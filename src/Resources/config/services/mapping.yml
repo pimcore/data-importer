@@ -1,0 +1,80 @@
+services:
+
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService: ~
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfigurationFactory: ~
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfiguration: ~
+
+    # -------------------
+    # simple operators
+    # -------------------
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Trim:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "trim" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Explode:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "explode" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Combine:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "combine" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\HtmlDecode:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "htmlDecode" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\ImportAsset:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "importAsset" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\LoadAsset:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "loadAsset" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\LoadDataObject:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "loadDataObject" }
+
+    # -------------------
+    # factory operators
+    # -------------------
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Numeric:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "numeric" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\QuantityValue:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "quantityValue" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\InputQuantityValue:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "inputQuantityValue" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Boolean:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "boolean" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Date:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "date" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Gallery:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "gallery" }
+
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\ImageAdvanced:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "imageAdvanced" }
+
+    # ---------------------
+    # data target services
+    # ---------------------
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget\Direct:
+        tags:
+            - { name: "pimcore.datahub.batch_import.data_target", type: "direct" }

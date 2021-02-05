@@ -1,0 +1,27 @@
+{
+  "name": "pimcore/data-hub-batch-import",
+  "license": "PEL",
+  "type": "pimcore-bundle",
+  "config": {
+    "sort-packages": true
+  },
+  "require": {
+    "pimcore/pimcore": "^6.8",
+    "dragonmantank/cron-expression": "^3.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pimcore\\Bundle\\DataHubBatchImportBundle\\": "src/"
+    }
+  },
+  "extra": {
+    "pimcore": {
+      "bundles": [
+        "Pimcore\\Bundle\\DataHubBatchImportBundle\\PimcoreDataHubBatchImportBundle"
+      ]
+    },
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}

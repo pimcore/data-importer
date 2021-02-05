@@ -1,0 +1,9 @@
+pimcore_data_hub_batch_import_homepage:
+    path:     /pimcore_data_hub_batch_import
+    defaults: { _controller: PimcoreDataHubBatchImportBundle:Default:index }
+
+_data_hub_batch_import_data_object_admin:
+    resource: "@PimcoreDataHubBatchImportBundle/Controller/ConfigDataObjectController.php"
+    type:     annotation
+    options:
+        expose: true
