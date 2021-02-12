@@ -50,7 +50,7 @@ class DataObjectFactory implements FactoryInterface
         $element = $this->modelFactory->build($className);
 
 //        $element = new $className();
-        $element->setKey(uniqid('import-'));
+        $element->setKey(uniqid('import-', true));
 
         return $element;
     }
