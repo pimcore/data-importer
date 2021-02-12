@@ -49,7 +49,6 @@ class DataObjectFactory implements FactoryInterface
         $className = '\\Pimcore\\Model\\DataObject\\' . $class->getName();
         $element = $this->modelFactory->build($className);
 
-//        $element = new $className();
         $element->setKey(uniqid('import-', true));
 
         return $element;
