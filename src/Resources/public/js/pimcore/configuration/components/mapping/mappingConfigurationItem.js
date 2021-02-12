@@ -270,7 +270,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 this.form.setIconCls('pimcore_icon_warning');
             }
         } catch (e) {
-            console.error(e);
+            console.log('Could not update validation state: ' + e);
         }
     },
 
