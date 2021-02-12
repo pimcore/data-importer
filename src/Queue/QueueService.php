@@ -130,7 +130,7 @@ class QueueService
                     [$configName]
             ) ?? 0;
         } catch (TableNotFoundException $exception) {
-            return $this->createQueueTableIfNotExisting(function ($configName) {
+            return $this->createQueueTableIfNotExisting(function () use ($configName) {
                 $this->getQueueItemCount($configName);
             });
         }
