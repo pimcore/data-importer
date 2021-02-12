@@ -145,7 +145,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                             settingsNamePrefix: 'locationUpdateStrategy.settings',
                             optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location,
                             settingsPanel: updateLocationStrategySettingsPanel,
-                            value: this.resolverConfigData.locationUpdateStrategy.type || 'staticPath',
+                            value: this.resolverConfigData.locationUpdateStrategy.type || 'noChange',
                             settingsValues: this.resolverConfigData.locationUpdateStrategy ? this.resolverConfigData.locationUpdateStrategy.settings : {},
                             configItemRootContainer: this.configItemRootContainer
                         },
