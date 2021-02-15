@@ -150,25 +150,38 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      */
     public function uploadPreviewDataAction(Request $request) {
 
-        if (array_key_exists('Filedata', $_FILES)) {
-            $filename = $_FILES['Filedata']['name'];
-            $sourcePath = $_FILES['Filedata']['tmp_name'];
-        } else {
-            throw new \Exception('The filename of the preview data is empty');
+        try {
+            if (array_key_exists('Filedata', $_FILES)) {
+                $filename = $_FILES['Filedata']['name'];
+                $sourcePath = $_FILES['Filedata']['tmp_name'];
+            } else {
+                throw new \Exception('The filename of the preview data is empty');
+            }
+
+            if (is_file($sourcePath) && filesize($sourcePath) < 1) {
+                throw new \Exception('File is empty!');
+            } elseif (!is_file($sourcePath)) {
+                throw new \Exception('Something went wrong, please check upload_max_filesize and post_max_size in your php.ini and write permissions of ' . PIMCORE_PUBLIC_VAR);
+            }
+
+            if(filesize($sourcePath) > 10485760) { //10 MB
+                throw new \Exception('File it too big for preview file, please create a smaller one');
+            }
+
+            $target = $this->getPreviewFilePath($request->get('config_name'));
+            File::put($target, file_get_contents($sourcePath));
+
+            @unlink($sourcePath);
+
+            return new JsonResponse(['success' => true]);
+        } catch (\Exception $e) {
+            Logger::error($e);
+            return $this->adminJson([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
         }
 
-        if (is_file($sourcePath) && filesize($sourcePath) < 1) {
-            throw new \Exception('File is empty!');
-        } elseif (!is_file($sourcePath)) {
-            throw new \Exception('Something went wrong, please check upload_max_filesize and post_max_size in your php.ini and write permissions of ' . PIMCORE_PUBLIC_VAR);
-        }
-
-        $target = $this->getPreviewFilePath($request->get('config_name'));
-        File::put($target, file_get_contents($sourcePath));
-
-        @unlink($sourcePath);
-
-        return new JsonResponse(['success' => true]);
     }
 
     /**
