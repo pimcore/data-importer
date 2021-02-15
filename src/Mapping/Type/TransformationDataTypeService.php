@@ -5,6 +5,7 @@ namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type;
 
 
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 class TransformationDataTypeService
 {
@@ -92,6 +93,41 @@ class TransformationDataTypeService
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
     }
 
+
+    protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, string $keyPrefix = null) {
+
+        if(in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
+            $key = $fieldDefinition->getName();
+            if($keyPrefix) {
+                $key = $keyPrefix . '.' . $key;
+            }
+            $attributes[$key] = [
+                'key' => $key,
+                'title' => $fieldDefinition->getTitle() . ' [' . $key . ']',
+                'localized' => $localized
+            ];
+        }
+
+        if($fieldDefinition instanceof ClassDefinition\Data\Localizedfields) {
+            foreach($fieldDefinition->getFieldDefinitions() as $localizedDefinition) {
+                $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix);
+            }
+        }
+
+        if($fieldDefinition instanceof ClassDefinition\Data\Objectbricks) {
+            foreach($fieldDefinition->getAllowedTypes() as $brickType) {
+                $brick = Definition::getByKey($brickType);
+
+                foreach($brick->getFieldDefinitions() as $brickFieldDefinition) {
+                    $keyPrefix = $fieldDefinition->getName() . '.' . $brickType;
+                    $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix);
+                }
+
+            }
+        }
+
+    }
+
     /**
      * @param string $classId
      * @param string|array $transformationTargetType
@@ -112,27 +148,9 @@ class TransformationDataTypeService
 
         foreach($transformationTargetType as $targetType) {
             foreach($class->getFieldDefinitions() as $definition) {
-                if(in_array($definition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
-                    $attributes[$definition->getName()] = [
-                        'key' => $definition->getName(),
-                        'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
-                        'localized' => false
-                    ];
-                }
-            }
 
-            if($localizedFields = $class->getFieldDefinition('localizedfields')) {
-                foreach($localizedFields->getFieldDefinitions() as $definition) {
-                    if(in_array($definition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
-                        $attributes[$definition->getName()] = [
-                            'key' => $definition->getName(),
-                            'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
-                            'localized' => true
-                        ];
-                    }
-                }
+                $this->addTypesToAttributesArray($definition, $targetType, $attributes);
             }
-
         }
 
         if(in_array(self::DEFAULT_TYPE, $transformationTargetType)) {

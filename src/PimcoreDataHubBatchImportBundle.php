@@ -56,7 +56,6 @@ class PimcoreDataHubBatchImportBundle extends AbstractPimcoreBundle
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/mappingConfigurationItem.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/transformationResultHandler.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/datatarget/direct.js',
-            '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/datatarget/objectBrick.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/abstractOperator.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/trim.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/numeric.js',

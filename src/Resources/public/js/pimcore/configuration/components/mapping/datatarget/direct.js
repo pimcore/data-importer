@@ -38,9 +38,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 fields: ['key', 'name', 'localized'],
                 listeners: {
                     dataChanged: function(store) {
-                        // console.log('data changed');
                         if(!this.dataApplied) {
-                            // console.log('apply data');
                             attributeSelection.setValue(this.data.fieldName);
                             if(this.form) {
                                 this.form.isValid();
@@ -60,9 +58,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             attributeSelection.setStore(attributeStore);
             attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
 
-
-
-
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultTypeChanged, function(newType) {
                 this.transformationResultType = newType;
@@ -72,8 +67,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                function(combo, newValue, oldValue) {
                     this.dataObjectClassId = newValue;
                     this.initAttributeStore(attributeStore);
-                    // console.log('listener called');
-                    // console.log(newValue);
                 }.bind(this)
             );
 
@@ -109,18 +102,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
         if(targetFieldCache[classId] && targetFieldCache[classId][transformationResultType]) {
 
             if(targetFieldCache[classId][transformationResultType].loading) {
-                // console.log('setting timeout');
                 setTimeout(this.initAttributeStore.bind(this, attributeStore), 400);
             } else {
-                // console.log('load cached');
-                // console.log(targetFieldCache[classId][transformationResultType].data);
                 attributeStore.loadData(targetFieldCache[classId][transformationResultType].data);
             }
 
 
         } else {
-            // console.log('load new: ' + classId + " " + transformationResultType);
-
             targetFieldCache = targetFieldCache || {};
             targetFieldCache[classId] = targetFieldCache[classId] || {};
             targetFieldCache[classId][transformationResultType] = {
@@ -138,7 +126,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                     'system_write': 1
                 },
                 success: function (response) {
-                    // console.log('loaded');
                     let data = Ext.decode(response.responseText);
 
                     targetFieldCache[classId][transformationResultType].loading = false;
@@ -148,11 +135,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
 
                 }.bind(this)
             });
-
-
         }
-
-
     },
 
     setLanguageVisibility: function(attributeStore, attributeSelection, languageSelection) {

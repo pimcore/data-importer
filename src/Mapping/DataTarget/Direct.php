@@ -33,8 +33,36 @@ class Direct implements DataTargetInterface
 
     public function assignData(ElementInterface $element, $data)
     {
-        $setter = 'set' . ucfirst($this->fieldName);
-        $element->$setter($data, $this->language);
+        $setterParts = explode('.', $this->fieldName);
+
+        if(count($setterParts) === 1) {
+            //direct class attribute
+            $setter = 'set' . ucfirst($this->fieldName);
+            $element->$setter($data, $this->language);
+        } else if(count($setterParts) === 3) {
+            //brick attribute
+
+            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
+            $brickContainer = $element->$brickContainerGetter();
+
+            $brickGetter = 'get' . ucfirst($setterParts[1]);
+            $brick = $brickContainer->$brickGetter();
+
+            if(empty($brick)) {
+                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
+                $brick = new $brickClassName($element);
+                $brickSetter = 'set' . ucfirst($setterParts[1]);
+                $brickContainer->$brickSetter($brick);
+            }
+
+            $setter = 'set' . ucfirst($setterParts[2]);
+            $brick->$setter($data, $this->language);
+
+        } else {
+            throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
+        }
+
     }
 
 }
+
