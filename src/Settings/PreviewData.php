@@ -69,7 +69,7 @@ class PreviewData
         foreach($this->previewData as $index => $attribute) {
             $dataPreview[] = [
                 'dataIndex' => (string) $index,
-                'label' => $this->labels[$index],
+                'label' => $this->labels[$index] ?? $index,
                 'data' => $attribute,
                 'mapped' => array_key_exists((string) $index, $this->mappedColumns)
             ];

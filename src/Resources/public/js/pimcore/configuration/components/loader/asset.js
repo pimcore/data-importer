@@ -147,7 +147,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.a
 
     dndAllowed: function (data) {
         if (data.elementType === 'asset') {
-            return data.type === 'document' || data.type === 'text';
+            return data.type === 'document' || data.type === 'text' || data.type === 'unknown';
         }
         return false;
     }

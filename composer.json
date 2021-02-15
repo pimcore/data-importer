@@ -8,7 +8,9 @@
   "require": {
     "pimcore/pimcore": "^6.8",
     "phpoffice/phpspreadsheet": "^1.1",
-    "dragonmantank/cron-expression": "^3.1"
+    "dragonmantank/cron-expression": "^3.1",
+    "ext-json": "*",
+    "ext-fileinfo": "*"
   },
   "autoload": {
     "psr-4": {

@@ -13,13 +13,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpre
                 },
                 border: false,
                 items: [
-                    {
-                        xtype: "label",
-                        fieldLabel: t("URL"),
-                        html: 'TODO',
-                        // name: this.dataNamePrefix + 'url',
-                        // value: this.data.url
-                    },
                 ]
             });
         }
