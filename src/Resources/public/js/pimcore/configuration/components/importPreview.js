@@ -25,12 +25,38 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
                 width: 400,
                 split: true,
                 items: [
+                    this.buildUploadPanel(),
                     this.buildPreviewGrid()
                 ]
             });
         }
         return this.panel;
 
+    },
+
+    buildUploadPanel: function() {
+        this.errorField = Ext.create('Ext.form.field.Display', {});
+        this.uploadPanel = Ext.create('Ext.Panel', {
+            bodyStyle: 'padding: 0 8px',
+            tbar: {
+                items: [
+                    {
+                        xtype: 'button',
+                        iconCls: 'pimcore_icon_upload',
+                        handler: this.uploadDialog.bind(this)
+                    },{
+                        xtype: 'button',
+                        iconCls: 'pimcore_icon_refresh',
+                        handler: this.updatePreview.bind(this, null, false)
+                    }
+                ]
+            },
+            items: [
+                this.errorField
+            ]
+        });
+
+        return this.uploadPanel;
     },
 
     buildPreviewGrid: function() {
@@ -66,7 +92,8 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
             '.whitespace-pre .x-grid-cell-inner { white-space:pre }'
         );
 
-        return Ext.create('Ext.grid.Panel', {
+        this.gridPanel = Ext.create('Ext.grid.Panel', {
+            hidden: true,
             autoScroll: true,
             store: this.previewStore,
             columns: {
@@ -119,6 +146,8 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
                 afterrender: this.updatePreview.bind(this, null, true)
             }
         });
+
+        return this.gridPanel;
     },
 
     checkValidConfiguration: function(suppressInvalidError) {
@@ -215,10 +244,25 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
             },
             success: function (response) {
                 let data = Ext.decode(response.responseText);
-                this.previewRecordIndex = data.previewRecordIndex;
-                this.previewStore.loadData(data.dataPreview);
-                this.transformationResultHandler.setCurrentPreviewRecord(data.previewRecordIndex);
-                this.transformationResultHandler.updateData(true);
+
+                if(data.hasData) {
+                    this.gridPanel.show();
+                    this.uploadPanel.hide();
+                    this.previewRecordIndex = data.previewRecordIndex;
+                    this.previewStore.loadData(data.dataPreview);
+                    this.transformationResultHandler.setCurrentPreviewRecord(data.previewRecordIndex);
+                    this.transformationResultHandler.updateData(true);
+                } else {
+                    this.gridPanel.hide();
+                    this.uploadPanel.show();
+                    if(data.errorMessage) {
+                        this.errorField.setValue(data.errorMessage);
+                    } else {
+                        this.errorField.setValue('');
+                    }
+                }
+
+
             }.bind(this)
         });
 

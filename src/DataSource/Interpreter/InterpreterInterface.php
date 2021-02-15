@@ -10,6 +10,14 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
 
 interface InterpreterInterface extends SettingsAwareInterface
 {
+
+    /**
+     * @param string $path
+     * @param bool $originalFilename
+     * @return bool
+     */
+    public function fileValid(string $path, bool $originalFilename = false): bool;
+
     /**
      * @param string $path
      * @return array

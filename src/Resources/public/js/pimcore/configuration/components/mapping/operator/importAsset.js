@@ -6,7 +6,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
 
     getFormItems: function() {
 
-        this.parentFolder = new Ext.form.TextField({
+        this.parentFolder = Ext.create('Ext.form.TextField', {
             name: 'settings.parentFolder',
             value: this.data.settings ? this.data.settings.parentFolder : '/',
             fieldCls: 'pimcore_droptarget_input',

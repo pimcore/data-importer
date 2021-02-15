@@ -36,7 +36,7 @@ class PimcoreDataHubBatchImportBundle extends AbstractPimcoreBundle
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/loader/push.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/csv.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/json.js',
-            '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/xslx.js',
+            '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/xlsx.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/cleanup/unpublish.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/cleanup/delete.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/importSettings.js',

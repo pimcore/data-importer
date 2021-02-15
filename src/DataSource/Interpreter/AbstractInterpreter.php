@@ -10,6 +10,7 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
 use Pimcore\Log\ApplicationLogger;
+use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerAwareTrait;
 
@@ -190,6 +191,27 @@ abstract class AbstractInterpreter implements InterpreterInterface
     {
         $this->resolver = $resolver;
     }
+
+    public function interpretFile(string $path): void
+    {
+        $this->resetIdentifierCache();
+
+        $this->doInterpretFileAndCallProcessRow($path);
+
+        $this->cleanupElements();
+
+        if($this->doArchiveImportFile) {
+            $this->applicationLogger->info("Interpreted source file and created queue items.", [
+                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                'fileObject' => new FileObject(file_get_contents($path))
+            ]);
+        }
+
+        $this->updateExecutionPackageInformation();
+
+    }
+
+    protected abstract function doInterpretFileAndCallProcessRow(string $path): void;
 
     protected function processImportRow(array $data) {
         $createQueueItem = true;

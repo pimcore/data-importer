@@ -24,6 +24,7 @@ use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataHubSimpleRestBundle\Service\IndexService;
 use Pimcore\File;
 use Pimcore\Logger;
+use Pimcore\Translation\Translator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -182,7 +183,8 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
     public function loadDataPreviewAction(
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
-        InterpreterFactory $interpreterFactory
+        InterpreterFactory $interpreterFactory,
+        Translator $translator
     ) {
 
         $configName = $request->get('config_name');
@@ -191,10 +193,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         $dataPreview = null;
         $hasData = false;
+        $errorMessage = '';
         $previewFilePath = $this->getPreviewFilePath($configName);
         if(is_file($previewFilePath)) {
-            $hasData = true;
-
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
             $mappedColumns = [];
@@ -203,14 +204,27 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             }
             $mappedColumns = array_unique($mappedColumns);
 
-            $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
-            $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
+            try {
+                $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
+
+                if($interpreter->fileValid($previewFilePath)) {
+                    $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
+                    $hasData = true;
+                } else {
+                    $errorMessage = $translator->trans('plugin_pimcore_datahub_batch_import_configpanel_preview_error_invalid_file', [], 'admin');
+                }
+
+            } catch (\Exception $e) {
+                Logger::error($e);
+                $errorMessage = $translator->trans('plugin_pimcore_datahub_batch_import_configpanel_preview_error_prefix', [], 'admin') . ': ' . $e->getMessage();
+            }
         }
 
         return new JsonResponse([
             'dataPreview' => $dataPreview ? $dataPreview->getDataPreview() : [],
             'previewRecordIndex' => $dataPreview ? $dataPreview->getRecordNumber() : 0,
-            'hasData' => $hasData
+            'hasData' => $hasData,
+            'errorMessage' => $errorMessage
         ]);
     }
 
@@ -264,24 +278,34 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         $previewFilePath = $this->getPreviewFilePath($configName);
         $importDataRow = [];
-        if(is_file($previewFilePath)) {
-            $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
-
-            $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber);
-            $importDataRow = $dataPreview->getRawData();
-        }
-
-
-        $mapping = $factory->loadMappingConfiguration($configName, $config['mappingConfig'], true);
-
         $transformationResults = [];
+        $errorMessage = '';
 
-        foreach($mapping as $index => $mappingConfiguration) {
-            $transformationResults[] = $importProcessingService->generateTransformationResultPreview($importDataRow, $mappingConfiguration);
+        try {
+            if(is_file($previewFilePath)) {
+                $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
+
+                $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber);
+                $importDataRow = $dataPreview->getRawData();
+            }
+
+
+            $mapping = $factory->loadMappingConfiguration($configName, $config['mappingConfig'], true);
+
+
+
+            foreach($mapping as $index => $mappingConfiguration) {
+                $transformationResults[] = $importProcessingService->generateTransformationResultPreview($importDataRow, $mappingConfiguration);
+            }
+
+        } catch (\Exception $e) {
+            Logger::error($e);
+            $errorMessage = $e->getMessage();
         }
 
         return new JsonResponse([
-            'transformationResultPreviews' => $transformationResults
+            'transformationResultPreviews' => $transformationResults,
+            'errorMessage' => $errorMessage
         ]);
 
     }

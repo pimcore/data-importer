@@ -30,10 +30,8 @@ class CsvFileInterpreter extends AbstractInterpreter
      */
     protected $escape;
 
-    public function interpretFile(string $path): void
+    protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        $this->resetIdentifierCache();
-
         if (($handle = fopen($path, "r")) !== false) {
             if($this->skipFirstRow) {
                 //load first row and ignore it
@@ -45,18 +43,6 @@ class CsvFileInterpreter extends AbstractInterpreter
             }
             fclose($handle);
         }
-
-        $this->cleanupElements();
-
-        if($this->doArchiveImportFile) {
-            $this->applicationLogger->info("Interpreted source file and created queue items.", [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                'fileObject' => new FileObject(file_get_contents($path))
-            ]);
-        }
-
-        $this->updateExecutionPackageInformation();
-
     }
 
     public function setSettings(array $settings): void
@@ -66,6 +52,24 @@ class CsvFileInterpreter extends AbstractInterpreter
         $this->enclosure = $settings['enclosure'] ?? '"';
         $this->escape = $settings['escape'] ?? '\\';
     }
+
+    public function fileValid(string $path, bool $originalFilename = false): bool {
+        if($originalFilename) {
+            $filename = $path;
+            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            if($ext !== 'csv') {
+                return false;
+            }
+        }
+
+        $csvMimes = ['text/x-comma-separated-values', 'text/comma-separated-values', 'application/octet-stream', 'application/vnd.ms-excel', 'application/x-csv', 'text/x-csv', 'text/csv', 'application/csv', 'application/excel', 'application/vnd.msexcel', 'text/plain'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $path);
+        finfo_close($finfo);
+
+        return in_array($mime, $csvMimes);
+    }
+
 
     /**
      * @param string $path
@@ -80,7 +84,7 @@ class CsvFileInterpreter extends AbstractInterpreter
         $columns = [];
         $readRecordNumber = -1;
 
-        if (($handle = fopen($path, "r")) !== false) {
+        if ($this->fileValid($path) && ($handle = fopen($path, "r")) !== false) {
             if($this->skipFirstRow) {
                 //load first row and ignore it
                 $data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape);
@@ -115,4 +119,5 @@ class CsvFileInterpreter extends AbstractInterpreter
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
 
     }
+
 }
