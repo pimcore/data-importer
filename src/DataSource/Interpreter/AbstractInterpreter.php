@@ -196,9 +196,14 @@ abstract class AbstractInterpreter implements InterpreterInterface
     {
         $this->resetIdentifierCache();
 
-        $this->doInterpretFileAndCallProcessRow($path);
-
-        $this->cleanupElements();
+        if($this->fileValid($path)) {
+            $this->doInterpretFileAndCallProcessRow($path);
+            $this->cleanupElements();
+        } else {
+            $this->applicationLogger->error("Uploaded file not valid, not creating any queue items and doing any cleanup.", [
+                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName
+            ]);
+        }
 
         if($this->doArchiveImportFile) {
             $this->applicationLogger->info("Interpreted source file and created queue items.", [
