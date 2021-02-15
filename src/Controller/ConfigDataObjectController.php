@@ -177,6 +177,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
+     * @param Translator $translator
      * @return JsonResponse
      * @throws \Exception
      */
