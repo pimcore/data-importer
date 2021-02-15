@@ -135,29 +135,31 @@ class TransformationDataTypeService
 
         }
 
-        if($includeSystemRead) {
-            $attributes['id'] = [
-                'key' => 'id',
-                'title' => 'SYSTEM ID',
-                'localized' => false
-            ];
-            $attributes['key'] = [
-                'key' => 'key',
-                'title' => 'SYSTEM Key',
-                'localized' => false
-            ];
-            $attributes['fullpath'] = [
-                'key' => 'fullpath',
-                'title' => 'SYSTEM Fullpath',
-                'localized' => false
-            ];
-        }
-        if($includeSystemWrite) {
-            $attributes['key'] = [
-                'key' => 'key',
-                'title' => 'SYSTEM Key',
-                'localized' => false
-            ];
+        if(in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
+            if($includeSystemRead) {
+                $attributes['id'] = [
+                    'key' => 'id',
+                    'title' => 'SYSTEM ID',
+                    'localized' => false
+                ];
+                $attributes['key'] = [
+                    'key' => 'key',
+                    'title' => 'SYSTEM Key',
+                    'localized' => false
+                ];
+                $attributes['fullpath'] = [
+                    'key' => 'fullpath',
+                    'title' => 'SYSTEM Fullpath',
+                    'localized' => false
+                ];
+            }
+            if($includeSystemWrite) {
+                $attributes['key'] = [
+                    'key' => 'key',
+                    'title' => 'SYSTEM Key',
+                    'localized' => false
+                ];
+            }
         }
 
         return array_values($attributes);
