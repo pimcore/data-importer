@@ -7,7 +7,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.a
     buildSettingsForm: function() {
         if(!this.form) {
 
-            this.component = new Ext.form.TextField({
+            this.component = Ext.create('Ext.form.TextField', {
                 name: this.dataNamePrefix + 'assetPath',
                 value: this.data.assetPath,
                 fieldCls: 'pimcore_droptarget_input',

@@ -293,11 +293,11 @@ class ImportProcessingService
         } else if(is_array($data)) {
 
             $dataStrings = [];
-            foreach($data as $dataEntry) {
+            foreach($data as $key => $dataEntry) {
                 if(is_string($dataEntry)) {
-                    $dataStrings[] = $dataEntry;
+                    $dataStrings[] = $key . ' => ' . $dataEntry;
                 } else {
-                    $dataStrings[] = json_encode($dataEntry);
+                    $dataStrings[] = $key . ' => ' . json_encode($dataEntry);
                 }
             }
 

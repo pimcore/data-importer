@@ -87,22 +87,26 @@ Ext.define('DataHub.BatchImport.StructuredValueForm', {
         let nestedValues = {};
 
         for(let key in values) {
-            let parts = key.split('.');
 
-            let subLevel = nestedValues;
-            let currentPath = '';
+            //ignore all fields with name starting __ignore
+            if(!key.startsWith('__ignore')) {
+                let parts = key.split('.');
 
-            parts.forEach(function(item) {
+                let subLevel = nestedValues;
+                let currentPath = '';
 
-                currentPath = currentPath + item;
-                if(values[currentPath] === undefined) {
-                    subLevel[item] = subLevel[item] || {};
-                } else {
-                    subLevel[item] = values[currentPath];
-                }
-                subLevel = subLevel[item];
-                currentPath = currentPath + '.';
-            });
+                parts.forEach(function(item) {
+
+                    currentPath = currentPath + item;
+                    if(values[currentPath] === undefined) {
+                        subLevel[item] = subLevel[item] || {};
+                    } else {
+                        subLevel[item] = values[currentPath];
+                    }
+                    subLevel = subLevel[item];
+                    currentPath = currentPath + '.';
+                });
+            }
         }
 
         return nestedValues;

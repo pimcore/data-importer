@@ -13,17 +13,22 @@
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Controller;
 
 use Cron\CronExpression;
+use CustomerManagementFrameworkBundle\Helper\Json;
+use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\ClassificationStoreDataTypeService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataHubSimpleRestBundle\Service\IndexService;
+use Pimcore\Db;
 use Pimcore\File;
 use Pimcore\Logger;
+use Pimcore\Model\DataObject;
 use Pimcore\Translation\Translator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -249,7 +254,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
      * @return JsonResponse
-     * @throws \Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException
+     * @throws \Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException|\Exception
      */
     public function loadAvailableColumnHeadersAction(
         Request $request,
@@ -274,7 +279,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param InterpreterFactory $interpreterFactory
      * @param ImportProcessingService $importProcessingService
      * @return JsonResponse
-     * @throws InvalidConfigurationException
+     * @throws InvalidConfigurationException|\Exception
      */
     public function loadTransformationResultPreviewsAction(
         Request $request,
@@ -331,7 +336,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param MappingConfigurationFactory $factory
      * @param ImportProcessingService $importProcessingService
      * @return JsonResponse
-     * @throws \Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException
      */
     public function calculateTransformationResultTypeAction(
         Request $request,
@@ -353,7 +357,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @Route("/load-class-attributes", methods={"GET"})
      *
      * @param Request $request
+     * @param TransformationDataTypeService $transformationDataTypeService
      * @return JsonResponse
+     * @throws \Exception
      */
     public function loadDataObjectAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService) {
 
@@ -368,6 +374,104 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $transformationTargetType = $request->get('transformation_result_type', [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC]);
         return new JsonResponse([
             'attributes' => $transformationDataTypeService->getPimcoreDataTypes($classId, $transformationTargetType, $includeSystemRead, $includeSystemWrite)
+        ]);
+
+    }
+
+    /**
+     * @Route("/load-class-classificationstore-attributes", methods={"GET"})
+     *
+     * @param Request $request
+     * @param TransformationDataTypeService $transformationDataTypeService
+     * @return JsonResponse
+     */
+    public function loadDataObjectClassificationStoreAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService) {
+
+        $classId = $request->get('class_id');
+        if(empty($classId)) {
+            return new JsonResponse([]);
+        }
+
+        return new JsonResponse([
+            'attributes' => $transformationDataTypeService->getClassificationStoreAttributes($classId)
+        ]);
+    }
+
+    /**
+     * @Route("/load-class-classificationstore-keys", methods={"GET"})
+     *
+     * @param Request $request
+     * @param ClassificationStoreDataTypeService $classificationStoreDataTypeService
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService) {
+
+        $sortParams = QueryParams::extractSortingSettings(['sort' => $request->get('sort')]);
+
+        $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
+            strip_tags($request->get('class_id')),
+            strip_tags($request->get('field_name')),
+            strip_tags($request->get('transformation_result_type')),
+            $sortParams['orderKey'] ?? 'name',
+            $sortParams['order'] ?? 'ASC',
+            intval($request->get('start')),
+            intval($request->get('limit')),
+            strip_tags($request->get('searchfilter')),
+            strip_tags($request->get('filter'))
+        );
+
+        $data = [];
+        foreach ($list as $config) {
+            $item = [
+                'keyId' => $config->getKeyId(),
+                'groupId' => $config->getGroupId(),
+                'keyName' => $config->getName(),
+                'keyDescription' => $config->getDescription(),
+                'id' => $config->getGroupId() . '-' . $config->getKeyId(),
+                'sorter' => $config->getSorter(),
+            ];
+
+            $groupConfig = DataObject\Classificationstore\GroupConfig::getById($config->getGroupId());
+            if ($groupConfig) {
+                $item['groupName'] = $groupConfig->getName();
+            }
+
+            $data[] = $item;
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'data' => $data,
+            'total' => $list->getTotalCount()
+        ]);
+    }
+
+    /**
+     * @Route("/load-class-classificationstore-key-name", methods={"GET"})
+     *
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function loadDataObjectClassificationStoreKeyNameAction(Request $request) {
+
+        $keyId = $request->get('key_id');
+        $keyParts = explode('-', $keyId);
+        if(count($keyParts) == 2) {
+            $keyGroupRelation = DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId($keyParts[0], $keyParts[1]);
+            $group = DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId());
+
+            if($keyGroupRelation && $group) {
+                return new JsonResponse([
+                    'groupName' => $group->getName(),
+                    'keyName' => $keyGroupRelation->getName()
+                ]);
+            }
+        }
+
+        return new JsonResponse([
+            'keyId' => $keyId
         ]);
 
     }

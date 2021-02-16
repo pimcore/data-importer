@@ -183,6 +183,35 @@ class TransformationDataTypeService
         return array_values($attributes);
     }
 
+    /**
+     * @param string $classId
+     * @return array
+     * @throws \Exception
+     */
+    public function getClassificationStoreAttributes(string $classId): array {
+        $class = ClassDefinition::getById($classId);
+
+        $attributes = [];
+        foreach($class->getFieldDefinitions() as $definition) {
+            if($definition instanceof ClassDefinition\Data\Classificationstore) {
+                $attributes[$definition->getName()] = [
+                    'key' => $definition->getName(),
+                    'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
+                    'localized' => $definition->isLocalized()
+                ];
+            }
+        }
+
+        return array_values($attributes);
+    }
+
+    /**
+     * @param string $transformationTargetType
+     * @return array|string[]
+     */
+    public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array {
+        return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
+    }
 
 
 }

@@ -26,7 +26,19 @@ class Explode extends AbstractOperator
     public function process($inputData, bool $dryRun = false)
     {
         if(!empty($this->delimiter)) {
-            return explode($this->delimiter, $inputData);
+
+            if(is_array($inputData)) {
+
+                $explodedArray = [];
+                foreach($inputData as $dataRow) {
+                    $explodedArray = array_merge($explodedArray, explode($this->delimiter, $dataRow));
+                }
+                return $explodedArray;
+
+            } else {
+                return explode($this->delimiter, $inputData);
+            }
+
         } else {
             return [$inputData];
         }
@@ -40,7 +52,7 @@ class Explode extends AbstractOperator
      */
     public function evaluateReturnType(string $inputType, int $index = null): string {
 
-        if(!$inputType === TransformationDataTypeService::DEFAULT_TYPE) {
+        if(! in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for explode operator at transformation position %s", $inputType, $index));
         }
 
