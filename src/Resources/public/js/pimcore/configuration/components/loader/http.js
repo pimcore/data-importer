@@ -22,7 +22,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.h
                         value: this.data.schema,
                         allowBlank: false,
                         msgTarget: 'under',
-                        width: 300
+                        width: 330
                     },{
                         xtype: 'textfield',
                         fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_http_url'),
