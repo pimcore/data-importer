@@ -40,6 +40,10 @@ services:
         tags:
             - { name: "pimcore.datahub.batch_import.loader", type: "http" }
 
+    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\SftpLoader:
+        tags:
+            - { name: "pimcore.datahub.batch_import.loader", type: "sftp" }
+
     Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker: ~
 
     Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory: ~
