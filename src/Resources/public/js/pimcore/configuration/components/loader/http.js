@@ -32,7 +32,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.h
                         msgTarget: 'under',
                         width: 900
 
-                    },
+                    }
                 ]
             });
         }
