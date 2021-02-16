@@ -5,7 +5,7 @@ namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location;
 
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\DataObject\AbstractObject;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -87,10 +87,10 @@ class FindParentStrategy implements LocationStrategyInterface
         switch ($this->findStrategy) {
 
             case self::FIND_BY_ID:
-                $newParent = AbstractObject::getById($inputData[$this->dataSourceIndex] ?? null);
+                $newParent = DataObject::getById($inputData[$this->dataSourceIndex] ?? null);
                 break;
             case self::FIND_BY_PATH:
-                $newParent = AbstractObject::getByPath($inputData[$this->dataSourceIndex] ?? null);
+                $newParent = DataObject::getByPath($inputData[$this->dataSourceIndex] ?? null);
                 break;
             case self::FIND_BY_ATTRIBUTE:
                 $getter = 'getBy' . $this->attributeName;
@@ -110,8 +110,8 @@ class FindParentStrategy implements LocationStrategyInterface
                 break;
         }
 
-        if(!($newParent instanceof AbstractObject) && $this->fallbackPath) {
-            $newParent = AbstractObject::getByPath($this->fallbackPath);
+        if(!($newParent instanceof DataObject) && $this->fallbackPath) {
+            $newParent = DataObject::getByPath($this->fallbackPath);
         }
 
         if($newParent) {

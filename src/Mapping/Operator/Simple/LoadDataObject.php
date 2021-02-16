@@ -6,11 +6,8 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationExcept
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Log\FileObject;
-use Pimcore\Model\Asset;
-use Pimcore\Model\DataObject\AbstractObject;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
-use Pimcore\Model\Element\Service;
 
 class LoadDataObject extends AbstractOperator
 {
@@ -64,9 +61,9 @@ class LoadDataObject extends AbstractOperator
 
             $object = null;
             if($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
-                $object = AbstractObject::getByPath(trim($data));
+                $object = DataObject::getByPath(trim($data));
             } else if($this->loadStrategy === self::LOAD_STRATEGY_ID) {
-                $object = AbstractObject::getById(trim($data));
+                $object = DataObject::getById(trim($data));
             } else if($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
 
                 if($this->attributeName) {
@@ -88,7 +85,7 @@ class LoadDataObject extends AbstractOperator
                 throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
             }
 
-            if($object instanceof AbstractObject) {
+            if($object instanceof DataObject) {
                 $objects[] = $object;
             } else if(!$dryRun) {
                 $this->applicationLogger->warning("Could not load data object from `$data` ", [
@@ -134,7 +131,7 @@ class LoadDataObject extends AbstractOperator
 
         foreach($inputData as &$data) {
 
-            if($data instanceof AbstractObject) {
+            if($data instanceof DataObject) {
                 $data = 'DataObject: ' . $data->getFullPath() . ' (ID: ' . $data->getId() . ')';
             }
 
