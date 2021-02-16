@@ -36,8 +36,8 @@ class HttpLoader implements DataLoaderInterface
 
         if ( copy($fullUrl, $this->importFilePath) ) {
             return $this->importFilePath;
-        }else{
-            throw new InvalidConfigurationException(fprintf('Could not copy from remote location `%s` to local tmp file `%s`', $fullUrl, $this->importFilePath));
+        } else {
+            throw new InvalidConfigurationException(sprintf('Could not copy from remote location `%s` to local tmp file `%s`', $fullUrl, $this->importFilePath));
         }
 
     }
