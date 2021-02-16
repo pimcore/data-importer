@@ -13,7 +13,6 @@
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Controller;
 
 use Cron\CronExpression;
-use CustomerManagementFrameworkBundle\Helper\Json;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
