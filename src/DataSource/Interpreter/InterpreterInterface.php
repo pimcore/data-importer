@@ -20,9 +20,9 @@ interface InterpreterInterface extends SettingsAwareInterface
 
     /**
      * @param string $path
-     * @return array
+     * @return bool
      */
-    public function interpretFile(string $path): void;
+    public function interpretFile(string $path): bool;
 
     /**
      * @param string $path

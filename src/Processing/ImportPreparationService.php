@@ -78,12 +78,13 @@ class ImportPreparationService
     /**
      * @param string $configName
      * @param bool $ignoreActiveFlag
+     * @param bool $ignoreNotEmptyQueueFlag
      * @return bool
      */
-    public function prepareImport(string $configName, bool $ignoreActiveFlag = false): bool {
+    public function prepareImport(string $configName, bool $ignoreActiveFlag = false, bool $ignoreNotEmptyQueueFlag = false): bool {
         try {
             $queueItemCount = $this->queueService->getQueueItemCount($configName);
-            if ($queueItemCount > 0) {
+            if ($queueItemCount > 0 && !$ignoreNotEmptyQueueFlag) {
                 throw new QueueNotEmptyException("Queue for `$configName` not empty. Not preparing new import, finish queue processing first.");
             }
 
@@ -108,14 +109,14 @@ class ImportPreparationService
 
             $logMessage = "Interpreting source file and preparing queue items...";
             $this->logger->info($logMessage);
-            $interpreter->interpretFile($filePath);
+            $fileInterpreted = $interpreter->interpretFile($filePath);
             $this->logger->info("Interpreted source file and prepared queue items.");
 
             $this->logger->info("Cleanup source file if necessary.");
             $loader->cleanup();
             $this->logger->info("Cleaned up source file if necessary.");
 
-            return true;
+            return $fileInterpreted;
         } catch (QueueNotEmptyException $e) {
             $message = "Error preparing Import: ". $e->getMessage();
             $this->logger->warning($message);

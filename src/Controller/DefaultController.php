@@ -127,14 +127,12 @@ class DefaultController extends FrontendController
 //        p_r($fileInterpreter->previewData($asset->getFileSystemPath(), 500));
 
 
-        $array = ['k1', 'v1', 'k2', 'v2', 'k3', 'v3', 'k4'];
 
-        $mappedArray = [];
-        while(!empty($array)) {
-            $mappedArray[array_shift($array)] = array_shift($array);
-        }
 
-        p_r($mappedArray);
+//        $entityBody = stream_get_contents(STDIN);
+        $entityBody = file_get_contents('php://input');
+
+        print_r($entityBody);
 
 
 

@@ -5,6 +5,7 @@ namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
 
 
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
+use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
@@ -192,21 +193,26 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->resolver = $resolver;
     }
 
-    public function interpretFile(string $path): void
+    public function interpretFile(string $path): bool
     {
+        $success = false;
         $this->resetIdentifierCache();
 
         if($this->fileValid($path)) {
+            $archiveLogMessage = 'Interpreted source file and created queue items.';
             $this->doInterpretFileAndCallProcessRow($path);
             $this->cleanupElements();
+            $success = true;
         } else {
-            $this->applicationLogger->error("Uploaded file not valid, not creating any queue items and doing any cleanup.", [
+            $archiveLogMessage = 'Uploaded file not valid.';
+            $message = 'Uploaded file not valid, not creating any queue items and doing any cleanup."';
+            $this->applicationLogger->error($message, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName
             ]);
         }
 
         if($this->doArchiveImportFile) {
-            $this->applicationLogger->info("Interpreted source file and created queue items.", [
+            $this->applicationLogger->info($archiveLogMessage, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 'fileObject' => new FileObject(file_get_contents($path))
             ]);
@@ -214,6 +220,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
         $this->updateExecutionPackageInformation();
 
+        return $success;
     }
 
     protected abstract function doInterpretFileAndCallProcessRow(string $path): void;
