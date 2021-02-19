@@ -5,6 +5,7 @@ namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
 
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\IReader;
 use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
 
 class XlsxFileInterpreter extends AbstractInterpreter

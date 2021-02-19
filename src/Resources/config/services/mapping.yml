@@ -26,6 +26,10 @@ services:
         tags:
             - { name: "pimcore.datahub.batch_import.operator", type: "reduceArrayKeyValuePairs" }
 
+    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\FlattenArray:
+        tags:
+            - { name: "pimcore.datahub.batch_import.operator", type: "flattenArray" }
+
     Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Combine:
         tags:
             - { name: "pimcore.datahub.batch_import.operator", type: "combine" }

@@ -37,6 +37,7 @@ class PimcoreDataHubBatchImportBundle extends AbstractPimcoreBundle
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/csv.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/json.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/xlsx.js',
+            '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/interpreter/xml.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/cleanup/unpublish.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/cleanup/delete.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/importSettings.js',
@@ -76,6 +77,7 @@ class PimcoreDataHubBatchImportBundle extends AbstractPimcoreBundle
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/imageAdvanced.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/loadDataObject.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/reduceArrayKeyValuePairs.js',
+            '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/mapping/operator/flattenArray.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/execution.js',
             '/bundles/pimcoredatahubbatchimport/js/pimcore/configuration/components/logTab.js',
         ];

@@ -10,7 +10,9 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.p
                 name: this.dataNamePrefix + 'apiKey',
                 value: this.data.apiKey,
                 width: 400,
-                minLength: 16
+                minLength: 16,
+                allowBlank: false,
+                msgTarget: 'under'
             });
 
             this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {

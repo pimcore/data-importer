@@ -1,0 +1,48 @@
+<?php
+
+
+namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
+
+use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
+
+class FlattenArray extends AbstractOperator
+{
+
+    public function setSettings(array $settings): void
+    {
+        //nothing to do
+    }
+
+
+    public function process($inputData, bool $dryRun = false)
+    {
+        if(!is_array($inputData) && !empty($inputData)) {
+            $inputData = [$inputData];
+        }
+
+        $flattenedArray = array();
+        array_walk_recursive($inputData, function($item) use (&$flattenedArray) { $flattenedArray[] = $item; });
+
+        return $flattenedArray;
+
+    }
+
+    /**
+     * @param string $inputType
+     * @param int|null $index
+     * @return string
+     * @throws InvalidConfigurationException
+     */
+    public function evaluateReturnType(string $inputType, int $index = null): string {
+
+        if($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
+            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for flatten array operator at transformation position %s", $inputType, $index));
+        }
+
+        return TransformationDataTypeService::DEFAULT_ARRAY;
+
+    }
+
+}

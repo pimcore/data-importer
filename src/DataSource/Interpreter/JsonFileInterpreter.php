@@ -10,10 +10,27 @@ use Pimcore\Log\FileObject;
 class JsonFileInterpreter extends AbstractInterpreter
 {
 
+    /**
+     * @var array
+     */
+    protected $cachedContent = null;
+    /**
+     * @var string
+     */
+    protected $cachedFilePath = null;
+
+    protected function loadData(string $path): array {
+        if($this->cachedFilePath === $path && !empty($this->cachedContent)) {
+            $content = file_get_contents($path);
+            return json_decode($content, true);
+        } else {
+            return $this->cachedContent;
+        }
+    }
+
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        $content = file_get_contents($path);
-        $data = json_decode($content, true);
+        $data = $this->loadData($path);
 
         foreach($data as $dataRow) {
             $this->processImportRow($dataRow);
@@ -28,6 +45,9 @@ class JsonFileInterpreter extends AbstractInterpreter
 
     public function fileValid(string $path, bool $originalFilename = false): bool {
 
+        $this->cachedContent = null;
+        $this->cachedFilePath = null;
+
         if($originalFilename) {
             $filename = $path;
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
@@ -37,8 +57,15 @@ class JsonFileInterpreter extends AbstractInterpreter
         }
 
         $content = file_get_contents($path);
-        json_decode($content, true);
-        return (json_last_error() == JSON_ERROR_NONE);
+        $data = json_decode($content, true);
+
+        if(json_last_error() === JSON_ERROR_NONE) {
+            $this->cachedContent = $data;
+            $this->cachedFilePath = $path;
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
@@ -56,8 +83,7 @@ class JsonFileInterpreter extends AbstractInterpreter
         $readRecordNumber = 0;
 
         if($this->fileValid($path)) {
-            $content = file_get_contents($path);
-            $data = json_decode($content, true);
+            $data = $this->loadData($path);
 
             $previewDataRow = $data[$recordNumber] ?? null;
 

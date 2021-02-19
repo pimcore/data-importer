@@ -73,6 +73,13 @@ services:
             - { name: monolog.logger, channel: 'BATCH-IMPORT' }
             - { name: "pimcore.datahub.batch_import.interpreter", type: "json" }
 
+    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\XmlFileInterpreter:
+        calls:
+            - [ setLogger, [ '@logger' ] ]
+        tags:
+            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
+            - { name: "pimcore.datahub.batch_import.interpreter", type: "xml" }
+
     Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\CleanupStrategyFactory: ~
 
     Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\DeleteStrategy:
