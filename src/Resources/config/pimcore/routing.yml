@@ -7,8 +7,3 @@ _data_hub_batch_import_data_object_admin:
 _data_hub_batch_import_data_object_push:
     resource: "@PimcoreDataHubBatchImportBundle/Controller/PushImportController.php"
     type:     annotation
-
-
-_data_hub_batch_import_data_object_debug:
-    resource: "@PimcoreDataHubBatchImportBundle/Controller/DefaultController.php"
-    type:     annotation
