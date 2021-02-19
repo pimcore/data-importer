@@ -1,0 +1,29 @@
+# Installation
+
+This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs 
+to be installed first. 
+
+To install batch import use following commands: 
+
+```bash
+composer require pimcore/data-hub-batch-import
+./bin/console pimcore:bundle:enable PimcoreDataHubBatchImportBundle
+```
+
+> Make sure, that priority of Datahub bundle is higher than priority of Datahub Batch Import bundle. 
+> This can be specified as parameter during bundle enablement or in Pimcore extension manager. 
+
+## Bundle Configuration
+
+Configure following commands to be executed on a regular base. The actual interval depends on use cases and system environment.  
+
+```bash 
+# Check cron configurations and execute necessary import definitions
+* * * * * php /home/project/www/bin/console datahub:batch-import:execute-cron
+
+# Process import queue items that can be executed in parallel
+*/5 * * * * php /home/project/www/bin/console datahub:batch-import:process-queue-parallel --processes=5
+
+# Process import queue items that need to be executed sequentially 
+*/5 * * * * php /home/project/www/bin/console datahub:batch-import:process-queue-sequential 
+```
