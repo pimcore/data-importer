@@ -48,9 +48,17 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                                 let missingDataIndices = allDataIndices.filter(item => !usedDataIndices.includes(item));
                                 missingDataIndices.forEach(function(item) {
                                     const storeItem = this.configItemRootContainer.columnHeaderStore.getById(item);
+                                    const itemLabel = storeItem ? storeItem.data.label : item;
                                     let data = {
-                                        label: storeItem ? storeItem.data.label : item,
-                                        dataSourceIndex: [item]
+                                        label: itemLabel,
+                                        dataSourceIndex: [item],
+                                        transformationResultType: 'default',
+                                        dataTarget: {
+                                            type: 'direct',
+                                            settings: {
+                                                fieldName: itemLabel
+                                            }
+                                        }
                                     };
 
                                     let mappingConfigurationItem = this.addItem(data, false);
@@ -68,7 +76,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 this.addItem(mappingItemData, true);
             }.bind(this));
 
-            // this.panel.updateLayout();
         }
 
         return this.panel;
