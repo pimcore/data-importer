@@ -1,11 +1,18 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
 
-
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
@@ -74,9 +81,9 @@ abstract class AbstractInterpreter implements InterpreterInterface
      */
     protected $identifierCache;
 
-
     /**
      * AbstractInterpreter constructor.
+     *
      * @param DeltaChecker $deltaChecker
      * @param QueueService $queueService
      * @param ApplicationLogger $applicationLogger
@@ -184,7 +191,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->doArchiveImportFile = $doArchiveImportFile;
     }
 
-
     /**
      * @param Resolver $resolver
      */
@@ -198,7 +204,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $success = false;
         $this->resetIdentifierCache();
 
-        if($this->fileValid($path)) {
+        if ($this->fileValid($path)) {
             $archiveLogMessage = 'Interpreted source file and created queue items.';
             $this->doInterpretFileAndCallProcessRow($path);
             $this->cleanupElements();
@@ -211,7 +217,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
             ]);
         }
 
-        if($this->doArchiveImportFile) {
+        if ($this->doArchiveImportFile) {
             $this->applicationLogger->info($archiveLogMessage, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 'fileObject' => new FileObject(file_get_contents($path))
@@ -223,20 +229,21 @@ abstract class AbstractInterpreter implements InterpreterInterface
         return $success;
     }
 
-    protected abstract function doInterpretFileAndCallProcessRow(string $path): void;
+    abstract protected function doInterpretFileAndCallProcessRow(string $path): void;
 
-    protected function processImportRow(array $data) {
+    protected function processImportRow(array $data)
+    {
         $createQueueItem = true;
 
         $this->addToIdentifierCache($data);
 
         //check delta
-        if($this->doDeltaCheck) {
+        if ($this->doDeltaCheck) {
             $createQueueItem = $this->deltaChecker->hasChanged($this->configName, $this->idDataIndex, $data);
         }
 
         //create queue item
-        if($createQueueItem) {
+        if ($createQueueItem) {
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to processing queue.', ($data[$this->idDataIndex] ?? null), $this->configName));
             $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_PROCESS, json_encode($data));
         } else {
@@ -248,16 +255,17 @@ abstract class AbstractInterpreter implements InterpreterInterface
         }
     }
 
-
-    protected function resetIdentifierCache(): void {
+    protected function resetIdentifierCache(): void
+    {
         $this->identifierCache = [];
     }
 
     /**
      * @param array $data
      */
-    protected function addToIdentifierCache(array $data): void {
-        if($this->doCleanup) {
+    protected function addToIdentifierCache(array $data): void
+    {
+        if ($this->doCleanup) {
             $this->identifierCache[] = $this->resolver->extractIdentifierFromData($data);
         }
     }
@@ -265,31 +273,26 @@ abstract class AbstractInterpreter implements InterpreterInterface
     /**
      * @throws \Doctrine\DBAL\DBALException
      */
-    protected function cleanupElements(): void {
-
-        if(!$this->doCleanup) {
+    protected function cleanupElements(): void
+    {
+        if (!$this->doCleanup) {
             return;
         }
 
         $existingElements = $this->resolver->loadFullIdentifierList();
         $elementsToCleanup = array_diff($existingElements, $this->identifierCache);
 
-        foreach($elementsToCleanup as $identifier) {
+        foreach ($elementsToCleanup as $identifier) {
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to cleanup queue.', $identifier, $this->configName));
             $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_CLEANUP, $identifier);
         }
-
     }
 
-
-    protected function updateExecutionPackageInformation() {
-
+    protected function updateExecutionPackageInformation()
+    {
         $totalItem = $this->queueService->getQueueItemCount($this->configName);
         $infoEntryId = ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName;
         TmpStore::delete($infoEntryId);
         TmpStore::add($infoEntryId, $totalItem);
-
     }
-
-
 }

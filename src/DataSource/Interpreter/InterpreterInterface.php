@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
@@ -10,16 +18,17 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
 
 interface InterpreterInterface extends SettingsAwareInterface
 {
-
     /**
      * @param string $path
      * @param bool $originalFilename
+     *
      * @return bool
      */
     public function fileValid(string $path, bool $originalFilename = false): bool;
 
     /**
      * @param string $path
+     *
      * @return bool
      */
     public function interpretFile(string $path): bool;
@@ -28,6 +37,7 @@ interface InterpreterInterface extends SettingsAwareInterface
      * @param string $path
      * @param int $recordNumber
      * @param array $mappedColumns
+     *
      * @return PreviewData
      */
     public function previewData(string $path, int $recordNumber = 0, array $mappedColumns = []): PreviewData;

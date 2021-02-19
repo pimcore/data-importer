@@ -1,7 +1,16 @@
 <?php
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Controller;
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
+namespace Pimcore\Bundle\DataHubBatchImportBundle\Controller;
 
 use Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse;
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory;
@@ -15,7 +24,6 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class PushImportController
 {
-
     protected function validateAuthorization(Request $request, PushLoader $loader)
     {
         if ($request->headers->has('authorization') === false) {
@@ -37,34 +45,34 @@ class PushImportController
      * @param Request $request
      * @param ConfigurationPreparationService $configurationLoaderService
      * @param ImportPreparationService $importPreparationService
+     *
      * @return JsonResponse
      */
-    public function pushAction(Request $request, ConfigurationPreparationService $configurationLoaderService, DataLoaderFactory $dataLoaderFactory, ImportPreparationService $importPreparationService) {
-
+    public function pushAction(Request $request, ConfigurationPreparationService $configurationLoaderService, DataLoaderFactory $dataLoaderFactory, ImportPreparationService $importPreparationService)
+    {
         try {
             $configName = $request->get('config');
             $config = $configurationLoaderService->prepareConfiguration($configName);
             $loader = $dataLoaderFactory->loadDataLoader($config['loaderConfig']);
 
-            if(!$loader instanceof PushLoader) {
+            if (!$loader instanceof PushLoader) {
                 return new JsonResponse(['success' => false, 'message' => 'Endpoint not has no Push data source configured.'], 405);
             }
 
             $this->validateAuthorization($request, $loader);
             $success = $importPreparationService->prepareImport($configName, false, $loader->isIgnoreNotEmptyQueue());
 
-            if($success) {
+            if ($success) {
                 return new JsonResponse(['success' => $success]);
             } else {
                 return new JsonResponse(['success' => false, 'message' => 'Import not prepared, see application log for details.'], 405);
             }
-
         } catch (\Exception $e) {
-            echo $e; die();
+            echo $e;
+            die();
             Logger::error($e);
+
             return new JsonResponse(['success' => false, 'error' => $e->getMessage()], 500);
         }
-
     }
-
 }

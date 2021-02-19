@@ -1,27 +1,35 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type;
-
 
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 class TransformationDataTypeService
 {
-    CONST DEFAULT_TYPE = 'default';
-    CONST DEFAULT_ARRAY = 'array';
-    CONST NUMERIC = 'numeric';
-    CONST BOOLEAN = 'boolean';
-    CONST QUANTITY_VALUE = 'quantityValue';
-    CONST INPUT_QUANTITY_VALUE = 'inputQuantityValue';
-    CONST DATE = 'date';
-    CONST ASSET = 'asset';
-    CONST ASSET_ARRAY = 'assetArray';
-    CONST GALLERY = 'gallery';
-    CONST IMAGE_ADVANCED = 'imageAdvanced';
-    CONST DATA_OBJECT = 'dataObject';
-    CONST DATA_OBJECT_ARRAY = 'dataObjectArray';
+    const DEFAULT_TYPE = 'default';
+    const DEFAULT_ARRAY = 'array';
+    const NUMERIC = 'numeric';
+    const BOOLEAN = 'boolean';
+    const QUANTITY_VALUE = 'quantityValue';
+    const INPUT_QUANTITY_VALUE = 'inputQuantityValue';
+    const DATE = 'date';
+    const ASSET = 'asset';
+    const ASSET_ARRAY = 'assetArray';
+    const GALLERY = 'gallery';
+    const IMAGE_ADVANCED = 'imageAdvanced';
+    const DATA_OBJECT = 'dataObject';
+    const DATA_OBJECT_ARRAY = 'dataObjectArray';
 
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -89,16 +97,16 @@ class TransformationDataTypeService
      * @param string $pimcoreDataType
      * @param string $transformationTargetType
      */
-    public function appendTypeMapping(string $pimcoreDataType, string $transformationTargetType): void {
+    public function appendTypeMapping(string $pimcoreDataType, string $transformationTargetType): void
+    {
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
     }
 
-
-    protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, string $keyPrefix = null) {
-
-        if(in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
+    protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, string $keyPrefix = null)
+    {
+        if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
             $key = $fieldDefinition->getName();
-            if($keyPrefix) {
+            if ($keyPrefix) {
                 $key = $keyPrefix . '.' . $key;
             }
             $attributes[$key] = [
@@ -108,24 +116,22 @@ class TransformationDataTypeService
             ];
         }
 
-        if($fieldDefinition instanceof ClassDefinition\Data\Localizedfields) {
-            foreach($fieldDefinition->getFieldDefinitions() as $localizedDefinition) {
+        if ($fieldDefinition instanceof ClassDefinition\Data\Localizedfields) {
+            foreach ($fieldDefinition->getFieldDefinitions() as $localizedDefinition) {
                 $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix);
             }
         }
 
-        if($fieldDefinition instanceof ClassDefinition\Data\Objectbricks) {
-            foreach($fieldDefinition->getAllowedTypes() as $brickType) {
+        if ($fieldDefinition instanceof ClassDefinition\Data\Objectbricks) {
+            foreach ($fieldDefinition->getAllowedTypes() as $brickType) {
                 $brick = Definition::getByKey($brickType);
 
-                foreach($brick->getFieldDefinitions() as $brickFieldDefinition) {
+                foreach ($brick->getFieldDefinitions() as $brickFieldDefinition) {
                     $keyPrefix = $fieldDefinition->getName() . '.' . $brickType;
                     $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix);
                 }
-
             }
         }
-
     }
 
     /**
@@ -133,28 +139,29 @@ class TransformationDataTypeService
      * @param string|array $transformationTargetType
      * @param bool $includeSystemRead
      * @param bool $includeSystemWrite
+     *
      * @return array
+     *
      * @throws \Exception
      */
-    public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite): array {
-
+    public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite): array
+    {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
 
-        if(!is_array($transformationTargetType)) {
+        if (!is_array($transformationTargetType)) {
             $transformationTargetType = [$transformationTargetType];
         }
 
-        foreach($transformationTargetType as $targetType) {
-            foreach($class->getFieldDefinitions() as $definition) {
-
+        foreach ($transformationTargetType as $targetType) {
+            foreach ($class->getFieldDefinitions() as $definition) {
                 $this->addTypesToAttributesArray($definition, $targetType, $attributes);
             }
         }
 
-        if(in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
-            if($includeSystemRead) {
+        if (in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
+            if ($includeSystemRead) {
                 $attributes['id'] = [
                     'key' => 'id',
                     'title' => 'SYSTEM ID',
@@ -171,7 +178,7 @@ class TransformationDataTypeService
                     'localized' => false
                 ];
             }
-            if($includeSystemWrite) {
+            if ($includeSystemWrite) {
                 $attributes['key'] = [
                     'key' => 'key',
                     'title' => 'SYSTEM Key',
@@ -185,15 +192,18 @@ class TransformationDataTypeService
 
     /**
      * @param string $classId
+     *
      * @return array
+     *
      * @throws \Exception
      */
-    public function getClassificationStoreAttributes(string $classId): array {
+    public function getClassificationStoreAttributes(string $classId): array
+    {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
-        foreach($class->getFieldDefinitions() as $definition) {
-            if($definition instanceof ClassDefinition\Data\Classificationstore) {
+        foreach ($class->getFieldDefinitions() as $definition) {
+            if ($definition instanceof ClassDefinition\Data\Classificationstore) {
                 $attributes[$definition->getName()] = [
                     'key' => $definition->getName(),
                     'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
@@ -207,11 +217,11 @@ class TransformationDataTypeService
 
     /**
      * @param string $transformationTargetType
+     *
      * @return array|string[]
      */
-    public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array {
+    public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array
+    {
         return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
     }
-
-
 }

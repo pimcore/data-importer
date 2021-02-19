@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Processing;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
@@ -10,7 +18,6 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron\CronExecutionService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\ResolverFactory;
@@ -32,7 +39,6 @@ class ImportProcessingService
     const EXECUTION_TYPE_PARALLEL = 'parallel';
 
     const INFO_ENTRY_ID_PREFIX = 'datahub_batchimport_';
-
 
     /**
      * @var QueueService
@@ -76,6 +82,7 @@ class ImportProcessingService
 
     /**
      * ImportProcessingService constructor.
+     *
      * @param QueueService $queueService
      * @param MappingConfigurationFactory $mappingConfigurationFactory
      * @param ResolverFactory $resolverFactory
@@ -93,12 +100,12 @@ class ImportProcessingService
         $this->configLoader = new ConfigurationPreparationService();
     }
 
-
-    public function processQueueItem(int $id) {
+    public function processQueueItem(int $id)
+    {
 
         //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
-        if(empty($queueItem)) {
+        if (empty($queueItem)) {
             return;
         }
 
@@ -107,21 +114,21 @@ class ImportProcessingService
         $config = $this->configLoader->prepareConfiguration($configName);
 
         //init resolver and mapping
-        if(empty($this->mappingConfigurationCache[$configName])) {
+        if (empty($this->mappingConfigurationCache[$configName])) {
             $this->mappingConfigurationCache[$configName] = $this->mappingConfigurationFactory->loadMappingConfiguration($configName, $config['mappingConfig']);
         }
         $mapping = $this->mappingConfigurationCache[$configName];
 
-        if(empty($this->resolverCache[$configName])) {
+        if (empty($this->resolverCache[$configName])) {
             $this->resolverCache[$configName] = $this->resolverFactory->loadResolver($config['resolverConfig']);
         }
         $resolver = $this->resolverCache[$configName];
 
         //process element
-        if($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
+        if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
             $data = json_decode($queueItem['data'], true);
             $this->processElement($configName, $data, $resolver, $mapping);
-        } elseif($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
+        } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
             $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['interpreterConfig']['cleanup'] ?? []);
         } else {
             throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
@@ -130,40 +137,38 @@ class ImportProcessingService
         $this->queueService->markQueueEntryAsProcessed($id);
     }
 
-
     /**
      * @param string $configName
      * @param array $importDataRow
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      */
-    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping) {
-
+    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping)
+    {
         $element = null;
         try {
             //resolve data object
             $element = $resolver->loadOrCreateAndPrepareElement($importDataRow);
 
-            foreach($mapping as $mappingConfiguration) {
+            foreach ($mapping as $mappingConfiguration) {
 
                 // extract raw data
                 $data = null;
-                if(is_array($mappingConfiguration->getDataSourceIndex())) {
+                if (is_array($mappingConfiguration->getDataSourceIndex())) {
                     $data = [];
-                    foreach($mappingConfiguration->getDataSourceIndex() as $index) {
+                    foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
                         $data[] = $importDataRow[$index] ?? null;
                     }
 
-                    if(count($data) === 1) {
+                    if (count($data) === 1) {
                         $data = $data[0];
                     }
-
                 } else {
                     $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
                 }
 
                 // process pipeline
-                foreach($mappingConfiguration->getTransformationPipeline() as $operator) {
+                foreach ($mappingConfiguration->getTransformationPipeline() as $operator) {
                     $data = $operator->process($data);
                 }
 
@@ -180,9 +185,8 @@ class ImportProcessingService
                 'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element
             ]);
-
         } catch (\Exception $e) {
-            $message = "Error processing element: ";
+            $message = 'Error processing element: ';
             $this->logger->error($message . $e);
 
             $this->applicationLogger->error($message . $e->getMessage(), [
@@ -190,20 +194,17 @@ class ImportProcessingService
                 'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element,
             ]);
-
         }
-
     }
 
-    protected function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig) {
-
-        if($cleanupConfig['doCleanup'] ?? false) {
-
+    protected function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
+    {
+        if ($cleanupConfig['doCleanup'] ?? false) {
             $element = null;
 
             try {
                 $element = $resolver->loadElementByIdentifier($identifier);
-                if($element) {
+                if ($element) {
                     $cleanupStrategy = $this->cleanupStrategyFactory->loadCleanupStrategy($cleanupConfig['strategy']);
                     $cleanupStrategy->doCleanup($element);
 
@@ -213,88 +214,83 @@ class ImportProcessingService
                         'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
                         'relatedObject' => $element
                     ]);
-
                 }
-
             } catch (\Exception $e) {
-                $message = "Error cleaning up element: ";
+                $message = 'Error cleaning up element: ';
                 $this->logger->error($message . $e);
                 $this->applicationLogger->error($message . $e->getMessage(), [
                     'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'relatedObject' => $element,
                 ]);
-
             }
-
         }
-
     }
-
 
     /**
      * @param MappingConfiguration $mappingConfiguration
+     *
      * @return string
      */
-    public function evaluateTransformationResultDataType(MappingConfiguration $mappingConfiguration): string {
+    public function evaluateTransformationResultDataType(MappingConfiguration $mappingConfiguration): string
+    {
 
         // extract raw data
         $transformationDataType = TransformationDataTypeService::DEFAULT_TYPE;
         $dataSourceIndex = $mappingConfiguration->getDataSourceIndex();
-        if(is_array($dataSourceIndex) && count($dataSourceIndex) > 1) {
+        if (is_array($dataSourceIndex) && count($dataSourceIndex) > 1) {
             $transformationDataType = TransformationDataTypeService::DEFAULT_ARRAY;
         }
 
         // process pipeline
-        foreach($mappingConfiguration->getTransformationPipeline() as $index => $operator) {
+        foreach ($mappingConfiguration->getTransformationPipeline() as $index => $operator) {
             $transformationDataType = $operator->evaluateReturnType($transformationDataType, $index + 1);
         }
 
         return $transformationDataType;
-
     }
 
     /**
      * @param array $importDataRow
      * @param MappingConfiguration $mappingConfiguration
+     *
      * @return string
      */
-    public function generateTransformationResultPreview(array $importDataRow, MappingConfiguration $mappingConfiguration): string {
+    public function generateTransformationResultPreview(array $importDataRow, MappingConfiguration $mappingConfiguration): string
+    {
 
         // extract raw data
         $data = null;
-        if(is_array($mappingConfiguration->getDataSourceIndex())) {
+        if (is_array($mappingConfiguration->getDataSourceIndex())) {
             $data = [];
-            foreach($mappingConfiguration->getDataSourceIndex() as $index) {
+            foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
                 $data[] = $importDataRow[$index] ?? null;
             }
 
-            if(count($data) === 1) {
+            if (count($data) === 1) {
                 $data = $data[0];
             }
-
         } else {
             $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
         }
 
         // process pipeline
         $operator = null;
-        foreach($mappingConfiguration->getTransformationPipeline() as $index => $operator) {
+        foreach ($mappingConfiguration->getTransformationPipeline() as $index => $operator) {
             $data = $operator->process($data, true);
         }
 
-        if($operator) {
+        if ($operator) {
             $data = $operator->generateResultPreview($data);
         }
 
-        if(empty($data)) {
+        if (empty($data)) {
             return '-- EMPTY --';
-        } else if(is_string($data)) {
+        } elseif (is_string($data)) {
             return $data;
-        } else if(is_array($data)) {
-
+        } elseif (is_array($data)) {
             $dataStrings = [];
-            foreach($data as $key => $dataEntry) {
-                if(is_string($dataEntry)) {
+            foreach ($data as $key => $dataEntry) {
+                if (is_string($dataEntry)) {
                     $dataStrings[] = $key . ' => ' . $dataEntry;
                 } else {
                     $dataStrings[] = $key . ' => ' . json_encode($dataEntry);
@@ -302,25 +298,24 @@ class ImportProcessingService
             }
 
             return '[ ' . implode(' | ', $dataStrings) . ' ]';
-
         } else {
             return json_encode($data);
         }
-
     }
 
     /**
      * @param string $configName
+     *
      * @return array
      */
-    public function getImportStatus(string $configName): array {
-
+    public function getImportStatus(string $configName): array
+    {
         $currentQueueItems = $this->queueService->getQueueItemCount($configName);
-        $infoEntry = TmpStore::get(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $configName);
-        if($infoEntry) {
+        $infoEntry = TmpStore::get(self::INFO_ENTRY_ID_PREFIX . $configName);
+        if ($infoEntry) {
             $totalItems = $infoEntry->getData();
             $processedItems = $totalItems - $currentQueueItems;
-            $progress = $totalItems > 0 ? round($processedItems/$totalItems, 2) : 1;
+            $progress = $totalItems > 0 ? round($processedItems / $totalItems, 2) : 1;
         } else {
             $totalItems = $currentQueueItems;
             $processedItems = 0;
@@ -333,19 +328,17 @@ class ImportProcessingService
             'processedItems' => $processedItems,
             'progress' => $progress
         ];
-
     }
 
     /**
      * @param string $configName
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function cancelImportAndCleanupQueue(string $configName): void {
-
-        $infoEntryId = ImportProcessingService::INFO_ENTRY_ID_PREFIX . $configName;
+    public function cancelImportAndCleanupQueue(string $configName): void
+    {
+        $infoEntryId = self::INFO_ENTRY_ID_PREFIX . $configName;
         TmpStore::delete($infoEntryId);
         $this->queueService->cleanupQueueItems($configName);
-
     }
-
 }

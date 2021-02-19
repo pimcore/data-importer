@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
+
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Queue;
 
 use Carbon\Carbon;
@@ -33,6 +43,7 @@ class QueueService
      * @param string $executionType
      * @param string $jobType
      * @param string $data
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
     public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data): void
@@ -79,7 +90,9 @@ class QueueService
     /**
      * @param string $executionType
      * @param int $limit
+     *
      * @return array
+     *
      * @throws \Doctrine\DBAL\Exception
      */
     public function getAllQueueEntryIds(string $executionType, $limit = 100000): array
@@ -89,6 +102,7 @@ class QueueService
                 sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
                 [$executionType]
             );
+
             return $results ?? [];
         } catch (TableNotFoundException $exception) {
             return $this->createQueueTableIfNotExisting(function () use ($executionType, $limit) {
@@ -99,7 +113,9 @@ class QueueService
 
     /**
      * @param int $id
+     *
      * @return array
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
     public function getQueueEntryById(int $id): array
@@ -120,6 +136,7 @@ class QueueService
 
     /**
      * @param string $configName
+     *
      * @return int
      */
     public function getQueueItemCount(string $configName): int
@@ -138,6 +155,7 @@ class QueueService
 
     /**
      * @param $id
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
     public function markQueueEntryAsProcessed($id)
@@ -154,9 +172,11 @@ class QueueService
 
     /**
      * @param string $configName
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function cleanupQueueItems(string $configName): void {
+    public function cleanupQueueItems(string $configName): void
+    {
         try {
             $this->db->executeQuery(
                 sprintf('DELETE FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),

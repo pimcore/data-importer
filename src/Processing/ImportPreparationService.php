@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Processing;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory;
@@ -56,6 +64,7 @@ class ImportPreparationService
 
     /**
      * ImportPreparationService constructor.
+     *
      * @param ResolverFactory $resolverFactory
      * @param InterpreterFactory $interpreterFactory
      * @param DataLoaderFactory $dataLoaderFactory
@@ -79,9 +88,11 @@ class ImportPreparationService
      * @param string $configName
      * @param bool $ignoreActiveFlag
      * @param bool $ignoreNotEmptyQueueFlag
+     *
      * @return bool
      */
-    public function prepareImport(string $configName, bool $ignoreActiveFlag = false, bool $ignoreNotEmptyQueueFlag = false): bool {
+    public function prepareImport(string $configName, bool $ignoreActiveFlag = false, bool $ignoreNotEmptyQueueFlag = false): bool
+    {
         try {
             $queueItemCount = $this->queueService->getQueueItemCount($configName);
             if ($queueItemCount > 0 && !$ignoreNotEmptyQueueFlag) {
@@ -90,97 +101,95 @@ class ImportPreparationService
 
             $config = $this->configLoader->prepareConfiguration($configName);
 
-            if(!$ignoreActiveFlag && !$this->isConfigurationActive($configName, $config)) {
+            if (!$ignoreActiveFlag && !$this->isConfigurationActive($configName, $config)) {
                 return false;
             }
 
             $loader = $this->dataLoaderFactory->loadDataLoader($config['loaderConfig']);
 
-            $logMessage = "Loading source data from configured source...";
+            $logMessage = 'Loading source data from configured source...';
             $this->applicationLogger->info($logMessage, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
             ]);
             $this->logger->info($logMessage);
             $filePath = $loader->loadData();
-            $this->logger->info("Loaded source data from configured source.");
+            $this->logger->info('Loaded source data from configured source.');
 
             $resolver = $this->resolverFactory->loadResolver($config['resolverConfig']);
             $interpreter = $this->interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig'], $resolver);
 
-            $logMessage = "Interpreting source file and preparing queue items...";
+            $logMessage = 'Interpreting source file and preparing queue items...';
             $this->logger->info($logMessage);
             $fileInterpreted = $interpreter->interpretFile($filePath);
-            $this->logger->info("Interpreted source file and prepared queue items.");
+            $this->logger->info('Interpreted source file and prepared queue items.');
 
-            $this->logger->info("Cleanup source file if necessary.");
+            $this->logger->info('Cleanup source file if necessary.');
             $loader->cleanup();
-            $this->logger->info("Cleaned up source file if necessary.");
+            $this->logger->info('Cleaned up source file if necessary.');
 
             return $fileInterpreted;
         } catch (QueueNotEmptyException $e) {
-            $message = "Error preparing Import: ". $e->getMessage();
+            $message = 'Error preparing Import: '. $e->getMessage();
             $this->logger->warning($message);
 
             $this->applicationLogger->warning($message, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
             ]);
-
         } catch (\Exception $e) {
-
-            $message = "Error preparing Import: ";
+            $message = 'Error preparing Import: ';
             $this->logger->warning($message . $e);
 
             $this->applicationLogger->error($message . $e->getMessage(), [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
             ]);
-
         }
 
         return false;
-
     }
 
-    public function executeCron(string $configName) {
-
+    public function executeCron(string $configName)
+    {
         $config = $this->configLoader->prepareConfiguration($configName);
 
-        if(!($config['executionConfig']['cronDefinition'] ?? '')) {
+        if (!($config['executionConfig']['cronDefinition'] ?? '')) {
             $message = "Configuration '$configName' has no cronDefinition, skipping cron execution.";
             $this->logger->debug($message);
             $this->applicationLogger->debug($message, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName
             ]);
+
             return;
         }
 
-        if(!$this->isConfigurationActive($configName, $config)) {
+        if (!$this->isConfigurationActive($configName, $config)) {
             return;
         }
 
-        if($this->cronExecutionService->getNextExecutionInPast($configName, $config['executionConfig']['cronDefinition'])) {
+        if ($this->cronExecutionService->getNextExecutionInPast($configName, $config['executionConfig']['cronDefinition'])) {
             $executionDateTime = new \DateTime();
             $this->prepareImport($configName);
             $this->cronExecutionService->updateExecutionTimestamp($configName, $executionDateTime);
         }
-
     }
 
     /**
      * @param string $configName
      * @param array $config
+     *
      * @return bool
      */
-    public function isConfigurationActive(string $configName, array $config): bool {
-        if(!($config['general']['active'] ?? false)) {
+    public function isConfigurationActive(string $configName, array $config): bool
+    {
+        if (!($config['general']['active'] ?? false)) {
             $message = "Configuration '$configName' is not active, skipping preparation execution.";
             $this->logger->info($message);
             $this->applicationLogger->info($message, [
                 'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName
             ]);
+
             return false;
         }
 
         return true;
     }
-
 }

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
+
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
@@ -11,10 +21,9 @@ use Pimcore\Model\DataObject\ClassDefinition;
 
 class LoadDataObject extends AbstractOperator
 {
-
-    CONST LOAD_STRATEGY_ID = 'id';
-    CONST LOAD_STRATEGY_PATH = 'path';
-    CONST LOAD_STRATEGY_ATTRIBUTE = 'attribute';
+    const LOAD_STRATEGY_ID = 'id';
+    const LOAD_STRATEGY_PATH = 'path';
+    const LOAD_STRATEGY_ATTRIBUTE = 'attribute';
 
     /**
      * @var string
@@ -36,7 +45,6 @@ class LoadDataObject extends AbstractOperator
      */
     protected $attributeDataObjectClassId;
 
-
     public function setSettings(array $settings): void
     {
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_ID;
@@ -45,103 +53,94 @@ class LoadDataObject extends AbstractOperator
         $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
     }
 
-
     public function process($inputData, bool $dryRun = false)
     {
-
         $returnScalar = false;
-        if(!is_array($inputData)) {
+        if (!is_array($inputData)) {
             $returnScalar = true;
             $inputData = [$inputData];
         }
 
         $objects = [];
 
-        foreach($inputData as $data) {
-
+        foreach ($inputData as $data) {
             $object = null;
-            if($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
+            if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
                 $object = DataObject::getByPath(trim($data));
-            } else if($this->loadStrategy === self::LOAD_STRATEGY_ID) {
+            } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ID) {
                 $object = DataObject::getById(trim($data));
-            } else if($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
-
-                if($this->attributeName) {
+            } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
+                if ($this->attributeName) {
                     $getter = 'getBy' . $this->attributeName;
                     $class = ClassDefinition::getById($this->attributeDataObjectClassId);
-                    if(empty($class)) {
+                    if (empty($class)) {
                         throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
                     }
                     $className = '\\Pimcore\\Model\\DataObject\\' . $class->getName();
 
-                    if($this->attributeLanguage) {
+                    if ($this->attributeLanguage) {
                         $object = $className::$getter($data, $this->attributeLanguage, 1);
                     } else {
                         $object = $className::$getter($data, 1);
                     }
                 }
-
             } else {
                 throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
             }
 
-            if($object instanceof DataObject) {
+            if ($object instanceof DataObject) {
                 $objects[] = $object;
-            } else if(!$dryRun) {
+            } elseif (!$dryRun) {
                 $this->applicationLogger->warning("Could not load data object from `$data` ", [
                     'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
             }
         }
 
-        if($returnScalar) {
+        if ($returnScalar) {
             return reset($objects);
         } else {
             return $objects;
         }
-
     }
 
     /**
      * @param string $inputType
      * @param int|null $index
+     *
      * @return string
+     *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string {
-
-        if($inputType === TransformationDataTypeService::DEFAULT_TYPE) {
+    public function evaluateReturnType(string $inputType, int $index = null): string
+    {
+        if ($inputType === TransformationDataTypeService::DEFAULT_TYPE) {
             return TransformationDataTypeService::DATA_OBJECT;
-        } else if($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
+        } elseif ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::DATA_OBJECT_ARRAY;
         } else {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for load data object operator at transformation position %s", $inputType, $index));
         }
-
     }
-
 
     public function generateResultPreview($inputData)
     {
         $returnScalar = false;
-        if(!is_array($inputData)) {
+        if (!is_array($inputData)) {
             $returnScalar = true;
             $inputData = [$inputData];
         }
 
-        foreach($inputData as &$data) {
-
-            if($data instanceof DataObject) {
+        foreach ($inputData as &$data) {
+            if ($data instanceof DataObject) {
                 $data = 'DataObject: ' . $data->getFullPath() . ' (ID: ' . $data->getId() . ')';
             }
-
         }
 
-        if($returnScalar) {
+        if ($returnScalar) {
             return reset($inputData);
         } else {
             return $inputData;
         }
     }
-
 }

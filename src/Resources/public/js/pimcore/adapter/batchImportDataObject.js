@@ -1,14 +1,11 @@
 /**
  * Pimcore
  *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
+ * This source file is available under following license:
  * - Pimcore Enterprise License (PEL)
- * Full copyright and license information is available in
- * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PEL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
  */
 
 pimcore.registerNS("pimcore.plugin.datahub.adapter.batchImportDataObject");

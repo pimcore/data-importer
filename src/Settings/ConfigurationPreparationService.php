@@ -1,18 +1,25 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Settings;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 
 class ConfigurationPreparationService
 {
-
-    public function prepareConfiguration(string $configName, $currentConfig = null) {
-
-        if($currentConfig) {
-            if(is_string($currentConfig)) {
+    public function prepareConfiguration(string $configName, $currentConfig = null)
+    {
+        if ($currentConfig) {
+            if (is_string($currentConfig)) {
                 $currentConfig = json_decode($currentConfig, true);
             }
             $config = $currentConfig;
@@ -41,7 +48,5 @@ class ConfigurationPreparationService
         ], $config);
 
         return $config;
-
     }
-
 }

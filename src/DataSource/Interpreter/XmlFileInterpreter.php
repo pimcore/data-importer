@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidInputException;
@@ -32,11 +40,11 @@ class XmlFileInterpreter extends AbstractInterpreter
      */
     protected $cachedFilePath = null;
 
-    protected function loadData(string $path) {
-
-        if($this->cachedFilePath === $path && !empty($this->cachedContent)) {
+    protected function loadData(string $path)
+    {
+        if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
             $schema = $this->schema;
-            $dom = XmlUtils::loadFile($path, function($dom) use ($schema) {
+            $dom = XmlUtils::loadFile($path, function ($dom) use ($schema) {
                 return @$dom->schemaValidateSource($schema);
             });
         } else {
@@ -46,22 +54,20 @@ class XmlFileInterpreter extends AbstractInterpreter
         $xpath = new \DOMXpath($dom);
 
         $result = $xpath->evaluate($this->xpath);
-        if($result instanceof \DOMNodeList) {
+        if ($result instanceof \DOMNodeList) {
             return $result;
         } else {
             throw new InvalidInputException(sprintf('Item path `%s` not found.', $this->xpath));
         }
     }
 
-
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
         $records = $this->loadData($path);
 
-        foreach($records as $item) {
+        foreach ($records as $item) {
             $this->processImportRow(XmlUtils::convertDomElementToArray($item));
         }
-
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -69,20 +75,19 @@ class XmlFileInterpreter extends AbstractInterpreter
         $this->cachedContent = null;
         $this->cachedFilePath = null;
 
-        if($originalFilename) {
+        if ($originalFilename) {
             $filename = $path;
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
-            if($ext !== 'xml') {
+            if ($ext !== 'xml') {
                 return false;
             }
         }
 
         try {
             $schema = $this->schema;
-            $dom = XmlUtils::loadFile($path, function($dom) use ($schema) {
+            $dom = XmlUtils::loadFile($path, function ($dom) use ($schema) {
                 return @$dom->schemaValidateSource($schema);
             });
-
         } catch (XmlParsingException $exception) {
             $message = 'Error validating XML: ' . $exception->getMessage();
             $this->applicationLogger->info($message, [
@@ -104,34 +109,31 @@ class XmlFileInterpreter extends AbstractInterpreter
         $columns = [];
         $readRecordNumber = 0;
 
-        if($this->fileValid($path)) {
-
+        if ($this->fileValid($path)) {
             $records = $this->loadData($path);
             $previewDataItem = $records->item($recordNumber);
 
-            if(empty($previewDataItem)) {
+            if (empty($previewDataItem)) {
                 $readRecordNumber = $records->count() - 1;
                 $previewDataItem = $records->item($readRecordNumber);
             } else {
                 $readRecordNumber = $recordNumber;
             }
 
-            if(!empty($previewDataItem) && $previewDataItem instanceof \DOMElement) {
+            if (!empty($previewDataItem) && $previewDataItem instanceof \DOMElement) {
                 $previewData = XmlUtils::convertDomElementToArray($previewDataItem);
 
                 $keys = array_keys($previewData);
                 $columns = array_combine($keys, $keys);
             }
-
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
-
     }
 
     public function setSettings(array $settings): void
     {
-        if(empty($settings['xpath'])) {
+        if (empty($settings['xpath'])) {
             throw new InvalidConfigurationException('Empty XPath.');
         }
         $this->xpath = $settings['xpath'];

@@ -1,11 +1,18 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
 
-
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -14,12 +21,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CronExecutionCommand extends AbstractCommand
 {
-
     /**
      * @var ImportPreparationService
      */
     protected $importPreparationService;
-
 
     public function __construct(ImportPreparationService $importPreparationService)
     {
@@ -38,11 +43,9 @@ class CronExecutionCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $configNames = $input->getArgument('config_name');
 
         if (empty($configNames)) {
-
             $configNames = [];
             $allDataHubConfiguations = Dao::getList();
             foreach ($allDataHubConfiguations as $dataHubConfig) {
@@ -57,9 +60,6 @@ class CronExecutionCommand extends AbstractCommand
             $this->importPreparationService->executeCron($configName);
         }
 
-
         return 0;
     }
-
-
 }

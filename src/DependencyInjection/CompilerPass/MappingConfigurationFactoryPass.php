@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
 
@@ -8,12 +17,10 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-
 class MappingConfigurationFactoryPass implements CompilerPassInterface
 {
-    CONST operator_tag = 'pimcore.datahub.batch_import.operator';
-    CONST data_target_tag = 'pimcore.datahub.batch_import.data_target';
-
+    const operator_tag = 'pimcore.datahub.batch_import.operator';
+    const data_target_tag = 'pimcore.datahub.batch_import.data_target';
 
     /**
      * @param ContainerBuilder $container

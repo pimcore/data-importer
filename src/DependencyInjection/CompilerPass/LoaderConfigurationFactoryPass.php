@@ -1,18 +1,25 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-
 class LoaderConfigurationFactoryPass implements CompilerPassInterface
 {
-    CONST loader_tag = 'pimcore.datahub.batch_import.loader';
+    const loader_tag = 'pimcore.datahub.batch_import.loader';
 
     /**
      * @param ContainerBuilder $container

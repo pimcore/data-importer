@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver;
 
@@ -11,7 +20,6 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish\PublishStrategyInte
 
 class ResolverFactory
 {
-
     /**
      * @var Resolver
      */
@@ -39,6 +47,7 @@ class ResolverFactory
 
     /**
      * ResolverFactory constructor.
+     *
      * @param Resolver $resolverBlueprint
      * @param LoadStrategyInterface[] $loadingStrategyBlueprints
      * @param LocationStrategyInterface[] $locationStrategyBlueprints
@@ -54,17 +63,18 @@ class ResolverFactory
         $this->factoryBlueprints = $factoryBlueprints;
     }
 
-
     /**
      * @param array $config
      * @param $classId
+     *
      * @return LoadStrategyInterface
+     *
      * @throws InvalidConfigurationException
      */
-    protected function buildLoadingStrategy(array $config, $classId): LoadStrategyInterface {
-
-        if(empty($config['type']) || !array_key_exists($config['type'], $this->loadingStrategyBlueprints)) {
-            throw new InvalidConfigurationException("Unknown loading strategy type `" . ($config['type'] ?? '') . "`");
+    protected function buildLoadingStrategy(array $config, $classId): LoadStrategyInterface
+    {
+        if (empty($config['type']) || !array_key_exists($config['type'], $this->loadingStrategyBlueprints)) {
+            throw new InvalidConfigurationException('Unknown loading strategy type `' . ($config['type'] ?? '') . '`');
         }
 
         $loadingStrategy = clone $this->loadingStrategyBlueprints[$config['type']];
@@ -74,10 +84,10 @@ class ResolverFactory
         return $loadingStrategy;
     }
 
-    protected function buildLocationStrategy(array $config): LocationStrategyInterface {
-
-        if(empty($config['type']) || !array_key_exists($config['type'], $this->locationStrategyBlueprints)) {
-            throw new InvalidConfigurationException("Unknown location strategy type `" . ($config['type'] ?? '') . "`");
+    protected function buildLocationStrategy(array $config): LocationStrategyInterface
+    {
+        if (empty($config['type']) || !array_key_exists($config['type'], $this->locationStrategyBlueprints)) {
+            throw new InvalidConfigurationException('Unknown location strategy type `' . ($config['type'] ?? '') . '`');
         }
 
         $locationStrategy = clone $this->locationStrategyBlueprints[$config['type']];
@@ -86,10 +96,10 @@ class ResolverFactory
         return $locationStrategy;
     }
 
-    protected function buildPublishingStrategy(array $config): PublishStrategyInterface {
-
-        if(empty($config['type']) || !array_key_exists($config['type'], $this->publishingStrategyBlueprints)) {
-            throw new InvalidConfigurationException("Unknown publishing strategy type `" . ($config['type'] ?? '') . "`");
+    protected function buildPublishingStrategy(array $config): PublishStrategyInterface
+    {
+        if (empty($config['type']) || !array_key_exists($config['type'], $this->publishingStrategyBlueprints)) {
+            throw new InvalidConfigurationException('Unknown publishing strategy type `' . ($config['type'] ?? '') . '`');
         }
 
         $publishStrategy = clone $this->publishingStrategyBlueprints[$config['type']];
@@ -98,10 +108,10 @@ class ResolverFactory
         return $publishStrategy;
     }
 
-    protected function buildElementFactory(string $type, string $subType = null): FactoryInterface {
-
-        if(empty($type) || !array_key_exists($type, $this->factoryBlueprints)) {
-            throw new InvalidConfigurationException("Unknown publishing strategy type `" . ($type) . "`");
+    protected function buildElementFactory(string $type, string $subType = null): FactoryInterface
+    {
+        if (empty($type) || !array_key_exists($type, $this->factoryBlueprints)) {
+            throw new InvalidConfigurationException('Unknown publishing strategy type `' . ($type) . '`');
         }
 
         $factory = clone $this->factoryBlueprints[$type];
@@ -110,18 +120,17 @@ class ResolverFactory
         return $factory;
     }
 
-    public function loadResolver(array $configuration): Resolver {
-
+    public function loadResolver(array $configuration): Resolver
+    {
         $resolver = clone $this->resolverBlueprint;
 
         $resolver->setDataObjectClassId($configuration['dataObjectClassId'] ?? null);
         $resolver->setLoadingStrategy($this->buildLoadingStrategy($configuration['loadingStrategy'] ?? [], $resolver->getDataObjectClassId()));
-        $resolver->setCreateLocationStrategy($this->buildLocationStrategy($configuration['createLocationStrategy']?? []));
-        $resolver->setLocationUpdateStrategy($this->buildLocationStrategy($configuration['locationUpdateStrategy']?? []));
+        $resolver->setCreateLocationStrategy($this->buildLocationStrategy($configuration['createLocationStrategy'] ?? []));
+        $resolver->setLocationUpdateStrategy($this->buildLocationStrategy($configuration['locationUpdateStrategy'] ?? []));
         $resolver->setPublishingStrategy($this->buildPublishingStrategy($configuration['publishingStrategy']));
         $resolver->setElementFactory($this->buildElementFactory($configuration['elementType' ?? ''], $resolver->getDataObjectClassId()));
 
         return $resolver;
     }
-
 }

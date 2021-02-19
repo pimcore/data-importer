@@ -1,11 +1,19 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Settings;
 
 class PreviewData
 {
-
     /**
      * @var array
      */
@@ -28,6 +36,7 @@ class PreviewData
 
     /**
      * PreviewData constructor.
+     *
      * @param array $labels
      * @param array $previewData
      * @param int $recordNumber
@@ -41,32 +50,31 @@ class PreviewData
         $this->mappedColumns = array_flip($mappedColumns);
     }
 
-
     /**
      * @return array
      */
-    public function getDataColumnHeaders(): array {
-
+    public function getDataColumnHeaders(): array
+    {
         $columnHeaders = [];
-        foreach($this->labels as $index => $label) {
+        foreach ($this->labels as $index => $label) {
             $columnHeaders[] = [
                 'id' => (string) $index,
                 'dataIndex' => (string) $index,
                 'label' => $label
             ];
         }
-        return $columnHeaders;
 
+        return $columnHeaders;
     }
 
     /**
      * @return array
      */
-    public function getDataPreview(): array {
-
+    public function getDataPreview(): array
+    {
         $dataPreview = [];
 
-        foreach($this->previewData as $index => $attribute) {
+        foreach ($this->previewData as $index => $attribute) {
             $dataPreview[] = [
                 'dataIndex' => (string) $index,
                 'label' => $this->labels[$index] ?? $index,
@@ -89,7 +97,8 @@ class PreviewData
     /**
      * @return array
      */
-    public function getRawData(): array {
+    public function getRawData(): array
+    {
         return $this->previewData;
     }
 }

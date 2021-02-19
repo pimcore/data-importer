@@ -1,18 +1,26 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
+
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Log\FileObject;
 use Pimcore\Model\Asset;
 use Pimcore\Model\Element\Service;
 
 class ImportAsset extends AbstractOperator
 {
-
     /**
      * @var string
      */
@@ -29,32 +37,28 @@ class ImportAsset extends AbstractOperator
         $this->useExisting = $settings['useExisting'] ?? false;
     }
 
-
     public function process($inputData, bool $dryRun = false)
     {
-
         $returnScalar = false;
-        if(!is_array($inputData)) {
+        if (!is_array($inputData)) {
             $returnScalar = true;
             $inputData = [$inputData];
         }
 
         $assets = [];
 
-        foreach($inputData as $data) {
-
+        foreach ($inputData as $data) {
             $fileUrl = trim($data);
             $filename = Service::getValidKey(basename($fileUrl), 'asset');
 
             $asset = null;
-            if($this->useExisting) {
+            if ($this->useExisting) {
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }
-            if(empty($asset)) {
+            if (empty($asset)) {
                 $assetData = @file_get_contents($fileUrl);
 
-                if($assetData) {
-
+                if ($assetData) {
                     $asset = new Asset();
                     $asset->setParent(Asset\Service::createFolderByPath($this->parentFolderPath));
                     $filename = $this->getSafeFilename($this->parentFolderPath, $filename);
@@ -73,17 +77,16 @@ class ImportAsset extends AbstractOperator
                 }
             }
 
-            if(!empty($asset)) {
+            if (!empty($asset)) {
                 $assets[] = $asset;
             }
         }
 
-        if($returnScalar) {
+        if ($returnScalar) {
             return reset($assets);
         } else {
             return $assets;
         }
-
     }
 
     protected function getSafeFilename($targetPath, $filename)
@@ -110,39 +113,37 @@ class ImportAsset extends AbstractOperator
     /**
      * @param string $inputType
      * @param int|null $index
+     *
      * @return string
+     *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string {
-
-        if($inputType === TransformationDataTypeService::DEFAULT_TYPE) {
+    public function evaluateReturnType(string $inputType, int $index = null): string
+    {
+        if ($inputType === TransformationDataTypeService::DEFAULT_TYPE) {
             return TransformationDataTypeService::ASSET;
-        } else if($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
+        } elseif ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::ASSET_ARRAY;
         } else {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for import/load asset operator at transformation position %s", $inputType, $index));
         }
-
     }
-
 
     public function generateResultPreview($inputData)
     {
         $returnScalar = false;
-        if(!is_array($inputData)) {
+        if (!is_array($inputData)) {
             $returnScalar = true;
             $inputData = [$inputData];
         }
 
-        foreach($inputData as &$data) {
-
-            if($data instanceof Asset) {
+        foreach ($inputData as &$data) {
+            if ($data instanceof Asset) {
                 $data = 'Asset: ' . $data->getFullPath();
             }
-
         }
 
-        if($returnScalar) {
+        if ($returnScalar) {
             return reset($inputData);
         } else {
             return $inputData;

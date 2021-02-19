@@ -1,14 +1,21 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator;
-
 
 use Pimcore\Log\ApplicationLogger;
 
 abstract class AbstractOperator implements OperatorInterface
 {
-
     /**
      * @var string
      */
@@ -21,6 +28,7 @@ abstract class AbstractOperator implements OperatorInterface
 
     /**
      * AbstractOperator constructor.
+     *
      * @param ApplicationLogger $applicationLogger
      */
     public function __construct(ApplicationLogger $applicationLogger)
@@ -32,8 +40,6 @@ abstract class AbstractOperator implements OperatorInterface
     {
         $this->configName = $configName;
     }
-
-
 
     public function generateResultPreview($inputData)
     {

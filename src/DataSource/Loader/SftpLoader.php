@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader;
-
 
 use League\Flysystem\Filesystem;
 use League\Flysystem\Sftp\SftpAdapter;
@@ -11,7 +19,6 @@ use Pimcore\File;
 
 class SftpLoader implements DataLoaderInterface
 {
-
     /**
      * @var string
      */
@@ -41,7 +48,6 @@ class SftpLoader implements DataLoaderInterface
      * @var string
      */
     protected $password;
-
 
     public function loadData(): string
     {
@@ -93,27 +99,27 @@ class SftpLoader implements DataLoaderInterface
 
     public function setSettings(array $settings): void
     {
-        if(empty($settings['host'])) {
+        if (empty($settings['host'])) {
             throw new InvalidConfigurationException('Empty Host.');
         }
         $this->host = $settings['host'];
 
-        if(empty($settings['port'])) {
+        if (empty($settings['port'])) {
             throw new InvalidConfigurationException('Empty Port.');
         }
         $this->port = $settings['port'];
 
-        if(empty($settings['username'])) {
+        if (empty($settings['username'])) {
             throw new InvalidConfigurationException('Empty Username.');
         }
         $this->username = $settings['username'];
 
-        if(empty($settings['password'])) {
+        if (empty($settings['password'])) {
             throw new InvalidConfigurationException('Empty Password.');
         }
         $this->password = $settings['password'];
 
-        if(empty($settings['remotePath'])) {
+        if (empty($settings['remotePath'])) {
             throw new InvalidConfigurationException('Empty Remote Path.');
         }
         $this->remotePath = $settings['remotePath'];

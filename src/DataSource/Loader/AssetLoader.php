@@ -1,16 +1,22 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader;
 
-
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
 use Pimcore\Model\Asset;
 
 class AssetLoader implements DataLoaderInterface
 {
-
     /**
      * @var string
      */
@@ -19,7 +25,7 @@ class AssetLoader implements DataLoaderInterface
     public function loadData(): string
     {
         $asset = Asset::getByPath($this->assetPath);
-        if(empty($asset)) {
+        if (empty($asset)) {
             throw new InvalidConfigurationException("Asset {$this->assetPath} not found.");
         }
 
@@ -28,7 +34,7 @@ class AssetLoader implements DataLoaderInterface
 
     public function setSettings(array $settings): void
     {
-        if(empty($settings['assetPath'])) {
+        if (empty($settings['assetPath'])) {
             throw new InvalidConfigurationException('Empty asset path.');
         }
 

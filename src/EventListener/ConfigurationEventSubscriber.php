@@ -1,7 +1,16 @@
 <?php
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\EventListener;
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
+namespace Pimcore\Bundle\DataHubBatchImportBundle\EventListener;
 
 use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron\CronExecutionService;
@@ -13,7 +22,6 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 
 class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
 {
-
     /**
      * @var DeltaChecker
      */
@@ -31,6 +39,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
 
     /**
      * ConfigurationEventSubscriber constructor.
+     *
      * @param DeltaChecker $deltaChecker
      * @param QueueService $queueService
      * @param CronExecutionService $cronExecutionService
@@ -42,7 +51,6 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
         $this->cronExecutionService = $cronExecutionService;
     }
 
-
     public static function getSubscribedEvents()
     {
         return [
@@ -52,15 +60,17 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
 
     /**
      * @param GenericEvent $event
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function postDelete(GenericEvent $event) {
+    public function postDelete(GenericEvent $event)
+    {
         /**
          * @var $config Configuration
          */
         $config = $event->getSubject();
 
-        if($config->getType() === 'batchImportDataObject') {
+        if ($config->getType() === 'batchImportDataObject') {
             //cleanup delta cache
             $this->deltaChecker->cleanup($config->getName());
 

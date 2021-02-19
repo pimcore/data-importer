@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Factory\FactoryInterface;
 use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load\LoadStrategyInterface;
@@ -12,7 +20,6 @@ use Pimcore\Model\Element\ElementInterface;
 
 class Resolver
 {
-
     /**
      * @var mixed
      */
@@ -141,30 +148,35 @@ class Resolver
 
     /**
      * @param array $inputData
+     *
      * @return ElementInterface|null
      */
-    public function loadElement(array $inputData): ?ElementInterface {
+    public function loadElement(array $inputData): ?ElementInterface
+    {
         return $this->getLoadingStrategy()->loadElement($inputData);
     }
 
     /**
      * @param $identifier
+     *
      * @return ElementInterface|null
      */
-    public function loadElementByIdentifier($identifier): ?ElementInterface {
+    public function loadElementByIdentifier($identifier): ?ElementInterface
+    {
         return $this->getLoadingStrategy()->loadElementByIdentifier($identifier);
     }
 
     /**
      * @param array $inputData
+     *
      * @return ElementInterface
      */
-    public function loadOrCreateAndPrepareElement(array $inputData): ElementInterface {
-
+    public function loadOrCreateAndPrepareElement(array $inputData): ElementInterface
+    {
         $element = $this->loadElement($inputData);
 
         $justCreated = false;
-        if(empty($element)) {
+        if (empty($element)) {
             $element = $this->getElementFactory()->createNewElement();
             $this->getCreateLocationStrategy()->updateParent($element, $inputData);
             $justCreated = true;
@@ -179,18 +191,19 @@ class Resolver
 
     /**
      * @param array $inputData
+     *
      * @return mixed
      */
-    public function extractIdentifierFromData(array $inputData) {
+    public function extractIdentifierFromData(array $inputData)
+    {
         return $this->getLoadingStrategy()->extractIdentifierFromData($inputData);
     }
 
     /**
      * @return array
      */
-    public function loadFullIdentifierList(): array {
+    public function loadFullIdentifierList(): array
+    {
         return $this->getLoadingStrategy()->loadFullIdentifierList();
     }
-
-
 }

@@ -1,17 +1,22 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load;
 
-
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\ElementNotFoundException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
 class AttributeStrategy extends AbstractLoad
 {
-
     /**
      * @var string
      */
@@ -24,13 +29,14 @@ class AttributeStrategy extends AbstractLoad
 
     /**
      * @param array $settings
+     *
      * @throws InvalidConfigurationException
      */
     public function setSettings(array $settings): void
     {
         parent::setSettings($settings);
 
-        if(empty($settings['attributeName'])) {
+        if (empty($settings['attributeName'])) {
             throw new InvalidConfigurationException('Empty attribute name.');
         }
 
@@ -40,7 +46,9 @@ class AttributeStrategy extends AbstractLoad
 
     /**
      * @param $identifier
+     *
      * @return ElementInterface|null
+     *
      * @throws InvalidConfigurationException
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
@@ -49,13 +57,13 @@ class AttributeStrategy extends AbstractLoad
         $getter = 'getBy' . $this->attributeName;
 
         $element = null;
-        if($this->attributeLanguage) {
+        if ($this->attributeLanguage) {
             $element = $className::$getter($identifier, $this->attributeLanguage, 1);
         } else {
             $element = $className::$getter($identifier, 1);
         }
 
-        if($element instanceof ElementInterface) {
+        if ($element instanceof ElementInterface) {
             return $element;
         }
 
@@ -67,13 +75,13 @@ class AttributeStrategy extends AbstractLoad
      */
     public function loadFullIdentifierList(): array
     {
-
         $tableName = 'object_' . $this->dataObjectClassId;
-        if($this->attributeLanguage) {
+        if ($this->attributeLanguage) {
             $tableName = 'object_localized_' . $this->dataObjectClassId . '_' . $this->attributeLanguage;
         }
 
         $sql = sprintf('SELECT `%s` FROM %s', $this->attributeName, $tableName);
+
         return $this->db->fetchCol($sql);
     }
 }

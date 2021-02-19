@@ -1,14 +1,22 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker;
 
-use Pimcore\Db;
 use Doctrine\DBAL\Exception\TableNotFoundException;
+use Pimcore\Db;
 
 class DeltaChecker
 {
-
     /**
      * @var Db\Connection|Db\ConnectionInterface
      */
@@ -35,53 +43,55 @@ class DeltaChecker
         }
     }
 
-
-    protected function getCurrentHash(string $configName, string $id): string {
+    protected function getCurrentHash(string $configName, string $id): string
+    {
         try {
             return $this->db->fetchOne(
                     sprintf('SELECT hash FROM %s WHERE configName = ? AND id = ?', self::CACHE_TABLE_NAME),
                     [$configName, $id]
                 ) ?? '';
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function() use ($configName, $id) {
+            return $this->createTableIfNotExisting(function () use ($configName, $id) {
                 $this->getCurrentHash($configName, $id);
             });
         }
     }
 
-    protected function updateHash(string $configName, string $id, string $hash) {
-
+    protected function updateHash(string $configName, string $id, string $hash)
+    {
         try {
             $this->db->executeQuery(
                 sprintf('INSERT INTO %s (configName, id, hash) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hash = ?', self::CACHE_TABLE_NAME),
                 [$configName, $id, $hash, $hash]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function() use ($configName, $id, $hash) {
+            return $this->createTableIfNotExisting(function () use ($configName, $id, $hash) {
                 $this->updateHash($configName, $id, $hash);
             });
         }
     }
 
-    public function hasChanged(string $configName, $idDataIndex, array $data): bool {
-
+    public function hasChanged(string $configName, $idDataIndex, array $data): bool
+    {
         $id = $data[$idDataIndex] ?? null;
-        if($id === null) {
+        if ($id === null) {
             return false;
         }
 
         $oldHash = $this->getCurrentHash($configName, $id);
 
         $newHash = md5(json_encode($data));
-        if($oldHash !== $newHash) {
+        if ($oldHash !== $newHash) {
             $this->updateHash($configName, $id, $newHash);
+
             return true;
         } else {
             return false;
         }
     }
 
-    public function cleanup(string $configName) {
+    public function cleanup(string $configName)
+    {
         try {
             $this->db->executeQuery(
                 sprintf('DELETE FROM %s WHERE configName = ?', self::CACHE_TABLE_NAME),
@@ -91,5 +101,4 @@ class DeltaChecker
             return $this->createTableIfNotExisting();
         }
     }
-
 }

@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
 
@@ -8,14 +17,12 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-
 class ResolverConfigurationFactoryPass implements CompilerPassInterface
 {
-    CONST load_tag = 'pimcore.datahub.batch_import.resolver.load';
-    CONST location_tag = 'pimcore.datahub.batch_import.resolver.location';
-    CONST publish_tag = 'pimcore.datahub.batch_import.resolver.publish';
-    CONST factory_tag = 'pimcore.datahub.batch_import.resolver.factory';
-
+    const load_tag = 'pimcore.datahub.batch_import.resolver.load';
+    const location_tag = 'pimcore.datahub.batch_import.resolver.location';
+    const publish_tag = 'pimcore.datahub.batch_import.resolver.publish';
+    const factory_tag = 'pimcore.datahub.batch_import.resolver.factory';
 
     /**
      * @param ContainerBuilder $container

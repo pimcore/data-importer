@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidInputException;
@@ -10,7 +18,6 @@ use Pimcore\Model\Element\ElementInterface;
 
 class ClassificationstoreBatch implements DataTargetInterface
 {
-
     /**
      * @var string
      */
@@ -23,7 +30,7 @@ class ClassificationstoreBatch implements DataTargetInterface
 
     public function setSettings(array $settings): void
     {
-        if(empty($settings['fieldName'])) {
+        if (empty($settings['fieldName'])) {
             throw new InvalidConfigurationException('Empty field name.');
         }
 
@@ -31,38 +38,30 @@ class ClassificationstoreBatch implements DataTargetInterface
         $this->language = $settings['language'] ?? null;
     }
 
-
     public function assignData(ElementInterface $element, $data)
     {
         $getter = 'get' . ucfirst($this->fieldName);
         $classificationStore = $element->$getter();
 
-        if($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
-
-            if(!is_array($data)) {
+        if ($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
+            if (!is_array($data)) {
                 throw new InvalidInputException('Input data not an array');
             }
 
             $data = array_filter($data);
-            if(!empty($data)) {
-                foreach($data as $key => $value) {
-
+            if (!empty($data)) {
+                foreach ($data as $key => $value) {
                     $keyParts = explode('-', $key);
-                    if(count($keyParts) !== 2) {
+                    if (count($keyParts) !== 2) {
                         throw new InvalidInputException('Key not format <GROUP_ID>-<KEY_ID>: ' . $key);
                     }
 
                     $classificationStore->setLocalizedKeyValue($keyParts[0], $keyParts[1], $value, $this->language);
                     $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$keyParts[0] => true]);
-
                 }
             }
-
         } else {
             throw new InvalidConfigurationException('Field ' . $this->fieldName . ' is not a classification store.');
         }
-
     }
-
 }
-

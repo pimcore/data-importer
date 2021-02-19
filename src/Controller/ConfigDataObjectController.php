@@ -24,7 +24,6 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataHubSimpleRestBundle\Service\IndexService;
-use Pimcore\Db;
 use Pimcore\File;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
@@ -79,22 +78,23 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         }
     }
 
-
     protected function loadAvailableColumnHeaders(
         string $configName,
         array $config,
         InterpreterFactory $interpreterFactory
     ) {
         $previewFilePath = $this->getPreviewFilePath($configName);
-        if(is_file($previewFilePath)) {
+        if (is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
                 $dataPreview = $interpreter->previewData($previewFilePath);
+
                 return $dataPreview->getDataColumnHeaders();
             } catch (\Exception $e) {
                 Logger::warning($e);
             }
         }
+
         return [];
     }
 
@@ -104,6 +104,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
+     *
      * @return JsonResponse
      *
      * @throws \Exception
@@ -111,8 +112,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
     public function getAction(Request $request,
         ConfigurationPreparationService $configurationPreparationService,
         InterpreterFactory $interpreterFactory
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $this->checkPermission(self::CONFIG_NAME);
 
         $name = $request->get('name');
@@ -130,10 +130,13 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
     /**
      * @param string $configName
+     *
      * @return string
+     *
      * @throws \Exception
      */
-    protected function getPreviewFilePath(string $configName): string {
+    protected function getPreviewFilePath(string $configName): string
+    {
         $user = $this->getAdminUser();
 
         $configuration = Dao::getByName($configName);
@@ -142,6 +145,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         }
 
         $filePath = PIMCORE_PRIVATE_VAR . '/tmp/datahub/batchimport/' . $configuration->getName() . '/' . $user->getId() . '.import';
+
         return $filePath;
     }
 
@@ -149,11 +153,13 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @Route("/upload-preview", methods={"POST"})
      *
      * @param Request $request
+     *
      * @return JsonResponse
+     *
      * @throws \Exception
      */
-    public function uploadPreviewDataAction(Request $request) {
-
+    public function uploadPreviewDataAction(Request $request)
+    {
         try {
             if (array_key_exists('Filedata', $_FILES)) {
                 $filename = $_FILES['Filedata']['name'];
@@ -168,7 +174,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                 throw new \Exception('Something went wrong, please check upload_max_filesize and post_max_size in your php.ini and write permissions of ' . PIMCORE_PUBLIC_VAR);
             }
 
-            if(filesize($sourcePath) > 10485760) { //10 MB
+            if (filesize($sourcePath) > 10485760) { //10 MB
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
@@ -180,12 +186,12 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
             Logger::error($e);
+
             return $this->adminJson([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
         }
-
     }
 
     /**
@@ -195,7 +201,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
      * @param Translator $translator
+     *
      * @return JsonResponse
+     *
      * @throws \Exception
      */
     public function loadDataPreviewAction(
@@ -204,7 +212,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         InterpreterFactory $interpreterFactory,
         Translator $translator
     ) {
-
         $configName = $request->get('config_name');
         $currentConfig = $request->get('current_config');
         $recordNumber = intval($request->get('record_number'));
@@ -213,11 +220,11 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $hasData = false;
         $errorMessage = '';
         $previewFilePath = $this->getPreviewFilePath($configName);
-        if(is_file($previewFilePath)) {
+        if (is_file($previewFilePath)) {
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
             $mappedColumns = [];
-            foreach(($config['mappingConfig'] ?? []) as $mapping) {
+            foreach (($config['mappingConfig'] ?? []) as $mapping) {
                 $mappedColumns = array_merge($mappedColumns, ($mapping['dataSourceIndex'] ?? []));
             }
             $mappedColumns = array_unique($mappedColumns);
@@ -225,13 +232,12 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
 
-                if($interpreter->fileValid($previewFilePath)) {
+                if ($interpreter->fileValid($previewFilePath)) {
                     $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
                     $hasData = true;
                 } else {
                     $errorMessage = $translator->trans('plugin_pimcore_datahub_batch_import_configpanel_preview_error_invalid_file', [], 'admin');
                 }
-
             } catch (\Exception $e) {
                 Logger::error($e);
                 $errorMessage = $translator->trans('plugin_pimcore_datahub_batch_import_configpanel_preview_error_prefix', [], 'admin') . ': ' . $e->getMessage();
@@ -252,7 +258,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
+     *
      * @return JsonResponse
+     *
      * @throws \Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException|\Exception
      */
     public function loadAvailableColumnHeadersAction(
@@ -277,7 +285,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param MappingConfigurationFactory $factory
      * @param InterpreterFactory $interpreterFactory
      * @param ImportProcessingService $importProcessingService
+     *
      * @return JsonResponse
+     *
      * @throws InvalidConfigurationException|\Exception
      */
     public function loadTransformationResultPreviewsAction(
@@ -287,7 +297,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         InterpreterFactory $interpreterFactory,
         ImportProcessingService $importProcessingService
     ) {
-
         $configName = $request->get('config_name');
         $currentConfig = $request->get('current_config');
         $recordNumber = intval($request->get('current_preview_record'));
@@ -300,22 +309,18 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $errorMessage = '';
 
         try {
-            if(is_file($previewFilePath)) {
+            if (is_file($previewFilePath)) {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
 
                 $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber);
                 $importDataRow = $dataPreview->getRawData();
             }
 
-
             $mapping = $factory->loadMappingConfiguration($configName, $config['mappingConfig'], true);
 
-
-
-            foreach($mapping as $index => $mappingConfiguration) {
+            foreach ($mapping as $index => $mappingConfiguration) {
                 $transformationResults[] = $importProcessingService->generateTransformationResultPreview($importDataRow, $mappingConfiguration);
             }
-
         } catch (\Exception $e) {
             Logger::error($e);
             $errorMessage = $e->getMessage();
@@ -325,7 +330,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             'transformationResultPreviews' => $transformationResults,
             'errorMessage' => $errorMessage
         ]);
-
     }
 
     /**
@@ -334,6 +338,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      * @param MappingConfigurationFactory $factory
      * @param ImportProcessingService $importProcessingService
+     *
      * @return JsonResponse
      */
     public function calculateTransformationResultTypeAction(
@@ -345,11 +350,11 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             $currentConfig = json_decode($request->get('current_config'), true);
             $configName = $request->get('config_name');
             $mappingConfiguration = $factory->loadMappingConfigurationItem($configName, $currentConfig, true);
+
             return new JsonResponse($importProcessingService->evaluateTransformationResultDataType($mappingConfiguration));
         } catch (InvalidConfigurationException $e) {
             return new JsonResponse('ERROR: ' . $e->getMessage());
         }
-
     }
 
     /**
@@ -357,13 +362,15 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      * @param TransformationDataTypeService $transformationDataTypeService
+     *
      * @return JsonResponse
+     *
      * @throws \Exception
      */
-    public function loadDataObjectAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService) {
-
+    public function loadDataObjectAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService)
+    {
         $classId = $request->get('class_id');
-        if(empty($classId)) {
+        if (empty($classId)) {
             return new JsonResponse([]);
         }
 
@@ -371,10 +378,10 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $includeSystemWrite = boolval($request->get('system_write', false));
 
         $transformationTargetType = $request->get('transformation_result_type', [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC]);
+
         return new JsonResponse([
             'attributes' => $transformationDataTypeService->getPimcoreDataTypes($classId, $transformationTargetType, $includeSystemRead, $includeSystemWrite)
         ]);
-
     }
 
     /**
@@ -382,12 +389,13 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      * @param TransformationDataTypeService $transformationDataTypeService
+     *
      * @return JsonResponse
      */
-    public function loadDataObjectClassificationStoreAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService) {
-
+    public function loadDataObjectClassificationStoreAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService)
+    {
         $classId = $request->get('class_id');
-        if(empty($classId)) {
+        if (empty($classId)) {
             return new JsonResponse([]);
         }
 
@@ -401,11 +409,13 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      * @param ClassificationStoreDataTypeService $classificationStoreDataTypeService
+     *
      * @return JsonResponse
+     *
      * @throws \Exception
      */
-    public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService) {
-
+    public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService)
+    {
         $sortParams = QueryParams::extractSortingSettings(['sort' => $request->get('sort')]);
 
         $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
@@ -450,18 +460,20 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @Route("/load-class-classificationstore-key-name", methods={"GET"})
      *
      * @param Request $request
+     *
      * @return JsonResponse
+     *
      * @throws \Exception
      */
-    public function loadDataObjectClassificationStoreKeyNameAction(Request $request) {
-
+    public function loadDataObjectClassificationStoreKeyNameAction(Request $request)
+    {
         $keyId = $request->get('key_id');
         $keyParts = explode('-', $keyId);
-        if(count($keyParts) == 2) {
+        if (count($keyParts) == 2) {
             $keyGroupRelation = DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId($keyParts[0], $keyParts[1]);
             $group = DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId());
 
-            if($keyGroupRelation && $group) {
+            if ($keyGroupRelation && $group) {
                 return new JsonResponse([
                     'groupName' => $group->getName(),
                     'keyName' => $keyGroupRelation->getName()
@@ -472,7 +484,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         return new JsonResponse([
             'keyId' => $keyId
         ]);
-
     }
 
     /**
@@ -480,17 +491,17 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      * @param ImportPreparationService $importPreparationService
+     *
      * @return JsonResponse
      */
-    public function startBatchImportAction(Request $request, ImportPreparationService $importPreparationService) {
-
+    public function startBatchImportAction(Request $request, ImportPreparationService $importPreparationService)
+    {
         $configName = $request->get('config_name');
         $success = $importPreparationService->prepareImport($configName, true);
 
         return new JsonResponse([
             'success' => $success
         ]);
-
     }
 
     /**
@@ -498,24 +509,29 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      * @param ImportProcessingService $importProcessingService
+     *
      * @return JsonResponse
      */
-    public function checkImportProgressAction(Request $request, ImportProcessingService $importProcessingService) {
+    public function checkImportProgressAction(Request $request, ImportProcessingService $importProcessingService)
+    {
         $configName = $request->get('config_name');
+
         return new JsonResponse($importProcessingService->getImportStatus($configName));
     }
 
     /**
      * @Route("/check-crontab", methods={"GET"})
+     *
      * @param Request $request
+     *
      * @return JsonResponse
      */
-    public function isCronExpressionValidAction(Request $request) {
-
+    public function isCronExpressionValidAction(Request $request)
+    {
         $message = '';
         $success = true;
         $cronExpression = $request->get('cron_expression');
-        if(!empty($cronExpression)) {
+        if (!empty($cronExpression)) {
             try {
                 new CronExpression($cronExpression);
             } catch (\Exception $e) {
@@ -528,23 +544,25 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             'success' => $success,
             'message' => $message
         ]);
-
     }
-
 
     /**
      * @Route("/cancel-execution", methods={"PUT"})
+     *
      * @param Request $request
      * @param ImportProcessingService $importProcessingService
+     *
      * @return JsonResponse
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService) {
+    public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService)
+    {
         $configName = $request->get('config_name');
         $importProcessingService->cancelImportAndCleanupQueue($configName);
+
         return new JsonResponse([
             'success' => true
         ]);
     }
-
 }

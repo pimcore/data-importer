@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
@@ -10,7 +18,6 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
 
 class InterpreterFactory
 {
-
     /**
      * @var InterpreterInterface[]
      */
@@ -18,6 +25,7 @@ class InterpreterFactory
 
     /**
      * LoaderFactory constructor.
+     *
      * @param InterpreterInterface[] $interpreterBluePrints
      */
     public function __construct(array $interpreterBluePrints)
@@ -25,10 +33,10 @@ class InterpreterFactory
         $this->interpreterBluePrints = $interpreterBluePrints;
     }
 
-    public function loadInterpreter(string $configName, array $interpreterConfiguration, array $processingConfiguration, Resolver $resolver = null) {
-
-        if(empty($interpreterConfiguration['type']) || !array_key_exists($interpreterConfiguration['type'], $this->interpreterBluePrints)) {
-            throw new InvalidConfigurationException("Unknown loader type `" . ($interpreterConfiguration['type'] ?? '') . "`");
+    public function loadInterpreter(string $configName, array $interpreterConfiguration, array $processingConfiguration, Resolver $resolver = null)
+    {
+        if (empty($interpreterConfiguration['type']) || !array_key_exists($interpreterConfiguration['type'], $this->interpreterBluePrints)) {
+            throw new InvalidConfigurationException('Unknown loader type `' . ($interpreterConfiguration['type'] ?? '') . '`');
         }
 
         $loader = clone $this->interpreterBluePrints[$interpreterConfiguration['type']];
@@ -39,14 +47,12 @@ class InterpreterFactory
         $loader->setDoCleanup($processingConfiguration['cleanup']['doCleanup'] ?? false);
         $loader->setDoArchiveImportFile($processingConfiguration['doArchiveImportFile'] ?? false);
 
-        if($resolver) {
+        if ($resolver) {
             $loader->setResolver($resolver);
         }
 
         $loader->setSettings($interpreterConfiguration['settings'] ?? []);
 
         return $loader;
-
     }
-
 }

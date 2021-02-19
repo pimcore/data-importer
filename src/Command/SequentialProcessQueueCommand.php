@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
@@ -13,7 +21,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class SequentialProcessQueueCommand extends AbstractCommand
 {
-
     /**
      * @var ImportProcessingService
      */
@@ -30,7 +37,6 @@ class SequentialProcessQueueCommand extends AbstractCommand
         $this->importProcessingService = $importProcessingService;
         $this->queueService = $queueService;
     }
-
 
     public function configure()
     {
@@ -50,7 +56,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
         $progressBar = new ProgressBar($output, $itemCount);
         $progressBar->start();
 
-        foreach($itemIds as $id) {
+        foreach ($itemIds as $id) {
             $this->importProcessingService->processQueueItem($id);
             $progressBar->advance();
         }
@@ -61,5 +67,4 @@ class SequentialProcessQueueCommand extends AbstractCommand
 
         return 0;
     }
-
 }

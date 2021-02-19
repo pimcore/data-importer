@@ -1,16 +1,22 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
 
-
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\IReader;
 use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
 
 class XlsxFileInterpreter extends AbstractInterpreter
 {
-
     /**
      * @var bool
      */
@@ -23,7 +29,6 @@ class XlsxFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $spreadSheet = $reader->load($path);
@@ -32,18 +37,19 @@ class XlsxFileInterpreter extends AbstractInterpreter
 
         $data = $spreadSheet->getActiveSheet()->toArray();
 
-        if($this->skipFirstRow) {
+        if ($this->skipFirstRow) {
             array_shift($data);
         }
 
-        foreach($data as $rowData) {
+        foreach ($data as $rowData) {
             $this->processImportRow($rowData);
         }
-
     }
 
-    public function fileValid(string $path, bool $originalFilename = false): bool {
+    public function fileValid(string $path, bool $originalFilename = false): bool
+    {
         $reader = IOFactory::createReaderForFile($path);
+
         return $reader->canRead($path);
     }
 
@@ -53,7 +59,7 @@ class XlsxFileInterpreter extends AbstractInterpreter
         $columns = [];
         $readRecordNumber = 0;
 
-        if($this->fileValid($path)) {
+        if ($this->fileValid($path)) {
             $reader = IOFactory::createReaderForFile($path);
             $reader->setReadDataOnly(true);
             $spreadSheet = $reader->load($path);
@@ -62,33 +68,32 @@ class XlsxFileInterpreter extends AbstractInterpreter
 
             $data = $spreadSheet->getActiveSheet()->toArray();
 
-            if($this->skipFirstRow) {
+            if ($this->skipFirstRow) {
                 $firstRow = array_shift($data);
-                foreach($firstRow as $index => $columnHeader) {
+                foreach ($firstRow as $index => $columnHeader) {
                     $columns[$index] = trim($columnHeader) . " [$index]";
                 }
             }
 
             $previewDataRow = $data[$recordNumber] ?? null;
 
-            if(empty($previewDataRow)) {
+            if (empty($previewDataRow)) {
                 $previewDataRow = end($data);
                 $readRecordNumber = count($data) - 1;
             } else {
                 $readRecordNumber = $recordNumber;
             }
 
-            foreach($previewDataRow as $index => $columnData) {
+            foreach ($previewDataRow as $index => $columnData) {
                 $previewData[$index] = $columnData;
             }
 
-            if(empty($columns)) {
+            if (empty($columns)) {
                 $columns = array_keys($previewData);
             }
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
-
     }
 
     public function setSettings(array $settings): void

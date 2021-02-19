@@ -1,9 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
-
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\AbstractOperator;
@@ -11,7 +18,6 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeS
 
 class Explode extends AbstractOperator
 {
-
     /**
      * @var string
      */
@@ -22,23 +28,19 @@ class Explode extends AbstractOperator
         $this->delimiter = $settings['delimiter'] ?? ' ';
     }
 
-
     public function process($inputData, bool $dryRun = false)
     {
-        if(!empty($this->delimiter)) {
-
-            if(is_array($inputData)) {
-
+        if (!empty($this->delimiter)) {
+            if (is_array($inputData)) {
                 $explodedArray = [];
-                foreach($inputData as $dataRow) {
+                foreach ($inputData as $dataRow) {
                     $explodedArray = array_merge($explodedArray, explode($this->delimiter, $dataRow));
                 }
-                return $explodedArray;
 
+                return $explodedArray;
             } else {
                 return explode($this->delimiter, $inputData);
             }
-
         } else {
             return [$inputData];
         }
@@ -47,17 +49,17 @@ class Explode extends AbstractOperator
     /**
      * @param string $inputType
      * @param int|null $index
+     *
      * @return string
+     *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string {
-
-        if(! in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
+    public function evaluateReturnType(string $inputType, int $index = null): string
+    {
+        if (! in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for explode operator at transformation position %s", $inputType, $index));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
-
     }
-
 }

@@ -1,14 +1,21 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type;
-
 
 use Pimcore\Model\DataObject;
 
 class ClassificationStoreDataTypeService
 {
-
     /**
      * @var TransformationDataTypeService
      */
@@ -22,12 +29,11 @@ class ClassificationStoreDataTypeService
         $this->transformationDataTypeService = $transformationDataTypeService;
     }
 
-
-    public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, string $searchString = null, string $filterString = null): DataObject\Classificationstore\KeyGroupRelation\Listing {
-
+    public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, string $searchString = null, string $filterString = null): DataObject\Classificationstore\KeyGroupRelation\Listing
+    {
         $classDefinition = DataObject\ClassDefinition::getById($classId);
         $field = $classDefinition->getFieldDefinition($fieldName);
-        if($field instanceof DataObject\ClassDefinition\Data\Classificationstore) {
+        if ($field instanceof DataObject\ClassDefinition\Data\Classificationstore) {
             $storeId = $field->getStoreId();
         } else {
             throw new \Exception("Invalid field, `$fieldName` is not a classification store");
@@ -70,15 +76,13 @@ class ClassificationStoreDataTypeService
                 . ' OR ' . DataObject\Classificationstore\KeyConfig\Dao::TABLE_NAME_KEYS . '.description LIKE ' . $list->quote('%' . $searchString . '%') . ')';
         }
 
-        if($transformationResultType) {
-
+        if ($transformationResultType) {
             $pimcoreTypes = $this->transformationDataTypeService->getPimcoreTypesByTransformationTargetType($transformationResultType);
-            if(!empty($pimcoreTypes)) {
+            if (!empty($pimcoreTypes)) {
 //                $conditionParts[] = '';
                 $list->addConditionParam(sprintf('type IN (%s)', "'" . implode("','", $pimcoreTypes) . "'"));
 //                $list->addConditionParam('type IN (?)', $pimcoreTypes);
             }
-
         }
 
         $condition = implode(' AND ', $conditionParts);
@@ -87,5 +91,4 @@ class ClassificationStoreDataTypeService
 
         return $list;
     }
-
 }

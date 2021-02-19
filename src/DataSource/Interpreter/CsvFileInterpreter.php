@@ -1,15 +1,21 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
 use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
-use Pimcore\Log\FileObject;
 
 class CsvFileInterpreter extends AbstractInterpreter
 {
-
     /**
      * @var bool
      */
@@ -32,8 +38,8 @@ class CsvFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        if (($handle = fopen($path, "r")) !== false) {
-            if($this->skipFirstRow) {
+        if (($handle = fopen($path, 'r')) !== false) {
+            if ($this->skipFirstRow) {
                 //load first row and ignore it
                 $data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape);
             }
@@ -53,11 +59,12 @@ class CsvFileInterpreter extends AbstractInterpreter
         $this->escape = $settings['escape'] ?? '\\';
     }
 
-    public function fileValid(string $path, bool $originalFilename = false): bool {
-        if($originalFilename) {
+    public function fileValid(string $path, bool $originalFilename = false): bool
+    {
+        if ($originalFilename) {
             $filename = $path;
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
-            if($ext !== 'csv') {
+            if ($ext !== 'csv') {
                 return false;
             }
         }
@@ -70,29 +77,27 @@ class CsvFileInterpreter extends AbstractInterpreter
         return in_array($mime, $csvMimes);
     }
 
-
     /**
      * @param string $path
      * @param int $recordNumber
      * @param array $mappedColumns
+     *
      * @return PreviewData
      */
     public function previewData(string $path, int $recordNumber = 0, array $mappedColumns = []): PreviewData
     {
-
         $previewData = [];
         $columns = [];
         $readRecordNumber = -1;
 
-        if ($this->fileValid($path) && ($handle = fopen($path, "r")) !== false) {
-            if($this->skipFirstRow) {
+        if ($this->fileValid($path) && ($handle = fopen($path, 'r')) !== false) {
+            if ($this->skipFirstRow) {
                 //load first row and ignore it
                 $data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape);
 
-                foreach($data as $index => $columnHeader) {
+                foreach ($data as $index => $columnHeader) {
                     $columns[$index] = trim($columnHeader) . " [$index]";
                 }
-
             }
 
             $previousData = null;
@@ -101,23 +106,21 @@ class CsvFileInterpreter extends AbstractInterpreter
                 $readRecordNumber++;
             }
 
-            if(empty($data)) {
+            if (empty($data)) {
                 $data = $previousData;
             }
 
-            foreach($data as $index => $columnData) {
+            foreach ($data as $index => $columnData) {
                 $previewData[$index] = $columnData;
             }
 
             fclose($handle);
         }
 
-        if(empty($columns)) {
+        if (empty($columns)) {
             $columns = array_keys($previewData);
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
-
     }
-
 }

@@ -1,9 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
-
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\AbstractOperator;
@@ -11,7 +18,6 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeS
 
 class Combine extends AbstractOperator
 {
-
     /**
      * @var string
      */
@@ -22,28 +28,29 @@ class Combine extends AbstractOperator
         $this->glue = $settings['glue'] ?? ' ';
     }
 
-
     public function process($inputData, bool $dryRun = false)
     {
-        if(!is_array($inputData)) {
+        if (!is_array($inputData)) {
             $inputData = [$inputData];
         }
+
         return implode($this->glue, $inputData);
     }
 
     /**
      * @param string $inputType
      * @param int|null $index
+     *
      * @return string
+     *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string {
-
-        if(!$inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
+    public function evaluateReturnType(string $inputType, int $index = null): string
+    {
+        if (!$inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for combine operator at transformation position %s", $inputType, $index));
         }
 
         return TransformationDataTypeService::DEFAULT_TYPE;
-
     }
 }

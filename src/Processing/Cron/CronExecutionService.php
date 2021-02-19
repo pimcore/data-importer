@@ -1,15 +1,23 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron;
 
 use Cron\CronExpression;
-use Pimcore\Db;
 use Doctrine\DBAL\Exception\TableNotFoundException;
+use Pimcore\Db;
 
 class CronExecutionService
 {
-
     /**
      * @var Db\Connection|Db\ConnectionInterface
      */
@@ -35,7 +43,8 @@ class CronExecutionService
         }
     }
 
-    protected function getLastExecution($configName): \DateTime {
+    protected function getLastExecution($configName): \DateTime
+    {
         try {
             $timestamp = $this->db->fetchOne(
                     sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
@@ -43,9 +52,8 @@ class CronExecutionService
                 ) ?? time();
 
             return date_create()->setTimestamp($timestamp);
-
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function() use ($configName) {
+            return $this->createTableIfNotExisting(function () use ($configName) {
                 $this->getLastExecution($configName);
             });
         }
@@ -54,39 +62,46 @@ class CronExecutionService
     /**
      * @param string $configName
      * @param string $cronDefinition
+     *
      * @return bool
+     *
      * @throws \Exception
      */
-    public function getNextExecutionInPast(string $configName, string $cronDefinition): bool {
-
+    public function getNextExecutionInPast(string $configName, string $cronDefinition): bool
+    {
         $cron = new CronExpression($cronDefinition);
         $lastExecution = $this->getLastExecution($configName);
         $nextRun = $cron->getNextRunDate($lastExecution);
 
         $now = new \DateTime();
+
         return $nextRun < $now;
     }
 
     /**
      * @param string $configName
      * @param \DateTime $executionTimestamp
+     *
      * @return mixed
+     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function updateExecutionTimestamp(string $configName, \DateTime $executionTimestamp) {
+    public function updateExecutionTimestamp(string $configName, \DateTime $executionTimestamp)
+    {
         try {
             $this->db->executeQuery(
                 sprintf('INSERT INTO %s (configName, lastExecutionDate) VALUES (?, ?) ON DUPLICATE KEY UPDATE lastExecutionDate = ?', self::EXECUTION_STORAGE_TABLE_NAME),
                 [$configName, $executionTimestamp->getTimestamp(), $executionTimestamp->getTimestamp()]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function() use ($configName, $executionTimestamp) {
+            return $this->createTableIfNotExisting(function () use ($configName, $executionTimestamp) {
                 $this->updateExecutionTimestamp($configName, $executionTimestamp);
             });
         }
     }
 
-    public function cleanup(string $configName) {
+    public function cleanup(string $configName)
+    {
         try {
             $this->db->executeQuery(
                 sprintf('DELETE FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
@@ -96,5 +111,4 @@ class CronExecutionService
             return $this->createTableIfNotExisting();
         }
     }
-
 }

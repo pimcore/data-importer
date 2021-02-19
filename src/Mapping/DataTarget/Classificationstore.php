@@ -1,15 +1,22 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
 class Classificationstore implements DataTargetInterface
 {
-
     /**
      * @var string
      */
@@ -32,12 +39,12 @@ class Classificationstore implements DataTargetInterface
 
     public function setSettings(array $settings): void
     {
-        if(empty($settings['fieldName'])) {
+        if (empty($settings['fieldName'])) {
             throw new InvalidConfigurationException('Empty field name.');
         }
 
         $keyParts = explode('-', ($settings['keyId'] ?? []));
-        if(empty($keyParts[0]) || empty($keyParts[1])) {
+        if (empty($keyParts[0]) || empty($keyParts[1])) {
             throw new InvalidConfigurationException('Empty or invalid keyId.');
         }
 
@@ -47,22 +54,16 @@ class Classificationstore implements DataTargetInterface
         $this->language = $settings['language'] ?? null;
     }
 
-
     public function assignData(ElementInterface $element, $data)
     {
         $getter = 'get' . ucfirst($this->fieldName);
         $classificationStore = $element->$getter();
 
-        if($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
-
+        if ($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
             $classificationStore->setLocalizedKeyValue($this->groupId, $this->keyId, $data, $this->language);
             $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$this->groupId => true]);
-
         } else {
             throw new InvalidConfigurationException('Field ' . $this->fieldName . ' is not a classification store.');
         }
-
     }
-
 }
-

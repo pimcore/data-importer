@@ -1,22 +1,27 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
 
-
 use Pimcore\Console\AbstractCommand;
 use Pimcore\File;
-use Symfony\Component\Console\Input\InputArgument;
+use Pimcore\Model\Asset;
+use Pimcore\Model\DataObject\Car;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Pimcore\Model\Asset;
-use Pimcore\Model\DataObject\Car;
-
 
 class DummyDataCommand extends AbstractCommand
 {
-
     protected function configure()
     {
         $this
@@ -30,7 +35,6 @@ class DummyDataCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         $tags = [
             'Trade Show',
             'Salzburg',
@@ -73,11 +77,9 @@ class DummyDataCommand extends AbstractCommand
             'email',
         ];
 
-
         $count = $input->getOption('items');
 
-        for($i = 0; $i < $count; $i++) {
-
+        for ($i = 0; $i < $count; $i++) {
             $output->writeln('Generating item ' . $i . ' ...');
 
             $faker = \Faker\Factory::create();
@@ -90,9 +92,9 @@ class DummyDataCommand extends AbstractCommand
                 'description_de' => $faker->realText(400, 4),
                 'start' => $startDate->format('y-m-d H:i'),
                 'end' => $faker->dateTimeBetween($startDate)->format('y-m-d H:i'),
-                'tags' => implode(',', array_rand($tags, rand(2,4))),
+                'tags' => implode(',', array_rand($tags, rand(2, 4))),
                 'location' => $faker->city,
-                'cars' => implode(',', array_rand($carsIdList, rand(3,10))),
+                'cars' => implode(',', array_rand($carsIdList, rand(3, 10))),
                 'mainimage' => 'https://via.placeholder.com/400x200/' . substr($faker->hexColor, 1) . '/000000?text=' . $faker->text(9) . 'jpg',
                 'image2' => Asset::getById(array_rand($assetIdList, 1))->getRealFullPath(),
                 'image3' => Asset::getById(array_rand($assetIdList, 1))->getRealFullPath(),
@@ -136,17 +138,15 @@ class DummyDataCommand extends AbstractCommand
             default:
                 throw new \Exception('Invalid format: ' . $format);
         }
-
     }
 
-    protected function writeCsv(string $filename, array $data) {
-
+    protected function writeCsv(string $filename, array $data)
+    {
         $fp = fopen($filename, 'w');
 
         foreach ($data as $fields) {
-
-            foreach($fields as &$field) {
-                if(is_array($field)) {
+            foreach ($fields as &$field) {
+                if (is_array($field)) {
                     $flattenedField = [];
                     array_walk_recursive($field, function ($item) use (&$flattenedField) {
                         $flattenedField[] = $item;
@@ -161,30 +161,32 @@ class DummyDataCommand extends AbstractCommand
         fclose($fp);
     }
 
-    protected function writeXml(string $filename, array $data) {
+    protected function writeXml(string $filename, array $data)
+    {
         array_shift($data);
 
         $xml = new \SimpleXMLElement('<root/>');
         $this->arrayToXml($data, $xml, 'item');
 
-        $dom = new \DOMDocument("1.0");
+        $dom = new \DOMDocument('1.0');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
         $dom->loadXML($xml->asXML());
         file_put_contents($filename, $dom->saveXML());
     }
 
-    function arrayToXml( $data, &$xml_data, $firstLevelKey = null ) {
-        foreach( $data as $key => $value ) {
+    public function arrayToXml($data, &$xml_data, $firstLevelKey = null)
+    {
+        foreach ($data as $key => $value) {
             $elementName = $key;
-            if($firstLevelKey) {
+            if ($firstLevelKey) {
                 $elementName = $firstLevelKey;
             }
-            if(is_numeric($elementName)) {
+            if (is_numeric($elementName)) {
                 $elementName = 'item_' . $elementName;
             }
 
-            if( is_array($value) ) {
+            if (is_array($value)) {
                 $subnode = $xml_data->addChild($elementName);
                 $this->arrayToXml($value, $subnode);
             } else {
@@ -193,10 +195,10 @@ class DummyDataCommand extends AbstractCommand
         }
     }
 
-    protected function writeJson(string $filename, array $data) {
+    protected function writeJson(string $filename, array $data)
+    {
         array_shift($data);
         $json = json_encode($data);
         file_put_contents($filename, $json);
     }
-
 }

@@ -1,8 +1,16 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under following license:
+ * - Pimcore Enterprise License (PEL)
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     PEL
+ */
 
 namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
-
 
 use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
 use Pimcore\Console\AbstractCommand;
@@ -12,7 +20,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class PrepareImportCommand extends AbstractCommand
 {
-
     /**
      * @var ImportPreparationService
      */
@@ -20,6 +27,7 @@ class PrepareImportCommand extends AbstractCommand
 
     /**
      * PrepareImportCommand constructor.
+     *
      * @param ImportPreparationService $importPreparationService
      */
     public function __construct(ImportPreparationService $importPreparationService)
@@ -27,7 +35,6 @@ class PrepareImportCommand extends AbstractCommand
         parent::__construct();
         $this->importPreparationService = $importPreparationService;
     }
-
 
     protected function configure()
     {
@@ -50,8 +57,5 @@ class PrepareImportCommand extends AbstractCommand
                 $this->importPreparationService->prepareImport($configName);
             }
         }
-
     }
-
-
 }
