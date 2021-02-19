@@ -114,7 +114,10 @@ class DummyDataCommand extends AbstractCommand
                 ]
             ];
 
-            \Pimcore::collectGarbage();
+            if($i % 100 === 0) {
+                \Pimcore::collectGarbage();
+            }
+
         }
 
         $format = $input->getOption('targetType');
