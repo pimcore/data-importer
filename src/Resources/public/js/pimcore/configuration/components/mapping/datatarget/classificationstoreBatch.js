@@ -23,9 +23,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             this.dataObjectClassId = this.configItemRootContainer.currentDataValues.dataObjectClassId;
             this.transformationResultType = this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType;
 
-            console.log(this.transformationResultType);
-
-
             const errorField = Ext.create('Ext.form.Label', {
                 html: t('plugin_pimcore_datahub_batch_import_configpanel_classification_store_batch_type_error'),
                 hidden: this.transformationResultType === 'array',
