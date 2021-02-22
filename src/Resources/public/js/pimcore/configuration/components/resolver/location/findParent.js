@@ -108,24 +108,6 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                 items: [
                     {
                         xtype: 'combo',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_data_source_index'),
-                        name: this.dataNamePrefix + 'dataSourceIndex',
-                        value: this.data.dataSourceIndex,
-                        store: this.configItemRootContainer.columnHeaderStore,
-                        displayField: 'label',
-                        valueField: 'dataIndex',
-                        forceSelection: false,
-                        queryMode: 'local',
-                        triggerOnClick: false
-                    },
-                    {
-                        xtype: 'textfield',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_fallback_path'),
-                        name: this.dataNamePrefix + 'fallbackPath',
-                        value: this.data.fallbackPath
-                    },
-                    {
-                        xtype: 'combo',
                         fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy'),
                         name: this.dataNamePrefix + 'findStrategy',
                         value: this.data.findStrategy,
@@ -152,7 +134,24 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                     },
                     attributeDataObjectClassId,
                     attributeName,
-                    languageSelection
+                    languageSelection,
+                    {
+                        xtype: 'combo',
+                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_data_source_index'),
+                        name: this.dataNamePrefix + 'dataSourceIndex',
+                        value: this.data.dataSourceIndex,
+                        store: this.configItemRootContainer.columnHeaderStore,
+                        displayField: 'label',
+                        valueField: 'dataIndex',
+                        forceSelection: false,
+                        queryMode: 'local',
+                        triggerOnClick: false
+                    },{
+                        xtype: 'textfield',
+                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_fallback_path'),
+                        name: this.dataNamePrefix + 'fallbackPath',
+                        value: this.data.fallbackPath
+                    }
                 ]
             });
         }
