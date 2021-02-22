@@ -34,7 +34,7 @@ class Explode extends AbstractOperator
             if (is_array($inputData)) {
                 $explodedArray = [];
                 foreach ($inputData as $dataRow) {
-                    $explodedArray = array_merge($explodedArray, explode($this->delimiter, $dataRow));
+                    $explodedArray = array_merge($explodedArray, $this->process($dataRow, $dryRun));
                 }
 
                 return $explodedArray;
