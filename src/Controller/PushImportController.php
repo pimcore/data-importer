@@ -40,7 +40,7 @@ class PushImportController
     }
 
     /**
-     * @Route("/pimcore-datahub-import/{config}/push", name="data_hub_batch_import_push", requirements={"config"="[\w-]+"})
+     * @Route("/pimcore-datahub-import/{config}/push", name="data_hub_batch_import_push", methods={"POST"}, requirements={"config"="[\w-]+"})
      *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationLoaderService
@@ -68,10 +68,7 @@ class PushImportController
                 return new JsonResponse(['success' => false, 'message' => 'Import not prepared, see application log for details.'], 405);
             }
         } catch (\Exception $e) {
-            echo $e;
-            die();
             Logger::error($e);
-
             return new JsonResponse(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
