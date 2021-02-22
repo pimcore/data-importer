@@ -5,9 +5,9 @@ at [Import Execution Details](../04_Import_Execution_Details.md) to understand h
 actually executed based on the import configuration. 
 
 ## Configuration Chapters
-- Data Sources
-- File Formats
-- Import Preview
+- [Data Sources](01_Data_Sources.md)
+- [File Formats](02_File_Formats.md)
+- [Import Preview](03_Import_Preview.md)
 - Resolver Settings
 - Processing Settings
 - Mapping Configuration

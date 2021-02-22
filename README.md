@@ -26,8 +26,16 @@ sources and applying the data to Pimcore data objects based on a configured mapp
   - on regular base via cron definitions. 
 - Import status updates and extensive logging information. 
 
+<div class="image-as-lightbox"></div>
+
 ![Data Source](doc/img/datasource.png)
+
+<div class="image-as-lightbox"></div>
+
 ![Mapping](doc/img/mapping.png)
+
+<div class="image-as-lightbox"></div>
+
 ![Execution](doc/img/execution.png)
 
 ## Further Information

@@ -4,6 +4,9 @@ Every batch import configuration needs a data source. Following data sources are
 be configured. 
 
 ### Asset
+
+<div class="image-as-lightbox"></div>
+
 ![Data Source Asset](../img/datasource_asset.png)
 
 Loads data from an asset stored within the Pimcore instance. 
