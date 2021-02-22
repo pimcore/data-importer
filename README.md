@@ -33,4 +33,6 @@ sources and applying the data to Pimcore data objects based on a configured mapp
 ## Further Information
 - [Installation](doc/01_Installation.md)
 - [Configuration](doc/03_Configuration/README.md)
-- [Extending](doc/05_Extending/README.md)
+- [Import Execution Details](doc/04_Import_Execution_Details.md)
+- [Import Progress and Logging](doc/05_Import_Progress_and_Logging.md)
+- [Extending](doc/06_Extending/README.md)

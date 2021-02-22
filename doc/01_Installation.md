@@ -27,3 +27,5 @@ Configure following commands to be executed on a regular base. The actual interv
 # Process import queue items that need to be executed sequentially 
 */5 * * * * php /home/project/www/bin/console datahub:batch-import:process-queue-sequential 
 ```
+
+See [Import Execution Details](04_Import_Execution_Details.md) for more information about sequential and parallel execution. 
