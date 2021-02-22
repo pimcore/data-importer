@@ -16,18 +16,18 @@ to update them instead of creating new data objects.
 
 Following strategies are available: 
 
-##### Loading Strategy: `No Loading`
+#### Loading Strategy: `No Loading`
 Does not look for any existing Pimcore data objects. Import always creates new data objects. 
 
-##### Loading Strategy: `Id`
+#### Loading Strategy: `Id`
 Look for data objects based on their id. 
 - **Data Source Index**: Field of import that contains the id to look for. 
 
-##### Loading Strategy: `Path`
+#### Loading Strategy: `Path`
 Look for data objects based on their full path. 
 - **Data Source Index**: Field of import that contains the path to look for. 
 
-##### Loading Strategy: `Attribute`
+#### Loading Strategy: `Attribute`
 Look for data objects based on a specific attribute (e.g. Remote Id, EAN, ...). 
 - **Data Source Index**: Field of import that contains the attribute value to look for. 
 - **Attribute Name**: Attribute of data object to look for. 
@@ -36,11 +36,11 @@ Look for data objects based on a specific attribute (e.g. Remote Id, EAN, ...).
 ### Element Creation 
 Define location of new created data objects. 
 
-##### Location Strategy: `Static Path`
+#### Location Strategy: `Static Path`
 Always put new elements to a fixed specific folder. 
 - **Path**: Folder where to put new elements to. 
 
-##### Location Strategy: `Find Parent`
+#### Location Strategy: `Find Parent`
 Find parent based on a strategy. 
 - **Find Strategy**: Strategy find to parent
   - Loading Strategy `Id`: Load based on id. 

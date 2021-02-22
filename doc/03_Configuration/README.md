@@ -8,7 +8,7 @@ actually executed based on the import configuration.
 - [Data Sources](01_Data_Sources.md)
 - [File Formats](02_File_Formats.md)
 - [Import Preview](03_Import_Preview.md)
-- Resolver Settings
+- [Resolver Settings](04_Resolver_Settings.md)
 - Processing Settings
 - Mapping Configuration
 - [Execution Configuration](07_Execution_Configuration.md)
