@@ -17,11 +17,15 @@ use Pimcore\Model\Element\ElementInterface;
 interface FactoryInterface
 {
     /**
+     * Set subtype of element
+     *
      * @param string $subType
      */
     public function setSubType(string $subType): void;
 
     /**
+     * Create new element
+     *
      * @return ElementInterface
      */
     public function createNewElement(): ElementInterface;

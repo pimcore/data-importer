@@ -16,5 +16,10 @@ use Pimcore\Model\Element\ElementInterface;
 
 interface CleanupStrategyInterface
 {
+    /**
+     * Apply cleanup on given element
+     *
+     * @param ElementInterface $element
+     */
     public function doCleanup(ElementInterface $element): void;
 }

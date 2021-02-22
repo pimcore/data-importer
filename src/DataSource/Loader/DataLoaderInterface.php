@@ -17,9 +17,15 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
 interface DataLoaderInterface extends SettingsAwareInterface
 {
     /**
-     * @return string
+     * Load data from source, eventually create a temporary file somewhere
+     * and return the path to the data
+     *
+     * @return string path to the data
      */
     public function loadData(): string;
 
+    /**
+     * Cleanup temporary file if necessary
+     */
     public function cleanup(): void;
 }

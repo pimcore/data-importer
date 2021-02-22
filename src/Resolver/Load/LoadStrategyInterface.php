@@ -18,6 +18,8 @@ use Pimcore\Model\Element\ElementInterface;
 interface LoadStrategyInterface extends SettingsAwareInterface
 {
     /**
+     * Load element based on input data array
+     *
      * @param array $inputData
      *
      * @return ElementInterface
@@ -25,6 +27,8 @@ interface LoadStrategyInterface extends SettingsAwareInterface
     public function loadElement(array $inputData): ?ElementInterface;
 
     /**
+     * Load element based on given identifier (not whole input data array)
+     *
      * @param $identifier
      *
      * @return ElementInterface|null
@@ -32,6 +36,8 @@ interface LoadStrategyInterface extends SettingsAwareInterface
     public function loadElementByIdentifier($identifier): ?ElementInterface;
 
     /**
+     * Extract identifier from input data array
+     *
      * @param array $inputData
      *
      * @return mixed
@@ -39,11 +45,15 @@ interface LoadStrategyInterface extends SettingsAwareInterface
     public function extractIdentifierFromData(array $inputData);
 
     /**
+     * Load all in Pimcore existing identifiers (e.g. all data object IDs of certain data object class)
+     *
      * @return array
      */
     public function loadFullIdentifierList(): array;
 
     /**
+     * Set current data object class Id
+     *
      * @param mixed $dataObjectClassId
      */
     public function setDataObjectClassId($dataObjectClassId): void;

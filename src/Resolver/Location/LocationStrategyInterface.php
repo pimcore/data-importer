@@ -18,6 +18,8 @@ use Pimcore\Model\Element\ElementInterface;
 interface LocationStrategyInterface extends SettingsAwareInterface
 {
     /**
+     * Update parent of given element based on input data
+     *
      * @param ElementInterface $element
      * @param array $inputData
      *

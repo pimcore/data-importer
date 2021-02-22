@@ -18,6 +18,8 @@ use Pimcore\Model\Element\ElementInterface;
 interface DataTargetInterface extends SettingsAwareInterface
 {
     /**
+     * Assign given data to element
+     *
      * @param ElementInterface $element
      * @param mixed $data
      *

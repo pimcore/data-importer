@@ -17,6 +17,8 @@ use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
 interface OperatorInterface extends SettingsAwareInterface
 {
     /**
+     * Apply transformation to input data
+     *
      * @param mixed $inputData
      * @param bool $dryRun
      *
@@ -25,6 +27,8 @@ interface OperatorInterface extends SettingsAwareInterface
     public function process($inputData, bool $dryRun = false);
 
     /**
+     * Calculate resulting return type for given input type. Throw exception if input type not supported.
+     *
      * @param string $inputType
      * @param int|null $index
      *
@@ -33,6 +37,8 @@ interface OperatorInterface extends SettingsAwareInterface
     public function evaluateReturnType(string $inputType, int $index = null): string;
 
     /**
+     * Generate string representation of given input
+     *
      * @param $inputData
      *
      * @return mixed
@@ -40,6 +46,8 @@ interface OperatorInterface extends SettingsAwareInterface
     public function generateResultPreview($inputData);
 
     /**
+     * Set name of current import configuration
+     *
      * @param string $configName
      *
      * @return mixed
