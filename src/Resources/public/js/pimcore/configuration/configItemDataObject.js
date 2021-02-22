@@ -28,7 +28,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
         this.parent = parent;
         this.configName = data.name;
         this.data = data.configuration;
-        console.log(this.data);
+        // console.log(this.data);
         this.modificationDate = data.modificationDate;
 
         this.tab = Ext.create('Ext.TabPanel', {
@@ -192,6 +192,9 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
                             settingsPanel: loaderSettingsPanel,
                             value: this.data.loaderConfig.type,
                             settingsValues: this.data.loaderConfig.settings,
+                            initContext: {
+                                configName: this.configName
+                            },
                             listeners: {
                                 change: function(combo, newValue, oldValue) {
                                     this.tab.fireEvent(

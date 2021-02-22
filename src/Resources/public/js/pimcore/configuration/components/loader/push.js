@@ -54,6 +54,17 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.p
                         fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_push_ignore_not_empty_queue'),
                         name: this.dataNamePrefix + 'ignoreNotEmptyQueue',
                         value: this.data.ignoreNotEmptyQueue,
+                    },{
+                        xtype: 'fieldcontainer',
+                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_push_endpoint'),
+                        layout: 'hbox',
+                        width: 700,
+                        items: [
+                            {
+                                xtype: 'label',
+                                text: location.protocol + '//' + location.host + '/pimcore-datahub-import/' + this.initContext.configName + '/push'
+                            }
+                        ]
                     }
 
                 ]
