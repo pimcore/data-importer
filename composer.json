@@ -7,6 +7,7 @@
   },
   "require": {
     "pimcore/pimcore": "^6.8",
+    "pimcore/data-hub": "^0.7",
     "phpoffice/phpspreadsheet": "^1.1",
     "dragonmantank/cron-expression": "^3.1",
     "league/flysystem": "^1.0",
