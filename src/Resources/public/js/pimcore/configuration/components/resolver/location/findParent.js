@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location.findParent');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location.findParent = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location.findParent');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location.findParent = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'findParent',
     dataApplied: false,
@@ -29,7 +29,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
             });
 
             const attributeName = Ext.create('Ext.form.ComboBox', {
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_attribute_name'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_attribute_name'),
                 name: this.dataNamePrefix + 'attributeName',
                 hidden: this.data.findStrategy !== 'attribute',
                 allowBlank: true, // this.data.findStrategy !== 'attribute',
@@ -50,7 +50,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                         class_id: this.data.attributeDataObjectClassId,
                         system_read: 1
                     },
-                    url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectattributes'),
+                    url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),
                     reader: {
                         type: 'json',
                         rootProperty: 'attributes'
@@ -97,7 +97,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
 
 
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600,
@@ -108,13 +108,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                 items: [
                     {
                         xtype: 'combo',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy'),
                         name: this.dataNamePrefix + 'findStrategy',
                         value: this.data.findStrategy,
                         store: [
-                            ['id', t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy_id')],
-                            ['path', t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy_path')],
-                            ['attribute', t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy_attribute')]
+                            ['id', t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy_id')],
+                            ['path', t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy_path')],
+                            ['attribute', t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy_attribute')]
                         ],
                         listeners: {
                             change: function(combo, strategy) {
@@ -137,7 +137,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                     languageSelection,
                     {
                         xtype: 'combo',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_data_source_index'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_data_source_index'),
                         name: this.dataNamePrefix + 'dataSourceIndex',
                         value: this.data.dataSourceIndex,
                         store: this.configItemRootContainer.columnHeaderStore,
@@ -148,7 +148,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                         triggerOnClick: false
                     },{
                         xtype: 'textfield',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_fallback_path'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fallback_path'),
                         name: this.dataNamePrefix + 'fallbackPath',
                         value: this.data.fallbackPath
                     }

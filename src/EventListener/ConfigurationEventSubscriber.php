@@ -10,11 +10,11 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\EventListener;
+namespace Pimcore\Bundle\DataImporterBundle\EventListener;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron\CronExecutionService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
+use Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
@@ -70,7 +70,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
          */
         $config = $event->getSubject();
 
-        if ($config->getType() === 'batchImportDataObject') {
+        if ($config->getType() === 'dataImporterDataObject') {
             //cleanup delta cache
             $this->deltaChecker->cleanup($config->getName());
 
@@ -78,7 +78,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
             $this->queueService->cleanupQueueItems($config->getName());
 
             //cleanup preview files
-            $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/batchimport/' . $config->getName();
+            $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/preview/' . $config->getName();
             recursiveDelete($folder);
 
             //cleanup cron execution

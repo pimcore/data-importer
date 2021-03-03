@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.load.path');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.load.path = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.load.id, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.path');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.path = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.id, {
 
     type: 'path'
 

@@ -14,142 +14,142 @@ services:
 
     # controllers are imported separately to make sure they're public
     # and have a tag that allows actions to type-hint services
-    Pimcore\Bundle\DataHubBatchImportBundle\Controller\:
+    Pimcore\Bundle\DataImporterBundle\Controller\:
         resource: '../../Controller'
         public: true
         tags: ['controller.service_arguments']
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Command\:
+    Pimcore\Bundle\DataImporterBundle\Command\:
         resource: '../../Command'
         tags: ['console.command']
 
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron\CronExecutionService: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\EventListener\ConfigurationEventSubscriber: ~
+    Pimcore\Bundle\DataImporterBundle\Queue\QueueService: ~
+    Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService: ~
+    Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
+    Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
 
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory: ~
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory: ~
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\AssetLoader:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader:
         tags:
-            - { name: "pimcore.datahub.batch_import.loader", type: "asset" }
+            - { name: "pimcore.datahub.data_importer.loader", type: "asset" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\HttpLoader:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader:
         tags:
-            - { name: "pimcore.datahub.batch_import.loader", type: "http" }
+            - { name: "pimcore.datahub.data_importer.loader", type: "http" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\SftpLoader:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\SftpLoader:
         tags:
-            - { name: "pimcore.datahub.batch_import.loader", type: "sftp" }
+            - { name: "pimcore.datahub.data_importer.loader", type: "sftp" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\PushLoader:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader:
         tags:
-            - { name: "pimcore.datahub.batch_import.loader", type: "push" }
+            - { name: "pimcore.datahub.data_importer.loader", type: "push" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker: ~
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker: ~
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory: ~
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory: ~
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\CsvFileInterpreter:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter:
         calls:
             - [ setLogger, [ '@logger' ] ]
         tags:
-            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
-            - { name: "pimcore.datahub.batch_import.interpreter", type: "csv" }
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+            - { name: "pimcore.datahub.data_importer.interpreter", type: "csv" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\XlsxFileInterpreter:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter:
         calls:
             - [ setLogger, [ '@logger' ] ]
         tags:
-            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
-            - { name: "pimcore.datahub.batch_import.interpreter", type: "xlsx" }
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+            - { name: "pimcore.datahub.data_importer.interpreter", type: "xlsx" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\JsonFileInterpreter:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\JsonFileInterpreter:
         calls:
             - [ setLogger, [ '@logger' ] ]
         tags:
-            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
-            - { name: "pimcore.datahub.batch_import.interpreter", type: "json" }
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+            - { name: "pimcore.datahub.data_importer.interpreter", type: "json" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\XmlFileInterpreter:
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XmlFileInterpreter:
         calls:
             - [ setLogger, [ '@logger' ] ]
         tags:
-            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
-            - { name: "pimcore.datahub.batch_import.interpreter", type: "xml" }
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+            - { name: "pimcore.datahub.data_importer.interpreter", type: "xml" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\CleanupStrategyFactory: ~
+    Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory: ~
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\DeleteStrategy:
+    Pimcore\Bundle\DataImporterBundle\Cleanup\DeleteStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.cleanup", type: "delete" }
+            - { name: "pimcore.datahub.data_importer.cleanup", type: "delete" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\UnpublishStrategy:
+    Pimcore\Bundle\DataImporterBundle\Cleanup\UnpublishStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.cleanup", type: "unpublish" }
+            - { name: "pimcore.datahub.data_importer.cleanup", type: "unpublish" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\ResolverFactory: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver: ~
+    Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory: ~
+    Pimcore\Bundle\DataImporterBundle\Resolver\Resolver: ~
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load\IdStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Load\IdStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.load", type: "id" }
+            - { name: "pimcore.datahub.data_importer.resolver.load", type: "id" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load\PathStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Load\PathStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.load", type: "path" }
+            - { name: "pimcore.datahub.data_importer.resolver.load", type: "path" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load\AttributeStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Load\AttributeStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.load", type: "attribute" }
+            - { name: "pimcore.datahub.data_importer.resolver.load", type: "attribute" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load\NotLoadStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Load\NotLoadStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.load", type: "notLoad" }
+            - { name: "pimcore.datahub.data_importer.resolver.load", type: "notLoad" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location\FindParentStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Location\FindParentStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.location", type: "findParent" }
+            - { name: "pimcore.datahub.data_importer.resolver.location", type: "findParent" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location\NoChangeStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Location\NoChangeStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.location", type: "noChange" }
+            - { name: "pimcore.datahub.data_importer.resolver.location", type: "noChange" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location\StaticPathStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Location\StaticPathStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.location", type: "staticPath" }
+            - { name: "pimcore.datahub.data_importer.resolver.location", type: "staticPath" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish\AlwaysPublishStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Publish\AlwaysPublishStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.publish", type: "alwaysPublish" }
+            - { name: "pimcore.datahub.data_importer.resolver.publish", type: "alwaysPublish" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish\AttributeBasedStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Publish\AttributeBasedStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.publish", type: "attributeBased" }
+            - { name: "pimcore.datahub.data_importer.resolver.publish", type: "attributeBased" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish\NoChangePublishNewStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Publish\NoChangePublishNewStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.publish", type: "noChangePublishNew" }
+            - { name: "pimcore.datahub.data_importer.resolver.publish", type: "noChangePublishNew" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish\NoChangeUnpublishNewStrategy:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Publish\NoChangeUnpublishNewStrategy:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.publish", type: "noChangeUnpublishNew" }
+            - { name: "pimcore.datahub.data_importer.resolver.publish", type: "noChangeUnpublishNew" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Factory\DataObjectFactory:
+    Pimcore\Bundle\DataImporterBundle\Resolver\Factory\DataObjectFactory:
         tags:
-            - { name: "pimcore.datahub.batch_import.resolver.factory", type: "dataObject" }
+            - { name: "pimcore.datahub.data_importer.resolver.factory", type: "dataObject" }
 
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService:
+    Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService:
         calls:
             - [ setLogger, [ '@logger' ] ]
         tags:
-            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService:
+    Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService:
         calls:
             - [ setLogger, [ '@logger' ] ]
         tags:
-            - { name: monolog.logger, channel: 'BATCH-IMPORT' }
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }

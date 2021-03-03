@@ -10,13 +10,13 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Factory\FactoryInterface;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load\LoadStrategyInterface;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location\LocationStrategyInterface;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish\PublishStrategyInterface;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Factory\FactoryInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\PublishStrategyInterface;
 
 class ResolverFactory
 {

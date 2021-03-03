@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 
 interface DataTargetInterface extends SettingsAwareInterface

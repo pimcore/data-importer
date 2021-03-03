@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.direct");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.direct = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.direct");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.direct = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'direct',
     dataApplied: false,
@@ -37,7 +37,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 valueField: 'key',
                 queryMode: 'local',
                 forceSelection: true,
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_fieldName'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fieldName'),
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
                 allowBlank: false,
@@ -69,18 +69,18 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
 
             //register listeners for class and type changes
-            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultTypeChanged, function(newType) {
+            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function(newType) {
                 this.transformationResultType = newType;
                 this.initAttributeStore(attributeStore);
             }.bind(this));
-            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.classChanged,
+            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
                function(combo, newValue, oldValue) {
                     this.dataObjectClassId = newValue;
                     this.initAttributeStore(attributeStore);
                 }.bind(this)
             );
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
                     width: 500,
@@ -128,7 +128,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             this.configItemRootContainer.targetFieldCache = targetFieldCache;
 
             Ext.Ajax.request({
-                url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectattributes'),
+                url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),
                 method: 'GET',
                 params: {
                     'class_id': classId,

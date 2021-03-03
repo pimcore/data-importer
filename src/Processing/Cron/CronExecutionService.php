@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron;
+namespace Pimcore\Bundle\DataImporterBundle\Processing\Cron;
 
 use Cron\CronExpression;
 use Doctrine\DBAL\Exception\TableNotFoundException;
@@ -23,7 +23,7 @@ class CronExecutionService
      */
     protected $db;
 
-    const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_batch_import_last_cron_execution';
+    const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
 
     public function __construct(Db\ConnectionInterface $connection)
     {

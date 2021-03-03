@@ -1,4 +1,4 @@
-# Pimcore Datahub Batch Import
+# Pimcore Data Importer
 
 This extension adds a comprehensive import functionality to Pimcore Datahub. It allows importing data from external 
 sources and applying the data to Pimcore data objects based on a configured mapping without writing any code.

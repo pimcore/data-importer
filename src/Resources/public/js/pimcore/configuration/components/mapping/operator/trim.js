@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.trim");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.trim = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.abstractOperator, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.trim");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.trim = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
     type: 'trim',
 
@@ -17,16 +17,16 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
         return [
             {
                 xtype: 'combo',
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_mode'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_mode'),
                 value: this.data.settings ? this.data.settings.mode : 'both',
                 name: 'settings.mode',
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
                 },
                 store: [
-                    ['left', t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_left')],
-                    ['right', t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_right')],
-                    ['both', t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_both')]
+                    ['left', t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_left')],
+                    ['right', t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_right')],
+                    ['both', t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_both')]
                 ]
 
             }

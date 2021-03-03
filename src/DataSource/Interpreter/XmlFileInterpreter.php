@@ -10,12 +10,12 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidInputException;
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
 use Symfony\Component\Config\Util\Exception\XmlParsingException;
 use Symfony\Component\Config\Util\XmlUtils;
 
@@ -91,7 +91,7 @@ class XmlFileInterpreter extends AbstractInterpreter
         } catch (XmlParsingException $exception) {
             $message = 'Error validating XML: ' . $exception->getMessage();
             $this->applicationLogger->info($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
             ]);
 
             return false;

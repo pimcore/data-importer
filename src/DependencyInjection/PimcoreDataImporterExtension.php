@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection;
+namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -22,7 +22,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  *
  * @link http://symfony.com/doc/current/cookbook/bundles/extension.html
  */
-class PimcoreDataHubBatchImportExtension extends Extension
+class PimcoreDataImporterExtension extends Extension
 {
     /**
      * {@inheritdoc}

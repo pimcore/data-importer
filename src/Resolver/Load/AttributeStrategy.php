@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
 class AttributeStrategy extends AbstractLoad

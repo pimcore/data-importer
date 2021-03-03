@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.asset");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.asset = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.asset");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.asset = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'asset',
 
@@ -78,7 +78,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.a
                 }
             });
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600

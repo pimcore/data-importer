@@ -10,16 +10,16 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
+namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
 class InterpreterConfigurationFactoryPass implements CompilerPassInterface
 {
-    const interpreter_tag = 'pimcore.datahub.batch_import.interpreter';
+    const interpreter_tag = 'pimcore.datahub.data_importer.interpreter';
 
     /**
      * @param ContainerBuilder $container

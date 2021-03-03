@@ -22,10 +22,10 @@ based on which the import starts on a regular base, e.g. every 10 Minutes, once 
 See for example [Crontab Guru](https://crontab.guru/) for possibilities and a generator for generating
 cron definitions. 
 
-> Make sure `datahub:batch-import:execute-cron` command is setup properly during installation. 
+> Make sure `datahub:data-importer:execute-cron` command is setup properly during installation. 
 
 ### Command-based Execution
-It is also possible to imports with executing the `datahub:batch-import:prepare-import` command on the commandline. 
+It is also possible to imports with executing the `datahub:data-importer:prepare-import` command on the commandline. 
 
 
 

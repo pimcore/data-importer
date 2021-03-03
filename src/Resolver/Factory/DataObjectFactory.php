@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Factory;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Factory;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Factory;

@@ -10,16 +10,16 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
+namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
 class LoaderConfigurationFactoryPass implements CompilerPassInterface
 {
-    const loader_tag = 'pimcore.datahub.batch_import.loader';
+    const loader_tag = 'pimcore.datahub.data_importer.loader';
 
     /**
      * @param ContainerBuilder $container

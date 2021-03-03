@@ -10,19 +10,19 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
+namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\ResolverFactory;
+use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
 class ResolverConfigurationFactoryPass implements CompilerPassInterface
 {
-    const load_tag = 'pimcore.datahub.batch_import.resolver.load';
-    const location_tag = 'pimcore.datahub.batch_import.resolver.location';
-    const publish_tag = 'pimcore.datahub.batch_import.resolver.publish';
-    const factory_tag = 'pimcore.datahub.batch_import.resolver.factory';
+    const load_tag = 'pimcore.datahub.data_importer.resolver.load';
+    const location_tag = 'pimcore.datahub.data_importer.resolver.location';
+    const publish_tag = 'pimcore.datahub.data_importer.resolver.publish';
+    const factory_tag = 'pimcore.datahub.data_importer.resolver.factory';
 
     /**
      * @param ContainerBuilder $container

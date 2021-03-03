@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.execution');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.execution = Class.create({
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Class.create({
 
     configName: '',
     data: {},
@@ -30,19 +30,19 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
         if(!this.form) {
 
             this.buttonFieldContainer = Ext.create('Ext.form.FieldContainer', {
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_execution_manual_execution'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_manual_execution'),
                 items: [
                     {
                         xtype: 'button',
                         width: 165,
-                        text: t('plugin_pimcore_datahub_batch_import_configpanel_execution_start'),
+                        text: t('plugin_pimcore_datahub_data_importer_configpanel_execution_start'),
                         handler: this.startImport.bind(this)
                     }
                 ],
             });
 
             this.cronDefinition = Ext.create('Ext.form.FieldContainer', {
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_execution_cron'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron'),
                 layout: 'hbox',
                 items: [
                     {
@@ -70,7 +70,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
                     },{
                         xtype: 'displayfield',
                         style: 'padding-left: 10px',
-                        value: '<a target="_blank" href="https://crontab.guru/">' + t('plugin_pimcore_datahub_batch_import_configpanel_execution_cron_generator') + '</a>'
+                        value: '<a target="_blank" href="https://crontab.guru/">' + t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron_generator') + '</a>'
                     }
                 ]
             });
@@ -94,17 +94,17 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
                     {
                         xtype: 'button',
                         iconCls: 'pimcore_icon_cancel',
-                        text: t('plugin_pimcore_datahub_batch_import_configpanel_execution_cancel'),
+                        text: t('plugin_pimcore_datahub_data_importer_configpanel_execution_cancel'),
                         handler: function() {
                             Ext.Ajax.request({
-                                url: Routing.generate('pimcore_datahubbatchimport_configdataobject_cancelexecution'),
+                                url: Routing.generate('pimcore_dataimporter_configdataobject_cancelexecution'),
                                 method: 'PUT',
                                 params: {
                                     config_name: this.configName,
                                 },
                                 success: function (response) {
 
-                                    pimcore.helpers.showNotification(t('success'), t('plugin_pimcore_datahub_batch_import_configpanel_execution_cancel_successful'), 'success');
+                                    pimcore.helpers.showNotification(t('success'), t('plugin_pimcore_datahub_data_importer_configpanel_execution_cancel_successful'), 'success');
                                     this.updateProgress();
 
                                 }.bind(this)
@@ -116,13 +116,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
 
             this.updateProgress();
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 bodyStyle: 'padding:10px;',
-                title: t('plugin_pimcore_datahub_batch_import_configpanel_execution'),
+                title: t('plugin_pimcore_datahub_data_importer_configpanel_execution'),
                 items: [
                     {
                         xtype: 'fieldset',
-                        title: t('plugin_pimcore_datahub_batch_import_configpanel_execution_settings'),
+                        title: t('plugin_pimcore_datahub_data_importer_configpanel_execution_settings'),
                         defaults: {
                             labelWidth: 130
                         },
@@ -132,7 +132,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
                         ]
                     },{
                         xtype: 'fieldset',
-                        title: t('plugin_pimcore_datahub_batch_import_configpanel_execution_status'),
+                        title: t('plugin_pimcore_datahub_data_importer_configpanel_execution_status'),
                         items: [
                             this.progressLabel,
                             this.progressBar,
@@ -145,12 +145,12 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
 
             this.updateDisabledState();
 
-            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.loaderTypeChanged, function(newType) {
+            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.loaderTypeChanged, function(newType) {
                 this.currentLoaderType = newType;
                 this.updateDisabledState();
             }.bind(this));
 
-            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.configDirtyChanged, function(dirty) {
+            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.configDirtyChanged, function(dirty) {
                 this.currentDirtyState = dirty;
                 this.updateDisabledState();
             }.bind(this));
@@ -171,11 +171,11 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
 
     startImport: function(button) {
 
-        button.setText(t('plugin_pimcore_datahub_batch_import_configpanel_execution_start_loading'));
+        button.setText(t('plugin_pimcore_datahub_data_importer_configpanel_execution_start_loading'));
         button.setDisabled(true);
 
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_startbatchimport'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_startbatchimport'),
             method: 'PUT',
             params: {
                 config_name: this.configName,
@@ -184,12 +184,12 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
                 let data = Ext.decode(response.responseText);
 
                 if (data && data.success) {
-                    pimcore.helpers.showNotification(t('success'), t('plugin_pimcore_datahub_batch_import_configpanel_execution_start_successful'), 'success');
+                    pimcore.helpers.showNotification(t('success'), t('plugin_pimcore_datahub_data_importer_configpanel_execution_start_successful'), 'success');
                 } else {
-                    pimcore.helpers.showNotification(t("error"), t('plugin_pimcore_datahub_batch_import_configpanel_execution_start_error'), 'error');
+                    pimcore.helpers.showNotification(t("error"), t('plugin_pimcore_datahub_data_importer_configpanel_execution_start_error'), 'error');
                 }
                 button.setDisabled(false);
-                button.setText(t('plugin_pimcore_datahub_batch_import_configpanel_execution_start'));
+                button.setText(t('plugin_pimcore_datahub_data_importer_configpanel_execution_start'));
                 this.updateDisabledState();
                 this.updateProgress();
             }.bind(this)
@@ -202,7 +202,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
             field.setValidation(true);
         } else {
             Ext.Ajax.request({
-                url: Routing.generate('pimcore_datahubbatchimport_configdataobject_iscronexpressionvalid'),
+                url: Routing.generate('pimcore_dataimporter_configdataobject_iscronexpressionvalid'),
                 method: 'GET',
                 params: {
                     cron_expression: field.getValue()
@@ -225,7 +225,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
     updateProgress: function() {
         clearTimeout(this.updateHandle);
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_checkimportprogress'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_checkimportprogress'),
             method: 'GET',
             params: {
                 config_name: this.configName,
@@ -236,12 +236,12 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.executio
                 if(data.isRunning) {
                     this.progressBar.show();
                     this.cancelButtonContainer.show();
-                    this.progressBar.updateProgress(data.progress, data.processedItems + '/' + data.totalItems + ' ' + t('plugin_pimcore_datahub_batch_import_configpanel_execution_processed'));
-                    this.progressLabel.setHtml(t('plugin_pimcore_datahub_batch_import_configpanel_execution_current_progress'));
+                    this.progressBar.updateProgress(data.progress, data.processedItems + '/' + data.totalItems + ' ' + t('plugin_pimcore_datahub_data_importer_configpanel_execution_processed'));
+                    this.progressLabel.setHtml(t('plugin_pimcore_datahub_data_importer_configpanel_execution_current_progress'));
                 } else {
                     this.progressBar.hide();
                     this.cancelButtonContainer.hide();
-                    this.progressLabel.setHtml('<b>' + t('plugin_pimcore_datahub_batch_import_configpanel_execution_not_running') + '</b>');
+                    this.progressLabel.setHtml('<b>' + t('plugin_pimcore_datahub_data_importer_configpanel_execution_not_running') + '</b>');
                 }
 
                 this.updateHandle = setTimeout(this.updateProgress.bind(this), 5000);

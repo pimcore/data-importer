@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
 class AttributeBasedStrategy implements PublishStrategyInterface

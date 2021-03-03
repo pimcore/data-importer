@@ -10,10 +10,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
+namespace Pimcore\Bundle\DataImporterBundle\Command;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Console\AbstractCommand;
 use Pimcore\Console\Traits\Parallelization;
 use Symfony\Component\Console\Input\InputInterface;
@@ -49,7 +49,7 @@ class ParallelProcessQueueCommand extends AbstractCommand
         self::configureParallelization($this);
 
         $this
-            ->setName('datahub:batch-import:process-queue-parallel')
+            ->setName('datahub:data-importer:process-queue-parallel')
             ->setDescription('Processes all items of the queue that can be executed parallel.')
         ;
     }

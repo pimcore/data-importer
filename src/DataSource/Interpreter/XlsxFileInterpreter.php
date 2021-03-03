@@ -10,10 +10,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
 
 class XlsxFileInterpreter extends AbstractInterpreter
 {

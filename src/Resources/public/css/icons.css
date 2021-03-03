@@ -37,7 +37,7 @@
     background-color: #f6f6f6;
 }
 
-.plugin_pimcore_datahub_icon_batchImportDataObject {
+.plugin_pimcore_datahub_icon_dataImporterDataObject {
     background: url(/bundles/pimcoreadmin/img/flat-color-icons/feed_in.svg) center center no-repeat !important;
 }
 

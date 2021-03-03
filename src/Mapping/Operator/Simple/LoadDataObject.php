@@ -10,12 +10,12 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\AbstractOperator;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 
@@ -92,7 +92,7 @@ class LoadDataObject extends AbstractOperator
                 $objects[] = $object;
             } elseif (!$dryRun) {
                 $this->applicationLogger->warning("Could not load data object from `$data` ", [
-                    'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
             }
         }

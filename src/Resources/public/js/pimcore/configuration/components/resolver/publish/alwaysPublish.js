@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish.alwaysPublish');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish.alwaysPublish = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish.alwaysPublish');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish.alwaysPublish = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'alwaysPublish',
 

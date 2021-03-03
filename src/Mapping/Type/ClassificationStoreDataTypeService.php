@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
 use Pimcore\Model\DataObject;
 

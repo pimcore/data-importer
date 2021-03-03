@@ -8,11 +8,11 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.datahub.adapter.batchImportDataObject");
-pimcore.plugin.datahub.adapter.batchImportDataObject = Class.create(pimcore.plugin.datahub.adapter.graphql, {
+pimcore.registerNS("pimcore.plugin.datahub.adapter.dataImporterDataObject");
+pimcore.plugin.datahub.adapter.dataImporterDataObject = Class.create(pimcore.plugin.datahub.adapter.graphql, {
 
     createConfigPanel: function(data) {
-        let fieldPanel = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObject(data, this);
+        let fieldPanel = new pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject(data, this);
     },
 
     openConfiguration: function (id) {
@@ -23,7 +23,7 @@ pimcore.plugin.datahub.adapter.batchImportDataObject = Class.create(pimcore.plug
         }
 
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_get'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_get'),
             params: {
                 name: id
             },

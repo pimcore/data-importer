@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.cleanup.delete');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.cleanup.delete = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.cleanup.delete');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.cleanup.delete = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'delete',
 

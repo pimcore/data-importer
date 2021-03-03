@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
+namespace Pimcore\Bundle\DataImporterBundle\Command;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -39,7 +39,7 @@ class PrepareImportCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('datahub:batch-import:prepare-import')
+            ->setName('datahub:data-importer:prepare-import')
             ->setDescription('Loads and interprets data source file and prepares queue items for import.')
             ->addArgument('config_name', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'Names of configs that should be considered.')
         ;

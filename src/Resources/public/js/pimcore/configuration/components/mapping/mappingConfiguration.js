@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.mappingConfiguration');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.mappingConfiguration = Class.create({
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfiguration');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfiguration = Class.create({
 
 
     configItemRootContainer: null,
@@ -37,11 +37,11 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                                 this.addItem({label: 'new column'}, false, true);
                             }.bind(this)
                         }, '->', {
-                            text: t('plugin_pimcore_datahub_batch_import_configpanel_mapping_collapse_all'),
+                            text: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_collapse_all'),
                             iconCls: 'plugin_pimcore_datahub_icon_collapse',
                             handler: this.collapseAll.bind(this)
                         }, {
-                            text: t('plugin_pimcore_datahub_batch_import_configpanel_mapping_autofill'),
+                            text: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_autofill'),
                             iconCls: 'plugin_pimcore_datahub_icon_wizard',
                             handler: function() {
                                 //get all fields from preview
@@ -98,7 +98,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
     },
 
     addItem: function(mappingItemData, collapsed, scrollToBottom) {
-        const mappingConfigurationItem = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.mappingConfigurationItem(mappingItemData, this.configItemRootContainer, this.transformationResultHandler);
+        const mappingConfigurationItem = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfigurationItem(mappingItemData, this.configItemRootContainer, this.transformationResultHandler);
         this.panel.add(mappingConfigurationItem.buildMappingConfigurationItem(collapsed));
         mappingConfigurationItem.recalculateTransformationResultType();
         if(scrollToBottom) {

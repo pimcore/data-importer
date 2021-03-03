@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\File;
 
 class HttpLoader implements DataLoaderInterface
@@ -34,7 +34,7 @@ class HttpLoader implements DataLoaderInterface
 
     public function loadData(): string
     {
-        $folder = PIMCORE_PRIVATE_VAR . '/datahub_batchimport_tmp';
+        $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/http-loader/';
         File::mkdir($folder);
 
         $this->importFilePath = $folder . uniqid('http-import-');

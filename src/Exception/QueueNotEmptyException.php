@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Exception;
+namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
 class QueueNotEmptyException extends \Exception
 {

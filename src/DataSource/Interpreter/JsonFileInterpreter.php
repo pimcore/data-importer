@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
 
 class JsonFileInterpreter extends AbstractInterpreter
 {

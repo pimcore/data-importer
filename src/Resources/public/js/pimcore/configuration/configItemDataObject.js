@@ -8,10 +8,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObject');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObject = Class.create(pimcore.plugin.datahub.configuration.graphql.configItem, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Class.create(pimcore.plugin.datahub.configuration.graphql.configItem, {
 
-    urlSave: Routing.generate('pimcore_datahubbatchimport_configdataobject_save'),
+    urlSave: Routing.generate('pimcore_dataimporter_configdataobject_save'),
 
     getPanels: function () {
         return [
@@ -92,7 +92,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
     save: function () {
         //TODO make that more generic in datahub
         if(!this.isValid(true)) {
-            pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_batch_import_configpanel_invalid_config'), 'error');
+            pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_data_importer_configpanel_invalid_config'), 'error');
             return;
         }
 
@@ -177,18 +177,18 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
             msgTarget: 'under'
         };
 
-        this.loaderForm = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+        this.loaderForm = Ext.create('DataHub.DataImporter.StructuredValueForm', {
             items: [
                 {
                     xtype: "fieldset",
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_datasource'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_datasource'),
                     defaults: defaults,
                     items: [
                         {
-                            fieldLabel: t("plugin_pimcore_datahub_batch_import_configpanel_datasource_type"),
+                            fieldLabel: t("plugin_pimcore_datahub_data_importer_configpanel_datasource_type"),
                             xtype: "subsettingscombo",
                             name: "type",
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader,
                             settingsPanel: loaderSettingsPanel,
                             value: this.data.loaderConfig.type,
                             settingsValues: this.data.loaderConfig.settings,
@@ -198,7 +198,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
                             listeners: {
                                 change: function(combo, newValue, oldValue) {
                                     this.tab.fireEvent(
-                                        pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.loaderTypeChanged,
+                                        pimcore.plugin.pimcoreDataImporterBundle.configuration.events.loaderTypeChanged,
                                         newValue
                                     );
                                 }.bind(this)
@@ -213,18 +213,18 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
         const interpreterSettingsPanel = Ext.create('Ext.Panel', {width: 900});
 
 
-        this.interpreterForm = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+        this.interpreterForm = Ext.create('DataHub.DataImporter.StructuredValueForm', {
             items: [
                 {
                     xtype: 'fieldset',
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_file_format'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_file_format'),
                     defaults: defaults,
                     items: [
                         {
-                            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_file_formats_type'),
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_file_formats_type'),
                             xtype: 'subsettingscombo',
                             name: 'type',
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpreter,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter,
                             settingsPanel: interpreterSettingsPanel,
                             value: this.data.interpreterConfig.type,
                             settingsValues: this.data.interpreterConfig.settings
@@ -240,7 +240,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
             bodyStyle: 'padding:10px;',
             autoScroll: true,
             border: false,
-            title: t('plugin_pimcore_datahub_batch_import_configpanel_datasource'),
+            title: t('plugin_pimcore_datahub_data_importer_configpanel_datasource'),
             items: [
                 this.loaderForm,
                 this.interpreterForm
@@ -251,13 +251,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
 
     buildImportSettingsTab: function() {
 
-        const transformationResultHandler = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.transformationResultHandler(this.configName, this);
-        const importPreview = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPreview(this.configName, this, transformationResultHandler);
-        this.importSettings = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSettings(this.data, this.tab, transformationResultHandler);
+        const transformationResultHandler = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.transformationResultHandler(this.configName, this);
+        const importPreview = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview(this.configName, this, transformationResultHandler);
+        this.importSettings = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings(this.data, this.tab, transformationResultHandler);
 
 
         return Ext.create('Ext.Panel', {
-            title: t('plugin_pimcore_datahub_batch_import_configpanel_import_settings'),
+            title: t('plugin_pimcore_datahub_data_importer_configpanel_import_settings'),
             bodyStyle: 'padding:10px;',
             layout: 'border',
             items: [
@@ -269,19 +269,19 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
     },
 
     buildExecutionTab: function() {
-        const execution = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.execution(this.configName, this.data.executionConfig, this.tab, this.data.loaderConfig.type);
+        const execution = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution(this.configName, this.data.executionConfig, this.tab, this.data.loaderConfig.type);
         this.executionForm = execution.buildPanel();
         return this.executionForm;
     },
 
     buildLoggerTab: function() {
-        const loggerTab = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.logTab(this.configName);
+        const loggerTab = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab(this.configName);
         return loggerTab.getTabPanel();
     },
 
     updateColumnHeaders: function() {
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loadavailablecolumnheaders'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_loadavailablecolumnheaders'),
             method: 'POST',
             params: {
                 config_name: this.configName,
@@ -312,7 +312,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
         $super();
         if(this.tab) {
             this.tab.fireEvent(
-                pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.configDirtyChanged,
+                pimcore.plugin.pimcoreDataImporterBundle.configuration.events.configDirtyChanged,
                 this.dirty
             );
         }
@@ -323,7 +323,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.configItemDataObjec
 
         if(this.tab && !this.dirty) {
             this.tab.fireEvent(
-                pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.configDirtyChanged,
+                pimcore.plugin.pimcoreDataImporterBundle.configuration.events.configDirtyChanged,
                 this.dirty
             );
         }

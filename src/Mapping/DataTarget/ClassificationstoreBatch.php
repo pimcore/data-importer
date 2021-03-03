@@ -10,10 +10,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Model\Element\ElementInterface;
 
 class ClassificationstoreBatch implements DataTargetInterface

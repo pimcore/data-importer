@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Publish;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 
 interface PublishStrategyInterface extends SettingsAwareInterface

@@ -10,16 +10,16 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Processing;
+namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\QueueNotEmptyException;
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\Cron\CronExecutionService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\ResolverFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\Exception\QueueNotEmptyException;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Log\ApplicationLogger;
 use Psr\Log\LoggerAwareTrait;
 
@@ -109,7 +109,7 @@ class ImportPreparationService
 
             $logMessage = 'Loading source data from configured source...';
             $this->applicationLogger->info($logMessage, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
             ]);
             $this->logger->info($logMessage);
             $filePath = $loader->loadData();
@@ -133,14 +133,14 @@ class ImportPreparationService
             $this->logger->warning($message);
 
             $this->applicationLogger->warning($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
             ]);
         } catch (\Exception $e) {
             $message = 'Error preparing Import: ';
             $this->logger->warning($message . $e);
 
             $this->applicationLogger->error($message . $e->getMessage(), [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
             ]);
         }
 
@@ -155,7 +155,7 @@ class ImportPreparationService
             $message = "Configuration '$configName' has no cronDefinition, skipping cron execution.";
             $this->logger->debug($message);
             $this->applicationLogger->debug($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
             ]);
 
             return;
@@ -184,7 +184,7 @@ class ImportPreparationService
             $message = "Configuration '$configName' is not active, skipping preparation execution.";
             $this->logger->info($message);
             $this->applicationLogger->info($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
             ]);
 
             return false;

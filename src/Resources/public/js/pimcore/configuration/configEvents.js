@@ -8,7 +8,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events = {
+pimcore.plugin.pimcoreDataImporterBundle.configuration.events = {
 
     /**
      * Fired when data object class changed

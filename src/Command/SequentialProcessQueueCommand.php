@@ -10,10 +10,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
+namespace Pimcore\Bundle\DataImporterBundle\Command;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -41,7 +41,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
     public function configure()
     {
         $this
-            ->setName('datahub:batch-import:process-queue-sequential')
+            ->setName('datahub:data-importer:process-queue-sequential')
             ->setDescription('Processes all items of the queue that need to be executed sequential.')
         ;
     }

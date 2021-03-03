@@ -8,15 +8,15 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish.attributeBased');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish.attributeBased = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish.attributeBased');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish.attributeBased = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'attributeBased',
 
     buildSettingsForm: function() {
 
         if(!this.form) {
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600,
@@ -27,7 +27,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                 items: [
                     {
                         xtype: 'combo',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_data_source_index'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_data_source_index'),
                         name: this.dataNamePrefix + 'dataSourceIndex',
                         value: this.data.dataSourceIndex,
                         store: this.configItemRootContainer.columnHeaderStore,

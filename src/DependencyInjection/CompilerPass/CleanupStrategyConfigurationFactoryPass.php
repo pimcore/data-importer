@@ -10,16 +10,16 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DependencyInjection\CompilerPass;
+namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\CleanupStrategyFactory;
+use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
 class CleanupStrategyConfigurationFactoryPass implements CompilerPassInterface
 {
-    const cleanup_tag = 'pimcore.datahub.batch_import.cleanup';
+    const cleanup_tag = 'pimcore.datahub.data_importer.cleanup';
 
     /**
      * @param ContainerBuilder $container

@@ -8,9 +8,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.classificationstore');
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.classificationstore');
 
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.classificationstore = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.classificationstore = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'classificationstore',
     dataApplied: false,
@@ -52,7 +52,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             });
 
             const clsKeySelection = Ext.create('Ext.form.FieldContainer', {
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_classification_store_key'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_classification_store_key'),
                 layout: 'hbox',
                 items: [
                     this.clsKeySelectionLabel,
@@ -62,7 +62,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                         style: "margin-left: 5px",
                         handler: function() {
 
-                            let searchWindow = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.tools.classificationStoreKeySearchWindow(
+                            let searchWindow = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.tools.classificationStoreKeySearchWindow(
                                 this.dataObjectClassId,
                                 attributeSelection.getValue(),
                                 this.transformationResultType,
@@ -87,7 +87,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
 
                             if(this.data.keyId) {
                                 Ext.Ajax.request({
-                                    url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectclassificationstorekeyname'),
+                                    url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectclassificationstorekeyname'),
                                     method: 'GET',
                                     params: {
                                         'key_id': this.data.keyId
@@ -115,7 +115,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 valueField: 'key',
                 queryMode: 'local',
                 forceSelection: true,
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_fieldName'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fieldName'),
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
                 allowBlank: false,
@@ -147,19 +147,19 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection, clsKeySelection));
 
             //register listeners for class and type changes
-            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultTypeChanged, function(newType) {
+            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function(newType) {
                 this.transformationResultType = newType;
                 this.clsKeySelectionLabel.setValue('');
                 clsKeySelectionValue.setValue('');
             }.bind(this));
-            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.classChanged,
+            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
                function(combo, newValue, oldValue) {
                     this.dataObjectClassId = newValue;
                     this.initAttributeStore(attributeStore);
                 }.bind(this)
             );
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
                     width: 500,
@@ -208,7 +208,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             this.configItemRootContainer.classificationStoreFieldCache = classificationStoreFieldCache;
 
             Ext.Ajax.request({
-                url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectclassificationstoreattributes'),
+                url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectclassificationstoreattributes'),
                 method: 'GET',
                 params: {
                     'class_id': classId
@@ -241,7 +241,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
     },
 
     updateDataKeyLabel: function(groupName, keyName) {
-        this.clsKeySelectionLabel.setValue(keyName + ' ' + t('plugin_pimcore_datahub_batch_import_configpanel_classification_key_in_group') + ' ' + groupName);
+        this.clsKeySelectionLabel.setValue(keyName + ' ' + t('plugin_pimcore_datahub_data_importer_configpanel_classification_key_in_group') + ' ' + groupName);
     }
 
 });

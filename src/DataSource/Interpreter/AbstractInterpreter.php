@@ -10,13 +10,13 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
@@ -213,13 +213,13 @@ abstract class AbstractInterpreter implements InterpreterInterface
             $archiveLogMessage = 'Uploaded file not valid.';
             $message = 'Uploaded file not valid, not creating any queue items and doing any cleanup."';
             $this->applicationLogger->error($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName
             ]);
         }
 
         if ($this->doArchiveImportFile) {
             $this->applicationLogger->info($archiveLogMessage, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 'fileObject' => new FileObject(file_get_contents($path))
             ]);
         }
@@ -250,7 +250,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
             $message = sprintf("Import data of item `%s` of `%s` didn't change, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName);
             $this->logger->debug($message);
             $this->applicationLogger->debug($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
             ]);
         }
     }

@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location.staticPath');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location.staticPath = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location.staticPath');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location.staticPath = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'staticPath',
 
@@ -50,7 +50,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                 }
             });
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600,
@@ -61,13 +61,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                 items: [
                     // {
                     //     xtype: 'textfield',
-                    //     fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_path'),
+                    //     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_path'),
                     //     name: this.dataNamePrefix + 'path',
                     //     value: this.data.path || '/'
                     // }
                     {
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_path'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_path'),
                         layout: 'hbox',
                         items: [
                             this.parentFolder,

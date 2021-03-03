@@ -9,7 +9,7 @@
  */
 
 
-Ext.define('DataHub.BatchImport.SubSettingsComboBox', {
+Ext.define('DataHub.DataImporter.SubSettingsComboBox', {
     extend: 'Ext.form.field.ComboBox',
 
     alias: ['widget.subsettingscombo'],
@@ -48,7 +48,7 @@ Ext.define('DataHub.BatchImport.SubSettingsComboBox', {
             if(!this.optionsBlackList.includes(optionType)) {
                 dataTypesStore.push([
                     optionType,
-                    t('plugin_pimcore_datahub_batch_import_configpanel_' + this.name + '_' + optionType)
+                    t('plugin_pimcore_datahub_data_importer_configpanel_' + this.name + '_' + optionType)
                 ]);
             }
 
@@ -88,7 +88,7 @@ Ext.define('DataHub.BatchImport.SubSettingsComboBox', {
 });
 
 
-Ext.define('DataHub.BatchImport.StructuredValueForm', {
+Ext.define('DataHub.DataImporter.StructuredValueForm', {
     extend: 'Ext.form.FormPanel',
     alias: ['widget.structuredvalueform'],
     getValues: function() {

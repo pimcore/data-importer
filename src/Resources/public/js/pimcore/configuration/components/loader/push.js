@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.push');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.push = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.push');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.push = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'push',
 
@@ -25,7 +25,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.p
                 msgTarget: 'under'
             });
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600
@@ -34,7 +34,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.p
                 items: [
                     {
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_push_apikey'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_push_apikey'),
                         layout: 'hbox',
                         width: 700,
                         items: [
@@ -51,12 +51,12 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.loader.p
                         ]
                     },{
                         xtype: 'checkbox',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_push_ignore_not_empty_queue'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_push_ignore_not_empty_queue'),
                         name: this.dataNamePrefix + 'ignoreNotEmptyQueue',
                         value: this.data.ignoreNotEmptyQueue,
                     },{
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_push_endpoint'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_push_endpoint'),
                         layout: 'hbox',
                         width: 700,
                         items: [

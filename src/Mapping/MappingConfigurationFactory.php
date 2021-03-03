@@ -10,11 +10,11 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget\DataTargetInterface;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\OperatorInterface;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 
 class MappingConfigurationFactory
 {

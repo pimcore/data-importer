@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPreview');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPreview = Class.create({
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview = Class.create({
 
     configName: '',
     configItemInstance: null,
@@ -26,7 +26,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
 
         if(!this.panel) {
             this.panel = Ext.create('Ext.Panel', {
-                title: t('plugin_pimcore_datahub_batch_import_configpanel_import_preview'),
+                title: t('plugin_pimcore_datahub_data_importer_configpanel_import_preview'),
                 region: 'west',
                 autoScroll: true,
                 animate: false,
@@ -72,20 +72,20 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
 
         var columns = [
             {
-                text: t('plugin_pimcore_datahub_batch_import_configpanel_preview_dataindex'),
+                text: t('plugin_pimcore_datahub_data_importer_configpanel_preview_dataindex'),
                 flex: 200,
                 sortable: false,
                 hidden: true,
                 dataIndex: 'dataindex'
             },
             {
-                text: t('plugin_pimcore_datahub_batch_import_configpanel_preview_label'),
+                text: t('plugin_pimcore_datahub_data_importer_configpanel_preview_label'),
                 flex: 130,
                 sortable: false,
                 dataIndex: 'label'
             },
             {
-                text: t('plugin_pimcore_datahub_batch_import_configpanel_preview_data'),
+                text: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data'),
                 flex: 150,
                 sortable: false,
                 dataIndex: 'data',
@@ -111,7 +111,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
                     renderer: Ext.util.Format.htmlEncode
                 },
             },
-            emptyText: t('plugin_pimcore_datahub_batch_import_configpanel_preview_empty'),
+            emptyText: t('plugin_pimcore_datahub_data_importer_configpanel_preview_empty'),
             tbar: {
                 items: [
                     {
@@ -166,7 +166,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
 
         if(!isValid) {
             if(!suppressInvalidError) {
-                pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_batch_import_configpanel_invalid_config_for_preview'), 'error');
+                pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_data_importer_configpanel_invalid_config_for_preview'), 'error');
             }
             return false;
         }
@@ -180,7 +180,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
             return;
         }
 
-        const url = Routing.generate('pimcore_datahubbatchimport_configdataobject_uploadpreviewdata', {'config_name': this.configName});
+        const url = Routing.generate('pimcore_dataimporter_configdataobject_uploadpreviewdata', {'config_name': this.configName});
 
         pimcore.helpers.uploadDialog(url, 'Filedata', function() {
             this.updatePreview();
@@ -244,7 +244,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importPr
         const currentConfig = this.configItemInstance.getSaveData();
 
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddatapreview'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_loaddatapreview'),
             method: 'POST',
             params: {
                 config_name: this.configName,

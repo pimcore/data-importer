@@ -10,11 +10,11 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use League\Flysystem\Filesystem;
 use League\Flysystem\Sftp\SftpAdapter;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\File;
 
 class SftpLoader implements DataLoaderInterface
@@ -51,10 +51,10 @@ class SftpLoader implements DataLoaderInterface
 
     public function loadData(): string
     {
-        $folder = PIMCORE_PRIVATE_VAR . '/datahub_batchimport_tmp';
+        $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/sftp-loader/';
         File::mkdir($folder);
 
-        $this->importFilePath = $folder . uniqid('http-import-');
+        $this->importFilePath = $folder . uniqid('sftp-import-');
 
         $loggingRemoteUrl = sprintf(
             'ssh2.sftp://%s:%s@%s:%s%s',

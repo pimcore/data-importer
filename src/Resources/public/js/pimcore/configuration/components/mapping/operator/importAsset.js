@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.importAsset");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.importAsset = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.abstractOperator, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.importAsset");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.importAsset = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
     //TODO
     type: 'importAsset',
@@ -51,7 +51,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
         });
 
         let composite = Ext.create('Ext.form.FieldContainer', {
-            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_target_folder'),
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_target_folder'),
             layout: 'hbox',
             items: [
                 this.parentFolder,
@@ -80,7 +80,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             composite,
             {
                 xtype: 'checkbox',
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_use_existing'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_use_existing'),
                 value: this.data.settings ? this.data.settings.useExisting : true,
                 name: 'settings.useExisting'
             }

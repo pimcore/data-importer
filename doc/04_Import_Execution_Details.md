@@ -11,9 +11,9 @@ and splits import source into single data rows. These data rows are added to a q
 
 Preparation starts when 'import is starte', that means ...  
 - when clicking manual execution in `Execution` tab of import configuration UI. 
-- based on cron definition for import when `datahub:batch-import:execute-cron` command is executed. Every command execution calls
+- based on cron definition for import when `datahub:data-importer:execute-cron` command is executed. Every command execution calls
  preparation of all import configuration, that are or were due since the last command execution.  
-- when `datahub:batch-import:prepare-import` is executed for certain an import configuration.
+- when `datahub:data-importer:prepare-import` is executed for certain an import configuration.
 - when data is pushed to the corresponding endpoint via http when `push` data source is configured. 
 
 For starting imports see also [Execution Configuration](./03_Configuration/07_Execution_Configuration.md).
@@ -38,7 +38,7 @@ Parallel imports process the queue items in a parallelized way. This speed thing
 in their exact order. 
 
 For executing processing of sequential and parallel queue items, two commands 
-(`datahub:batch-import:process-queue-sequential` and `datahub:batch-import:process-queue-parallel`) are available.
+(`datahub:data-importer:process-queue-sequential` and `datahub:data-importer:process-queue-parallel`) are available.
 
 The actual processing is the same for both types and consists of following steps for import jobs: 
 - Look for existing data element based on loading strategy or create new data element.

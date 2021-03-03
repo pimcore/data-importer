@@ -10,10 +10,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Asset;
 
 class LoadAsset extends ImportAsset
@@ -53,7 +53,7 @@ class LoadAsset extends ImportAsset
 
             if (empty($asset) && !$dryRun) {
                 $this->applicationLogger->warning("Could not load asset from `$data` ", [
-                    'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
             } else {
                 $assets[] = $asset;

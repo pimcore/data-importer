@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSettings');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSettings = Class.create({
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings = Class.create({
 
     configItemRootContainer: null,
     transformationResultHandler: null,
@@ -28,7 +28,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
         if(!this.panel) {
             this.panel = Ext.create('Ext.TabPanel', {
                 region: 'center',
-                title: t('plugin_pimcore_datahub_batch_import_configpanel_import_settings'),
+                title: t('plugin_pimcore_datahub_data_importer_configpanel_import_settings'),
                 items: [
                     this.buildResolverTab(),
                     this.buildProcessingTab(),
@@ -58,11 +58,11 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
         this.configItemRootContainer.currentDataValues = this.configItemRootContainer.currentDataValues || {};
         this.configItemRootContainer.currentDataValues.dataObjectClassId = this.resolverConfigData.dataObjectClassId;
 
-        this.resolverForm = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+        this.resolverForm = Ext.create('DataHub.DataImporter.StructuredValueForm', {
             bodyStyle: 'padding:10px;',
             defaults: panelDefaults,
             scrollable: true,
-            title: t('plugin_pimcore_datahub_batch_import_configpanel_resolver'),
+            title: t('plugin_pimcore_datahub_data_importer_configpanel_resolver'),
             items: [
                 {
                     xtype: 'textfield',
@@ -85,7 +85,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                         change: function(combo, newValue, oldValue) {
                             this.configItemRootContainer.currentDataValues.dataObjectClassId = newValue;
                             this.configItemRootContainer.fireEvent(
-                                pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.classChanged,
+                                pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
                                 combo,
                                 newValue,
                                 oldValue
@@ -93,7 +93,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                         }.bind(this),
                         added: function(combo) {
                             this.configItemRootContainer.fireEvent(
-                                pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.classInit,
+                                pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classInit,
                                 combo,
                                 combo.getValue(),
                             );
@@ -102,16 +102,16 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                 },
                 {
                     xtype: 'fieldset',
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_element_loading'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_element_loading'),
                     defaults: panelDefaults,
                     width: 850,
                     items: [
                         {
-                            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_loading_strategy'),
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_loading_strategy'),
                             xtype: 'subsettingscombo',
                             name: 'loadingStrategy.type',
                             settingsNamePrefix: 'loadingStrategy.settings',
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.load,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load,
                             settingsPanel: loadingStrategySettingsPanel,
                             value: this.resolverConfigData.loadingStrategy.type || 'notLoad',
                             settingsValues: this.resolverConfigData.loadingStrategy ? this.resolverConfigData.loadingStrategy.settings : {},
@@ -123,15 +123,15 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                 {
                     xtype: 'fieldset',
                     width: 850,
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_element_creation'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_element_creation'),
                     defaults: panelDefaults,
                     items: [
                         {
-                            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_create_location_strategy'),
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_create_location_strategy'),
                             xtype: 'subsettingscombo',
                             name: 'createLocationStrategy.type',
                             settingsNamePrefix: 'createLocationStrategy.settings',
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location,
                             optionsBlackList: ['noChange'],
                             settingsPanel: createLocationStrategySettingsPanel,
                             value: this.resolverConfigData.createLocationStrategy.type || 'staticPath',
@@ -144,15 +144,15 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                 {
                     xtype: 'fieldset',
                     width: 850,
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_element_location_update'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_element_location_update'),
                     defaults: panelDefaults,
                     items: [
                         {
-                            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_update_location_strategy'),
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_update_location_strategy'),
                             xtype: 'subsettingscombo',
                             name: 'locationUpdateStrategy.type',
                             settingsNamePrefix: 'locationUpdateStrategy.settings',
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.location,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location,
                             settingsPanel: updateLocationStrategySettingsPanel,
                             value: this.resolverConfigData.locationUpdateStrategy.type || 'noChange',
                             settingsValues: this.resolverConfigData.locationUpdateStrategy ? this.resolverConfigData.locationUpdateStrategy.settings : {},
@@ -164,15 +164,15 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                 {
                     xtype: 'fieldset',
                     width: 850,
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_element_publishing'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_element_publishing'),
                     defaults: panelDefaults,
                     items: [
                         {
-                            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_publish_strategy'),
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_publish_strategy'),
                             xtype: 'subsettingscombo',
                             name: 'publishingStrategy.type',
                             settingsNamePrefix: 'publishingStrategy.settings',
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish,
                             settingsPanel: publishingStrategySettingsPanel,
                             value: this.resolverConfigData.publishingStrategy.type || 'noChangeUnpublishNew',
                             settingsValues: this.resolverConfigData.publishingStrategy ? this.resolverConfigData.publishingStrategy.settings : {},
@@ -207,43 +207,43 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
         };
 
         const doDeltaCheckCheckbox = Ext.create('Ext.form.field.Checkbox', {
-            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_delta_check'),
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_delta_check'),
             name: 'doDeltaCheckCheck',
             disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
             inputValue: true,
             value: this.processingConfigData.hasOwnProperty('doDeltaCheckCheck') ? this.processingConfigData.doDeltaCheckCheck : false
         });
         const doCleanup = Ext.create('Ext.form.field.Checkbox', {
-            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_do_cleanup'),
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_do_cleanup'),
             name: 'cleanup.doCleanup',
             disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
             inputValue: true,
             value: this.processingConfigData.cleanup && this.processingConfigData.cleanup.hasOwnProperty('doCleanup') ? this.processingConfigData.cleanup.doCleanup : false
         });
         const cleanupSettingsPanel = Ext.create('Ext.Panel', {width: 900});
-        const cleanupStrategy = Ext.create('DataHub.BatchImport.SubSettingsComboBox', {
-            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_cleanup_strategy'),
+        const cleanupStrategy = Ext.create('DataHub.DataImporter.SubSettingsComboBox', {
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_cleanup_strategy'),
             name: 'cleanup.strategy',
             disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
-            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.cleanup,
+            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.cleanup,
             settingsPanel: cleanupSettingsPanel,
             value: this.processingConfigData.cleanup ? this.processingConfigData.cleanup.strategy : ''
         });
 
 
-        this.processingForm = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+        this.processingForm = Ext.create('DataHub.DataImporter.StructuredValueForm', {
             bodyStyle: 'padding:10px;',
             defaults: panelDefaults,
             scrollable: true,
-            title: t('plugin_pimcore_datahub_batch_import_configpanel_processing_settings'),
+            title: t('plugin_pimcore_datahub_data_importer_configpanel_processing_settings'),
             items: [
                 {
                     xtype: 'combo',
                     name: 'executionType',
-                    fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_execution_type'),
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_type'),
                     store: [
-                        ['sequential', t('plugin_pimcore_datahub_batch_import_configpanel_execution_type_sequential')],
-                        ['parallel', t('plugin_pimcore_datahub_batch_import_configpanel_execution_type_parallel')]
+                        ['sequential', t('plugin_pimcore_datahub_data_importer_configpanel_execution_type_sequential')],
+                        ['parallel', t('plugin_pimcore_datahub_data_importer_configpanel_execution_type_parallel')]
                     ],
                     value: this.processingConfigData.executionType || 'parallel',
                     mode: 'local',
@@ -252,14 +252,14 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
                 },
                 {
                     xtype: 'checkbox',
-                    fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_archive_import_file'),
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_archive_import_file'),
                     name: 'doArchiveImportFile',
                     inputValue: true,
                     value: this.processingConfigData.hasOwnProperty('doArchiveImportFile') ? this.processingConfigData.doArchiveImportFile : false
                 },
                 {
                     xtype: 'combo',
-                    fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_id_data_index'),
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_id_data_index'),
                     name: 'idDataIndex',
                     value: this.processingConfigData.idDataIndex,
                     store: this.configItemRootContainer.columnHeaderStore,
@@ -304,14 +304,14 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.importSe
 
     buildMappingsTab: function() {
 
-        this.mappingConfiguration = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.mappingConfiguration(
+        this.mappingConfiguration = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfiguration(
             this.mappingConfigData,
             this.configItemRootContainer,
             this.transformationResultHandler
         );
 
         const panel = Ext.create('Ext.Panel', {
-            title: t('plugin_pimcore_datahub_batch_import_configpanel_mappings'),
+            title: t('plugin_pimcore_datahub_data_importer_configpanel_mappings'),
             scrollable: false,
             layout: 'fit',
             items: [

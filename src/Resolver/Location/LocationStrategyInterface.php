@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 
 interface LocationStrategyInterface extends SettingsAwareInterface

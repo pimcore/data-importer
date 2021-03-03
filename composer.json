@@ -1,5 +1,5 @@
 {
-  "name": "pimcore/data-hub-batch-import",
+  "name": "pimcore/data-importer",
   "license": "PEL",
   "type": "pimcore-bundle",
   "config": {
@@ -16,13 +16,13 @@
   },
   "autoload": {
     "psr-4": {
-      "Pimcore\\Bundle\\DataHubBatchImportBundle\\": "src/"
+      "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
     }
   },
   "extra": {
     "pimcore": {
       "bundles": [
-        "Pimcore\\Bundle\\DataHubBatchImportBundle\\PimcoreDataHubBatchImportBundle"
+        "Pimcore\\Bundle\\DataImporterBundle\\PimcoreDataImporterBundle"
       ]
     },
     "branch-alias": {

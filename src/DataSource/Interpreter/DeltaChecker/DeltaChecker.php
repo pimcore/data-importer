@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\DeltaChecker;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker;
 
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
@@ -22,7 +22,7 @@ class DeltaChecker
      */
     protected $db;
 
-    const CACHE_TABLE_NAME = 'bundle_data_hub_batch_import_delta_cache';
+    const CACHE_TABLE_NAME = 'bundle_data_hub_data_importer_delta_cache';
 
     public function __construct(Db\ConnectionInterface $connection)
     {

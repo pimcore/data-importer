@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.cleanup.unpublish");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.cleanup.unpublish = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.cleanup.unpublish");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.cleanup.unpublish = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'unpublish',
 

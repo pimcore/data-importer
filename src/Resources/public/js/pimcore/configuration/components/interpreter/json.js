@@ -8,15 +8,15 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpreter.json");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpreter.json = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.json");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.json = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'json',
 
     buildSettingsForm: function() {
 
         if(!this.form) {
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600

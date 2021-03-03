@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Settings;
+namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
 interface SettingsAwareInterface
 {

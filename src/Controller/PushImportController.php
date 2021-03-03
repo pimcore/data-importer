@@ -10,13 +10,13 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Controller;
+namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
 use Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse;
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\DataLoaderFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Loader\PushLoader;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Logger;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -40,7 +40,7 @@ class PushImportController
     }
 
     /**
-     * @Route("/pimcore-datahub-import/{config}/push", name="data_hub_batch_import_push", methods={"POST"}, requirements={"config"="[\w-]+"})
+     * @Route("/pimcore-datahub-import/{config}/push", name="data_hub_data_importer_push", methods={"POST"}, requirements={"config"="[\w-]+"})
      *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationLoaderService

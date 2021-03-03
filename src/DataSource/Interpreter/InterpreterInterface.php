@@ -10,11 +10,11 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter;
+namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\PreviewData;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 
 interface InterpreterInterface extends SettingsAwareInterface
 {

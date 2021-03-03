@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator;
 
 use Pimcore\Log\ApplicationLogger;
 

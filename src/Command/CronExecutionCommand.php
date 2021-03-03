@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
+namespace Pimcore\Bundle\DataImporterBundle\Command;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -35,8 +35,8 @@ class CronExecutionCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('datahub:batch-import:execute-cron')
-            ->setDescription('Executes all batch import configurations corresponding to their cron definition.')
+            ->setName('datahub:data-importer:execute-cron')
+            ->setDescription('Executes all data importer configurations corresponding to their cron definition.')
             ->addArgument('config_name', InputArgument::OPTIONAL | InputArgument::IS_ARRAY, 'Names of configs that should be considered. Uses all if not specified.')
         ;
     }
@@ -49,7 +49,7 @@ class CronExecutionCommand extends AbstractCommand
             $configNames = [];
             $allDataHubConfiguations = Dao::getList();
             foreach ($allDataHubConfiguations as $dataHubConfig) {
-                if (in_array($dataHubConfig->getType(), ['batchImportDataObject'])) {
+                if (in_array($dataHubConfig->getType(), ['dataImporterDataObject'])) {
                     $configNames[] = $dataHubConfig->getName();
                 }
             }

@@ -10,18 +10,18 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Processing;
+namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Cleanup\CleanupStrategyFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfiguration;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfigurationFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Bundle\DataHubBatchImportBundle\PimcoreDataHubBatchImportBundle;
-use Pimcore\Bundle\DataHubBatchImportBundle\Queue\QueueService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Resolver;
-use Pimcore\Bundle\DataHubBatchImportBundle\Resolver\ResolverFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\DataObject\Import\Resolver\ResolverInterface;
 use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
@@ -38,7 +38,7 @@ class ImportProcessingService
     const EXECUTION_TYPE_SEQUENTIAL = 'sequential';
     const EXECUTION_TYPE_PARALLEL = 'parallel';
 
-    const INFO_ENTRY_ID_PREFIX = 'datahub_batchimport_';
+    const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
 
     /**
      * @var QueueService
@@ -181,7 +181,7 @@ class ImportProcessingService
             $message = "Element {$element->getId()} imported successfully.";
             $this->logger->info($message);
             $this->applicationLogger->info($message, [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                 'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element
             ]);
@@ -190,7 +190,7 @@ class ImportProcessingService
             $this->logger->error($message . $e);
 
             $this->applicationLogger->error($message . $e->getMessage(), [
-                'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                 'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element,
             ]);
@@ -211,7 +211,7 @@ class ImportProcessingService
                     $message = "Element {$identifier} cleaned up ({$cleanupConfig['strategy']}) successfully.";
                     $this->logger->info($message);
                     $this->applicationLogger->info($message, [
-                        'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                         'relatedObject' => $element
                     ]);
                 }
@@ -219,7 +219,7 @@ class ImportProcessingService
                 $message = 'Error cleaning up element: ';
                 $this->logger->error($message . $e);
                 $this->applicationLogger->error($message . $e->getMessage(), [
-                    'component' => PimcoreDataHubBatchImportBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'relatedObject' => $element,
                 ]);
             }

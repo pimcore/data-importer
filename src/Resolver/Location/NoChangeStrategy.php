@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Location;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Model\Element\ElementInterface;
 

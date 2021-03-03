@@ -8,9 +8,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.tools.classificationStoreKeySearchWindow');
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.tools.classificationStoreKeySearchWindow');
 
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.tools.classificationStoreKeySearchWindow = Class.create({
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.tools.classificationStoreKeySearchWindow = Class.create({
 
     initialize: function (classId, fieldname, transformationResultType, callback) {
 
@@ -100,7 +100,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
 
         const proxy = {
             type: 'ajax',
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectclassificationstorekeys'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectclassificationstorekeys'),
             reader: {
                 type: 'json',
                 rootProperty: 'data',

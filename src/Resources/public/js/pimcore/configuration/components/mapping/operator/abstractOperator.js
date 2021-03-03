@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.abstractOperator");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.abstractOperator = Class.create({
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator = Class.create({
 
     type: 'abstract',
 
@@ -64,13 +64,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
     buildTransformationPipelineItem: function() {
         var myId = Ext.id();
         if(!this.form) {
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 operatorImplementation: this,
                 id: myId,
                 style: "margin-top: 10px",
                 border: true,
                 bodyStyle: "padding: 10px;",
-                tbar: this.getTopBar(t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_' + this.type), myId, this.container),
+                tbar: this.getTopBar(t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + this.type), myId, this.container),
                 items: this.getFormItems()
             });
         }

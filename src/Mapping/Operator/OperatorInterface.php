@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator;
+namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 
 interface OperatorInterface extends SettingsAwareInterface
 {

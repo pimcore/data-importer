@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType = Class.create({
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType = Class.create({
 
     type: 'abstract',
     data: {},

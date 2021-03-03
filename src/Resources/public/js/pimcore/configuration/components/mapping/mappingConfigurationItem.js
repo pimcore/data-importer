@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.mappingConfigurationItem');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.mappingConfigurationItem = Class.create({
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfigurationItem');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfigurationItem = Class.create({
 
     configItemRootContainer: null,
     transformationPipelineItems: [],
@@ -26,7 +26,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
         let data = this.data;
 
         if(!this.form) {
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 bodyStyle: 'padding:10px;',
                 title: data.label,
                 collapsed : true,
@@ -66,7 +66,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                         transformationResultTypeLabel.setHtml(newValue);
                         this.form.currentDataValues.transformationResultType = newValue;
                         this.form.fireEvent(
-                            pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultTypeChanged,
+                            pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged,
                             newValue
                         );
                     }.bind(this)
@@ -76,7 +76,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             this.transformationResultPreviewLabel = Ext.create('Ext.form.Label', {});
 
             this.configItemRootContainer.on(
-                pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultPreviewUpdated,
+                pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultPreviewUpdated,
                 this.doUpdateTransformationResultPreview.bind(this)
             );
 
@@ -86,7 +86,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             this.form.add([
                 {
                     xtype: 'textfield',
-                    fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_mapping_label'),
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_label'),
                     name: 'label',
                     value: data.label,
                     listeners: {
@@ -98,7 +98,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                     xtype: 'tagfield',
                     name: 'dataSourceIndex',
                     value: data.dataSourceIndex,
-                    fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_mapping_source'),
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_source'),
                     store: this.configItemRootContainer.columnHeaderStore,
                     displayField: 'label',
                     valueField: 'dataIndex',
@@ -119,7 +119,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 },
                 {
                     xtype: 'fieldset',
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline'),
                     collapsible: true,
                     collapsed:  true,
                     items: [
@@ -129,17 +129,17 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 this.transformationResultType,
                 {
                     xtype: 'fieldset',
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_result'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_result'),
                     items: [{
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_result_type'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_result_type'),
                         layout: 'hbox',
                         items: [
                             transformationResultTypeLabel
                         ]
                     },{
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_result_preview'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_result_preview'),
                         layout: 'hbox',
                         items: [
                             this.transformationResultPreviewLabel
@@ -148,18 +148,18 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 },
                 {
                     xtype: 'fieldset',
-                    title: t('plugin_pimcore_datahub_batch_import_configpanel_data_target'),
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_data_target'),
                     defaults: {
                         labelWidth: 120,
                         width: 500
                     },
                     items: [
                         {
-                            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_data_target_type'),
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_data_target_type'),
                             xtype: 'subsettingscombo',
                             name: 'dataTarget.type',
                             settingsNamePrefix: 'dataTarget.settings',
-                            optionsNamespace: pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget,
+                            optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget,
                             settingsPanel: dataTargetSettingsPanel,
                             value: data.dataTarget ? data.dataTarget.type : '',
                             settingsValues: data.dataTarget ? data.dataTarget.settings : {},
@@ -197,10 +197,10 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
 
         //TODO make that once globally, and not per mapping item?
         let addMenu = [];
-        const itemTypes = Object.keys(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator);
+        const itemTypes = Object.keys(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator);
         itemTypes.sort((item1, item2) => {
-            const str1 = t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_' + item1);
-            const str2 = t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_' + item2);
+            const str1 = t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + item1);
+            const str2 = t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + item2);
             return str1.localeCompare(str2);
         });
 
@@ -212,7 +212,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                     this.recalculateTransformationResultType();
                     this.updateTransformationResultPreview();
                 }.bind(this),
-                text: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_' + itemTypes[i])
+                text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + itemTypes[i])
             });
         }
 
@@ -237,7 +237,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
     },
 
     addTransformationPipelineItem: function(type, data, container) {
-        const item = new pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator[type](
+        const item = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator[type](
             data, container, this.recalculateTransformationResultType.bind(this), this.updateTransformationResultPreview.bind(this)
         );
         container.add(item.buildTransformationPipelineItem());
@@ -246,7 +246,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
     recalculateTransformationResultType: function() {
         const currentConfig = Ext.encode(this.getValues());
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_calculatetransformationresulttype'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_calculatetransformationresulttype'),
             method: 'POST',
             params: {
                 config_name: this.configItemRootContainer.configName,

@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish.noChangeUnpublishNew');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.publish.noChangeUnpublishNew = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish.noChangeUnpublishNew');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish.noChangeUnpublishNew = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'noChangeUnpublishNew',
 

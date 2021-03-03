@@ -10,9 +10,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Resolver\Load;
+namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\SettingsAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 
 interface LoadStrategyInterface extends SettingsAwareInterface

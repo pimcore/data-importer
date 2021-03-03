@@ -1,9 +1,9 @@
-_data_hub_batch_import_data_object_admin:
-    resource: "@PimcoreDataHubBatchImportBundle/Controller/ConfigDataObjectController.php"
+_data_hub_data_importer_data_object_admin:
+    resource: "@PimcoreDataImporterBundle/Controller/ConfigDataObjectController.php"
     type:     annotation
     options:
         expose: true
 
-_data_hub_batch_import_data_object_push:
-    resource: "@PimcoreDataHubBatchImportBundle/Controller/PushImportController.php"
+_data_hub_data_importer_data_object_push:
+    resource: "@PimcoreDataImporterBundle/Controller/PushImportController.php"
     type:     annotation

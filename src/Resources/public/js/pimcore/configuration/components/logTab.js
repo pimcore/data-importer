@@ -8,10 +8,10 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.logTab');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.logTab = Class.create(pimcore.log.admin, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab = Class.create(pimcore.log.admin, {
 
-    componentPrefix: 'BATCH-IMPORT ',
+    componentPrefix: 'DATA-IMPORTER ',
 
     initialize: function($super, configName) {
         $super({
@@ -25,7 +25,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.logTab =
     getTabPanel: function($super) {
         $super();
 
-        this.panel.setTitle(t('plugin_pimcore_datahub_batch_import_configpanel_logs'));
+        this.panel.setTitle(t('plugin_pimcore_datahub_data_importer_configpanel_logs'));
         this.panel.setIconCls('');
 
         const fieldset = this.searchpanel.items.items[0];

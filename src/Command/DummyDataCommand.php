@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Command;
+namespace Pimcore\Bundle\DataImporterBundle\Command;
 
 use Pimcore\Console\AbstractCommand;
 use Pimcore\File;
@@ -25,7 +25,7 @@ class DummyDataCommand extends AbstractCommand
     protected function configure()
     {
         $this
-            ->setName('datahub:batch-import:create-dummy-data')
+            ->setName('datahub:data-importer:create-dummy-data')
             ->setDescription("Creates a dummy-data file for test imports. File is located will be created in private tmp directory of Pimcore. Don't forget to run 'composer require fzaninotto/faker' in advance.")
             ->addOption('items', 'i', InputOption::VALUE_OPTIONAL, 'Number of data items in file', 100)
             ->addOption('targetType', 't', InputOption::VALUE_OPTIONAL, 'Target filetype, one of csv, xml, json', 'csv')

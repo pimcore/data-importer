@@ -8,11 +8,11 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.PimcoreDataHubBatchImportBundle");
+pimcore.registerNS("pimcore.plugin.PimcoreDataImporterBundle");
 
-pimcore.plugin.PimcoreDataHubBatchImportBundle = Class.create(pimcore.plugin.admin, {
+pimcore.plugin.PimcoreDataImporterBundle = Class.create(pimcore.plugin.admin, {
     getClassName: function () {
-        return 'pimcore.plugin.PimcoreDataHubBatchImportBundle';
+        return 'pimcore.plugin.PimcoreDataImporterBundle';
     },
 
     initialize: function () {
@@ -21,4 +21,4 @@ pimcore.plugin.PimcoreDataHubBatchImportBundle = Class.create(pimcore.plugin.adm
 
 });
 
-var PimcoreDataHubBatchImportBundlePlugin = new pimcore.plugin.PimcoreDataHubBatchImportBundle();
+var PimcoreDataImporterBundlePlugin = new pimcore.plugin.PimcoreDataImporterBundle();

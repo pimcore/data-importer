@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.loadDataObject");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.loadDataObject = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.abstractOperator, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.loadDataObject");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.loadDataObject = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
     type: 'loadDataObject',
     dataApplied: false,
@@ -45,7 +45,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
         });
 
         const attributeName = Ext.create('Ext.form.ComboBox', {
-            fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_attribute_name'),
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_attribute_name'),
             name: 'settings.attributeName',
             hidden: this.data.settings.loadStrategy !== 'attribute',
             allowBlank: true,
@@ -70,7 +70,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                     class_id: this.data.settings.attributeDataObjectClassId,
                     system_read: 1
                 },
-                url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectattributes'),
+                url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),
                 reader: {
                     type: 'json',
                     rootProperty: 'attributes'
@@ -119,13 +119,13 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
         return [
             {
                 xtype: 'combo',
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_transformation_pipeline_dataobject_load_strategy'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_dataobject_load_strategy'),
                 name: 'settings.loadStrategy',
                 value: this.data.settings.loadStrategy || 'id',
                 store: [
-                    ['id', t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy_id')],
-                    ['path', t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy_path')],
-                    ['attribute', t('plugin_pimcore_datahub_batch_import_configpanel_find_strategy_attribute')]
+                    ['id', t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy_id')],
+                    ['path', t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy_path')],
+                    ['attribute', t('plugin_pimcore_datahub_data_importer_configpanel_find_strategy_attribute')]
                 ],
                 listeners: {
                     change: function(combo, strategy) {

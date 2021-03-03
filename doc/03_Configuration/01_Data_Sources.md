@@ -1,6 +1,6 @@
 # Data Sources
 
-Every batch import configuration needs a data source. Following data sources are available and can 
+Every data importer configuration needs a data source. Following data sources are available and can 
 be configured. 
 
 ### Asset

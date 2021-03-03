@@ -8,15 +8,15 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpreter.xml');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpreter.xml = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.xml');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.xml = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'xml',
 
     buildSettingsForm: function() {
 
         if(!this.form) {
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600
@@ -25,14 +25,14 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.interpre
                 items: [
                     {
                         xtype: 'textfield',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_xml_xpath'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_xml_xpath'),
                         name: this.dataNamePrefix + 'xpath',
                         value: this.data.xpath || '/root/item',
                         allowBlank: false,
                         msgTarget: 'under'
                     },{
                         xtype: 'textarea',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_xml_schema'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_xml_schema'),
                         name: this.dataNamePrefix + 'schema',
                         value: this.data.schema || '',
                         grow: true,

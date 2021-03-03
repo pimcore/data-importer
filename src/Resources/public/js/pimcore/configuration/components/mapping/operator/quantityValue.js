@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.quantityValue");
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.operator.quantityValue = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.abstractOperator, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.quantityValue");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.quantityValue = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
     type: 'quantityValue'
 

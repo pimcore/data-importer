@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.load.attribute');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver.load.attribute = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.attribute');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.attribute = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
     type: 'attribute',
     dataApplied: false,
@@ -28,7 +28,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
             });
 
             const attributeSelection = Ext.create('Ext.form.ComboBox', {
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_attribute_name'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_attribute_name'),
                 name: this.dataNamePrefix + 'attributeName',
                 value: this.data.attributeName,
                 displayField: 'title',
@@ -45,7 +45,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                     extraParams: {
                         class_id: this.configItemRootContainer.currentDataValues.dataObjectClassId
                     },
-                    url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loaddataobjectattributes'),
+                    url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),
                     reader: {
                         type: 'json',
                         rootProperty: 'attributes'
@@ -68,14 +68,14 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
             attributeSelection.setStore(attributeStore);
             attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
 
-            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.classChanged,
+            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
                 function(combo, newValue, oldValue) {
                     attributeStore.proxy.setExtraParam('class_id', newValue);
                     attributeStore.load();
                 }
             );
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
                     width: 600,
@@ -86,7 +86,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.resolver
                 items: [
                     {
                         xtype: 'combo',
-                        fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_data_source_index'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_data_source_index'),
                         name: this.dataNamePrefix + 'dataSourceIndex',
                         value: this.data.dataSourceIndex,
                         store: this.configItemRootContainer.columnHeaderStore,

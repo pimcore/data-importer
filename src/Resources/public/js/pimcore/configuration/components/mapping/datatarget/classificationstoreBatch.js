@@ -8,9 +8,9 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.classificationstoreBatch');
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.classificationstoreBatch');
 
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.classificationstoreBatch = Class.create(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.datatarget.classificationstore, {
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.classificationstoreBatch = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.classificationstore, {
 
     type: 'classificationstoreBatch',
     dataApplied: false,
@@ -24,7 +24,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             this.transformationResultType = this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType;
 
             const errorField = Ext.create('Ext.form.Label', {
-                html: t('plugin_pimcore_datahub_batch_import_configpanel_classification_store_batch_type_error'),
+                html: t('plugin_pimcore_datahub_data_importer_configpanel_classification_store_batch_type_error'),
                 hidden: this.transformationResultType === 'array',
                 style: 'color: #cf4c35'
             });
@@ -46,7 +46,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 valueField: 'key',
                 queryMode: 'local',
                 forceSelection: true,
-                fieldLabel: t('plugin_pimcore_datahub_batch_import_configpanel_fieldName'),
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fieldName'),
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
                 allowBlank: false,
@@ -79,7 +79,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
             attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
 
             //register listeners for class and type changes
-            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultTypeChanged, function(newType) {
+            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function(newType) {
                 this.transformationResultType = newType;
 
                 if(this.transformationResultType !== 'array') {
@@ -94,14 +94,14 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 }
 
             }.bind(this));
-            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.classChanged,
+            this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
                function(combo, newValue, oldValue) {
                     this.dataObjectClassId = newValue;
                     this.initAttributeStore(attributeStore);
                 }.bind(this)
             );
 
-            this.form = Ext.create('DataHub.BatchImport.StructuredValueForm', {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
                     width: 500,
@@ -113,7 +113,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 items: [
                     errorField,
                     {
-                        html: t('plugin_pimcore_datahub_batch_import_configpanel_classification_store_batch_type'),
+                        html: t('plugin_pimcore_datahub_data_importer_configpanel_classification_store_batch_type'),
                         style: 'padding-bottom: 5px'
                     },
                     attributeSelection,

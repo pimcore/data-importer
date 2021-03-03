@@ -10,18 +10,18 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Controller;
+namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
 use Cron\CronExpression;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
-use Pimcore\Bundle\DataHubBatchImportBundle\DataSource\Interpreter\InterpreterFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfigurationFactory;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\ClassificationStoreDataTypeService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportPreparationService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Processing\ImportProcessingService;
-use Pimcore\Bundle\DataHubBatchImportBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataHubSimpleRestBundle\Service\IndexService;
 use Pimcore\File;
@@ -33,7 +33,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * @Route("/admin/pimcoredatahubbatchimport/dataobject/config")
+ * @Route("/admin/pimcoredataimporter/dataobject/config")
  */
 class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\AdminController
 {
@@ -144,7 +144,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             throw new \Exception('Configuration ' . $configName . ' does not exist.');
         }
 
-        $filePath = PIMCORE_PRIVATE_VAR . '/tmp/datahub/batchimport/' . $configuration->getName() . '/' . $user->getId() . '.import';
+        $filePath = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/preview/' . $configuration->getName() . '/' . $user->getId() . '.import';
 
         return $filePath;
     }
@@ -236,11 +236,11 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                     $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
                     $hasData = true;
                 } else {
-                    $errorMessage = $translator->trans('plugin_pimcore_datahub_batch_import_configpanel_preview_error_invalid_file', [], 'admin');
+                    $errorMessage = $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_preview_error_invalid_file', [], 'admin');
                 }
             } catch (\Exception $e) {
                 Logger::error($e);
-                $errorMessage = $translator->trans('plugin_pimcore_datahub_batch_import_configpanel_preview_error_prefix', [], 'admin') . ': ' . $e->getMessage();
+                $errorMessage = $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_preview_error_prefix', [], 'admin') . ': ' . $e->getMessage();
             }
         }
 
@@ -261,7 +261,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @return JsonResponse
      *
-     * @throws \Pimcore\Bundle\DataHubBatchImportBundle\Exception\InvalidConfigurationException|\Exception
+     * @throws \Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException|\Exception
      */
     public function loadAvailableColumnHeadersAction(
         Request $request,

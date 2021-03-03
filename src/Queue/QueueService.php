@@ -10,7 +10,7 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-namespace Pimcore\Bundle\DataHubBatchImportBundle\Queue;
+namespace Pimcore\Bundle\DataImporterBundle\Queue;
 
 use Carbon\Carbon;
 use Doctrine\DBAL\Exception\TableNotFoundException;
@@ -23,7 +23,7 @@ class QueueService
      */
     protected $db;
 
-    const QUEUE_TABLE_NAME = 'bundle_data_hub_batch_import_queue';
+    const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
 
     public function __construct(Db\ConnectionInterface $connection)
     {

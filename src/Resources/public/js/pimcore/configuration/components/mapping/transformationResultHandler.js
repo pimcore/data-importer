@@ -8,8 +8,8 @@
  *  @license    http://www.pimcore.org/license     PEL
  */
 
-pimcore.registerNS('pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.transformationResultHandler');
-pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.transformationResultHandler = Class.create({
+pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.transformationResultHandler');
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.transformationResultHandler = Class.create({
 
     currentPreviewRecord: 0,
     configItemRootContainer: null,
@@ -31,7 +31,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
 
         //loads transformation results (data type & preview) for all mappings and stores it in class variable
         Ext.Ajax.request({
-            url: Routing.generate('pimcore_datahubbatchimport_configdataobject_loadtransformationresultpreviews'),
+            url: Routing.generate('pimcore_dataimporter_configdataobject_loadtransformationresultpreviews'),
             method: 'POST',
             params: {
                 config_name: this.configName,
@@ -46,7 +46,7 @@ pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.components.mapping.
                 if(fireUpdateEvent) {
                     //fire event so that elements can update themselves
                     this.configItemRootContainer.fireEvent(
-                        pimcore.plugin.pimcoreDataHubBatchImportBundle.configuration.events.transformationResultPreviewUpdated,
+                        pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultPreviewUpdated,
                         this
                     );
                 }

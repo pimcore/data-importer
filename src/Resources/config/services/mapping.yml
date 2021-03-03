@@ -6,96 +6,96 @@ services:
         public: false
 
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\TransformationDataTypeService: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Type\ClassificationStoreDataTypeService: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfigurationFactory: ~
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\MappingConfiguration: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration: ~
 
     # -------------------
     # simple operators
     # -------------------
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Trim:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Trim:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "trim" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "trim" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Explode:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Explode:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "explode" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "explode" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\ReduceArrayKeyValuePairs:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ReduceArrayKeyValuePairs:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "reduceArrayKeyValuePairs" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "reduceArrayKeyValuePairs" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\FlattenArray:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\FlattenArray:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "flattenArray" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "flattenArray" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\Combine:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Combine:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "combine" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "combine" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\HtmlDecode:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\HtmlDecode:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "htmlDecode" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "htmlDecode" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\ImportAsset:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ImportAsset:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "importAsset" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "importAsset" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\LoadAsset:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "loadAsset" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "loadAsset" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Simple\LoadDataObject:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "loadDataObject" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "loadDataObject" }
 
     # -------------------
     # factory operators
     # -------------------
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Numeric:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Numeric:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "numeric" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "numeric" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\QuantityValue:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValue:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "quantityValue" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "quantityValue" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\InputQuantityValue:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\InputQuantityValue:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "inputQuantityValue" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "inputQuantityValue" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Boolean:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Boolean:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "boolean" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "boolean" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Date:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Date:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "date" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "date" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\Gallery:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Gallery:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "gallery" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "gallery" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\ImageAdvanced:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\ImageAdvanced:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "imageAdvanced" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "imageAdvanced" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\Operator\Factory\AsArray:
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsArray:
         tags:
-            - { name: "pimcore.datahub.batch_import.operator", type: "asArray" }
+            - { name: "pimcore.datahub.data_importer.operator", type: "asArray" }
 
     # ---------------------
     # data target services
     # ---------------------
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget\Direct:
+    Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct:
         tags:
-            - { name: "pimcore.datahub.batch_import.data_target", type: "direct" }
+            - { name: "pimcore.datahub.data_importer.data_target", type: "direct" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget\Classificationstore:
+    Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore:
         tags:
-            - { name: "pimcore.datahub.batch_import.data_target", type: "classificationstore" }
+            - { name: "pimcore.datahub.data_importer.data_target", type: "classificationstore" }
 
-    Pimcore\Bundle\DataHubBatchImportBundle\Mapping\DataTarget\ClassificationstoreBatch:
+    Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch:
         tags:
-            - { name: "pimcore.datahub.batch_import.data_target", type: "classificationstoreBatch" }
+            - { name: "pimcore.datahub.data_importer.data_target", type: "classificationstoreBatch" }
