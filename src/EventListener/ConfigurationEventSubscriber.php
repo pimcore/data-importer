@@ -3,20 +3,23 @@
 /**
  * Pimcore
  *
- * This source file is available under following license:
+ * This source file is available under two different licenses:
+ * - GNU General Public License version 3 (GPLv3)
  * - Pimcore Enterprise License (PEL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
  *
  *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     PEL
+ *  @license    http://www.pimcore.org/license     GPLv3 and PEL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\EventListener;
 
+use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
-use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
 use Symfony\Component\EventDispatcher\GenericEvent;
 

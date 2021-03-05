@@ -3,17 +3,20 @@
 /**
  * Pimcore
  *
- * This source file is available under following license:
+ * This source file is available under two different licenses:
+ * - GNU General Public License version 3 (GPLv3)
  * - Pimcore Enterprise License (PEL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
  *
  *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     PEL
+ *  @license    http://www.pimcore.org/license     GPLv3 and PEL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Command;
 
-use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
