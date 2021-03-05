@@ -1,6 +1,6 @@
 {
   "name": "pimcore/data-importer",
-  "license": "PEL",
+  "license": "GPL-3.0+",
   "type": "pimcore-bundle",
   "config": {
     "sort-packages": true
