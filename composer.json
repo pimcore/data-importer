@@ -6,7 +6,7 @@
     "sort-packages": true
   },
   "require": {
-    "pimcore/pimcore": "^6.8",
+    "pimcore/pimcore": "^6.8 || ^10.0",
     "pimcore/data-hub": "^0.7",
     "phpoffice/phpspreadsheet": "^1.1",
     "dragonmantank/cron-expression": "^3.1",
