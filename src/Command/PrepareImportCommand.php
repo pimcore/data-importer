@@ -60,5 +60,7 @@ class PrepareImportCommand extends AbstractCommand
                 $this->importPreparationService->prepareImport($configName);
             }
         }
+
+        return 0;
     }
 }
