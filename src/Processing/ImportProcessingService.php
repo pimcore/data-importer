@@ -25,7 +25,6 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\DataObject\Import\Resolver\ResolverInterface;
 use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
@@ -74,7 +73,7 @@ class ImportProcessingService
     protected $applicationLogger;
 
     /**
-     * @var ResolverInterface[]
+     * @var Resolver[]
      */
     protected $resolverCache = [];
 
