@@ -18,7 +18,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller;
 use Cron\CronExpression;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
-use Pimcore\Bundle\DataHubSimpleRestBundle\Service\IndexService;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
@@ -52,7 +51,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @throws \Exception
      *
      */
-    public function saveAction(Request $request, IndexService $indexService): ?JsonResponse
+    public function saveAction(Request $request): ?JsonResponse
     {
         $this->checkPermission(self::CONFIG_NAME);
 
