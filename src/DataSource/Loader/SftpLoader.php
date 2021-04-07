@@ -68,15 +68,6 @@ class SftpLoader implements DataLoaderInterface
             $this->remotePath
         );
 
-        $remoteUrl = sprintf(
-            'ssh2.sftp://%s:%s@%s:%s%s',
-            $this->username,
-            $this->password,
-            $this->host,
-            $this->port,
-            $this->remotePath
-        );
-
         $adapter = new SftpAdapter([
             'host' => $this->host,
             'port' => $this->port,
