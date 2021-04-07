@@ -25,6 +25,11 @@ class AssetLoader implements DataLoaderInterface
      */
     protected $assetPath;
 
+    /**
+     * @var string
+     */
+    protected $temporaryFile = null;
+
     public function loadData(): string
     {
         $asset = Asset::getByPath($this->assetPath);
@@ -32,7 +37,8 @@ class AssetLoader implements DataLoaderInterface
             throw new InvalidConfigurationException("Asset {$this->assetPath} not found.");
         }
 
-        return $asset->getFileSystemPath();
+        $this->temporaryFile = $asset->getTemporaryFile();
+        return $this->temporaryFile;
     }
 
     public function setSettings(array $settings): void
@@ -46,6 +52,6 @@ class AssetLoader implements DataLoaderInterface
 
     public function cleanup(): void
     {
-        // nothing to do
+        unlink($this->temporaryFile);
     }
 }
