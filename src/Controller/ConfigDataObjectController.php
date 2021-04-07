@@ -173,7 +173,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             if (is_file($sourcePath) && filesize($sourcePath) < 1) {
                 throw new \Exception('File is empty!');
             } elseif (!is_file($sourcePath)) {
-                throw new \Exception('Something went wrong, please check upload_max_filesize and post_max_size in your php.ini and write permissions of ' . PIMCORE_PUBLIC_VAR);
+                throw new \Exception('Something went wrong, please check upload_max_filesize and post_max_size in your php.ini and write permissions of your temporary directories.');
             }
 
             if (filesize($sourcePath) > 10485760) { //10 MB
