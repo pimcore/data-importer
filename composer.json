@@ -10,8 +10,8 @@
     "pimcore/data-hub": "^0.7",
     "phpoffice/phpspreadsheet": "^1.1",
     "dragonmantank/cron-expression": "^3.1",
-    "league/flysystem": "^1.0",
-    "league/flysystem-sftp": "^1.0",
+    "league/flysystem": "^2.0",
+    "league/flysystem-sftp": "^2.0",
     "ext-json": "*",
     "ext-fileinfo": "*"
   },
