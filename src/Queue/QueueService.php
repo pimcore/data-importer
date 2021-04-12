@@ -21,16 +21,13 @@ use Pimcore\Db;
 
 class QueueService
 {
-    /**
-     * @var Db\Connection|Db\ConnectionInterface
-     */
-    protected $db;
-
     const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
 
-    public function __construct(Db\ConnectionInterface $connection)
-    {
-        $this->db = $connection;
+    /**
+     * @return Db\Connection|Db\ConnectionInterface
+     */
+    protected function getDb() {
+        return Db::get();
     }
 
     protected function getCurrentQueueTableOperationTime(): int
@@ -51,17 +48,18 @@ class QueueService
      */
     public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data): void
     {
+        $db = $this->getDb();
         try {
-            $this->db->executeQuery(sprintf(
+            $db->executeQuery(sprintf(
                 'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp)',
                 self::QUEUE_TABLE_NAME,
                 implode(',', ['timestamp', 'configName', 'data', 'executionType', 'jobType']),
                 implode(',', [
                     $this->getCurrentQueueTableOperationTime(),
-                    $this->db->quote($configName),
-                    $this->db->quote($data),
-                    $this->db->quote($executionType),
-                    $this->db->quote($jobType)
+                    $db->quote($configName),
+                    $db->quote($data),
+                    $db->quote($executionType),
+                    $db->quote($jobType)
                 ])
             ));
         } catch (TableNotFoundException $exception) {
@@ -73,7 +71,7 @@ class QueueService
 
     protected function createQueueTableIfNotExisting(\Closure $callable = null)
     {
-        $this->db->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
+        $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             id bigint AUTO_INCREMENT,
             timestamp bigint NULL,
             configName varchar(50) NULL,
@@ -101,7 +99,7 @@ class QueueService
     public function getAllQueueEntryIds(string $executionType, $limit = 100000): array
     {
         try {
-            $results = $this->db->fetchCol(
+            $results = $this->getDb()->fetchCol(
                 sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
                 [$executionType]
             );
@@ -124,7 +122,7 @@ class QueueService
     public function getQueueEntryById(int $id): array
     {
         try {
-            $result = $this->db->fetchRow(
+            $result = $this->getDb()->fetchRow(
                 sprintf('SELECT * FROM %s WHERE id = ?', self::QUEUE_TABLE_NAME),
                 [$id]
             );
@@ -145,7 +143,7 @@ class QueueService
     public function getQueueItemCount(string $configName): int
     {
         try {
-            return $this->db->fetchOne(
+            return $this->getDb()->fetchOne(
                 sprintf('SELECT count(*) as count FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),
                     [$configName]
             ) ?? 0;
@@ -164,7 +162,7 @@ class QueueService
     public function markQueueEntryAsProcessed($id)
     {
         try {
-            $this->db->executeQuery(
+            $this->getDb()->executeQuery(
                 sprintf('DELETE FROM %s WHERE id = ?', self::QUEUE_TABLE_NAME),
                 [$id]
             );
@@ -181,7 +179,7 @@ class QueueService
     public function cleanupQueueItems(string $configName): void
     {
         try {
-            $this->db->executeQuery(
+            $this->getDb()->executeQuery(
                 sprintf('DELETE FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),
                 [$configName]
             );

@@ -21,21 +21,19 @@ use Pimcore\Db;
 
 class CronExecutionService
 {
-    /**
-     * @var Db\Connection|Db\ConnectionInterface
-     */
-    protected $db;
-
     const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
 
-    public function __construct(Db\ConnectionInterface $connection)
-    {
-        $this->db = $connection;
+    /**
+     * @return Db\Connection|Db\ConnectionInterface
+     */
+    protected function getDb() {
+        return Db::get();
     }
+
 
     protected function createTableIfNotExisting(\Closure $callable = null)
     {
-        $this->db->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
+        $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             configName varchar(50) NOT NULL,
             lastExecutionDate int(11),
             PRIMARY KEY (configName))
@@ -49,7 +47,7 @@ class CronExecutionService
     protected function getLastExecution($configName): \DateTime
     {
         try {
-            $timestamp = $this->db->fetchOne(
+            $timestamp = $this->getDb()->fetchOne(
                     sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
                     [$configName]
                 ) ?? time();
@@ -92,7 +90,7 @@ class CronExecutionService
     public function updateExecutionTimestamp(string $configName, \DateTime $executionTimestamp)
     {
         try {
-            $this->db->executeQuery(
+            $this->getDb()->executeQuery(
                 sprintf('INSERT INTO %s (configName, lastExecutionDate) VALUES (?, ?) ON DUPLICATE KEY UPDATE lastExecutionDate = ?', self::EXECUTION_STORAGE_TABLE_NAME),
                 [$configName, $executionTimestamp->getTimestamp(), $executionTimestamp->getTimestamp()]
             );
@@ -106,7 +104,7 @@ class CronExecutionService
     public function cleanup(string $configName)
     {
         try {
-            $this->db->executeQuery(
+            $this->getDb()->executeQuery(
                 sprintf('DELETE FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
                 [$configName]
             );
