@@ -86,7 +86,10 @@ class ImportAsset extends AbstractOperator
         }
 
         if ($returnScalar) {
-            return reset($assets);
+            if(!empty($assets)) {
+                return reset($assets);
+            }
+            return null;
         } else {
             return $assets;
         }

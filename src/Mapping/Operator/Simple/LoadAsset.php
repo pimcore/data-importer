@@ -64,7 +64,10 @@ class LoadAsset extends ImportAsset
         }
 
         if ($returnScalar) {
-            return reset($assets);
+            if(!empty($assets)) {
+                return reset($assets);
+            }
+            return null;
         } else {
             return $assets;
         }

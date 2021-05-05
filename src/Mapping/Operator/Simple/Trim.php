@@ -60,7 +60,10 @@ class Trim extends AbstractOperator
         }
 
         if ($returnScalar) {
-            return reset($inputData);
+            if(!empty($inputData)) {
+                return reset($inputData);
+            }
+            return null;
         } else {
             return $inputData;
         }

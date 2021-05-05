@@ -101,7 +101,10 @@ class LoadDataObject extends AbstractOperator
         }
 
         if ($returnScalar) {
-            return reset($objects);
+            if(!empty($objects)) {
+                return reset($objects);
+            }
+            return null;
         } else {
             return $objects;
         }
