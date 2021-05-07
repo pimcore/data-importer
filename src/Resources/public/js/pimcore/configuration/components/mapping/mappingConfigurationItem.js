@@ -24,7 +24,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         this.transformationResultHandler = transformationResultHandler;
     },
 
-    buildMappingConfigurationItem: function(collapsed) {
+    buildMappingConfigurationItem: function() {
 
         let data = this.data;
 
@@ -184,12 +184,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         }
 
         this.form.isValid();
-        if(collapsed) {
-            this.form.collapse();
-        } else {
-            this.form.expand();
-        }
-
         return this.form;
     },
 

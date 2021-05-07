@@ -102,7 +102,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
 
     addItem: function(mappingItemData, collapsed, scrollToBottom) {
         const mappingConfigurationItem = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfigurationItem(mappingItemData, this.configItemRootContainer, this.transformationResultHandler);
-        this.panel.add(mappingConfigurationItem.buildMappingConfigurationItem(collapsed));
+
+        const item = mappingConfigurationItem.buildMappingConfigurationItem(collapsed);
+        this.panel.add(item);
+
+        if(collapsed) {
+            item.collapse();
+        } else {
+            item.expand();
+        }
+
         mappingConfigurationItem.recalculateTransformationResultType();
         if(scrollToBottom) {
             this.panel.getScrollable().scrollTo(0, 9999, false);
