@@ -91,6 +91,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/loadDataObject.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/reduceArrayKeyValuePairs.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/flattenArray.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/staticText.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/execution.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/logTab.js',
         ];
