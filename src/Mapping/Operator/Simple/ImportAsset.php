@@ -59,8 +59,7 @@ class ImportAsset extends AbstractOperator
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }
             if (empty($asset)) {
-
-                if($fileUrl && $assetData = @file_get_contents($fileUrl)) {
+                if ($fileUrl && $assetData = @file_get_contents($fileUrl)) {
                     $parent = Asset\Service::createFolderByPath($this->parentFolderPath);
                     $filename = $this->getSafeFilename($this->parentFolderPath, $filename);
 
@@ -76,7 +75,6 @@ class ImportAsset extends AbstractOperator
                     } else {
                         $asset->save();
                     }
-
                 } else {
                     $this->applicationLogger->error("Could not import asset data from `$fileUrl` ", [
                         'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
