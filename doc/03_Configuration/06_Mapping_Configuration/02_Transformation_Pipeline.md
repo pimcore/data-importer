@@ -48,4 +48,5 @@ done on every array item recursively resulting in one flat array with all items.
 - **Load DataObject**: Loads existing data object based on id, path or specific attribute
 - **Reduce Array KeyValue Pairs**: Reduces a flat array `['k1', 'v1', 'k2', 'v2']` 
    to key-value pair array `['k1' => 'v1', 'k2' => 'v2']`. 
-- **Trim**: Removes leading and/or tailing white spaces from string.            
+- **Trim**: Removes leading and/or tailing white spaces from string.
+- **Static Text**: Adds a static text to the value - either prepends or appends it.
