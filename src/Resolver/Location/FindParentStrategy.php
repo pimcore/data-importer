@@ -58,7 +58,7 @@ class FindParentStrategy implements LocationStrategyInterface
 
     public function setSettings(array $settings): void
     {
-        if (empty($settings['dataSourceIndex'])) {
+        if ($settings['dataSourceIndex'] !== 0 && empty($settings['dataSourceIndex'])) {
             throw new InvalidConfigurationException('Empty data source index.');
         }
 
