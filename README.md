@@ -28,19 +28,19 @@ sources and applying the data to Pimcore data objects based on a configured mapp
 
 <div class="image-as-lightbox"></div>
 
-![Data Source](doc/img/datasource.png)
+![Data Source](./doc/img/datasource.png)
 
 <div class="image-as-lightbox"></div>
 
-![Mapping](doc/img/mapping.png)
+![Mapping](./doc/img/mapping.png)
 
 <div class="image-as-lightbox"></div>
 
-![Execution](doc/img/execution.png)
+![Execution](./doc/img/execution.png)
 
 ## Further Information
-- [Installation](doc/01_Installation.md)
-- [Configuration](doc/03_Configuration/README.md)
-- [Import Execution Details](doc/04_Import_Execution_Details.md)
-- [Import Progress and Logging](doc/05_Import_Progress_and_Logging.md)
-- [Extending](doc/06_Extending.md)
+- [Installation](./doc/01_Installation.md)
+- [Configuration](./doc/03_Configuration/README.md)
+- [Import Execution Details](./doc/04_Import_Execution_Details.md)
+- [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md)
+- [Extending](./doc/06_Extending.md)
