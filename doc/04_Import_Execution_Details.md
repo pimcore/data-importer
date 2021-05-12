@@ -13,7 +13,7 @@ Preparation starts when 'import is starte', that means ...
 - when clicking manual execution in `Execution` tab of import configuration UI. 
 - based on cron definition for import when `datahub:data-importer:execute-cron` command is executed. Every command execution calls
  preparation of all import configuration, that are or were due since the last command execution.  
-- when `datahub:data-importer:prepare-import` is executed for certain an import configuration.
+- when `datahub:data-importer:prepare-import` is executed for a certain import configuration.
 - when data is pushed to the corresponding endpoint via http when `push` data source is configured. 
 
 For starting imports see also [Execution Configuration](./03_Configuration/07_Execution_Configuration.md).
