@@ -48,7 +48,10 @@ class XmlFileInterpreter extends AbstractInterpreter
         if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
             $schema = $this->schema;
             $dom = XmlUtils::loadFile($path, function ($dom) use ($schema) {
-                return @$dom->schemaValidateSource($schema);
+                if(!empty($schema)) {
+                    return @$dom->schemaValidateSource($schema);
+                }
+                return true;
             });
         } else {
             $dom = $this->cachedContent;
@@ -89,7 +92,10 @@ class XmlFileInterpreter extends AbstractInterpreter
         try {
             $schema = $this->schema;
             $dom = XmlUtils::loadFile($path, function ($dom) use ($schema) {
-                return @$dom->schemaValidateSource($schema);
+                if(!empty($schema)) {
+                    return @$dom->schemaValidateSource($schema);
+                }
+                return true;
             });
         } catch (XmlParsingException $exception) {
             $message = 'Error validating XML: ' . $exception->getMessage();
