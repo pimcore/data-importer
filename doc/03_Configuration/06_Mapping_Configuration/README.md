@@ -5,7 +5,7 @@ the Pimcore data object.
 
 <div class="image-as-lightbox"></div>
 
-![Import Preview](../img/mapping.png)
+![Import Preview](../../img/mapping.png)
 
 The mapping configuration consists of multiple mapping entries. Each mapping entry provides settings for:
 - **Label**: Defines a name for the mapping entry. The name is used as title of the mapping entry only and has no further 
