@@ -36,6 +36,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.loader", type: "asset" }
 
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\UploadLoader:
+        tags:
+            - { name: "pimcore.datahub.data_importer.loader", type: "upload" }
+
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader:
         tags:
             - { name: "pimcore.datahub.data_importer.loader", type: "http" }
