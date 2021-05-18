@@ -1,6 +1,6 @@
 # Import Preview
 
-The import configuration allows to upload a preview file which helps
+The import configuration allows to show a preview of the data which helps
 to setup the [mapping configuration](06_Mapping_Configuration/README.md) and
 validate the expected results. 
 
@@ -16,6 +16,10 @@ Any changes in file format settings result in a reloading of the uploaded previe
 file. Reloading the preview file or paging the records will also update the
 processing result preview of the [mapping configuration](06_Mapping_Configuration/README.md).
 
-Preview files are saved per user and import configuration in Pimcores `tmp` directory 
-and should only be a small extract of the actual import files - due to loading
-performance and used storage space.
+There are two options for loading the preview file:
+- Upload an extra preview file. 
+- Copy the preview file from the configured data source (not possible with push data source).   
+
+For both options, preview files are saved per user and import configuration in Pimcores `tmp` directory and 
+should only be a small extract of the actual import files - due to loading performance and used storage space.
+
