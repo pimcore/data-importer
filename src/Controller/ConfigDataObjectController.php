@@ -574,10 +574,13 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
+     *
      * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     *
      * @throws \League\Flysystem\FilesystemException
      */
-    public function uploadImportFileAction(Request $request, FilesystemOperator $pimcoreDataImporterUploadStorage) {
+    public function uploadImportFileAction(Request $request, FilesystemOperator $pimcoreDataImporterUploadStorage)
+    {
         try {
             if (array_key_exists('Filedata', $_FILES)) {
                 $filename = $_FILES['Filedata']['name'];
@@ -627,18 +630,19 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      * @param Translator $translator
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
+     *
      * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
      */
-    public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage) {
+    public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage)
+    {
         try {
             $importFile = $this->getImportFilePath($request->get('config_name'));
 
-            if($pimcoreDataImporterUploadStorage->fileExists($importFile)) {
+            if ($pimcoreDataImporterUploadStorage->fileExists($importFile)) {
                 return new JsonResponse(['success' => true, 'filePath' => $importFile, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists', [], 'admin')]);
             }
 
             return new JsonResponse(['success' => false, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists', [], 'admin')]);
-
         } catch (\Exception $e) {
             Logger::error($e);
 

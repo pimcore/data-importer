@@ -46,6 +46,7 @@ class UploadLoader implements DataLoaderInterface
     {
         $stream = $this->pimcoreDataImporterUploadStorage->readStream($this->uploadFilePath);
         $this->temporaryFile = self::getTemporaryFileFromStream($stream, true);
+
         return $this->temporaryFile;
     }
 
