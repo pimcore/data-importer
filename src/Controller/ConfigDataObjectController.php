@@ -198,7 +198,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         }
     }
 
-
     /**
      * @Route("/copy-preview", methods={"POST"})
      *
@@ -214,22 +213,19 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
         DataLoaderFactory $dataLoaderFactory
-    )
-    {
+    ) {
         try {
-
             $configName = $request->get('config_name');
             $currentConfig = $request->get('current_config');
 
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
             $loader = $dataLoaderFactory->loadDataLoader($config['loaderConfig']);
 
-            if($loader instanceof PushLoader) {
+            if ($loader instanceof PushLoader) {
                 throw new \Exception('Cannot copy data from push loader for preview.');
             }
 
             $sourcePath = $loader->loadData();
-
 
             if (is_file($sourcePath) && filesize($sourcePath) < 1) {
                 throw new \Exception('File is empty!');
@@ -256,8 +252,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             ]);
         }
     }
-
-
 
     /**
      * @Route("/load-preview-data", methods={"POST"})
