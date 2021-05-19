@@ -15,8 +15,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Settings\SettingsAwareInterface;
 
 interface InterpreterInterface extends SettingsAwareInterface
