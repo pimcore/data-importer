@@ -15,7 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 class JsonFileInterpreter extends AbstractInterpreter
 {

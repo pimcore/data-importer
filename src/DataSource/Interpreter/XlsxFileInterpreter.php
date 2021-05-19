@@ -16,7 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 class XlsxFileInterpreter extends AbstractInterpreter
 {

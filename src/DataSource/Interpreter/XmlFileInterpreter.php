@@ -18,7 +18,7 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
-use Pimcore\Bundle\DataImporterBundle\Settings\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Symfony\Component\Config\Util\Exception\XmlParsingException;
 use Symfony\Component\Config\Util\XmlUtils;
 

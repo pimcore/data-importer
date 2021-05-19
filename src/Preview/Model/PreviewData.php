@@ -13,7 +13,7 @@
  *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
-namespace Pimcore\Bundle\DataImporterBundle\Settings;
+namespace Pimcore\Bundle\DataImporterBundle\Preview\Model;
 
 class PreviewData
 {
@@ -105,3 +105,5 @@ class PreviewData
         return $this->previewData;
     }
 }
+
+class_alias(PreviewData::class, 'Pimcore\Bundle\DataImporterBundle\Settings\PreviewData');
