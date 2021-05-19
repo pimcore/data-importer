@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use League\Flysystem\FilesystemOperator;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 
 class UploadLoader implements DataLoaderInterface
@@ -32,6 +33,9 @@ class UploadLoader implements DataLoaderInterface
      */
     protected $temporaryFile = null;
 
+    /**
+     * @var FilesystemOperator
+     */
     protected FilesystemOperator $pimcoreDataImporterUploadStorage;
 
     /**
@@ -44,18 +48,17 @@ class UploadLoader implements DataLoaderInterface
 
     public function loadData(): string
     {
-        $stream = $this->pimcoreDataImporterUploadStorage->readStream($this->uploadFilePath);
-        $this->temporaryFile = self::getTemporaryFileFromStream($stream, true);
+        if($this->pimcoreDataImporterUploadStorage->fileExists($this->uploadFilePath)) {
+            $stream = $this->pimcoreDataImporterUploadStorage->readStream($this->uploadFilePath);
+            $this->temporaryFile = self::getTemporaryFileFromStream($stream, true);
+            return $this->temporaryFile;
+        }
 
-        return $this->temporaryFile;
+        throw new InvalidConfigurationException('No file uploaded for import.');
     }
 
     public function setSettings(array $settings): void
     {
-//        if (empty($settings['uploadFile'])) {
-//            throw new InvalidConfigurationException('Empty asset path.');
-//        }
-
         $this->uploadFilePath = $settings['uploadFilePath'];
     }
 

@@ -15,11 +15,14 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\EventListener;
 
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Logger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
@@ -41,17 +44,23 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     protected $cronExecutionService;
 
     /**
+     * @var FilesystemOperator
+     */
+    protected FilesystemOperator $pimcoreDataImporterUploadStorage;
+
+    /**
      * ConfigurationEventSubscriber constructor.
      *
      * @param DeltaChecker $deltaChecker
      * @param QueueService $queueService
      * @param CronExecutionService $cronExecutionService
      */
-    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, CronExecutionService $cronExecutionService)
+    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, CronExecutionService $cronExecutionService, FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
         $this->deltaChecker = $deltaChecker;
         $this->queueService = $queueService;
         $this->cronExecutionService = $cronExecutionService;
+        $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;
     }
 
     public static function getSubscribedEvents()
@@ -83,6 +92,12 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
             //cleanup preview files
             $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/preview/' . $config->getName();
             recursiveDelete($folder);
+
+            try {
+                $this->pimcoreDataImporterUploadStorage->deleteDirectory($config->getName());
+            } catch (FilesystemException $e) {
+                Logger::info($e);
+            }
 
             //cleanup cron execution
             $this->cronExecutionService->cleanup($config->getName());
