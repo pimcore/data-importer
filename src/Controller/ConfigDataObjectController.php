@@ -26,10 +26,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\File;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
 use Pimcore\Translation\Translator;
@@ -43,6 +43,21 @@ use Symfony\Component\Routing\Annotation\Route;
 class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\AdminController
 {
     public const CONFIG_NAME = 'plugin_datahub_config';
+
+    /**
+     * @var PreviewService
+     */
+    protected $previewService;
+
+    /**
+     * ConfigDataObjectController constructor.
+     * @param PreviewService $previewService
+     */
+    public function __construct(PreviewService $previewService)
+    {
+        $this->previewService = $previewService;
+    }
+
 
     /**
      * @Route("/save")
@@ -88,7 +103,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         array $config,
         InterpreterFactory $interpreterFactory
     ) {
-        $previewFilePath = $this->getPreviewFilePath($configName);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
         if (is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
@@ -133,26 +148,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         );
     }
 
-    /**
-     * @param string $configName
-     *
-     * @return string
-     *
-     * @throws \Exception
-     */
-    protected function getPreviewFilePath(string $configName): string
-    {
-        $user = $this->getAdminUser();
-
-        $configuration = Dao::getByName($configName);
-        if (!$configuration) {
-            throw new \Exception('Configuration ' . $configName . ' does not exist.');
-        }
-
-        $filePath = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/preview/' . $configuration->getName() . '/' . $user->getId() . '.import';
-
-        return $filePath;
-    }
 
     /**
      * @Route("/upload-preview", methods={"POST"})
@@ -183,9 +178,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $target = $this->getPreviewFilePath($request->get('config_name'));
-            File::put($target, file_get_contents($sourcePath));
-
+            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getAdminUser());
             @unlink($sourcePath);
 
             return new JsonResponse(['success' => true]);
@@ -238,8 +231,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $target = $this->getPreviewFilePath($request->get('config_name'));
-            File::put($target, file_get_contents($sourcePath));
+            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getAdminUser());
 
             $loader->cleanup();
 
@@ -279,7 +271,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $dataPreview = null;
         $hasData = false;
         $errorMessage = '';
-        $previewFilePath = $this->getPreviewFilePath($configName);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
         if (is_file($previewFilePath)) {
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
@@ -363,7 +355,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
-        $previewFilePath = $this->getPreviewFilePath($configName);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
         $importDataRow = [];
         $transformationResults = [];
         $errorMessage = '';

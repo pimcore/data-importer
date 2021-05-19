@@ -49,18 +49,25 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     protected FilesystemOperator $pimcoreDataImporterUploadStorage;
 
     /**
-     * ConfigurationEventSubscriber constructor.
-     *
+     * @var FilesystemOperator
+     */
+    protected FilesystemOperator $pimcoreDataImporterPreviewStorage;
+
+
+    /**
      * @param DeltaChecker $deltaChecker
      * @param QueueService $queueService
      * @param CronExecutionService $cronExecutionService
+     * @param FilesystemOperator $pimcoreDataImporterUploadStorage
+     * @param FilesystemOperator $pimcoreDataImporterPreviewStorage
      */
-    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, CronExecutionService $cronExecutionService, FilesystemOperator $pimcoreDataImporterUploadStorage)
+    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, CronExecutionService $cronExecutionService, FilesystemOperator $pimcoreDataImporterUploadStorage, FilesystemOperator $pimcoreDataImporterPreviewStorage)
     {
         $this->deltaChecker = $deltaChecker;
         $this->queueService = $queueService;
         $this->cronExecutionService = $cronExecutionService;
         $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;
+        $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
     }
 
     public static function getSubscribedEvents()
@@ -90,9 +97,13 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
             $this->queueService->cleanupQueueItems($config->getName());
 
             //cleanup preview files
-            $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/preview/' . $config->getName();
-            recursiveDelete($folder);
+            try {
+                $this->pimcoreDataImporterPreviewStorage->deleteDirectory($config->getName());
+            } catch (FilesystemException $e) {
+                Logger::info($e);
+            }
 
+            //cleanup upload files
             try {
                 $this->pimcoreDataImporterUploadStorage->deleteDirectory($config->getName());
             } catch (FilesystemException $e) {
