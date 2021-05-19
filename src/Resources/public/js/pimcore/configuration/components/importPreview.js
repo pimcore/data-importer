@@ -55,8 +55,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
                     {
                         xtype: 'button',
                         iconCls: 'pimcore_icon_upload',
+                        tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data_upload'),
                         handler: this.uploadDialog.bind(this)
                     },{
+                        xtype: 'button',
+                        iconCls: 'pimcore_icon_clone',
+                        tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data_clone'),
+                        handler: this.copyPreviewFromDataSource.bind(this)
+                    },
+                    '->',
+                    {
                         xtype: 'button',
                         iconCls: 'pimcore_icon_refresh',
                         handler: this.updatePreview.bind(this, null, false)
@@ -120,15 +128,20 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
                     {
                         xtype: 'button',
                         iconCls: 'pimcore_icon_upload',
+                        tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data_upload'),
                         handler: this.uploadDialog.bind(this)
+                    },{
+                        xtype: 'button',
+                        iconCls: 'pimcore_icon_clone',
+                        tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data_clone'),
+                        handler: this.copyPreviewFromDataSource.bind(this)
                     },
+                    '->',
                     {
                         xtype: 'button',
                         iconCls: 'pimcore_icon_refresh',
                         handler: this.updatePreview.bind(this, null, false)
-                    },
-                    '->',
-                    {
+                    },{
                         xtype: 'button',
                         iconCls: 'plugin_pimcore_datahub_icon_previous',
                         handler: this.updatePreview.bind(this, 'previous', false)
@@ -193,43 +206,49 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
 
             const response = res.response;
 
-            var jsonData = null;
+            let jsonData = null;
             try {
                 jsonData = Ext.decode(response.responseText);
             } catch (e) {
 
             }
 
-            var date = new Date();
-            var errorMessage = "Timestamp: " + date.toString() + "\n";
-            var errorDetailMessage = "\n" + response.responseText;
+            const errorMessage = this.buildErrorMessage(response, jsonData);
 
-            try {
-                errorMessage += "Status: " + response.status + " | " + response.statusText + "\n";
-                errorMessage += "URL: " + options.url + "\n";
-
-                if(jsonData) {
-                    if (jsonData['message']) {
-                        errorDetailMessage = jsonData['message'];
-                    }
-
-                    if(jsonData['traceString']) {
-                        errorDetailMessage += "\nTrace: \n" + jsonData['traceString'];
-                    }
-                }
-
-                errorMessage += "Message: " + errorDetailMessage;
-            } catch (e) {
-                errorMessage += "\n\n";
-                errorMessage += response.responseText;
-            }
-
-            var message = t("error_general");
+            let message = t("error_general");
             if(jsonData && jsonData['message']) {
                 message = jsonData['message'] + "<br><br>" + t("error_general");
             }
             pimcore.helpers.showNotification(t("error"), message, "error", errorMessage);
         });
+    },
+
+    buildErrorMessage: function(response, jsonData) {
+        const date = new Date();
+        let errorMessage = "Timestamp: " + date.toString() + "\n";
+        let errorDetailMessage = "\n" + response.responseText;
+
+        try {
+            errorMessage += "Status: " + response.status + " | " + response.statusText + "\n";
+            errorMessage += "URL: " + options.url + "\n";
+
+            if(jsonData) {
+                if (jsonData['message']) {
+                    errorDetailMessage = jsonData['message'];
+                }
+
+                if(jsonData['traceString']) {
+                    errorDetailMessage += "\nTrace: \n" + jsonData['traceString'];
+                }
+            }
+
+            errorMessage += "Message: " + errorDetailMessage;
+        } catch (e) {
+            errorMessage += "\n\n";
+            errorMessage += response.responseText;
+        }
+
+        return errorMessage;
     },
 
     updatePreview: function(direction, suppressInvalidError) {
@@ -281,6 +300,40 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
 
         this.configItemInstance.updateColumnHeaders();
 
+    },
+
+    copyPreviewFromDataSource: function() {
+
+        if(!this.checkValidConfiguration(false)) {
+            return;
+        }
+
+        const currentConfig = this.configItemInstance.getSaveData();
+
+        Ext.Ajax.request({
+            url: Routing.generate('pimcore_dataimporter_configdataobject_copypreviewdata'),
+            method: 'POST',
+            params: {
+                config_name: this.configName,
+                current_config: currentConfig
+            },
+            success: function (response) {
+                let data = Ext.decode(response.responseText);
+
+                if(data.success) {
+                    this.updatePreview()
+                } else {
+                    let message = t("error_general");
+                    if(data && data['message']) {
+                        message = data['message'] + "<br><br>" + t("error_general");
+                    }
+
+                    const errorMessage = this.buildErrorMessage(response, data);
+                    pimcore.helpers.showNotification(t("error"), message, "error", errorMessage);
+                }
+
+            }.bind(this)
+        });
     }
 
 });

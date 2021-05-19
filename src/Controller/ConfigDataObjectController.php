@@ -19,6 +19,8 @@ use Cron\CronExpression;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService;
@@ -184,6 +186,61 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             File::put($target, file_get_contents($sourcePath));
 
             @unlink($sourcePath);
+
+            return new JsonResponse(['success' => true]);
+        } catch (\Exception $e) {
+            Logger::error($e);
+
+            return $this->adminJson([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @Route("/copy-preview", methods={"POST"})
+     *
+     * @param Request $request
+     * @param ConfigurationPreparationService $configurationPreparationService
+     * @param DataLoaderFactory $dataLoaderFactory
+     *
+     * @return JsonResponse
+     *
+     * @throws \Exception
+     */
+    public function copyPreviewDataAction(
+        Request $request,
+        ConfigurationPreparationService $configurationPreparationService,
+        DataLoaderFactory $dataLoaderFactory
+    ) {
+        try {
+            $configName = $request->get('config_name');
+            $currentConfig = $request->get('current_config');
+
+            $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
+            $loader = $dataLoaderFactory->loadDataLoader($config['loaderConfig']);
+
+            if ($loader instanceof PushLoader) {
+                throw new \Exception('Cannot copy data from push loader for preview.');
+            }
+
+            $sourcePath = $loader->loadData();
+
+            if (is_file($sourcePath) && filesize($sourcePath) < 1) {
+                throw new \Exception('File is empty!');
+            } elseif (!is_file($sourcePath)) {
+                throw new \Exception('Something went wrong, please check upload_max_filesize and post_max_size in your php.ini and write permissions of your temporary directories.');
+            }
+
+            if (filesize($sourcePath) > 10485760) { //10 MB
+                throw new \Exception('File it too big for preview file, please create a smaller one');
+            }
+
+            $target = $this->getPreviewFilePath($request->get('config_name'));
+            File::put($target, file_get_contents($sourcePath));
+
+            $loader->cleanup();
 
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
