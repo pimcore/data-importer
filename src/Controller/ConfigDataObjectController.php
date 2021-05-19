@@ -51,13 +51,13 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
     /**
      * ConfigDataObjectController constructor.
+     *
      * @param PreviewService $previewService
      */
     public function __construct(PreviewService $previewService)
     {
         $this->previewService = $previewService;
     }
-
 
     /**
      * @Route("/save")
@@ -147,7 +147,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             ]
         );
     }
-
 
     /**
      * @Route("/upload-preview", methods={"POST"})

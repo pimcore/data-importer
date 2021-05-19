@@ -1,7 +1,19 @@
 <?php
 
-namespace Pimcore\Bundle\DataImporterBundle\Preview;
+/**
+ * Pimcore
+ *
+ * This source file is available under two different licenses:
+ * - GNU General Public License version 3 (GPLv3)
+ * - Pimcore Commercial License (PCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ */
 
+namespace Pimcore\Bundle\DataImporterBundle\Preview;
 
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
@@ -25,8 +37,8 @@ class PreviewService
         $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
     }
 
-
-    public function writePreviewFile(string $configName, string $sourcePath, User $user) {
+    public function writePreviewFile(string $configName, string $sourcePath, User $user)
+    {
         $target = $this->getPreviewFilePath($configName, $user);
         $this->pimcoreDataImporterPreviewStorage->write($target, file_get_contents($sourcePath));
     }
@@ -50,13 +62,13 @@ class PreviewService
         return $filePath;
     }
 
-
-    public function getLocalPreviewFile(string $configName, User $user): ?string {
-
+    public function getLocalPreviewFile(string $configName, User $user): ?string
+    {
         $filePath = $this->getPreviewFilePath($configName, $user);
 
-        if($this->pimcoreDataImporterPreviewStorage->fileExists($filePath)) {
+        if ($this->pimcoreDataImporterPreviewStorage->fileExists($filePath)) {
             $stream = $this->pimcoreDataImporterPreviewStorage->readStream($filePath);
+
             return self::getLocalFileFromStream($stream);
         }
 

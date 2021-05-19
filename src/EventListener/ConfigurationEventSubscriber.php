@@ -53,7 +53,6 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
      */
     protected FilesystemOperator $pimcoreDataImporterPreviewStorage;
 
-
     /**
      * @param DeltaChecker $deltaChecker
      * @param QueueService $queueService
