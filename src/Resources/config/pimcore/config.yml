@@ -1,0 +1,7 @@
+flysystem:
+    storages:
+        pimcore.dataImporter.upload.storage:
+            adapter: 'local'
+            visibility: private
+            options:
+                directory: '%kernel.project_dir%/var/tmp/datahub/dataimporter/upload'

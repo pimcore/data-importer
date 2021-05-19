@@ -15,15 +15,18 @@
 
 namespace Pimcore\Bundle\DataImporterBundle;
 
+use League\FlysystemBundle\FlysystemBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\InterpreterConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverConfigurationFactoryPass;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
+use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
+use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class PimcoreDataImporterBundle extends AbstractPimcoreBundle
+class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface
 {
     const LOGGER_COMPONENT_PREFIX = 'DATA-IMPORTER ';
 
@@ -46,6 +49,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/sftp.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/http.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/asset.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/upload.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/push.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/interpreter/csv.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/interpreter/json.js',
@@ -106,5 +110,10 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle
             ->addCompilerPass(new InterpreterConfigurationFactoryPass())
             ->addCompilerPass(new CleanupStrategyConfigurationFactoryPass())
         ;
+    }
+
+    public static function registerDependentBundles(BundleCollection $collection)
+    {
+        $collection->addBundle(new FlysystemBundle());
     }
 }

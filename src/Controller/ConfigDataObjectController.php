@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
 use Cron\CronExpression;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
@@ -623,5 +624,89 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         return new JsonResponse([
             'success' => true
         ]);
+    }
+
+    /**
+     * @Route("/upload-import-file", methods={"POST"})
+     *
+     * @param Request $request
+     * @param FilesystemOperator $pimcoreDataImporterUploadStorage
+     *
+     * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     *
+     * @throws \League\Flysystem\FilesystemException
+     */
+    public function uploadImportFileAction(Request $request, FilesystemOperator $pimcoreDataImporterUploadStorage)
+    {
+        try {
+            if (array_key_exists('Filedata', $_FILES)) {
+                $filename = $_FILES['Filedata']['name'];
+                $sourcePath = $_FILES['Filedata']['tmp_name'];
+            } else {
+                throw new \Exception('The filename of the upload data is empty');
+            }
+
+            $target = $this->getImportFilePath($request->get('config_name'));
+            $pimcoreDataImporterUploadStorage->write($target, file_get_contents($sourcePath));
+
+            @unlink($sourcePath);
+
+            return new JsonResponse(['success' => true]);
+        } catch (\Exception $e) {
+            Logger::error($e);
+
+            return $this->adminJson([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * @param string $configName
+     *
+     * @return string
+     *
+     * @throws \Exception
+     */
+    protected function getImportFilePath(string $configName): string
+    {
+        $configuration = Dao::getByName($configName);
+        if (!$configuration) {
+            throw new \Exception('Configuration ' . $configName . ' does not exist.');
+        }
+
+        $filePath = $configuration->getName() . '/upload.import';
+
+        return $filePath;
+    }
+
+    /**
+     * @Route("/has-import-file-uploaded", methods={"GET"})
+     *
+     * @param Request $request
+     * @param Translator $translator
+     * @param FilesystemOperator $pimcoreDataImporterUploadStorage
+     *
+     * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     */
+    public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage)
+    {
+        try {
+            $importFile = $this->getImportFilePath($request->get('config_name'));
+
+            if ($pimcoreDataImporterUploadStorage->fileExists($importFile)) {
+                return new JsonResponse(['success' => true, 'filePath' => $importFile, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists', [], 'admin')]);
+            }
+
+            return new JsonResponse(['success' => false, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists', [], 'admin')]);
+        } catch (\Exception $e) {
+            Logger::error($e);
+
+            return $this->adminJson([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }
