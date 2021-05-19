@@ -48,9 +48,10 @@ class UploadLoader implements DataLoaderInterface
 
     public function loadData(): string
     {
-        if($this->pimcoreDataImporterUploadStorage->fileExists($this->uploadFilePath)) {
+        if ($this->pimcoreDataImporterUploadStorage->fileExists($this->uploadFilePath)) {
             $stream = $this->pimcoreDataImporterUploadStorage->readStream($this->uploadFilePath);
             $this->temporaryFile = self::getTemporaryFileFromStream($stream, true);
+
             return $this->temporaryFile;
         }
 
