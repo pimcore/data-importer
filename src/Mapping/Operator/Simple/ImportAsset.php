@@ -53,7 +53,7 @@ class ImportAsset extends AbstractOperator
         foreach ($inputData as $data) {
             $fileUrl = trim($data);
 
-            if(empty($fileUrl)) {
+            if (empty($fileUrl)) {
                 continue;
             }
 
