@@ -52,6 +52,11 @@ class ImportAsset extends AbstractOperator
 
         foreach ($inputData as $data) {
             $fileUrl = trim($data);
+
+            if(empty($fileUrl)) {
+                continue;
+            }
+
             $filename = Service::getValidKey(basename($fileUrl), 'asset');
 
             $asset = null;
