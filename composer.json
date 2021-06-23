@@ -6,6 +6,7 @@
     "sort-packages": true
   },
   "require": {
+    "php": ">=7.4",
     "pimcore/pimcore": "^6.8 || ^10.0",
     "pimcore/data-hub": "^0.7 || ^1.0",
     "phpoffice/phpspreadsheet": "^1.1",
