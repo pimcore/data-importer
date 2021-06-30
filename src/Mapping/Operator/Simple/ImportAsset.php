@@ -64,13 +64,12 @@ class ImportAsset extends AbstractOperator
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }
             if (empty($asset)) {
-
-                $options = array(
-                    'http'=>array(
-                        'method'=>"GET",
-                        'header'=> "User-Agent: pimcore-data-importer"
-                    )
-                );
+                $options = [
+                    'http' => [
+                        'method' => 'GET',
+                        'header' => 'User-Agent: pimcore-data-importer'
+                    ]
+                ];
                 $context = stream_context_create($options);
 
                 if ($fileUrl && $assetData = @file_get_contents($fileUrl, false, $context)) {
