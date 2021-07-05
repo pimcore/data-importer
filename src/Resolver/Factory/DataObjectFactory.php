@@ -58,12 +58,12 @@ class DataObjectFactory implements FactoryInterface
         $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
         $element = $this->modelFactory->build($className);
 
-        if($element instanceof ElementInterface) {
+        if ($element instanceof ElementInterface) {
             $element->setKey(uniqid('import-', true));
+
             return $element;
         }
 
         throw new InvalidConfigurationException("Object of class `{$this->subType}` could not be created.");
-
     }
 }
