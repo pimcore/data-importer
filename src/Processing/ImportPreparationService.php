@@ -157,9 +157,9 @@ class ImportPreparationService
         if (!($config['executionConfig']['cronDefinition'] ?? '')) {
             $message = "Configuration '$configName' has no cronDefinition, skipping cron execution.";
             $this->logger->debug($message);
-            $this->applicationLogger->debug($message, [
-                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
-            ]);
+//            $this->applicationLogger->debug($message, [
+//                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
+//            ]);
 
             return;
         }
