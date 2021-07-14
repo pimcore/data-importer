@@ -18,17 +18,22 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
     type: 'classificationstoreBatch',
     dataApplied: false,
     dataObjectClassId: null,
-    transformationResultType: null,
+    validTransformationResultType: null,
+
+    isTransformationResultTypeValid: function(transformationResultType) {
+        const validTypes = ['array', 'quantityValueArray', 'inputQuantityValueArray', 'dateArray'];
+        return validTypes.includes(transformationResultType);
+    },
 
     buildSettingsForm: function() {
 
         if(!this.form) {
             this.dataObjectClassId = this.configItemRootContainer.currentDataValues.dataObjectClassId;
-            this.transformationResultType = this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType;
+            this.validTransformationResultType = this.isTransformationResultTypeValid(this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType);
 
             const errorField = Ext.create('Ext.form.Label', {
                 html: t('plugin_pimcore_datahub_data_importer_configpanel_classification_store_batch_type_error'),
-                hidden: this.transformationResultType === 'array',
+                hidden: this.validTransformationResultType,
                 style: 'color: #cf4c35'
             });
 
@@ -54,7 +59,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 value: this.data.fieldName,
                 allowBlank: false,
                 msgTarget: 'under',
-                hidden: this.transformationResultType !== 'array'
+                hidden: !this.validTransformationResultType
             });
 
             const attributeStore = Ext.create('Ext.data.JsonStore', {
@@ -83,17 +88,17 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
 
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function(newType) {
-                this.transformationResultType = newType;
+                this.validTransformationResultType = this.isTransformationResultTypeValid(newType);
 
-                if(this.transformationResultType !== 'array') {
+                if(this.validTransformationResultType) {
+                    errorField.hide();
+                    attributeSelection.show();
+                    this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection);
+                } else {
                     attributeSelection.setValue('');
                     attributeSelection.hide();
                     languageSelection.hide();
                     errorField.show();
-                } else {
-                    errorField.hide();
-                    attributeSelection.show();
-                    this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection);
                 }
 
             }.bind(this));
