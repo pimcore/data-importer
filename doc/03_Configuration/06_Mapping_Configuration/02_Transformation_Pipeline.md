@@ -41,8 +41,8 @@ Their name is usually prefixed with `As`.
 - **As Quantity Value Array**: Same like `As Quantity Value`, but for arrays of values. Expects an array
   with sub-arrays where first item to be value and second item to be unit id each and results in an array of quantity value objects.
 - **Combine**: Combines an array to a string with using configuerd `glue`. 
-- **Explode**: Explodes string to array using configured `delimiter`. If input is an array, explode is 
-done on every array item recursively resulting in one flat array with all items. 
+- **Explode**: Explodes string to array using configured `delimiter`. If input is an array, explode is done on every array item recursively. 
+  Depending if `Do not flatten sub arrays` is set, the operator results in one flat array with all items, or in an array with sub arrays. 
 - **Flatten Array**: Converts one array with potential sub arrays into one flat array with all items and sub items in one level. 
 - **HTML Decode**: Applies `html_entity_decode` to input data.
 - **Import Asset**: Expects a URL as input, downloads data via `file_get_contents` and stores it as new asset in configured 
