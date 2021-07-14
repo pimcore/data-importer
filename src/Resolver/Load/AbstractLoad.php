@@ -71,7 +71,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
             throw new InvalidConfigurationException("Class `{$this->dataObjectClassId}` not found.");
         }
 
-        return '\\Pimcore\\Model\\DataObject\\' . $class->getName();
+        return '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
     }
 
     /**

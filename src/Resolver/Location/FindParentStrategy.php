@@ -106,7 +106,7 @@ class FindParentStrategy implements LocationStrategyInterface
                 if (empty($class)) {
                     throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
                 }
-                $className = '\\Pimcore\\Model\\DataObject\\' . $class->getName();
+                $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
 
                 $identifier = $inputData[$this->dataSourceIndex] ?? null;
                 if ($this->attributeLanguage) {
