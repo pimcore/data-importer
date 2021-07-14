@@ -12,7 +12,7 @@ The transformation result panels shows information about the current resulting
 type of the transformation and - if a preview file is uploaded - also a preview
 based on the currently active data record of the preview panel. 
 
-The result type is also important for the [Data Target](./03_Data_Target.md) setting 
+The result type is also important for the [Data Target](./03_Data_Target/README.md) setting 
 as it defines available options there.
 
 ### Operators
@@ -33,9 +33,13 @@ Their name is usually prefixed with `As`.
 - **As Image Advanced**: Packs a single asset to an image advanced. 
 - **As Input Quantity Value**: Converts an array to a quantity value object for 
   input quanitity value, expects first item in array to be value, second item in array to be unit id. 
+- **As Input Quantity Value Array**: Same like `As Input Quantity Value`, but for arrays of values. Expects an array
+  with sub-arrays where first item to be value and second item to be unit id each and results in an array of quantity value objects.
 - **As Numeric**: Converts data to a numeric by using `floatval`.
 - **As Quantity Value**: Converts an array to a quantity value object for 
     quanitity value, expects first item in array to be value, second item in array to be unit id.
+- **As Quantity Value Array**: Same like `As Quantity Value`, but for arrays of values. Expects an array
+  with sub-arrays where first item to be value and second item to be unit id each and results in an array of quantity value objects.
 - **Combine**: Combines an array to a string with using configuerd `glue`. 
 - **Explode**: Explodes string to array using configured `delimiter`. If input is an array, explode is 
 done on every array item recursively resulting in one flat array with all items. 
