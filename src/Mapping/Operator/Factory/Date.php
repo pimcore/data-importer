@@ -66,7 +66,7 @@ class Date extends AbstractOperator
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for date operator at transformation position %s", $inputType, $index));
         }
 
-        if($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
+        if ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::DATE_ARRAY;
         }
 
@@ -79,8 +79,7 @@ class Date extends AbstractOperator
             return $inputData->format('c');
         }
 
-        if(is_array($inputData)) {
-
+        if (is_array($inputData)) {
             $preview = [];
 
             foreach ($inputData as $key => $data) {

@@ -22,13 +22,13 @@ class InputQuantityValueArray extends QuantityValueArray
 {
     public function process($inputData, bool $dryRun = false)
     {
-        if(!is_array($inputData)) {
+        if (!is_array($inputData)) {
             return [];
         }
 
         $result = [];
 
-        foreach($inputData as $key => $data) {
+        foreach ($inputData as $key => $data) {
             $result[$key] = new \Pimcore\Model\DataObject\Data\QuantityValue(
                 $data[0] ?? null,
                 $data[1] ?? null
@@ -57,24 +57,20 @@ class InputQuantityValueArray extends QuantityValueArray
 
     public function generateResultPreview($inputData)
     {
-        if(is_array($inputData)) {
-
+        if (is_array($inputData)) {
             $preview = [];
 
             foreach ($inputData as $key => $data) {
-
                 if ($data instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
                     $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' . ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
                 } else {
                     $preview[$key] = $data;
                 }
-
             }
 
             return $preview;
         }
 
         return $inputData;
-
     }
 }

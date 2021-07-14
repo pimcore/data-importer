@@ -43,8 +43,7 @@ class Explode extends AbstractOperator
             if (is_array($inputData)) {
                 $explodedArray = [];
                 foreach ($inputData as $key => $dataRow) {
-
-                    if($this->keepSubArrays) {
+                    if ($this->keepSubArrays) {
                         $explodedArray[$key] = $this->process($dataRow, $dryRun);
                     } else {
                         $explodedArray = array_merge($explodedArray, [$this->process($dataRow, $dryRun)]);
