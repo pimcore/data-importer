@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\PostUpdatePublishStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
@@ -176,6 +177,11 @@ class ImportProcessingService
 
                 $dataTarget = $mappingConfiguration->getDataTarget();
                 $dataTarget->assignData($element, $data);
+            }
+
+            $postUpdateUpdateStrategy = $resolver->getPublishingStrategy();
+            if($postUpdateUpdateStrategy instanceof PostUpdatePublishStrategyInterface) {
+                $postUpdateUpdateStrategy->postUpdateUpdatePublishState($element, $importDataRow);
             }
 
             $element->save();
