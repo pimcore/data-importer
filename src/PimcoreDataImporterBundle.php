@@ -36,7 +36,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     protected function getComposerPackageName(): string
     {
         return 'pimcore/data-importer';
-    }    
+    }
 
     public function getCssPaths()
     {
