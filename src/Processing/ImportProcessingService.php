@@ -180,7 +180,7 @@ class ImportProcessingService
             }
 
             $postUpdateUpdateStrategy = $resolver->getPublishingStrategy();
-            if($postUpdateUpdateStrategy instanceof PostUpdatePublishStrategyInterface) {
+            if ($postUpdateUpdateStrategy instanceof PostUpdatePublishStrategyInterface) {
                 $postUpdateUpdateStrategy->postUpdateUpdatePublishState($element, $importDataRow);
             }
 
