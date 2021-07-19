@@ -25,8 +25,11 @@ class TransformationDataTypeService
     const NUMERIC = 'numeric';
     const BOOLEAN = 'boolean';
     const QUANTITY_VALUE = 'quantityValue';
+    const QUANTITY_VALUE_ARRAY = 'quantityValueArray';
     const INPUT_QUANTITY_VALUE = 'inputQuantityValue';
+    const INPUT_QUANTITY_VALUE_ARRAY = 'inputQuantityValueArray';
     const DATE = 'date';
+    const DATE_ARRAY = 'dateArray';
     const ASSET = 'asset';
     const ASSET_ARRAY = 'assetArray';
     const GALLERY = 'gallery';
