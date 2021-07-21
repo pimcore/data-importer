@@ -22,13 +22,21 @@ use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderCon
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverConfigurationFactoryPass;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
+use Pimcore\Extension\Bundle\Traits\PackageVersionTrait;
 use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface
 {
+    use PackageVersionTrait;
+
     const LOGGER_COMPONENT_PREFIX = 'DATA-IMPORTER ';
+
+    protected function getComposerPackageName(): string
+    {
+        return 'pimcore/data-importer';
+    }
 
     public function getCssPaths()
     {

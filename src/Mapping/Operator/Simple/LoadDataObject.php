@@ -79,7 +79,7 @@ class LoadDataObject extends AbstractOperator
                     if (empty($class)) {
                         throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
                     }
-                    $className = '\\Pimcore\\Model\\DataObject\\' . $class->getName();
+                    $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
 
                     if ($this->attributeLanguage) {
                         $object = $className::$getter($data, $this->attributeLanguage, 1);
