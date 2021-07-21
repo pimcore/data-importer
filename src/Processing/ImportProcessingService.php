@@ -16,7 +16,6 @@
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
-use Pimcore\Bundle\DataImporterBundle\Event\DataObject\AbstractDataObjectImportEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -85,7 +84,6 @@ class ImportProcessingService
      * @var MappingConfiguration[]
      */
     protected $mappingConfigurationCache = [];
-
 
     /**
      * @var EventDispatcherInterface

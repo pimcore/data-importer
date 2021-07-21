@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under two different licenses:
+ * - GNU General Public License version 3 (GPLv3)
+ * - Pimcore Commercial License (PCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ */
 
 namespace Pimcore\Bundle\DataImporterBundle\Event\DataObject;
 
@@ -8,7 +20,6 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 abstract class AbstractDataObjectImportEvent extends Event
 {
-
     /**
      * @var string
      */
@@ -26,6 +37,7 @@ abstract class AbstractDataObjectImportEvent extends Event
 
     /**
      * AbstractDataObjectImportEvent constructor.
+     *
      * @param string $configName
      * @param array $rawData
      * @param ElementInterface $dataObject
@@ -48,9 +60,10 @@ abstract class AbstractDataObjectImportEvent extends Event
     /**
      * @param string $configName
      */
-    public function setConfigName(string $configName): AbstractDataObjectImportEvent
+    public function setConfigName(string $configName): self
     {
         $this->configName = $configName;
+
         return $this;
     }
 
@@ -65,9 +78,10 @@ abstract class AbstractDataObjectImportEvent extends Event
     /**
      * @param array $rawData
      */
-    public function setRawData(array $rawData): AbstractDataObjectImportEvent
+    public function setRawData(array $rawData): self
     {
         $this->rawData = $rawData;
+
         return $this;
     }
 
@@ -82,10 +96,10 @@ abstract class AbstractDataObjectImportEvent extends Event
     /**
      * @param ElementInterface $dataObject
      */
-    public function setDataObject(ElementInterface $dataObject): AbstractDataObjectImportEvent
+    public function setDataObject(ElementInterface $dataObject): self
     {
         $this->dataObject = $dataObject;
+
         return $this;
     }
-
 }
