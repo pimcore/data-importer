@@ -16,6 +16,9 @@
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\AbstractDataObjectImportEvent;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
@@ -29,6 +32,7 @@ use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ImportProcessingService
 {
@@ -82,6 +86,12 @@ class ImportProcessingService
      */
     protected $mappingConfigurationCache = [];
 
+
+    /**
+     * @var EventDispatcherInterface
+     */
+    protected $eventDispatcher;
+
     /**
      * ImportProcessingService constructor.
      *
@@ -91,13 +101,14 @@ class ImportProcessingService
      * @param CleanupStrategyFactory $cleanupStrategyFactory
      * @param ApplicationLogger $applicationLogger
      */
-    public function __construct(QueueService $queueService, MappingConfigurationFactory $mappingConfigurationFactory, ResolverFactory $resolverFactory, CleanupStrategyFactory $cleanupStrategyFactory, ApplicationLogger $applicationLogger)
+    public function __construct(QueueService $queueService, MappingConfigurationFactory $mappingConfigurationFactory, ResolverFactory $resolverFactory, CleanupStrategyFactory $cleanupStrategyFactory, ApplicationLogger $applicationLogger, EventDispatcherInterface $eventDispatcher)
     {
         $this->queueService = $queueService;
         $this->mappingConfigurationFactory = $mappingConfigurationFactory;
         $this->resolverFactory = $resolverFactory;
         $this->cleanupStrategyFactory = $cleanupStrategyFactory;
         $this->applicationLogger = $applicationLogger;
+        $this->eventDispatcher = $eventDispatcher;
 
         $this->configLoader = new ConfigurationPreparationService();
     }
@@ -178,7 +189,13 @@ class ImportProcessingService
                 $dataTarget->assignData($element, $data);
             }
 
+            $event = new PreSaveEvent($configName, $importDataRow, $element);
+            $this->eventDispatcher->dispatch($event);
+
             $element->save();
+
+            $event = new PostSaveEvent($configName, $importDataRow, $element);
+            $this->eventDispatcher->dispatch($event);
 
             $message = "Element {$element->getId()} imported successfully.";
             $this->logger->info($message);
