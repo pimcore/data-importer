@@ -26,6 +26,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "staticText" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ConditionalConversion:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "conditionalConversion" }
+
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ReduceArrayKeyValuePairs:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "reduceArrayKeyValuePairs" }
