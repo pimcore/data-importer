@@ -211,10 +211,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
 
         const doDeltaCheckCheckbox = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_delta_check'),
-            name: 'doDeltaCheckCheck',
+            name: 'doDeltaCheck',
             disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
             inputValue: true,
-            value: this.processingConfigData.hasOwnProperty('doDeltaCheckCheck') ? this.processingConfigData.doDeltaCheckCheck : false
+            value: this.processingConfigData.hasOwnProperty('doDeltaCheck') ? this.processingConfigData.doDeltaCheck : false
         });
         const doCleanup = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_do_cleanup'),
