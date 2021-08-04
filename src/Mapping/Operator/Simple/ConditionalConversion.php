@@ -46,7 +46,6 @@ class ConditionalConversion extends AbstractOperator
             $inputData = [$inputData];
         }
 
-        \Pimcore\Log\Simple::log("importerlog", $this->original . " " . $this->converted ." ".print_r($inputData, true));
         $origArr = explode('|', $this->original);
         $convArr = explode('|', $this->converted);
         foreach ($inputData as &$data) {
