@@ -91,6 +91,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 }.bind(this)
             }
         });
+        
+        const partialMatch = Ext.create('Ext.form.field.Checkbox', {
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_accept_partial_match',
+            name: 'settings.partialMatch',
+            allowBlank: true,
+            value: this.data.settings ? this.data.settings.partialMatch : false,
+            listeners: {
+                change: this.inputChangePreviewUpdate.bind(this)
+            },
+        });
 
         attributeName.setStore(attributeStore);
         attributeName.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeName, languageSelection));
@@ -149,6 +159,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             },
             attributeDataObjectClassId,
             attributeName,
+            partialMatch,
             languageSelection
         ];
     }
