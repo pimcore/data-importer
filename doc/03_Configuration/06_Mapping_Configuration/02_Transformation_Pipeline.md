@@ -50,3 +50,4 @@ done on every array item recursively resulting in one flat array with all items.
    to key-value pair array `['k1' => 'v1', 'k2' => 'v2']`. 
 - **Trim**: Removes leading and/or tailing white spaces from string.
 - **Static Text**: Adds a static text to the value - either prepends or appends it.
+- **Conditional Conversion**: String values are converted to other string values (e.g. '0' to '1' or 'csv-value' to 'object-value'). Multiple conversions can be configured by separating the values with pipe symbol ('|') (e.g. '0|1|2' to 'some|other|values'). An asterisk can be used as a wildcard (e.g. '0|\*' to 'no value|default' where '0' will be converted to 'no value' and all other values to 'default').
