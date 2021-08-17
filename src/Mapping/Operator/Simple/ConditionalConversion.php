@@ -21,7 +21,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class ConditionalConversion extends AbstractOperator
 {
-
     /**
      * @var string
      */
@@ -70,7 +69,7 @@ class ConditionalConversion extends AbstractOperator
             return $inputData;
         }
     }
-    
+
     public function evaluateReturnType(string $inputType, int $index = null): string
     {
         if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
