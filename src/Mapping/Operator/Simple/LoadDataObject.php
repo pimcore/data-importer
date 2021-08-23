@@ -84,6 +84,7 @@ class LoadDataObject extends AbstractOperator
                         $listClassName = $className . '\\Listing';
                         $listing = new $listClassName();
                         $listing->setCondition($this->attributeName . ' like ' . $listing->quote($data));
+                        $listing->setLimit(1);
                         foreach ($listing as $listObject) {
                             if (!is_int($listObject) and !is_string($listObject)) {
                                 $object = $listObject;
