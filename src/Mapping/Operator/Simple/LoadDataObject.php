@@ -83,7 +83,7 @@ class LoadDataObject extends AbstractOperator
                     if ($this->partialMatch) {
                         $listClassName = $className . '\\Listing';
                         $listing = new $listClassName();
-                        $listing->setCondition($this->attributeName . ' like ' . $listing->quote("%".$data."%"));
+                        $listing->setCondition($this->attributeName . ' like ' . $listing->quote($data));
                         foreach ($listing as $listObject) {
                             if (!is_int($listObject) and !is_string($listObject)) {
                                 $object = $listObject;
