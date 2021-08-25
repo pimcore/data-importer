@@ -31,6 +31,11 @@ class AttributeStrategy extends AbstractLoad
     protected $attributeLanguage;
 
     /**
+     * @var bool
+     */
+    protected $includeUnpublished;
+
+    /**
      * @param array $settings
      *
      * @throws InvalidConfigurationException
@@ -45,6 +50,7 @@ class AttributeStrategy extends AbstractLoad
 
         $this->attributeName = $settings['attributeName'];
         $this->attributeLanguage = $settings['attributeLanguage'] ?? null;
+        $this->includeUnpublished = $settings['includeUnpublished'] ?? false;
     }
 
     /**
@@ -58,6 +64,10 @@ class AttributeStrategy extends AbstractLoad
     {
         $className = $this->getClassName();
         $getter = 'getBy' . $this->attributeName;
+
+        if ($this->includeUnpublished) {
+            $className::setHideUnpublished(false);
+        }
 
         $element = null;
         if ($this->attributeLanguage) {
