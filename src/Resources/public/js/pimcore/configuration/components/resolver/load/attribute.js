@@ -100,7 +100,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.
                         triggerOnClick: false
                     },
                     attributeSelection,
-                    languageSelection
+                    languageSelection,
+                    {
+                        xtype: 'checkbox',
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_include_unpublished'),
+                        name: this.dataNamePrefix + 'includeUnpublished',
+                        value: this.data.hasOwnProperty('includeUnpublished') ? this.data.includeUnpublished : false,
+                        inputValue: true
+                    }
                 ]
             });
         }
