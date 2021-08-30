@@ -16,4 +16,4 @@ but also other fields can be defined by just writing the data index or field nam
 - **Transformation Pipeline**: The transformation pipeline transforms the data read from the source attribute(s) with operators.
 For details see [Transformation Pipeline](./02_Transformation_Pipeline.md).
 - **Data Target**: Data target definition assigns the result of the transformation pipeline to a data object field. 
-For details see [Data Target](./03_Data_Target.md).
+For details see [Data Target](./03_Data_Target/README.md).

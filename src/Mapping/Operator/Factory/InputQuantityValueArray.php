@@ -16,40 +16,26 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class Date extends AbstractOperator
+class InputQuantityValueArray extends QuantityValueArray
 {
-    /**
-     * @var string
-     */
-    protected $format;
-
-    public function setSettings(array $settings): void
-    {
-        $this->format = $settings['format'] ?? 'Y-m-d';
-    }
-
     public function process($inputData, bool $dryRun = false)
     {
-        $returnScalar = false;
         if (!is_array($inputData)) {
-            $returnScalar = true;
-            $inputData = [$inputData];
+            return [];
         }
 
-        foreach ($inputData as &$data) {
-            if (!empty($data)) {
-                $data = \Carbon\Carbon::createFromFormat($this->format, $data);
-            }
+        $result = [];
+
+        foreach ($inputData as $key => $data) {
+            $result[$key] = new \Pimcore\Model\DataObject\Data\QuantityValue(
+                $data[0] ?? null,
+                $data[1] ?? null
+            );
         }
 
-        if ($returnScalar) {
-            return reset($inputData);
-        } else {
-            return $inputData;
-        }
+        return $result;
     }
 
     /**
@@ -62,29 +48,21 @@ class Date extends AbstractOperator
      */
     public function evaluateReturnType(string $inputType, int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for date operator at transformation position %s", $inputType, $index));
+        if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
+            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for input quantity value operator at transformation position %s", $inputType, $index));
         }
 
-        if ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
-            return TransformationDataTypeService::DATE_ARRAY;
-        }
-
-        return TransformationDataTypeService::DATE;
+        return TransformationDataTypeService::INPUT_QUANTITY_VALUE_ARRAY;
     }
 
     public function generateResultPreview($inputData)
     {
-        if ($inputData instanceof \DateTime) {
-            return $inputData->format('c');
-        }
-
         if (is_array($inputData)) {
             $preview = [];
 
             foreach ($inputData as $key => $data) {
-                if ($data instanceof \DateTime) {
-                    $preview[$key] = $data->format('c');
+                if ($data instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
+                    $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' . ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
                 } else {
                     $preview[$key] = $data;
                 }

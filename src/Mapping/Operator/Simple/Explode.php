@@ -26,9 +26,15 @@ class Explode extends AbstractOperator
      */
     protected $delimiter;
 
+    /**
+     * @var bool
+     */
+    protected $keepSubArrays;
+
     public function setSettings(array $settings): void
     {
         $this->delimiter = $settings['delimiter'] ?? ' ';
+        $this->keepSubArrays = (bool) ($settings['keepSubArrays'] ?? false);
     }
 
     public function process($inputData, bool $dryRun = false)
@@ -36,8 +42,12 @@ class Explode extends AbstractOperator
         if (!empty($this->delimiter)) {
             if (is_array($inputData)) {
                 $explodedArray = [];
-                foreach ($inputData as $dataRow) {
-                    $explodedArray = array_merge($explodedArray, $this->process($dataRow, $dryRun));
+                foreach ($inputData as $key => $dataRow) {
+                    if ($this->keepSubArrays) {
+                        $explodedArray[$key] = $this->process($dataRow, $dryRun);
+                    } else {
+                        $explodedArray = array_merge($explodedArray, [$this->process($dataRow, $dryRun)]);
+                    }
                 }
 
                 return $explodedArray;

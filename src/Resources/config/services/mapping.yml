@@ -69,9 +69,17 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "quantityValue" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueArray:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "quantityValueArray" }
+
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\InputQuantityValue:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "inputQuantityValue" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\InputQuantityValueArray:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "inputQuantityValueArray" }
 
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Boolean:
         tags:

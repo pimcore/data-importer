@@ -33,4 +33,4 @@ an array with `<GROUP_ID>-<KEY_ID>` as keys, and values as array values.
 
 ![Data Target Classification Store](../../img/data_target_classification_store_batch.png)
 
-> For batch assignment data types that require special data format like Date, Time, Quantity Value, etc. are not supported. 
+For more details and examples see [Classification Store Batch Details](./05_Classification_Store_Batch_Details.md). 
