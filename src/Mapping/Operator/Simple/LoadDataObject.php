@@ -47,7 +47,7 @@ class LoadDataObject extends AbstractOperator
      * @var string
      */
     protected $attributeDataObjectClassId;
-    
+
     /**
      * @var bool
      */
@@ -80,24 +80,20 @@ class LoadDataObject extends AbstractOperator
                 $object = DataObject::getById(trim($data));
             } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
                 if ($this->attributeName) {
+                    $getter = 'getBy' . $this->attributeName;
+                    $class = ClassDefinition::getById($this->attributeDataObjectClassId);
+                    if (empty($class)) {
+                        throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
+                    }
+                    $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
+
                     if ($this->partialMatch) {
                         $listClassName = $className . '\\Listing';
                         $listing = new $listClassName();
-                        $listing->setCondition($this->attributeName . ' like ' . $listing->quote($data));
+                        $listing->setCondition($this->attributeName . ' LIKE ' . $listing->quote($data));
                         $listing->setLimit(1);
-                        foreach ($listing as $listObject) {
-                            if (!is_int($listObject) and !is_string($listObject)) {
-                                $object = $listObject;
-                            }
-                        }
+                        $object = $listing->load()[0] ?? null;
                     } else {
-                        $getter = 'getBy' . $this->attributeName;
-                        $class = ClassDefinition::getById($this->attributeDataObjectClassId);
-                        if (empty($class)) {
-                            throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
-                        }
-                        $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
-
                         if ($this->attributeLanguage) {
                             $object = $className::$getter($data, $this->attributeLanguage, 1);
                         } else {
