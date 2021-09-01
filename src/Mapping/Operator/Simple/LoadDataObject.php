@@ -94,7 +94,7 @@ class LoadDataObject extends AbstractOperator
                         $listing->setLimit(1);
                         if ($this->attributeLanguage) {
                             $listing->setLocale($this->attributeLanguage);
-                        }                        
+                        }
                         $object = $listing->load()[0] ?? null;
                     } else {
                         if ($this->attributeLanguage) {
