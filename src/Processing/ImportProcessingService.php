@@ -140,7 +140,7 @@ class ImportProcessingService
             $data = json_decode($queueItem['data'], true);
             $this->processElement($configName, $data, $resolver, $mapping);
         } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
-            $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['interpreterConfig']['cleanup'] ?? []);
+            $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
         } else {
             throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
         }
