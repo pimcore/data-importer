@@ -92,6 +92,9 @@ class LoadDataObject extends AbstractOperator
                         $listing = new $listClassName();
                         $listing->setCondition($this->attributeName . ' LIKE ' . $listing->quote($data));
                         $listing->setLimit(1);
+                        if ($this->attributeLanguage) {
+                            $listing->setLocale($this->attributeLanguage);
+                        }                        
                         $object = $listing->load()[0] ?? null;
                     } else {
                         if ($this->attributeLanguage) {
