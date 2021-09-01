@@ -49,7 +49,7 @@ Their name is usually prefixed with `As`.
    target folder. File name is extracted from URL via `basename`. If asset with same name already exists, either it is 
     reused (when `Use Existing Asset` activated), or a new asset with suffix in file name is generated. 
 - **Load Asset**: Loads existing asset based on path or id
-- **Load DataObject**: Loads existing data object based on id, path or specific attribute
+- **Load DataObject**: Loads existing data object based on id, path or specific attribute. With specific attribute it is possible to find the object with a partial match of the attribute value (e.g. data value `%foo%` would find an object with attribute value `barfoobar`)
 - **Reduce Array KeyValue Pairs**: Reduces a flat array `['k1', 'v1', 'k2', 'v2']` 
    to key-value pair array `['k1' => 'v1', 'k2' => 'v2']`. 
 - **Trim**: Removes leading and/or tailing white spaces from string.

@@ -48,12 +48,18 @@ class LoadDataObject extends AbstractOperator
      */
     protected $attributeDataObjectClassId;
 
+    /**
+     * @var bool
+     */
+    protected $partialMatch;
+
     public function setSettings(array $settings): void
     {
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_ID;
         $this->attributeLanguage = $settings['attributeLanguage'];
         $this->attributeName = $settings['attributeName'];
         $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
+        $this->partialMatch = $settings['partialMatch'] ?? false;
     }
 
     public function process($inputData, bool $dryRun = false)
@@ -81,10 +87,21 @@ class LoadDataObject extends AbstractOperator
                     }
                     $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
 
-                    if ($this->attributeLanguage) {
-                        $object = $className::$getter($data, $this->attributeLanguage, 1);
+                    if ($this->partialMatch) {
+                        $listClassName = $className . '\\Listing';
+                        $listing = new $listClassName();
+                        $listing->setCondition($this->attributeName . ' LIKE ' . $listing->quote($data));
+                        $listing->setLimit(1);
+                        if ($this->attributeLanguage) {
+                            $listing->setLocale($this->attributeLanguage);
+                        }                        
+                        $object = $listing->load()[0] ?? null;
                     } else {
-                        $object = $className::$getter($data, 1);
+                        if ($this->attributeLanguage) {
+                            $object = $className::$getter($data, $this->attributeLanguage, 1);
+                        } else {
+                            $object = $className::$getter($data, 1);
+                        }
                     }
                 }
             } else {
