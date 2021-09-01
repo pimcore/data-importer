@@ -93,7 +93,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
         });
         
         const partialMatch = Ext.create('Ext.form.field.Checkbox', {
-            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_accept_partial_match',
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_accept_partial_match'),
             name: 'settings.partialMatch',
             hidden: this.data.settings.loadStrategy !== 'attribute',
             allowBlank: true,
@@ -143,7 +143,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 ],
                 listeners: {
                     change: function(combo, strategy) {
-                        const attributeFields = [attributeDataObjectClassId, attributeName];
+                        const attributeFields = [attributeDataObjectClassId, attributeName, partialMatch];
                         if(strategy === 'attribute') {
                             attributeFields.forEach(function(item) {
                                 item.setHidden(false);
