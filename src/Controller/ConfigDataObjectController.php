@@ -704,7 +704,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
     /**
      * @Route("/load-unit-data", methods={"GET"})
+     *
      * @param Request $request
+     *
      * @return JsonResponse
      */
     public function loadUnitDataAction(Request $request): JsonResponse
@@ -712,11 +714,10 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $unitList = new Unit\Listing();
         $unitList->load();
         $data = [];
-        foreach ($unitList as $unit)
-        {
-            $data[] = array('unitId' => $unit->getId(), 'abbreviation' => $unit->getAbbreviation());
+        foreach ($unitList as $unit) {
+            $data[] = ['unitId' => $unit->getId(), 'abbreviation' => $unit->getAbbreviation()];
         }
 
-        return new JsonResponse(array('UnitList' => $data));
+        return new JsonResponse(['UnitList' => $data]);
     }
 }
