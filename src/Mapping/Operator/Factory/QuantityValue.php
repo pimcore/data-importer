@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
@@ -44,6 +44,7 @@ class QuantityValue extends AbstractOperator
     /**
      * @param mixed $inputData
      * @param bool $dryRun
+     *
      * @return \Pimcore\Model\DataObject\Data\QuantityValue
      */
     public function process($inputData, bool $dryRun = false)
@@ -51,16 +52,12 @@ class QuantityValue extends AbstractOperator
         $value = null;
         $unitId = null;
 
-        switch ($this->unitSource)
-        {
+        switch ($this->unitSource) {
             case 'id':
-                if (is_array($inputData))
-                {
-                    if (isset($inputData[1]))
-                    {
+                if (is_array($inputData)) {
+                    if (isset($inputData[1])) {
                         $unit = Unit::getById($inputData[1]);
-                        if ($unit instanceof Unit)
-                        {
+                        if ($unit instanceof Unit) {
                             $unitId = $unit->getId();
                         }
                     }
@@ -69,13 +66,10 @@ class QuantityValue extends AbstractOperator
                 break;
 
             case 'abbr':
-                if (is_array($inputData))
-                {
-                    if (isset($inputData[1]))
-                    {
+                if (is_array($inputData)) {
+                    if (isset($inputData[1])) {
                         $unit = Unit::getByAbbreviation($inputData[1]);
-                        if ($unit instanceof Unit)
-                        {
+                        if ($unit instanceof Unit) {
                             $unitId = $unit->getId();
                         }
                     }
@@ -88,6 +82,7 @@ class QuantityValue extends AbstractOperator
                 $unitId = $this->staticUnitId;
 
         }
+
         return new \Pimcore\Model\DataObject\Data\QuantityValue(
             floatval($value ?? null),
             $unitId ?? null
@@ -104,15 +99,12 @@ class QuantityValue extends AbstractOperator
      */
     public function evaluateReturnType(string $inputType, int $index = null): string
     {
-        if ($this->unitSource !== 'static')
-        {
-            if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY)
-            {
+        if ($this->unitSource !== 'static') {
+            if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
                 throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for quantity value operator at transformation position %s",
                     $inputType, $index));
             }
-        } elseif ($inputType !== TransformationDataTypeService::DEFAULT_TYPE)
-        {
+        } elseif ($inputType !== TransformationDataTypeService::DEFAULT_TYPE) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for quantity value operator with static unit at transformation position %s",
                 $inputType, $index));
         }
@@ -122,8 +114,7 @@ class QuantityValue extends AbstractOperator
 
     public function generateResultPreview($inputData)
     {
-        if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue)
-        {
+        if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
             return 'QuantityValue: ' . $inputData->getValue() . ' ' .
                 ($inputData->getUnit() ? $inputData->getUnit()->getAbbreviation() : '');
         }
