@@ -54,7 +54,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
         const unitSourceSelect = Ext.create('Ext.form.ComboBox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_quantityValue_unit_source'),
             name: 'settings.unitSourceSelect',
-            value: this.data.settings ? this.data.settings.unitSource : 'id',
+            value: this.data.settings.unitSource || 'id',
             forceSelection: true,
             store: [
                 ['id', t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_quantityValue_unit_source_id')],

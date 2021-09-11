@@ -79,8 +79,10 @@ class QuantityValue extends AbstractOperator
 
             case 'static':
                 $value = $inputData;
+                if(is_array($inputData)) {
+                    $value = $inputData[0];
+                }
                 $unitId = $this->staticUnitId;
-
         }
 
         return new \Pimcore\Model\DataObject\Data\QuantityValue(

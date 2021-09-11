@@ -712,7 +712,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
     public function loadUnitDataAction(Request $request): JsonResponse
     {
         $unitList = new Unit\Listing();
-        $unitList->load();
+        $unitList->setOrderKey('abbreviation');
         $data = [];
         foreach ($unitList as $unit) {
             $data[] = ['unitId' => $unit->getId(), 'abbreviation' => $unit->getAbbreviation()];
