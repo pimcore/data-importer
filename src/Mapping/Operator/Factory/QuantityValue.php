@@ -79,7 +79,7 @@ class QuantityValue extends AbstractOperator
 
             case 'static':
                 $value = $inputData;
-                if(is_array($inputData)) {
+                if (is_array($inputData)) {
                     $value = $inputData[0];
                 }
                 $unitId = $this->staticUnitId;
