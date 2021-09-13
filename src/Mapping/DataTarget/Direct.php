@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\Element\ElementInterface;
 
 class Direct implements DataTargetInterface
@@ -28,8 +29,23 @@ class Direct implements DataTargetInterface
     /**
      * @var string
      */
+
     protected $language;
 
+    /**
+     * @var bool
+     */
+    protected $writeIfSourceIsEmpty = false;
+
+    /**
+     * @var bool
+     */
+    protected $writeIfTargetIsNotEmpty = false;
+
+    /**
+     * @param array $settings
+     * @throws InvalidConfigurationException
+     */
     public function setSettings(array $settings): void
     {
         if (empty($settings['fieldName'])) {
@@ -38,15 +54,35 @@ class Direct implements DataTargetInterface
 
         $this->fieldName = $settings['fieldName'];
         $this->language = $settings['language'] ?? null;
+
+        if (isset($settings['writeIfSourceIsEmpty']))
+        {
+            $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'];
+        }
+
+        if (isset($settings['writeIfTargetIsNotEmpty']))
+        {
+            $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty'];
+        }
     }
 
-    public function assignData(ElementInterface $element, $data)
+    /**
+     * @param ElementInterface $element
+     * @param mixed $data
+     * @return void
+     * @throws InvalidConfigurationException
+     */
+    public function assignData(ElementInterface $element, $data) : void
     {
         $setterParts = explode('.', $this->fieldName);
 
         if (count($setterParts) === 1) {
             //direct class attribute
             $setter = 'set' . ucfirst($this->fieldName);
+            $getter = 'get' . ucfirst($this->fieldName);
+            if(!$this->checkAssignData($data, $element->$getter($this->language))) {
+                return;
+            }
             $element->$setter($data, $this->language);
         } elseif (count($setterParts) === 3) {
             //brick attribute
@@ -65,9 +101,30 @@ class Direct implements DataTargetInterface
             }
 
             $setter = 'set' . ucfirst($setterParts[2]);
+            $getter = 'get' . ucfirst($setterParts[2]);
+            if(!$this->checkAssignData($data, $brick->$getter($this->language))) {
+                return;
+            }
             $brick->$setter($data, $this->language);
         } else {
             throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
         }
+    }
+
+    /**
+     * @param mixed $value Value from element attribute
+     * @return bool
+     */
+    protected function checkAssignData($valueData, $valueAttribute) {
+        if (!empty($valueAttribute) && $this->writeIfTargetIsNotEmpty === false)
+        {
+            return false;
+        }
+        if ((empty($valueData) || ($valueData instanceof QuantityValue && empty($valueData->getValue()))) && $this->writeIfSourceIsEmpty === false)
+        {
+            return false;
+        }
+
+        return true;
     }
 }
