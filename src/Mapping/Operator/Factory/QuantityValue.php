@@ -44,7 +44,6 @@ class QuantityValue extends AbstractOperator
     /**
      * @param mixed $inputData
      * @param bool $dryRun
-     *
      * @return \Pimcore\Model\DataObject\Data\QuantityValue
      */
     public function process($inputData, bool $dryRun = false)
@@ -114,6 +113,10 @@ class QuantityValue extends AbstractOperator
         return TransformationDataTypeService::QUANTITY_VALUE;
     }
 
+    /**
+     * @param $inputData
+     * @return mixed|string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {

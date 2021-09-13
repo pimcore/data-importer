@@ -28,12 +28,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                     type: 'json',
                     rootProperty: 'UnitList'
                 }
-            },
-
-            listeners: {
-                dataChanged: function(store) {
-                    //todo
-                }.bind(this)
             }
         });
 
@@ -69,6 +63,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                         staticUnitSelect.setHidden(true);
                     }
                     this.inputChangePreviewUpdate();
+                    this.transformationResultTypeChangeCallback();
                 }.bind(this)
             }
         });
