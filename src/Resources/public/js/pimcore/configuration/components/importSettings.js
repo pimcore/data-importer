@@ -156,6 +156,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                             name: 'locationUpdateStrategy.type',
                             settingsNamePrefix: 'locationUpdateStrategy.settings',
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location,
+                            optionsBlackList: ['doNotCreate'],
                             settingsPanel: updateLocationStrategySettingsPanel,
                             value: this.resolverConfigData.locationUpdateStrategy.type || 'noChange',
                             settingsValues: this.resolverConfigData.locationUpdateStrategy ? this.resolverConfigData.locationUpdateStrategy.settings : {},
