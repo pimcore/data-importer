@@ -162,38 +162,31 @@ class ImportProcessingService
         try {
             //resolve data object
             $createNew = true;
-            if($resolver->getCreateLocationStrategy() instanceof DoNotCreateStrategy) {
+            if ($resolver->getCreateLocationStrategy() instanceof DoNotCreateStrategy) {
                 $createNew = false;
             }
             $element = $resolver->loadOrCreateAndPrepareElement($importDataRow, $createNew);
 
-            if($element instanceof ElementInterface)
-            {
-                foreach ($mapping as $mappingConfiguration)
-                {
+            if ($element instanceof ElementInterface) {
+                foreach ($mapping as $mappingConfiguration) {
 
                     // extract raw data
                     $data = null;
-                    if (is_array($mappingConfiguration->getDataSourceIndex()))
-                    {
+                    if (is_array($mappingConfiguration->getDataSourceIndex())) {
                         $data = [];
-                        foreach ($mappingConfiguration->getDataSourceIndex() as $index)
-                        {
+                        foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
                             $data[] = $importDataRow[$index] ?? null;
                         }
 
-                        if (count($data) === 1)
-                        {
+                        if (count($data) === 1) {
                             $data = $data[0];
                         }
-                    } else
-                    {
+                    } else {
                         $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
                     }
 
                     // process pipeline
-                    foreach ($mappingConfiguration->getTransformationPipeline() as $operator)
-                    {
+                    foreach ($mappingConfiguration->getTransformationPipeline() as $operator) {
                         $data = $operator->process($data);
                     }
 

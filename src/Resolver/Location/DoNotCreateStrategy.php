@@ -15,7 +15,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
-use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 
 class DoNotCreateStrategy implements LocationStrategyInterface
