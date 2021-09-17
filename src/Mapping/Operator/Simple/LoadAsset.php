@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Asset;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 
 class LoadAsset extends ImportAsset
 {
@@ -53,8 +54,12 @@ class LoadAsset extends ImportAsset
                 throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
             }
 
-            if (!empty($asset)) {
+            if ($asset instanceof Asset) {
                 $assets[] = $asset;
+            } elseif (!$dryRun && !empty($data)) {
+                $this->applicationLogger->warning("Could not load asset from `$data` ", [
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                ]);
             }
         }
 
