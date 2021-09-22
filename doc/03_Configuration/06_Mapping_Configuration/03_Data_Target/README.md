@@ -1,7 +1,7 @@
 # Data Target
 
 Data target definition assigns the result of the transformation pipeline to a data object field. The available data object 
-fields for assignment depend on the transformation result of the [transformation pipeline](./02_Transformation_Pipeline.md).  
+fields for assignment depend on the transformation result of the [transformation pipeline](../02_Transformation_Pipeline.md).  
 
 Three different data target types are available: 
 
@@ -11,7 +11,7 @@ schema for Object brick fields is `<OBJECT_BRICK_FIELD>.<OBJECT_BRICK_TYPE>.<ATT
 
 <div class="image-as-lightbox"></div>
 
-![Data Target Direct](../../img/data_target_direct.png)
+![Data Target Direct](../../../img/data_target_direct.png)
 
 
 Actually available fields depend on the result type of the transformation pipeline. 
@@ -21,7 +21,7 @@ Assign data to specific keys in a classification store.
 
 <div class="image-as-lightbox"></div>
 
-![Data Target Classification Store](../../img/data_target_classification_store.png)
+![Data Target Classification Store](../../../img/data_target_classification_store.png)
 
 Actually available keys in the search depend on the result type of the transformation pipeline. 
 
@@ -31,6 +31,6 @@ an array with `<GROUP_ID>-<KEY_ID>` as keys, and values as array values.
 
 <div class="image-as-lightbox"></div>
 
-![Data Target Classification Store](../../img/data_target_classification_store_batch.png)
+![Data Target Classification Store](../../../img/data_target_classification_store_batch.png)
 
 For more details and examples see [Classification Store Batch Details](./05_Classification_Store_Batch_Details.md). 

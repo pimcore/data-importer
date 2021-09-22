@@ -121,7 +121,7 @@ class LoadDataObject extends AbstractOperator
 
             if ($object instanceof DataObject) {
                 $objects[] = $object;
-            } elseif (!$dryRun) {
+            } elseif (!$dryRun && !empty($data)) {
                 $this->applicationLogger->warning("Could not load data object from `$data` ", [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
