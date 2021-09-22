@@ -53,7 +53,7 @@ class LoadDataObject extends AbstractOperator
      */
     protected $partialMatch;
 
-   /**
+    /**
      * @var bool
      */
     protected $loadUnpublished;
@@ -78,8 +78,7 @@ class LoadDataObject extends AbstractOperator
 
         $objects = [];
 
-
-        if($this->loadUnpublished) {
+        if ($this->loadUnpublished) {
             $prevHideUnpublished = DataObject::getHideUnpublished();
             DataObject::setHideUnpublished(false);
         }
@@ -128,8 +127,7 @@ class LoadDataObject extends AbstractOperator
                 ]);
             }
         }
-        if($this->loadUnpublished)
-        {
+        if ($this->loadUnpublished) {
             DataObject::setHideUnpublished($prevHideUnpublished);
         }
 
