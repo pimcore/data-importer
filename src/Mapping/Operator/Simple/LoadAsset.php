@@ -54,12 +54,12 @@ class LoadAsset extends ImportAsset
                 throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
             }
 
-            if (empty($asset) && !$dryRun) {
+            if ($asset instanceof Asset) {
+                $assets[] = $asset;
+            } elseif (!$dryRun && !empty($data)) {
                 $this->applicationLogger->warning("Could not load asset from `$data` ", [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
-            } else {
-                $assets[] = $asset;
             }
         }
 

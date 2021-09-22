@@ -32,6 +32,7 @@ use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Pimcore\Translation\Translator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -699,5 +700,24 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                 'message' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * @Route("/load-unit-data", methods={"GET"})
+     *
+     * @param Request $request
+     *
+     * @return JsonResponse
+     */
+    public function loadUnitDataAction(Request $request): JsonResponse
+    {
+        $unitList = new Unit\Listing();
+        $unitList->setOrderKey('abbreviation');
+        $data = [];
+        foreach ($unitList as $unit) {
+            $data[] = ['unitId' => $unit->getId(), 'abbreviation' => $unit->getAbbreviation()];
+        }
+
+        return new JsonResponse(['UnitList' => $data]);
     }
 }
