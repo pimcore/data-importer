@@ -172,13 +172,18 @@ class Resolver
     /**
      * @param array $inputData
      *
-     * @return ElementInterface
+     * @return ElementInterface | null
      */
-    public function loadOrCreateAndPrepareElement(array $inputData): ElementInterface
+    public function loadOrCreateAndPrepareElement(array $inputData, bool $createNew = true): ElementInterface | null
     {
         $element = $this->loadElement($inputData);
 
         $justCreated = false;
+
+        if (empty($element) && ! $createNew) {
+            return null;
+        }
+
         if (empty($element)) {
             $element = $this->getElementFactory()->createNewElement();
             $this->getCreateLocationStrategy()->updateParent($element, $inputData);

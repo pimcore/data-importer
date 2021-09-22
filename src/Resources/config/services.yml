@@ -126,6 +126,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.location", type: "staticPath" }
 
+    Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy:
+        tags:
+            - { name: "pimcore.datahub.data_importer.resolver.location", type: "doNotCreate" }
+
     Pimcore\Bundle\DataImporterBundle\Resolver\Publish\AlwaysPublishStrategy:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.publish", type: "alwaysPublish" }
