@@ -103,6 +103,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             },
         });
 
+        const loadUnpublished = Ext.create('Ext.form.field.Checkbox', {
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_dataobject_load_unpublished'),
+            name: 'settings.loadUnpublished',
+            allowBlank: true,
+            value: this.data.settings ? this.data.settings.loadUnpublished : false,
+            listeners: {
+                change: this.inputChangePreviewUpdate.bind(this)
+            },
+        });
+
         attributeName.setStore(attributeStore);
         attributeName.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeName, languageSelection));
 
@@ -161,7 +171,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             attributeDataObjectClassId,
             attributeName,
             partialMatch,
-            languageSelection
+            languageSelection,
+            loadUnpublished
         ];
     }
 

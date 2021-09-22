@@ -53,6 +53,11 @@ class LoadDataObject extends AbstractOperator
      */
     protected $partialMatch;
 
+   /**
+     * @var bool
+     */
+    protected $loadUnpublished;
+
     public function setSettings(array $settings): void
     {
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_ID;
@@ -60,6 +65,7 @@ class LoadDataObject extends AbstractOperator
         $this->attributeName = $settings['attributeName'];
         $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
         $this->partialMatch = $settings['partialMatch'] ?? false;
+        $this->loadUnpublished = $settings['loadUnpublished'] ?? false;
     }
 
     public function process($inputData, bool $dryRun = false)
@@ -71,6 +77,12 @@ class LoadDataObject extends AbstractOperator
         }
 
         $objects = [];
+
+
+        if($this->loadUnpublished) {
+            $prevHideUnpublished = DataObject::getHideUnpublished();
+            DataObject::setHideUnpublished(false);
+        }
 
         foreach ($inputData as $data) {
             $object = null;
@@ -115,6 +127,10 @@ class LoadDataObject extends AbstractOperator
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
             }
+        }
+        if($this->loadUnpublished)
+        {
+            DataObject::setHideUnpublished($prevHideUnpublished);
         }
 
         if ($returnScalar) {
