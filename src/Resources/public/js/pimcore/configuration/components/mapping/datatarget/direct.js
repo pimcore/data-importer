@@ -19,9 +19,9 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
     dataObjectClassId: null,
     transformationResultType: null,
 
-    buildSettingsForm: function() {
+    buildSettingsForm: function () {
 
-        if(!this.form) {
+        if (!this.form) {
             this.dataObjectClassId = this.configItemRootContainer.currentDataValues.dataObjectClassId;
             this.transformationResultType = this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType;
 
@@ -50,17 +50,17 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             const attributeStore = Ext.create('Ext.data.JsonStore', {
                 fields: ['key', 'name', 'localized'],
                 listeners: {
-                    dataChanged: function(store) {
-                        if(!this.dataApplied) {
+                    dataChanged: function (store) {
+                        if (!this.dataApplied) {
                             attributeSelection.setValue(this.data.fieldName);
-                            if(this.form) {
+                            if (this.form) {
                                 this.form.isValid();
                             }
                             this.dataApplied = true;
                             this.setLanguageVisibility(attributeStore, attributeSelection, languageSelection);
                         }
 
-                        if(!store.findRecord('key', attributeSelection.getValue())) {
+                        if (!store.findRecord('key', attributeSelection.getValue())) {
                             attributeSelection.setValue(null);
                             this.form.isValid();
                         }
@@ -72,16 +72,41 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
 
             //register listeners for class and type changes
-            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function(newType) {
+            this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function (newType) {
                 this.transformationResultType = newType;
                 this.initAttributeStore(attributeStore);
             }.bind(this));
             this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
-               function(combo, newValue, oldValue) {
+                function (combo, newValue, oldValue) {
                     this.dataObjectClassId = newValue;
                     this.initAttributeStore(attributeStore);
                 }.bind(this)
             );
+
+            const writeIfTargetIsNotEmpty = Ext.create('Ext.form.Checkbox', {
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifTargetIsNotEmpty'),
+                name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
+                value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : false,
+                inputValue: true,
+                listeners: {
+                    change: function (checkbox, value) {
+                        if (value) {
+                            writeIfSourceIsEmpty.enable();
+                        } else {
+                            writeIfSourceIsEmpty.setValue(false);
+                            writeIfSourceIsEmpty.disable();
+                        }
+                    }
+                }
+            });
+
+            const writeIfSourceIsEmpty = Ext.create('Ext.form.Checkbox', {
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifSourceIsEmpty'),
+                name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
+                value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : false,
+                disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true,
+                inputValue: true
+            });
 
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
@@ -94,7 +119,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 border: false,
                 items: [
                     attributeSelection,
-                    languageSelection
+                    languageSelection,
+                    {
+                        xtype: 'fieldcontainer',
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_label'),
+                        defaultType: 'checkboxfield',
+                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
+                    }
                 ]
             });
 
@@ -105,16 +136,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
         return this.form;
     },
 
-    initAttributeStore: function(attributeStore) {
+    initAttributeStore: function (attributeStore) {
 
         const classId = this.dataObjectClassId;
         const transformationResultType = this.transformationResultType;
 
         let targetFieldCache = this.configItemRootContainer.targetFieldCache || {};
 
-        if(targetFieldCache[classId] && targetFieldCache[classId][transformationResultType]) {
+        if (targetFieldCache[classId] && targetFieldCache[classId][transformationResultType]) {
 
-            if(targetFieldCache[classId][transformationResultType].loading) {
+            if (targetFieldCache[classId][transformationResultType].loading) {
                 setTimeout(this.initAttributeStore.bind(this, attributeStore), 400);
             } else {
                 attributeStore.loadData(targetFieldCache[classId][transformationResultType].data);
@@ -151,9 +182,9 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
         }
     },
 
-    setLanguageVisibility: function(attributeStore, attributeSelection, languageSelection) {
+    setLanguageVisibility: function (attributeStore, attributeSelection, languageSelection) {
         const record = attributeStore.findRecord('key', attributeSelection.getValue());
-        if(record) {
+        if (record) {
             languageSelection.setHidden(!record.data.localized);
         }
     }
