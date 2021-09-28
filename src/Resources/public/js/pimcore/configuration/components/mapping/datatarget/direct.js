@@ -44,7 +44,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
                 allowBlank: false,
-                msgTarget: 'under'
+                msgTarget: 'under',
+                listeners: {
+                    change: function (combo, value, opts) {
+                        let rec = this.store.findRecord('key', value);
+                        let fieldType = rec.get('fieldtype');
+                    }
+                }
             });
 
             const attributeStore = Ext.create('Ext.data.JsonStore', {
@@ -108,6 +114,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 inputValue: true
             });
 
+            const appendRelationItems = Ext.create('Ext.form.Checkbox', {
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_appendRelationItems'),
+                name: this.dataNamePrefix + 'appendRelationItems',
+                value: this.data.hasOwnProperty('appendRelationItems') ? this.data.appendRelationItems : false,
+                inputValue: true
+            });
+
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
@@ -124,7 +137,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                         xtype: 'fieldcontainer',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_label'),
                         defaultType: 'checkboxfield',
-                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
+                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty, appendRelationItems]
                     }
                 ]
             });

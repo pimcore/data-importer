@@ -82,7 +82,8 @@ class TransformationDataTypeService
             'manyToOneRelation'
         ],
         self::ASSET_ARRAY => [
-            'manyToManyRelation'
+            'manyToManyRelation',
+            'advancedManyToManyRelation',
         ],
         self::GALLERY => [
             'imageGallery'
@@ -95,7 +96,9 @@ class TransformationDataTypeService
         ],
         self::DATA_OBJECT_ARRAY => [
             'manyToManyRelation',
-            'manyToManyObjectRelation'
+            'manyToManyObjectRelation',
+            'advancedManyToManyRelation',
+            'advancedManyToManyObjectRelation'
         ]
     ];
 
@@ -118,7 +121,8 @@ class TransformationDataTypeService
             $attributes[$key] = [
                 'key' => $key,
                 'title' => $fieldDefinition->getTitle() . ' [' . $key . ']',
-                'localized' => $localized
+                'localized' => $localized,
+                'fieldtype' => $fieldDefinition->getFieldtype()
             ];
         }
 
