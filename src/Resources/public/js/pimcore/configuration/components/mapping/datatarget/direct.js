@@ -35,6 +35,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 hidden: true
             });
 
+            const appendRelationItems = Ext.create('Ext.form.Checkbox', {
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_appendRelationItems'),
+                name: this.dataNamePrefix + 'appendRelationItems',
+                value: this.data.hasOwnProperty('appendRelationItems') ? this.data.appendRelationItems : false,
+                inputValue: true,
+                hidden: true
+            });
+
             const attributeSelection = Ext.create('Ext.form.ComboBox', {
                 displayField: 'title',
                 valueField: 'key',
@@ -44,13 +52,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
                 allowBlank: false,
-                msgTarget: 'under',
-                listeners: {
-                    change: function (combo, value, opts) {
-                        let rec = this.store.findRecord('key', value);
-                        let fieldType = rec.get('fieldtype');
-                    }
-                }
+                msgTarget: 'under'
             });
 
             const attributeStore = Ext.create('Ext.data.JsonStore', {
@@ -63,7 +65,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                                 this.form.isValid();
                             }
                             this.dataApplied = true;
-                            this.setLanguageVisibility(attributeStore, attributeSelection, languageSelection);
+                            this.setOptionsVisibility(attributeStore, attributeSelection, languageSelection, appendRelationItems);
                         }
 
                         if (!store.findRecord('key', attributeSelection.getValue())) {
@@ -75,7 +77,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
 
             attributeSelection.setStore(attributeStore);
-            attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
+            attributeSelection.on('change', this.setOptionsVisibility.bind(this, attributeStore, attributeSelection, languageSelection, appendRelationItems));
 
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function (newType) {
@@ -114,12 +116,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 inputValue: true
             });
 
-            const appendRelationItems = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_appendRelationItems'),
-                name: this.dataNamePrefix + 'appendRelationItems',
-                value: this.data.hasOwnProperty('appendRelationItems') ? this.data.appendRelationItems : false,
-                inputValue: true
-            });
 
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
@@ -194,12 +190,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
         }
     },
-
-    setLanguageVisibility: function (attributeStore, attributeSelection, languageSelection) {
+    setOptionsVisibility: function (attributeStore, attributeSelection, languageSelection, appendRelationItems) {
         const record = attributeStore.findRecord('key', attributeSelection.getValue());
         if (record) {
             languageSelection.setHidden(!record.data.localized);
+            appendRelationItems.setHidden(record.data.fieldtype.search('Relation') == -1);
         }
     }
-
 });
