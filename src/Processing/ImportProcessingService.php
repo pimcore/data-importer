@@ -24,11 +24,13 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
+use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -159,49 +161,63 @@ class ImportProcessingService
         $element = null;
         try {
             //resolve data object
-            $element = $resolver->loadOrCreateAndPrepareElement($importDataRow);
-
-            foreach ($mapping as $mappingConfiguration) {
-
-                // extract raw data
-                $data = null;
-                if (is_array($mappingConfiguration->getDataSourceIndex())) {
-                    $data = [];
-                    foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
-                        $data[] = $importDataRow[$index] ?? null;
-                    }
-
-                    if (count($data) === 1) {
-                        $data = $data[0];
-                    }
-                } else {
-                    $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
-                }
-
-                // process pipeline
-                foreach ($mappingConfiguration->getTransformationPipeline() as $operator) {
-                    $data = $operator->process($data);
-                }
-
-                $dataTarget = $mappingConfiguration->getDataTarget();
-                $dataTarget->assignData($element, $data);
+            $createNew = true;
+            if ($resolver->getCreateLocationStrategy() instanceof DoNotCreateStrategy) {
+                $createNew = false;
             }
+            $element = $resolver->loadOrCreateAndPrepareElement($importDataRow, $createNew);
 
-            $event = new PreSaveEvent($configName, $importDataRow, $element);
-            $this->eventDispatcher->dispatch($event);
+            if ($element instanceof ElementInterface) {
+                foreach ($mapping as $mappingConfiguration) {
 
-            $element->save();
+                    // extract raw data
+                    $data = null;
+                    if (is_array($mappingConfiguration->getDataSourceIndex())) {
+                        $data = [];
+                        foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
+                            $data[] = $importDataRow[$index] ?? null;
+                        }
 
-            $event = new PostSaveEvent($configName, $importDataRow, $element);
-            $this->eventDispatcher->dispatch($event);
+                        if (count($data) === 1) {
+                            $data = $data[0];
+                        }
+                    } else {
+                        $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
+                    }
 
-            $message = "Element {$element->getId()} imported successfully.";
-            $this->logger->info($message);
-            $this->applicationLogger->info($message, [
-                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                'fileObject' => new FileObject(json_encode($importDataRow)),
-                'relatedObject' => $element
-            ]);
+                    // process pipeline
+                    foreach ($mappingConfiguration->getTransformationPipeline() as $operator) {
+                        $data = $operator->process($data);
+                    }
+
+                    $dataTarget = $mappingConfiguration->getDataTarget();
+                    $dataTarget->assignData($element, $data);
+                }
+
+                $event = new PreSaveEvent($configName, $importDataRow, $element);
+                $this->eventDispatcher->dispatch($event);
+
+                $element->save();
+
+                $event = new PostSaveEvent($configName, $importDataRow, $element);
+                $this->eventDispatcher->dispatch($event);
+
+                $message = "Element {$element->getId()} imported successfully.";
+                $this->logger->info($message);
+                $this->applicationLogger->info($message, [
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                    'fileObject' => new FileObject(json_encode($importDataRow)),
+                    'relatedObject' => $element
+                ]);
+            } else {
+                $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
+                $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
+                $this->logger->info($message);
+                $this->applicationLogger->info($message, [
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                    'fileObject' => new FileObject(json_encode($importDataRow))
+                ]);
+            }
         } catch (\Exception $e) {
             $message = 'Error processing element: ';
             $this->logger->error($message . $e);

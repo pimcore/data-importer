@@ -116,7 +116,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 inputValue: true
             });
 
-
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
