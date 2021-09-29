@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ * @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
@@ -36,6 +36,8 @@ class TransformationDataTypeService
     const IMAGE_ADVANCED = 'imageAdvanced';
     const DATA_OBJECT = 'dataObject';
     const DATA_OBJECT_ARRAY = 'dataObjectArray';
+    const ADVANCED_DATA_OBJECT_ARRAY = 'advancedDataObjectArray';
+    const ADVANCED_ASSET_ARRAY = 'advancedAssetArray';
 
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -83,7 +85,7 @@ class TransformationDataTypeService
         ],
         self::ASSET_ARRAY => [
             'manyToManyRelation',
-            'advancedManyToManyRelation',
+            'advancedManyToManyRelation'
         ],
         self::GALLERY => [
             'imageGallery'
@@ -97,7 +99,6 @@ class TransformationDataTypeService
         self::DATA_OBJECT_ARRAY => [
             'manyToManyRelation',
             'manyToManyObjectRelation',
-            'advancedManyToManyRelation',
             'advancedManyToManyObjectRelation'
         ]
     ];
@@ -111,34 +112,51 @@ class TransformationDataTypeService
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
     }
 
-    protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, string $keyPrefix = null)
-    {
-        if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
-            $key = $fieldDefinition->getName();
-            if ($keyPrefix) {
-                $key = $keyPrefix . '.' . $key;
+    protected function addTypesToAttributesArray(
+        ClassDefinition\Data $fieldDefinition,
+        string $targetType,
+        array &$attributes,
+        bool $localized = false,
+        string $keyPrefix = null,
+        bool $advancedRelations = false
+    ) {
+        if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? [])))
+        {
+            if ($this->checkAdvancedRelations($fieldDefinition, $advancedRelations))
+            {
+                $key = $fieldDefinition->getName();
+                if ($keyPrefix)
+                {
+                    $key = $keyPrefix . '.' . $key;
+                }
+                $attributes[$key] = [
+                    'key' => $key,
+                    'title' => $fieldDefinition->getTitle() . ' [' . $key . ']',
+                    'localized' => $localized
+                ];
             }
-            $attributes[$key] = [
-                'key' => $key,
-                'title' => $fieldDefinition->getTitle() . ' [' . $key . ']',
-                'localized' => $localized,
-                'fieldtype' => $fieldDefinition->getFieldtype()
-            ];
         }
 
-        if ($fieldDefinition instanceof ClassDefinition\Data\Localizedfields) {
-            foreach ($fieldDefinition->getFieldDefinitions() as $localizedDefinition) {
-                $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix);
+        if ($fieldDefinition instanceof ClassDefinition\Data\Localizedfields)
+        {
+            foreach ($fieldDefinition->getFieldDefinitions() as $localizedDefinition)
+            {
+                $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix,
+                    $advancedRelations);
             }
         }
 
-        if ($fieldDefinition instanceof ClassDefinition\Data\Objectbricks) {
-            foreach ($fieldDefinition->getAllowedTypes() as $brickType) {
+        if ($fieldDefinition instanceof ClassDefinition\Data\Objectbricks)
+        {
+            foreach ($fieldDefinition->getAllowedTypes() as $brickType)
+            {
                 $brick = Definition::getByKey($brickType);
 
-                foreach ($brick->getFieldDefinitions() as $brickFieldDefinition) {
+                foreach ($brick->getFieldDefinitions() as $brickFieldDefinition)
+                {
                     $keyPrefix = $fieldDefinition->getName() . '.' . $brickType;
-                    $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix);
+                    $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix,
+                        $advancedRelations);
                 }
             }
         }
@@ -154,49 +172,61 @@ class TransformationDataTypeService
      *
      * @throws \Exception
      */
-    public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite): array
-    {
+    public function getPimcoreDataTypes(
+        string $classId,
+        $transformationTargetType,
+        bool $includeSystemRead,
+        bool $includeSystemWrite,
+        bool $loadAdvancedRelations
+    ): array {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
 
-        if (!is_array($transformationTargetType)) {
+        if (!is_array($transformationTargetType))
+        {
             $transformationTargetType = [$transformationTargetType];
         }
 
-        foreach ($transformationTargetType as $targetType) {
-            foreach ($class->getFieldDefinitions() as $definition) {
-                $this->addTypesToAttributesArray($definition, $targetType, $attributes);
+        foreach ($transformationTargetType as $targetType)
+        {
+            foreach ($class->getFieldDefinitions() as $definition)
+            {
+
+                $this->addTypesToAttributesArray($definition, $targetType, $attributes, false, null, $loadAdvancedRelations);
+
+            }
+
+            if (in_array(self::DEFAULT_TYPE, $transformationTargetType))
+            {
+                if ($includeSystemRead)
+                {
+                    $attributes['id'] = [
+                        'key' => 'id',
+                        'title' => 'SYSTEM ID',
+                        'localized' => false
+                    ];
+                    $attributes['key'] = [
+                        'key' => 'key',
+                        'title' => 'SYSTEM Key',
+                        'localized' => false
+                    ];
+                    $attributes['fullpath'] = [
+                        'key' => 'fullpath',
+                        'title' => 'SYSTEM Fullpath',
+                        'localized' => false
+                    ];
+                }
+                if ($includeSystemWrite)
+                {
+                    $attributes['key'] = [
+                        'key' => 'key',
+                        'title' => 'SYSTEM Key',
+                        'localized' => false
+                    ];
+                }
             }
         }
-
-        if (in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
-            if ($includeSystemRead) {
-                $attributes['id'] = [
-                    'key' => 'id',
-                    'title' => 'SYSTEM ID',
-                    'localized' => false
-                ];
-                $attributes['key'] = [
-                    'key' => 'key',
-                    'title' => 'SYSTEM Key',
-                    'localized' => false
-                ];
-                $attributes['fullpath'] = [
-                    'key' => 'fullpath',
-                    'title' => 'SYSTEM Fullpath',
-                    'localized' => false
-                ];
-            }
-            if ($includeSystemWrite) {
-                $attributes['key'] = [
-                    'key' => 'key',
-                    'title' => 'SYSTEM Key',
-                    'localized' => false
-                ];
-            }
-        }
-
         return array_values($attributes);
     }
 
@@ -207,13 +237,17 @@ class TransformationDataTypeService
      *
      * @throws \Exception
      */
-    public function getClassificationStoreAttributes(string $classId): array
-    {
+    public
+    function getClassificationStoreAttributes(
+        string $classId
+    ): array {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
-        foreach ($class->getFieldDefinitions() as $definition) {
-            if ($definition instanceof ClassDefinition\Data\Classificationstore) {
+        foreach ($class->getFieldDefinitions() as $definition)
+        {
+            if ($definition instanceof ClassDefinition\Data\Classificationstore)
+            {
                 $attributes[$definition->getName()] = [
                     'key' => $definition->getName(),
                     'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
@@ -230,8 +264,22 @@ class TransformationDataTypeService
      *
      * @return array|string[]
      */
-    public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array
-    {
+    public function getPimcoreTypesByTransformationTargetType(
+        string $transformationTargetType
+    ): array {
         return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
+    }
+
+    protected function checkAdvancedRelations(ClassDefinition\Data $definition, $loadAdvancedRelations = false)
+    {
+        if ((!$loadAdvancedRelations && !$definition instanceof ClassDefinition\Data\AdvancedManyToManyObjectRelation &&
+                !$definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation) || ($loadAdvancedRelations &&
+                ($definition instanceof ClassDefinition\Data\AdvancedManyToManyObjectRelation ||
+                    $definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation)))
+        {
+            return true;
+        }
+
+        return false;
     }
 }
