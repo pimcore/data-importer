@@ -84,7 +84,9 @@ class TransformationDataTypeService
             'manyToOneRelation'
         ],
         self::ASSET_ARRAY => [
-            'manyToManyRelation',
+            'manyToManyRelation'
+        ],
+        self::ADVANCED_ASSET_ARRAY => [
             'advancedManyToManyRelation'
         ],
         self::GALLERY => [
@@ -98,7 +100,10 @@ class TransformationDataTypeService
         ],
         self::DATA_OBJECT_ARRAY => [
             'manyToManyRelation',
-            'manyToManyObjectRelation',
+            'manyToManyObjectRelation'
+        ],
+        self::ADVANCED_DATA_OBJECT_ARRAY => [
+            'advancedManyToManyRelation',
             'advancedManyToManyObjectRelation'
         ]
     ];
@@ -112,32 +117,23 @@ class TransformationDataTypeService
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
     }
 
-    protected function addTypesToAttributesArray(
-        ClassDefinition\Data $fieldDefinition,
-        string $targetType,
-        array &$attributes,
-        bool $localized = false,
-        string $keyPrefix = null,
-        bool $advancedRelations = false
-    ) {
+    protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, string $keyPrefix = null)
+    {
         if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
-            if ($this->checkAdvancedRelations($fieldDefinition, $advancedRelations)) {
-                $key = $fieldDefinition->getName();
-                if ($keyPrefix) {
-                    $key = $keyPrefix . '.' . $key;
-                }
-                $attributes[$key] = [
-                    'key' => $key,
-                    'title' => $fieldDefinition->getTitle() . ' [' . $key . ']',
-                    'localized' => $localized
-                ];
+            $key = $fieldDefinition->getName();
+            if ($keyPrefix) {
+                $key = $keyPrefix . '.' . $key;
             }
+            $attributes[$key] = [
+                'key' => $key,
+                'title' => $fieldDefinition->getTitle() . ' [' . $key . ']',
+                'localized' => $localized
+            ];
         }
 
         if ($fieldDefinition instanceof ClassDefinition\Data\Localizedfields) {
             foreach ($fieldDefinition->getFieldDefinitions() as $localizedDefinition) {
-                $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix,
-                    $advancedRelations);
+                $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix);
             }
         }
 
@@ -147,8 +143,7 @@ class TransformationDataTypeService
 
                 foreach ($brick->getFieldDefinitions() as $brickFieldDefinition) {
                     $keyPrefix = $fieldDefinition->getName() . '.' . $brickType;
-                    $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix,
-                        $advancedRelations);
+                    $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix);
                 }
             }
         }
@@ -156,7 +151,7 @@ class TransformationDataTypeService
 
     /**
      * @param string $classId
-     * @param string|array $transformationTargetType
+     * @param $transformationTargetType
      * @param bool $includeSystemRead
      * @param bool $includeSystemWrite
      *
@@ -164,13 +159,8 @@ class TransformationDataTypeService
      *
      * @throws \Exception
      */
-    public function getPimcoreDataTypes(
-        string $classId,
-        $transformationTargetType,
-        bool $includeSystemRead,
-        bool $includeSystemWrite,
-        bool $loadAdvancedRelations
-    ): array {
+    public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite, bool $includeAdvancedRelations): array
+    {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
@@ -179,36 +169,50 @@ class TransformationDataTypeService
             $transformationTargetType = [$transformationTargetType];
         }
 
+        //replace for advanced relations
+        if ($includeAdvancedRelations) {
+            $transformationTargetType = array_map(function ($item) {
+                switch ($item) {
+                    case self::ASSET_ARRAY:
+                        return self::ADVANCED_ASSET_ARRAY;
+                    case self::DATA_OBJECT_ARRAY:
+                        return self::ADVANCED_DATA_OBJECT_ARRAY;
+                    default:
+                        return $item;
+                }
+            }, $transformationTargetType);
+        }
+
         foreach ($transformationTargetType as $targetType) {
             foreach ($class->getFieldDefinitions() as $definition) {
-                $this->addTypesToAttributesArray($definition, $targetType, $attributes, false, null, $loadAdvancedRelations);
+                $this->addTypesToAttributesArray($definition, $targetType, $attributes);
             }
+        }
 
-            if (in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
-                if ($includeSystemRead) {
-                    $attributes['id'] = [
-                        'key' => 'id',
-                        'title' => 'SYSTEM ID',
-                        'localized' => false
-                    ];
-                    $attributes['key'] = [
-                        'key' => 'key',
-                        'title' => 'SYSTEM Key',
-                        'localized' => false
-                    ];
-                    $attributes['fullpath'] = [
-                        'key' => 'fullpath',
-                        'title' => 'SYSTEM Fullpath',
-                        'localized' => false
-                    ];
-                }
-                if ($includeSystemWrite) {
-                    $attributes['key'] = [
-                        'key' => 'key',
-                        'title' => 'SYSTEM Key',
-                        'localized' => false
-                    ];
-                }
+        if (in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
+            if ($includeSystemRead) {
+                $attributes['id'] = [
+                    'key' => 'id',
+                    'title' => 'SYSTEM ID',
+                    'localized' => false
+                ];
+                $attributes['key'] = [
+                    'key' => 'key',
+                    'title' => 'SYSTEM Key',
+                    'localized' => false
+                ];
+                $attributes['fullpath'] = [
+                    'key' => 'fullpath',
+                    'title' => 'SYSTEM Fullpath',
+                    'localized' => false
+                ];
+            }
+            if ($includeSystemWrite) {
+                $attributes['key'] = [
+                    'key' => 'key',
+                    'title' => 'SYSTEM Key',
+                    'localized' => false
+                ];
             }
         }
 
@@ -222,9 +226,8 @@ class TransformationDataTypeService
      *
      * @throws \Exception
      */
-    public function getClassificationStoreAttributes(
-        string $classId
-    ): array {
+    public function getClassificationStoreAttributes(string $classId): array
+    {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
@@ -246,21 +249,8 @@ class TransformationDataTypeService
      *
      * @return array|string[]
      */
-    public function getPimcoreTypesByTransformationTargetType(
-        string $transformationTargetType
-    ): array {
-        return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
-    }
-
-    protected function checkAdvancedRelations(ClassDefinition\Data $definition, $loadAdvancedRelations = false)
+    public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array
     {
-        if ((!$loadAdvancedRelations && !$definition instanceof ClassDefinition\Data\AdvancedManyToManyObjectRelation &&
-                !$definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation) || ($loadAdvancedRelations &&
-                ($definition instanceof ClassDefinition\Data\AdvancedManyToManyObjectRelation ||
-                    $definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation))) {
-            return true;
-        }
-
-        return false;
+        return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
     }
 }
