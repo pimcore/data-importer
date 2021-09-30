@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
@@ -120,13 +120,10 @@ class TransformationDataTypeService
         string $keyPrefix = null,
         bool $advancedRelations = false
     ) {
-        if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? [])))
-        {
-            if ($this->checkAdvancedRelations($fieldDefinition, $advancedRelations))
-            {
+        if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
+            if ($this->checkAdvancedRelations($fieldDefinition, $advancedRelations)) {
                 $key = $fieldDefinition->getName();
-                if ($keyPrefix)
-                {
+                if ($keyPrefix) {
                     $key = $keyPrefix . '.' . $key;
                 }
                 $attributes[$key] = [
@@ -137,23 +134,18 @@ class TransformationDataTypeService
             }
         }
 
-        if ($fieldDefinition instanceof ClassDefinition\Data\Localizedfields)
-        {
-            foreach ($fieldDefinition->getFieldDefinitions() as $localizedDefinition)
-            {
+        if ($fieldDefinition instanceof ClassDefinition\Data\Localizedfields) {
+            foreach ($fieldDefinition->getFieldDefinitions() as $localizedDefinition) {
                 $this->addTypesToAttributesArray($localizedDefinition, $targetType, $attributes, true, $keyPrefix,
                     $advancedRelations);
             }
         }
 
-        if ($fieldDefinition instanceof ClassDefinition\Data\Objectbricks)
-        {
-            foreach ($fieldDefinition->getAllowedTypes() as $brickType)
-            {
+        if ($fieldDefinition instanceof ClassDefinition\Data\Objectbricks) {
+            foreach ($fieldDefinition->getAllowedTypes() as $brickType) {
                 $brick = Definition::getByKey($brickType);
 
-                foreach ($brick->getFieldDefinitions() as $brickFieldDefinition)
-                {
+                foreach ($brick->getFieldDefinitions() as $brickFieldDefinition) {
                     $keyPrefix = $fieldDefinition->getName() . '.' . $brickType;
                     $this->addTypesToAttributesArray($brickFieldDefinition, $targetType, $attributes, false, $keyPrefix,
                         $advancedRelations);
@@ -183,24 +175,17 @@ class TransformationDataTypeService
 
         $attributes = [];
 
-        if (!is_array($transformationTargetType))
-        {
+        if (!is_array($transformationTargetType)) {
             $transformationTargetType = [$transformationTargetType];
         }
 
-        foreach ($transformationTargetType as $targetType)
-        {
-            foreach ($class->getFieldDefinitions() as $definition)
-            {
-
+        foreach ($transformationTargetType as $targetType) {
+            foreach ($class->getFieldDefinitions() as $definition) {
                 $this->addTypesToAttributesArray($definition, $targetType, $attributes, false, null, $loadAdvancedRelations);
-
             }
 
-            if (in_array(self::DEFAULT_TYPE, $transformationTargetType))
-            {
-                if ($includeSystemRead)
-                {
+            if (in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
+                if ($includeSystemRead) {
                     $attributes['id'] = [
                         'key' => 'id',
                         'title' => 'SYSTEM ID',
@@ -217,8 +202,7 @@ class TransformationDataTypeService
                         'localized' => false
                     ];
                 }
-                if ($includeSystemWrite)
-                {
+                if ($includeSystemWrite) {
                     $attributes['key'] = [
                         'key' => 'key',
                         'title' => 'SYSTEM Key',
@@ -227,6 +211,7 @@ class TransformationDataTypeService
                 }
             }
         }
+
         return array_values($attributes);
     }
 
@@ -237,17 +222,14 @@ class TransformationDataTypeService
      *
      * @throws \Exception
      */
-    public
-    function getClassificationStoreAttributes(
+    public function getClassificationStoreAttributes(
         string $classId
     ): array {
         $class = ClassDefinition::getById($classId);
 
         $attributes = [];
-        foreach ($class->getFieldDefinitions() as $definition)
-        {
-            if ($definition instanceof ClassDefinition\Data\Classificationstore)
-            {
+        foreach ($class->getFieldDefinitions() as $definition) {
+            if ($definition instanceof ClassDefinition\Data\Classificationstore) {
                 $attributes[$definition->getName()] = [
                     'key' => $definition->getName(),
                     'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
@@ -275,8 +257,7 @@ class TransformationDataTypeService
         if ((!$loadAdvancedRelations && !$definition instanceof ClassDefinition\Data\AdvancedManyToManyObjectRelation &&
                 !$definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation) || ($loadAdvancedRelations &&
                 ($definition instanceof ClassDefinition\Data\AdvancedManyToManyObjectRelation ||
-                    $definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation)))
-        {
+                    $definition instanceof ClassDefinition\Data\AdvancedManyToManyRelation))) {
             return true;
         }
 
