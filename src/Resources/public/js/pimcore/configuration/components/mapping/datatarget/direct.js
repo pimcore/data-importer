@@ -106,7 +106,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
     },
 
     initAttributeStore: function (attributeStore) {
-        console.log('direct init');
         const classId = this.dataObjectClassId;
         const transformationResultType = this.transformationResultType;
 
