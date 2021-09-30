@@ -11,10 +11,10 @@
  *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.advancedManyToManyRelation");
-pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.advancedManyToManyRelation = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.manyToManyRelation");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.manyToManyRelation = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
-    type: 'advancedManyToManyRelation',
+    type: 'manyToManyRelation',
     dataApplied: false,
     dataObjectClassId: null,
     transformationResultType: null,
@@ -36,7 +36,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
 
             const appendRelationItems = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_advanced_many_to_may_object_relation_write_settings_appendRelationItems'),
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_appendRelationItems'),
                 name: this.dataNamePrefix + 'appendRelationItems',
                 value: this.data.hasOwnProperty('appendRelationItems') ? this.data.appendRelationItems : false,
                 inputValue: true
@@ -91,7 +91,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             );
 
             const writeIfTargetIsNotEmpty = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_advanced_many_to_may_object_relation_write_settings_ifTargetIsNotEmpty'),
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifTargetIsNotEmpty'),
                 name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
                 value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : false,
                 inputValue: true,
@@ -108,7 +108,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
 
             const writeIfSourceIsEmpty = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_advanced_many_to_may_object_relation_write_settings_ifSourceIsEmpty'),
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifSourceIsEmpty'),
                 name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
                 value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : false,
                 disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true,
@@ -129,7 +129,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     languageSelection,
                     {
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_advanced_many_to_may_object_relation_write_settings_label'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_label'),
                         defaultType: 'checkboxfield',
                         items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty, appendRelationItems]
                     }
@@ -144,13 +144,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
     },
 
     initAttributeStore: function (attributeStore) {
-        console.log('adv init');
-
         const classId = this.dataObjectClassId;
 
         const transformationResultType = this.transformationResultType;
 
-        let targetFieldCache = this.configItemRootContainer.targetFieldCacheAdvanced || {};
+        let targetFieldCache = this.configItemRootContainer.targetFieldCacheRelations || {};
 
         if (targetFieldCache[classId] && targetFieldCache[classId][transformationResultType]) {
 
@@ -168,7 +166,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 loading: true,
                 data: null
             };
-            this.configItemRootContainer.targetFieldCacheAdvanced = targetFieldCache;
+            this.configItemRootContainer.targetFieldCacheRelations = targetFieldCache;
 
             Ext.Ajax.request({
                 url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),

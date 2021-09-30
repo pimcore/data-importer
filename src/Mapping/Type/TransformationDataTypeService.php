@@ -87,6 +87,7 @@ class TransformationDataTypeService
             'manyToManyRelation'
         ],
         self::ADVANCED_ASSET_ARRAY => [
+            'manyToManyRelation',
             'advancedManyToManyRelation'
         ],
         self::GALLERY => [
@@ -103,7 +104,9 @@ class TransformationDataTypeService
             'manyToManyObjectRelation'
         ],
         self::ADVANCED_DATA_OBJECT_ARRAY => [
+            'manyToManyRelation',
             'advancedManyToManyRelation',
+            'manyToManyObjectRelation',
             'advancedManyToManyObjectRelation'
         ]
     ];
@@ -154,6 +157,7 @@ class TransformationDataTypeService
      * @param $transformationTargetType
      * @param bool $includeSystemRead
      * @param bool $includeSystemWrite
+     * @param bool $includeAdvancedRelations
      *
      * @return array
      *

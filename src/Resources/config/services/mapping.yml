@@ -108,9 +108,9 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.data_target", type: "direct" }
 
-    Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\AdvancedManyToManyRelation:
+    Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ManyToManyRelation:
         tags:
-            - { name: "pimcore.datahub.data_importer.data_target", type: "advancedManyToManyRelation" }
+            - { name: "pimcore.datahub.data_importer.data_target", type: "manyToManyRelation" }
 
     Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore:
         tags:

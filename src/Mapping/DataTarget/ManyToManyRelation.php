@@ -21,7 +21,7 @@ use Pimcore\Model\DataObject\Data\ObjectMetadata;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Element\Service;
 
-class AdvancedManyToManyRelation implements DataTargetInterface
+class ManyToManyRelation implements DataTargetInterface
 {
     /**
      * @var string
@@ -135,6 +135,8 @@ class AdvancedManyToManyRelation implements DataTargetInterface
         $fieldDef = $definition->getFieldDefinition($attributeName);
 
         switch ($fieldDef->getFieldtype()) {
+            case 'manyToManyRelation':
+            case 'manyToManyObjectRelation':
             case 'advancedManyToManyRelation':
             case 'advancedManyToManyObjectRelation':
                 $getter = 'get' . ucfirst($attributeName);
@@ -160,6 +162,22 @@ class AdvancedManyToManyRelation implements DataTargetInterface
     {
         $newData = [];
         switch ($fieldType) {
+            case 'manyToManyObjectRelation':
+                if ($this->appendRelationItems) {
+                    foreach ($existingData as $dataObject) {
+                        $newData[$dataObject->getId()] = $dataObject;
+                    }
+
+                    foreach ($data as $dataObject) {
+                        if (!isset($newData[$dataObject->getId()])) {
+                            $newData[$dataObject->getId()] = $dataObject;
+                        }
+                    }
+                } else {
+                    return $data;
+                }
+                break;
+
             case 'advancedManyToManyObjectRelation':
                 if ($this->appendRelationItems) {
                     foreach ($existingData as $metaDataObject) {
@@ -171,6 +189,22 @@ class AdvancedManyToManyRelation implements DataTargetInterface
                         $metaDataObject = new ObjectMetadata($this->fieldName, [], $dataObject);
                         $newData[$metaDataObject->getObject()->getId()] = $metaDataObject;
                     }
+                }
+
+                break;
+
+            case 'manyToManyRelation':
+                if ($this->appendRelationItems) {
+                    foreach ($existingData as $element) {
+                        $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
+                    }
+                    foreach ($data as $element) {
+                        if (!isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
+                            $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
+                        }
+                    }
+                } else {
+                    return $data;
                 }
 
                 break;
