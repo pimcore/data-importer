@@ -218,7 +218,7 @@ class ManyToManyRelation implements DataTargetInterface
                 }
                 foreach ($data as $element) {
                     if (!$this->appendRelationItems ||
-                        !isset($newData[Service::getElementType($element->getElement()) . '_' . $element->getId()])) {
+                        !isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
                         $metaDataElement = new ElementMetadata($this->fieldName, [], $element);
                         $newData[Service::getElementType($metaDataElement->getElement()) . '_' . $element->getId()] =
                             $metaDataElement;
