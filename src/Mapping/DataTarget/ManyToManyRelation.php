@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ * @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
@@ -23,6 +23,8 @@ use Pimcore\Model\Element\Service;
 
 class ManyToManyRelation implements DataTargetInterface
 {
+    const OVERWRITE_MODE_MERGE = 'merge';
+    const OVERWRITE_MODE_REPLACE = 'replace';
     /**
      * @var string
      */
@@ -46,7 +48,7 @@ class ManyToManyRelation implements DataTargetInterface
     /**
      * @var bool
      */
-    protected $appendRelationItems = false;
+    protected $overwriteMode = false;
 
     /**
      * @param array $settings
@@ -55,24 +57,25 @@ class ManyToManyRelation implements DataTargetInterface
      */
     public function setSettings(array $settings): void
     {
-        if (empty($settings['fieldName'])) {
+        if (empty($settings['fieldName']))
+        {
             throw new InvalidConfigurationException('Empty field name.');
         }
 
         $this->fieldName = $settings['fieldName'];
         $this->language = $settings['language'] ?? null;
 
-        if (isset($settings['writeIfSourceIsEmpty'])) {
+        if (isset($settings['writeIfSourceIsEmpty']))
+        {
             $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'];
         }
 
-        if (isset($settings['writeIfTargetIsNotEmpty'])) {
+        if (isset($settings['writeIfTargetIsNotEmpty']))
+        {
             $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty'];
         }
 
-        if (isset($settings['appendRelationItems'])) {
-            $this->appendRelationItems = $settings['appendRelationItems'];
-        }
+        $this->overwriteMode = $settings['overwriteMode'] ?? self::OVERWRITE_MODE_REPLACE;
     }
 
     /**
@@ -87,15 +90,18 @@ class ManyToManyRelation implements DataTargetInterface
     {
         $setterParts = explode('.', $this->fieldName);
 
-        if (count($setterParts) === 1) {
+        if (count($setterParts) === 1)
+        {
             //direct class attribute
             $setter = 'set' . ucfirst($this->fieldName);
             $getter = 'get' . ucfirst($this->fieldName);
-            if (!$this->checkAssignData($data, $element->$getter($this->language))) {
+            if (!$this->checkAssignData($data, $element->$getter($this->language)))
+            {
                 return;
             }
             $element->$setter($this->getPreprocessData($element, $element->getClass(), $this->fieldName, $data), $this->language);
-        } elseif (count($setterParts) === 3) {
+        } elseif (count($setterParts) === 3)
+        {
             //brick attribute
 
             $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
@@ -104,7 +110,8 @@ class ManyToManyRelation implements DataTargetInterface
             $brickGetter = 'get' . ucfirst($setterParts[1]);
             $brick = $brickContainer->$brickGetter();
 
-            if (empty($brick)) {
+            if (empty($brick))
+            {
                 $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
                 $brick = new $brickClassName($element);
                 $brickSetter = 'set' . ucfirst($setterParts[1]);
@@ -113,11 +120,13 @@ class ManyToManyRelation implements DataTargetInterface
 
             $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
-            if (!$this->checkAssignData($data, $brick->$getter($this->language))) {
+            if (!$this->checkAssignData($data, $brick->$getter($this->language)))
+            {
                 return;
             }
             $brick->$setter($this->getPreprocessData($brick, $brick->getDefinition(), $setterParts[2], $data), $this->language);
-        } else {
+        } else
+        {
             throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
         }
     }
@@ -134,7 +143,8 @@ class ManyToManyRelation implements DataTargetInterface
     {
         $fieldDef = $definition->getFieldDefinition($attributeName);
 
-        switch ($fieldDef->getFieldtype()) {
+        switch ($fieldDef->getFieldtype())
+        {
             case 'manyToManyRelation':
             case 'manyToManyObjectRelation':
             case 'advancedManyToManyRelation':
@@ -161,31 +171,41 @@ class ManyToManyRelation implements DataTargetInterface
     protected function getMergedDataArray(array $existingData, array $data, string $fieldType): array
     {
         $newData = [];
-        switch ($fieldType) {
+        switch ($fieldType)
+        {
             case 'manyToManyObjectRelation':
-                if ($this->appendRelationItems) {
-                    foreach ($existingData as $dataObject) {
+                if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE)
+                {
+                    foreach ($existingData as $dataObject)
+                    {
                         $newData[$dataObject->getId()] = $dataObject;
                     }
 
-                    foreach ($data as $dataObject) {
-                        if (!isset($newData[$dataObject->getId()])) {
+                    foreach ($data as $dataObject)
+                    {
+                        if (!isset($newData[$dataObject->getId()]))
+                        {
                             $newData[$dataObject->getId()] = $dataObject;
                         }
                     }
-                } else {
+                } else
+                {
                     return $data;
                 }
                 break;
 
             case 'advancedManyToManyObjectRelation':
-                if ($this->appendRelationItems) {
-                    foreach ($existingData as $metaDataObject) {
+                if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE)
+                {
+                    foreach ($existingData as $metaDataObject)
+                    {
                         $newData[$metaDataObject->getObject()->getId()] = $metaDataObject;
                     }
                 }
-                foreach ($data as $dataObject) {
-                    if (!$this->appendRelationItems || !isset($newData[$dataObject->getId()])) {
+                foreach ($data as $dataObject)
+                {
+                    if ($this->overwriteMode == self::OVERWRITE_MODE_REPLACE || !isset($newData[$dataObject->getId()]))
+                    {
                         $metaDataObject = new ObjectMetadata($this->fieldName, [], $dataObject);
                         $newData[$metaDataObject->getObject()->getId()] = $metaDataObject;
                     }
@@ -194,31 +214,40 @@ class ManyToManyRelation implements DataTargetInterface
                 break;
 
             case 'manyToManyRelation':
-                if ($this->appendRelationItems) {
-                    foreach ($existingData as $element) {
+                if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE)
+                {
+                    foreach ($existingData as $element)
+                    {
                         $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
                     }
-                    foreach ($data as $element) {
-                        if (!isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
+                    foreach ($data as $element)
+                    {
+                        if (!isset($newData[Service::getElementType($element) . '_' . $element->getId()]))
+                        {
                             $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
                         }
                     }
-                } else {
+                } else
+                {
                     return $data;
                 }
 
                 break;
 
             case 'advancedManyToManyRelation':
-                if ($this->appendRelationItems) {
-                    foreach ($existingData as $metaDataElement) {
+                if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE)
+                {
+                    foreach ($existingData as $metaDataElement)
+                    {
                         $newData[Service::getElementType($metaDataElement->getElement()) . '_' .
                         $metaDataElement->getElement()->getId()] = $metaDataElement;
                     }
                 }
-                foreach ($data as $element) {
-                    if (!$this->appendRelationItems ||
-                        !isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
+                foreach ($data as $element)
+                {
+                    if ($this->overwriteMode == self::OVERWRITE_MODE_REPLACE ||
+                        !isset($newData[Service::getElementType($element) . '_' . $element->getId()]))
+                    {
                         $metaDataElement = new ElementMetadata($this->fieldName, [], $element);
                         $newData[Service::getElementType($metaDataElement->getElement()) . '_' . $element->getId()] =
                             $metaDataElement;
@@ -238,10 +267,12 @@ class ManyToManyRelation implements DataTargetInterface
      */
     protected function checkAssignData($valueData, $valueAttribute)
     {
-        if (!empty($valueAttribute) && $this->writeIfTargetIsNotEmpty === false) {
+        if (!empty($valueAttribute) && $this->writeIfTargetIsNotEmpty === false)
+        {
             return false;
         }
-        if (empty($valueData) && $this->writeIfSourceIsEmpty === false) {
+        if (empty($valueData) && $this->writeIfSourceIsEmpty === false)
+        {
             return false;
         }
 

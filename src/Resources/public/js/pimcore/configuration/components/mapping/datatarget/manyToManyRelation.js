@@ -35,11 +35,15 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 hidden: true
             });
 
-            const appendRelationItems = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_appendRelationItems'),
-                name: this.dataNamePrefix + 'appendRelationItems',
-                value: this.data.hasOwnProperty('appendRelationItems') ? this.data.appendRelationItems : false,
-                inputValue: true
+            const overwriteMode = Ext.create('Ext.form.ComboBox', {
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode'),
+                name: this.dataNamePrefix + 'overwriteMode',
+                value: this.data.overwriteMode || 'replace',
+                store: [
+                    ['replace', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_replace')],
+                    ['merge', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_merge')],
+                ],
+                hidden: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true
             });
 
             const attributeSelection = Ext.create('Ext.form.ComboBox', {
@@ -64,7 +68,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                                 this.form.isValid();
                             }
                             this.dataApplied = true;
-                            this.setOptionsVisibility(attributeStore, attributeSelection, languageSelection, appendRelationItems);
+                            this.setOptionsVisibility(attributeStore, attributeSelection, languageSelection, overwriteMode);
                         }
 
                         if (!store || !store.findRecord('key', attributeSelection.getValue())) {
@@ -76,7 +80,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
 
             attributeSelection.setStore(attributeStore);
-            attributeSelection.on('change', this.setOptionsVisibility.bind(this, attributeStore, attributeSelection, languageSelection, appendRelationItems));
+            attributeSelection.on('change', this.setOptionsVisibility.bind(this, attributeStore, attributeSelection, languageSelection, overwriteMode));
 
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function (newType) {
@@ -99,9 +103,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     change: function (checkbox, value) {
                         if (value) {
                             writeIfSourceIsEmpty.enable();
+                            overwriteMode.setHidden(false);
                         } else {
                             writeIfSourceIsEmpty.setValue(false);
                             writeIfSourceIsEmpty.disable();
+                            overwriteMode.setHidden(true);
                         }
                     }
                 }
@@ -131,8 +137,9 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                         xtype: 'fieldcontainer',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_label'),
                         defaultType: 'checkboxfield',
-                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty, appendRelationItems]
-                    }
+                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
+                    },
+                    overwriteMode
                 ]
             });
 
