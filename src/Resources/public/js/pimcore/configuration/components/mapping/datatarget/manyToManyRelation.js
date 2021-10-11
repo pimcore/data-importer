@@ -97,7 +97,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             const writeIfTargetIsNotEmpty = Ext.create('Ext.form.Checkbox', {
                 boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifTargetIsNotEmpty'),
                 name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
-                value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : false,
+                value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : true,
                 inputValue: true,
                 listeners: {
                     change: function (checkbox, value) {
@@ -116,8 +116,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             const writeIfSourceIsEmpty = Ext.create('Ext.form.Checkbox', {
                 boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifSourceIsEmpty'),
                 name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
-                value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : false,
-                disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true,
+                value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : true,
+                disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
                 inputValue: true
             });
 

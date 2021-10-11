@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
 use Pimcore\Model\Element\ElementInterface;
@@ -86,12 +87,16 @@ class ManyToManyRelation implements DataTargetInterface
     public function assignData(ElementInterface $element, $data): void
     {
         $setterParts = explode('.', $this->fieldName);
+        $hideUnpublished = DataObject::getHideUnpublished();
 
         if (count($setterParts) === 1) {
             //direct class attribute
             $setter = 'set' . ucfirst($this->fieldName);
             $getter = 'get' . ucfirst($this->fieldName);
-            if (!$this->checkAssignData($data, $element->$getter($this->language))) {
+            DataObject::setHideUnpublished(false);
+            $currentData = $element->$getter($this->language);
+            DataObject::setHideUnpublished($hideUnpublished);
+            if (!$this->checkAssignData($data, $currentData)) {
                 return;
             }
             $element->$setter($this->getPreprocessData($element, $element->getClass(), $this->fieldName, $data), $this->language);
@@ -113,7 +118,10 @@ class ManyToManyRelation implements DataTargetInterface
 
             $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
-            if (!$this->checkAssignData($data, $brick->$getter($this->language))) {
+            DataObject::setHideUnpublished(false);
+            $currentData = $brick->$getter($this->language);
+            DataObject::setHideUnpublished($hideUnpublished);
+            if (!$this->checkAssignData($data, $currentData)) {
                 return;
             }
             $brick->$setter($this->getPreprocessData($brick, $brick->getDefinition(), $setterParts[2], $data), $this->language);
