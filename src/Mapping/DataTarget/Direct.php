@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -57,10 +58,14 @@ class Direct implements DataTargetInterface
 
         if (isset($settings['writeIfSourceIsEmpty'])) {
             $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'];
+        } else {
+            $this->writeIfSourceIsEmpty = false;
         }
 
         if (isset($settings['writeIfTargetIsNotEmpty'])) {
             $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty'];
+        } else {
+            $this->writeIfTargetIsNotEmpty = false;
         }
     }
 
@@ -75,12 +80,16 @@ class Direct implements DataTargetInterface
     public function assignData(ElementInterface $element, $data): void
     {
         $setterParts = explode('.', $this->fieldName);
+        $hideUnpublished = DataObject::getHideUnpublished();
 
         if (count($setterParts) === 1) {
             //direct class attribute
             $setter = 'set' . ucfirst($this->fieldName);
             $getter = 'get' . ucfirst($this->fieldName);
-            if (!$this->checkAssignData($data, $element->$getter($this->language))) {
+            DataObject::setHideUnpublished(false);
+            $currentData = $element->$getter($this->language);
+            DataObject::setHideUnpublished($hideUnpublished);
+            if (!$this->checkAssignData($data, $currentData)) {
                 return;
             }
             $element->$setter($data, $this->language);
@@ -102,7 +111,10 @@ class Direct implements DataTargetInterface
 
             $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
-            if (!$this->checkAssignData($data, $brick->$getter($this->language))) {
+            DataObject::setHideUnpublished(false);
+            $currentData = $element->$getter($this->language);
+            DataObject::setHideUnpublished($hideUnpublished);
+            if (!$this->checkAssignData($data, $currentData)) {
                 return;
             }
             $brick->$setter($data, $this->language);
