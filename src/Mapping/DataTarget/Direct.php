@@ -112,7 +112,7 @@ class Direct implements DataTargetInterface
             $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
             DataObject::setHideUnpublished(false);
-            $currentData = $element->$getter($this->language);
+            $currentData = $brick->$getter($this->language);
             DataObject::setHideUnpublished($hideUnpublished);
             if (!$this->checkAssignData($data, $currentData)) {
                 return;
