@@ -19,10 +19,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
     previewRecordIndex: 0,
     transformationResultHandler: null,
 
-    initialize: function(configName, configItemInstance, transformationResultHandler) {
+    initialize: function(configName, configItemInstance, transformationResultHandler, disableForm = false) {
         this.configName = configName;
         this.configItemInstance = configItemInstance;
         this.transformationResultHandler = transformationResultHandler;
+        this.disableForm = disableForm;
     },
 
     buildImportPreviewPanel: function() {
@@ -80,7 +81,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
     },
 
     buildPreviewGrid: function() {
-
         var columns = [
             {
                 text: t('plugin_pimcore_datahub_data_importer_configpanel_preview_dataindex'),
@@ -119,7 +119,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
             columns: {
                 items: columns,
                 defaults: {
-                    renderer: Ext.util.Format.htmlEncode
+                    renderer: Ext.util.Format.htmlEncode,
+                    disabled: this.disableForm
                 },
             },
             emptyText: t('plugin_pimcore_datahub_data_importer_configpanel_preview_empty'),
@@ -129,10 +130,12 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
                         xtype: 'button',
                         iconCls: 'pimcore_icon_upload',
                         tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data_upload'),
+                        disabled: this.disableForm,
                         handler: this.uploadDialog.bind(this)
                     },{
                         xtype: 'button',
                         iconCls: 'pimcore_icon_clone',
+                        disabled: this.disableForm,
                         tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_preview_data_clone'),
                         handler: this.copyPreviewFromDataSource.bind(this)
                     },
@@ -140,15 +143,18 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview 
                     {
                         xtype: 'button',
                         iconCls: 'pimcore_icon_refresh',
+                        disabled: this.disableForm,
                         handler: this.updatePreview.bind(this, null, false)
                     },{
                         xtype: 'button',
                         iconCls: 'plugin_pimcore_datahub_icon_previous',
+                        disabled: this.disableForm,
                         handler: this.updatePreview.bind(this, 'previous', false)
                     },
                     {
                         xtype: 'button',
                         iconCls: 'plugin_pimcore_datahub_icon_next',
+                        disabled: this.disableForm,
                         handler: this.updatePreview.bind(this, 'next', false)
                     }
                 ]

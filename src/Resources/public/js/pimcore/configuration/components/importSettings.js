@@ -17,10 +17,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
     configItemRootContainer: null,
     transformationResultHandler: null,
 
-    initialize: function(data, configItemRootContainer, transformationResultHandler) {
+    initialize: function(data, configItemRootContainer, transformationResultHandler, disableForm = false) {
         this.resolverConfigData = data.resolverConfig;
         this.processingConfigData = data.processingConfig;
         this.mappingConfigData = data.mappingConfig;
+        this.disableForm = disableForm;
 
         this.configItemRootContainer = configItemRootContainer;
         this.transformationResultHandler = transformationResultHandler;
@@ -81,6 +82,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                     displayField: 'text',
                     listWidth: 'auto',
                     fieldLabel: t('class'),
+                    disabled: this.disableForm,
                     name: 'dataObjectClassId',
                     value: this.resolverConfigData.dataObjectClassId,
                     forceSelection: true,
@@ -112,9 +114,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                         {
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_loading_strategy'),
                             xtype: 'subsettingscombo',
+                            disabled: this.disableForm,
                             name: 'loadingStrategy.type',
                             settingsNamePrefix: 'loadingStrategy.settings',
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load,
+                            initContext: {
+                                disableForm: this.disableForm
+                            },
                             settingsPanel: loadingStrategySettingsPanel,
                             value: this.resolverConfigData.loadingStrategy.type || 'notLoad',
                             settingsValues: this.resolverConfigData.loadingStrategy ? this.resolverConfigData.loadingStrategy.settings : {},
@@ -132,9 +138,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                         {
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_create_location_strategy'),
                             xtype: 'subsettingscombo',
+                            disabled: this.disableForm,
                             name: 'createLocationStrategy.type',
                             settingsNamePrefix: 'createLocationStrategy.settings',
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location,
+                            initContext: {
+                                disableForm: this.disableForm
+                            },
                             optionsBlackList: ['noChange'],
                             settingsPanel: createLocationStrategySettingsPanel,
                             value: this.resolverConfigData.createLocationStrategy.type || 'staticPath',
@@ -153,9 +163,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                         {
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_update_location_strategy'),
                             xtype: 'subsettingscombo',
+                            disabled: this.disableForm,
                             name: 'locationUpdateStrategy.type',
                             settingsNamePrefix: 'locationUpdateStrategy.settings',
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.location,
+                            initContext: {
+                                disableForm: this.disableForm
+                            },
                             optionsBlackList: ['doNotCreate'],
                             settingsPanel: updateLocationStrategySettingsPanel,
                             value: this.resolverConfigData.locationUpdateStrategy.type || 'noChange',
@@ -174,9 +188,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                         {
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_publish_strategy'),
                             xtype: 'subsettingscombo',
+                            disabled: this.disableForm,
                             name: 'publishingStrategy.type',
                             settingsNamePrefix: 'publishingStrategy.settings',
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.publish,
+                            initContext: {
+                                disableForm: this.disableForm
+                            },
                             settingsPanel: publishingStrategySettingsPanel,
                             value: this.resolverConfigData.publishingStrategy.type || 'noChangeUnpublishNew',
                             settingsValues: this.resolverConfigData.publishingStrategy ? this.resolverConfigData.publishingStrategy.settings : {},
@@ -213,14 +231,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
         const doDeltaCheckCheckbox = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_delta_check'),
             name: 'doDeltaCheck',
-            disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
+            disabled: this.disableForm || (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
             inputValue: true,
             value: this.processingConfigData.hasOwnProperty('doDeltaCheck') ? this.processingConfigData.doDeltaCheck : false
         });
         const doCleanup = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_do_cleanup'),
             name: 'cleanup.doCleanup',
-            disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
+            disabled: this.disableForm || (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
             inputValue: true,
             value: this.processingConfigData.cleanup && this.processingConfigData.cleanup.hasOwnProperty('doCleanup') ? this.processingConfigData.cleanup.doCleanup : false
         });
@@ -228,8 +246,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
         const cleanupStrategy = Ext.create('DataHub.DataImporter.SubSettingsComboBox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_cleanup_strategy'),
             name: 'cleanup.strategy',
-            disabled: (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
+            disabled: this.disableForm || (!this.processingConfigData.idDataIndex || 0 === this.processingConfigData.idDataIndex.length),
             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.cleanup,
+            initContext: {
+                disableForm: this.disableForm
+            },
             settingsPanel: cleanupSettingsPanel,
             value: this.processingConfigData.cleanup ? this.processingConfigData.cleanup.strategy : ''
         });
@@ -244,6 +265,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                 {
                     xtype: 'combo',
                     name: 'executionType',
+                    disabled: this.disableForm,
                     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_type'),
                     store: [
                         ['sequential', t('plugin_pimcore_datahub_data_importer_configpanel_execution_type_sequential')],
@@ -256,6 +278,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                 },
                 {
                     xtype: 'checkbox',
+                    disabled: this.disableForm,
                     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_archive_import_file'),
                     name: 'doArchiveImportFile',
                     inputValue: true,
@@ -263,6 +286,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                 },
                 {
                     xtype: 'combo',
+                    disabled: this.disableForm,
                     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_id_data_index'),
                     name: 'idDataIndex',
                     value: this.processingConfigData.idDataIndex,
@@ -311,7 +335,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
         this.mappingConfiguration = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfiguration(
             this.mappingConfigData,
             this.configItemRootContainer,
-            this.transformationResultHandler
+            this.transformationResultHandler,
+            this.disableForm
         );
 
         const panel = Ext.create('Ext.Panel', {

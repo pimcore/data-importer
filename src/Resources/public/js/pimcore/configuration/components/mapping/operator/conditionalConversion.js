@@ -23,6 +23,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_original'),
                 value: this.data.settings ? this.data.settings.original : '',
                 name: 'settings.original',
+                disabled: this.disableForm,
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
                 }
@@ -33,6 +34,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_converted'),
                 value: this.data.settings ? this.data.settings.converted : '',
                 name: 'settings.converted',
+                disabled: this.disableForm,
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
                 }

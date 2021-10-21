@@ -24,6 +24,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.cs
                     labelWidth: 200,
                     width: 600,
                     allowBlank: false,
+                    disabled: this.disableForm,
                     msgTarget: 'under'
                 },
                 border: false,

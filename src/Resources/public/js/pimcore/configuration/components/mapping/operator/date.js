@@ -22,6 +22,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 xtype: 'textfield',
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_format'),
                 value: this.data.settings ? this.data.settings.format : 'Y-m-d',
+                disabled: this.disableForm,
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
                 },

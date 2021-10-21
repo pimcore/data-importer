@@ -31,6 +31,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 fieldLabel: t('language'),
                 name: this.dataNamePrefix + 'language',
                 value: this.data.language,
+                disabled: this.disableForm,
                 allowBlank: true,
                 hidden: true
             });
@@ -40,6 +41,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 valueField: 'key',
                 queryMode: 'local',
                 forceSelection: true,
+                disabled: this.disableForm,
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fieldName'),
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
@@ -88,6 +90,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
                 value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : false,
                 inputValue: true,
+                disabled: this.disableForm,
                 listeners: {
                     change: function (checkbox, value) {
                         if (value) {
@@ -104,7 +107,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifSourceIsEmpty'),
                 name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
                 value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : false,
-                disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true,
+                disabled: this.disableForm || this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true,
                 inputValue: true
             });
 
@@ -112,6 +115,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 defaults: {
                     labelWidth: 120,
                     width: 500,
+                    disabled: this.disableForm,
                     listeners: {
                         errorchange: this.initContext.updateValidationStateCallback
                     }

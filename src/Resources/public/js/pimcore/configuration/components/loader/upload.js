@@ -92,7 +92,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.upload 
 
             this.uploadStatus = Ext.create('Ext.form.field.Display', {
                 hideLabel: false,
-                disabled: false,
                 style: 'margin-left:205px;margin-top:-10px'
             });
             items.push(this.uploadStatus);
@@ -108,7 +107,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.upload 
                 fileUpload: true,
                 defaults: {
                     labelWidth: 200,
-                    width: 600
+                    width: 600,
+                    disabled: this.disableForm,
                 },
                 border: false,
                 width: 900,
