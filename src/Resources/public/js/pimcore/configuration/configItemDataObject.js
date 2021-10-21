@@ -273,7 +273,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
     buildImportSettingsTab: function() {
 
         const transformationResultHandler = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.transformationResultHandler(this.configName, this, null);
-        console.log(this.disableForm);
         const importPreview = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview(this.configName, this, transformationResultHandler,  this.disableForm);
         this.importSettings = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings(this.data, this.tab, transformationResultHandler,  this.disableForm);
 
