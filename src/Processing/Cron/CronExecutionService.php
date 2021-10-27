@@ -106,9 +106,9 @@ class CronExecutionService
         $timestamp = $this->getDb()->fetchOne(
                 sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
                 [$configName]
-            ) ?? time();
+            );
 
-        if($timestamp === null ) {
+        if($timestamp === false) {
             $this->updateExecutionTimestamp($configName, new \DateTime());
         }
 
