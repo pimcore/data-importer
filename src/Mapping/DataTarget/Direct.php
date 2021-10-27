@@ -112,11 +112,12 @@ class Direct implements DataTargetInterface
      * @param $newData
      * @param $valueContainer
      * @param $getter
+     *
      * @return bool
      */
     protected function checkAssignData($newData, $valueContainer, $getter)
     {
-        if($this->writeIfTargetIsNotEmpty === true && $this->writeIfSourceIsEmpty === true) {
+        if ($this->writeIfTargetIsNotEmpty === true && $this->writeIfSourceIsEmpty === true) {
             return true;
         }
 
@@ -124,7 +125,6 @@ class Direct implements DataTargetInterface
         DataObject::setHideUnpublished(false);
         $currentData = $valueContainer->$getter($this->language);
         DataObject::setHideUnpublished($hideUnpublished);
-
 
         if (!empty($currentData) && $this->writeIfTargetIsNotEmpty === false) {
             return false;
