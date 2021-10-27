@@ -56,17 +56,9 @@ class Direct implements DataTargetInterface
         $this->fieldName = $settings['fieldName'];
         $this->language = $settings['language'] ?? null;
 
-        if (isset($settings['writeIfSourceIsEmpty'])) {
-            $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'];
-        } else {
-            $this->writeIfSourceIsEmpty = false;
-        }
-
-        if (isset($settings['writeIfTargetIsNotEmpty'])) {
-            $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty'];
-        } else {
-            $this->writeIfTargetIsNotEmpty = false;
-        }
+        $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'] ?? false;
+        $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty' ?? false;
+       
     }
 
     /**
