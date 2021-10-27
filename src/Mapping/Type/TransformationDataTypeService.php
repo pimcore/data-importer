@@ -36,6 +36,8 @@ class TransformationDataTypeService
     const IMAGE_ADVANCED = 'imageAdvanced';
     const DATA_OBJECT = 'dataObject';
     const DATA_OBJECT_ARRAY = 'dataObjectArray';
+    const ADVANCED_DATA_OBJECT_ARRAY = 'advancedDataObjectArray';
+    const ADVANCED_ASSET_ARRAY = 'advancedAssetArray';
 
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -84,6 +86,10 @@ class TransformationDataTypeService
         self::ASSET_ARRAY => [
             'manyToManyRelation'
         ],
+        self::ADVANCED_ASSET_ARRAY => [
+            'manyToManyRelation',
+            'advancedManyToManyRelation'
+        ],
         self::GALLERY => [
             'imageGallery'
         ],
@@ -96,6 +102,12 @@ class TransformationDataTypeService
         self::DATA_OBJECT_ARRAY => [
             'manyToManyRelation',
             'manyToManyObjectRelation'
+        ],
+        self::ADVANCED_DATA_OBJECT_ARRAY => [
+            'manyToManyRelation',
+            'advancedManyToManyRelation',
+            'manyToManyObjectRelation',
+            'advancedManyToManyObjectRelation'
         ]
     ];
 
@@ -142,15 +154,16 @@ class TransformationDataTypeService
 
     /**
      * @param string $classId
-     * @param string|array $transformationTargetType
+     * @param $transformationTargetType
      * @param bool $includeSystemRead
      * @param bool $includeSystemWrite
+     * @param bool $includeAdvancedRelations
      *
      * @return array
      *
      * @throws \Exception
      */
-    public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite): array
+    public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite, bool $includeAdvancedRelations): array
     {
         $class = ClassDefinition::getById($classId);
 
@@ -158,6 +171,20 @@ class TransformationDataTypeService
 
         if (!is_array($transformationTargetType)) {
             $transformationTargetType = [$transformationTargetType];
+        }
+
+        //replace for advanced relations
+        if ($includeAdvancedRelations) {
+            $transformationTargetType = array_map(function ($item) {
+                switch ($item) {
+                    case self::ASSET_ARRAY:
+                        return self::ADVANCED_ASSET_ARRAY;
+                    case self::DATA_OBJECT_ARRAY:
+                        return self::ADVANCED_DATA_OBJECT_ARRAY;
+                    default:
+                        return $item;
+                }
+            }, $transformationTargetType);
         }
 
         foreach ($transformationTargetType as $targetType) {
