@@ -75,12 +75,11 @@ class Direct implements DataTargetInterface
 
         if (count($setterParts) === 1) {
             //direct class attribute
-            $setter = 'set' . ucfirst($this->fieldName);
             $getter = 'get' . ucfirst($this->fieldName);
             if (!$this->checkAssignData($data, $element, $getter)) {
                 return;
             }
-            $element->$setter($data, $this->language);
+            $this->doAssignData($element, $this->fieldName, $data);
         } elseif (count($setterParts) === 3) {
             //brick attribute
 
@@ -97,15 +96,20 @@ class Direct implements DataTargetInterface
                 $brickContainer->$brickSetter($brick);
             }
 
-            $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
             if (!$this->checkAssignData($data, $brick, $getter)) {
                 return;
             }
-            $brick->$setter($data, $this->language);
+            $this->doAssignData($brick, $setterParts[2], $data);
         } else {
             throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
         }
+    }
+
+    protected function doAssignData($valueContainer, $fieldName, $data)
+    {
+        $setter = 'set' . ucfirst($fieldName);
+        $valueContainer->$setter($data, $this->language);
     }
 
     /**

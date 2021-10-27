@@ -19,32 +19,12 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Element\Service;
 
-class ManyToManyRelation implements DataTargetInterface
+class ManyToManyRelation extends Direct
 {
     const OVERWRITE_MODE_MERGE = 'merge';
     const OVERWRITE_MODE_REPLACE = 'replace';
-    /**
-     * @var string
-     */
-    protected $fieldName;
-
-    /**
-     * @var string
-     */
-    protected $language;
-
-    /**
-     * @var bool
-     */
-    protected $writeIfSourceIsEmpty;
-
-    /**
-     * @var bool
-     */
-    protected $writeIfTargetIsNotEmpty;
 
     /**
      * @var bool
@@ -58,117 +38,68 @@ class ManyToManyRelation implements DataTargetInterface
      */
     public function setSettings(array $settings): void
     {
-        if (empty($settings['fieldName'])) {
-            throw new InvalidConfigurationException('Empty field name.');
-        }
-
-        $this->fieldName = $settings['fieldName'];
-        $this->language = $settings['language'] ?? null;
-
-        //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
-        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
-        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
-
+        parent::setSettings($settings);
         $this->overwriteMode = $settings['overwriteMode'] ?? self::OVERWRITE_MODE_REPLACE;
     }
 
-    /**
-     * @param ElementInterface $element
-     * @param mixed $data
-     *
-     * @return void
-     *
-     * @throws InvalidConfigurationException
-     */
-    public function assignData(ElementInterface $element, $data): void
+    protected function doAssignData($valueContainer, $fieldName, $data)
     {
-        $setterParts = explode('.', $this->fieldName);
-        $hideUnpublished = DataObject::getHideUnpublished();
-
-        if (count($setterParts) === 1) {
-            //direct class attribute
-            $setter = 'set' . ucfirst($this->fieldName);
-            $getter = 'get' . ucfirst($this->fieldName);
-            DataObject::setHideUnpublished(false);
-            $currentData = $element->$getter($this->language);
-            DataObject::setHideUnpublished($hideUnpublished);
-            if (!$this->checkAssignData($data, $currentData)) {
-                return;
-            }
-            $element->$setter($this->getPreprocessData($element, $element->getClass(), $this->fieldName, $data), $this->language);
-        } elseif (count($setterParts) === 3) {
-            //brick attribute
-
-            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
-            $brickContainer = $element->$brickContainerGetter();
-
-            $brickGetter = 'get' . ucfirst($setterParts[1]);
-            $brick = $brickContainer->$brickGetter();
-
-            if (empty($brick)) {
-                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
-                $brick = new $brickClassName($element);
-                $brickSetter = 'set' . ucfirst($setterParts[1]);
-                $brickContainer->$brickSetter($brick);
-            }
-
-            $setter = 'set' . ucfirst($setterParts[2]);
-            $getter = 'get' . ucfirst($setterParts[2]);
-            DataObject::setHideUnpublished(false);
-            $currentData = $brick->$getter($this->language);
-            DataObject::setHideUnpublished($hideUnpublished);
-            if (!$this->checkAssignData($data, $currentData)) {
-                return;
-            }
-            $brick->$setter($this->getPreprocessData($brick, $brick->getDefinition(), $setterParts[2], $data), $this->language);
+        if ($valueContainer instanceof DataObject\Concrete) {
+            $definition = $valueContainer->getClass();
+        } elseif ($valueContainer instanceof DataObject\Objectbrick\Data\AbstractData) {
+            $definition = $valueContainer->getDefinition();
         } else {
-            throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
+            throw new InvalidConfigurationException('Invalid container type for data attribute.');
         }
-    }
 
-    /**
-     * @param $object
-     * @param $definition
-     * @param string $attributeName
-     * @param $data
-     *
-     * @return array
-     */
-    protected function getPreprocessData($object, $definition, string $attributeName, $data)
-    {
-        $fieldDef = $definition->getFieldDefinition($attributeName);
+        $fieldDefinition = $definition->getFieldDefinition($fieldName);
 
-        switch ($fieldDef->getFieldtype()) {
+        switch ($fieldDefinition->getFieldtype()) {
             case 'manyToManyRelation':
             case 'manyToManyObjectRelation':
             case 'advancedManyToManyRelation':
             case 'advancedManyToManyObjectRelation':
-                $getter = 'get' . ucfirst($attributeName);
-                $existingData = $object->$getter();
 
-                return $this->getMergedDataArray($existingData ?? [], $data, $fieldDef->getFieldtype());
+                $setter = 'set' . ucfirst($fieldName);
+                $getter = 'get' . ucfirst($fieldName);
+                $valueContainer->$setter(
+                    $this->getMergedDataArray($valueContainer, $getter, $fieldDefinition->getFieldtype(), $data),
+                    $this->language
+                );
+
+                break;
 
             default:
-                throw new InvalidConfigurationException('Only supports addvanced relation types');
+                throw new InvalidConfigurationException('Invalid field type for attribute ' . $fieldName .
+                    '. Only supports advanced relation types, ' . $fieldDefinition->getFieldtype() . ' given.');
         }
     }
 
     /**
-     * @param array $existingData
-     * @param array $data
+     * @param $valueContainer
+     * @param string $getter
      * @param string $fieldType
+     * @param $data
      *
      * @return array
      *
      * @throws \Exception
      */
-    protected function getMergedDataArray(array $existingData, array $data, string $fieldType): array
+    protected function getMergedDataArray($valueContainer, string $getter, string $fieldType, $data): array
     {
+        $currentData = [];
+        if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
+            $hideUnpublished = DataObject::getHideUnpublished();
+            DataObject::setHideUnpublished(false);
+            $currentData = $valueContainer->$getter($this->language);
+            DataObject::setHideUnpublished($hideUnpublished);
+        }
+
         $newData = [];
         switch ($fieldType) {
             case 'manyToManyObjectRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
-                    foreach ($existingData as $dataObject) {
+                    foreach ($currentData as $dataObject) {
                         $newData[$dataObject->getId()] = $dataObject;
                     }
 
@@ -184,7 +115,7 @@ class ManyToManyRelation implements DataTargetInterface
 
             case 'advancedManyToManyObjectRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
-                    foreach ($existingData as $metaDataObject) {
+                    foreach ($currentData as $metaDataObject) {
                         $newData[$metaDataObject->getObject()->getId()] = $metaDataObject;
                     }
                 }
@@ -199,7 +130,7 @@ class ManyToManyRelation implements DataTargetInterface
 
             case 'manyToManyRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
-                    foreach ($existingData as $element) {
+                    foreach ($currentData as $element) {
                         $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
                     }
                     foreach ($data as $element) {
@@ -215,7 +146,7 @@ class ManyToManyRelation implements DataTargetInterface
 
             case 'advancedManyToManyRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
-                    foreach ($existingData as $metaDataElement) {
+                    foreach ($currentData as $metaDataElement) {
                         $newData[Service::getElementType($metaDataElement->getElement()) . '_' .
                         $metaDataElement->getElement()->getId()] = $metaDataElement;
                     }
@@ -233,22 +164,5 @@ class ManyToManyRelation implements DataTargetInterface
         }
 
         return array_values($newData);
-    }
-
-    /**
-     * @param mixed $value Value from element attribute
-     *
-     * @return bool
-     */
-    protected function checkAssignData($valueData, $valueAttribute)
-    {
-        if (!empty($valueAttribute) && $this->writeIfTargetIsNotEmpty === false) {
-            return false;
-        }
-        if (empty($valueData) && $this->writeIfSourceIsEmpty === false) {
-            return false;
-        }
-
-        return true;
     }
 }
