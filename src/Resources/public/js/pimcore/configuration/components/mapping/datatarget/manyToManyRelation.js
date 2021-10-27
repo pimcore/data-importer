@@ -11,10 +11,10 @@
  *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
-pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.direct");
-pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.direct = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.manyToManyRelation");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget.manyToManyRelation = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType, {
 
-    type: 'direct',
+    type: 'manyToManyRelation',
     dataApplied: false,
     dataObjectClassId: null,
     transformationResultType: null,
@@ -31,9 +31,19 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 fieldLabel: t('language'),
                 name: this.dataNamePrefix + 'language',
                 value: this.data.language,
-                disabled: this.disableForm,
                 allowBlank: true,
                 hidden: true
+            });
+
+            const overwriteMode = Ext.create('Ext.form.ComboBox', {
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode'),
+                name: this.dataNamePrefix + 'overwriteMode',
+                value: this.data.overwriteMode || 'replace',
+                store: [
+                    ['replace', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_replace')],
+                    ['merge', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_merge')],
+                ],
+                hidden: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false
             });
 
             const attributeSelection = Ext.create('Ext.form.ComboBox', {
@@ -41,7 +51,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 valueField: 'key',
                 queryMode: 'local',
                 forceSelection: true,
-                disabled: this.disableForm,
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fieldName'),
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
@@ -59,10 +68,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                                 this.form.isValid();
                             }
                             this.dataApplied = true;
-                            this.setLanguageVisibility(attributeStore, attributeSelection, languageSelection);
+                            this.setOptionsVisibility(attributeStore, attributeSelection, languageSelection, overwriteMode);
                         }
 
-                        if (!store.findRecord('key', attributeSelection.getValue())) {
+                        if (!store || !store.findRecord('key', attributeSelection.getValue())) {
                             attributeSelection.setValue(null);
                             this.form.isValid();
                         }
@@ -71,7 +80,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
 
             attributeSelection.setStore(attributeStore);
-            attributeSelection.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeSelection, languageSelection));
+            attributeSelection.on('change', this.setOptionsVisibility.bind(this, attributeStore, attributeSelection, languageSelection, overwriteMode));
 
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function (newType) {
@@ -86,40 +95,39 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             );
 
             const writeIfTargetIsNotEmpty = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifTargetIsNotEmpty'),
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifTargetIsNotEmpty'),
                 name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
                 value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : true,
                 inputValue: true,
-                disabled: this.disableForm,
                 uncheckedValue: false,
                 listeners: {
                     change: function (checkbox, value) {
                         if (value) {
                             writeIfSourceIsEmpty.setReadOnly(false);
                             writeIfSourceIsEmpty.setValue(true);
+                            overwriteMode.setHidden(false);
                         } else {
-                            writeIfSourceIsEmpty.setValue(false);
                             writeIfSourceIsEmpty.setReadOnly(true);
+                            writeIfSourceIsEmpty.setValue(false);
+                            overwriteMode.setHidden(true);
                         }
                     }
                 }
             });
 
             const writeIfSourceIsEmpty = Ext.create('Ext.form.Checkbox', {
-                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifSourceIsEmpty'),
-                name: this.dataNamePrefix + 'writeIfSourceIsEmpty',                
-                disabled: this.disableForm,
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifSourceIsEmpty'),
+                name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
                 value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : true,
-                uncheckedValue: false,
                 readOnly: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
-                inputValue: true
+                inputValue: true,
+                uncheckedValue: false
             });
-            
+
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
                     width: 500,
-                    disabled: this.disableForm,
                     listeners: {
                         errorchange: this.initContext.updateValidationStateCallback
                     }
@@ -130,10 +138,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     languageSelection,
                     {
                         xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_label'),
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_label'),
                         defaultType: 'checkboxfield',
                         items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
-                    }
+                    },
+                    overwriteMode
                 ]
             });
 
@@ -146,9 +155,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
 
     initAttributeStore: function (attributeStore) {
         const classId = this.dataObjectClassId;
+
         const transformationResultType = this.transformationResultType;
 
-        let targetFieldCache = this.configItemRootContainer.targetFieldCache || {};
+        let targetFieldCache = this.configItemRootContainer.targetFieldCacheRelations || {};
 
         if (targetFieldCache[classId] && targetFieldCache[classId][transformationResultType]) {
 
@@ -166,7 +176,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 loading: true,
                 data: null
             };
-            this.configItemRootContainer.targetFieldCache = targetFieldCache;
+            this.configItemRootContainer.targetFieldCacheRelations = targetFieldCache;
 
             Ext.Ajax.request({
                 url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),
@@ -174,7 +184,9 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 params: {
                     'class_id': classId,
                     'transformation_result_type': transformationResultType,
-                    'system_write': 1
+                    'system_read': 0,
+                    'system_write': 0,
+                    'load_advanced_relations': 1
                 },
                 success: function (response) {
                     let data = Ext.decode(response.responseText);
@@ -188,12 +200,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             });
         }
     },
-
-    setLanguageVisibility: function (attributeStore, attributeSelection, languageSelection) {
+    setOptionsVisibility: function (attributeStore, attributeSelection, languageSelection) {
         const record = attributeStore.findRecord('key', attributeSelection.getValue());
         if (record) {
             languageSelection.setHidden(!record.data.localized);
         }
     }
-
 });

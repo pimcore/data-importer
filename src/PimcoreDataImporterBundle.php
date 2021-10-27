@@ -83,6 +83,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/mappingConfigurationItem.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/transformationResultHandler.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/direct.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/manyToManyRelation.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/classificationstore.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/classificationstoreBatch.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/tools/classificationStoreKeySearchWindow.js',

@@ -425,6 +425,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         if (empty($classId)) {
             return new JsonResponse([]);
         }
+        $loadAdvancedRelations = boolval($request->get('load_advanced_relations', false));
 
         $includeSystemRead = boolval($request->get('system_read', false));
         $includeSystemWrite = boolval($request->get('system_write', false));
@@ -432,7 +433,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $transformationTargetType = $request->get('transformation_result_type', [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC]);
 
         return new JsonResponse([
-            'attributes' => $transformationDataTypeService->getPimcoreDataTypes($classId, $transformationTargetType, $includeSystemRead, $includeSystemWrite)
+            'attributes' => $transformationDataTypeService->getPimcoreDataTypes($classId, $transformationTargetType, $includeSystemRead, $includeSystemWrite, $loadAdvancedRelations)
         ]);
     }
 

@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -34,12 +35,12 @@ class Direct implements DataTargetInterface
     /**
      * @var bool
      */
-    protected $writeIfSourceIsEmpty = false;
+    protected $writeIfSourceIsEmpty;
 
     /**
      * @var bool
      */
-    protected $writeIfTargetIsNotEmpty = false;
+    protected $writeIfTargetIsNotEmpty;
 
     /**
      * @param array $settings
@@ -55,13 +56,9 @@ class Direct implements DataTargetInterface
         $this->fieldName = $settings['fieldName'];
         $this->language = $settings['language'] ?? null;
 
-        if (isset($settings['writeIfSourceIsEmpty'])) {
-            $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'];
-        }
-
-        if (isset($settings['writeIfTargetIsNotEmpty'])) {
-            $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty'];
-        }
+        //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
+        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
+        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
     }
 
     /**
@@ -78,12 +75,11 @@ class Direct implements DataTargetInterface
 
         if (count($setterParts) === 1) {
             //direct class attribute
-            $setter = 'set' . ucfirst($this->fieldName);
             $getter = 'get' . ucfirst($this->fieldName);
-            if (!$this->checkAssignData($data, $element->$getter($this->language))) {
+            if (!$this->checkAssignData($data, $element, $getter)) {
                 return;
             }
-            $element->$setter($data, $this->language);
+            $this->doAssignData($element, $this->fieldName, $data);
         } elseif (count($setterParts) === 3) {
             //brick attribute
 
@@ -100,28 +96,44 @@ class Direct implements DataTargetInterface
                 $brickContainer->$brickSetter($brick);
             }
 
-            $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
-            if (!$this->checkAssignData($data, $brick->$getter($this->language))) {
+            if (!$this->checkAssignData($data, $brick, $getter)) {
                 return;
             }
-            $brick->$setter($data, $this->language);
+            $this->doAssignData($brick, $setterParts[2], $data);
         } else {
             throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
         }
     }
 
+    protected function doAssignData($valueContainer, $fieldName, $data)
+    {
+        $setter = 'set' . ucfirst($fieldName);
+        $valueContainer->$setter($data, $this->language);
+    }
+
     /**
-     * @param mixed $value Value from element attribute
+     * @param $newData
+     * @param $valueContainer
+     * @param $getter
      *
      * @return bool
      */
-    protected function checkAssignData($valueData, $valueAttribute)
+    protected function checkAssignData($newData, $valueContainer, $getter)
     {
-        if (!empty($valueAttribute) && $this->writeIfTargetIsNotEmpty === false) {
+        if ($this->writeIfTargetIsNotEmpty === true && $this->writeIfSourceIsEmpty === true) {
+            return true;
+        }
+
+        $hideUnpublished = DataObject::getHideUnpublished();
+        DataObject::setHideUnpublished(false);
+        $currentData = $valueContainer->$getter($this->language);
+        DataObject::setHideUnpublished($hideUnpublished);
+
+        if (!empty($currentData) && $this->writeIfTargetIsNotEmpty === false) {
             return false;
         }
-        if ((empty($valueData) || ($valueData instanceof QuantityValue && empty($valueData->getValue()))) && $this->writeIfSourceIsEmpty === false) {
+        if ($this->writeIfSourceIsEmpty === false && (empty($newData) || ($newData instanceof QuantityValue && empty($newData->getValue())))) {
             return false;
         }
 
