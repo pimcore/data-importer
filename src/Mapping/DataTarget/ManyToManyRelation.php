@@ -39,17 +39,17 @@ class ManyToManyRelation implements DataTargetInterface
     /**
      * @var bool
      */
-    protected $writeIfSourceIsEmpty = false;
+    protected $writeIfSourceIsEmpty;
 
     /**
      * @var bool
      */
-    protected $writeIfTargetIsNotEmpty = false;
+    protected $writeIfTargetIsNotEmpty;
 
     /**
      * @var bool
      */
-    protected $overwriteMode = false;
+    protected $overwriteMode;
 
     /**
      * @param array $settings
@@ -65,13 +65,9 @@ class ManyToManyRelation implements DataTargetInterface
         $this->fieldName = $settings['fieldName'];
         $this->language = $settings['language'] ?? null;
 
-        if (isset($settings['writeIfSourceIsEmpty'])) {
-            $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'];
-        }
-
-        if (isset($settings['writeIfTargetIsNotEmpty'])) {
-            $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty'];
-        }
+        //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
+        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
+        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
 
         $this->overwriteMode = $settings['overwriteMode'] ?? self::OVERWRITE_MODE_REPLACE;
     }
