@@ -72,16 +72,12 @@ class Direct implements DataTargetInterface
     public function assignData(ElementInterface $element, $data): void
     {
         $setterParts = explode('.', $this->fieldName);
-        $hideUnpublished = DataObject::getHideUnpublished();
 
         if (count($setterParts) === 1) {
             //direct class attribute
             $setter = 'set' . ucfirst($this->fieldName);
             $getter = 'get' . ucfirst($this->fieldName);
-            DataObject::setHideUnpublished(false);
-            $currentData = $element->$getter($this->language);
-            DataObject::setHideUnpublished($hideUnpublished);
-            if (!$this->checkAssignData($data, $currentData)) {
+            if (!$this->checkAssignData($data, $element, $getter)) {
                 return;
             }
             $element->$setter($data, $this->language);
@@ -103,10 +99,7 @@ class Direct implements DataTargetInterface
 
             $setter = 'set' . ucfirst($setterParts[2]);
             $getter = 'get' . ucfirst($setterParts[2]);
-            DataObject::setHideUnpublished(false);
-            $currentData = $brick->$getter($this->language);
-            DataObject::setHideUnpublished($hideUnpublished);
-            if (!$this->checkAssignData($data, $currentData)) {
+            if (!$this->checkAssignData($data, $brick, $getter)) {
                 return;
             }
             $brick->$setter($data, $this->language);
@@ -116,16 +109,27 @@ class Direct implements DataTargetInterface
     }
 
     /**
-     * @param mixed $value Value from element attribute
-     *
+     * @param $newData
+     * @param $valueContainer
+     * @param $getter
      * @return bool
      */
-    protected function checkAssignData($valueData, $valueAttribute)
+    protected function checkAssignData($newData, $valueContainer, $getter)
     {
-        if (!empty($valueAttribute) && $this->writeIfTargetIsNotEmpty === false) {
+        if($this->writeIfTargetIsNotEmpty === true && $this->writeIfSourceIsEmpty === true) {
+            return true;
+        }
+
+        $hideUnpublished = DataObject::getHideUnpublished();
+        DataObject::setHideUnpublished(false);
+        $currentData = $valueContainer->$getter($this->language);
+        DataObject::setHideUnpublished($hideUnpublished);
+
+
+        if (!empty($currentData) && $this->writeIfTargetIsNotEmpty === false) {
             return false;
         }
-        if ((empty($valueData) || ($valueData instanceof QuantityValue && empty($valueData->getValue()))) && $this->writeIfSourceIsEmpty === false) {
+        if ($this->writeIfSourceIsEmpty === false && (empty($newData) || ($newData instanceof QuantityValue && empty($newData->getValue())))) {
             return false;
         }
 
