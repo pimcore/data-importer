@@ -88,13 +88,15 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
                 value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : true,
                 inputValue: true,
+                uncheckedValue: false,
                 listeners: {
                     change: function (checkbox, value) {
                         if (value) {
-                            writeIfSourceIsEmpty.enable();
+                            writeIfSourceIsEmpty.setReadOnly(false);
+                            writeIfSourceIsEmpty.setValue(true);
                         } else {
                             writeIfSourceIsEmpty.setValue(false);
-                            writeIfSourceIsEmpty.disable();
+                            writeIfSourceIsEmpty.setReadOnly(true);
                         }
                     }
                 }
@@ -104,10 +106,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifSourceIsEmpty'),
                 name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
                 value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : true,
-                disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
+                uncheckedValue: false,
+                readOnly: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
                 inputValue: true
             });
-
+            
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
