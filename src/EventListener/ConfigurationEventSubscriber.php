@@ -115,7 +115,8 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
         }
     }
 
-    public function postSave(GenericEvent $event) {
+    public function postSave(GenericEvent $event)
+    {
         /**
          * @var $config Configuration
          */
