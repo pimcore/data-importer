@@ -35,12 +35,12 @@ class Direct implements DataTargetInterface
     /**
      * @var bool
      */
-    protected $writeIfSourceIsEmpty = false;
+    protected $writeIfSourceIsEmpty;
 
     /**
      * @var bool
      */
-    protected $writeIfTargetIsNotEmpty = false;
+    protected $writeIfTargetIsNotEmpty;
 
     /**
      * @param array $settings
@@ -56,8 +56,9 @@ class Direct implements DataTargetInterface
         $this->fieldName = $settings['fieldName'];
         $this->language = $settings['language'] ?? null;
 
-        $this->writeIfSourceIsEmpty = $settings['writeIfSourceIsEmpty'] ?? false;
-        $this->writeIfTargetIsNotEmpty = $settings['writeIfTargetIsNotEmpty' ?? false;
+        //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
+        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
+        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
        
     }
 
