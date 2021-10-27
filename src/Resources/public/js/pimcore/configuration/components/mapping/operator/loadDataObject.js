@@ -106,6 +106,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
         const loadUnpublished = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_dataobject_load_unpublished'),
             name: 'settings.loadUnpublished',
+            hidden: this.data.settings.loadStrategy !== 'attribute',
             allowBlank: true,
             value: this.data.settings ? this.data.settings.loadUnpublished : false,
             listeners: {
@@ -153,7 +154,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 ],
                 listeners: {
                     change: function(combo, strategy) {
-                        const attributeFields = [attributeDataObjectClassId, attributeName, partialMatch];
+                        const attributeFields = [attributeDataObjectClassId, attributeName, partialMatch, loadUnpublished];
                         if(strategy === 'attribute') {
                             attributeFields.forEach(function(item) {
                                 item.setHidden(false);
