@@ -43,7 +43,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     ['replace', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_replace')],
                     ['merge', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_merge')],
                 ],
-                hidden: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : true
+                hidden: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false
             });
 
             const attributeSelection = Ext.create('Ext.form.ComboBox', {
@@ -99,14 +99,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
                 value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : true,
                 inputValue: true,
+                uncheckedValue: false,
                 listeners: {
                     change: function (checkbox, value) {
                         if (value) {
-                            writeIfSourceIsEmpty.enable();
+                            writeIfSourceIsEmpty.setReadOnly(false);
+                            writeIfSourceIsEmpty.setValue(true);
                             overwriteMode.setHidden(false);
                         } else {
+                            writeIfSourceIsEmpty.setReadOnly(true);
                             writeIfSourceIsEmpty.setValue(false);
-                            writeIfSourceIsEmpty.disable();
                             overwriteMode.setHidden(true);
                         }
                     }
@@ -117,8 +119,9 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_ifSourceIsEmpty'),
                 name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
                 value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : true,
-                disabled: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
-                inputValue: true
+                readOnly: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
+                inputValue: true,
+                uncheckedValue: false
             });
 
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
