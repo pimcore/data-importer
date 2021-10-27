@@ -106,7 +106,8 @@ class Direct implements DataTargetInterface
         }
     }
 
-    protected function doAssignData($valueContainer, $fieldName, $data) {
+    protected function doAssignData($valueContainer, $fieldName, $data)
+    {
         $setter = 'set' . ucfirst($fieldName);
         $valueContainer->$setter($data, $this->language);
     }

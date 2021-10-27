@@ -19,7 +19,6 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Element\Service;
 
 class ManyToManyRelation extends Direct
@@ -43,10 +42,11 @@ class ManyToManyRelation extends Direct
         $this->overwriteMode = $settings['overwriteMode'] ?? self::OVERWRITE_MODE_REPLACE;
     }
 
-    protected function doAssignData($valueContainer, $fieldName, $data) {
-        if($valueContainer instanceof DataObject\Concrete) {
+    protected function doAssignData($valueContainer, $fieldName, $data)
+    {
+        if ($valueContainer instanceof DataObject\Concrete) {
             $definition = $valueContainer->getClass();
-        } else if($valueContainer instanceof DataObject\Objectbrick\Data\AbstractData) {
+        } elseif ($valueContainer instanceof DataObject\Objectbrick\Data\AbstractData) {
             $definition = $valueContainer->getDefinition();
         } else {
             throw new InvalidConfigurationException('Invalid container type for data attribute.');
@@ -73,7 +73,6 @@ class ManyToManyRelation extends Direct
                 throw new InvalidConfigurationException('Invalid field type for attribute ' . $fieldName .
                     '. Only supports advanced relation types, ' . $fieldDefinition->getFieldtype() . ' given.');
         }
-
     }
 
     /**
@@ -81,7 +80,9 @@ class ManyToManyRelation extends Direct
      * @param string $getter
      * @param string $fieldType
      * @param $data
+     *
      * @return array
+     *
      * @throws \Exception
      */
     protected function getMergedDataArray($valueContainer, string $getter, string $fieldType, $data): array
@@ -164,5 +165,4 @@ class ManyToManyRelation extends Direct
 
         return array_values($newData);
     }
-
 }
