@@ -91,32 +91,20 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 }.bind(this)
             }
         });
-
-        const systemAttributes = ['id', 'fullpath', 'key'];
-
+        
         const partialMatch = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_accept_partial_match'),
             name: 'settings.partialMatch',
             hidden: this.data.settings.loadStrategy !== 'attribute',
             allowBlank: true,
             value: this.data.settings ? this.data.settings.partialMatch : false,
-            hidden: this.data.settings && this.data.settings.attributeName ? (this.data.settings.attributeName === null || systemAttributes.includes(this.data.settings.attributeName)) : true,
             listeners: {
                 change: this.inputChangePreviewUpdate.bind(this)
             },
         });
 
         attributeName.setStore(attributeStore);
-        attributeName.on('change', function(combo, newValue, oldValue) {
-            this.setLanguageVisibility(attributeStore, attributeName, languageSelection);
-
-            if(newValue === null || systemAttributes.includes(newValue)) {
-                partialMatch.setValue(false);
-                partialMatch.hide();
-            } else {
-                partialMatch.show();
-            }
-        }.bind(this));
+        attributeName.on('change', this.setLanguageVisibility.bind(this, attributeStore, attributeName, languageSelection));
 
 
         const attributeDataObjectClassId = Ext.create('Ext.form.field.ComboBox', {
@@ -155,7 +143,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 ],
                 listeners: {
                     change: function(combo, strategy) {
-                        const attributeFields = [attributeDataObjectClassId, attributeName];
+                        const attributeFields = [attributeDataObjectClassId, attributeName, partialMatch];
                         if(strategy === 'attribute') {
                             attributeFields.forEach(function(item) {
                                 item.setHidden(false);
