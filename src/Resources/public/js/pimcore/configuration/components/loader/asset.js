@@ -84,7 +84,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.asset =
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 200,
-                    width: 600
+                    width: 600,
+                    disabled: this.disableForm,
                 },
                 border: false,
                 width: 900,

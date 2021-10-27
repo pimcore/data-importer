@@ -22,6 +22,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 xtype: 'combo',
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_static_text_mode'),
                 value: this.data.settings ? this.data.settings.mode : 'append',
+                disabled: this.disableForm,
                 name: 'settings.mode',
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
@@ -37,6 +38,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 xtype: 'textfield',
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_text'),
                 value: this.data.settings ? this.data.settings.text : '',
+                disabled: this.disableForm,
                 name: 'settings.text',
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
@@ -47,6 +49,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 xtype: 'checkbox',
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_always_add'),
                 value: this.data.settings ? this.data.settings.alwaysAdd : false,
+                disabled: this.disableForm,
                 name: 'settings.alwaysAdd'
             }
         ];

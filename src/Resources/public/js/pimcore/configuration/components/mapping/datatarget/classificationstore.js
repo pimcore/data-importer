@@ -166,6 +166,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 defaults: {
                     labelWidth: 120,
                     width: 500,
+                    disabled: this.disableForm,
                     listeners: {
                         errorchange: this.initContext.updateValidationStateCallback
                     }
