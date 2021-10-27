@@ -99,7 +99,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             name: 'settings.partialMatch',
             allowBlank: true,
             value: this.data.settings ? this.data.settings.partialMatch : false,
-            hidden: this.data.settings && this.data.settings.attributeName ? (this.data.settings.attributeName !== 'attribute' || systemAttributes.includes(this.data.settings.attributeName)) : true,
+            hidden: this.data.settings && this.data.settings.attributeName ? (this.data.settings.attributeName === null || systemAttributes.includes(this.data.settings.attributeName)) : true,
             listeners: {
                 change: this.inputChangePreviewUpdate.bind(this)
             },
