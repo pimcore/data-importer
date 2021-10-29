@@ -174,7 +174,7 @@ class Resolver
      *
      * @return ElementInterface | null
      */
-    public function loadOrCreateAndPrepareElement(array $inputData, bool $createNew = true): ElementInterface | null
+    public function loadOrCreateAndPrepareElement(array $inputData, bool $createNew = true): ?ElementInterface
     {
         $element = $this->loadElement($inputData);
 
