@@ -31,12 +31,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         this.parent = parent;
         this.configName = data.name;
         this.data = data.configuration;
-        // console.log(this.data);
-        this.disableForm = false;
-        if(data['configuration']['general']['writeable'] != null &&
-            data['configuration']['general']['writeable'] != undefined) {
-            this.disableForm = !data['configuration']['general']['writeable'];
-        }
         this.modificationDate = data.modificationDate;
 
         this.tab = Ext.create('Ext.TabPanel', {
@@ -89,46 +83,46 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         // footer.add(this.queueCountInfo);
         footer.add('->');
 
-        footer.add({
+        let saveButtonConfig = {
             text: t("save"),
             iconCls: "pimcore_icon_apply",
+            disabled: !this.data.general.writeable,
             handler: this.save.bind(this)
-        });
+        };
+        if(!this.data.general.writeable) {
+            saveButtonConfig.tooltip = t("config_not_writeable");
+        }
+        footer.add(saveButtonConfig);
 
     },
 
     save: function () {
         //TODO make that more generic in datahub
-        if(this.disableForm === false) {
-            if (!this.isValid(true)) {
-                pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_data_importer_configpanel_invalid_config'), 'error');
-                return;
-            }
-
-            var saveData = this.getSaveData();
-
-            Ext.Ajax.request({
-                url: this.urlSave,
-                params: {
-                    data: saveData,
-                    modificationDate: this.modificationDate
-                },
-                method: "post",
-                success: function (response) {
-                    var rdata = Ext.decode(response.responseText);
-                    if (rdata && rdata.success) {
-                        pimcore.helpers.showNotification(t("success"), t("plugin_pimcore_datahub_configpanel_item_save_success"), "success");
-                        this.modificationDate = rdata.modificationDate;
-                        this.resetChanges();
-                    } else {
-                        pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror"), "error", t(rdata.message));
-                    }
-                }.bind(this)
-            });
+        if (!this.isValid(true)) {
+            pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_data_importer_configpanel_invalid_config'), 'error');
+            return;
         }
-        else {
-            pimcore.helpers.showNotification(t("info"), t("config_not_writeable"), "info");
-        }
+
+        var saveData = this.getSaveData();
+
+        Ext.Ajax.request({
+            url: this.urlSave,
+            params: {
+                data: saveData,
+                modificationDate: this.modificationDate
+            },
+            method: "post",
+            success: function (response) {
+                var rdata = Ext.decode(response.responseText);
+                if (rdata && rdata.success) {
+                    pimcore.helpers.showNotification(t("success"), t("plugin_pimcore_datahub_configpanel_item_save_success"), "success");
+                    this.modificationDate = rdata.modificationDate;
+                    this.resetChanges();
+                } else {
+                    pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror"), "error", t(rdata.message));
+                }
+            }.bind(this)
+        });
     },
 
 
@@ -148,7 +142,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                     fieldLabel: t("active"),
                     name: "active",
                     inputValue: true,
-                    disabled: this.disableForm,
                     value: this.data.general && this.data.general.hasOwnProperty("active") ? this.data.general.active : false
                 },
                 {
@@ -170,7 +163,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                     fieldLabel: t("description"),
                     xtype: "textarea",
                     height: 100,
-                    disabled: this.disableForm,
                     value: this.data.general.description
                 }
             ]
@@ -207,10 +199,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                             settingsPanel: loaderSettingsPanel,
                             value: this.data.loaderConfig.type,
                             settingsValues: this.data.loaderConfig.settings,
-                            disabled: this.disableForm,
                             initContext: {
-                                configName: this.configName,
-                                disableForm: this.disableForm,
+                                configName: this.configName
                             },
                             listeners: {
                                 change: function(combo, newValue, oldValue) {
@@ -240,12 +230,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                         {
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_file_formats_type'),
                             xtype: 'subsettingscombo',
-                            disabled: this.disableForm,
                             name: 'type',
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter,
-                            initContext: {
-                                disableForm: this.disableForm,
-                            },
                             settingsPanel: interpreterSettingsPanel,
                             value: this.data.interpreterConfig.type,
                             settingsValues: this.data.interpreterConfig.settings
@@ -273,8 +259,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
     buildImportSettingsTab: function() {
 
         const transformationResultHandler = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.transformationResultHandler(this.configName, this, null);
-        const importPreview = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview(this.configName, this, transformationResultHandler,  this.disableForm);
-        this.importSettings = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings(this.data, this.tab, transformationResultHandler,  this.disableForm);
+        const importPreview = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importPreview(this.configName, this, transformationResultHandler);
+        this.importSettings = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings(this.data, this.tab, transformationResultHandler);
 
 
         return Ext.create('Ext.Panel', {
@@ -290,7 +276,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
     },
 
     buildExecutionTab: function() {
-        const execution = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution(this.configName, this.data.executionConfig, this.tab, this.data.loaderConfig.type, this.disableForm);
+        const execution = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution(this.configName, this.data.executionConfig, this.tab, this.data.loaderConfig.type);
         this.executionForm = execution.buildPanel();
         return this.executionForm;
     },

@@ -23,7 +23,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.xl
                 defaults: {
                     labelWidth: 200,
                     width: 600,
-                    disabled: this.disableForm,
                 },
                 border: false,
                 items: [
