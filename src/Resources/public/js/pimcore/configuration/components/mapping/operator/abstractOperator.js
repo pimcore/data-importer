@@ -21,12 +21,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstra
     transformationResultTypeChangeCallback: null,
     transformationResultPreviewChangeCallback: null,
 
-    initialize: function(data, container, transformationResultTypeChangeCallback, transformationResultPreviewChangeCallback, disableForm = false) {
+    initialize: function(data, container, transformationResultTypeChangeCallback, transformationResultPreviewChangeCallback) {
         this.data = data;
         this.container = container;
         this.transformationResultTypeChangeCallback = transformationResultTypeChangeCallback;
         this.transformationResultPreviewChangeCallback = transformationResultPreviewChangeCallback;
-        this.disableForm = disableForm;
     },
 
     getTopBar: function (name, index, parent) {
@@ -35,7 +34,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstra
             text: "<b>" + name + "</b>"
         }, "-", {
             iconCls: 'pimcore_icon_up',
-            disabled: this.disableForm,
             handler: function (blockId, parent) {
 
                 const container = parent;
@@ -47,7 +45,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstra
             }.bind(this, index, parent)
         }, {
             iconCls: 'pimcore_icon_down',
-            disabled: this.disableForm,
             handler: function (blockId, parent) {
 
                 const container = parent;
@@ -59,7 +56,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstra
             }.bind(this, index, parent)
         }, '->', {
             iconCls: 'pimcore_icon_delete',
-            disabled: this.disableForm,
             handler: function (index, parent) {
                 parent.remove(Ext.getCmp(index));
 

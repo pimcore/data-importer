@@ -105,8 +105,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.locat
                     labelWidth: 200,
                     width: 600,
                     allowBlank: false,
-                    msgTarget: 'under',
-                    disabled: this.disableForm
+                    msgTarget: 'under'
                 },
                 border: false,
                 items: [

@@ -17,9 +17,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
 
     configItemRootContainer: null,
 
-    initialize: function(data, configItemRootContainer, transformationResultHandler, disableForm = false) {
+    initialize: function(data, configItemRootContainer, transformationResultHandler) {
         this.mappingConfigData = data || [];
-        this.disableForm = disableForm;
 
         this.configItemRootContainer = configItemRootContainer;
         this.transformationResultHandler = transformationResultHandler;
@@ -36,7 +35,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                         {
                             text: t('add'),
                             iconCls: 'pimcore_icon_add',
-                            disabled: this.disableForm,
                             handler: function() {
                                 this.collapseAll();
                                 this.addItem({label: 'new column'}, false, true);
@@ -48,7 +46,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                         }, {
                             text: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_autofill'),
                             iconCls: 'plugin_pimcore_datahub_icon_wizard',
-                            disabled: this.disableForm,
                             handler: function() {
                                 //get all fields from preview
                                 let allDataIndices = [];
@@ -104,7 +101,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
     },
 
     addItem: function(mappingItemData, collapsed, scrollToBottom) {
-        const mappingConfigurationItem = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfigurationItem(mappingItemData, this.configItemRootContainer, this.transformationResultHandler, this.disableForm);
+        const mappingConfigurationItem = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappingConfigurationItem(mappingItemData, this.configItemRootContainer, this.transformationResultHandler);
 
         const item = mappingConfigurationItem.buildMappingConfigurationItem(collapsed);
         this.panel.add(item);

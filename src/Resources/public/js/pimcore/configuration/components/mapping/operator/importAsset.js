@@ -27,7 +27,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             enableKeyEvents: true,
             allowBlank: false,
             msgTarget: 'under',
-            disabled: this.disableForm,
             listeners: {
                 render: function (el) {
                     // add drop zone
@@ -63,13 +62,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                     xtype: "button",
                     iconCls: "pimcore_icon_delete",
                     style: "margin-left: 5px",
-                    disabled: this.disableForm,
                     handler: this.empty.bind(this)
                 },{
                     xtype: "button",
                     iconCls: "pimcore_icon_search",
                     style: "margin-left: 5px",
-                    disabled: this.disableForm,
                     handler: this.openSearchEditor.bind(this)
                 }
             ],
@@ -86,7 +83,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             composite,
             {
                 xtype: 'checkbox',
-                disabled: this.disableForm,
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_use_existing'),
                 value: this.data.settings ? this.data.settings.useExisting : true,
                 name: 'settings.useExisting'

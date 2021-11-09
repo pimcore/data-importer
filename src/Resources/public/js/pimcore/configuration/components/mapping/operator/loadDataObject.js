@@ -40,7 +40,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             name: 'settings.attributeLanguage',
             value: this.data.settings.attributeLanguage,
             allowBlank: true,
-            disabled: this.disableForm,
             width: 400,
             hidden: true,
             listeners: {
@@ -56,7 +55,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             value: this.data.settings.attributeName,
             displayField: 'title',
             valueField: 'key',
-            disabled: this.disableForm,
             width: 400,
             forceSelection: true,
             queryMode: 'local',
@@ -99,7 +97,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
         const partialMatch = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_accept_partial_match'),
             name: 'settings.partialMatch',
-            disabled: this.disableForm,
             allowBlank: true,
             value: this.data.settings ? this.data.settings.partialMatch : false,
             hidden: this.data.settings && this.data.settings.attributeName ? (this.data.settings.attributeName === null || systemAttributes.includes(this.data.settings.attributeName)) : true,
@@ -135,7 +132,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
         const attributeDataObjectClassId = Ext.create('Ext.form.field.ComboBox', {
             typeAhead: true,
             triggerAction: 'all',
-            disabled: this.disableForm,
             store: pimcore.globalmanager.get('object_types_store'),
             valueField: 'id',
             displayField: 'text',
@@ -159,7 +155,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
         return [
             {
                 xtype: 'combo',
-                disabled: this.disableForm,
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_dataobject_load_strategy'),
                 name: 'settings.loadStrategy',
                 value: this.data.settings.loadStrategy || 'id',

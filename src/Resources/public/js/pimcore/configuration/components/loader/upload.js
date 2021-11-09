@@ -107,8 +107,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.upload 
                 fileUpload: true,
                 defaults: {
                     labelWidth: 200,
-                    width: 600,
-                    disabled: this.disableForm,
+                    width: 600
                 },
                 border: false,
                 width: 900,

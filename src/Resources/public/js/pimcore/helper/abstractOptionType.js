@@ -24,11 +24,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOption
 
         this.data = data;
         this.dataNamePrefix = dataNamePrefix + '.';
-        this.disableForm = false;
-        if(initContext !== null && initContext.hasOwnProperty("disableForm") === true) {
-            this.disableForm = initContext["disableForm"];
-        }
-
         this.configItemRootContainer = configItemRootContainer;
         this.initContext = initContext;
     }

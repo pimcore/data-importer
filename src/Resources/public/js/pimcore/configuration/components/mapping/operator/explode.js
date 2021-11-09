@@ -21,7 +21,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             {
                 xtype: 'textfield',
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_delimiter'),
-                disabled: this.disableForm,
                 value: this.data.settings ? this.data.settings.delimiter : ' ',
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
@@ -32,7 +31,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             {
                 xtype: 'checkbox',
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_keep_sub_arrays'),
-                disabled: this.disableForm,
                 value: this.data.settings ? this.data.settings.keepSubArrays : false,
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)

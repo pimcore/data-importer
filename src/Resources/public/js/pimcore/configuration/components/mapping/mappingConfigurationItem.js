@@ -17,11 +17,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
     configItemRootContainer: null,
     transformationPipelineItems: [],
 
-    initialize: function(data, configItemRootContainer, transformationResultHandler, disableForm = false) {
+    initialize: function(data, configItemRootContainer, transformationResultHandler) {
         this.data = data || [];
 
         this.configItemRootContainer = configItemRootContainer;
-        this.disableForm = disableForm;
         this.transformationResultHandler = transformationResultHandler;
     },
 
@@ -45,7 +44,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                 },
                 tools: [{
                     type: 'close',
-                    disabled: this.disableForm,
                     cls: 'plugin_pimcore_datahub_icon_mapping_remove',
                     handler: function(owner, tool, event) {
                         const ownerContainer = event.container.component.ownerCt;
@@ -92,7 +90,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                 {
                     xtype: 'textfield',
                     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_label'),
-                    disabled: this.disableForm,
                     name: 'label',
                     value: data.label,
                     listeners: {
@@ -102,7 +99,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                     }
                 },{
                     xtype: 'tagfield',
-                    disabled: this.disableForm,
                     name: 'dataSourceIndex',
                     value: data.dataSourceIndex,
                     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_mapping_source'),
@@ -166,7 +162,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                             xtype: 'subsettingscombo',
                             name: 'dataTarget.type',
                             settingsNamePrefix: 'dataTarget.settings',
-                            disabled: this.disableForm,
                             optionsNamespace: pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datatarget,
                             settingsPanel: dataTargetSettingsPanel,
                             value: data.dataTarget ? data.dataTarget.type : '',
@@ -174,8 +169,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                             configItemRootContainer: this.configItemRootContainer,
                             initContext: {
                                 mappingConfigItemContainer: this.form,
-                                updateValidationStateCallback: this.updateValidationState.bind(this),
-                                disableForm: this.disableForm
+                                updateValidationStateCallback: this.updateValidationState.bind(this)
                             },
                             allowBlank: false,
                             msgTarget: 'under'
@@ -210,7 +204,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         for (let i = 0; i < itemTypes.length; i++) {
             addMenu.push({
                 iconCls: 'pimcore_icon_add',
-                disabled: this.disableForm,
                 handler: function() {
                     this.addTransformationPipelineItem(itemTypes[i], {}, transformationPipelineContainer);
                     this.recalculateTransformationResultType();
@@ -226,7 +219,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
             items: [
                 {
                     text: t('add'),
-                    disabled: this.disableForm,
                     iconCls: 'pimcore_icon_add',
                     menu: addMenu
                 }
@@ -243,7 +235,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
 
     addTransformationPipelineItem: function(type, data, container) {
         const item = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator[type](
-            data, container, this.recalculateTransformationResultType.bind(this), this.updateTransformationResultPreview.bind(this), this.disableForm
+            data, container, this.recalculateTransformationResultType.bind(this), this.updateTransformationResultPreview.bind(this)
         );
         container.add(item.buildTransformationPipelineItem());
     },

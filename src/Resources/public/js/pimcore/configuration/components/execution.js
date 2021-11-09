@@ -21,12 +21,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
     currentDirtyState: false,
     updateHandle: null,
 
-    initialize: function(configName, data, configItemRootContainer, loaderType, disableForm = false) {
+    initialize: function(configName, data, configItemRootContainer, loaderType) {
         this.configName = configName;
         this.data = data;
         this.configItemRootContainer = configItemRootContainer;
         this.currentLoaderType = loaderType;
-        this.disableForm = disableForm;
     },
 
     buildPanel: function() {
@@ -40,7 +39,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                         xtype: 'button',
                         width: 165,
                         text: t('plugin_pimcore_datahub_data_importer_configpanel_execution_start'),
-                        disabled: this.disableForm,
                         handler: this.startImport.bind(this)
                     }
                 ],
@@ -53,7 +51,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                     {
                         xtype: 'textfield',
                         name: 'cronDefinition',
-                        disabled: this.disableForm,
                         width: 300,
                         value: this.data.cronDefinition,
                         listeners: {
