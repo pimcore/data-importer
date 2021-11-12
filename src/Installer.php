@@ -48,7 +48,7 @@ class Installer extends SettingsStoreAwareInstaller
         // e.g. updating from 1.0.* to 1.1.*
         $installEntry = SettingsStore::get($this->getSettingsStoreInstallationId(), 'pimcore');
         if (!$installEntry) {
-            $this->markInstalled();
+            SettingsStore::set($this->getSettingsStoreInstallationId(), true, 'bool', 'pimcore');
 
             return true;
         }
