@@ -23,7 +23,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_mode'),
                 value: this.data.settings ? this.data.settings.mode : 'both',
                 name: 'settings.mode',
-                disabled: this.disableForm,
                 listeners: {
                     change: this.inputChangePreviewUpdate.bind(this)
                 },
