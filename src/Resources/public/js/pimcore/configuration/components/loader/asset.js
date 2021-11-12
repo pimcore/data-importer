@@ -85,7 +85,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.asset =
                 defaults: {
                     labelWidth: 200,
                     width: 600,
-                    disabled: this.disableForm,
                 },
                 border: false,
                 width: 900,
