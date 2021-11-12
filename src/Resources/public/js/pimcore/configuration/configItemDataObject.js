@@ -22,7 +22,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
             this.buildDataSourceTab(),
             this.buildImportSettingsTab(),
             this.buildExecutionTab(),
-            this.buildLoggerTab()
+            this.buildLoggerTab(),
+            this.getPermissions()
         ];
     },
 
@@ -86,7 +87,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         let saveButtonConfig = {
             text: t("save"),
             iconCls: "pimcore_icon_apply",
-            disabled: !this.data.general.writeable,
+            disabled: !this.data.general.writeable || !pimcore.plugin.datahub.helper.isAllowed("update", this.data),
             handler: this.save.bind(this)
         };
         if(!this.data.general.writeable) {
@@ -311,6 +312,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         saveData['processingConfig'] = this.importSettings.getProcessingConfig();
         saveData['mappingConfig'] = this.importSettings.getMappingConfig();
         saveData['executionConfig'] = this.executionForm.getValues();
+        saveData['permissions'] = this.getPermissionsSaveData();
 
         return Ext.encode(saveData);
     },
