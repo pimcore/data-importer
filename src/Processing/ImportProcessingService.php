@@ -161,7 +161,7 @@ class ImportProcessingService
         $element = null;
         try {
             //resolve data object
-            $importDataRowString = implode(", ", $importDataRow);
+            $importDataRowString = implode(', ', $importDataRow);
             $createNew = true;
             if ($resolver->getCreateLocationStrategy() instanceof DoNotCreateStrategy) {
                 $createNew = false;
