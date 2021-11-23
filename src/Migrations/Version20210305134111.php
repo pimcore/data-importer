@@ -18,10 +18,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Migrations;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Migrations\BundleAwareMigration;
+use Pimcore\Model\Tool\SettingsStore;
 
-/**
- * Auto-generated Migration: Please modify to your needs!
- */
 class Version20210305134111 extends BundleAwareMigration
 {
     protected function getBundleName(): string
@@ -29,13 +27,20 @@ class Version20210305134111 extends BundleAwareMigration
         return 'PimcoreDataImporterBundle';
     }
 
+    protected function checkBundleInstalled()
+    {
+        //need to always return true here, as the migration is setting the bundle installed
+        return true;
+    }
+
     public function up(Schema $schema): void
     {
+        SettingsStore::set('BUNDLE_INSTALLED__Pimcore\\Bundle\\DataImporterBundle\\PimcoreDataImporterBundle', true, 'bool', 'pimcore');
+
         $this->addSql(sprintf("INSERT IGNORE INTO users_permission_definitions (`key`) VALUES('%s');", Installer::DATAHUB_ADAPTER_PERMISSION));
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql(sprintf("DELETE FROM users_permission_definitions WHERE `key` = '%s'", Installer::DATAHUB_ADAPTER_PERMISSION));
     }
 }
