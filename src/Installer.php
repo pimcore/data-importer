@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle;
 
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20210305134111;
 use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
-use Pimcore\Model\Tool\SettingsStore;
 
 class Installer extends SettingsStoreAwareInstaller
 {
