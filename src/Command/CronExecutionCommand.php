@@ -52,7 +52,7 @@ class CronExecutionCommand extends AbstractCommand
             $configNames = [];
             $allDataHubConfiguations = Dao::getList();
             foreach ($allDataHubConfiguations as $dataHubConfig) {
-                if (in_array($dataHubConfig->getType(), ['dataImporterDataObject'])) {
+                if (in_array($dataHubConfig->getType(), ['dataImporterDataObject']) && $this->importPreparationService->isConfiguredAsCronJob($dataHubConfig->getName(), $dataHubConfig->getConfiguration())) {
                     $configNames[] = $dataHubConfig->getName();
                 }
             }

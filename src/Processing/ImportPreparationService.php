@@ -154,7 +154,7 @@ class ImportPreparationService
     {
         $config = $this->configLoader->prepareConfiguration($configName);
 
-        if (!($config['executionConfig']['cronDefinition'] ?? '')) {
+        if (!($config['executionConfig']['cronDefinition'] ?? '') && $config['executionConfig']['cronJobType'] !== 'oneTimeJob') {
             $message = "Configuration '$configName' has no cronDefinition, skipping cron execution.";
             $this->logger->debug($message);
 //            $this->applicationLogger->debug($message, [
@@ -185,6 +185,29 @@ class ImportPreparationService
     {
         if (!($config['general']['active'] ?? false)) {
             $message = "Configuration '$configName' is not active, skipping preparation execution.";
+            $this->logger->info($message);
+            $this->applicationLogger->info($message, [
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param string $configName
+     * @param array $config
+     *
+     * @return bool
+     */
+    public function isConfiguredAsCronJob(string $configName, array $config): bool
+    {
+        if (!empty($config['executionConfig']['cronDefinitionByDate']) && ($config['executionConfig']['cronJobType'] === 'oneTimeJob')) {
+            //TODO: Non Recurring One Time Job
+            $schdeuledDate = $config['executionConfig']['cronDefinitionByDate'];
+            $message = "Configuration '$configName' is defined as One Time Job '$schdeuledDate', skipping cron execution.";
             $this->logger->info($message);
             $this->applicationLogger->info($message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
