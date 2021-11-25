@@ -44,33 +44,83 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                 ],
             });
 
-            this.cronDefinition = Ext.create('Ext.form.FieldContainer', {
-                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron'),
-                layout: 'hbox',
-                items: [
-                    {
-                        xtype: 'textfield',
-                        name: 'cronDefinition',
-                        width: 300,
-                        value: this.data.cronDefinition,
-                        listeners: {
-                            blur: function(field) {
-                                if(this.cronTimeout) {
-                                    clearTimeout(this.cronTimeout);
-                                }
-                                this.validateCron(field);
-                            }.bind(this),
-                            change: function(field) {
-                                if(this.cronTimeout) {
-                                    clearTimeout(this.cronTimeout);
-                                }
-                                this.cronTimeout = setTimeout(function(field) {
-                                    this.validateCron(field);
-                                }.bind(this, field), 1000);
-                            }.bind(this)
-                        },
-                        msgTarget: 'under'
-                    },{
+                this.cronTypes = Ext.create('Ext.form.FieldContainer', {
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_cron_job_type'),
+                    items: [{
+                        xtype: 'radiogroup',
+                        vertical: 'false',
+                        columns: 2,
+                        width: 400,
+                        items: [{
+                            boxLabel: 'Recurring Cron Job',
+                            name: 'cronJobType',
+                            checked: this.data ? this.data.cronJobType === 'recurringJob' : true,
+                            inputValue: 'recurringJob',
+                            listeners: {
+                                change: function (obj, value) {
+                                    if (value) {
+                                        this.cronDatePickerContainer.down('datefield').setValue(this.data.cronDefinition);
+                                        this.cronDatePickerContainer.setVisible(false);
+                                        this.cronDefinitionContainer.setVisible(true);
+                                    }
+                                },
+                                scope: this
+                            }
+ 
+                        }, {
+                            boxLabel: 'One Time Job',
+                            name: 'cronJobType',
+                            checked: this.data ? this.data.cronJobType === 'oneTimeJob' : true,
+                            inputValue: 'oneTimeJob',
+                            listeners: {
+                                change: function (obj, value) {
+                                    if (value) {
+                                        this.cronDatePickerContainer.down('textfield').setValue(this.data.cronDefinitionByDate);
+                                        this.cronDatePickerContainer.setVisible(true);
+                                        this.cronDefinitionContainer.setVisible(false);
+                                    }
+                                },
+                                scope: this
+                            }
+                        }]
+ 
+                    }]
+                });
+ 
+                this.cronDatePickerContainer = Ext.create('Ext.form.FieldContainer', {
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron'),
+                    layout: 'hbox',
+                    hidden: this.data ? this.data.cronJobType !== 'oneTimeJob' : true,
+                    items: [
+                     {
+                            xtype: 'datefield',
+                            name: 'cronDefinitionByDate',
+                            width: 300,
+                            format: 'd-m-Y H:i',
+                            flex: 1,
+                            value: this.data ? this.data.cronDefinitionByDate : '',
+                            activeErrorsTpl: t('plugin_pimcore_datahub_data_importer_configpanel_execution_status_error'),
+                            formatText: t('plugin_pimcore_datahub_data_importer_configpanel_execution_date_format'),
+                            listeners: this.listenersList('cronDefinitionByDate'),
+                            msgTarget: 'under'
+                    }
+                    ]
+                });
+ 
+                this.cronDefinitionContainer = Ext.create('Ext.form.FieldContainer', {
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron'),
+                    layout: 'hbox',
+                    hidden: this.data ? this.data.cronJobType === 'oneTimeJob' : false,
+                    items: [
+                     {
+                            xtype: 'textfield',
+                            name: 'cronDefinition',
+                            width: 300,
+                            value: this.data.cronDefinition,
+                            listeners: this.listenersList('cronDefinition'),
+                            msgTarget: 'under'
+                    },
+                     {
                         xtype: 'displayfield',
                         style: 'padding-left: 10px',
                         value: '<a target="_blank" href="https://crontab.guru/">' + t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron_generator') + '</a>'
@@ -130,8 +180,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                             labelWidth: 130
                         },
                         items: [
-                            this.cronDefinition,
-                            this.buttonFieldContainer
+                             this.cronTypes,
+                             this.cronDefinitionContainer,
+                             this.cronDatePickerContainer,
+                             this.buttonFieldContainer
                         ]
                     },{
                         xtype: 'fieldset',
@@ -168,7 +220,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
     },
 
     updateDisabledState: function() {
-        this.cronDefinition.setDisabled(this.currentLoaderType === 'push');
+            this.cronDefinitionContainer.setDisabled(this.currentLoaderType === 'push');
         this.buttonFieldContainer.setDisabled(this.currentLoaderType === 'push' || this.currentDirtyState);
     },
 
@@ -220,9 +272,31 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                     field.isValid();
                 }.bind(this)
             });
-
-        }
-
+            }
+ 
+        },
+ 
+        listenersList: function (feildName) {
+            return {
+                blur: function (field) {
+                    if (this.cronTimeout) {
+                        clearTimeout(this.cronTimeout);
+                    }
+                    if (feildName !== 'cronDefinitionByDate') {
+                        this.validateCron(field);
+                    }
+                }.bind(this),
+                change: function (field) {
+                    if (this.cronTimeout) {
+                        clearTimeout(this.cronTimeout);
+                    }
+                    this.cronTimeout = setTimeout(function (field) {
+                        if (feildName !== 'cronDefinitionByDate') {
+                            this.validateCron(field);
+                        }
+                    }.bind(this, field), 1000);
+                }.bind(this)
+            }
     },
 
     updateProgress: function() {
