@@ -20,7 +20,7 @@ use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
-use Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Logger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
@@ -39,9 +39,9 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     protected $queueService;
 
     /**
-     * @var CronExecutionService
+     * @var ExecutionService
      */
-    protected $cronExecutionService;
+    protected $executionService;
 
     /**
      * @var FilesystemOperator
@@ -56,15 +56,15 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     /**
      * @param DeltaChecker $deltaChecker
      * @param QueueService $queueService
-     * @param CronExecutionService $cronExecutionService
+     * @param ExecutionService $executionService
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      * @param FilesystemOperator $pimcoreDataImporterPreviewStorage
      */
-    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, CronExecutionService $cronExecutionService, FilesystemOperator $pimcoreDataImporterUploadStorage, FilesystemOperator $pimcoreDataImporterPreviewStorage)
+    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ExecutionService $executionService, FilesystemOperator $pimcoreDataImporterUploadStorage, FilesystemOperator $pimcoreDataImporterPreviewStorage)
     {
         $this->deltaChecker = $deltaChecker;
         $this->queueService = $queueService;
-        $this->cronExecutionService = $cronExecutionService;
+        $this->executionService = $executionService;
         $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;
         $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
     }
@@ -109,7 +109,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
             }
 
             //cleanup cron execution
-            $this->cronExecutionService->cleanup($config->getName());
+            $this->executionService->cleanup($config->getName());
         }
     }
 
@@ -119,7 +119,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
         $config = $event->getSubject();
 
         if ($config->getType() === 'dataImporterDataObject') {
-            $this->cronExecutionService->initExecution($config->getName());
+            $this->executionService->initExecution($config->getName());
         }
     }
 }

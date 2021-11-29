@@ -13,13 +13,14 @@
  *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
-namespace Pimcore\Bundle\DataImporterBundle\Processing\Cron;
+namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
-use Cron\CronExpression;
+use Closure;
+use DateTime;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
-class CronExecutionService
+class ExecutionService
 {
     const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
 
@@ -57,40 +58,19 @@ class CronExecutionService
     }
 
     /**
-     * @param string $configName
-     * @param string $cronDefinition
-     *
-     * @return bool
-     *
-     * @throws \Exception
-     */
-    public function getNextExecutionInPast(string $configName, string $cronDefinition): bool
-    {
-        $cron = new CronExpression($cronDefinition);
-        $lastExecution = $this->getLastExecution($configName);
-        $nextRun = $cron->getNextRunDate($lastExecution);
-
-        $now = new \DateTime();
-
-        return $nextRun < $now;
-    }
-
-    /**
-     * @param string $configName
-     * @param \DateTime $executionTimestamp
-     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function updateExecutionTimestamp(string $configName, \DateTime $executionTimestamp)
+    public function updateExecutionTimestamp(string $configName, DateTime $executionTimestamp)
     {
         try {
             $this->getDb()->executeQuery(
-                sprintf('INSERT INTO %s (configName, lastExecutionDate) VALUES (?, ?) ON DUPLICATE KEY UPDATE lastExecutionDate = ?', self::EXECUTION_STORAGE_TABLE_NAME),
+                sprintf('INSERT INTO %s (configName, lastExecutionDate) VALUES (?, ?) ON DUPLICATE KEY UPDATE lastExecutionDate = ?',
+                    self::EXECUTION_STORAGE_TABLE_NAME),
                 [$configName, $executionTimestamp->getTimestamp(), $executionTimestamp->getTimestamp()]
             );
         } catch (TableNotFoundException $exception) {
             $this->createTableIfNotExisting();
-            $this->updateExecutionTimestamp($configName, $executionTimestamp);
+                $this->updateExecutionTimestamp($configName, $executionTimestamp);
         }
     }
 

@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ * @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Command;
@@ -40,8 +40,8 @@ class CronExecutionCommand extends AbstractCommand
         $this
             ->setName('datahub:data-importer:execute-cron')
             ->setDescription('Executes all data importer configurations corresponding to their cron definition.')
-            ->addArgument('config_name', InputArgument::OPTIONAL | InputArgument::IS_ARRAY, 'Names of configs that should be considered. Uses all if not specified.')
-        ;
+            ->addArgument('config_name', InputArgument::OPTIONAL | InputArgument::IS_ARRAY,
+                'Names of configs that should be considered. Uses all if not specified.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -59,8 +59,8 @@ class CronExecutionCommand extends AbstractCommand
         }
 
         foreach ($configNames as $configName) {
-            $output->writeln("Cron execution of config '$configName'");
-            $this->importPreparationService->executeCron($configName);
+            $output->writeln("Execution of config '$configName'");
+            $this->importPreparationService->execute($configName);
         }
 
         return 0;

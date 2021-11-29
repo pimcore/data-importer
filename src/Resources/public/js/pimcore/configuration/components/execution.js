@@ -44,9 +44,73 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                 ],
             });
 
-            this.cronDefinition = Ext.create('Ext.form.FieldContainer', {
+            this.scheduleTypes = Ext.create('Ext.form.FieldContainer', {
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_schedule_type'),
+                items: [{
+                    xtype: 'radiogroup',
+                    vertical: 'false',
+                    columns: 2,
+                    width: 400,
+                    items: [{
+                        boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_schedule_type_cron_label'),
+                        name: 'scheduleType',
+                        checked: !this.data || this.data.scheduleType !== 'job',
+                        inputValue: 'recurring',
+                        listeners: {
+                            change:  (obj, value) => {
+                                if (value) {
+                                    this.cronDefinitionContainer.down('textfield').setValue(this.data.cronDefinition);
+                                    this.cronDefinitionContainer.setVisible(true);
+                                    this.scheduledAtContainer.setVisible(false);
+                                    this.scheduledAtContainer.down('datefield').reset();
+                                }
+                            },
+                            scope: this
+                        }
+
+                    }, {
+                        boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_schedule_type_job_label'),
+                        name: 'scheduleType',
+                        checked: this.data?.scheduleType === 'job',
+                        inputValue: 'job',
+                        listeners: {
+                            change: (obj, value) => {
+                                if (value) {
+                                    this.scheduledAtContainer.down('datefield').setValue(this.data.scheduledAt);
+                                    this.scheduledAtContainer.setVisible(true);
+                                    this.cronDefinitionContainer.setVisible(false);
+                                    this.cronDefinitionContainer.down('textfield').reset();
+                                }
+                            },
+                            scope: this
+                        }
+                    }]
+                }]
+            });
+
+            this.scheduledAtContainer = Ext.create('Ext.form.FieldContainer', {
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_datetime'),
+                layout: 'hbox',
+                hidden: this.data?.scheduleType !== 'job',
+                style: 'margin-bottom: 18px;',
+                items: [
+                    {
+                        xtype: 'datefield',
+                        name: 'scheduledAt',
+                        width: 300,
+                        format: 'd-m-Y H:i',
+                        value: this.data ? this.data.scheduledAt : '',
+                        activeErrorsTpl: t('plugin_pimcore_datahub_data_importer_configpanel_execution_status_error'),
+                        formatText: t('plugin_pimcore_datahub_data_importer_configpanel_execution_date_format'),
+                        msgTarget: 'under'
+                    }
+                ]
+            });
+
+            this.cronDefinitionContainer = Ext.create('Ext.form.FieldContainer', {
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron'),
                 layout: 'hbox',
+                hidden: this.data?.scheduleType === 'job',
                 items: [
                     {
                         xtype: 'textfield',
@@ -66,11 +130,12 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                                 }
                                 this.cronTimeout = setTimeout(function(field) {
                                     this.validateCron(field);
-                                }.bind(this, field), 1000);
+                                }.bind(this, field), 500);
                             }.bind(this)
                         },
-                        msgTarget: 'under'
-                    },{
+                        msgTarget: 'under',
+                    },
+                    {
                         xtype: 'displayfield',
                         style: 'padding-left: 10px',
                         value: '<a target="_blank" href="https://crontab.guru/">' + t('plugin_pimcore_datahub_data_importer_configpanel_execution_cron_generator') + '</a>'
@@ -130,7 +195,9 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                             labelWidth: 130
                         },
                         items: [
-                            this.cronDefinition,
+                            this.scheduleTypes,
+                            this.cronDefinitionContainer,
+                            this.scheduledAtContainer,
                             this.buttonFieldContainer
                         ]
                     },{
@@ -168,7 +235,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
     },
 
     updateDisabledState: function() {
-        this.cronDefinition.setDisabled(this.currentLoaderType === 'push');
+        this.cronDefinitionContainer.setDisabled(this.currentLoaderType === 'push');
         this.buttonFieldContainer.setDisabled(this.currentLoaderType === 'push' || this.currentDirtyState);
     },
 
@@ -220,7 +287,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.execution = Cl
                     field.isValid();
                 }.bind(this)
             });
-
         }
 
     },
