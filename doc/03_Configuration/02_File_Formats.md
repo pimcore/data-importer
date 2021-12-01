@@ -93,4 +93,6 @@ below, this the sub elements are interpreted as array in one field (and needs to
 Internally the adapter uses [Symfony `XmlUtils`](https://github.com/symfony/config/blob/master/Util/XmlUtils.php) to read 
 and validate the data.
 
+### Custom File Formats
+You can import any file format using custom adapters.
 
