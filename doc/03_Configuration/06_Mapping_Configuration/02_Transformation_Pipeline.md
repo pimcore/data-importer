@@ -57,5 +57,5 @@ Their name is usually prefixed with `As`.
 - **Conditional Conversion**: String values are converted to other string values (e.g. '0' to '1' or 'csv-value' to 'object-value'). Multiple conversions can be configured by separating the values with pipe symbol ('|') (e.g. '0|1|2' to 'some|other|values'). An asterisk can be used as a wildcard (e.g. '0|\*' to 'no value|default' where '0' will be converted to 'no value' and all other values to 'default').
 
 #### What Operators are NOT supposed to do:
-- **Complex statistical calculations**: you possibly get an idea like that you can explode string to array and then calculate some average value, nut it is wrong place to do it. Please keep the import peformance light.
-- **Assign data to data object fields**: One import is updating fields of one Data Object. if you need to update another one then please create one more import.
+- **Complex statistical calculations**: you possibly get an idea like that you can explode string to array and then calculate some average value, but it is wrong place to do it. Please keep the import peformance light.
+- **Assign data to data object fields**: One import is updating fields of one Data Object. If you need to update another one then please create one more import.
