@@ -13,8 +13,7 @@ schema for Object brick fields is `<OBJECT_BRICK_FIELD>.<OBJECT_BRICK_TYPE>.<ATT
 
 ![Data Target Direct](../../../img/data_target_direct.png)
 
-
-Actually available fields depend on the result type of the transformation pipeline. 
+> The availability of target fields depends on the settings and the result type of the transformation pipeline. 
 
 ### Classification Store
 Assign data to specific keys in a classification store. 
@@ -23,7 +22,7 @@ Assign data to specific keys in a classification store.
 
 ![Data Target Classification Store](../../../img/data_target_classification_store.png)
 
-Actually available keys in the search depend on the result type of the transformation pipeline. 
+> The availability of target fields depends on the settings and the result type of the transformation pipeline. 
 
 ### Classification Store Batch
 Assign multiple classification store attributes with one mapping. For this to work, the transformation result has to be
