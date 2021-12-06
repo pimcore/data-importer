@@ -58,17 +58,18 @@ class JsonFileInterpreter extends AbstractInterpreter
      * remove BOM bytes to have a proper UTF-8
      *
      * @param $content
+     *
      * @return false|mixed|string
      */
-    protected function prepareContent($content) {
-
+    protected function prepareContent($content)
+    {
         $UTF8_BOM = chr(0xEF) . chr(0xBB) . chr(0xBF);
         $first3 = substr($content, 0, 3);
         if ($first3 === $UTF8_BOM) {
             $content = substr($content, 3);
         }
-        return $content;
 
+        return $content;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -97,6 +98,7 @@ class JsonFileInterpreter extends AbstractInterpreter
             $this->applicationLogger->error('Reading file ERROR: ' . json_last_error_msg(), [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName
             ]);
+
             return false;
         }
     }
