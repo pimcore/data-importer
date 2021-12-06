@@ -15,6 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 class JsonFileInterpreter extends AbstractInterpreter
@@ -33,7 +34,7 @@ class JsonFileInterpreter extends AbstractInterpreter
         if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
             $content = file_get_contents($path);
 
-            return json_decode($content, true);
+            return json_decode($this->prepareContent($content), true);
         } else {
             return $this->cachedContent;
         }
@@ -53,6 +54,23 @@ class JsonFileInterpreter extends AbstractInterpreter
         //nothing to do
     }
 
+    /**
+     * remove BOM bytes to have a proper UTF-8
+     *
+     * @param $content
+     * @return false|mixed|string
+     */
+    protected function prepareContent($content) {
+
+        $UTF8_BOM = chr(0xEF) . chr(0xBB) . chr(0xBF);
+        $first3 = substr($content, 0, 3);
+        if ($first3 === $UTF8_BOM) {
+            $content = substr($content, 3);
+        }
+        return $content;
+
+    }
+
     public function fileValid(string $path, bool $originalFilename = false): bool
     {
         $this->cachedContent = null;
@@ -67,7 +85,8 @@ class JsonFileInterpreter extends AbstractInterpreter
         }
 
         $content = file_get_contents($path);
-        $data = json_decode($content, true);
+
+        $data = json_decode($this->prepareContent($content), true);
 
         if (json_last_error() === JSON_ERROR_NONE) {
             $this->cachedContent = $data;
@@ -75,6 +94,9 @@ class JsonFileInterpreter extends AbstractInterpreter
 
             return true;
         } else {
+            $this->applicationLogger->error('Reading file ERROR: ' . json_last_error_msg(), [
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName
+            ]);
             return false;
         }
     }
