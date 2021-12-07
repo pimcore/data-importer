@@ -124,9 +124,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
             success: function (response) {
                 var rdata = Ext.decode(response.responseText);
                 if (rdata && rdata.success) {
-                    pimcore.helpers.showNotification(t("success"), t("plugin_pimcore_datahub_configpanel_item_save_success"), "success");
                     this.modificationDate = rdata.modificationDate;
-                    this.resetChanges();
+                    this.saveOnComplete();
                 } else {
                     pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror"), "error", t(rdata.message));
                 }
@@ -173,7 +172,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                     xtype: "textarea",
                     height: 100,
                     value: this.data.general.description
-                }
+                },
+                {
+                    xtype: "textfield",
+                    fieldLabel: t("group"),
+                    name: "group",
+                    value: this.data.general.group
+                },
             ]
         });
 
@@ -334,6 +339,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         }
     },
 
+    saveOnComplete: function () {
+        this.parent.configPanel.tree.getStore().load({
+            node: this.parent.configPanel.tree.getRootNode()
+        });
+
+        pimcore.helpers.showNotification(t("success"), t("plugin_pimcore_datahub_configpanel_item_save_success"), "success");
+
+        this.resetChanges();
+    },
+
     resetChanges: function ($super) {
         $super();
 
@@ -361,9 +376,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         }
 
         isValid = this.importSettings.isValid(expandPanels) && isValid;
-
-
-
+        
         return isValid;
     }
 
