@@ -32,6 +32,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         this.configName = data.name;
         this.data = data.configuration;
         this.modificationDate = data.modificationDate;
+        if(this.data.general.writeable === null ||
+            this.data.general.writeable === undefined) {
+            this.data.general.writeable = true;
+        }
 
         this.tab = Ext.create('Ext.TabPanel', {
             title: this.data.general.name,
