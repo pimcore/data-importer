@@ -38,7 +38,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
          * This is done because of backwards compatability to version 6.9-
          * Otherwise the save button would be disabled.
          */
-        if(this.data.general.writeable === undefined) {
+        if (typeof this.data.general.writeable === 'undefined') {
             this.data.general.writeable = true;
         }
 
