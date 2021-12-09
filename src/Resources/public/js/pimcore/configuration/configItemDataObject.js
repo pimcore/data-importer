@@ -32,8 +32,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         this.configName = data.name;
         this.data = data.configuration;
         this.modificationDate = data.modificationDate;
-        if(this.data.general.writeable === null ||
-            this.data.general.writeable === undefined) {
+
+        /**
+         * Set writeable to true, if it is undefined.
+         * This is done because of backwards compatability to version 6.9-
+         * Otherwise the save button would be disabled.
+         */
+        if(this.data.general.writeable === undefined) {
             this.data.general.writeable = true;
         }
 
