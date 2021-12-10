@@ -34,7 +34,7 @@ class CronExecutionService
     protected function createTableIfNotExisting(\Closure $callable = null)
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
-            configName varchar(50) NOT NULL,
+            configName varchar(80) NOT NULL,
             lastExecutionDate int(11),
             PRIMARY KEY (configName))
         ', self::EXECUTION_STORAGE_TABLE_NAME));
