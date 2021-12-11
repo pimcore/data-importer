@@ -1,3 +1,7 @@
+doctrine_migrations:
+    migrations_paths:
+        'Pimcore\Bundle\DataImporterBundle\Migrations': '@PimcoreDataImporterBundle/Migrations'
+
 flysystem:
     storages:
         pimcore.dataImporter.upload.storage:
