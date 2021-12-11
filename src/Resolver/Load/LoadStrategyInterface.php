@@ -32,7 +32,7 @@ interface LoadStrategyInterface extends SettingsAwareInterface
     /**
      * Load element based on given identifier (not whole input data array)
      *
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      */
@@ -57,7 +57,7 @@ interface LoadStrategyInterface extends SettingsAwareInterface
     /**
      * Set current data object class Id
      *
-     * @param mixed $dataObjectClassId
+     * @param string $dataObjectClassId
      */
     public function setDataObjectClassId($dataObjectClassId): void;
 }

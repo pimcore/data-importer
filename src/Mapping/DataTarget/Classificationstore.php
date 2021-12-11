@@ -52,8 +52,8 @@ class Classificationstore implements DataTargetInterface
         }
 
         $this->fieldName = $settings['fieldName'];
-        $this->groupId = $keyParts[0];
-        $this->keyId = $keyParts[1];
+        $this->groupId = (int) $keyParts[0];
+        $this->keyId = (int) $keyParts[1];
         $this->language = $settings['language'] ?? null;
     }
 

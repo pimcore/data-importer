@@ -26,7 +26,9 @@ class AlwaysPublishStrategy implements PublishStrategyInterface
 
     public function updatePublishState(ElementInterface $element, bool $justCreated, array $inputData): ElementInterface
     {
-        $element->setPublished(true);
+        if (method_exists($element, 'setPublished')) {
+            $element->setPublished(true);
+        }
 
         return $element;
     }

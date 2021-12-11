@@ -21,7 +21,7 @@ use Pimcore\Model\Element\ElementInterface;
 class IdStrategy extends AbstractLoad
 {
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      *

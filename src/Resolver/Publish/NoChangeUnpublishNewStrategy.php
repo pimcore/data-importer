@@ -26,7 +26,7 @@ class NoChangeUnpublishNewStrategy implements PublishStrategyInterface
 
     public function updatePublishState(ElementInterface $element, bool $justCreated, array $inputData): ElementInterface
     {
-        if ($justCreated) {
+        if ($justCreated && method_exists($element, 'setPublished')) {
             $element->setPublished(false);
         }
 

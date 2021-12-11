@@ -113,9 +113,9 @@ class Direct implements DataTargetInterface
     }
 
     /**
-     * @param $newData
-     * @param $valueContainer
-     * @param $getter
+     * @param mixed $newData
+     * @param object $valueContainer
+     * @param string $getter
      *
      * @return bool
      */

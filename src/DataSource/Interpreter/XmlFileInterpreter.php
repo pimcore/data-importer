@@ -25,21 +25,22 @@ use Symfony\Component\Config\Util\XmlUtils;
 class XmlFileInterpreter extends AbstractInterpreter
 {
     /**
-     * @var string
+     * @var string|null
      */
     protected $xpath;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $schema;
 
     /**
-     * @var \DOMDocument
+     * @var \DOMDocument|null
      */
     protected $cachedContent = null;
+
     /**
-     * @var string
+     * @var string|null
      */
     protected $cachedFilePath = null;
 

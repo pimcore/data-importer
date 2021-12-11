@@ -143,6 +143,8 @@ class DummyDataCommand extends AbstractCommand
             default:
                 throw new \Exception('Invalid format: ' . $format);
         }
+
+        return 0;
     }
 
     protected function writeCsv(string $filename, array $data)

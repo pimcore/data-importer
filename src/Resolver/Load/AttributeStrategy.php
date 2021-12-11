@@ -54,7 +54,7 @@ class AttributeStrategy extends AbstractLoad
     }
 
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      *

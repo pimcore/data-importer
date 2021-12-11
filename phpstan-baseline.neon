@@ -1,0 +1,37 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Call to method loadIdList\\(\\) on an unknown class Pimcore\\\\Model\\\\DataObject\\\\Car\\\\Listing\\.$#"
+			count: 1
+			path: src/Command/DummyDataCommand.php
+
+		-
+			message: "#^Call to method setCondition\\(\\) on an unknown class Pimcore\\\\Model\\\\DataObject\\\\Car\\\\Listing\\.$#"
+			count: 1
+			path: src/Command/DummyDataCommand.php
+
+		-
+			message: "#^Constant PIMCORE_PRIVATE_VAR not found\\.$#"
+			count: 1
+			path: src/Command/DummyDataCommand.php
+
+		-
+			message: "#^Instantiated class Pimcore\\\\Model\\\\DataObject\\\\Car\\\\Listing not found\\.$#"
+			count: 1
+			path: src/Command/DummyDataCommand.php
+
+		-
+			message: "#^Constant PIMCORE_PRIVATE_VAR not found\\.$#"
+			count: 1
+			path: src/DataSource/Loader/HttpLoader.php
+
+		-
+			message: "#^Constant PIMCORE_PRIVATE_VAR not found\\.$#"
+			count: 1
+			path: src/DataSource/Loader/PushLoader.php
+
+		-
+			message: "#^Constant PIMCORE_PRIVATE_VAR not found\\.$#"
+			count: 1
+			path: src/DataSource/Loader/SftpLoader.php
+

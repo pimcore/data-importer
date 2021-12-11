@@ -41,7 +41,7 @@ class MappingConfiguration
     protected $dataTarget;
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getLabel(): string
     {
@@ -49,7 +49,7 @@ class MappingConfiguration
     }
 
     /**
-     * @param mixed $label
+     * @param string $label
      */
     public function setLabel($label): void
     {

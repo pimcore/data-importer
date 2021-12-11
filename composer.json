@@ -17,6 +17,10 @@
     "ext-json": "*",
     "ext-fileinfo": "*"
   },
+  "require-dev": {
+    "fzaninotto/faker": "^1.5",
+    "phpstan/phpstan": "^1.2"
+  },
   "autoload": {
     "psr-4": {
       "Pimcore\\Bundle\\DataImporterBundle\\": "src/"

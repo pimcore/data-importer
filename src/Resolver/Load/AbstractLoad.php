@@ -33,7 +33,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
     protected $dataSourceIndex;
 
     /**
-     * @var mixed
+     * @var string
      */
     protected $dataObjectClassId;
 
@@ -57,7 +57,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
     }
 
     /**
-     * @param mixed $dataObjectClassId
+     * @param string $dataObjectClassId
      */
     public function setDataObjectClassId($dataObjectClassId): void
     {

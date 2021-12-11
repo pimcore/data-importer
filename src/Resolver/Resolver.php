@@ -160,7 +160,7 @@ class Resolver
     }
 
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      */

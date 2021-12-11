@@ -83,9 +83,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
      */
     public function postDelete(GenericEvent $event)
     {
-        /**
-         * @var $config Configuration
-         */
+        /** @var Configuration $config */
         $config = $event->getSubject();
 
         if ($config->getType() === 'dataImporterDataObject') {
