@@ -29,6 +29,10 @@ jobs:
                   coverage: "none"
                   php-version: "${{ matrix.php-version }}"
 
+            - name: "Setup Pimcore environment"
+              run: |
+                  .github/ci/scripts/setup-pimcore-environment.sh
+
             - name: "Install dependencies with Composer"
               uses: "ramsey/composer-install@v1"
               with:

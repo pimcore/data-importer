@@ -2,6 +2,8 @@ parameters:
     level: 4
     paths:
         - src
+    bootstrapFiles:
+        - vendor/pimcore/pimcore/phpstan-bootstrap.php
 
 includes:
     - phpstan-baseline.neon
