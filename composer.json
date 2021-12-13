@@ -3,10 +3,7 @@
   "license": "GPL-3.0+",
   "type": "pimcore-bundle",
   "config": {
-    "sort-packages": true,
-    "preferred-install": {
-      "pimcore/pimcore": "source"
-    }
+    "sort-packages": true
   },
   "require": {
     "php": ">=7.4",
@@ -27,6 +24,11 @@
   "autoload": {
     "psr-4": {
       "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Pimcore\\Model\\DataObject\\": "var/classes/DataObject"
     }
   },
   "extra": {

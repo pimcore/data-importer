@@ -2,4 +2,5 @@
 
 set -eu -o xtrace
 
-cp .github/ci/files/.env ./
+cp -rv .github/ci/files/var .
+cp .github/ci/files/.env .
