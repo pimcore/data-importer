@@ -1,6 +1,6 @@
 <?php
 
-namespace Pimcore\Model\DataObject\Data\QuantityValue;
+namespace Pimcore\Model\DataObject\Data;
 
 class QuantityValue
 {

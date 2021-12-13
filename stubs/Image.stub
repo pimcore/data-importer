@@ -1,6 +1,6 @@
 <?php
 
-namespace Pimcore\Model\Asset\Image;
+namespace Pimcore\Model\Asset;
 
 class Image
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Pimcore\Model\DataObject\QuantityValue\Unit;
+namespace Pimcore\Model\DataObject\QuantityValue;
 
 class Unit
 {

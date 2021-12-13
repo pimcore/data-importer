@@ -1,6 +1,6 @@
 <?php
 
-namespace Pimcore\Model\DataObject\Data\Hotspotimage;
+namespace Pimcore\Model\DataObject\Data;
 
 class Hotspotimage
 {
