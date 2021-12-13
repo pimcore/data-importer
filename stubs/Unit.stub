@@ -1,0 +1,7 @@
+<?php
+
+namespace Pimcore\Model\DataObject\QuantityValue\Unit;
+
+class Unit
+{
+}

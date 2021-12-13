@@ -4,3 +4,8 @@ parameters:
         - src
     bootstrapFiles:
         - phpstan-bootstrap.php
+    stubFiles:
+        - stubs/Hotspotimage.stub
+        - stubs/Image.stub
+        - stubs/QuantityValue.stub
+        - stubs/Unit.stub

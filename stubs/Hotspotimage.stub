@@ -1,0 +1,11 @@
+<?php
+
+namespace Pimcore\Model\DataObject\Data\Hotspotimage;
+
+class Hotspotimage
+{
+    /**
+     * @return \Pimcore\Model\Asset\Image|null
+     */
+    public function getImage();
+}
