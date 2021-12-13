@@ -37,10 +37,7 @@ class StaticPathStrategy implements LocationStrategyInterface
 
     public function updateParent(ElementInterface $element, array $inputData): ElementInterface
     {
-        //TODO: Add setParent to ElementInterface in Pimcore 11
-        if (method_exists($element, 'setParent')) {
-            $element->setParent(Service::createFolderByPath($this->path));
-        }
+        $element->setParent(Service::createFolderByPath($this->path));
 
         return $element;
     }

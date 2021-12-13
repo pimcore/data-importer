@@ -5,6 +5,7 @@ parameters:
     bootstrapFiles:
         - phpstan-bootstrap.php
     stubFiles:
+        - stubs/ElementInterface.stub
         - stubs/Hotspotimage.stub
         - stubs/Image.stub
         - stubs/QuantityValue.stub

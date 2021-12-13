@@ -122,8 +122,7 @@ class FindParentStrategy implements LocationStrategyInterface
             $newParent = DataObject::getByPath($this->fallbackPath);
         }
 
-        //TODO: Add setParent to ElementInterface in Pimcore 11
-        if ($newParent && method_exists($element, 'setParent')) {
+        if ($newParent) {
             return $element->setParent($newParent);
         }
 
