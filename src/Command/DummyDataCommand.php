@@ -80,7 +80,7 @@ class DummyDataCommand extends AbstractCommand
             'email',
         ];
 
-        $count = $input->getOption('items');
+        $count = (int) $input->getOption('items');
 
         for ($i = 0; $i < $count; $i++) {
             $output->writeln('Generating item ' . $i . ' ...');
