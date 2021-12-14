@@ -101,6 +101,18 @@ class CronExecutionService
         }
     }
 
+    public function initExecution(string $configName)
+    {
+        $timestamp = $this->getDb()->fetchOne(
+                sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
+                [$configName]
+            );
+
+        if ($timestamp === false) {
+            $this->updateExecutionTimestamp($configName, new \DateTime());
+        }
+    }
+
     public function cleanup(string $configName)
     {
         try {
