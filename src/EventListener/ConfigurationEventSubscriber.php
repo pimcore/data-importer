@@ -72,7 +72,8 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     public static function getSubscribedEvents()
     {
         return [
-            ConfigurationEvents::CONFIGURATION_POST_DELETE => 'postDelete'
+            ConfigurationEvents::CONFIGURATION_POST_DELETE => 'postDelete',
+            ConfigurationEvents::CONFIGURATION_POST_SAVE => 'postSave'
         ];
     }
 
@@ -111,6 +112,18 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
 
             //cleanup cron execution
             $this->cronExecutionService->cleanup($config->getName());
+        }
+    }
+
+    public function postSave(GenericEvent $event)
+    {
+        /**
+         * @var $config Configuration
+         */
+        $config = $event->getSubject();
+
+        if ($config->getType() === 'dataImporterDataObject') {
+            $this->cronExecutionService->initExecution($config->getName());
         }
     }
 }
