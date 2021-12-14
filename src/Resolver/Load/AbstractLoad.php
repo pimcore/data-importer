@@ -89,7 +89,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
     /**
      * @param array $inputData
      *
-     * @return mixed|null
+     * @return mixed
      */
     public function extractIdentifierFromData(array $inputData)
     {

@@ -81,7 +81,7 @@ class MappingConfiguration
     }
 
     /**
-     * @param mixed $transformationPipeline
+     * @param OperatorInterface[] $transformationPipeline
      */
     public function setTransformationPipeline($transformationPipeline): void
     {
@@ -97,7 +97,7 @@ class MappingConfiguration
     }
 
     /**
-     * @param mixed $dataTarget
+     * @param DataTargetInterface $dataTarget
      */
     public function setDataTarget($dataTarget): void
     {

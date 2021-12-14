@@ -31,17 +31,13 @@ class CronExecutionService
         return Db::get();
     }
 
-    protected function createTableIfNotExisting(\Closure $callable = null)
+    protected function createTableIfNotExisting()
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             configName varchar(80) NOT NULL,
             lastExecutionDate int(11),
             PRIMARY KEY (configName))
         ', self::EXECUTION_STORAGE_TABLE_NAME));
-
-        if ($callable) {
-            return $callable();
-        }
     }
 
     protected function getLastExecution($configName): \DateTime
@@ -54,9 +50,9 @@ class CronExecutionService
 
             return date_create()->setTimestamp($timestamp);
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function () use ($configName) {
-                $this->getLastExecution($configName);
-            });
+            $this->createTableIfNotExisting();
+
+            return $this->getLastExecution($configName);
         }
     }
 
@@ -83,8 +79,6 @@ class CronExecutionService
      * @param string $configName
      * @param \DateTime $executionTimestamp
      *
-     * @return mixed
-     *
      * @throws \Doctrine\DBAL\DBALException
      */
     public function updateExecutionTimestamp(string $configName, \DateTime $executionTimestamp)
@@ -95,9 +89,8 @@ class CronExecutionService
                 [$configName, $executionTimestamp->getTimestamp(), $executionTimestamp->getTimestamp()]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function () use ($configName, $executionTimestamp) {
-                $this->updateExecutionTimestamp($configName, $executionTimestamp);
-            });
+            $this->createTableIfNotExisting();
+            $this->updateExecutionTimestamp($configName, $executionTimestamp);
         }
     }
 
@@ -109,7 +102,7 @@ class CronExecutionService
                 [$configName]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting();
+            $this->createTableIfNotExisting();
         }
     }
 }

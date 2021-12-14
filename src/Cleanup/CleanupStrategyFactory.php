@@ -37,7 +37,7 @@ class CleanupStrategyFactory
     /**
      * @param string $type
      *
-     * @return mixed
+     * @return CleanupStrategyInterface
      *
      * @throws InvalidConfigurationException
      */

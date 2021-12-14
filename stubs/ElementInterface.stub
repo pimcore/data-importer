@@ -3,7 +3,7 @@
 namespace Pimcore\Model\Element;
 
 /**
- * @method self setParent(?ElementInterface $parent)
+ * @method static setParent(?ElementInterface $parent)
  */
 interface ElementInterface
 {
