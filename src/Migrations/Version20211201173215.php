@@ -38,14 +38,14 @@ final class Version20211201173215 extends BundleAwareMigration
     public function up(Schema $schema): void
     {
         if ($schema->hasTable(self::ORIGINAL_NAME)) {
-            $this->addSql(sprintf('RENAME TABLE %s TO %s', self::ORIGINAL_NAME, self::TARGET_NAME));
+            $this->addSql(sprintf('RENAME TABLE `%s` TO `%s`', self::ORIGINAL_NAME, self::TARGET_NAME));
         }
     }
 
     public function down(Schema $schema): void
     {
         if ($schema->hasTable(self::TARGET_NAME)) {
-            $this->addSql(sprintf('RENAME TABLE %s TO %s', self::TARGET_NAME, self::ORIGINAL_NAME));
+            $this->addSql(sprintf('RENAME TABLE `%s` TO `%s`', self::TARGET_NAME, self::ORIGINAL_NAME));
         }
     }
 }
