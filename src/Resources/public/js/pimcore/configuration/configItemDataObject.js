@@ -33,6 +33,15 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         this.data = data.configuration;
         this.modificationDate = data.modificationDate;
 
+        /**
+         * Set writeable to true, if it is undefined.
+         * This is done because of backwards compatability to version 6.9-
+         * Otherwise the save button would be disabled.
+         */
+        if (typeof this.data.general.writeable === 'undefined') {
+            this.data.general.writeable = true;
+        }
+
         this.tab = Ext.create('Ext.TabPanel', {
             title: this.data.general.name,
             closable: true,
