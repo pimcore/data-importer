@@ -58,9 +58,9 @@ class JsonFileInterpreter extends AbstractInterpreter
     /**
      * remove BOM bytes to have a proper UTF-8
      *
-     * @param $content
+     * @param string $content
      *
-     * @return false|mixed|string
+     * @return string
      */
     protected function prepareContent($content)
     {
