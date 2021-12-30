@@ -18,6 +18,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller;
 use Cron\CronExpression;
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
@@ -88,12 +89,15 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             $dataDecoded['general']['active'] = $dataDecoded['general']['active'] ?? false;
             $config = Dao::getByName($name);
 
-            $oldConfig = $config->getConfiguration();
-
             $config->setConfiguration($dataDecoded);
-            $config->save();
 
-            return $this->json(['success' => true, 'modificationDate' => Dao::getConfigModificationDate()]);
+            if ($config->isAllowed('read') && $config->isAllowed('update')) {
+                $config->save();
+
+                return $this->json(['success' => true, 'modificationDate' => Dao::getConfigModificationDate()]);
+            } else {
+                return $this->json(['success' => false, 'permissionError' => true]);
+            }
         } catch (\Exception $e) {
             return $this->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -138,11 +142,11 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         $name = $request->get('name');
         $config = $configurationPreparationService->prepareConfiguration($name);
-
         return new JsonResponse(
             [
                 'name' => $name,
                 'configuration' => $config,
+                'userPermissions' => $config['userPermissions'],
                 'modificationDate' => Dao::getConfigModificationDate(),
                 'columnHeaders' => $this->loadAvailableColumnHeaders($name, $config, $interpreterFactory)
             ]
@@ -721,4 +725,5 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         return new JsonResponse(['UnitList' => $data]);
     }
+
 }

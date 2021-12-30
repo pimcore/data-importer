@@ -32,6 +32,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         this.parent = parent;
         this.configName = data.name;
         this.data = data.configuration;
+        this.userPermissions = data.userPermissions;
         this.modificationDate = data.modificationDate;
 
         this.tab = Ext.create('Ext.TabPanel', {
@@ -87,7 +88,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         let saveButtonConfig = {
             text: t("save"),
             iconCls: "pimcore_icon_apply",
-            disabled: !this.data.general.writeable || !pimcore.plugin.datahub.helper.isAllowed("update", this.data),
+            disabled: !this.data.general.writeable || !this.userPermissions.update,
             handler: this.save.bind(this)
         };
         if(!this.data.general.writeable) {
@@ -99,10 +100,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
 
     save: function () {
         //TODO make that more generic in datahub
-        if (!this.isValid(true)) {
-            pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_data_importer_configpanel_invalid_config'), 'error');
-            return;
-        }
 
         var saveData = this.getSaveData();
 
@@ -119,6 +116,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                     pimcore.helpers.showNotification(t("success"), t("plugin_pimcore_datahub_configpanel_item_save_success"), "success");
                     this.modificationDate = rdata.modificationDate;
                     this.resetChanges();
+                }
+                else if(rdata && rdata.permissionError) {
+                        pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror_permissions"), "error");
+                        this.tab.setActiveTab(this.tab.items.length-1);
                 } else {
                     pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror"), "error", t(rdata.message));
                 }
