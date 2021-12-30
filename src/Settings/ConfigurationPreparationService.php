@@ -31,6 +31,9 @@ class ConfigurationPreparationService
             if (!$configuration) {
                 throw new \Exception('Configuration ' . $configName . ' does not exist.');
             }
+            if (!$configuration->isAllowed('read')) {
+                throw $this->createAccessDeniedHttpException();
+            }
 
             $config = $configuration->getConfiguration();
         }
