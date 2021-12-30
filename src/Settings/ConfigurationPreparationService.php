@@ -23,7 +23,6 @@ class ConfigurationPreparationService
     public function prepareConfiguration(string $configName, $currentConfig = null)
     {
         if ($currentConfig) {
-
             if (is_string($currentConfig)) {
                 $currentConfig = json_decode($currentConfig, true);
             }
