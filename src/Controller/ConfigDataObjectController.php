@@ -18,7 +18,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller;
 use Cron\CronExpression;
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
-use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
@@ -142,6 +141,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         $name = $request->get('name');
         $config = $configurationPreparationService->prepareConfiguration($name);
+
         return new JsonResponse(
             [
                 'name' => $name,
@@ -725,5 +725,4 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         return new JsonResponse(['UnitList' => $data]);
     }
-
 }
