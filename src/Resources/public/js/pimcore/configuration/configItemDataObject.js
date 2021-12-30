@@ -32,6 +32,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         this.parent = parent;
         this.configName = data.name;
         this.data = data.configuration;
+        this.userPermissions = data.userPermissions;
         this.modificationDate = data.modificationDate;
 
         /**
@@ -127,6 +128,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                 if (rdata && rdata.success) {
                     this.modificationDate = rdata.modificationDate;
                     this.saveOnComplete();
+                }
+                else if(rdata && rdata.permissionError) {
+                        pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror_permissions"), "error");
+                        this.tab.setActiveTab(this.tab.items.length-1);
                 } else {
                     pimcore.helpers.showNotification(t("error"), t("plugin_pimcore_datahub_configpanel_item_saveerror"), "error", t(rdata.message));
                 }
@@ -378,7 +383,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         }
 
         isValid = this.importSettings.isValid(expandPanels) && isValid;
-        
+
         return isValid;
     }
 

@@ -45,6 +45,10 @@ class ConfigurationPreparationService
                 'locationUpdateStrategy' => [],
                 'publishingStrategy' => []
             ],
+            'userPermissions' => [
+                'update' => $configuration->isAllowed('update'),
+                'delete' => $configuration->isAllowed('delete')
+            ],
             'processingConfig' => [],
             'mappingConfig' => [],
             'executionConfig' => []
