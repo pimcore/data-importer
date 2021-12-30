@@ -100,6 +100,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
 
     save: function () {
         //TODO make that more generic in datahub
+        if (!this.isValid(true)) {
+            pimcore.helpers.showNotification(t('error'), t('plugin_pimcore_datahub_data_importer_configpanel_invalid_config'), 'error');
+            return;
+        }
 
         var saveData = this.getSaveData();
 
