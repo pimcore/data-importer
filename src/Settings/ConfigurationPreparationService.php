@@ -22,6 +22,7 @@ class ConfigurationPreparationService
     public function prepareConfiguration(string $configName, $currentConfig = null)
     {
         if ($currentConfig) {
+
             if (is_string($currentConfig)) {
                 $currentConfig = json_decode($currentConfig, true);
             }
@@ -36,6 +37,10 @@ class ConfigurationPreparationService
             }
 
             $config = $configuration->getConfiguration();
+            $config['userPermissions'] = [
+                'update' => $configuration->isAllowed('update'),
+                'delete' => $configuration->isAllowed('delete')
+            ];
         }
 
         //init config array with default values
@@ -47,10 +52,6 @@ class ConfigurationPreparationService
                 'createLocationStrategy' => [],
                 'locationUpdateStrategy' => [],
                 'publishingStrategy' => []
-            ],
-            'userPermissions' => [
-                'update' => $configuration->isAllowed('update'),
-                'delete' => $configuration->isAllowed('delete')
             ],
             'processingConfig' => [],
             'mappingConfig' => [],

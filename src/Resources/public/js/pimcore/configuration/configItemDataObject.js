@@ -97,7 +97,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
         let saveButtonConfig = {
             text: t("save"),
             iconCls: "pimcore_icon_apply",
-            disabled: !this.data.general.writeable || !pimcore.plugin.datahub.helper.isAllowed("update", this.data),
+            disabled: !this.data.general.writeable || !this.userPermissions.update,
             handler: this.save.bind(this)
         };
         if(!this.data.general.writeable) {
