@@ -88,7 +88,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             $dataDecoded['general']['active'] = $dataDecoded['general']['active'] ?? false;
             $config = Dao::getByName($name);
             if (!$config->isAllowed('update')) {
-                $this->createAccessDeniedHttpException();
+                throw $this->createAccessDeniedHttpException();
             }
             $config->setConfiguration($dataDecoded);
 
