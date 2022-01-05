@@ -220,6 +220,14 @@ class TransformationDataTypeService
             }
         }
 
+        if ($class->getAllowVariants()) {
+            $attributes['type'] = [
+                'key' => 'type',
+                'title' => 'Object Type ("variant"|"object")',
+                'localized' => false
+            ];
+        }
+
         return array_values($attributes);
     }
 
