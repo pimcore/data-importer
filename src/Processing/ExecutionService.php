@@ -15,7 +15,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
-use Closure;
 use DateTime;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
@@ -41,15 +40,16 @@ class ExecutionService
         ', self::EXECUTION_STORAGE_TABLE_NAME));
     }
 
-    protected function getLastExecution($configName): \DateTime
+    public function getLastExecution($configName): ?DateTime
     {
         try {
             $timestamp = $this->getDb()->fetchOne(
-                    sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
-                    [$configName]
-                ) ?? time();
+                sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?',
+                    self::EXECUTION_STORAGE_TABLE_NAME),
+                [$configName]
+            );
 
-            return date_create()->setTimestamp($timestamp);
+            return $timestamp ? date_create()->setTimestamp($timestamp) : null;
         } catch (TableNotFoundException $exception) {
             $this->createTableIfNotExisting();
 
