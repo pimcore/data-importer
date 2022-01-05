@@ -4,5 +4,7 @@ parameters:
         - src
     bootstrapFiles:
         - phpstan-bootstrap.php
+    excludePaths:
+        - src/Command/DummyDataCommand.php
     stubFiles:
         - stubs/ElementInterface.stub

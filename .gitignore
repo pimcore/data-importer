@@ -2,7 +2,6 @@
 Thumbs.db
 *.log
 
-/var
 /.env
 /phpunit.xml
 
