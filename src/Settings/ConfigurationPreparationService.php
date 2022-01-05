@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ConfigurationPreparationService
 {
@@ -31,8 +32,15 @@ class ConfigurationPreparationService
             if (!$configuration) {
                 throw new \Exception('Configuration ' . $configName . ' does not exist.');
             }
+            if (!$configuration->isAllowed('read')) {
+                throw new AccessDeniedHttpException('Access denied');
+            }
 
             $config = $configuration->getConfiguration();
+            $config['userPermissions'] = [
+                'update' => $configuration->isAllowed('update'),
+                'delete' => $configuration->isAllowed('delete')
+            ];
         }
 
         //init config array with default values

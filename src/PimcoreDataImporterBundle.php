@@ -129,4 +129,9 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     {
         $collection->addBundle(new FlysystemBundle());
     }
+
+    public function getInstaller()
+    {
+        return $this->container->get(Installer::class);
+    }
 }

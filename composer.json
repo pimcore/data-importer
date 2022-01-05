@@ -6,9 +6,9 @@
     "sort-packages": true
   },
   "require": {
-    "php": ">=7.4",
-    "pimcore/pimcore": "^6.9 || ^10.0",
-    "pimcore/data-hub": "^0.7 || ^1.0",
+    "php": "^8.0",
+    "pimcore/pimcore": "^10.2",
+    "pimcore/data-hub": "^1.2",
     "phpoffice/phpspreadsheet": "^1.1",
     "doctrine/dbal": "^2.11",
     "doctrine/migrations": "^1.8 || ^2 || ^3",
