@@ -16,30 +16,30 @@
 namespace Pimcore\Bundle\DataImporterBundle\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
+use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Migrations\BundleAwareMigration;
+use Pimcore\Model\Tool\SettingsStore;
 
-class Version20211110174732 extends BundleAwareMigration
+class Version20210305134111 extends BundleAwareMigration
 {
     protected function getBundleName(): string
     {
         return 'PimcoreDataImporterBundle';
     }
 
-    /**
-     * @param Schema $schema
-     */
-    public function up(Schema $schema): void
+    protected function checkBundleInstalled()
     {
-        $this->addSql('ALTER TABLE `bundle_data_hub_data_importer_delta_cache` MODIFY `configName` VARCHAR(80);');
-        $this->addSql('ALTER TABLE `bundle_data_hub_data_importer_last_cron_execution` MODIFY `configName` VARCHAR(80);');
-        $this->addSql('ALTER TABLE `bundle_data_hub_data_importer_queue` MODIFY `configName` VARCHAR(80);');
+        //need to always return true here, as the migration is setting the bundle installed
+        return true;
     }
 
-    /**
-     * @param Schema $schema
-     */
+    public function up(Schema $schema): void
+    {
+        SettingsStore::set('BUNDLE_INSTALLED__Pimcore\\Bundle\\DataImporterBundle\\PimcoreDataImporterBundle', true, 'bool', 'pimcore');
+        $this->addSql(sprintf("INSERT IGNORE INTO users_permission_definitions (`key`, `category`) VALUES('%s', '%s');", Installer::DATAHUB_ADAPTER_PERMISSION, \Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY));
+    }
+
     public function down(Schema $schema): void
     {
-        // not needed
     }
 }

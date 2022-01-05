@@ -1,4 +1,5 @@
 plugin_pimcore_datahub_type_dataImporterDataObject: Data Objects Importer
+plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Data Object Importer
 plugin_pimcore_datahub_data_importer_configpanel_invalid_config: Configuration is invalid. Please configure all mandatory elements.
 plugin_pimcore_datahub_data_importer_configpanel_invalid_config_for_preview: Missing settings for loading preview. Please finish configuration of data source and resolver.
 plugin_pimcore_datahub_data_importer_configpanel_datasource: Data Source
