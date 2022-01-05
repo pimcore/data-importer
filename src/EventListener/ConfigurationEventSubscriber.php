@@ -73,7 +73,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     {
         return [
             ConfigurationEvents::CONFIGURATION_POST_DELETE => 'postDelete',
-            'pimcore.datahub.configuration.postSave' => 'postSave'
+            ConfigurationEvents::CONFIGURATION_POST_SAVE => 'postSave'
         ];
     }
 
