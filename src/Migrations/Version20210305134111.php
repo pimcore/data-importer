@@ -36,8 +36,7 @@ class Version20210305134111 extends BundleAwareMigration
     public function up(Schema $schema): void
     {
         SettingsStore::set('BUNDLE_INSTALLED__Pimcore\\Bundle\\DataImporterBundle\\PimcoreDataImporterBundle', true, 'bool', 'pimcore');
-
-        $this->addSql(sprintf("INSERT IGNORE INTO users_permission_definitions (`key`) VALUES('%s');", Installer::DATAHUB_ADAPTER_PERMISSION));
+        $this->addSql(sprintf("INSERT IGNORE INTO users_permission_definitions (`key`, `category`) VALUES('%s', '%s');", Installer::DATAHUB_ADAPTER_PERMISSION, \Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY));
     }
 
     public function down(Schema $schema): void

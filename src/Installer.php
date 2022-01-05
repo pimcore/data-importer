@@ -33,7 +33,7 @@ class Installer extends SettingsStoreAwareInstaller
     public function install()
     {
         // create backend permission
-        \Pimcore\Model\User\Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION);
+        \Pimcore\Model\User\Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION)->setCategory(\Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY)->save();;
 
         parent::install();
 
