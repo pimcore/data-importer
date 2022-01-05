@@ -193,7 +193,7 @@ class ImportProcessingService
                     $dataTarget = $mappingConfiguration->getDataTarget();
                     $dataTarget->assignData($element, $data);
                 }
-                $this->applicationLogger->info("Processing DataRow {$importDataRowString}", [
+                $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     null,
                     'relatedObject' => $element
