@@ -8,7 +8,7 @@
   "require": {
     "php": "^8.0",
     "pimcore/pimcore": "^10.2",
-    "pimcore/data-hub": "^1.2",
+    "pimcore/data-hub": "^1.2@dev",
     "phpoffice/phpspreadsheet": "^1.1",
     "doctrine/dbal": "^2.11",
     "doctrine/migrations": "^1.8 || ^2 || ^3",
