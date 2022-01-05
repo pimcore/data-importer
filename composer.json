@@ -26,11 +26,6 @@
       "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
     }
   },
-  "autoload-dev": {
-    "psr-4": {
-      "Pimcore\\Model\\DataObject\\": "var/classes/DataObject"
-    }
-  },
   "extra": {
     "pimcore": {
       "bundles": [
