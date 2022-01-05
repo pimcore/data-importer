@@ -70,7 +70,7 @@ class ExecutionService
             );
         } catch (TableNotFoundException $exception) {
             $this->createTableIfNotExisting();
-                $this->updateExecutionTimestamp($configName, $executionTimestamp);
+            $this->updateExecutionTimestamp($configName, $executionTimestamp);
         }
     }
 

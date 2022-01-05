@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing\Scheduler;
@@ -36,7 +36,7 @@ class JobScheduler implements SchedulerInterface
 
         $hasExecutedInPast = $executedAt && $this->scheduledAt <= $executedAt;
         $isTimeToExecute = $now >= $this->scheduledAt;
-        $isModifiedBeforeSchedule =  $this->modifiedAt <= $this->scheduledAt;
+        $isModifiedBeforeSchedule = $this->modifiedAt <= $this->scheduledAt;
 
         if ($isTimeToExecute && $isModifiedBeforeSchedule && !$hasExecutedInPast) {
             return true;

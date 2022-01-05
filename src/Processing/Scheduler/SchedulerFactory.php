@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing\Scheduler;
@@ -29,7 +29,6 @@ class SchedulerFactory
         $modifiedAt = date_create()->setTimestamp($config['general']['modificationDate']);
 
         if ($scheduleType === JobScheduler::NAME) {
-
             if (empty($config['executionConfig']['scheduledAt'])) {
                 throw new InvalidScheduleException('No scheduled date/time');
             }
@@ -37,7 +36,6 @@ class SchedulerFactory
             $scheduledAt = DateTime::createFromFormat('d-m-Y H:i', $config['executionConfig']['scheduledAt']);
 
             return new JobScheduler($scheduledAt, $modifiedAt);
-
         }
 
         if (empty($config['executionConfig']['cronDefinition'])) {
@@ -46,5 +44,4 @@ class SchedulerFactory
 
         return new CronScheduler($config['executionConfig']['cronDefinition'], $modifiedAt);
     }
-
 }
