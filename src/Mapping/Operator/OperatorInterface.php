@@ -42,7 +42,7 @@ interface OperatorInterface extends SettingsAwareInterface
     /**
      * Generate string representation of given input
      *
-     * @param $inputData
+     * @param mixed $inputData
      *
      * @return mixed
      */

@@ -83,7 +83,7 @@ class ImportProcessingService
     protected $resolverCache = [];
 
     /**
-     * @var MappingConfiguration[]
+     * @var MappingConfiguration[][]
      */
     protected $mappingConfigurationCache = [];
 
@@ -115,7 +115,6 @@ class ImportProcessingService
 
     public function processQueueItem(int $id)
     {
-
         //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
         if (empty($queueItem)) {
@@ -159,9 +158,9 @@ class ImportProcessingService
     protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping)
     {
         $element = null;
+        $importDataRowString = implode(', ', $importDataRow);
         try {
             //resolve data object
-            $importDataRowString = implode(', ', $importDataRow);
             $createNew = true;
             if ($resolver->getCreateLocationStrategy() instanceof DoNotCreateStrategy) {
                 $createNew = false;

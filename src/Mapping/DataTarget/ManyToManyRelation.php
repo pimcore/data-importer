@@ -76,10 +76,10 @@ class ManyToManyRelation extends Direct
     }
 
     /**
-     * @param $valueContainer
+     * @param object $valueContainer
      * @param string $getter
      * @param string $fieldType
-     * @param $data
+     * @param mixed $data
      *
      * @return array
      *

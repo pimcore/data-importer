@@ -1,0 +1,10 @@
+parameters:
+    level: 4
+    paths:
+        - src
+    bootstrapFiles:
+        - phpstan-bootstrap.php
+    excludePaths:
+        - src/Command/DummyDataCommand.php
+    stubFiles:
+        - stubs/ElementInterface.stub

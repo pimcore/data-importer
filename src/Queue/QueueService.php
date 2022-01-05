@@ -156,7 +156,7 @@ class QueueService
     }
 
     /**
-     * @param $id
+     * @param int $id
      *
      * @throws \Doctrine\DBAL\DBALException
      */

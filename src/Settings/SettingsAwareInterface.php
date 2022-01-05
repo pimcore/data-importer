@@ -20,7 +20,7 @@ interface SettingsAwareInterface
     /**
      * @param array $settings
      *
-     * @return mixed
+     * @return void
      */
     public function setSettings(array $settings): void;
 }

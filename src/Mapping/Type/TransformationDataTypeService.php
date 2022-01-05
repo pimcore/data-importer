@@ -154,7 +154,7 @@ class TransformationDataTypeService
 
     /**
      * @param string $classId
-     * @param $transformationTargetType
+     * @param array|string $transformationTargetType
      * @param bool $includeSystemRead
      * @param bool $includeSystemWrite
      * @param bool $includeAdvancedRelations

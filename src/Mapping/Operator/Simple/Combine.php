@@ -50,7 +50,7 @@ class Combine extends AbstractOperator
      */
     public function evaluateReturnType(string $inputType, int $index = null): string
     {
-        if (!$inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
+        if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for combine operator at transformation position %s", $inputType, $index));
         }
 
