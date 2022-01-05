@@ -13,17 +13,22 @@
  *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
-namespace Pimcore\Bundle\DataHubBundle\Migrations;
+namespace Pimcore\Bundle\DataImporterBundle\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
-use Pimcore\Migrations\Migration\AbstractPimcoreMigration;
+use Pimcore\Migrations\BundleAwareMigration;
 
-class Version20211110174732 extends AbstractPimcoreMigration
+class Version20211110174732 extends BundleAwareMigration
 {
+    protected function getBundleName(): string
+    {
+        return 'PimcoreDataImporterBundle';
+    }
+
     /**
      * @param Schema $schema
      */
-    public function up(Schema $schema)
+    public function up(Schema $schema): void
     {
         $this->addSql('ALTER TABLE `bundle_data_hub_data_importer_delta_cache` MODIFY `configName` VARCHAR(80);');
         $this->addSql('ALTER TABLE `bundle_data_hub_data_importer_last_cron_execution` MODIFY `configName` VARCHAR(80);');
@@ -33,7 +38,7 @@ class Version20211110174732 extends AbstractPimcoreMigration
     /**
      * @param Schema $schema
      */
-    public function down(Schema $schema)
+    public function down(Schema $schema): void
     {
         // not needed
     }
