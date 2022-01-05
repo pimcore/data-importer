@@ -21,7 +21,7 @@ use Pimcore\Model\Element\ElementInterface;
 class PathStrategy extends AbstractLoad
 {
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      *

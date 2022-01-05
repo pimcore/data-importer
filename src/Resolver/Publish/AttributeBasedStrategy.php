@@ -36,7 +36,9 @@ class AttributeBasedStrategy implements PublishStrategyInterface
 
     public function updatePublishState(ElementInterface $element, bool $justCreated, array $inputData): ElementInterface
     {
-        $element->setPublished($inputData[$this->dataSourceIndex] ?? false);
+        if (method_exists($element, 'setPublished')) {
+            $element->setPublished($inputData[$this->dataSourceIndex] ?? false);
+        }
 
         return $element;
     }

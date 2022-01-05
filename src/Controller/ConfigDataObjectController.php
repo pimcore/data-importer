@@ -92,6 +92,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
             }
             $config->setConfiguration($dataDecoded);
 
+            // @phpstan-ignore-next-line isAllowed return can changed now
             if ($config->isAllowed('read') && $config->isAllowed('update')) {
                 $config->save();
 
