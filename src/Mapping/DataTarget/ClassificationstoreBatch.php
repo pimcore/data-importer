@@ -44,6 +44,7 @@ class ClassificationstoreBatch implements DataTargetInterface
     public function assignData(ElementInterface $element, $data)
     {
         $getter = 'get' . ucfirst($this->fieldName);
+        $setter = 'set' . ucfirst($this->fieldName);
         $classificationStore = $element->$getter();
 
         if ($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
@@ -61,6 +62,8 @@ class ClassificationstoreBatch implements DataTargetInterface
 
                     $classificationStore->setLocalizedKeyValue($keyParts[0], $keyParts[1], $value, $this->language);
                     $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$keyParts[0] => true]);
+
+                    $element->$setter($classificationStore, $this->language);
                 }
             }
         } else {

@@ -60,11 +60,14 @@ class Classificationstore implements DataTargetInterface
     public function assignData(ElementInterface $element, $data)
     {
         $getter = 'get' . ucfirst($this->fieldName);
+        $setter = 'set' . ucfirst($this->fieldName);
         $classificationStore = $element->$getter();
 
         if ($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
             $classificationStore->setLocalizedKeyValue($this->groupId, $this->keyId, $data, $this->language);
             $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$this->groupId => true]);
+
+            $element->$setter($classificationStore, $this->language);
         } else {
             throw new InvalidConfigurationException('Field ' . $this->fieldName . ' is not a classification store.');
         }
