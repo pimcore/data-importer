@@ -38,7 +38,6 @@ class Version20211110174732 extends BundleAwareMigration
     /**
      * @param Schema $schema
      */
-
     public function down(Schema $schema): void
     {
         // not needed
