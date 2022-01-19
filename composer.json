@@ -6,16 +6,20 @@
     "sort-packages": true
   },
   "require": {
-    "php": ">=7.4",
-    "pimcore/pimcore": "^6.9 || ^10.0",
-    "pimcore/data-hub": "^0.7 || ^1.0",
-    "phpoffice/phpspreadsheet": "^1.1",
+    "php": "^8.0",
+    "pimcore/pimcore": "^10.2",
+    "pimcore/data-hub": "^1.2@dev",
+    "phpoffice/phpspreadsheet": "^1.15",
     "dragonmantank/cron-expression": "^3.1",
+    "nesbot/carbon": "^2.27",
     "league/flysystem": "^2.0",
     "league/flysystem-sftp": "^2.0",
     "league/flysystem-bundle" : "^2.0",
     "ext-json": "*",
     "ext-fileinfo": "*"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^1.2"
   },
   "autoload": {
     "psr-4": {

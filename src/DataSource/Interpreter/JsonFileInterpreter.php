@@ -21,11 +21,12 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 class JsonFileInterpreter extends AbstractInterpreter
 {
     /**
-     * @var array
+     * @var array|null
      */
     protected $cachedContent = null;
+
     /**
-     * @var string
+     * @var string|null
      */
     protected $cachedFilePath = null;
 
@@ -57,9 +58,9 @@ class JsonFileInterpreter extends AbstractInterpreter
     /**
      * remove BOM bytes to have a proper UTF-8
      *
-     * @param $content
+     * @param string $content
      *
-     * @return false|mixed|string
+     * @return string
      */
     protected function prepareContent($content)
     {
@@ -132,10 +133,8 @@ class JsonFileInterpreter extends AbstractInterpreter
                 $previewData[$index] = $columnData;
             }
 
-            if (empty($columns)) {
-                $keys = array_keys($previewData);
-                $columns = array_combine($keys, $keys);
-            }
+            $keys = array_keys($previewData);
+            $columns = array_combine($keys, $keys);
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);

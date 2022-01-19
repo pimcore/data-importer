@@ -115,7 +115,7 @@ class QuantityValue extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      *
      * @return mixed|string
      */

@@ -37,14 +37,14 @@ class CleanupStrategyFactory
     /**
      * @param string $type
      *
-     * @return mixed
+     * @return CleanupStrategyInterface
      *
      * @throws InvalidConfigurationException
      */
     public function loadCleanupStrategy(string $type)
     {
         if (empty($type) || !array_key_exists($type, $this->cleanupStrategies)) {
-            throw new InvalidConfigurationException('Unknown loader type `' . ($type ?? '') . '`');
+            throw new InvalidConfigurationException('Unknown loader type `' . $type . '`');
         }
 
         return $this->cleanupStrategies[$type];

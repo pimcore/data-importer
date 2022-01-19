@@ -24,7 +24,7 @@ use Pimcore\Model\Element\ElementInterface;
 class Resolver
 {
     /**
-     * @var mixed
+     * @var string
      */
     protected $dataObjectClassId;
 
@@ -54,7 +54,7 @@ class Resolver
     protected $elementFactory;
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getDataObjectClassId()
     {
@@ -62,7 +62,7 @@ class Resolver
     }
 
     /**
-     * @param mixed $dataObjectClassId
+     * @param string $dataObjectClassId
      */
     public function setDataObjectClassId($dataObjectClassId): void
     {
@@ -160,7 +160,7 @@ class Resolver
     }
 
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      */

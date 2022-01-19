@@ -72,7 +72,7 @@ class ImportAsset extends AbstractOperator
                 ];
                 $context = stream_context_create($options);
 
-                if ($fileUrl && $assetData = @file_get_contents($fileUrl, false, $context)) {
+                if ($assetData = @file_get_contents($fileUrl, false, $context)) {
                     $parent = Asset\Service::createFolderByPath($this->parentFolderPath);
                     $filename = $this->getSafeFilename($this->parentFolderPath, $filename);
 

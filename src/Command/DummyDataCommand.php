@@ -80,7 +80,7 @@ class DummyDataCommand extends AbstractCommand
             'email',
         ];
 
-        $count = $input->getOption('items');
+        $count = (int) $input->getOption('items');
 
         for ($i = 0; $i < $count; $i++) {
             $output->writeln('Generating item ' . $i . ' ...');
@@ -143,6 +143,8 @@ class DummyDataCommand extends AbstractCommand
             default:
                 throw new \Exception('Invalid format: ' . $format);
         }
+
+        return 0;
     }
 
     protected function writeCsv(string $filename, array $data)

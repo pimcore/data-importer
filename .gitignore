@@ -2,6 +2,7 @@
 Thumbs.db
 *.log
 
+/.env
 /phpunit.xml
 
 # PHP-CS-Fixer
