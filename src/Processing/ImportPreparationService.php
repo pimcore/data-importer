@@ -15,11 +15,13 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
+use DateTime;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\Exception\QueueNotEmptyException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
-use Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService;
+use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\Exception\InvalidScheduleException;
+use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\SchedulerFactory;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
@@ -28,6 +30,9 @@ use Psr\Log\LoggerAwareTrait;
 
 class ImportPreparationService
 {
+    const SCHEDULE_TYPE_CRON = 'cron';
+    const SCHEDULE_TYPE_JOB = 'job';
+
     use LoggerAwareTrait;
 
     /**
@@ -61,9 +66,9 @@ class ImportPreparationService
     protected $applicationLogger;
 
     /**
-     * @var CronExecutionService
+     * @var ExecutionService
      */
-    protected $cronExecutionService;
+    protected $executionService;
 
     /**
      * ImportPreparationService constructor.
@@ -74,17 +79,24 @@ class ImportPreparationService
      * @param QueueService $queueService
      * @param ApplicationLogger $applicationLogger
      * @param ConfigurationPreparationService $configurationPreparationService
-     * @param CronExecutionService $cronExecutionService
+     * @param ExecutionService $executionService
      */
-    public function __construct(ResolverFactory $resolverFactory, InterpreterFactory $interpreterFactory, DataLoaderFactory $dataLoaderFactory, QueueService $queueService, ApplicationLogger $applicationLogger, ConfigurationPreparationService $configurationPreparationService, CronExecutionService $cronExecutionService)
-    {
+    public function __construct(
+        ResolverFactory $resolverFactory,
+        InterpreterFactory $interpreterFactory,
+        DataLoaderFactory $dataLoaderFactory,
+        QueueService $queueService,
+        ApplicationLogger $applicationLogger,
+        ConfigurationPreparationService $configurationPreparationService,
+        ExecutionService $executionService
+    ) {
         $this->resolverFactory = $resolverFactory;
         $this->interpreterFactory = $interpreterFactory;
         $this->dataLoaderFactory = $dataLoaderFactory;
         $this->queueService = $queueService;
         $this->applicationLogger = $applicationLogger;
         $this->configLoader = $configurationPreparationService;
-        $this->cronExecutionService = $cronExecutionService;
+        $this->executionService = $executionService;
     }
 
     /**
@@ -94,8 +106,11 @@ class ImportPreparationService
      *
      * @return bool
      */
-    public function prepareImport(string $configName, bool $ignoreActiveFlag = false, bool $ignoreNotEmptyQueueFlag = false): bool
-    {
+    public function prepareImport(
+        string $configName,
+        bool $ignoreActiveFlag = false,
+        bool $ignoreNotEmptyQueueFlag = false
+    ): bool {
         try {
             $queueItemCount = $this->queueService->getQueueItemCount($configName);
             if ($queueItemCount > 0 && !$ignoreNotEmptyQueueFlag) {
@@ -119,7 +134,8 @@ class ImportPreparationService
             $this->logger->info('Loaded source data from configured source.');
 
             $resolver = $this->resolverFactory->loadResolver($config['resolverConfig']);
-            $interpreter = $this->interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig'], $resolver);
+            $interpreter = $this->interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'],
+                $config['processingConfig'], $resolver);
 
             $logMessage = 'Interpreting source file and preparing queue items...';
             $this->logger->info($logMessage);
@@ -132,7 +148,7 @@ class ImportPreparationService
 
             return $fileInterpreted;
         } catch (QueueNotEmptyException $e) {
-            $message = 'Error preparing Import: '. $e->getMessage();
+            $message = 'Error preparing Import: ' . $e->getMessage();
             $this->logger->warning($message);
 
             $this->applicationLogger->warning($message, [
@@ -150,28 +166,29 @@ class ImportPreparationService
         return false;
     }
 
-    public function executeCron(string $configName)
+    public function execute(string $configName)
     {
         $config = $this->configLoader->prepareConfiguration($configName);
-
-        if (!($config['executionConfig']['cronDefinition'] ?? '')) {
-            $message = "Configuration '$configName' has no cronDefinition, skipping cron execution.";
-            $this->logger->debug($message);
-//            $this->applicationLogger->debug($message, [
-//                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
-//            ]);
-
-            return;
-        }
 
         if (!$this->isConfigurationActive($configName, $config)) {
             return;
         }
 
-        if ($this->cronExecutionService->getNextExecutionInPast($configName, $config['executionConfig']['cronDefinition'])) {
-            $executionDateTime = new \DateTime();
+        try {
+            $scheduler = SchedulerFactory::create($config);
+        } catch (InvalidScheduleException $e) {
+            $message = "Configuration '$configName' is invalid: {$e->getMessage()}. Skipping job execution.";
+            $this->logger->debug($message);
+
+            return;
+        }
+
+        $executedAt = $this->executionService->getLastExecution($configName);
+
+        if ($scheduler->isExecutable($executedAt)) {
+            $executionDateTime = new DateTime();
             $this->prepareImport($configName);
-            $this->cronExecutionService->updateExecutionTimestamp($configName, $executionDateTime);
+            $this->executionService->updateExecutionTimestamp($configName, $executionDateTime);
         }
     }
 
