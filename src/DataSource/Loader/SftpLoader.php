@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemException;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\PhpseclibV2\SftpAdapter;
 use League\Flysystem\PhpseclibV2\SftpConnectionProvider;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -83,12 +84,18 @@ class SftpLoader implements DataLoaderInterface
         );
 
         $filesystem = new Filesystem(new SftpAdapter($connectionProvider, '/'));
+        $filesystemLocal = new Filesystem(new LocalFilesystemAdapter('/'));
         try {
-            $filesystem->copy($this->remotePath, $this->importFilePath);
+            $readStream = $filesystem->readStream($this->remotePath);
+            $filesystemLocal->writeStream($this->importFilePath, $readStream);
+
+            return $this->importFilePath;
         } catch (FilesystemException $e) {
             Logger::error($e);
             throw new InvalidConfigurationException(sprintf('Could not copy from remote location `%s` to local tmp file `%s`', $loggingRemoteUrl, $this->importFilePath));
         }
+
+        throw new \Exception(sprintf('Could not find any files to load in path `%s`', $this->remotePath));
     }
 
     public function cleanup(): void
