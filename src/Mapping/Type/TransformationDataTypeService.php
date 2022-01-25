@@ -223,7 +223,7 @@ class TransformationDataTypeService
         if ($class->getAllowVariants()) {
             $attributes['type'] = [
                 'key' => 'type',
-                'title' => 'Object Type ("variant"|"object")',
+                'title' => 'SYSTEM Object Type ("variant"|"object")',
                 'localized' => false
             ];
         }
