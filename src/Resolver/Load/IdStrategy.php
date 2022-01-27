@@ -31,7 +31,6 @@ class IdStrategy extends AbstractLoad
     {
         return $this->dataObjectLoader->loadById($identifier,
                                                  $this->getClassName());
-
     }
 
     /**

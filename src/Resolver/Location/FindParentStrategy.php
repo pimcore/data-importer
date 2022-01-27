@@ -62,7 +62,6 @@ class FindParentStrategy implements LocationStrategyInterface
      */
     public function __construct(protected DataObjectLoader $dataObjectLoader)
     {
-
     }
 
     public function setSettings(array $settings): void

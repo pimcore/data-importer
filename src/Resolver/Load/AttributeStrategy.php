@@ -53,10 +53,11 @@ class AttributeStrategy extends AbstractLoad
         $this->includeUnpublished = $settings['includeUnpublished'] ?? false;
     }
 
-
     /**
      * @param $identifier
+     *
      * @return ElementInterface|null
+     *
      * @throws InvalidConfigurationException
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface

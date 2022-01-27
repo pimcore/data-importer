@@ -85,7 +85,7 @@ class LoadDataObject extends AbstractOperator
 
         foreach ($inputData as $data) {
             $object = null;
-            if(empty($data) === false) {
+            if (empty($data) === false) {
                 if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
                     $object = $this->dataObjectLoader->loadByPath(trim($data));
                 } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ID) {
@@ -98,10 +98,10 @@ class LoadDataObject extends AbstractOperator
                             throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
                         }
                         $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
-                        if($this->partialMatch) {
+                        if ($this->partialMatch) {
                             $data = "%$data%";
                             $operator = 'LIKE';
-                         }
+                        }
                         $object = $this->dataObjectLoader->loadByAttribute($className,
                             $this->attributeName,
                             $data,

@@ -31,7 +31,6 @@ class PathStrategy extends AbstractLoad
     {
         return $this->dataObjectLoader->loadByPath($identifier,
                                                    $this->getClassName());
-
     }
 
     /**
