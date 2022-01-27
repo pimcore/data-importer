@@ -29,9 +29,9 @@ class IdStrategy extends AbstractLoad
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
-        $className = $this->getClassName();
+        return $this->dataObjectLoader->loadById($identifier,
+                                                 $this->getClassName());
 
-        return $className::getById($identifier);
     }
 
     /**
