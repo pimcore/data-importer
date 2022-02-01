@@ -29,9 +29,8 @@ class PathStrategy extends AbstractLoad
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
-        $className = $this->getClassName();
-
-        return $className::getByPath($identifier);
+        return $this->dataObjectLoader->loadByPath($identifier,
+                                                   $this->getClassName());
     }
 
     /**

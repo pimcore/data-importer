@@ -162,3 +162,5 @@ services:
             - [ setLogger, [ '@logger' ] ]
         tags:
             - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+
+    Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader: ~

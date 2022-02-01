@@ -62,25 +62,12 @@ class AttributeStrategy extends AbstractLoad
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
-        $className = $this->getClassName();
-        $getter = 'getBy' . $this->attributeName;
-
-        if ($this->includeUnpublished) {
-            $className::setHideUnpublished(false);
-        }
-
-        $element = null;
-        if ($this->attributeLanguage) {
-            $element = $className::$getter($identifier, $this->attributeLanguage, 1);
-        } else {
-            $element = $className::$getter($identifier, 1);
-        }
-
-        if ($element instanceof ElementInterface) {
-            return $element;
-        }
-
-        return null;
+        return $this->dataObjectLoader->loadByAttribute($this->getClassName(),
+                                                        $this->attributeName,
+                                                        $identifier,
+                                                        $this->attributeLanguage,
+                                                        $this->includeUnpublished,
+                                                        1);
     }
 
     /**
