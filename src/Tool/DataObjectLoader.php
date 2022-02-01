@@ -133,6 +133,7 @@ class DataObjectLoader
     /**
      * @param string $identifier
      * @param string $className
+     *
      * @return ElementInterface|null
      */
     public function loadById(string $identifier,
@@ -144,6 +145,7 @@ class DataObjectLoader
     /**
      * @param string $identifier
      * @param string $className
+     *
      * @return ElementInterface|null
      */
     public function loadByPath(string $identifier,
