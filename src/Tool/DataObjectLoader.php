@@ -32,7 +32,7 @@ class DataObjectLoader
      */
     private function isObjectBrickAttribute(string $attributeName): bool
     {
-        return str_contains($attributeName, '.');
+        return str_contains($attributeName, self::BRICK_ATTRIBUTE_SEPARATOR);
     }
 
     /**
@@ -130,12 +130,22 @@ class DataObjectLoader
         return null;
     }
 
+    /**
+     * @param string $identifier
+     * @param string $className
+     * @return ElementInterface|null
+     */
     public function loadById(string $identifier,
                              string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {
         return $className::getById($identifier);
     }
 
+    /**
+     * @param string $identifier
+     * @param string $className
+     * @return ElementInterface|null
+     */
     public function loadByPath(string $identifier,
                                string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {

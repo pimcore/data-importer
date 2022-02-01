@@ -19,6 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
+use Pimcore\Log\ApplicationLogger;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 
@@ -57,6 +59,20 @@ class LoadDataObject extends AbstractOperator
      * @var bool
      */
     protected $loadUnpublished;
+
+    /**
+     * @var DataObjectLoader
+     */
+    protected DataObjectLoader $dataObjectLoader;
+
+
+    /**
+     * @param DataObjectLoader $dataObjectLoader
+     * @required
+     */
+    public function setDataObjectLoader(DataObjectLoader $dataObjectLoader) {
+        $this->dataObjectLoader = $dataObjectLoader;
+    }
 
     public function setSettings(array $settings): void
     {

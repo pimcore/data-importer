@@ -15,7 +15,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator;
 
-use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Log\ApplicationLogger;
 
 abstract class AbstractOperator implements OperatorInterface
@@ -35,7 +34,7 @@ abstract class AbstractOperator implements OperatorInterface
      *
      * @param ApplicationLogger $applicationLogger
      */
-    public function __construct(ApplicationLogger $applicationLogger, protected DataObjectLoader $dataObjectLoader)
+    public function __construct(ApplicationLogger $applicationLogger)
     {
         $this->applicationLogger = $applicationLogger;
     }
