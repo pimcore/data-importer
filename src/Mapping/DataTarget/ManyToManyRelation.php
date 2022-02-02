@@ -87,6 +87,10 @@ class ManyToManyRelation extends Direct
      */
     protected function getMergedDataArray($valueContainer, string $getter, string $fieldType, $data): array
     {
+        if (null === $data) {
+            return [];
+        }
+
         $currentData = [];
         if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
             $hideUnpublished = DataObject::getHideUnpublished();
@@ -109,7 +113,7 @@ class ManyToManyRelation extends Direct
                         }
                     }
                 } else {
-                    return $data;
+                    return is_array($data) ? $data : [$data];
                 }
                 break;
 
@@ -139,7 +143,7 @@ class ManyToManyRelation extends Direct
                         }
                     }
                 } else {
-                    return $data;
+                    return is_array($data) ? $data : [$data];
                 }
 
                 break;
