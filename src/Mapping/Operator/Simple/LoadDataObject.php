@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 
@@ -58,6 +59,20 @@ class LoadDataObject extends AbstractOperator
      */
     protected $loadUnpublished;
 
+    /**
+     * @var DataObjectLoader
+     */
+    protected DataObjectLoader $dataObjectLoader;
+
+    /**
+     * @param DataObjectLoader $dataObjectLoader
+     * @required
+     */
+    public function setDataObjectLoader(DataObjectLoader $dataObjectLoader)
+    {
+        $this->dataObjectLoader = $dataObjectLoader;
+    }
+
     public function setSettings(array $settings): void
     {
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_ID;
@@ -77,71 +92,75 @@ class LoadDataObject extends AbstractOperator
         }
 
         $objects = [];
-        $prevHideUnpublished = DataObject::getHideUnpublished();
 
         if ($this->loadUnpublished) {
+            $prevHideUnpublished = DataObject::getHideUnpublished();
             DataObject::setHideUnpublished(false);
         }
 
         foreach ($inputData as $data) {
             $object = null;
             $logMessage = '';
-            if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
-                $object = DataObject::getByPath(trim($data));
-                $logMessage = 'by path `' . trim($data) . '`';
-            } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ID) {
-                $object = DataObject::getById(trim($data));
-                $logMessage = 'by id `' . trim($data) . '`';
-            } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
-                if ($this->attributeName) {
-                    $getter = 'getBy' . $this->attributeName;
-                    $class = ClassDefinition::getById($this->attributeDataObjectClassId);
-                    if (empty($class)) {
-                        throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
-                    }
-                    $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
-
-                    if ($this->partialMatch) {
-                        $listClassName = $className . '\\Listing';
-                        $listing = new $listClassName();
-                        $listing->setCondition($this->attributeName . ' LIKE ' . $listing->quote($data));
-                        $listing->setLimit(1);
-                        if ($this->attributeLanguage) {
-                            $listing->setLocale($this->attributeLanguage);
-                            $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`, language `%s`)';
-                            $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
-                        } else {
-                            $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`)';
-                            $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+            if (empty($data) === false) {
+                if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
+                    $object = $this->dataObjectLoader->loadByPath(trim($data));
+                    $logMessage = 'by path `' . trim($data) . '`';
+                } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ID) {
+                    $object = $this->dataObjectLoader->loadById(trim($data));
+                    $logMessage = 'by id `' . trim($data) . '`';
+                } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
+                    if ($this->attributeName) {
+                        $operator = '=';
+                        $class = ClassDefinition::getById($this->attributeDataObjectClassId);
+                        if (empty($class)) {
+                            throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
                         }
-                        $object = $listing->load()[0] ?? null;
-                    } else {
-                        if ($this->attributeLanguage) {
-                            $object = $className::$getter($data, $this->attributeLanguage, 1);
-                            $logMessage = 'by attribute `%s` (class `%s`, value `%s`, language `%s`)';
-                            $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
-                        } else {
-                            $object = $className::$getter($data, 1);
-                            $logMessage = 'by attribute `%s` (class `%s`, value `%s`)';
-                            $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
-                        }
-                    }
-                }
-            } else {
-                throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
-            }
+                        $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
+                        if ($this->partialMatch) {
+                            $data = "%$data%";
+                            $operator = 'LIKE';
 
-            if ($object instanceof DataObject) {
-                $objects[] = $object;
-            } elseif (!$dryRun && !empty($data)) {
-                if (empty($logMessage)) {
-                    $logMessage = "Could not load data object from `$data`";
+                            if ($this->attributeLanguage) {
+                                $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`, language `%s`)';
+                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
+                            } else {
+                                $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`)';
+                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+                            }
+                        }
+                        else {
+                            if ($this->attributeLanguage) {
+                                $logMessage = 'by attribute `%s` (class `%s`, value `%s`, language `%s`)';
+                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
+                            } else {
+                                $logMessage = 'by attribute `%s` (class `%s`, value `%s`)';
+                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+                            }
+                        }
+                        $object = $this->dataObjectLoader->loadByAttribute($className,
+                            $this->attributeName,
+                            $data,
+                            $this->attributeLanguage,
+                            $this->loadUnpublished,
+                            1,
+                            $operator);
+                    }
                 } else {
-                    $logMessage = 'Could not load data object ' . $logMessage;
+                    throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
                 }
-                $this->applicationLogger->warning($logMessage . ' ', [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                ]);
+
+                if ($object instanceof DataObject) {
+                    $objects[] = $object;
+                } elseif (!$dryRun && !empty($data)) {
+                    if (empty($logMessage)) {
+                        $logMessage = "Could not load data object from `$data`";
+                    } else {
+                        $logMessage = 'Could not load data object ' . $logMessage;
+                    }
+                    $this->applicationLogger->warning($logMessage . ' ', [
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                    ]);
+                }
             }
         }
         if ($this->loadUnpublished) {

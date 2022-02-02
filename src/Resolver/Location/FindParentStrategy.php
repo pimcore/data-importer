@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
@@ -56,6 +57,13 @@ class FindParentStrategy implements LocationStrategyInterface
      */
     protected $attributeLanguage;
 
+    /**
+     * @param DataObjectLoader $dataObjectLoader
+     */
+    public function __construct(protected DataObjectLoader $dataObjectLoader)
+    {
+    }
+
     public function setSettings(array $settings): void
     {
         if ($settings['dataSourceIndex'] !== 0 && $settings['dataSourceIndex'] !== '0' && empty($settings['dataSourceIndex'])) {
@@ -92,29 +100,25 @@ class FindParentStrategy implements LocationStrategyInterface
     {
         $newParent = null;
 
-        switch ($this->findStrategy) {
+        $identifier = $inputData[$this->dataSourceIndex] ?? null;
 
+        switch ($this->findStrategy) {
             case self::FIND_BY_ID:
-                $newParent = DataObject::getById($inputData[$this->dataSourceIndex] ?? null);
+                $newParent = $this->dataObjectLoader->loadById($identifier);
                 break;
             case self::FIND_BY_PATH:
-                $newParent = DataObject::getByPath($inputData[$this->dataSourceIndex] ?? null);
+                $newParent = $this->dataObjectLoader->loadByPath($identifier);
                 break;
             case self::FIND_BY_ATTRIBUTE:
-                $getter = 'getBy' . $this->attributeName;
                 $class = ClassDefinition::getById($this->attributeDataObjectClassId);
                 if (empty($class)) {
                     throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
                 }
                 $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
-
-                $identifier = $inputData[$this->dataSourceIndex] ?? null;
-                if ($this->attributeLanguage) {
-                    $newParent = $className::$getter($identifier, $this->attributeLanguage, 1);
-                } else {
-                    $newParent = $className::$getter($identifier, 1);
-                }
-
+                $newParent = $this->dataObjectLoader->loadByAttribute($className,
+                                                                      $this->attributeName,
+                                                                      $identifier,
+                                                                      $this->attributeLanguage);
                 break;
         }
 
