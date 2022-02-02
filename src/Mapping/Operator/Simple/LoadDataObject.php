@@ -128,8 +128,7 @@ class LoadDataObject extends AbstractOperator
                                 $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`)';
                                 $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
                             }
-                        }
-                        else {
+                        } else {
                             if ($this->attributeLanguage) {
                                 $logMessage = 'by attribute `%s` (class `%s`, value `%s`, language `%s`)';
                                 $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
