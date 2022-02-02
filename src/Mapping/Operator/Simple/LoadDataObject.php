@@ -95,7 +95,6 @@ class LoadDataObject extends AbstractOperator
         $prevHideUnpublished = DataObject::getHideUnpublished();
 
         if ($this->loadUnpublished) {
-            $prevHideUnpublished = DataObject::getHideUnpublished();
             DataObject::setHideUnpublished(false);
         }
 
