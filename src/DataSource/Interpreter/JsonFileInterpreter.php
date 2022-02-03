@@ -35,7 +35,13 @@ class JsonFileInterpreter extends AbstractInterpreter
         if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
             $content = file_get_contents($path);
 
-            return json_decode($this->prepareContent($content), true);
+            $data = json_decode($this->prepareContent($content), true);
+
+            if (count($data) < 1) {
+                return $data;
+            } else {
+                return [$data];
+            }
         } else {
             return $this->cachedContent;
         }
