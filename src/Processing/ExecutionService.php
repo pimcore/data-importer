@@ -21,7 +21,7 @@ use Pimcore\Db;
 
 class ExecutionService
 {
-    const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
+    const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_execution';
 
     /**
      * @return Db\Connection|Db\ConnectionInterface
