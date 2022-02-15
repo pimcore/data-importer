@@ -20,7 +20,8 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ConfigurationPreparationService
 {
-    public function prepareConfiguration(string $configName, $currentConfig = null)
+
+    public function prepareConfiguration(string $configName, $currentConfig = null, $ignorePermissions = false)
     {
         if ($currentConfig) {
             if (is_string($currentConfig)) {
@@ -32,15 +33,19 @@ class ConfigurationPreparationService
             if (!$configuration) {
                 throw new \Exception('Configuration ' . $configName . ' does not exist.');
             }
-            if (!$configuration->isAllowed('read')) {
-                throw new AccessDeniedHttpException('Access denied');
-            }
 
             $config = $configuration->getConfiguration();
-            $config['userPermissions'] = [
-                'update' => $configuration->isAllowed('update'),
-                'delete' => $configuration->isAllowed('delete')
-            ];
+            if (!$ignorePermissions) {
+                if (!$configuration->isAllowed('read')) {
+                    throw new AccessDeniedHttpException('Access denied');
+                }
+
+
+                $config['userPermissions'] = [
+                    'update' => $configuration->isAllowed('update'),
+                    'delete' => $configuration->isAllowed('delete')
+                ];
+            }
         }
 
         //init config array with default values
