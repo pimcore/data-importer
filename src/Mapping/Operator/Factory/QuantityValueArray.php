@@ -30,8 +30,9 @@ class QuantityValueArray extends AbstractOperator
         $result = [];
 
         foreach ($inputData as $key => $data) {
+            $value = $data[0] ?? null;
             $result[$key] = new \Pimcore\Model\DataObject\Data\QuantityValue(
-                floatval($data[0] ?? null),
+                $value === null ? null : floatval($value),
                 $data[1] ?? null
             );
         }
