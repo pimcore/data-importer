@@ -20,7 +20,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ConfigurationPreparationService
 {
-
     public function prepareConfiguration(string $configName, $currentConfig = null, $ignorePermissions = false)
     {
         if ($currentConfig) {
@@ -39,7 +38,6 @@ class ConfigurationPreparationService
                 if (!$configuration->isAllowed('read')) {
                     throw new AccessDeniedHttpException('Access denied');
                 }
-
 
                 $config['userPermissions'] = [
                     'update' => $configuration->isAllowed('update'),
