@@ -123,7 +123,7 @@ class ImportProcessingService
 
         //get config
         $configName = $queueItem['configName'];
-        $config = $this->configLoader->prepareConfiguration($configName);
+        $config = $this->configLoader->prepareConfiguration($configName, null, true);
 
         //init resolver and mapping
         if (empty($this->mappingConfigurationCache[$configName])) {

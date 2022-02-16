@@ -55,7 +55,8 @@ class PushImportController
     {
         try {
             $configName = $request->get('config');
-            $config = $configurationLoaderService->prepareConfiguration($configName);
+            $config = $configurationLoaderService->prepareConfiguration($configName, null, true);
+
             $loader = $dataLoaderFactory->loadDataLoader($config['loaderConfig']);
 
             if (!$loader instanceof PushLoader) {

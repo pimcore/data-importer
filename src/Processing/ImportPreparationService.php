@@ -117,7 +117,7 @@ class ImportPreparationService
                 throw new QueueNotEmptyException("Queue for `$configName` not empty. Not preparing new import, finish queue processing first.");
             }
 
-            $config = $this->configLoader->prepareConfiguration($configName);
+            $config = $this->configLoader->prepareConfiguration($configName, null, true);
 
             if (!$ignoreActiveFlag && !$this->isConfigurationActive($configName, $config)) {
                 return false;
@@ -168,7 +168,7 @@ class ImportPreparationService
 
     public function execute(string $configName)
     {
-        $config = $this->configLoader->prepareConfiguration($configName);
+        $config = $this->configLoader->prepareConfiguration($configName, null, true);
 
         if (!$this->isConfigurationActive($configName, $config)) {
             return;

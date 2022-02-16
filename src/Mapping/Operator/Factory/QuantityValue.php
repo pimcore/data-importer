@@ -85,8 +85,10 @@ class QuantityValue extends AbstractOperator
                 $unitId = $this->staticUnitId;
         }
 
+        $value = $value ?? null;
+
         return new \Pimcore\Model\DataObject\Data\QuantityValue(
-            floatval($value ?? null),
+            $value === null ? null : floatval($value),
             $unitId ?? null
         );
     }
