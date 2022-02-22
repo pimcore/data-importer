@@ -123,10 +123,9 @@ class CsvFileInterpreter extends AbstractInterpreter
         $previewDataColumns = array_keys($previewData);
         if (empty($columns)) {
             $columns = $previewDataColumns;
-        }
-        else if(count($columns) < count($previewDataColumns)) {
-            foreach($previewDataColumns as $columnIdx) {
-                if(isset($columns[$columnIdx]) === false) {
+        } elseif (count($columns) < count($previewDataColumns)) {
+            foreach ($previewDataColumns as $columnIdx) {
+                if (isset($columns[$columnIdx]) === false) {
                     $columns[$columnIdx] = "[$columnIdx]";
                 }
             }
