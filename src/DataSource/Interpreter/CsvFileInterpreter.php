@@ -120,8 +120,15 @@ class CsvFileInterpreter extends AbstractInterpreter
             fclose($handle);
         }
 
+        $previewDataColumns = array_keys($previewData);
         if (empty($columns)) {
-            $columns = array_keys($previewData);
+            $columns = $previewDataColumns;
+        } elseif (count($columns) < count($previewDataColumns)) {
+            foreach ($previewDataColumns as $columnIdx) {
+                if (isset($columns[$columnIdx]) === false) {
+                    $columns[$columnIdx] = "[$columnIdx]";
+                }
+            }
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
