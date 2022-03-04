@@ -18,6 +18,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing;
 use DateTime;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\QueueNotEmptyException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\Exception\InvalidScheduleException;
@@ -27,6 +28,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Log\ApplicationLogger;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ImportPreparationService
 {
@@ -71,6 +73,11 @@ class ImportPreparationService
     protected $executionService;
 
     /**
+     * @var EventDispatcherInterface
+     */
+    protected $eventDispatcher;
+
+    /**
      * ImportPreparationService constructor.
      *
      * @param ResolverFactory $resolverFactory
@@ -88,7 +95,8 @@ class ImportPreparationService
         QueueService $queueService,
         ApplicationLogger $applicationLogger,
         ConfigurationPreparationService $configurationPreparationService,
-        ExecutionService $executionService
+        ExecutionService $executionService,
+        EventDispatcherInterface $eventDispatcher
     ) {
         $this->resolverFactory = $resolverFactory;
         $this->interpreterFactory = $interpreterFactory;
@@ -97,6 +105,7 @@ class ImportPreparationService
         $this->applicationLogger = $applicationLogger;
         $this->configLoader = $configurationPreparationService;
         $this->executionService = $executionService;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -145,6 +154,8 @@ class ImportPreparationService
             $this->logger->info('Cleanup source file if necessary.');
             $loader->cleanup();
             $this->logger->info('Cleaned up source file if necessary.');
+
+            $this->eventDispatcher->dispatch(new PostPreparationEvent($configName, $config['processingConfig']['executionType'] ?? ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL, $fileInterpreted));
 
             return $fileInterpreted;
         } catch (QueueNotEmptyException $e) {

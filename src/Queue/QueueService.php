@@ -79,8 +79,10 @@ class QueueService
             `data` TEXT null,
             executionType varchar(20) NULL,
             jobType varchar(20) NULL,
+            dispatched bigint NULL,
             PRIMARY KEY (id),
             KEY `bundle_index_queue_configName_index` (`configName`),
+            KEY `bundle_index_queue_configName_executiontype_dispatched` (`executionType`, `dispatched`),
             KEY `bundle_index_queue_configName_index_executionType` (`configName`, `executionType`))
         ', self::QUEUE_TABLE_NAME));
 
@@ -97,13 +99,30 @@ class QueueService
      *
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getAllQueueEntryIds(string $executionType, $limit = 100000): array
+    public function getAllQueueEntryIds(string $executionType, $limit = 100000, $dispatch = false): array
     {
         try {
-            $results = $this->getDb()->fetchCol(
-                sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
-                [$executionType]
-            );
+
+            if($dispatch === true) {
+
+                $dispatchId = time();
+
+                $this->getDb()->executeQuery('UPDATE ' . self::QUEUE_TABLE_NAME . ' SET dispatched = ? WHERE executionType = ? AND (ISNULL(dispatched) OR dispatched < ?) LIMIT ' . intval($limit),
+                    [$dispatchId, $executionType, $dispatchId - 3000]);
+
+                $results = $this->getDb()->fetchCol(
+                    sprintf('SELECT id FROM %s WHERE executionType = ? AND dispatched = ?', self::QUEUE_TABLE_NAME),
+                    [$executionType, $dispatchId]
+                );
+
+            } else {
+
+                $results = $this->getDb()->fetchCol(
+                    sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
+                    [$executionType]
+                );
+
+            }
 
             return $results ?? [];
         } catch (TableNotFoundException $exception) {
