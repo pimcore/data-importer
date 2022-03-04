@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Event;
 
 class PostPreparationEvent
 {
-
     /**
      * @var string
      */
@@ -33,7 +32,6 @@ class PostPreparationEvent
      */
     protected bool $fileInterpreted;
 
-
     /**
      * @param string $configName
      * @param string $executionType
@@ -45,7 +43,6 @@ class PostPreparationEvent
         $this->executionType = $executionType;
         $this->fileInterpreted = $fileInterpreted;
     }
-
 
     /**
      * @return string
@@ -70,6 +67,4 @@ class PostPreparationEvent
     {
         return $this->fileInterpreted;
     }
-
 }
-

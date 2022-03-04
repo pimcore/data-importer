@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 /**
@@ -34,7 +34,6 @@ use Pimcore\Migrations\BundleAwareMigration;
 
 class Version20220304130000 extends BundleAwareMigration
 {
-
     public function up(Schema $schema): void
     {
         if ($schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
