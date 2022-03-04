@@ -80,9 +80,10 @@ class QueueService
             executionType varchar(20) NULL,
             jobType varchar(20) NULL,
             dispatched bigint NULL,
+            workerId varchar(13) NULL,
             PRIMARY KEY (id),
             KEY `bundle_index_queue_configName_index` (`configName`),
-            KEY `bundle_index_queue_configName_executiontype_dispatched` (`executionType`, `dispatched`),
+            KEY `bundle_index_queue_configName_executiontype_workerId` (`executionType`, `workerId`),
             KEY `bundle_index_queue_configName_index_executionType` (`configName`, `executionType`))
         ', self::QUEUE_TABLE_NAME));
 
@@ -104,13 +105,14 @@ class QueueService
         try {
             if ($dispatch === true) {
                 $dispatchId = time();
+                $workerId = uniqid();
 
-                $this->getDb()->executeQuery('UPDATE ' . self::QUEUE_TABLE_NAME . ' SET dispatched = ? WHERE executionType = ? AND (ISNULL(dispatched) OR dispatched < ?) LIMIT ' . intval($limit),
-                    [$dispatchId, $executionType, $dispatchId - 3000]);
+                $this->getDb()->executeQuery('UPDATE ' . self::QUEUE_TABLE_NAME . ' SET dispatched = ?, workerId = ? WHERE executionType = ? AND (ISNULL(dispatched) OR dispatched < ?) LIMIT ' . intval($limit),
+                    [$dispatchId, $workerId, $executionType, $dispatchId - 3000]);
 
                 $results = $this->getDb()->fetchCol(
-                    sprintf('SELECT id FROM %s WHERE executionType = ? AND dispatched = ?', self::QUEUE_TABLE_NAME),
-                    [$executionType, $dispatchId]
+                    sprintf('SELECT id FROM %s WHERE executionType = ? AND workerId = ?', self::QUEUE_TABLE_NAME),
+                    [$executionType, $workerId]
                 );
             } else {
                 $results = $this->getDb()->fetchCol(

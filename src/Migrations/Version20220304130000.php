@@ -39,7 +39,18 @@ class Version20220304130000 extends BundleAwareMigration
         if ($schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
             $cacheTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
             $cacheTable->addColumn('dispatched', 'bigint', ['notnull' => false, 'default' => 'null']);
-            $cacheTable->addIndex(['executionType', 'dispatched']);
+            $cacheTable->addColumn('workerId', 'varchar', ['notnull' => false, 'default' => 'null', 'length' => 13]);
+            $cacheTable->addIndex(['executionType', 'workerId'], 'bundle_index_queue_configName_executiontype_workerId');
+        }
+    }
+
+    public function down(Schema $schema): void
+    {
+        if ($schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
+            $cacheTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
+            $cacheTable->dropColumn('dispatched');
+            $cacheTable->dropColumn('workerId');
+            $cacheTable->dropIndex('bundle_index_queue_configName_executiontype_workerId');
         }
     }
 
