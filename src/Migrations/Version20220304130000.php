@@ -40,7 +40,7 @@ class Version20220304130000 extends BundleAwareMigration
             $queueTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
             $queueTable->addColumn('dispatched', 'bigint', ['notnull' => false, 'default' => null]);
             $queueTable->addColumn('workerId', 'string', ['notnull' => false, 'default' => null, 'length' => 13]);
-            $queueTable->addIndex(['executionType', 'workerId'], 'bundle_index_queue_configName_executiontype_workerId');
+            $queueTable->addIndex(['executionType', 'workerId'], 'bundle_index_queue_executiontype_workerId');
         }
     }
 
@@ -50,7 +50,7 @@ class Version20220304130000 extends BundleAwareMigration
             $queueTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
             $queueTable->dropColumn('dispatched');
             $queueTable->dropColumn('workerId');
-            $queueTable->dropIndex('bundle_index_queue_configName_executiontype_workerId');
+            $queueTable->dropIndex('bundle_index_queue_executiontype_workerId');
         }
     }
 

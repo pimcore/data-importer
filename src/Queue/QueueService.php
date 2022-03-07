@@ -83,7 +83,7 @@ class QueueService
             workerId varchar(13) NULL,
             PRIMARY KEY (id),
             KEY `bundle_index_queue_configName_index` (`configName`),
-            KEY `bundle_index_queue_configName_executiontype_workerId` (`executionType`, `workerId`),
+            KEY `bundle_index_queue_executiontype_workerId` (`executionType`, `workerId`),
             KEY `bundle_index_queue_configName_index_executionType` (`configName`, `executionType`))
         ', self::QUEUE_TABLE_NAME));
 
@@ -94,15 +94,14 @@ class QueueService
 
     /**
      * @param string $executionType
-     * @param $limit
-     * @param $dispatch
-     *
+     * @param int $limit
+     * @param bool $dispatch
      * @return array
      *
      * @throws \Doctrine\DBAL\Driver\Exception
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getAllQueueEntryIds(string $executionType, $limit = 100000, $dispatch = false): array
+    public function getAllQueueEntryIds(string $executionType, int $limit = 100000, bool $dispatch = false): array
     {
         try {
             if ($dispatch === true) {
