@@ -96,6 +96,7 @@ class QueueService
      * @param string $executionType
      * @param int $limit
      * @param bool $dispatch
+     *
      * @return array
      *
      * @throws \Doctrine\DBAL\Driver\Exception
