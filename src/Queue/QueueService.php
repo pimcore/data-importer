@@ -94,10 +94,10 @@ class QueueService
 
     /**
      * @param string $executionType
-     * @param int $limit
-     *
+     * @param $limit
+     * @param $dispatch
      * @return array
-     *
+     * @throws \Doctrine\DBAL\Driver\Exception
      * @throws \Doctrine\DBAL\Exception
      */
     public function getAllQueueEntryIds(string $executionType, $limit = 100000, $dispatch = false): array
