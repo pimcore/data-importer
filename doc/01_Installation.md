@@ -17,7 +17,7 @@ composer require pimcore/data-importer --with-all-dependencies
 
 ### Import Execution
 The imports are executed asynchronously in the background. The processing can be done via executing commands on a regular 
-base or by utilizing symfony messenger. Either of the two needs to be configured. 
+basis or by utilizing symfony messenger. Either of the two needs to be configured. 
 
 #### Command Based
 For command based importing, following commands need to be executed on regular base. The actual interval depends
@@ -40,6 +40,8 @@ pimcore_data_importer:
     messenger_queue_processing:
         activated: true
 ```
+
+If activated, the processing is kicked off automatically as soon as an import is prepared. 
 
 In addition to that, following settings are available. They all have meaningful default values though: 
 - `worker_count_parallel`: Count of maximum parallel worker messages for parallel imports.
