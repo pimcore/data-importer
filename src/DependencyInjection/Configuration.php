@@ -32,7 +32,7 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('pimcore_data_importer');
 
-        $treeBuilder->getRootNode()->children()
+        $treeBuilder->getRootNode()->children() // @phpstan-ignore-line
             ->arrayNode('messenger_queue_processing')
                 ->addDefaultsIfNotSet()
                 ->info('Configure import queue processing via symfony messenger')
