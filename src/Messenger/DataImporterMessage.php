@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Messenger;
 
 class DataImporterMessage
 {
-
     public function __construct(protected string $executionType, protected array $ids)
     {
     }
@@ -37,7 +36,4 @@ class DataImporterMessage
     {
         return $this->ids;
     }
-
-
-
 }

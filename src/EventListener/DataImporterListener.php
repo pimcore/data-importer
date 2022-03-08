@@ -20,18 +20,16 @@ use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 
 class DataImporterListener
 {
-
     public function __construct(
         protected DataImporterHandler $dataImporterHandler,
         protected bool $messengerQueueActivated
-    )
-    {
+    ) {
     }
 
-    public function importPrepared(PostPreparationEvent $event) {
-        if($this->messengerQueueActivated === true) {
+    public function importPrepared(PostPreparationEvent $event)
+    {
+        if ($this->messengerQueueActivated === true) {
             $this->dataImporterHandler->dispatchMessages($event->getExecutionType());
         }
     }
-
 }

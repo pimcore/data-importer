@@ -22,8 +22,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 
 class DataImporterHandler
 {
-
-    CONST IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX = 'DATA-IMPORTER::worker-count::';
+    const IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX = 'DATA-IMPORTER::worker-count::';
 
     protected $workerCounts = [
         ImportProcessingService::EXECUTION_TYPE_PARALLEL => 3,
@@ -37,8 +36,7 @@ class DataImporterHandler
         protected int $workerCountLifeTime,
         protected int $workerItemCount,
         protected $workerCountParallel
-    )
-    {
+    ) {
         $this->workerCounts[ImportProcessingService::EXECUTION_TYPE_PARALLEL] = $this->workerCountParallel;
     }
 
@@ -56,17 +54,16 @@ class DataImporterHandler
         $this->dispatchMessages($message->getExecutionType());
     }
 
-
-    public function dispatchMessages(string $executionType) {
-
+    public function dispatchMessages(string $executionType)
+    {
         $tmpStoreKey = self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType;
 
         $workerCount = TmpStore::get($tmpStoreKey)?->getData() ?? 0;
 
         $addWorkers = true;
-        while($addWorkers && $workerCount < ($this->workerCounts[$executionType] ?? 1)) {
+        while ($addWorkers && $workerCount < ($this->workerCounts[$executionType] ?? 1)) {
             $ids = $this->queueService->getAllQueueEntryIds($executionType, $this->workerItemCount, true);
-            if(!empty($ids)) {
+            if (!empty($ids)) {
                 $this->messageBus->dispatch(new DataImporterMessage($executionType, $ids));
                 $workerCount++;
                 TmpStore::set($tmpStoreKey, $workerCount, null, $this->workerCountLifeTime);
