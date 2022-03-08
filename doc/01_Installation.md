@@ -46,6 +46,9 @@ In addition to that, following settings are available. They all have meaningful 
 - `worker_item_count`: Count of items imported per worker message.
 - `worker_count_lifetime`: Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared.
 
+Messages are dispatched via `pimcore_data_import` transport. So make sure, you have
+workers processing this transport when activating the messenger based queue processing.
+
 
 ### Cron Execution
 Import configuration can be setup to be executed on regular base by defining a cron definition. To make sure, the cron 

@@ -30,8 +30,6 @@ services:
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener:
-        arguments:
-            $messengerQueueActivated: '%pimcore.data_importer.messenger_queue_processing.activated%'
         tags:
             - { name: kernel.event_listener, event: 'Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent', method: importPrepared }
 
@@ -184,9 +182,5 @@ services:
 
 
     Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler:
-        arguments:
-            $workerCountLifeTime: '%pimcore.data_importer.messenger_queue_processing.worker_count_lifetime%'
-            $workerItemCount: '%pimcore.data_importer.messenger_queue_processing.worker_item_count%'
-            $workerCountParallel: '%pimcore.data_importer.messenger_queue_processing.worker_count_parallel%'
         tags:
             - { name: messenger.message_handler }

@@ -38,7 +38,8 @@ Parallel imports process the queue items in a parallelized way. This speed thing
 in their exact order. 
 
 For executing processing of sequential and parallel queue items, two commands 
-(`datahub:data-importer:process-queue-sequential` and `datahub:data-importer:process-queue-parallel`) are available.
+(`datahub:data-importer:process-queue-sequential` and `datahub:data-importer:process-queue-parallel`) are available or 
+processing can be done via the symfony messenger.
 
 The actual processing is the same for both types and consists of following steps for import jobs: 
 - Look for existing data element based on loading strategy or create new data element.
