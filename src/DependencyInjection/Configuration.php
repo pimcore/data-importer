@@ -30,11 +30,33 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder('pimcore_data_hub_data_importer');
+        $treeBuilder = new TreeBuilder('pimcore_data_importer');
 
-        // Here you should define the parameters that are allowed to
-        // configure your bundle. See the documentation linked above for
-        // more information on that topic.
+        $treeBuilder->getRootNode()->children()
+            ->arrayNode('messenger_queue_processing')
+                ->addDefaultsIfNotSet()
+                ->info('Configure import queue processing via symfony messenger')
+                ->children()
+                    ->booleanNode('activated')
+                        ->info('Activate dispatching messages after import was prepared. Will start import as soon as messages are processed via symfony messenger.')
+                        ->defaultFalse()
+                    ->end()
+                    ->integerNode('worker_count_lifetime')
+                        ->defaultValue(60 * 60) //1 hour
+                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared. Default to 1 hour.')
+                    ->end()
+                    ->integerNode('worker_item_count')
+                        ->defaultValue(200)
+                        ->info('Count of items imported per worker message.')
+                    ->end()
+                    ->integerNode('worker_count_parallel')
+                        ->defaultValue(3)
+                        ->info('Count of maximum parallel worker messages for parallel imports.')
+                    ->end()
+                ->end()
+            ->end()
+        ->end();
+
 
         return $treeBuilder;
     }

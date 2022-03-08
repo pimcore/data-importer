@@ -39,6 +39,11 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+
+        $container->setParameter('pimcore.data_importer.messenger_queue_processing.activated', $config['messenger_queue_processing']['activated']);
+        $container->setParameter('pimcore.data_importer.messenger_queue_processing.worker_count_lifetime', $config['messenger_queue_processing']['worker_count_lifetime']);
+        $container->setParameter('pimcore.data_importer.messenger_queue_processing.worker_item_count', $config['messenger_queue_processing']['worker_item_count']);
+        $container->setParameter('pimcore.data_importer.messenger_queue_processing.worker_count_parallel', $config['messenger_queue_processing']['worker_count_parallel']);
     }
 
     /**
