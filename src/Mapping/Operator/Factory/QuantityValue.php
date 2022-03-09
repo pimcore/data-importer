@@ -86,6 +86,9 @@ class QuantityValue extends AbstractOperator
         }
 
         $value = $value ?? null;
+        if ($value === null || $value === '') {
+            return null;
+        }
 
         return new \Pimcore\Model\DataObject\Data\QuantityValue(
             $value === null ? null : floatval($value),
