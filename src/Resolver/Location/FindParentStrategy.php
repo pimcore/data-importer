@@ -102,7 +102,7 @@ class FindParentStrategy implements LocationStrategyInterface
 
         $identifier = $inputData[$this->dataSourceIndex] ?? null;
 
-        if(isset($identifier)) {
+        if (isset($identifier)) {
             switch ($this->findStrategy) {
                 case self::FIND_BY_ID:
                     $newParent = $this->dataObjectLoader->loadById($identifier);
