@@ -79,8 +79,11 @@ class QueueService
             `data` TEXT null,
             executionType varchar(20) NULL,
             jobType varchar(20) NULL,
+            dispatched bigint NULL,
+            workerId varchar(13) NULL,
             PRIMARY KEY (id),
             KEY `bundle_index_queue_configName_index` (`configName`),
+            KEY `bundle_index_queue_executiontype_workerId` (`executionType`, `workerId`),
             KEY `bundle_index_queue_configName_index_executionType` (`configName`, `executionType`))
         ', self::QUEUE_TABLE_NAME));
 
@@ -92,18 +95,33 @@ class QueueService
     /**
      * @param string $executionType
      * @param int $limit
+     * @param bool $dispatch
      *
      * @return array
      *
+     * @throws \Doctrine\DBAL\Driver\Exception
      * @throws \Doctrine\DBAL\Exception
      */
-    public function getAllQueueEntryIds(string $executionType, $limit = 100000): array
+    public function getAllQueueEntryIds(string $executionType, int $limit = 100000, bool $dispatch = false): array
     {
         try {
-            $results = $this->getDb()->fetchCol(
-                sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
-                [$executionType]
-            );
+            if ($dispatch === true) {
+                $dispatchId = time();
+                $workerId = uniqid();
+
+                $this->getDb()->executeQuery('UPDATE ' . self::QUEUE_TABLE_NAME . ' SET dispatched = ?, workerId = ? WHERE executionType = ? AND (ISNULL(dispatched) OR dispatched < ?) LIMIT ' . intval($limit),
+                    [$dispatchId, $workerId, $executionType, $dispatchId - 3000]);
+
+                $results = $this->getDb()->fetchCol(
+                    sprintf('SELECT id FROM %s WHERE executionType = ? AND workerId = ?', self::QUEUE_TABLE_NAME),
+                    [$executionType, $workerId]
+                );
+            } else {
+                $results = $this->getDb()->fetchCol(
+                    sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
+                    [$executionType]
+                );
+            }
 
             return $results ?? [];
         } catch (TableNotFoundException $exception) {

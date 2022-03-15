@@ -15,6 +15,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
+use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
+use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -39,6 +41,14 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+
+        $definition = $container->getDefinition(DataImporterHandler::class);
+        $definition->setArgument('$workerCountLifeTime', $config['messenger_queue_processing']['worker_count_lifetime']);
+        $definition->setArgument('$workerItemCount', $config['messenger_queue_processing']['worker_item_count']);
+        $definition->setArgument('$workerCountParallel', $config['messenger_queue_processing']['worker_count_parallel']);
+
+        $definition = $container->getDefinition(DataImporterListener::class);
+        $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
     }
 
     /**

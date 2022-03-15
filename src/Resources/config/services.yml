@@ -29,7 +29,9 @@ services:
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
-
+    Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener:
+        tags:
+            - { name: kernel.event_listener, event: 'Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent', method: importPrepared }
 
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory: ~
 
@@ -177,3 +179,8 @@ services:
         arguments:
             # fetch the bundle via expression language
             $bundle: "@=service('kernel').getBundle('PimcoreDataImporterBundle')"
+
+
+    Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler:
+        tags:
+            - { name: messenger.message_handler }
