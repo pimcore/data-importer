@@ -94,7 +94,7 @@ class DataObjectLoader
                                     string $operator = '='): ?ElementInterface
     {
         $element = null;
-        $objectTypes = [DataObject::OBJECT_TYPE_VARIANT,DataObject::OBJECT_TYPE_OBJECT];
+        $objectTypes = [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT];
 
         if ($includeUnpublished) {
             $className::setHideUnpublished(false);
@@ -118,7 +118,7 @@ class DataObjectLoader
             if ($limit > 0) {
                 $conditions['limit'] = $limit;
             }
-            $conditions["objectTypes"] = $objectTypes;
+            $conditions['objectTypes'] = $objectTypes;
             $list = $className::getList($conditions);
             $dataObjects = $list->load();
             if (empty($dataObjects) === false) {
