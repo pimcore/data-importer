@@ -102,24 +102,26 @@ class FindParentStrategy implements LocationStrategyInterface
 
         $identifier = $inputData[$this->dataSourceIndex] ?? null;
 
-        switch ($this->findStrategy) {
-            case self::FIND_BY_ID:
-                $newParent = $this->dataObjectLoader->loadById($identifier);
-                break;
-            case self::FIND_BY_PATH:
-                $newParent = $this->dataObjectLoader->loadByPath($identifier);
-                break;
-            case self::FIND_BY_ATTRIBUTE:
-                $class = ClassDefinition::getById($this->attributeDataObjectClassId);
-                if (empty($class)) {
-                    throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
-                }
-                $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
-                $newParent = $this->dataObjectLoader->loadByAttribute($className,
-                                                                      $this->attributeName,
-                                                                      $identifier,
-                                                                      $this->attributeLanguage);
-                break;
+        if(isset($identifier)) {
+            switch ($this->findStrategy) {
+                case self::FIND_BY_ID:
+                    $newParent = $this->dataObjectLoader->loadById($identifier);
+                    break;
+                case self::FIND_BY_PATH:
+                    $newParent = $this->dataObjectLoader->loadByPath($identifier);
+                    break;
+                case self::FIND_BY_ATTRIBUTE:
+                    $class = ClassDefinition::getById($this->attributeDataObjectClassId);
+                    if (empty($class)) {
+                        throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
+                    }
+                    $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
+                    $newParent = $this->dataObjectLoader->loadByAttribute($className,
+                                                                        $this->attributeName,
+                                                                        $identifier,
+                                                                        $this->attributeLanguage);
+                    break;
+            }
         }
 
         if (!($newParent instanceof DataObject) && $this->fallbackPath) {
