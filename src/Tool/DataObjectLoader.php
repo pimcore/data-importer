@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tool;
 
 use Pimcore\Db;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ElementInterface;
 
 class DataObjectLoader
@@ -93,6 +94,7 @@ class DataObjectLoader
                                     string $operator = '='): ?ElementInterface
     {
         $element = null;
+        $objectTypes = [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT];
 
         if ($includeUnpublished) {
             $className::setHideUnpublished(false);
@@ -101,9 +103,9 @@ class DataObjectLoader
         if ($this->isObjectBrickAttribute($attributeName) === false && $operator === '=') {
             $getter = 'getBy' . $attributeName;
             if (empty($attributeLanguage) === false) {
-                $element = $className::$getter($identifier, $attributeLanguage, $limit);
+                $element = $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
             } else {
-                $element = $className::$getter($identifier, $limit);
+                $element = $className::$getter($identifier, $limit, 0, $objectTypes);
             }
         } else {
             $queryFieldName = $attributeName;
@@ -116,6 +118,7 @@ class DataObjectLoader
             if ($limit > 0) {
                 $conditions['limit'] = $limit;
             }
+            $conditions['objectTypes'] = $objectTypes;
             $list = $className::getList($conditions);
             $dataObjects = $list->load();
             if (empty($dataObjects) === false) {
