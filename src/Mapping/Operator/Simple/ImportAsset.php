@@ -59,7 +59,22 @@ class ImportAsset extends AbstractOperator
 
             $filename = Service::getValidKey(basename($fileUrl), 'asset');
 
-            $asset = null;
+            if(!empty($this->pregMatch)){
+                $matches = [];
+                preg_match($this->pregMatch, $filename,$matches);
+
+                if($matches !== []){
+                    // Remove the first element since it is the whole matched string
+                    // and not the matched sub pattern
+                    array_shift($matches);
+                    $filename = implode('-', $matches);
+
+                }
+
+            }
+
+
+                $asset = null;
             if ($this->useExisting) {
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }

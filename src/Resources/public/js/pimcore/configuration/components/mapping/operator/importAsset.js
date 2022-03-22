@@ -86,6 +86,12 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_use_existing'),
                 value: this.data.settings ? this.data.settings.useExisting : true,
                 name: 'settings.useExisting'
+            },
+            {
+                xtype: 'textfield',
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_preg_match'),
+                value: this.data.settings ? this.data.settings.pregMatch : '',
+                name: 'settings.pregMatch'
             }
         ];
     },
