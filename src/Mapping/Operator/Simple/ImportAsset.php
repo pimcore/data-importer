@@ -34,10 +34,17 @@ class ImportAsset extends AbstractOperator
      */
     protected $useExisting;
 
+    /**
+     * @var string
+     */
+    protected $pregMatch;
+
+
     public function setSettings(array $settings): void
     {
         $this->parentFolderPath = $settings['parentFolder'] ?? '/';
         $this->useExisting = $settings['useExisting'] ?? false;
+        $this->pregMatch = $settings['pregMatch'] ?? '';
     }
 
     public function process($inputData, bool $dryRun = false)
