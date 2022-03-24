@@ -19,11 +19,32 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
     dataObjectClassId: null,
     transformationResultType: null,
 
+    isTransformationResultTypeValid: function(transformationResultType) {
+        const validTypes = ['advancedDataObject', 'dataObjectArray', 'assetArray', 'advancedAssetArray'];
+        return validTypes.includes(transformationResultType);
+    },
+
     buildSettingsForm: function () {
 
         if (!this.form) {
             this.dataObjectClassId = this.configItemRootContainer.currentDataValues.dataObjectClassId;
             this.transformationResultType = this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType;
+            this.validTransformationResultType = this.isTransformationResultTypeValid(this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType);
+
+            const errorField = Ext.create('Ext.form.Label', {
+                html: t('plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type_error'),
+                style: 'color: #cf4c35'
+            });
+
+            const errorFieldExtMessage = Ext.create('Ext.form.Label', {
+                html: t('plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type'),
+                style: 'padding-bottom: 5px',
+            });
+
+            const fieldContainerError = Ext.create('Ext.form.FieldContainer',{
+                hidden: this.validTransformationResultType,
+                items: [errorField, errorFieldExtMessage]
+            });
 
             const languageSelection = Ext.create('Ext.form.ComboBox', {
                 store: pimcore.settings.websiteLanguages,
@@ -43,7 +64,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     ['replace', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_replace')],
                     ['merge', t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_overwriteMode_merge')],
                 ],
-                hidden: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false
+                hidden: !this.validTransformationResultType || (this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false)
             });
 
             const attributeSelection = Ext.create('Ext.form.ComboBox', {
@@ -55,7 +76,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 name: this.dataNamePrefix + 'fieldName',
                 value: this.data.fieldName,
                 allowBlank: false,
-                msgTarget: 'under'
+                msgTarget: 'under',
+                hidden: !this.validTransformationResultType
             });
 
             const attributeStore = Ext.create('Ext.data.JsonStore', {
@@ -84,8 +106,25 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
 
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function (newType) {
+
+                this.validTransformationResultType = this.isTransformationResultTypeValid(newType);
                 this.transformationResultType = newType;
-                this.initAttributeStore(attributeStore);
+
+                if(this.validTransformationResultType) {
+                    attributeSelection.show();
+                    languageSelection.show();
+                    overwriteMode.show();
+                    fieldContainerCB.show();
+                    fieldContainerError.hide()
+                    this.initAttributeStore(attributeStore);
+                } else {
+                    attributeSelection.setValue('');
+                    attributeSelection.hide();
+                    languageSelection.hide();
+                    overwriteMode.hide();
+                    fieldContainerCB.hide();
+                    fieldContainerError.show();
+                }
             }.bind(this));
             this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,
                 function (combo, newValue, oldValue) {
@@ -124,6 +163,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 uncheckedValue: false
             });
 
+            const fieldContainerCB = Ext.create('Ext.form.FieldContainer',{
+                fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_label'),
+                defaultType: 'checkboxfield',
+                hidden: !this.validTransformationResultType,
+                items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
+            });
+
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
@@ -134,14 +180,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 },
                 border: false,
                 items: [
+                    fieldContainerError,
                     attributeSelection,
                     languageSelection,
-                    {
-                        xtype: 'fieldcontainer',
-                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_manyToManyRelation_write_settings_label'),
-                        defaultType: 'checkboxfield',
-                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
-                    },
+                    fieldContainerCB,
                     overwriteMode
                 ]
             });
