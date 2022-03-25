@@ -21,6 +21,8 @@ use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\LockInterface;
 
 class SequentialProcessQueueCommand extends AbstractCommand
 {
@@ -33,6 +35,11 @@ class SequentialProcessQueueCommand extends AbstractCommand
      * @var QueueService
      */
     protected $queueService;
+
+    /**
+     * @var LockInterface|null
+     */
+    private $lock;
 
     public function __construct(ImportProcessingService $importProcessingService, QueueService $queueService)
     {
@@ -51,6 +58,12 @@ class SequentialProcessQueueCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+
+        if (!$this->lock()) {
+            $this->writeError('The command is already running.');
+            exit(1);
+        }
+
         $itemIds = $this->queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
         $itemCount = count($itemIds);
 
@@ -66,8 +79,42 @@ class SequentialProcessQueueCommand extends AbstractCommand
 
         $progressBar->finish();
 
+        $this->release(); //release the lock
+
         $output->writeln("\n\nProcessed {$itemCount} items.");
 
         return 0;
     }
+
+    /**
+     * Locks the command.
+     *
+     * @param bool|null $blocking
+     *
+     * @return bool
+     */
+    private function lock(): bool
+    {
+        $this->lock = \Pimcore::getContainer()->get(LockFactory::class)->createLock($this->getName(), 86400);
+
+        if (!$this->lock->acquire(false)) {
+            $this->lock = null;
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Releases the command lock if there is one.
+     */
+    private function release()
+    {
+        if ($this->lock) {
+            $this->lock->release();
+            $this->lock = null;
+        }
+    }
+
 }
