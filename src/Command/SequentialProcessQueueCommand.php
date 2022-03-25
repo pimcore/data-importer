@@ -89,8 +89,6 @@ class SequentialProcessQueueCommand extends AbstractCommand
     /**
      * Locks the command.
      *
-     * @param bool|null $blocking
-     *
      * @return bool
      */
     private function lock(): bool
