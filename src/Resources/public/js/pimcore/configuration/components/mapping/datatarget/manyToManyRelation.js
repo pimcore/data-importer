@@ -32,7 +32,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             this.validTransformationResultType = this.isTransformationResultTypeValid(this.initContext.mappingConfigItemContainer.currentDataValues.transformationResultType);
 
             const errorField = Ext.create('Ext.form.Label', {
-                html: t('plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type_error'),
+                html: '<p>' + t('plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type_error') + '</p>',
                 style: 'color: #cf4c35'
             });
 
