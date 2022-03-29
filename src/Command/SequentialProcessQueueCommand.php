@@ -58,7 +58,6 @@ class SequentialProcessQueueCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-
         if (!$this->lock()) {
             $this->writeError('The command is already running.');
             exit(1);
@@ -114,5 +113,4 @@ class SequentialProcessQueueCommand extends AbstractCommand
             $this->lock = null;
         }
     }
-
 }
