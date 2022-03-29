@@ -86,7 +86,7 @@ class QuantityValue extends AbstractOperator
         }
 
         $value = $value ?? null;
-        if ($value === null || $value === '') {
+        if (($value === null || $value === '') && $unitId === null) {
             return null;
         }
 
