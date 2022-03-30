@@ -105,7 +105,7 @@ class QueueService
                 [$executionType]
             );
 
-            return is_array($results)? $results : [];
+            return is_array($results) ? $results : [];
         } catch (TableNotFoundException $exception) {
             return $this->createQueueTableIfNotExisting(function () use ($executionType, $limit) {
                 $this->getAllQueueEntryIds($executionType, $limit);
