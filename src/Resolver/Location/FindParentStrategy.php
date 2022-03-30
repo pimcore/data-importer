@@ -119,7 +119,10 @@ class FindParentStrategy implements LocationStrategyInterface
                     $newParent = $this->dataObjectLoader->loadByAttribute($className,
                                                                         $this->attributeName,
                                                                         $identifier,
-                                                                        $this->attributeLanguage);
+                                                                        $this->attributeLanguage,
+                                                                        false,
+                                                                        1
+                    );
                     break;
             }
         }
