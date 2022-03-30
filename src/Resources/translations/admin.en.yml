@@ -188,3 +188,5 @@ plugin_pimcore_datahub_data_importer_configpanel_execution_datetime: Date &amp; 
 plugin_pimcore_datahub_data_importer_configpanel_execution_status_error: Wrong format please use, DD-MM-YYYY HH:MM
 plugin_pimcore_datahub_data_importer_configpanel_execution_date_format: Date &amp; Time formatted as DD-MM-YYYY HH:MM
 plugin_pimcore_datahub_data_importer_configpanel_logs: Import Logs
+plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type_error: Type not supported for Many To Many Relation assignment.
+plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type: Make sure transformation results in a 'dataObjectArray' or an 'assetArray'.
