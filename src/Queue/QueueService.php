@@ -105,7 +105,7 @@ class QueueService
                 [$executionType]
             );
 
-            return is_array($results) ? $results : [];
+            return $results ?? []; // @phpstan-ignore-line
         } catch (TableNotFoundException $exception) {
             return $this->createQueueTableIfNotExisting(function () use ($executionType, $limit) {
                 $this->getAllQueueEntryIds($executionType, $limit);
