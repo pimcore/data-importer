@@ -34,10 +34,17 @@ class ImportAsset extends AbstractOperator
      */
     protected $useExisting;
 
+    /**
+     * @var string
+     */
+    protected $pregMatch;
+
+
     public function setSettings(array $settings): void
     {
         $this->parentFolderPath = $settings['parentFolder'] ?? '/';
         $this->useExisting = $settings['useExisting'] ?? false;
+        $this->pregMatch = $settings['pregMatch'] ?? '';
     }
 
     public function process($inputData, bool $dryRun = false)
@@ -59,7 +66,22 @@ class ImportAsset extends AbstractOperator
 
             $filename = Service::getValidKey(basename($fileUrl), 'asset');
 
-            $asset = null;
+            if(!empty($this->pregMatch)){
+                $matches = [];
+                preg_match($this->pregMatch, $filename,$matches);
+
+                if($matches !== []){
+                    // Remove the first element since it is the whole matched string
+                    // and not the matched sub pattern
+                    array_shift($matches);
+                    $filename = implode('-', $matches);
+
+                }
+
+            }
+
+
+                $asset = null;
             if ($this->useExisting) {
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }
