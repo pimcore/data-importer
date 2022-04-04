@@ -39,7 +39,6 @@ class ImportAsset extends AbstractOperator
      */
     protected $pregMatch;
 
-
     public function setSettings(array $settings): void
     {
         $this->parentFolderPath = $settings['parentFolder'] ?? '/';
@@ -66,22 +65,19 @@ class ImportAsset extends AbstractOperator
 
             $filename = Service::getValidKey(basename($fileUrl), 'asset');
 
-            if(!empty($this->pregMatch)){
+            if (!empty($this->pregMatch)) {
                 $matches = [];
-                preg_match($this->pregMatch, $filename,$matches);
+                preg_match($this->pregMatch, $filename, $matches);
 
-                if($matches !== []){
+                if ($matches !== []) {
                     // Remove the first element since it is the whole matched string
                     // and not the matched sub pattern
                     array_shift($matches);
                     $filename = implode('-', $matches);
-
                 }
-
             }
 
-
-                $asset = null;
+            $asset = null;
             if ($this->useExisting) {
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }
