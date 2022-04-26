@@ -33,12 +33,18 @@ class QuantityValue extends AbstractOperator
     protected $staticUnitId;
 
     /**
+     * @var bool
+     */
+    protected $unitNullIfNoValue;
+
+    /**
      * @param array $settings
      */
     public function setSettings(array $settings): void
     {
         $this->unitSource = $settings['unitSourceSelect'] ?? 'id';
         $this->staticUnitId = $settings['staticUnitSelect'] ?? null;
+        $this->unitNullIfNoValue = (bool) ($settings['unitNullIfNoValueCheckbox'] ?? false);
     }
 
     /**
@@ -86,6 +92,9 @@ class QuantityValue extends AbstractOperator
         }
 
         $value = $value ?? null;
+        if (($value === null || $value === '') && $this->unitNullIfNoValue) {
+            $unitId = null;
+        }
         if (($value === null || $value === '') && $unitId === null) {
             return null;
         }
