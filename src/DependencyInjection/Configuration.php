@@ -42,8 +42,8 @@ class Configuration implements ConfigurationInterface
                         ->defaultFalse()
                     ->end()
                     ->integerNode('worker_count_lifetime')
-                        ->defaultValue(60 * 60) //1 hour
-                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared. Default to 1 hour.')
+                        ->defaultValue(60 * 30) //30 minutes
+                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared. Default to 30 minutes.')
                     ->end()
                     ->integerNode('worker_item_count')
                         ->defaultValue(200)
