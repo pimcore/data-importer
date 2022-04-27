@@ -33,6 +33,10 @@ services:
         tags:
             - { name: kernel.event_listener, event: 'Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent', method: importPrepared }
 
+    Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask:
+        tags:
+            - { name: pimcore.maintenance.task, type: data_importer.restart_queue_workers }
+
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory: ~
 
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader:

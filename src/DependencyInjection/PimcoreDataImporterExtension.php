@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
+use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -48,6 +49,9 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
         $definition->setArgument('$workerCountParallel', $config['messenger_queue_processing']['worker_count_parallel']);
 
         $definition = $container->getDefinition(DataImporterListener::class);
+        $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+
+        $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
     }
 
