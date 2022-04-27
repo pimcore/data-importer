@@ -149,6 +149,16 @@ class ImportProcessingService
         $this->queueService->markQueueEntryAsProcessed($id);
     }
 
+    private function flattenArray(array $arr): array
+    {
+        $flattenedArray = [];
+        array_walk_recursive($arr, function ($item, $key) use (&$flattenedArray) {
+            $flattenedArray[$key] = $item;
+        });
+
+        return $flattenedArray;
+    }
+
     /**
      * @param string $configName
      * @param array $importDataRow
@@ -158,7 +168,7 @@ class ImportProcessingService
     protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping)
     {
         $element = null;
-        $importDataRowString = implode(', ', $importDataRow);
+        $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
         try {
             //resolve data object
             $createNew = true;
