@@ -10,3 +10,16 @@ flysystem:
             visibility: private
             options:
                 directory: '%kernel.project_dir%/var/tmp/datahub/dataimporter/preview'
+
+
+framework:
+
+    messenger:
+        transports:
+            pimcore_data_import:
+                dsn: 'doctrine://default'
+                options:
+                    queue_name: pimcore_data_import
+
+        routing:
+            'Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage': pimcore_data_import

@@ -34,10 +34,22 @@ class ImportAsset extends AbstractOperator
      */
     protected $useExisting;
 
+    /**
+     * @var bool
+     */
+    protected $overwriteExisting;
+
+    /**
+     * @var string
+     */
+    protected $pregMatch;
+
     public function setSettings(array $settings): void
     {
         $this->parentFolderPath = $settings['parentFolder'] ?? '/';
         $this->useExisting = $settings['useExisting'] ?? false;
+        $this->overwriteExisting = $settings['overwriteExisting'] ?? false;
+        $this->pregMatch = $settings['pregMatch'] ?? '';
     }
 
     public function process($inputData, bool $dryRun = false)
@@ -59,11 +71,23 @@ class ImportAsset extends AbstractOperator
 
             $filename = Service::getValidKey(basename($fileUrl), 'asset');
 
+            if (!empty($this->pregMatch)) {
+                $matches = [];
+                preg_match($this->pregMatch, $filename, $matches);
+
+                if ($matches !== []) {
+                    // Remove the first element since it is the whole matched string
+                    // and not the matched sub pattern
+                    array_shift($matches);
+                    $filename = implode('-', $matches);
+                }
+            }
+
             $asset = null;
             if ($this->useExisting) {
                 $asset = Asset::getByPath($this->parentFolderPath . '/' . $filename);
             }
-            if (empty($asset)) {
+            if ($this->overwriteExisting || $asset === null) {
                 $options = [
                     'http' => [
                         'method' => 'GET',
@@ -73,20 +97,30 @@ class ImportAsset extends AbstractOperator
                 $context = stream_context_create($options);
 
                 if ($assetData = @file_get_contents($fileUrl, false, $context)) {
-                    $parent = Asset\Service::createFolderByPath($this->parentFolderPath);
-                    $filename = $this->getSafeFilename($this->parentFolderPath, $filename);
+                    if ($asset === null) {
+                        $parent = Asset\Service::createFolderByPath($this->parentFolderPath);
+                        $filename = $this->getSafeFilename($this->parentFolderPath, $filename);
 
-                    $data = [
-                        'data' => $assetData,
-                        'key' => $filename,
-                        'filename' => $filename
-                    ];
-                    $asset = Asset::create($parent->getId(), $data, false);
+                        $data = [
+                            'data' => $assetData,
+                            'key' => $filename,
+                            'filename' => $filename
+                        ];
+                        $asset = Asset::create($parent->getId(), $data, false);
 
-                    if ($dryRun) {
-                        $asset->correctPath();
-                    } else {
-                        $asset->save();
+                        if ($dryRun) {
+                            $asset->correctPath();
+                        } else {
+                            $asset->save();
+                        }
+                    } elseif ($this->overwriteExisting && $asset->getData() !== $assetData) {
+                        $asset->setData($assetData);
+
+                        if ($dryRun) {
+                            $asset->correctPath();
+                        } else {
+                            $asset->save();
+                        }
                     }
                 } else {
                     $this->applicationLogger->error("Could not import asset data from `$fileUrl` ", [
@@ -95,7 +129,7 @@ class ImportAsset extends AbstractOperator
                 }
             }
 
-            if (!empty($asset)) {
+            if ($asset !== null) {
                 $assets[] = $asset;
             }
         }
@@ -118,7 +152,7 @@ class ImportAsset extends AbstractOperator
         $originalFileextension = empty($pathinfo['extension']) ? '' : '.' . $pathinfo['extension'];
         $count = 1;
 
-        if ($targetPath == '/') {
+        if ($targetPath === '/') {
             $targetPath = '';
         }
 
