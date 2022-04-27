@@ -2,8 +2,13 @@
 Thumbs.db
 *.log
 
-/.env
+# symfony default
+/.web-server-pid
+/app/config/parameters.yml
+/build/
 /phpunit.xml
+/web/bundles/
+/web/var/
 
 # PHP-CS-Fixer
 /.php_cs
@@ -11,9 +16,21 @@ Thumbs.db
 
 # composer
 /composer.lock
-!/vendor
-/vendor/*
-!/vendor/.gitkeep
 
 # PhpStorm / IDEA
 .idea
+
+
+# Test env
+/bin
+/cache
+/config
+/kernel
+/public
+/templates
+/var
+/vendor
+/.env
+/.htaccess
+/auth.json
+/config.json

@@ -284,7 +284,9 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
             $mappedColumns = [];
             foreach (($config['mappingConfig'] ?? []) as $mapping) {
-                $mappedColumns = array_merge($mappedColumns, ($mapping['dataSourceIndex'] ?? []));
+                if (isset($mapping['dataSourceIndex']) && is_array($mapping['dataSourceIndex'])) {
+                    $mappedColumns = array_merge($mappedColumns, $mapping['dataSourceIndex']);
+                }
             }
             $mappedColumns = array_unique($mappedColumns);
 
