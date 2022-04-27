@@ -67,9 +67,22 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
                 }.bind(this)
             }
         });
+
+        const unitNullIfNoValueCheckbox = Ext.create('Ext.form.Checkbox', {
+            xtype: "checkbox",
+            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_quantityValue_unit_null_if_no_value'),
+            allowBlank: true,
+            value: this.data.settings ? this.data.settings.unitNullIfNoValueCheckbox : false,
+            listeners: {
+                change: this.inputChangePreviewUpdate.bind(this),
+            },
+            name: "settings.unitNullIfNoValueCheckbox",
+        });
+
         return [
             unitSourceSelect,
-            staticUnitSelect
+            staticUnitSelect,
+            unitNullIfNoValueCheckbox
         ];
     }
 });

@@ -33,19 +33,25 @@ class QuantityValue extends AbstractOperator
     protected $staticUnitId;
 
     /**
+     * @var bool
+     */
+    protected $unitNullIfNoValue;
+
+    /**
      * @param array $settings
      */
     public function setSettings(array $settings): void
     {
         $this->unitSource = $settings['unitSourceSelect'] ?? 'id';
         $this->staticUnitId = $settings['staticUnitSelect'] ?? null;
+        $this->unitNullIfNoValue = (bool) ($settings['unitNullIfNoValueCheckbox'] ?? false);
     }
 
     /**
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return \Pimcore\Model\DataObject\Data\QuantityValue
+     * @return \Pimcore\Model\DataObject\Data\QuantityValue|null
      */
     public function process($inputData, bool $dryRun = false)
     {
@@ -61,7 +67,7 @@ class QuantityValue extends AbstractOperator
                             $unitId = $unit->getId();
                         }
                     }
-                    $value = $inputData[0];
+                    $value = $inputData[0] ?? null;
                 }
                 break;
 
@@ -73,19 +79,25 @@ class QuantityValue extends AbstractOperator
                             $unitId = $unit->getId();
                         }
                     }
-                    $value = $inputData[0];
+                    $value = $inputData[0] ?? null;
                 }
                 break;
 
             case 'static':
                 $value = $inputData;
                 if (is_array($inputData)) {
-                    $value = $inputData[0];
+                    $value = $inputData[0] ?? null;
                 }
                 $unitId = $this->staticUnitId;
         }
 
         $value = $value ?? null;
+        if (($value === null || $value === '') && $this->unitNullIfNoValue) {
+            $unitId = null;
+        }
+        if (($value === null || $value === '') && $unitId === null) {
+            return null;
+        }
 
         return new \Pimcore\Model\DataObject\Data\QuantityValue(
             $value === null ? null : floatval($value),
