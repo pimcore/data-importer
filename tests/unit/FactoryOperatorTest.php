@@ -266,6 +266,9 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $this->assertEquals('1', $result->getUnitId());
         $this->assertEquals('Meter', $result->getUnit()->getLongname());
 
+        $preview = $quantityValue->generateResultPreview($result);
+        $this->assertStringStartsWith('Quantity', $preview);
+
         $result = $quantityValue->process(['12']);
         $this->assertInstanceOf(QuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());
@@ -276,9 +279,11 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $this->assertNull($result->getValue());
         $this->assertEquals('1', $result->getUnitId());
 
-        $preview = $quantityValue->generateResultPreview($result);
-        $this->assertStringStartsWith('Quantity', $preview);
+        $result = $quantityValue->process([]);
+        $this->assertNull($result);
 
+        $result = $quantityValue->process(['', '']);
+        $this->assertNull($result);
 
         $quantityValue->setSettings(['unitSourceSelect' => 'abbr']);
 
@@ -297,11 +302,37 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $this->assertEquals('1', $result->getUnitId());
         $this->assertEquals('Meter', $result->getUnit()->getLongname());
 
-        $result = $quantityValue->process('12');
+        $result = $quantityValue->process(['12', '2']);
         $this->assertInstanceOf(QuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());
         $this->assertEquals('1', $result->getUnitId());
         $this->assertEquals('Meter', $result->getUnit()->getLongname());
+
+
+        $result = $quantityValue->process('12');
+        $this->assertInstanceOf(QuantityValue::class, $result);
+        $this->assertEquals('12', $result->getValue());
+        $this->assertEquals('1', $result->getUnitId());
+
+        $result = $quantityValue->process([]);
+        $this->assertInstanceOf(QuantityValue::class, $result);
+        $this->assertEquals('1', $result->getUnitId());
+
+
+        $quantityValue->setSettings(['unitSourceSelect' => 'abbr', 'unitNullIfNoValueCheckbox' => true]);
+        $result = $quantityValue->process([null, 'm']);
+        $this->assertNull($result);
+
+        $result = $quantityValue->process([]);
+        $this->assertNull($result);
+
+
+        $quantityValue->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => '1', 'unitNullIfNoValueCheckbox' => true]);
+        $result = $quantityValue->process([null, 'm']);
+        $this->assertNull($result);
+
+        $result = $quantityValue->process([]);
+        $this->assertNull($result);
 
         $unit->delete();
     }

@@ -67,7 +67,7 @@ class QuantityValue extends AbstractOperator
                             $unitId = $unit->getId();
                         }
                     }
-                    $value = $inputData[0];
+                    $value = $inputData[0] ?? null;
                 }
                 break;
 
@@ -79,14 +79,14 @@ class QuantityValue extends AbstractOperator
                             $unitId = $unit->getId();
                         }
                     }
-                    $value = $inputData[0];
+                    $value = $inputData[0] ?? null;
                 }
                 break;
 
             case 'static':
                 $value = $inputData;
                 if (is_array($inputData)) {
-                    $value = $inputData[0];
+                    $value = $inputData[0] ?? null;
                 }
                 $unitId = $this->staticUnitId;
         }
