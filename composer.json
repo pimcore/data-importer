@@ -3,7 +3,11 @@
   "license": "GPL-3.0+",
   "type": "pimcore-bundle",
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "preferred-install": {
+      "pimcore/pimcore": "source",
+      "*": "dist"
+    }
   },
   "require": {
     "php": "^8.0",
@@ -19,12 +23,25 @@
     "ext-fileinfo": "*"
   },
   "require-dev": {
-    "phpstan/phpstan": "^1.2"
+    "phpstan/phpstan": "^1.2",
+    "phpunit/phpunit": "^9.3",
+    "codeception/codeception": "^4.1.12",
+    "codeception/phpunit-wrapper": "^9",
+    "codeception/module-asserts": "^2",
+    "codeception/module-symfony":"^2"
   },
   "autoload": {
     "psr-4": {
       "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Pimcore\\Bundle\\DataImporterBundle\\Tests\\": "tests"
+    },
+    "files": [
+      "kernel/Kernel.php"
+    ]
   },
   "extra": {
     "pimcore": {
