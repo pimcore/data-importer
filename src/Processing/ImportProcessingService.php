@@ -149,11 +149,13 @@ class ImportProcessingService
         $this->queueService->markQueueEntryAsProcessed($id);
     }
 
-    private function flattenArray(array $arr): array {
+    private function flattenArray(array $arr): array
+    {
         $flattenedArray = [];
         array_walk_recursive($arr, function ($item, $key) use (&$flattenedArray) {
             $flattenedArray[$key] = $item;
         });
+
         return $flattenedArray;
     }
 
