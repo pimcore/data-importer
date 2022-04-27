@@ -21,7 +21,6 @@ use Pimcore\Maintenance\TaskInterface;
 
 class RestartQueueWorkersTask implements TaskInterface
 {
-
     public function __construct(
         protected DataImporterHandler $dataImporterHandler,
         protected bool $messengerQueueActivated
