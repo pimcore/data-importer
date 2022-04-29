@@ -18,8 +18,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Model\DataObject\Data\GeoCoordinates;
 use Pimcore\Model\DataObject\Data\Geobounds;
+use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
 class AsGeobounds extends AbstractOperator
 {
@@ -27,14 +27,16 @@ class AsGeobounds extends AbstractOperator
     {
         $northEast = new GeoCoordinates($inputData[0] ?? null, $inputData[1] ?? null);
         $southWest = new GeoCoordinates($inputData[2] ?? null, $inputData[3] ?? null);
+
         return new Geobounds($northEast, $southWest);
     }
 
     public function generateResultPreview($inputData)
     {
-        if($inputData instanceof Geobounds) {
-            return "NE: " . $inputData->getNorthEast() . " SW: " . $inputData->getSouthWest();
+        if ($inputData instanceof Geobounds) {
+            return 'NE: ' . $inputData->getNorthEast() . ' SW: ' . $inputData->getSouthWest();
         }
+
         return $inputData;
     }
 

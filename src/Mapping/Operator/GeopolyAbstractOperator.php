@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * Pimcore
  *
@@ -10,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator;
@@ -24,12 +23,11 @@ abstract class GeopolyAbstractOperator extends AbstractOperator
     {
         $data = [];
         $i = 0;
-        if(is_array($inputData)) {
-            foreach($inputData as $input) {
-                if(is_array($input)) {
+        if (is_array($inputData)) {
+            foreach ($inputData as $input) {
+                if (is_array($input)) {
                     $data[] = new GeoCoordinates($input[0], $input[1]);
-                }
-                else {
+                } else {
                     $coordinates[] = $input;
                     if (++$i % 2 === 0) {
                         $data[] = new GeoCoordinates($coordinates[0], $coordinates[1]);
@@ -38,19 +36,21 @@ abstract class GeopolyAbstractOperator extends AbstractOperator
                 }
             }
         }
+
         return $data;
     }
 
     public function generateResultPreview($inputData)
     {
         $preview = null;
-        if(is_array($inputData)) {
-            foreach($inputData as $key => $item) {
-                if($item instanceof GeoCoordinates) {
-                    $preview[$key] = "Lat.: " . $item->getLatitude() . " Long.: " . $item->getLongitude();
+        if (is_array($inputData)) {
+            foreach ($inputData as $key => $item) {
+                if ($item instanceof GeoCoordinates) {
+                    $preview[$key] = 'Lat.: ' . $item->getLatitude() . ' Long.: ' . $item->getLongitude();
                 }
             }
         }
+
         return $preview;
     }
 }
