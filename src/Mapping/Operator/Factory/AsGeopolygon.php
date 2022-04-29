@@ -16,46 +16,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\GeopolyAbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
-class AsGeopolygon extends AbstractOperator
+class AsGeopolygon extends GeopolyAbstractOperator
 {
-    public function process($inputData, bool $dryRun = false)
-    {
-        $data = [];
-        $i = 0;
-        if(is_array($inputData)) {
-            foreach($inputData as $input) {
-                if(is_array($input)) {
-                    $data[] = new GeoCoordinates($input[0], $input[1]);
-                }
-                else {
-                    $coordinates[] = $input;
-                    if (++$i % 2 === 0) {
-                        $data[] = new GeoCoordinates($coordinates[0], $coordinates[1]);
-                        $coordinates = null;
-                    }
-                }
-            }
-        }
-        return $data;
-    }
-
-    public function generateResultPreview($inputData)
-    {
-        $preview = null;
-        if(is_array($inputData)) {
-            foreach($inputData as $key => $item) {
-                if($item instanceof GeoCoordinates) {
-                    $preview[$key] = "Lat.: " . $item->getLatitude() . " Long.:" . $item->getLongitude();
-                }
-            }
-        }
-        return $preview;
-    }
-
     /**
      * @param string $inputType
      * @param int|null $index
