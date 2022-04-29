@@ -22,8 +22,7 @@ services:
             PIMCORE_TEST: 1
             PIMCORE_TEST_DB_DSN: "mysql://pimcore:pimcore@db:3306/pimcore_test"
         depends_on:
-            - db
-            - elastic
+            - db            
         volumes:
             - ../../.:/var/www/html
             - /var/www/html/vendor
