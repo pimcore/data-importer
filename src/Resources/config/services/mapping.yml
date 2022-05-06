@@ -101,6 +101,22 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "asArray" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopoint:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asGeopoint" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeobounds:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asGeobounds" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopolygon:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asGeopolygon" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopolyline:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asGeopolyline" }
+
     # ---------------------
     # data target services
     # ---------------------
