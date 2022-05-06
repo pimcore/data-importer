@@ -38,6 +38,10 @@ class TransformationDataTypeService
     const DATA_OBJECT_ARRAY = 'dataObjectArray';
     const ADVANCED_DATA_OBJECT_ARRAY = 'advancedDataObjectArray';
     const ADVANCED_ASSET_ARRAY = 'advancedAssetArray';
+    const GEOPOINT_VALUE = 'geoPoint';
+    const GEOBOUNDS_VALUE = 'geoBounds';
+    const GEOPOLYGON_VALUE = 'geoPolygon';
+    const GEOPOLYLINE_VALUE = 'geoPolyline';
 
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -108,6 +112,18 @@ class TransformationDataTypeService
             'advancedManyToManyRelation',
             'manyToManyObjectRelation',
             'advancedManyToManyObjectRelation'
+        ],
+        self::GEOPOINT_VALUE => [
+            'geopoint'
+        ],
+        self::GEOBOUNDS_VALUE => [
+            'geobounds'
+        ],
+        self::GEOPOLYGON_VALUE => [
+            'geopolygon'
+        ],
+        self::GEOPOLYLINE_VALUE => [
+            'geopolyline'
         ]
     ];
 
