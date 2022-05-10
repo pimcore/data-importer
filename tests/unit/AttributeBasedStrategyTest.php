@@ -18,6 +18,9 @@ class AttributeBasedStrategyTest extends \Codeception\Test\Unit
         ];
     }
 
+    /**
+     * @dataProvider provideIndexes
+     */
     public function testDataSourceIndex(mixed $index): void
     {
         $config = ['dataSourceIndex' => $index];
