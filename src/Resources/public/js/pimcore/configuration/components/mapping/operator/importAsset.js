@@ -17,6 +17,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
     //TODO
     type: 'importAsset',
 
+    getMenuGroup: function() {
+        return this.menuGroups.loadImport;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_asset pimcore_icon_overlay_upload";
+    },
+
     getFormItems: function() {
 
         this.parentFolder = Ext.create('Ext.form.TextField', {

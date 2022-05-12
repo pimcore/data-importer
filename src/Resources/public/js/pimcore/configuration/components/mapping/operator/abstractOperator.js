@@ -15,6 +15,21 @@ pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.compo
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator = Class.create({
 
     type: 'abstract',
+    menuGroup: '',
+    menuGroups: {
+        dataTypes: {
+            text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_data_types'),
+            icon: "pimcore_icon_reload"
+        },
+        loadImport: {
+            text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_load_import'),
+            icon: "pimcore_icon_import"
+        },
+        dataManipulation: {
+            text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_data_manipulation'),
+            icon: "pimcore_icon_log_admin"
+        },
+    },
 
     data: {},
     container: null,
@@ -89,6 +104,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstra
         let values = this.form.getValues();
         values.type = this.type;
         return values;
+    },
+
+    getMenuGroup: function() {
+        return null;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_add";
     },
 
     executeTransformationResultCallbacks: function() {

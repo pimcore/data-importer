@@ -14,6 +14,14 @@
 pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.numeric");
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.numeric = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'numeric'
+    type: 'numeric',
+
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_data_group_numeric";
+    },
 
 });

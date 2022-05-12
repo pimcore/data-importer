@@ -14,6 +14,12 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeobounds');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeobounds = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'asGeobounds'
+    type: 'asGeobounds',
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
 
+    getIconClass: function() {
+        return "pimcore_icon_geobounds";
+    },
 });

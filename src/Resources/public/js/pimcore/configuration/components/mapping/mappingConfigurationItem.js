@@ -17,22 +17,22 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
     configItemRootContainer: null,
     transformationPipelineItems: [],
 
-    initialize: function(data, configItemRootContainer, transformationResultHandler) {
+    initialize: function (data, configItemRootContainer, transformationResultHandler) {
         this.data = data || [];
 
         this.configItemRootContainer = configItemRootContainer;
         this.transformationResultHandler = transformationResultHandler;
     },
 
-    buildMappingConfigurationItem: function() {
+    buildMappingConfigurationItem: function () {
 
         let data = this.data;
 
-        if(!this.form) {
+        if (!this.form) {
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 bodyStyle: 'padding:10px;',
                 title: data.label,
-                collapsed : true,
+                collapsed: true,
                 collapsible: true,
                 titleCollapse: true,
                 hideCollapseTool: true,
@@ -45,7 +45,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                 tools: [{
                     type: 'close',
                     cls: 'plugin_pimcore_datahub_icon_mapping_remove',
-                    handler: function(owner, tool, event) {
+                    handler: function (owner, tool, event) {
                         const ownerContainer = event.container.component.ownerCt;
                         ownerContainer.remove(event.container.component, true);
                         ownerContainer.updateLayout();
@@ -65,7 +65,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                 name: 'transformationResultType',
                 hidden: true,
                 listeners: {
-                    change: function(field, newValue, oldValue) {
+                    change: function (field, newValue, oldValue) {
                         transformationResultTypeLabel.setHtml(newValue);
                         this.form.currentDataValues.transformationResultType = newValue;
                         this.form.fireEvent(
@@ -93,11 +93,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                     name: 'label',
                     value: data.label,
                     listeners: {
-                        change: function(field, newValue, oldValue) {
+                        change: function (field, newValue, oldValue) {
                             this.form.setTitle(newValue);
                         }.bind(this)
                     }
-                },{
+                }, {
                     xtype: 'tagfield',
                     name: 'dataSourceIndex',
                     value: data.dataSourceIndex,
@@ -113,7 +113,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                     allowBlank: false,
                     msgTarget: 'under',
                     listeners: {
-                        change: function() {
+                        change: function () {
                             this.recalculateTransformationResultType();
                             this.updateTransformationResultPreview();
                         }.bind(this),
@@ -124,7 +124,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                     xtype: 'fieldset',
                     title: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline'),
                     collapsible: true,
-                    collapsed:  true,
+                    collapsed: true,
                     items: [
                         this.transformationPipeline
                     ]
@@ -140,7 +140,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
                         items: [
                             transformationResultTypeLabel
                         ]
-                    },{
+                    }, {
                         xtype: 'fieldcontainer',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_result_preview'),
                         layout: 'hbox',
@@ -187,13 +187,16 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         return this.form;
     },
 
-    buildTransformationPipeline: function(data) {
+    buildTransformationPipeline: function (data) {
         data = data || [];
 
         var transformationPipelineContainer = Ext.create('Ext.Panel', {});
 
         //TODO make that once globally, and not per mapping item?
-        let addMenu = [];
+        let addMenu = new Ext.menu.Menu();
+
+        let subMenus = {};
+        let menuItemsWithoutGroup = [];
         const itemTypes = Object.keys(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator);
         itemTypes.sort((item1, item2) => {
             const str1 = t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + item1);
@@ -202,15 +205,47 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         });
 
         for (let i = 0; i < itemTypes.length; i++) {
-            addMenu.push({
-                iconCls: 'pimcore_icon_add',
-                handler: function() {
-                    this.addTransformationPipelineItem(itemTypes[i], {}, transformationPipelineContainer);
-                    this.recalculateTransformationResultType();
-                    this.updateTransformationResultPreview();
-                }.bind(this),
-                text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + itemTypes[i])
-            });
+            const menuGroup = pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator[itemTypes[i]].prototype.getMenuGroup();
+            const iconClass = pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator[itemTypes[i]].prototype.getIconClass();
+            if (menuGroup) {
+                if (!subMenus[menuGroup.text]) {
+                    subMenus[menuGroup.text] = [];
+                    subMenus[menuGroup.text]['icon'] = menuGroup.icon;
+                }
+
+                subMenus[menuGroup.text].push({
+                    iconCls: iconClass,
+                    handler: function () {
+                        this.addTransformationPipelineItem(itemTypes[i], {}, transformationPipelineContainer);
+                        this.recalculateTransformationResultType();
+                        this.updateTransformationResultPreview();
+                    }.bind(this),
+                    text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + itemTypes[i])
+                });
+            } else {
+                menuItemsWithoutGroup.push(new Ext.menu.Item({
+                    iconCls: iconClass,
+                    handler: function () {
+                        this.addTransformationPipelineItem(itemTypes[i], {}, transformationPipelineContainer);
+                        this.recalculateTransformationResultType();
+                        this.updateTransformationResultPreview();
+                    }.bind(this),
+                    text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + itemTypes[i])
+                }));
+            }
+        }
+
+        for (let menuText in subMenus) {
+            addMenu.add(new Ext.menu.Item({
+                text: menuText,
+                iconCls: subMenus[menuText]['icon'],
+                menu: subMenus[menuText],
+                hideOnClick: false
+            }));
+        }
+
+        for (let menuIndex in menuItemsWithoutGroup) {
+            addMenu.add(menuItemsWithoutGroup[menuIndex]);
         }
 
         transformationPipelineContainer.addDocked({
@@ -225,7 +260,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
             ]
         });
 
-        data.forEach(function(item) {
+        data.forEach(function (item) {
             this.addTransformationPipelineItem(item.type, item, transformationPipelineContainer);
         }.bind(this));
 
@@ -233,14 +268,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
 
     },
 
-    addTransformationPipelineItem: function(type, data, container) {
+    addTransformationPipelineItem: function (type, data, container) {
         const item = new pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator[type](
             data, container, this.recalculateTransformationResultType.bind(this), this.updateTransformationResultPreview.bind(this)
         );
         container.add(item.buildTransformationPipelineItem());
     },
 
-    recalculateTransformationResultType: function() {
+    recalculateTransformationResultType: function () {
         const currentConfig = Ext.encode(this.getValues());
         Ext.Ajax.request({
             url: Routing.generate('pimcore_dataimporter_configdataobject_calculatetransformationresulttype'),
@@ -257,21 +292,21 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         });
     },
 
-    updateTransformationResultPreview: function() {
+    updateTransformationResultPreview: function () {
         this.transformationResultHandler.updateData(false, this.doUpdateTransformationResultPreview.bind(this));
     },
 
-    doUpdateTransformationResultPreview: function() {
-        if(this.form.ownerCt && this.form.ownerCt.items) {
+    doUpdateTransformationResultPreview: function () {
+        if (this.form.ownerCt && this.form.ownerCt.items) {
             const mappingIndex = this.form.ownerCt.items.items.indexOf(this.form);
             const transformationResultPreview = this.transformationResultHandler.getTransformationResultPreview(mappingIndex);
             this.transformationResultPreviewLabel.setHtml(transformationResultPreview);
         }
     },
 
-    updateValidationState: function() {
+    updateValidationState: function () {
         try {
-            if(this.form.isValid()) {
+            if (this.form.isValid()) {
                 this.form.setIconCls('');
             } else {
                 this.form.setIconCls('pimcore_icon_warning');
@@ -281,11 +316,11 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.mappin
         }
     },
 
-    getValues: function() {
+    getValues: function () {
         let values = this.form.getValues();
 
         let transformationPipelineData = [];
-        this.transformationPipeline.items.items.forEach(function(pipelineItem) {
+        this.transformationPipeline.items.items.forEach(function (pipelineItem) {
             transformationPipelineData.push(pipelineItem.operatorImplementation.getValues());
         });
         values.transformationPipeline = transformationPipelineData;

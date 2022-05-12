@@ -14,6 +14,13 @@
 pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.inputQuantityValueArray");
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.inputQuantityValueArray = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'inputQuantityValueArray'
+    type: 'inputQuantityValueArray',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_inputQuantityValue";
+    },
 });

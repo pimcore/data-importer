@@ -16,6 +16,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
 
     type: 'date',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_date";
+    },
+
     getFormItems: function() {
         return [
             {

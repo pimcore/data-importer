@@ -17,6 +17,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
     type: 'loadDataObject',
     dataApplied: false,
 
+    getMenuGroup: function() {
+        return this.menuGroups.loadImport;
+    },
+
+    getIconClass: function() {
+        return "pimcore_nav_icon_object pimcore_icon_overlay_add";
+    },
 
     setLanguageVisibility: function(attributeStore, attributeSelection, languageSelection) {
         const record = attributeStore.findRecord('key', attributeSelection.getValue());

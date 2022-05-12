@@ -14,6 +14,12 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeopolygon');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeopolygon = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'asGeopolygon'
+    type: 'asGeopolygon',
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
 
+    getIconClass: function() {
+        return "pimcore_icon_geopolygon";
+    },
 });

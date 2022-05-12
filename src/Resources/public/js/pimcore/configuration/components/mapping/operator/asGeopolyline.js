@@ -14,6 +14,12 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeopolyline');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeopolyline = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'asGeopolyline'
+    type: 'asGeopolyline',
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
 
+    getIconClass: function() {
+        return "pimcore_icon_geopolyline";
+    },
 });

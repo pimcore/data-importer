@@ -14,6 +14,9 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.flattenArray');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.flattenArray = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'flattenArray'
+    type: 'flattenArray',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataManipulation;
+    },
 });

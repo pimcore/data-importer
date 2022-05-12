@@ -14,6 +14,9 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.reduceArrayKeyValuePairs');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.reduceArrayKeyValuePairs = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'reduceArrayKeyValuePairs'
+    type: 'reduceArrayKeyValuePairs',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataManipulation;
+    },
 });
