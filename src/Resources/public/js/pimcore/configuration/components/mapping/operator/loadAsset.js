@@ -16,6 +16,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
 
     type: 'loadAsset',
 
+    getMenuGroup: function() {
+        return this.menuGroups.loadImport;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_asset pimcore_icon_overlay_add";
+    },
+
     getFormItems: function() {
         return [
             {

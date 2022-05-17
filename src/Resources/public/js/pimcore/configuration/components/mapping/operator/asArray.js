@@ -14,6 +14,9 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asArray');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asArray = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'asArray'
+    type: 'asArray',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    }
 });

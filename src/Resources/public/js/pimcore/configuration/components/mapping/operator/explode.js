@@ -16,6 +16,14 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
 
     type: 'explode',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataManipulation;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_operator_splitter";
+    },
+
     getFormItems: function() {
         return [
             {

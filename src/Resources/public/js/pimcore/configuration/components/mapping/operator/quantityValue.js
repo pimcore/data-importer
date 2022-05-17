@@ -15,6 +15,15 @@ pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.compo
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.quantityValue = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
     type: 'quantityValue',
+
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_quantityValue";
+    },
+
     getFormItems: function () {
         this.data.settings = this.data.settings || {};
 

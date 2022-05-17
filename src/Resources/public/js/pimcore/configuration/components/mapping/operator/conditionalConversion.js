@@ -16,6 +16,10 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
 
     type: 'conditionalConversion',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataManipulation;
+    },
+
     getFormItems: function() {
         return [
             {

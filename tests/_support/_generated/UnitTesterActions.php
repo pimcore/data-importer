@@ -12,7 +12,7 @@ trait UnitTesterActions
      */
     abstract protected function getScenario();
 
-    
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -23,7 +23,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('getPimcoreModule', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -34,7 +34,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('getKernel', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -45,7 +45,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('getContainer', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -56,7 +56,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setAdminMode', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -67,7 +67,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('unsetAdminMode', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -88,7 +88,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('makeHtmlSnapshot', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -99,7 +99,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Condition('amHttpAuthenticated', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -132,7 +132,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('haveHttpHeader', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -156,7 +156,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('deleteHeader', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -177,7 +177,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Condition('amOnPage', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -216,7 +216,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('click', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -293,7 +293,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('see', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -366,7 +366,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSee', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -403,7 +403,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInSource', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -440,7 +440,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeInSource', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -483,7 +483,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeLink', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -526,7 +526,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeLink', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -569,7 +569,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInCurrentUrl', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -606,7 +606,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeInCurrentUrl', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -647,7 +647,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCurrentUrlEquals', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -688,7 +688,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeCurrentUrlEquals', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -727,7 +727,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCurrentUrlMatches', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -766,7 +766,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeCurrentUrlMatches', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -789,7 +789,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabFromCurrentUrl', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -830,7 +830,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCheckboxIsChecked', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -869,7 +869,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeCheckboxIsChecked', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -920,7 +920,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInField', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -971,7 +971,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeInField', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1108,7 +1108,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInFormFields', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1205,7 +1205,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeInFormFields', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1389,7 +1389,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('submitForm', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1410,7 +1410,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('fillField', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1449,7 +1449,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('selectOption', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1468,7 +1468,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('checkOption', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1487,7 +1487,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('uncheckOption', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1508,7 +1508,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('attachFile', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1520,7 +1520,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('sendAjaxGetRequest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1548,7 +1548,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('sendAjaxPostRequest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1565,7 +1565,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('sendAjaxRequest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1590,7 +1590,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabTextFrom', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1614,7 +1614,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabAttributeFrom', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1646,7 +1646,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabMultiple', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1671,7 +1671,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabValueFrom', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1695,7 +1695,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setCookie', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1713,7 +1713,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabCookie', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1727,7 +1727,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabPageSource', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1770,7 +1770,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCookie', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1803,7 +1803,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeCookie', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1820,7 +1820,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('resetCookie', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1875,7 +1875,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeElement', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1922,7 +1922,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeElement', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -1961,7 +1961,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeNumberOfElements', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2004,7 +2004,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeOptionIsSelected', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2047,7 +2047,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeOptionIsSelected', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2068,7 +2068,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seePageNotFound', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2105,7 +2105,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeResponseCodeIs', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2126,7 +2126,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeResponseCodeIsBetween', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2163,7 +2163,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeResponseCodeIs', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2184,7 +2184,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeResponseCodeIsSuccessful', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2205,7 +2205,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeResponseCodeIsRedirection', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2226,7 +2226,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeResponseCodeIsClientError', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2247,7 +2247,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeResponseCodeIsServerError', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2288,7 +2288,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInTitle', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2317,7 +2317,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeInTitle', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2339,7 +2339,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('switchToIframe', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2352,7 +2352,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('moveBack', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2368,7 +2368,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('setServerParameters', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2383,7 +2383,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('haveServerParameter', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2399,7 +2399,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('stopFollowingRedirects', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2415,7 +2415,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('startFollowingRedirects', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2431,7 +2431,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('followRedirect', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2447,7 +2447,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('setMaxRedirects', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2471,7 +2471,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('rebootClientKernel', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2514,7 +2514,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seePageIsAvailable', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2551,7 +2551,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seePageRedirectsTo', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2576,7 +2576,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('submitSymfonyForm', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2599,7 +2599,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('runSymfonyConsoleCommand', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2620,7 +2620,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabNumRecords', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2643,7 +2643,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabRepository', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2686,7 +2686,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeNumRecords', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2735,7 +2735,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeOrphanEvent', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2774,7 +2774,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeEventTriggered', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2821,7 +2821,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeOrphanEvent', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2860,7 +2860,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeEventTriggered', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2891,7 +2891,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeFormErrors', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -2932,7 +2932,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeFormErrorMessage', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3033,7 +3033,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeFormErrorMessages', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3064,7 +3064,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeFormHasErrors', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3091,7 +3091,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeEmailIsSent', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3132,7 +3132,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeEmailIsSent', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3156,7 +3156,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabLastSentEmail', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3178,7 +3178,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabSentEmails', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3196,7 +3196,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailAddressContains', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3213,7 +3213,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailAttachmentCount', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3230,7 +3230,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailHasHeader', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3248,7 +3248,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailHeaderNotSame', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3266,7 +3266,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailHeaderSame', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3283,7 +3283,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailHtmlBodyContains', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3300,7 +3300,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailHtmlBodyNotContains', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3317,7 +3317,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailNotHasHeader', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3334,7 +3334,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailTextBodyContains', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3351,7 +3351,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('assertEmailTextBodyNotContains', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3370,7 +3370,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabParameter', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3391,7 +3391,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Condition('amOnAction', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3411,7 +3411,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Condition('amOnRoute', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3422,7 +3422,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('invalidateCachedRouter', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3459,7 +3459,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCurrentActionIs', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3498,7 +3498,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCurrentRouteIs', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3535,7 +3535,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInCurrentRoute', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3566,7 +3566,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeAuthentication', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3597,7 +3597,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeRememberedAuthentication', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3628,7 +3628,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeAuthentication', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3659,7 +3659,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeRememberedAuthentication', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3694,7 +3694,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeUserHasRole', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3729,7 +3729,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeUserHasRoles', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3772,7 +3772,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeUserPasswordDoesNotNeedRehash', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3783,7 +3783,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('grabService', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3797,7 +3797,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('persistService', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3812,7 +3812,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('persistPermanentService', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3826,7 +3826,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('unpersistService', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3851,7 +3851,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Condition('amLoggedInAs', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3890,7 +3890,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeInSession', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3904,7 +3904,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('goToLogoutPath', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3920,7 +3920,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('logout', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3937,7 +3937,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\Action('logoutProgrammatically', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -3976,7 +3976,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeInSession', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4013,7 +4013,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeSessionHasValues', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4056,7 +4056,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeRequestTimeIsLessThan', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4091,7 +4091,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('dontSeeRenderedTemplate', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4126,7 +4126,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeCurrentTemplateIs', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4165,7 +4165,7 @@ trait UnitTesterActions
         $this->getScenario()->runStep(new \Codeception\Step\ConditionalAssertion('seeRenderedTemplate', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4176,7 +4176,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('initializeDefinitions', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4193,7 +4193,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_Csstore', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4211,7 +4211,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_LazyLoading', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4229,7 +4229,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_RelationTest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4247,7 +4247,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_MultipleAssignments', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4265,7 +4265,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_Block', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4283,7 +4283,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_Link', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4301,7 +4301,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_Unittest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4319,7 +4319,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupPimcoreClass_Inheritance', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4337,7 +4337,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupFieldcollection_Unittestfieldcollection', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4355,7 +4355,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupFieldcollection_LazyLoadingTest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4373,7 +4373,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupFieldcollection_LazyLoadingLocalizedTest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4391,7 +4391,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupObjectbrick_LazyLoadingTest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4409,7 +4409,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupObjectbrick_LazyLoadingLocalizedTest', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4427,7 +4427,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupObjectbrick_UnittestBrick', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4438,7 +4438,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupUnitDefinitions', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *
@@ -4449,7 +4449,7 @@ trait UnitTesterActions
         return $this->getScenario()->runStep(new \Codeception\Step\Action('setupQuantityValueUnits', func_get_args()));
     }
 
- 
+
     /**
      * [!] Method is generated. Documentation taken from corresponding module.
      *

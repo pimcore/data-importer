@@ -14,6 +14,13 @@
 pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.gallery");
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.gallery = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'gallery'
+    type: 'gallery',
 
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_imageGallery";
+    },
 });

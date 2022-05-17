@@ -14,6 +14,12 @@
 pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.imageAdvanced");
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.imageAdvanced = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'imageAdvanced'
+    type: 'imageAdvanced',
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
 
+    getIconClass: function() {
+        return "pimcore_icon_hotspotimage";
+    },
 });

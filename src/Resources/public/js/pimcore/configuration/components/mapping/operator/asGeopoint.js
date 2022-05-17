@@ -14,6 +14,13 @@
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeopoint');
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.asGeopoint = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'asGeopoint'
+    type: 'asGeopoint',
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_geopoint";
+    },
 
 });

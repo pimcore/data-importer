@@ -14,6 +14,12 @@
 pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.boolean");
 pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operator.boolean = Class.create(pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator, {
 
-    type: 'boolean'
+    type: 'boolean',
+    getMenuGroup: function() {
+        return this.menuGroups.dataTypes;
+    },
 
+    getIconClass: function() {
+        return "pimcore_icon_booleanSelect";
+    },
 });
