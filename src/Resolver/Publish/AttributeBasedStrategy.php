@@ -27,11 +27,11 @@ class AttributeBasedStrategy implements PublishStrategyInterface
 
     public function setSettings(array $settings): void
     {
-        if (empty($settings['dataSourceIndex'])) {
+        if (($dsi = $settings['dataSourceIndex'] ?? null) === null) {
             throw new InvalidConfigurationException('Empty data source index.');
         }
 
-        $this->dataSourceIndex = $settings['dataSourceIndex'];
+        $this->dataSourceIndex = $dsi;
     }
 
     public function updatePublishState(ElementInterface $element, bool $justCreated, array $inputData): ElementInterface
