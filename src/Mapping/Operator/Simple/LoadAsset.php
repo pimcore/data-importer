@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ * @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
@@ -46,10 +46,13 @@ class LoadAsset extends ImportAsset
 
         foreach ($inputData as $data) {
             $asset = null;
+            $cleanData = trim($data);
             if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
-                $asset = Asset::getByPath(trim($data));
+                $asset = Asset::getByPath($cleanData);
             } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ID) {
-                $asset = Asset::getById(trim($data));
+                if (is_numeric($cleanData)) {
+                    $asset = Asset::getById((int)$cleanData);
+                }
             } else {
                 throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
             }

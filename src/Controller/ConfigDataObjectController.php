@@ -532,7 +532,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $keyId = $request->get('key_id');
         $keyParts = explode('-', $keyId);
         if (count($keyParts) == 2) {
-            $keyGroupRelation = DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId($keyParts[0], $keyParts[1]);
+            $keyGroupRelation = DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId((int)$keyParts[0], (int)$keyParts[1]);
             $group = DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId());
 
             if ($keyGroupRelation && $group) {

@@ -29,7 +29,7 @@ class ImageAdvanced extends AbstractOperator
             $inputData = reset($inputData);
         }
 
-        if ($inputData instanceof Asset) {
+        if ($inputData instanceof Asset\Image) {
             return new Hotspotimage($inputData);
         }
 

@@ -33,7 +33,7 @@ class Gallery extends AbstractOperator
         }
 
         foreach ($inputData as $asset) {
-            if ($asset instanceof Asset) {
+            if ($asset instanceof Asset\Image) {
                 $hotspotImage = new Hotspotimage($asset);
                 $items[] = $hotspotImage;
             }

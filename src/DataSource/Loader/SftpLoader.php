@@ -72,13 +72,17 @@ class SftpLoader implements DataLoaderInterface
             $this->remotePath
         );
 
+        if(!is_numeric($this->port)) {
+            throw new InvalidConfigurationException("The port must be a number");
+        }
+
         $connectionProvider = new SftpConnectionProvider(
             $this->host,
             $this->username,
             $this->password,
             null,
             null,
-            $this->port,
+            (int) $this->port,
             false,
             10
         );
