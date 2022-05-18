@@ -115,7 +115,7 @@ class ImportProcessingService
 
     public function processQueueItem(string $id)
     {
-        $id = intval($id);
+        $id = (int)$id;
 
         //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
