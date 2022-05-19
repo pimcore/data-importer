@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
@@ -21,11 +21,8 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class StringReplace extends AbstractOperator
 {
-
-
     protected string $search;
     protected string $replace;
-
 
     public function setSettings(array $settings): void
     {
@@ -42,9 +39,8 @@ class StringReplace extends AbstractOperator
         }
 
         foreach ($inputData as &$data) {
-            $data = str_replace( $this->search, $this->replace, $data);
+            $data = str_replace($this->search, $this->replace, $data);
         }
-
 
         if ($returnScalar) {
             if (!empty($inputData)) {
