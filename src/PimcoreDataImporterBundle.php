@@ -114,6 +114,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/flattenArray.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/staticText.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/conditionalConversion.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/stringReplace.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/execution.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/logTab.js',
         ];
