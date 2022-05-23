@@ -113,11 +113,9 @@ class ImportProcessingService
         $this->configLoader = new ConfigurationPreparationService();
     }
 
-    public function processQueueItem(string $id)
+    public function processQueueItem(int $id)
     {
-        $id = (int)$id;
-
-        //get queue item
+          //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
         if (empty($queueItem)) {
             return;
