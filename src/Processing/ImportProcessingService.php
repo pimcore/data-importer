@@ -115,7 +115,7 @@ class ImportProcessingService
 
     public function processQueueItem(int $id)
     {
-          //get queue item
+        //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
         if (empty($queueItem)) {
             return;
