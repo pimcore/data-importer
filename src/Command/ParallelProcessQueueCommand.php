@@ -79,6 +79,6 @@ class ParallelProcessQueueCommand extends AbstractCommand
      */
     protected function runSingleCommand(string $item, InputInterface $input, OutputInterface $output): void
     {
-        $this->importProcessingService->processQueueItem($item);
+        $this->importProcessingService->processQueueItem((int) $item);
     }
 }

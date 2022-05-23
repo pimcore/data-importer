@@ -59,7 +59,15 @@ class ClassificationstoreBatch implements DataTargetInterface
                         throw new InvalidInputException('Key not format <GROUP_ID>-<KEY_ID>: ' . $key);
                     }
 
-                    $classificationStore->setLocalizedKeyValue($keyParts[0], $keyParts[1], $value, $this->language);
+                    if (!is_numeric($keyParts[0])) {
+                        throw new \Exception('groupId not valid');
+                    }
+
+                    if (!is_numeric($keyParts[1])) {
+                        throw new \Exception('keyId not valid');
+                    }
+
+                    $classificationStore->setLocalizedKeyValue((int)$keyParts[0], (int)$keyParts[1], $value, $this->language);
                     $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$keyParts[0] => true]);
                 }
             }

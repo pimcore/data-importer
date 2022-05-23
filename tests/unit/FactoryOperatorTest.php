@@ -145,11 +145,11 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         /**
          * @var ImageGallery $result
          */
-        $result = $gallery->process(new Asset());
+        $result = $gallery->process(new Asset\Image());
         $this->assertInstanceOf(ImageGallery::class, $result);
         $this->assertEquals(1, count($result->getItems()));
 
-        $result = $gallery->process([new Asset(), new Asset()]);
+        $result = $gallery->process([new Asset\Image(), new Asset\Image()]);
         $this->assertInstanceOf(ImageGallery::class, $result);
         $this->assertEquals(2, count($result->getItems()));
 
