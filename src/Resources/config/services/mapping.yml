@@ -18,6 +18,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "trim" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StringReplace:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "stringReplace" }
+
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Explode:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "explode" }
