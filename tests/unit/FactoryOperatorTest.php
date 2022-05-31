@@ -106,8 +106,8 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $this->assertEquals($result->format('c'), $preview);
 
 
-        $date->setSettings(['format' => 'Y.m']);
-        $result = $date->process('2022.08');
+        $date->setSettings(['format' => 'Y.m.d']);
+        $result = $date->process('2022.08.01');
         $this->assertInstanceOf(Carbon::class, $result);
         $this->assertEquals(2022, $result->year);
         $this->assertEquals(8, $result->month);
@@ -115,7 +115,7 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $this->assertEquals($result->format('c'), $preview);
 
 
-        $dates = ['2022.08', '1950.09', '2250.12'];
+        $dates = ['2022.08.01', '1950.09.01', '2250.12.01'];
         $dateParts = [
             ['year' => 2022, 'month' => 8],
             ['year' => 1950, 'month' => 9],
