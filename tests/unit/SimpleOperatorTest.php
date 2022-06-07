@@ -46,4 +46,40 @@ class SimpleOperatorTest extends \Codeception\Test\Unit
         $service->setSettings(['search' => 'Test', 'replace' => 'Result']);
         $service->evaluateReturnType("boolean");
     }
+
+    public function testStringReplaceProcessFunctionWithZero() {
+        $service = $this->tester->grabService(StringReplace::class);
+        $service->setSettings(['search' => 'ObjectKey ', 'replace' => '']);
+        $data = $service->process("ObjectKey 0");
+
+        $this->assertEquals($data, "0");
+    }
+
+    public function testStringReplaceProcessFunctionWithZeroInArray() {
+        $service = $this->tester->grabService(StringReplace::class);
+        $service->setSettings(['search' => 'Test', 'replace' => 'Result']);
+        $data = $service->process(["Test", "Test 0", "0"]);
+
+        $this->assertEquals($data[0], "Result");
+        $this->assertEquals($data[1], "Result 0");
+        $this->assertEquals($data[2], "0");
+    }
+
+    public function testStringReplaceProcessFunctionWithEmpty() {
+        $service = $this->tester->grabService(StringReplace::class);
+        $service->setSettings(['search' => 'ObjectKey', 'replace' => '']);
+        $data = $service->process("ObjectKey");
+
+        $this->assertEquals($data, '');
+    }
+
+    public function testStringReplaceProcessFunctionWithEmptyInArray() {
+        $service = $this->tester->grabService(StringReplace::class);
+        $service->setSettings(['search' => 'Test', 'replace' => '']);
+        $data = $service->process(["Hello Test", "", "Test"]);
+
+        $this->assertEquals($data[0], "Hello ");
+        $this->assertEquals($data[1], "");
+        $this->assertEquals($data[2], "");
+    }
 }

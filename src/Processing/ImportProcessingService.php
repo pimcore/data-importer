@@ -331,10 +331,10 @@ class ImportProcessingService
             $data = $operator->generateResultPreview($data);
         }
 
-        if (empty($data)) {
-            return '-- EMPTY --';
-        } elseif (is_string($data)) {
+        if (is_string($data) && $data !== '') {
             return $data;
+        } elseif (empty($data)) {
+            return '-- EMPTY --';
         } elseif (is_array($data)) {
             $dataStrings = [];
             foreach ($data as $key => $dataEntry) {
