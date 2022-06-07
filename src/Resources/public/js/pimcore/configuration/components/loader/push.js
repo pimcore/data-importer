@@ -61,7 +61,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.push = 
                         xtype: 'fieldcontainer',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_push_endpoint'),
                         layout: 'hbox',
-                        width: 700,
+                        width: 1450,
                         items: [
                             {
                                 xtype: 'label',
