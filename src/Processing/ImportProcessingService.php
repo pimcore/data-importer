@@ -331,7 +331,7 @@ class ImportProcessingService
             $data = $operator->generateResultPreview($data);
         }
 
-       if (is_string($data) && $data !== '') {
+        if (is_string($data) && $data !== '') {
             return $data;
         } elseif (empty($data)) {
             return '-- EMPTY --';
