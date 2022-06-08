@@ -44,3 +44,4 @@ sources and applying the data to Pimcore data objects based on a configured mapp
 - [Import Execution Details](./doc/04_Import_Execution_Details.md)
 - [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md)
 - [Extending](./doc/06_Extending/README.md)
+- [Troubleshooting/FAQ](./doc/06_Troubleshooting_FAQ.md) 
