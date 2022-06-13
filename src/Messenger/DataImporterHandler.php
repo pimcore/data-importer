@@ -71,7 +71,7 @@ class DataImporterHandler
 
     private function addMessage(string $messageId, string $executionType)
     {
-        TmpStore::set(self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $messageId, true, self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType, 2000);
+        TmpStore::set(self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $messageId, true, self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType, $this->workerCountLifeTime);
     }
 
     private function removeMessage(string $messageId)
