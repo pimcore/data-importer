@@ -69,7 +69,6 @@ class DataImporterHandler
         }
     }
 
-
     private function addMessage(string $messageId, string $executionType)
     {
         TmpStore::set(self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $messageId, true, self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType, 2000);
