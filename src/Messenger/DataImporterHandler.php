@@ -24,7 +24,7 @@ class DataImporterHandler
 {
     const IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX = 'DATA-IMPORTER::worker-count::';
 
-    protected $workerCounts = [
+    protected array $workerCounts = [
         ImportProcessingService::EXECUTION_TYPE_PARALLEL => 3,
         ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL => 1,
     ];
@@ -46,30 +46,48 @@ class DataImporterHandler
             $this->importProcessingService->processQueueItem($id);
         }
 
-        $tmpStoreKey = self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $message->getExecutionType();
-        $workerCount = TmpStore::get($tmpStoreKey)?->getData() ?? 0;
-        $workerCount--;
-        TmpStore::set($tmpStoreKey, $workerCount, null, $this->workerCountLifeTime);
-
+        $this->removeMessage($message->getMessageId());
         $this->dispatchMessages($message->getExecutionType());
     }
 
     public function dispatchMessages(string $executionType)
     {
-        $tmpStoreKey = self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType;
-
-        $workerCount = TmpStore::get($tmpStoreKey)?->getData() ?? 0;
+        $dispatchedMessageCount = $this->getMessageCount($executionType);
 
         $addWorkers = true;
-        while ($addWorkers && $workerCount < ($this->workerCounts[$executionType] ?? 1)) {
+        while ($addWorkers && $dispatchedMessageCount < ($this->workerCounts[$executionType] ?? 1)) {
             $ids = $this->queueService->getAllQueueEntryIds($executionType, $this->workerItemCount, true);
             if (!empty($ids)) {
-                $this->messageBus->dispatch(new DataImporterMessage($executionType, $ids));
-                $workerCount++;
-                TmpStore::set($tmpStoreKey, $workerCount, null, $this->workerCountLifeTime);
+                $messageId = uniqid();
+                $this->messageBus->dispatch(new DataImporterMessage($executionType, $ids, $messageId));
+
+                $this->addMessage($messageId, $executionType);
+                $dispatchedMessageCount = $this->getMessageCount($executionType);
             } else {
                 $addWorkers = false;
             }
         }
+    }
+
+
+    private function addMessage(string $messageId, string $executionType)
+    {
+        TmpStore::set(self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $messageId, true, self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType, 2000);
+    }
+
+    private function removeMessage(string $messageId)
+    {
+        TmpStore::delete(self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $messageId);
+    }
+
+    private function getMessageCount(string $executionType): int
+    {
+        $ids = TmpStore::getIdsByTag(self::IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX . $executionType);
+        $runningWorkers = [];
+        foreach ($ids as $id) {
+            $runningWorkers[] = TmpStore::get($id);
+        }
+
+        return count(array_filter($runningWorkers));
     }
 }
