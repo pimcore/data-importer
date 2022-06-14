@@ -59,9 +59,9 @@ class DataImporterHandler
             $ids = $this->queueService->getAllQueueEntryIds($executionType, $this->workerItemCount, true);
             if (!empty($ids)) {
                 $messageId = uniqid();
-                $this->messageBus->dispatch(new DataImporterMessage($executionType, $ids, $messageId));
 
                 $this->addMessage($messageId, $executionType);
+                $this->messageBus->dispatch(new DataImporterMessage($executionType, $ids, $messageId));
                 $dispatchedMessageCount = $this->getMessageCount($executionType);
             } else {
                 $addWorkers = false;
