@@ -17,7 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Messenger;
 
 class DataImporterMessage
 {
-    public function __construct(protected string $executionType, protected array $ids)
+    public function __construct(protected string $executionType, protected array $ids, protected string $messageId)
     {
     }
 
@@ -35,5 +35,13 @@ class DataImporterMessage
     public function getIds(): array
     {
         return $this->ids;
+    }
+
+    /**
+     * @return string
+     */
+    public function getMessageId(): string
+    {
+        return $this->messageId;
     }
 }
