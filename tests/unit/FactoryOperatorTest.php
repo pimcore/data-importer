@@ -345,7 +345,8 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
 
 
 
-    public function testQuantityArray() {
+    public function testQuantityArray()
+    {
         $unit = new Unit();
         $unit->setId('m');
         $unit->setAbbreviation('m');
@@ -353,35 +354,67 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $unit->save();
 
 
-        $operators = [
-            $this->tester->grabService(InputQuantityValueArray::class),
-            $this->tester->grabService(QuantityValueArray::class),
-        ];
+        $operator = $this->tester->grabService(QuantityValueArray::class);
 
-        foreach($operators as $operator) {
-            /**
-             * @var QuantityValue $result
-             */
-            $result = $operator->process([['12', 'm']]);
-            $this->assertInstanceOf(QuantityValue::class, $result[0]);
-            $this->assertEquals('12', $result[0]->getValue());
-            $this->assertEquals('m', $result[0]->getUnitId());
-            $this->assertEquals('Meter', $result[0]->getUnit()->getLongname());
+        /**
+         * @var QuantityValue $result
+         */
+        $result = $operator->process([['12', 'm']]);
+        $this->assertInstanceOf(QuantityValue::class, $result[0]);
+        $this->assertEquals('12', $result[0]->getValue());
+        $this->assertEquals('m', $result[0]->getUnitId());
+        $this->assertEquals('Meter', $result[0]->getUnit()->getLongname());
 
-            $result = $operator->process([['12']]);
-            $this->assertInstanceOf(QuantityValue::class, $result[0]);
-            $this->assertEquals('12', $result[0]->getValue());
-            $this->assertNull($result[0]->getUnitId());
+        $result = $operator->process([['12']]);
+        $this->assertInstanceOf(QuantityValue::class, $result[0]);
+        $this->assertEquals('12', $result[0]->getValue());
+        $this->assertNull($result[0]->getUnitId());
 
-            $result = $operator->process([[null, 'm']]);
-            $this->assertInstanceOf(QuantityValue::class, $result[0]);
-            $this->assertNull($result[0]->getValue());
-            $this->assertEquals('m', $result[0]->getUnitId());
+        $result = $operator->process([[null, 'm']]);
+        $this->assertInstanceOf(QuantityValue::class, $result[0]);
+        $this->assertNull($result[0]->getValue());
+        $this->assertEquals('m', $result[0]->getUnitId());
 
-            $preview = $operator->generateResultPreview($result);
-            $this->assertStringContainsString('Quantity', $preview[0]);
+        $preview = $operator->generateResultPreview($result);
+        $this->assertStringContainsString('Quantity', $preview[0]);
 
-        }
+
+        $unit->delete();
+    }
+
+    public function testInputQuantityArray()
+    {
+        $unit = new Unit();
+        $unit->setId('m');
+        $unit->setAbbreviation('m');
+        $unit->setLongname('Meter');
+        $unit->save();
+
+
+        $operator = $this->tester->grabService(InputQuantityValueArray::class);
+
+        /**
+          * @var InputQuantityValue $result
+        */
+        $result = $operator->process([['12', 'm']]);
+        $this->assertInstanceOf(InpuQuantityValue::class, $result[0]);
+        $this->assertEquals('12', $result[0]->getValue());
+        $this->assertEquals('m', $result[0]->getUnitId());
+        $this->assertEquals('Meter', $result[0]->getUnit()->getLongname());
+
+        $result = $operator->process([['12']]);
+        $this->assertInstanceOf(InpuQuantityValue::class, $result[0]);
+        $this->assertEquals('12', $result[0]->getValue());
+        $this->assertNull($result[0]->getUnitId());
+
+        $result = $operator->process([[null, 'm']]);
+        $this->assertInstanceOf(InpuQuantityValue::class, $result[0]);
+        $this->assertNull($result[0]->getValue());
+        $this->assertEquals('m', $result[0]->getUnitId());
+
+        $preview = $operator->generateResultPreview($result);
+        $this->assertStringContainsString('Quantity', $preview[0]);
+
 
         $unit->delete();
     }
