@@ -394,22 +394,22 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
         $operator = $this->tester->grabService(InputQuantityValueArray::class);
 
         /**
-          * @var InputQuantityValue $result
+          * @var \Pimcore\Model\DataObject\Data\InputQuantityValue $result
         */
         $result = $operator->process([['12', 'm']]);
-        $this->assertInstanceOf(InpuQuantityValue::class, $result[0]);
+        $this->assertInstanceOf(\Pimcore\Model\DataObject\Data\InputQuantityValue::class, $result[0]);
         $this->assertEquals('12', $result[0]->getValue());
         $this->assertEquals('m', $result[0]->getUnitId());
         $this->assertEquals('Meter', $result[0]->getUnit()->getLongname());
 
         $result = $operator->process([['12']]);
-        $this->assertInstanceOf(InpuQuantityValue::class, $result[0]);
+        $this->assertInstanceOf(\Pimcore\Model\DataObject\Data\InputQuantityValue::class, $result[0]);
         $this->assertEquals('12', $result[0]->getValue());
         $this->assertNull($result[0]->getUnitId());
 
         $result = $operator->process([[null, 'm']]);
-        $this->assertInstanceOf(InpuQuantityValue::class, $result[0]);
-        $this->assertNull($result[0]->getValue());
+        $this->assertInstanceOf(\Pimcore\Model\DataObject\Data\InputQuantityValue::class, $result[0]);
+        $this->assertEquals( '',$result[0]->getValue());
         $this->assertEquals('m', $result[0]->getUnitId());
 
         $preview = $operator->generateResultPreview($result);
