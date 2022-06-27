@@ -29,7 +29,7 @@ class InputQuantityValueArray extends QuantityValueArray
         $result = [];
 
         foreach ($inputData as $key => $data) {
-            $result[$key] = new \Pimcore\Model\DataObject\Data\QuantityValue(
+            $result[$key] = new \Pimcore\Model\DataObject\Data\InputQuantityValue(
                 $data[0] ?? null,
                 $data[1] ?? null
             );
