@@ -17,9 +17,7 @@ framework:
     messenger:
         transports:
             pimcore_data_import:
-                dsn: 'doctrine://default'
-                options:
-                    queue_name: pimcore_data_import
+                dsn: 'doctrine://default?queue_name=pimcore_data_import'
 
         routing:
             'Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage': pimcore_data_import
