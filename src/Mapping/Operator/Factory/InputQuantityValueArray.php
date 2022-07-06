@@ -29,7 +29,7 @@ class InputQuantityValueArray extends QuantityValueArray
         $result = [];
 
         foreach ($inputData as $key => $data) {
-            $result[$key] = new \Pimcore\Model\DataObject\Data\QuantityValue(
+            $result[$key] = new \Pimcore\Model\DataObject\Data\InputQuantityValue(
                 $data[0] ?? null,
                 $data[1] ?? null
             );
@@ -61,7 +61,7 @@ class InputQuantityValueArray extends QuantityValueArray
             $preview = [];
 
             foreach ($inputData as $key => $data) {
-                if ($data instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
+                if ($data instanceof \Pimcore\Model\DataObject\Data\InputQuantityValue) {
                     $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' . ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
                 } else {
                     $preview[$key] = $data;
