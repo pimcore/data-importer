@@ -57,6 +57,7 @@ class AsCountries extends AbstractOperator
         if ($inputType != TransformationDataTypeService::DEFAULT_ARRAY) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for as countries operator at transformation position %s", $inputType, $index));
         }
+
         return TransformationDataTypeService::COUNTRY_ARRAY;
     }
 }
