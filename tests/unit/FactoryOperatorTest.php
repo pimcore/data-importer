@@ -2,7 +2,9 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Carbon\Carbon;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsArray;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsCountries;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeobounds;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopoint;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopolygon;
@@ -488,5 +490,32 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
 
         $this->assertEquals($data[1]->getLatitude(), "47.810540991091045");
         $this->assertEquals($data[1]->getLongitude(), "13.073721286556358");
+    }
+
+    public function testAsCountries() {
+        $service = $this->tester->grabService(AsCountries::class);
+        $data = $service->process(["China", "Germany", "Austria"]);
+        $this->assertIsArray($data);
+
+        $this->assertEquals("CN", $data[0]);
+        $this->assertEquals("DE", $data[1]);
+        $this->assertEquals("AT", $data[2]);
+    }
+
+    public function testAsCountriesWithWhiteSpace() {
+        $service = $this->tester->grabService(AsCountries::class);
+        $data = $service->process(["China ", " Germany", " Austria "]);
+        $this->assertIsArray($data);
+
+        $this->assertEquals("CN", $data[0]);
+        $this->assertEquals("DE", $data[1]);
+        $this->assertEquals("AT", $data[2]);
+    }
+
+    public function testAsCountriesWithWrongInputType() {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $service = $this->tester->grabService(AsCountries::class);
+        $service->evaluateReturnType("default");
     }
 }
