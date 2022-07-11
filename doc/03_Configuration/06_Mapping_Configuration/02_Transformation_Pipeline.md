@@ -45,6 +45,7 @@ and the second item reflects the value for the longitude attribute.
 - **As Geobounds**: Expects an array, where the first and second item reflect the values for the northeastern latitude and longitude, third and fourth item reflect the values for the southwestern latitude and longitude respectively.
 - **As Geopolygon**: Expects an array with a variable amount of items. Whereas first and second item reflect latitude and longitude for the first point, third and fourth item for the second point and so on.
 - **As Geopolyline**: Same as `As Geopolygon`.
+- **As Countries Value**: Converts an array of countries into an array of country codes
 - **Combine**: Combines an array to a string with using configuerd `glue`. 
 - **Explode**: Explodes string to array using configured `delimiter`. If input is an array, explode is done on every array item recursively. 
   Depending if `Do not flatten sub arrays` is set, the operator results in one flat array with all items, or in an array with sub arrays. 
