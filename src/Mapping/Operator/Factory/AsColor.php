@@ -19,7 +19,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Model\DataObject\Data\RgbaColor;
 
-
 class AsColor extends AbstractOperator
 {
     /**
@@ -27,13 +26,14 @@ class AsColor extends AbstractOperator
      */
     public function process($inputData, bool $dryRun = false)
     {
-        if (is_array($inputData)){
+        if (is_array($inputData)) {
             if (count($inputData) > 0 && is_numeric($inputData[0])) {
                 return new RgbaColor(...$inputData);
             }
         } elseif (str_starts_with($inputData, '#')) {
             $color = new RgbaColor();
             $color->setHex($inputData);
+
             return $color;
         }
 
