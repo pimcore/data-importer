@@ -3,6 +3,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Carbon\Carbon;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsArray;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsColor;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeobounds;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopoint;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsGeopolygon;
@@ -488,5 +489,32 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
 
         $this->assertEquals($data[1]->getLatitude(), "47.810540991091045");
         $this->assertEquals($data[1]->getLongitude(), "13.073721286556358");
+    }
+
+    public function testAsColorArray() {
+        $service = $this->tester->grabService(AsColor::class);
+        $data = $service->process([15,44,73,255]);
+
+        $this->assertEquals($data->getR(), 15);
+        $this->assertEquals($data->getG(), 44);
+        $this->assertEquals($data->getB(), 73);
+        $this->assertEquals($data->getA(), 255);
+    }
+
+    public function testAsColorHex() {
+        $service = $this->tester->grabService(AsColor::class);
+        $data = $service->process("#0f2c49FF");
+
+        $this->assertEquals($data->getR(), 15);
+        $this->assertEquals($data->getG(), 44);
+        $this->assertEquals($data->getB(), 73);
+        $this->assertEquals($data->getA(), 255);
+    }
+
+
+    public function testAsColorHexWrongInput() {
+        $this->expectException(\Exception::class);
+        $service = $this->tester->grabService(AsColor::class);
+        $service->process("#0f2c49F");
     }
 }

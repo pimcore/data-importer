@@ -96,6 +96,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asGeobounds.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asGeopolygon.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asGeopolyline.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asColor.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/explode.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/combine.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/htmlDecode.js',

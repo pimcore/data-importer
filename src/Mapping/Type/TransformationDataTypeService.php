@@ -42,6 +42,7 @@ class TransformationDataTypeService
     const GEOBOUNDS_VALUE = 'geoBounds';
     const GEOPOLYGON_VALUE = 'geoPolygon';
     const GEOPOLYLINE_VALUE = 'geoPolyline';
+    const RGBA_COLOR = 'rgbaColor';
 
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -124,6 +125,9 @@ class TransformationDataTypeService
         ],
         self::GEOPOLYLINE_VALUE => [
             'geopolyline'
+        ],
+        self::RGBA_COLOR => [
+            'rgbaColor'
         ]
     ];
 

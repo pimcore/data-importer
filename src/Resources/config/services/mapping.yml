@@ -121,6 +121,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "asGeopolyline" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsColor:
+         tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asColor" }
+
     # ---------------------
     # data target services
     # ---------------------
