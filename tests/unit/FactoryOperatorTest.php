@@ -514,10 +514,11 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
     }
 
 
-    public function testAsColorHexWrongInput() {
+    public function testAsColorHexWrongInput(){
         $this->expectException(\Exception::class);
         $service = $this->tester->grabService(AsColor::class);
         $service->process("#0f2c49F");
+    }
 
     public function testAsCountries() {
         $service = $this->tester->grabService(AsCountries::class);

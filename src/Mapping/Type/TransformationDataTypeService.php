@@ -129,6 +129,7 @@ class TransformationDataTypeService
         ],
         self::RGBA_COLOR => [
             'rgbaColor'
+        ],
         self::COUNTRY_ARRAY => [
             'countrymultiselect'
         ]
