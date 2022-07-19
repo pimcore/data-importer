@@ -42,6 +42,7 @@ class TransformationDataTypeService
     const GEOBOUNDS_VALUE = 'geoBounds';
     const GEOPOLYGON_VALUE = 'geoPolygon';
     const GEOPOLYLINE_VALUE = 'geoPolyline';
+    const RGBA_COLOR = 'rgbaColor';
     const COUNTRY_ARRAY = 'countryArray';
 
     protected $transformationDataTypesMapping = [
@@ -125,6 +126,9 @@ class TransformationDataTypeService
         ],
         self::GEOPOLYLINE_VALUE => [
             'geopolyline'
+        ],
+        self::RGBA_COLOR => [
+            'rgbaColor'
         ],
         self::COUNTRY_ARRAY => [
             'countrymultiselect'
