@@ -2,6 +2,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StaticText;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StringReplace;
 use Pimcore\Tests\Util\TestHelper;
 
@@ -81,5 +82,20 @@ class SimpleOperatorTest extends \Codeception\Test\Unit
         $this->assertEquals($data[0], "Hello ");
         $this->assertEquals($data[1], "");
         $this->assertEquals($data[2], "");
+    }
+
+    public function testStaticTextProcessFunctionWithZero() {
+        $service = $this->tester->grabService(StaticText::class);
+        $service->setSettings(['mode' => StaticText::MODE_APPEND, 'text' => '0', 'alwaysAdd' => false]);
+        $data = $service->process("Test");
+
+        $this->assertEquals("Test0", $data);
+    }
+    public function testStaticTextProcessFunctionWithZeroAndAlwaysAdd() {
+        $service = $this->tester->grabService(StaticText::class);
+        $service->setSettings(['mode' => StaticText::MODE_APPEND, 'text' => '0', 'alwaysAdd' => true]);
+        $data = $service->process("");
+
+        $this->assertEquals("0", $data);
     }
 }
