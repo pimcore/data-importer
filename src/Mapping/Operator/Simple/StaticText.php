@@ -54,7 +54,7 @@ class StaticText extends AbstractOperator
             $inputData = [$inputData];
         }
 
-        if ($this->text) {
+        if ($this->text !== '') {
             foreach ($inputData as &$data) {
                 if (!empty($data) || $this->alwaysAdd) {
                     switch ($this->mode) {
