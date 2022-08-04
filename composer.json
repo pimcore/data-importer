@@ -16,9 +16,7 @@
     "phpoffice/phpspreadsheet": "^1.15",
     "dragonmantank/cron-expression": "^3.1",
     "nesbot/carbon": "^2.27",
-    "league/flysystem": "^2.0",
-    "league/flysystem-sftp": "^2.0",
-    "league/flysystem-bundle" : "^2.0",
+    "league/flysystem-sftp": "^2.0 ||^3.0",
     "ext-json": "*",
     "ext-fileinfo": "*"
   },
