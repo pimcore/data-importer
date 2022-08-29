@@ -56,7 +56,7 @@ class DeltaChecker
         } catch (TableNotFoundException $exception) {
             return $this->createTableIfNotExisting(function () use ($configName, $id) {
                 $this->getCurrentHash($configName, $id);
-            });
+            }) ?? '';
         }
     }
 
