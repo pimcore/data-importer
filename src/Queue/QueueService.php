@@ -90,6 +90,8 @@ class QueueService
         if ($callable) {
             return $callable();
         }
+
+        return null;
     }
 
     /**
@@ -126,7 +128,7 @@ class QueueService
             return $results ?? []; // @phpstan-ignore-line
         } catch (TableNotFoundException $exception) {
             return $this->createQueueTableIfNotExisting(function () use ($executionType, $limit) {
-                $this->getAllQueueEntryIds($executionType, $limit);
+                return $this->getAllQueueEntryIds($executionType, $limit);
             });
         }
     }
@@ -149,7 +151,7 @@ class QueueService
             return is_array($result) ? $result : [];
         } catch (TableNotFoundException $exception) {
             return $this->createQueueTableIfNotExisting(function () use ($id) {
-                $this->getQueueEntryById($id);
+                return $this->getQueueEntryById($id);
             });
         }
     }

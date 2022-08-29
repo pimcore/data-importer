@@ -44,6 +44,8 @@ class DeltaChecker
         if ($callable) {
             return $callable();
         }
+
+        return null;
     }
 
     protected function getCurrentHash(string $configName, string $id): string
@@ -55,7 +57,7 @@ class DeltaChecker
                 ) ?? '';
         } catch (TableNotFoundException $exception) {
             return $this->createTableIfNotExisting(function () use ($configName, $id) {
-                $this->getCurrentHash($configName, $id);
+                return $this->getCurrentHash($configName, $id);
             });
         }
     }
@@ -68,7 +70,7 @@ class DeltaChecker
                 [$configName, $id, $hash, $hash]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function () use ($configName, $id, $hash) {
+            $this->createTableIfNotExisting(function () use ($configName, $id, $hash) {
                 $this->updateHash($configName, $id, $hash);
             });
         }
@@ -101,7 +103,7 @@ class DeltaChecker
                 [$configName]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting();
+            $this->createTableIfNotExisting();
         }
     }
 }
