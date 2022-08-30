@@ -112,12 +112,12 @@ class QueueService
                 $this->getDb()->executeQuery('UPDATE ' . self::QUEUE_TABLE_NAME . ' SET dispatched = ?, workerId = ? WHERE executionType = ? AND (ISNULL(dispatched) OR dispatched < ?) LIMIT ' . intval($limit),
                     [$dispatchId, $workerId, $executionType, $dispatchId - 3000]);
 
-                $results = $this->getDb()->fetchCol(
+                $results = $this->getDb()->fetchFirstColumn(
                     sprintf('SELECT id FROM %s WHERE executionType = ? AND workerId = ?', self::QUEUE_TABLE_NAME),
                     [$executionType, $workerId]
                 );
             } else {
-                $results = $this->getDb()->fetchCol(
+                $results = $this->getDb()->fetchFirstColumn(
                     sprintf('SELECT id FROM %s WHERE executionType = ?', self::QUEUE_TABLE_NAME),
                     [$executionType]
                 );
@@ -141,7 +141,7 @@ class QueueService
     public function getQueueEntryById(int $id): array
     {
         try {
-            $result = $this->getDb()->fetchRow(
+            $result = $this->getDb()->fetchAssociative(
                 sprintf('SELECT * FROM %s WHERE id = ?', self::QUEUE_TABLE_NAME),
                 [$id]
             );

@@ -40,6 +40,6 @@ class PathStrategy extends AbstractLoad
     {
         $sql = sprintf('SELECT CONCAT(`o_path`, `o_key`) FROM object_%s', $this->dataObjectClassId);
 
-        return $this->db->fetchCol($sql);
+        return $this->db->fetchFirstColumn($sql);
     }
 }
