@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Queue;
 
 use Carbon\Carbon;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
@@ -24,11 +25,14 @@ class QueueService
     const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
 
     /**
-     * @return Db\Connection|Db\ConnectionInterface
+     * @return Connection
      */
     protected function getDb()
     {
-        return Db::get();
+        /** @var Connection $db */
+        $db = Db::get();
+
+        return $db;
     }
 
     protected function getCurrentQueueTableOperationTime(): int

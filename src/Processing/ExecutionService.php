@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
 use DateTime;
+use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
@@ -24,11 +25,14 @@ class ExecutionService
     const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_execution';
 
     /**
-     * @return Db\Connection|Db\ConnectionInterface
+     * @return Connection
      */
     protected function getDb()
     {
-        return Db::get();
+        /** @var Connection $db */
+        $db = Db::get();
+
+        return $db;
     }
 
     protected function createTableIfNotExisting()
