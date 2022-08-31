@@ -90,6 +90,8 @@ class QueueService
         if ($callable) {
             return $callable();
         }
+
+        return null;
     }
 
     /**
