@@ -15,16 +15,16 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
+use Doctrine\DBAL\Connection;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
-use Pimcore\Db;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
 abstract class AbstractLoad implements LoadStrategyInterface
 {
     /**
-     * @var Db\Connection|Db\ConnectionInterface
+     * @var Connection
      */
     protected $db;
 
@@ -41,9 +41,9 @@ abstract class AbstractLoad implements LoadStrategyInterface
     /**
      * AbstractLoad constructor.
      *
-     * @param Db\ConnectionInterface $connection
+     * @param Connection $connection
      */
-    public function __construct(Db\ConnectionInterface $connection, protected DataObjectLoader $dataObjectLoader)
+    public function __construct(Connection $connection, protected DataObjectLoader $dataObjectLoader)
     {
         $this->db = $connection;
     }

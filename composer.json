@@ -11,8 +11,8 @@
   },
   "require": {
     "php": "^8.0",
-    "pimcore/pimcore": "^10.2",
-    "pimcore/data-hub": "^1.2@dev",
+    "pimcore/pimcore": "^10.5",
+    "pimcore/data-hub": "^1.2",
     "phpoffice/phpspreadsheet": "^1.15",
     "dragonmantank/cron-expression": "^3.1",
     "nesbot/carbon": "^2.27",

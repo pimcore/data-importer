@@ -1,11 +1,8 @@
 parameters:
     level: 5
-    reportUnmatchedIgnoredErrors: false
     paths:
         - src
     bootstrapFiles:
         - phpstan-bootstrap.php
     excludePaths:
         - src/Command/DummyDataCommand.php
-    stubFiles:
-        - stubs/ElementInterface.stub

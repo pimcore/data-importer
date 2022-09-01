@@ -82,6 +82,6 @@ class AttributeStrategy extends AbstractLoad
 
         $sql = sprintf('SELECT `%s` FROM %s', $this->attributeName, $tableName);
 
-        return $this->db->fetchCol($sql);
+        return $this->db->fetchFirstColumn($sql);
     }
 }

@@ -40,6 +40,6 @@ class IdStrategy extends AbstractLoad
     {
         $sql = sprintf('SELECT `o_id` FROM object_%s', $this->dataObjectClassId);
 
-        return $this->db->fetchCol($sql);
+        return $this->db->fetchFirstColumn($sql);
     }
 }
