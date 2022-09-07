@@ -20,7 +20,7 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 abstract class GeopolyAbstractOperator extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array
      */
@@ -46,7 +46,7 @@ abstract class GeopolyAbstractOperator extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return array
      */
     public function generateResultPreview($inputData)

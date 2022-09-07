@@ -45,7 +45,7 @@ class ManyToManyRelation extends Direct
     /**
      * @param DataObject\Concrete|DataObject\Objectbrick\Data\AbstractData $valueContainer
      * @param string $fieldName
-     * @param $data
+     * @param mixed $data
      * @return void
      * @throws InvalidConfigurationException
      */

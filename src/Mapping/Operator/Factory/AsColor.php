@@ -41,7 +41,7 @@ class AsColor extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return mixed|string
      */
     public function generateResultPreview($inputData)

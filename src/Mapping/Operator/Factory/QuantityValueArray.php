@@ -22,7 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 class QuantityValueArray extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array
      */
@@ -68,7 +68,7 @@ class QuantityValueArray extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return array|mixed
      */
     public function generateResultPreview($inputData)

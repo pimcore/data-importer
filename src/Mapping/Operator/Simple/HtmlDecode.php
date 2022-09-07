@@ -22,7 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 class HtmlDecode extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array|false|mixed|null
      */

@@ -23,7 +23,7 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 class AsGeopoint extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return GeoCoordinates
      */
@@ -33,7 +33,7 @@ class AsGeopoint extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return mixed|string
      */
     public function generateResultPreview($inputData)

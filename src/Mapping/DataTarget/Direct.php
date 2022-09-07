@@ -110,7 +110,7 @@ class Direct implements DataTargetInterface
     /**
      * @param ElementInterface $valueContainer
      * @param string $fieldName
-     * @param $data
+     * @param mixed $data
      * @return void
      */
     protected function doAssignData($valueContainer, $fieldName, $data)

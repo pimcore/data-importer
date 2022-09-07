@@ -59,7 +59,7 @@ class Classificationstore implements DataTargetInterface
 
     /**
      * @param ElementInterface $element
-     * @param $data
+     * @param mixed $data
      * @return void
      * @throws InvalidConfigurationException
      */

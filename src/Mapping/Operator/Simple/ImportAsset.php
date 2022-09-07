@@ -54,7 +54,7 @@ class ImportAsset extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array|false|mixed|null
      * @throws DuplicateFullPathException
@@ -153,7 +153,7 @@ class ImportAsset extends AbstractOperator
     }
 
     /**
-     * @param $targetPath
+     * @param string $targetPath
      * @param string $filename
      * @return string
      */
@@ -198,7 +198,7 @@ class ImportAsset extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return array|false|mixed
      */
     public function generateResultPreview($inputData)

@@ -35,7 +35,7 @@ class LoadAsset extends ImportAsset
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array|false|mixed|null
      * @throws InvalidConfigurationException

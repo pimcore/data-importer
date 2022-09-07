@@ -21,7 +21,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 class InputQuantityValueArray extends QuantityValueArray
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array
      */
@@ -61,7 +61,7 @@ class InputQuantityValueArray extends QuantityValueArray
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return array|mixed
      */
     public function generateResultPreview($inputData)

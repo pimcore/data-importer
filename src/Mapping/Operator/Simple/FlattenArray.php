@@ -27,7 +27,7 @@ class FlattenArray extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array
      */

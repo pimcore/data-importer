@@ -81,7 +81,7 @@ class LoadDataObject extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return array|false|mixed|null
      * @throws InvalidConfigurationException
@@ -200,7 +200,7 @@ class LoadDataObject extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return array|false|mixed
      */
     public function generateResultPreview($inputData)

@@ -22,7 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 class Numeric extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return float
      */
@@ -53,7 +53,7 @@ class Numeric extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return mixed
      */
     public function generateResultPreview($inputData)

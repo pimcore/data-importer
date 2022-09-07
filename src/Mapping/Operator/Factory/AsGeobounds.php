@@ -24,7 +24,7 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 class AsGeobounds extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return Geobounds
      */
@@ -37,7 +37,7 @@ class AsGeobounds extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return mixed|string
      */
     public function generateResultPreview($inputData)

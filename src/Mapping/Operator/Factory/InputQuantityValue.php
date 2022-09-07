@@ -22,7 +22,7 @@ use Pimcore\Model\DataObject\Data\QuantityValue;
 class InputQuantityValue extends QuantityValue
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return QuantityValue
      */
@@ -52,7 +52,7 @@ class InputQuantityValue extends QuantityValue
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return string
      */
     public function generateResultPreview($inputData)

@@ -49,7 +49,7 @@ abstract class AbstractOperator implements OperatorInterface
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return mixed
      */
     public function generateResultPreview($inputData)

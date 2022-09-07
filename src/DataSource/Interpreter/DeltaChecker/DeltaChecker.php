@@ -82,6 +82,12 @@ class DeltaChecker
         }
     }
 
+    /**
+     * @param string $configName
+     * @param mixed $idDataIndex
+     * @param array $data
+     * @return bool
+     */
     public function hasChanged(string $configName, $idDataIndex, array $data): bool
     {
         $id = $data[$idDataIndex] ?? null;

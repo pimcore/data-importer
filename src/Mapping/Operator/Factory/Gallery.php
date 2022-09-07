@@ -25,7 +25,7 @@ use Pimcore\Model\DataObject\Data\ImageGallery;
 class Gallery extends AbstractOperator
 {
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @param bool $dryRun
      * @return ImageGallery
      */
@@ -65,7 +65,7 @@ class Gallery extends AbstractOperator
     }
 
     /**
-     * @param $inputData
+     * @param mixed $inputData
      * @return array|mixed
      */
     public function generateResultPreview($inputData)
