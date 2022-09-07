@@ -40,6 +40,7 @@ class Explode extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array|array[]|mixed|string[]|\string[][]
      */
     public function process($inputData, bool $dryRun = false)

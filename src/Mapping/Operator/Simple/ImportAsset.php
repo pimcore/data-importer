@@ -56,7 +56,9 @@ class ImportAsset extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array|false|mixed|null
+     *
      * @throws DuplicateFullPathException
      */
     public function process($inputData, bool $dryRun = false)
@@ -155,6 +157,7 @@ class ImportAsset extends AbstractOperator
     /**
      * @param $targetPath
      * @param string $filename
+     *
      * @return string
      */
     protected function getSafeFilename($targetPath, $filename)
@@ -199,6 +202,7 @@ class ImportAsset extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return array|false|mixed
      */
     public function generateResultPreview($inputData)

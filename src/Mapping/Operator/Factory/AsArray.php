@@ -23,6 +23,7 @@ class AsArray extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array|mixed
      */
     public function process($inputData, bool $dryRun = false)

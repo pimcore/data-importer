@@ -60,7 +60,9 @@ class Classificationstore implements DataTargetInterface
     /**
      * @param ElementInterface $element
      * @param $data
+     *
      * @return void
+     *
      * @throws InvalidConfigurationException
      */
     public function assignData(ElementInterface $element, $data)

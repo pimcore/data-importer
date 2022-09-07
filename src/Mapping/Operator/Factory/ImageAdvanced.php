@@ -26,6 +26,7 @@ class ImageAdvanced extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return Hotspotimage|null
      */
     public function process($inputData, bool $dryRun = false)
@@ -60,6 +61,7 @@ class ImageAdvanced extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return mixed|string
      */
     public function generateResultPreview($inputData)

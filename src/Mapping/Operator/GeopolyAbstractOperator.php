@@ -22,6 +22,7 @@ abstract class GeopolyAbstractOperator extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array
      */
     public function process($inputData, bool $dryRun = false)
@@ -47,6 +48,7 @@ abstract class GeopolyAbstractOperator extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return array
      */
     public function generateResultPreview($inputData)

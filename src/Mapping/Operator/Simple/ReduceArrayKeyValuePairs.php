@@ -29,6 +29,7 @@ class ReduceArrayKeyValuePairs extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array
      */
     public function process($inputData, bool $dryRun = false)

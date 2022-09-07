@@ -46,7 +46,9 @@ class ManyToManyRelation extends Direct
      * @param DataObject\Concrete|DataObject\Objectbrick\Data\AbstractData $valueContainer
      * @param string $fieldName
      * @param $data
+     *
      * @return void
+     *
      * @throws InvalidConfigurationException
      */
     protected function doAssignData($valueContainer, $fieldName, $data)

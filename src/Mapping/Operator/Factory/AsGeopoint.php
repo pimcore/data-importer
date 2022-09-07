@@ -25,6 +25,7 @@ class AsGeopoint extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return GeoCoordinates
      */
     public function process($inputData, bool $dryRun = false)
@@ -34,6 +35,7 @@ class AsGeopoint extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return mixed|string
      */
     public function generateResultPreview($inputData)

@@ -24,6 +24,7 @@ class QuantityValueArray extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array
      */
     public function process($inputData, bool $dryRun = false)
@@ -69,6 +70,7 @@ class QuantityValueArray extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return array|mixed
      */
     public function generateResultPreview($inputData)

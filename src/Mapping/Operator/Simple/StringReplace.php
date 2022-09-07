@@ -33,6 +33,7 @@ class StringReplace extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array|false|mixed|null
      */
     public function process($inputData, bool $dryRun = false)

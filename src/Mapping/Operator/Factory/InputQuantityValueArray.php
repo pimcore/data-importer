@@ -23,6 +23,7 @@ class InputQuantityValueArray extends QuantityValueArray
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array
      */
     public function process($inputData, bool $dryRun = false)
@@ -62,6 +63,7 @@ class InputQuantityValueArray extends QuantityValueArray
 
     /**
      * @param $inputData
+     *
      * @return array|mixed
      */
     public function generateResultPreview($inputData)

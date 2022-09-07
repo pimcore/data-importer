@@ -26,6 +26,7 @@ class NotLoadStrategy implements LoadStrategyInterface
 
     /**
      * @param string $identifier
+     *
      * @return ElementInterface|null
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
@@ -35,6 +36,7 @@ class NotLoadStrategy implements LoadStrategyInterface
 
     /**
      * @param array $inputData
+     *
      * @return null
      */
     public function extractIdentifierFromData(array $inputData)

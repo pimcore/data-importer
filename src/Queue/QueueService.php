@@ -76,7 +76,9 @@ class QueueService
 
     /**
      * @param \Closure|null $callable
+     *
      * @return mixed|null
+     *
      * @throws Exception
      */
     protected function createQueueTableIfNotExisting(\Closure $callable = null)

@@ -34,6 +34,7 @@ class Date extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array|false|mixed
      */
     public function process($inputData, bool $dryRun = false)
@@ -80,6 +81,7 @@ class Date extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return array|mixed|string
      */
     public function generateResultPreview($inputData)

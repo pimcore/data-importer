@@ -34,6 +34,7 @@ class Combine extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return string
      */
     public function process($inputData, bool $dryRun = false)

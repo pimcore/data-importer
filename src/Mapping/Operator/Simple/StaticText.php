@@ -49,7 +49,9 @@ class StaticText extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return array|false|mixed|null
+     *
      * @throws InvalidConfigurationException
      */
     public function process($inputData, bool $dryRun = false)

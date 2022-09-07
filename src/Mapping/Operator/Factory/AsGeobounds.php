@@ -26,6 +26,7 @@ class AsGeobounds extends AbstractOperator
     /**
      * @param $inputData
      * @param bool $dryRun
+     *
      * @return Geobounds
      */
     public function process($inputData, bool $dryRun = false)
@@ -38,6 +39,7 @@ class AsGeobounds extends AbstractOperator
 
     /**
      * @param $inputData
+     *
      * @return mixed|string
      */
     public function generateResultPreview($inputData)
