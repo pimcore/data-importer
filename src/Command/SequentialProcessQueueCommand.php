@@ -61,7 +61,9 @@ class SequentialProcessQueueCommand extends AbstractCommand
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
+     *
      * @return int|void
+     *
      * @throws Exception
      * @throws \Doctrine\DBAL\Exception
      * @throws InvalidConfigurationException

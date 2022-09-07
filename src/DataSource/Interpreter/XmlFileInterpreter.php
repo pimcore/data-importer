@@ -46,7 +46,9 @@ class XmlFileInterpreter extends AbstractInterpreter
 
     /**
      * @param string $path
+     *
      * @return \DOMNodeList
+     *
      * @throws InvalidInputException
      */
     protected function loadData(string $path)

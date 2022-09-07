@@ -35,7 +35,9 @@ class DeltaChecker
 
     /**
      * @param \Closure|null $callable
+     *
      * @return mixed|null
+     *
      * @throws Exception
      */
     protected function createTableIfNotExisting(\Closure $callable = null)

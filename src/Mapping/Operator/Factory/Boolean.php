@@ -24,6 +24,7 @@ class Boolean extends AbstractOperator
     /**
      * @param mixed $inputData
      * @param bool $dryRun
+     *
      * @return bool
      */
     public function process($inputData, bool $dryRun = false)

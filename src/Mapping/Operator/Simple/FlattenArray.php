@@ -29,6 +29,7 @@ class FlattenArray extends AbstractOperator
     /**
      * @param mixed $inputData
      * @param bool $dryRun
+     *
      * @return array
      */
     public function process($inputData, bool $dryRun = false)

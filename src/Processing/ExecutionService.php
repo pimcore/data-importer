@@ -47,7 +47,9 @@ class ExecutionService
 
     /**
      * @param string $configName
+     *
      * @return DateTime|null
+     *
      * @throws Exception
      */
     public function getLastExecution($configName): ?DateTime

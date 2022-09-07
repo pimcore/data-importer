@@ -36,7 +36,9 @@ class DataLoaderFactory
 
     /**
      * @param array $configuration
+     *
      * @return DataLoaderInterface
+     *
      * @throws InvalidConfigurationException
      */
     public function loadDataLoader(array $configuration)

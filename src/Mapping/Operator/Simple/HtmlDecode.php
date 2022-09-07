@@ -24,6 +24,7 @@ class HtmlDecode extends AbstractOperator
     /**
      * @param mixed $inputData
      * @param bool $dryRun
+     *
      * @return array|false|mixed|null
      */
     public function process($inputData, bool $dryRun = false)

@@ -68,6 +68,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
 
     /**
      * @return string
+     *
      * @throws InvalidConfigurationException
      */
     protected function getClassName()

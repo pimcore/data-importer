@@ -40,6 +40,7 @@ class PreviewService
     /**
      * @param string $configName
      * @param User $user
+     *
      * @return string
      *
      * @throws \Exception

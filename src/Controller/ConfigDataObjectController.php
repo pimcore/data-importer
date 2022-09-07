@@ -107,6 +107,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param string $configName
      * @param array $config
      * @param InterpreterFactory $interpreterFactory
+     *
      * @return array
      */
     protected function loadAvailableColumnHeaders(
