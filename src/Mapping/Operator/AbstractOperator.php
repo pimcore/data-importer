@@ -41,6 +41,7 @@ abstract class AbstractOperator implements OperatorInterface
 
     /**
      * @param string $configName
+     *
      * @return void
      */
     public function setConfigName(string $configName)
@@ -50,6 +51,7 @@ abstract class AbstractOperator implements OperatorInterface
 
     /**
      * @param mixed $inputData
+     *
      * @return mixed
      */
     public function generateResultPreview($inputData)

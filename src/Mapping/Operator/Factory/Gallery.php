@@ -27,6 +27,7 @@ class Gallery extends AbstractOperator
     /**
      * @param mixed $inputData
      * @param bool $dryRun
+     *
      * @return ImageGallery
      */
     public function process($inputData, bool $dryRun = false)
@@ -66,6 +67,7 @@ class Gallery extends AbstractOperator
 
     /**
      * @param mixed $inputData
+     *
      * @return array|mixed
      */
     public function generateResultPreview($inputData)

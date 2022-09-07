@@ -24,6 +24,7 @@ class InputQuantityValue extends QuantityValue
     /**
      * @param mixed $inputData
      * @param bool $dryRun
+     *
      * @return QuantityValue
      */
     public function process($inputData, bool $dryRun = false)
@@ -53,6 +54,7 @@ class InputQuantityValue extends QuantityValue
 
     /**
      * @param mixed $inputData
+     *
      * @return string
      */
     public function generateResultPreview($inputData)

@@ -51,6 +51,7 @@ class NotLoadStrategy implements LoadStrategyInterface
 
     /**
      * @param string $dataObjectClassId
+     *
      * @return void
      */
     public function setDataObjectClassId($dataObjectClassId): void

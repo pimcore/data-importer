@@ -44,7 +44,9 @@ class ClassificationstoreBatch implements DataTargetInterface
     /**
      * @param ElementInterface $element
      * @param mixed $data
+     *
      * @return void
+     *
      * @throws InvalidConfigurationException
      * @throws InvalidInputException
      */
