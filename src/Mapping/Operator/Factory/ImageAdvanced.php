@@ -23,6 +23,11 @@ use Pimcore\Model\DataObject\Data\Hotspotimage;
 
 class ImageAdvanced extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return Hotspotimage|null
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (is_array($inputData)) {
@@ -53,6 +58,10 @@ class ImageAdvanced extends AbstractOperator
         return TransformationDataTypeService::IMAGE_ADVANCED;
     }
 
+    /**
+     * @param $inputData
+     * @return mixed|string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof Hotspotimage) {

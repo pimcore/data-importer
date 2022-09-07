@@ -34,6 +34,12 @@ class LoadAsset extends ImportAsset
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_PATH;
     }
 
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array|false|mixed|null
+     * @throws InvalidConfigurationException
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;

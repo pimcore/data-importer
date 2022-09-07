@@ -17,10 +17,5 @@ namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
 interface SettingsAwareInterface
 {
-    /**
-     * @param array $settings
-     *
-     * @return void
-     */
     public function setSettings(array $settings): void;
 }

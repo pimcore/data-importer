@@ -15,6 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
+use Pimcore\Bundle\DataHubBundle\GraphQL\Resolver\Element;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\QuantityValue;
@@ -106,6 +107,12 @@ class Direct implements DataTargetInterface
         }
     }
 
+    /**
+     * @param ElementInterface $valueContainer
+     * @param string $fieldName
+     * @param $data
+     * @return void
+     */
     protected function doAssignData($valueContainer, $fieldName, $data)
     {
         $setter = 'set' . ucfirst($fieldName);

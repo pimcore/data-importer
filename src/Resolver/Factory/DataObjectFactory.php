@@ -32,17 +32,11 @@ class DataObjectFactory implements FactoryInterface
      */
     protected $modelFactory;
 
-    /**
-     * @param Factory $modelFactory
-     */
     public function __construct(Factory $modelFactory)
     {
         $this->modelFactory = $modelFactory;
     }
 
-    /**
-     * @param string $subType
-     */
     public function setSubType(string $subType): void
     {
         $this->subType = $subType;

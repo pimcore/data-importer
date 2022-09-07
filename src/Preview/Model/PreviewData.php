@@ -53,9 +53,6 @@ class PreviewData
         $this->mappedColumns = array_flip($mappedColumns);
     }
 
-    /**
-     * @return array
-     */
     public function getDataColumnHeaders(): array
     {
         $columnHeaders = [];
@@ -70,9 +67,6 @@ class PreviewData
         return $columnHeaders;
     }
 
-    /**
-     * @return array
-     */
     public function getDataPreview(): array
     {
         $dataPreview = [];
@@ -89,17 +83,11 @@ class PreviewData
         return $dataPreview;
     }
 
-    /**
-     * @return int
-     */
     public function getRecordNumber(): int
     {
         return $this->recordNumber;
     }
 
-    /**
-     * @return array
-     */
     public function getRawData(): array
     {
         return $this->previewData;

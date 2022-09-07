@@ -22,11 +22,20 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
 class AsGeopoint extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return GeoCoordinates
+     */
     public function process($inputData, bool $dryRun = false)
     {
         return new GeoCoordinates($inputData[0] ?? null, $inputData[1] ?? null);
     }
 
+    /**
+     * @param $inputData
+     * @return mixed|string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof GeoCoordinates) {

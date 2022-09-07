@@ -63,17 +63,11 @@ class PushLoader implements DataLoaderInterface
         $this->ignoreNotEmptyQueue = $settings['ignoreNotEmptyQueue'] ?? false;
     }
 
-    /**
-     * @return string
-     */
     public function getApiKey(): string
     {
         return $this->apiKey;
     }
 
-    /**
-     * @return bool
-     */
     public function isIgnoreNotEmptyQueue(): bool
     {
         return $this->ignoreNotEmptyQueue;

@@ -43,23 +43,10 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
      */
     protected $executionService;
 
-    /**
-     * @var FilesystemOperator
-     */
     protected FilesystemOperator $pimcoreDataImporterUploadStorage;
 
-    /**
-     * @var FilesystemOperator
-     */
     protected FilesystemOperator $pimcoreDataImporterPreviewStorage;
 
-    /**
-     * @param DeltaChecker $deltaChecker
-     * @param QueueService $queueService
-     * @param ExecutionService $executionService
-     * @param FilesystemOperator $pimcoreDataImporterUploadStorage
-     * @param FilesystemOperator $pimcoreDataImporterPreviewStorage
-     */
     public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ExecutionService $executionService, FilesystemOperator $pimcoreDataImporterUploadStorage, FilesystemOperator $pimcoreDataImporterPreviewStorage)
     {
         $this->deltaChecker = $deltaChecker;
@@ -69,6 +56,9 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
         $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
     }
 
+    /**
+     * @return string[]
+     */
     public static function getSubscribedEvents()
     {
         return [

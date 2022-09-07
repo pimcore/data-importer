@@ -30,6 +30,11 @@ class StringReplace extends AbstractOperator
         $this->replace = $settings['replace'] ?? '';
     }
 
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array|false|mixed|null
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;

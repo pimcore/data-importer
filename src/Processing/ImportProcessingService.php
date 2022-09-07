@@ -100,6 +100,7 @@ class ImportProcessingService
      * @param ResolverFactory $resolverFactory
      * @param CleanupStrategyFactory $cleanupStrategyFactory
      * @param ApplicationLogger $applicationLogger
+     * @param EventDispatcherInterface $eventDispatcher
      */
     public function __construct(QueueService $queueService, MappingConfigurationFactory $mappingConfigurationFactory, ResolverFactory $resolverFactory, CleanupStrategyFactory $cleanupStrategyFactory, ApplicationLogger $applicationLogger, EventDispatcherInterface $eventDispatcher)
     {
@@ -274,11 +275,6 @@ class ImportProcessingService
         }
     }
 
-    /**
-     * @param MappingConfiguration $mappingConfiguration
-     *
-     * @return string
-     */
     public function evaluateTransformationResultDataType(MappingConfiguration $mappingConfiguration): string
     {
 
@@ -297,12 +293,6 @@ class ImportProcessingService
         return $transformationDataType;
     }
 
-    /**
-     * @param array $importDataRow
-     * @param MappingConfiguration $mappingConfiguration
-     *
-     * @return string
-     */
     public function generateTransformationResultPreview(array $importDataRow, MappingConfiguration $mappingConfiguration): string
     {
 
@@ -351,11 +341,6 @@ class ImportProcessingService
         }
     }
 
-    /**
-     * @param string $configName
-     *
-     * @return array
-     */
     public function getImportStatus(string $configName): array
     {
         $currentQueueItems = $this->queueService->getQueueItemCount($configName);

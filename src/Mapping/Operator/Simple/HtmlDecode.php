@@ -21,6 +21,11 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class HtmlDecode extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array|false|mixed|null
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;

@@ -33,9 +33,6 @@ class IdStrategy extends AbstractLoad
                                                  $this->getClassName());
     }
 
-    /**
-     * @return array
-     */
     public function loadFullIdentifierList(): array
     {
         $sql = sprintf('SELECT `o_id` FROM object_%s', $this->dataObjectClassId);

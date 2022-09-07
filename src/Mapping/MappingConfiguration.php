@@ -40,9 +40,6 @@ class MappingConfiguration
      */
     protected $dataTarget;
 
-    /**
-     * @return string
-     */
     public function getLabel(): string
     {
         return $this->label;
@@ -88,9 +85,6 @@ class MappingConfiguration
         $this->transformationPipeline = $transformationPipeline;
     }
 
-    /**
-     * @return DataTargetInterface
-     */
     public function getDataTarget(): DataTargetInterface
     {
         return $this->dataTarget;

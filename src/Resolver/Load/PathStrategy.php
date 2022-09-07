@@ -33,9 +33,6 @@ class PathStrategy extends AbstractLoad
                                                    $this->getClassName());
     }
 
-    /**
-     * @return array
-     */
     public function loadFullIdentifierList(): array
     {
         $sql = sprintf('SELECT CONCAT(`o_path`, `o_key`) FROM object_%s', $this->dataObjectClassId);

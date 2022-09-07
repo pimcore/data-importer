@@ -29,6 +29,14 @@ class DataImporterHandler
         ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL => 1,
     ];
 
+    /**
+     * @param QueueService $queueService
+     * @param ImportProcessingService $importProcessingService
+     * @param MessageBusInterface $messageBus
+     * @param int $workerCountLifeTime
+     * @param int $workerItemCount
+     * @param int $workerCountParallel
+     */
     public function __construct(
         protected QueueService $queueService,
         protected ImportProcessingService $importProcessingService,

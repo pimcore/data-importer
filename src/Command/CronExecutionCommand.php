@@ -44,6 +44,11 @@ class CronExecutionCommand extends AbstractCommand
                 'Names of configs that should be considered. Uses all if not specified.');
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $configNames = $input->getArgument('config_name');

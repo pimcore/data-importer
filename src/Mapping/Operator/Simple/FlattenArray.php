@@ -26,6 +26,11 @@ class FlattenArray extends AbstractOperator
         //nothing to do
     }
 
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (!is_array($inputData) && !empty($inputData)) {

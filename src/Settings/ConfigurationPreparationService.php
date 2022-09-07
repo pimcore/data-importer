@@ -20,6 +20,13 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ConfigurationPreparationService
 {
+    /**
+     * @param string $configName
+     * @param string|array|null $currentConfig
+     * @param bool $ignorePermissions
+     * @return array
+     * @throws \Exception
+     */
     public function prepareConfiguration(string $configName, $currentConfig = null, $ignorePermissions = false)
     {
         if ($currentConfig) {

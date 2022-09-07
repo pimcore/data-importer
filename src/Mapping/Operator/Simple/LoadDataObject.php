@@ -59,9 +59,6 @@ class LoadDataObject extends AbstractOperator
      */
     protected $loadUnpublished;
 
-    /**
-     * @var DataObjectLoader
-     */
     protected DataObjectLoader $dataObjectLoader;
 
     /**
@@ -83,6 +80,12 @@ class LoadDataObject extends AbstractOperator
         $this->loadUnpublished = $settings['loadUnpublished'] ?? false;
     }
 
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array|false|mixed|null
+     * @throws InvalidConfigurationException
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;
@@ -196,6 +199,10 @@ class LoadDataObject extends AbstractOperator
         }
     }
 
+    /**
+     * @param $inputData
+     * @return array|false|mixed
+     */
     public function generateResultPreview($inputData)
     {
         $returnScalar = false;

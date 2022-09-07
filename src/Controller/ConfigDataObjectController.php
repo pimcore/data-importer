@@ -65,9 +65,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @param Request $request
      *
-     * @return JsonResponse
-     *
-     * @throws \Exception
+     * @return JsonResponse|null
      *
      */
     public function saveAction(Request $request): ?JsonResponse
@@ -105,6 +103,12 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         }
     }
 
+    /**
+     * @param string $configName
+     * @param array $config
+     * @param InterpreterFactory $interpreterFactory
+     * @return array
+     */
     protected function loadAvailableColumnHeaders(
         string $configName,
         array $config,

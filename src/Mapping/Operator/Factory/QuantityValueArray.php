@@ -21,6 +21,11 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class QuantityValueArray extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (!is_array($inputData)) {
@@ -62,6 +67,10 @@ class QuantityValueArray extends AbstractOperator
         return TransformationDataTypeService::QUANTITY_VALUE_ARRAY;
     }
 
+    /**
+     * @param $inputData
+     * @return array|mixed
+     */
     public function generateResultPreview($inputData)
     {
         if (is_array($inputData)) {

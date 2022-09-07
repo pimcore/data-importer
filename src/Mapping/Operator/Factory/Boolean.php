@@ -21,6 +21,11 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class Boolean extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return bool
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (is_array($inputData)) {

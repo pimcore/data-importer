@@ -24,6 +24,11 @@ use Pimcore\Model\DataObject\Data\ImageGallery;
 
 class Gallery extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return ImageGallery
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $items = [];
@@ -59,6 +64,10 @@ class Gallery extends AbstractOperator
         return TransformationDataTypeService::GALLERY;
     }
 
+    /**
+     * @param $inputData
+     * @return array|mixed
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof ImageGallery) {

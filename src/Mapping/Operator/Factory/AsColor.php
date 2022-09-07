@@ -40,6 +40,10 @@ class AsColor extends AbstractOperator
         return new RgbaColor();
     }
 
+    /**
+     * @param $inputData
+     * @return mixed|string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof RgbaColor) {

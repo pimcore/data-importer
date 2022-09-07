@@ -48,6 +48,11 @@ class PrepareImportCommand extends AbstractCommand
         ;
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $configNames = $input->getArgument('config_name');

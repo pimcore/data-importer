@@ -21,6 +21,11 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class Numeric extends AbstractOperator
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return float
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (is_array($inputData)) {
@@ -47,6 +52,10 @@ class Numeric extends AbstractOperator
         return TransformationDataTypeService::NUMERIC;
     }
 
+    /**
+     * @param $inputData
+     * @return mixed
+     */
     public function generateResultPreview($inputData)
     {
         return $inputData;

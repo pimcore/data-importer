@@ -20,6 +20,11 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class InputQuantityValueArray extends QuantityValueArray
 {
+    /**
+     * @param $inputData
+     * @param bool $dryRun
+     * @return array
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (!is_array($inputData)) {
@@ -55,6 +60,10 @@ class InputQuantityValueArray extends QuantityValueArray
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE_ARRAY;
     }
 
+    /**
+     * @param $inputData
+     * @return array|mixed
+     */
     public function generateResultPreview($inputData)
     {
         if (is_array($inputData)) {
