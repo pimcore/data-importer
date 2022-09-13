@@ -381,7 +381,7 @@ class ImportProcessingService
     /**
      * @param string $configName
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function cancelImportAndCleanupQueue(string $configName): void
     {

@@ -80,7 +80,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     /**
      * @param GenericEvent $event
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function postDelete(GenericEvent $event)
     {

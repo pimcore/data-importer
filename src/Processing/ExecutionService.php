@@ -62,7 +62,7 @@ class ExecutionService
     }
 
     /**
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function updateExecutionTimestamp(string $configName, DateTime $executionTimestamp)
     {

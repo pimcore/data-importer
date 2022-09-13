@@ -49,7 +49,7 @@ class QueueService
      * @param string $jobType
      * @param string $data
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data): void
     {
@@ -142,7 +142,7 @@ class QueueService
      *
      * @return array
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function getQueueEntryById(int $id): array
     {
@@ -182,7 +182,7 @@ class QueueService
     /**
      * @param int $id
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function markQueueEntryAsProcessed($id)
     {
@@ -199,7 +199,7 @@ class QueueService
     /**
      * @param string $configName
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function cleanupQueueItems(string $configName): void
     {

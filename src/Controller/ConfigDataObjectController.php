@@ -616,7 +616,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @return JsonResponse
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService)
     {
