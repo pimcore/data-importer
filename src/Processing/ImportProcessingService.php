@@ -113,7 +113,7 @@ class ImportProcessingService
         $this->configLoader = new ConfigurationPreparationService();
     }
 
-    public function processQueueItem(int $id)
+    public function processQueueItem(int $id, bool $logs)
     {
         //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
@@ -139,7 +139,7 @@ class ImportProcessingService
         //process element
         if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
             $data = json_decode($queueItem['data'], true);
-            $this->processElement($configName, $data, $resolver, $mapping);
+            $this->processElement($configName, $data, $resolver, $mapping, $logs);
         } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
             $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
         } else {
@@ -165,7 +165,7 @@ class ImportProcessingService
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      */
-    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping)
+    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping, bool $logs)
     {
         $element = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
@@ -203,11 +203,13 @@ class ImportProcessingService
                     $dataTarget = $mappingConfiguration->getDataTarget();
                     $dataTarget->assignData($element, $data);
                 }
-                $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    null,
-                    'relatedObject' => $element
-                ]);
+                if ($logs) {
+                    $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                        null,
+                        'relatedObject' => $element
+                    ]);
+                }
 
                 $event = new PreSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
@@ -217,21 +219,25 @@ class ImportProcessingService
                 $event = new PostSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
 
-                $message = "Element {$element->getId()} imported successfully.";
-                $this->logger->info($message);
-                $this->applicationLogger->info($message, [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => new FileObject(json_encode($importDataRow)),
-                    'relatedObject' => $element
-                ]);
+                if ($logs) {
+                    $message = "Element {$element->getId()} imported successfully.";
+                    $this->logger->info($message);
+                    $this->applicationLogger->info($message, [
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                        'fileObject' => new FileObject(json_encode($importDataRow)),
+                        'relatedObject' => $element
+                    ]);
+                }
             } else {
                 $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
-                $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
-                $this->logger->info($message);
-                $this->applicationLogger->info($message, [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => new FileObject(json_encode($importDataRow))
-                ]);
+                if ($logs) {
+                    $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
+                    $this->logger->info($message);
+                    $this->applicationLogger->info($message, [
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                        'fileObject' => new FileObject(json_encode($importDataRow))
+                    ]);
+                }
             }
         } catch (\Exception $e) {
             $message = "Error processing element: {$importDataRowString}";

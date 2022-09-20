@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Console\AbstractCommand;
 use Pimcore\Console\Traits\Parallelization;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class ParallelProcessQueueCommand extends AbstractCommand
@@ -54,6 +55,7 @@ class ParallelProcessQueueCommand extends AbstractCommand
         $this
             ->setName('datahub:data-importer:process-queue-parallel')
             ->setDescription('Processes all items of the queue that can be executed parallel.')
+            ->addOption('no-logs', null, InputOption::VALUE_NONE, 'Add this option to suppress info logs')
         ;
     }
 
@@ -79,6 +81,6 @@ class ParallelProcessQueueCommand extends AbstractCommand
      */
     protected function runSingleCommand(string $item, InputInterface $input, OutputInterface $output): void
     {
-        $this->importProcessingService->processQueueItem((int) $item);
+        $this->importProcessingService->processQueueItem((int) $item, !$input->getOption('no-logs'));
     }
 }
