@@ -66,7 +66,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      *
      * @return JsonResponse|null
-     *
+     * @throws \Exception
      */
     public function saveAction(Request $request): ?JsonResponse
     {
