@@ -63,7 +63,6 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
     /**
      * @Route("/save")
      *
-     *
      * @throws \Exception
      */
     public function saveAction(Request $request): ?JsonResponse
