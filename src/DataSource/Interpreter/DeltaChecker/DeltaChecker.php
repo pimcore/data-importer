@@ -86,7 +86,7 @@ class DeltaChecker
         $oldHash = $this->getCurrentHash($configName, $id);
 
         $newHash = md5(json_encode($data));
-        if ($oldHash !== $newHash) {
+        if (!hash_equals($oldHash, $newHash)) {
             $this->updateHash($configName, $id, $newHash);
 
             return true;
