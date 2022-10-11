@@ -42,6 +42,15 @@ class ManyToManyRelation extends Direct
         $this->overwriteMode = $settings['overwriteMode'] ?? self::OVERWRITE_MODE_REPLACE;
     }
 
+    /**
+     * @param DataObject\Concrete|DataObject\Objectbrick\Data\AbstractData $valueContainer
+     * @param string $fieldName
+     * @param mixed $data
+     *
+     * @return void
+     *
+     * @throws InvalidConfigurationException
+     */
     protected function doAssignData($valueContainer, $fieldName, $data)
     {
         if ($valueContainer instanceof DataObject\Concrete) {

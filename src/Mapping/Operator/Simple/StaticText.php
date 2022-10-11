@@ -46,6 +46,14 @@ class StaticText extends AbstractOperator
         $this->alwaysAdd = $settings['alwaysAdd'] ?? false;
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|false|mixed|null
+     *
+     * @throws InvalidConfigurationException
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;

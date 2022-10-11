@@ -37,6 +37,12 @@ class Explode extends AbstractOperator
         $this->keepSubArrays = (bool) ($settings['keepSubArrays'] ?? false);
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|array[]|mixed|string[]|\string[][]
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (!empty($this->delimiter)) {

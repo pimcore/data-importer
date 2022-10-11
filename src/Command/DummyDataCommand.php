@@ -36,6 +36,14 @@ class DummyDataCommand extends AbstractCommand
         ;
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     *
+     * @return int
+     *
+     * @throws \Exception
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $tags = [
@@ -182,6 +190,13 @@ class DummyDataCommand extends AbstractCommand
         file_put_contents($filename, $dom->saveXML());
     }
 
+    /**
+     * @param array $data
+     * @param \SimpleXMLElement $xml_data
+     * @param string $firstLevelKey
+     *
+     * @return void
+     */
     public function arrayToXml($data, &$xml_data, $firstLevelKey = null)
     {
         foreach ($data as $key => $value) {

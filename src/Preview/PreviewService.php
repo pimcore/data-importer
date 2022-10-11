@@ -24,14 +24,8 @@ class PreviewService
 {
     use TemporaryFileHelperTrait;
 
-    /**
-     * @var FilesystemOperator
-     */
     protected FilesystemOperator $pimcoreDataImporterPreviewStorage;
 
-    /**
-     * @param FilesystemOperator $pimcoreDataImporterPreviewStorage
-     */
     public function __construct(FilesystemOperator $pimcoreDataImporterPreviewStorage)
     {
         $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
@@ -45,6 +39,7 @@ class PreviewService
 
     /**
      * @param string $configName
+     * @param User $user
      *
      * @return string
      *

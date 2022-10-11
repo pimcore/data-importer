@@ -37,6 +37,12 @@ class ConditionalConversion extends AbstractOperator
         $this->converted = $settings['converted'] ?? '';
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|false|mixed|null
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;

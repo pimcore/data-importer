@@ -20,6 +20,12 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 
 class AsArray extends AbstractOperator
 {
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|mixed
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (!is_array($inputData)) {

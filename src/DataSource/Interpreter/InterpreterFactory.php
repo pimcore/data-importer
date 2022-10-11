@@ -36,6 +36,16 @@ class InterpreterFactory
         $this->interpreterBluePrints = $interpreterBluePrints;
     }
 
+    /**
+     * @param string $configName
+     * @param array $interpreterConfiguration
+     * @param array $processingConfiguration
+     * @param Resolver|null $resolver
+     *
+     * @return InterpreterInterface
+     *
+     * @throws InvalidConfigurationException
+     */
     public function loadInterpreter(string $configName, array $interpreterConfiguration, array $processingConfiguration, Resolver $resolver = null)
     {
         if (empty($interpreterConfiguration['type']) || !array_key_exists($interpreterConfiguration['type'], $this->interpreterBluePrints)) {

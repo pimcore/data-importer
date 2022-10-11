@@ -135,10 +135,6 @@ class TransformationDataTypeService
         ]
     ];
 
-    /**
-     * @param string $pimcoreDataType
-     * @param string $transformationTargetType
-     */
     public function appendTypeMapping(string $pimcoreDataType, string $transformationTargetType): void
     {
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;

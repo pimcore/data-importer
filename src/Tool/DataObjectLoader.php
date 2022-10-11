@@ -26,21 +26,11 @@ class DataObjectLoader
     const BRICK_ATTRIBUTE_NAME = 'brickFieldName';
     const BRICK_ATTRIBUTE_SEPARATOR = '.';
 
-    /**
-     * @param string $attributeName
-     *
-     * @return bool
-     */
     private function isObjectBrickAttribute(string $attributeName): bool
     {
         return str_contains($attributeName, self::BRICK_ATTRIBUTE_SEPARATOR);
     }
 
-    /**
-     * @param string $attributeName
-     *
-     * @return array
-     */
     private function getObjectBrickParts(string $attributeName): array
     {
         $parts = explode(self::BRICK_ATTRIBUTE_SEPARATOR, $attributeName);
@@ -53,12 +43,6 @@ class DataObjectLoader
         return [];
     }
 
-    /**
-     * @param array $objectBrickParts
-     * @param bool $includeClassFieldName
-     *
-     * @return string
-     */
     private function getAttributeNameFromParts(array $objectBrickParts,
                                                bool $includeClassFieldName): string
     {
@@ -74,17 +58,6 @@ class DataObjectLoader
         return $fullAttributeName;
     }
 
-    /**
-     * @param string $className
-     * @param string $attributeName
-     * @param string $identifier
-     * @param string $attributeLanguage
-     * @param bool $includeUnpublished
-     * @param int $limit
-     * @param string $operator
-     *
-     * @return ElementInterface|null
-     */
     public function loadByAttribute(string $className,
                                     string $attributeName,
                                     string $identifier,
@@ -133,24 +106,12 @@ class DataObjectLoader
         return null;
     }
 
-    /**
-     * @param string $identifier
-     * @param string $className
-     *
-     * @return ElementInterface|null
-     */
     public function loadById(string $identifier,
                              string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {
         return $className::getById($identifier);
     }
 
-    /**
-     * @param string $identifier
-     * @param string $className
-     *
-     * @return ElementInterface|null
-     */
     public function loadByPath(string $identifier,
                                string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {

@@ -25,7 +25,7 @@ interface LoadStrategyInterface extends SettingsAwareInterface
      *
      * @param array $inputData
      *
-     * @return ElementInterface
+     * @return ElementInterface|null
      */
     public function loadElement(array $inputData): ?ElementInterface;
 

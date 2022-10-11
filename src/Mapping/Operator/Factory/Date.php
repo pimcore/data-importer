@@ -31,6 +31,12 @@ class Date extends AbstractOperator
         $this->format = $settings['format'] ?? 'Y-m-d';
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|false|mixed
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;
@@ -73,6 +79,11 @@ class Date extends AbstractOperator
         return TransformationDataTypeService::DATE;
     }
 
+    /**
+     * @param mixed $inputData
+     *
+     * @return array|mixed|string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof \DateTime) {

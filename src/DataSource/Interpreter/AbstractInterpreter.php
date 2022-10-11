@@ -98,33 +98,21 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->applicationLogger = $applicationLogger;
     }
 
-    /**
-     * @return string
-     */
     public function getConfigName(): string
     {
         return $this->configName;
     }
 
-    /**
-     * @param string $configName
-     */
     public function setConfigName(string $configName): void
     {
         $this->configName = $configName;
     }
 
-    /**
-     * @return bool
-     */
     public function doDeltaCheck(): bool
     {
         return $this->doDeltaCheck;
     }
 
-    /**
-     * @param bool $doDeltaCheck
-     */
     public function setDoDeltaCheck(bool $doDeltaCheck): void
     {
         $this->doDeltaCheck = $doDeltaCheck;
@@ -146,57 +134,36 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->idDataIndex = $idDataIndex;
     }
 
-    /**
-     * @return string
-     */
     public function getExecutionType(): string
     {
         return $this->executionType;
     }
 
-    /**
-     * @param string $executionType
-     */
     public function setExecutionType(string $executionType): void
     {
         $this->executionType = $executionType;
     }
 
-    /**
-     * @return bool
-     */
     public function doCleanup(): bool
     {
         return $this->doCleanup;
     }
 
-    /**
-     * @param bool $doCleanup
-     */
     public function setDoCleanup(bool $doCleanup): void
     {
         $this->doCleanup = $doCleanup;
     }
 
-    /**
-     * @return bool
-     */
     public function doArchiveImportFile(): bool
     {
         return $this->doArchiveImportFile;
     }
 
-    /**
-     * @param bool $doArchiveImportFile
-     */
     public function setDoArchiveImportFile(bool $doArchiveImportFile): void
     {
         $this->doArchiveImportFile = $doArchiveImportFile;
     }
 
-    /**
-     * @param Resolver $resolver
-     */
     public function setResolver(Resolver $resolver): void
     {
         $this->resolver = $resolver;
@@ -263,9 +230,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->identifierCache = [];
     }
 
-    /**
-     * @param array $data
-     */
     protected function addToIdentifierCache(array $data): void
     {
         if ($this->doCleanup) {

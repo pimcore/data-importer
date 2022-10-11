@@ -87,6 +87,7 @@ class ImportPreparationService
      * @param ApplicationLogger $applicationLogger
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param ExecutionService $executionService
+     * @param EventDispatcherInterface $eventDispatcher
      */
     public function __construct(
         ResolverFactory $resolverFactory,
@@ -108,13 +109,6 @@ class ImportPreparationService
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    /**
-     * @param string $configName
-     * @param bool $ignoreActiveFlag
-     * @param bool $ignoreNotEmptyQueueFlag
-     *
-     * @return bool
-     */
     public function prepareImport(
         string $configName,
         bool $ignoreActiveFlag = false,
@@ -203,12 +197,6 @@ class ImportPreparationService
         }
     }
 
-    /**
-     * @param string $configName
-     * @param array $config
-     *
-     * @return bool
-     */
     public function isConfigurationActive(string $configName, array $config): bool
     {
         if (!($config['general']['active'] ?? false)) {

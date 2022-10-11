@@ -33,14 +33,8 @@ class UploadLoader implements DataLoaderInterface
      */
     protected $temporaryFile = null;
 
-    /**
-     * @var FilesystemOperator
-     */
     protected FilesystemOperator $pimcoreDataImporterUploadStorage;
 
-    /**
-     * @param FilesystemOperator $pimcoreDataImporterUploadStorage
-     */
     public function __construct(FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
         $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;

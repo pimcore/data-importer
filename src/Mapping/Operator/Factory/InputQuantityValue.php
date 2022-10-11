@@ -17,9 +17,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Model\DataObject\Data\QuantityValue;
 
 class InputQuantityValue extends QuantityValue
 {
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return QuantityValue
+     */
     public function process($inputData, bool $dryRun = false)
     {
         return new \Pimcore\Model\DataObject\Data\QuantityValue(
@@ -45,6 +52,11 @@ class InputQuantityValue extends QuantityValue
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE;
     }
 
+    /**
+     * @param mixed $inputData
+     *
+     * @return string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {

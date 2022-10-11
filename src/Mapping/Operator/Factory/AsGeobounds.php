@@ -23,6 +23,12 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
 class AsGeobounds extends AbstractOperator
 {
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return Geobounds
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $northEast = new GeoCoordinates($inputData[0] ?? null, $inputData[1] ?? null);
@@ -31,6 +37,11 @@ class AsGeobounds extends AbstractOperator
         return new Geobounds($northEast, $southWest);
     }
 
+    /**
+     * @param mixed $inputData
+     *
+     * @return mixed|string
+     */
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof Geobounds) {

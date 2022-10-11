@@ -21,25 +21,16 @@ class DataImporterMessage
     {
     }
 
-    /**
-     * @return string
-     */
     public function getExecutionType(): string
     {
         return $this->executionType;
     }
 
-    /**
-     * @return array
-     */
     public function getIds(): array
     {
         return $this->ids;
     }
 
-    /**
-     * @return string
-     */
     public function getMessageId(): string
     {
         return $this->messageId;

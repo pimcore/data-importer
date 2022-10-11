@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Asset;
+use Pimcore\Model\Element\DuplicateFullPathException;
 use Pimcore\Model\Element\Service;
 
 class ImportAsset extends AbstractOperator
@@ -52,6 +53,14 @@ class ImportAsset extends AbstractOperator
         $this->pregMatch = $settings['pregMatch'] ?? '';
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|false|mixed|null
+     *
+     * @throws DuplicateFullPathException
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;
@@ -145,6 +154,12 @@ class ImportAsset extends AbstractOperator
         }
     }
 
+    /**
+     * @param string $targetPath
+     * @param string $filename
+     *
+     * @return string
+     */
     protected function getSafeFilename($targetPath, $filename)
     {
         $pathinfo = pathinfo($filename);
@@ -185,6 +200,11 @@ class ImportAsset extends AbstractOperator
         }
     }
 
+    /**
+     * @param mixed $inputData
+     *
+     * @return array|false|mixed
+     */
     public function generateResultPreview($inputData)
     {
         $returnScalar = false;

@@ -44,6 +44,13 @@ class XmlFileInterpreter extends AbstractInterpreter
      */
     protected $cachedFilePath = null;
 
+    /**
+     * @param string $path
+     *
+     * @return \DOMNodeList
+     *
+     * @throws InvalidInputException
+     */
     protected function loadData(string $path)
     {
         if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
@@ -73,6 +80,7 @@ class XmlFileInterpreter extends AbstractInterpreter
     {
         $records = $this->loadData($path);
 
+        /** @var \DOMElement $item */
         foreach ($records as $item) {
             $this->processImportRow(XmlUtils::convertDomElementToArray($item));
         }

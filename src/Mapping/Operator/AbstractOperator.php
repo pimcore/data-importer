@@ -39,11 +39,21 @@ abstract class AbstractOperator implements OperatorInterface
         $this->applicationLogger = $applicationLogger;
     }
 
+    /**
+     * @param string $configName
+     *
+     * @return void
+     */
     public function setConfigName(string $configName)
     {
         $this->configName = $configName;
     }
 
+    /**
+     * @param mixed $inputData
+     *
+     * @return mixed
+     */
     public function generateResultPreview($inputData)
     {
         return $inputData;

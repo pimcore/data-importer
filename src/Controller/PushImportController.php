@@ -47,6 +47,7 @@ class PushImportController
      *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationLoaderService
+     * @param DataLoaderFactory $dataLoaderFactory
      * @param ImportPreparationService $importPreparationService
      *
      * @return JsonResponse

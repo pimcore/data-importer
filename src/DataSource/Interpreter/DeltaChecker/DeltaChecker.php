@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 
 class DeltaChecker
@@ -32,6 +33,13 @@ class DeltaChecker
         $this->db = $connection;
     }
 
+    /**
+     * @param \Closure|null $callable
+     *
+     * @return mixed|null
+     *
+     * @throws Exception
+     */
     protected function createTableIfNotExisting(\Closure $callable = null)
     {
         $this->db->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
@@ -76,6 +84,13 @@ class DeltaChecker
         }
     }
 
+    /**
+     * @param string $configName
+     * @param mixed $idDataIndex
+     * @param array $data
+     *
+     * @return bool
+     */
     public function hasChanged(string $configName, $idDataIndex, array $data): bool
     {
         $id = $data[$idDataIndex] ?? null;

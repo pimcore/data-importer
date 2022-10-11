@@ -55,9 +55,6 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
     }
 
-    /**
-     * @param ContainerBuilder $container
-     */
     public function prepend(ContainerBuilder $container)
     {
         if ($container->hasExtension('doctrine_migrations')) {

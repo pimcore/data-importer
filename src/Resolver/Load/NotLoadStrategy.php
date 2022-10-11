@@ -24,11 +24,21 @@ class NotLoadStrategy implements LoadStrategyInterface
         return null;
     }
 
+    /**
+     * @param string $identifier
+     *
+     * @return ElementInterface|null
+     */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
         return null;
     }
 
+    /**
+     * @param array $inputData
+     *
+     * @return null
+     */
     public function extractIdentifierFromData(array $inputData)
     {
         return null;
@@ -39,6 +49,11 @@ class NotLoadStrategy implements LoadStrategyInterface
         return [];
     }
 
+    /**
+     * @param string $dataObjectClassId
+     *
+     * @return void
+     */
     public function setDataObjectClassId($dataObjectClassId): void
     {
         //nothing to do

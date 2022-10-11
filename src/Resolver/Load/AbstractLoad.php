@@ -42,6 +42,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
      * AbstractLoad constructor.
      *
      * @param Connection $connection
+     * @param DataObjectLoader $dataObjectLoader
      */
     public function __construct(Connection $connection, protected DataObjectLoader $dataObjectLoader)
     {
@@ -65,6 +66,11 @@ abstract class AbstractLoad implements LoadStrategyInterface
         $this->dataObjectClassId = $dataObjectClassId;
     }
 
+    /**
+     * @return string
+     *
+     * @throws InvalidConfigurationException
+     */
     protected function getClassName()
     {
         $class = ClassDefinition::getById($this->dataObjectClassId);

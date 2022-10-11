@@ -145,9 +145,6 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
          */
         $gallery = $this->tester->grabService(Gallery::class);
 
-        /**
-         * @var ImageGallery $result
-         */
         $result = $gallery->process(new Asset\Image());
         $this->assertInstanceOf(ImageGallery::class, $result);
         $this->assertEquals(1, count($result->getItems()));
@@ -227,9 +224,6 @@ class FactoryOperatorTest extends \Codeception\Test\Unit
          */
         $inputQuantityValue = $this->tester->grabService(InputQuantityValue::class);
 
-        /**
-         * @var QuantityValue $result
-         */
         $result = $inputQuantityValue->process(['12', 'm']);
         $this->assertInstanceOf(QuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());

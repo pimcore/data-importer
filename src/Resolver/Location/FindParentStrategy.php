@@ -57,9 +57,6 @@ class FindParentStrategy implements LocationStrategyInterface
      */
     protected $attributeLanguage;
 
-    /**
-     * @param DataObjectLoader $dataObjectLoader
-     */
     public function __construct(protected DataObjectLoader $dataObjectLoader)
     {
     }

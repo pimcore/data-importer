@@ -69,91 +69,56 @@ class Resolver
         $this->dataObjectClassId = $dataObjectClassId;
     }
 
-    /**
-     * @return LoadStrategyInterface
-     */
     public function getLoadingStrategy(): LoadStrategyInterface
     {
         return $this->loadingStrategy;
     }
 
-    /**
-     * @param LoadStrategyInterface $loadingStrategy
-     */
     public function setLoadingStrategy(LoadStrategyInterface $loadingStrategy): void
     {
         $this->loadingStrategy = $loadingStrategy;
     }
 
-    /**
-     * @return LocationStrategyInterface
-     */
     public function getLocationUpdateStrategy(): LocationStrategyInterface
     {
         return $this->locationUpdateStrategy;
     }
 
-    /**
-     * @param LocationStrategyInterface $locationUpdateStrategy
-     */
     public function setLocationUpdateStrategy(LocationStrategyInterface $locationUpdateStrategy): void
     {
         $this->locationUpdateStrategy = $locationUpdateStrategy;
     }
 
-    /**
-     * @return LocationStrategyInterface
-     */
     public function getCreateLocationStrategy(): LocationStrategyInterface
     {
         return $this->createLocationStrategy;
     }
 
-    /**
-     * @param LocationStrategyInterface $createLocationStrategy
-     */
     public function setCreateLocationStrategy(LocationStrategyInterface $createLocationStrategy): void
     {
         $this->createLocationStrategy = $createLocationStrategy;
     }
 
-    /**
-     * @return PublishStrategyInterface
-     */
     public function getPublishingStrategy(): PublishStrategyInterface
     {
         return $this->publishingStrategy;
     }
 
-    /**
-     * @param PublishStrategyInterface $publishingStrategy
-     */
     public function setPublishingStrategy(PublishStrategyInterface $publishingStrategy): void
     {
         $this->publishingStrategy = $publishingStrategy;
     }
 
-    /**
-     * @return FactoryInterface
-     */
     public function getElementFactory(): FactoryInterface
     {
         return $this->elementFactory;
     }
 
-    /**
-     * @param FactoryInterface $elementFactory
-     */
     public function setElementFactory(FactoryInterface $elementFactory): void
     {
         $this->elementFactory = $elementFactory;
     }
 
-    /**
-     * @param array $inputData
-     *
-     * @return ElementInterface|null
-     */
     public function loadElement(array $inputData): ?ElementInterface
     {
         return $this->getLoadingStrategy()->loadElement($inputData);
@@ -169,11 +134,6 @@ class Resolver
         return $this->getLoadingStrategy()->loadElementByIdentifier($identifier);
     }
 
-    /**
-     * @param array $inputData
-     *
-     * @return ElementInterface | null
-     */
     public function loadOrCreateAndPrepareElement(array $inputData, bool $createNew = true): ?ElementInterface
     {
         $element = $this->loadElement($inputData);
@@ -207,9 +167,6 @@ class Resolver
         return $this->getLoadingStrategy()->extractIdentifierFromData($inputData);
     }
 
-    /**
-     * @return array
-     */
     public function loadFullIdentifierList(): array
     {
         return $this->getLoadingStrategy()->loadFullIdentifierList();

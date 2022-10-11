@@ -24,9 +24,6 @@ class CleanupStrategyConfigurationFactoryPass implements CompilerPassInterface
 {
     const cleanup_tag = 'pimcore.datahub.data_importer.cleanup';
 
-    /**
-     * @param ContainerBuilder $container
-     */
     public function process(ContainerBuilder $container)
     {
         $taggedServices = $container->findTaggedServiceIds(self::cleanup_tag);

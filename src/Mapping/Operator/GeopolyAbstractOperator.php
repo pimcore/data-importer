@@ -19,6 +19,12 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
 abstract class GeopolyAbstractOperator extends AbstractOperator
 {
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $data = [];
@@ -40,6 +46,11 @@ abstract class GeopolyAbstractOperator extends AbstractOperator
         return $data;
     }
 
+    /**
+     * @param mixed $inputData
+     *
+     * @return array
+     */
     public function generateResultPreview($inputData)
     {
         $preview = null;

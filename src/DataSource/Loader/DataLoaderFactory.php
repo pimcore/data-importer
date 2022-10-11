@@ -34,6 +34,13 @@ class DataLoaderFactory
         $this->dataLoaderBluePrints = $dataLoaderBluePrints;
     }
 
+    /**
+     * @param array $configuration
+     *
+     * @return DataLoaderInterface
+     *
+     * @throws InvalidConfigurationException
+     */
     public function loadDataLoader(array $configuration)
     {
         if (empty($configuration['type']) || !array_key_exists($configuration['type'], $this->dataLoaderBluePrints)) {

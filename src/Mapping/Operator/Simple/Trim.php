@@ -35,6 +35,12 @@ class Trim extends AbstractOperator
         $this->mode = $settings['mode'] ?? self::MODE_BOTH;
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return array|false|mixed|null
+     */
     public function process($inputData, bool $dryRun = false)
     {
         $returnScalar = false;

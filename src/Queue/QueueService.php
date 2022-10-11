@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Queue;
 
 use Carbon\Carbon;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
@@ -37,7 +38,6 @@ class QueueService
 
     protected function getCurrentQueueTableOperationTime(): int
     {
-        /** @var Carbon $carbonNow */
         $carbonNow = Carbon::now();
 
         return (int)($carbonNow->getTimestamp() . str_pad((string)$carbonNow->milli, 3, '0'));
@@ -74,6 +74,13 @@ class QueueService
         }
     }
 
+    /**
+     * @param \Closure|null $callable
+     *
+     * @return mixed|null
+     *
+     * @throws Exception
+     */
     protected function createQueueTableIfNotExisting(\Closure $callable = null)
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
@@ -160,11 +167,6 @@ class QueueService
         }
     }
 
-    /**
-     * @param string $configName
-     *
-     * @return int
-     */
     public function getQueueItemCount(string $configName): int
     {
         try {

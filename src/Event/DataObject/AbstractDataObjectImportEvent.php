@@ -49,17 +49,11 @@ abstract class AbstractDataObjectImportEvent extends Event
         $this->dataObject = $dataObject;
     }
 
-    /**
-     * @return string
-     */
     public function getConfigName(): string
     {
         return $this->configName;
     }
 
-    /**
-     * @param string $configName
-     */
     public function setConfigName(string $configName): self
     {
         $this->configName = $configName;
@@ -67,17 +61,11 @@ abstract class AbstractDataObjectImportEvent extends Event
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getRawData(): array
     {
         return $this->rawData;
     }
 
-    /**
-     * @param array $rawData
-     */
     public function setRawData(array $rawData): self
     {
         $this->rawData = $rawData;
@@ -85,17 +73,11 @@ abstract class AbstractDataObjectImportEvent extends Event
         return $this;
     }
 
-    /**
-     * @return ElementInterface
-     */
     public function getDataObject(): ElementInterface
     {
         return $this->dataObject;
     }
 
-    /**
-     * @param ElementInterface $dataObject
-     */
     public function setDataObject(ElementInterface $dataObject): self
     {
         $this->dataObject = $dataObject;

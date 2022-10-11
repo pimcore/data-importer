@@ -31,6 +31,12 @@ class Combine extends AbstractOperator
         $this->glue = $settings['glue'] ?? ' ';
     }
 
+    /**
+     * @param mixed $inputData
+     * @param bool $dryRun
+     *
+     * @return string
+     */
     public function process($inputData, bool $dryRun = false)
     {
         if (!is_array($inputData)) {

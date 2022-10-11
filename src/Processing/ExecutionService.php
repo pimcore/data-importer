@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
 use DateTime;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
@@ -44,6 +45,13 @@ class ExecutionService
         ', self::EXECUTION_STORAGE_TABLE_NAME));
     }
 
+    /**
+     * @param string $configName
+     *
+     * @return DateTime|null
+     *
+     * @throws Exception
+     */
     public function getLastExecution($configName): ?DateTime
     {
         try {

@@ -24,9 +24,6 @@ class ClassificationStoreDataTypeService
      */
     protected $transformationDataTypeService;
 
-    /**
-     * @param TransformationDataTypeService $transformationDataTypeService
-     */
     public function __construct(TransformationDataTypeService $transformationDataTypeService)
     {
         $this->transformationDataTypeService = $transformationDataTypeService;

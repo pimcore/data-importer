@@ -70,9 +70,6 @@ class AttributeStrategy extends AbstractLoad
                                                         1);
     }
 
-    /**
-     * @return array
-     */
     public function loadFullIdentifierList(): array
     {
         $tableName = 'object_' . $this->dataObjectClassId;

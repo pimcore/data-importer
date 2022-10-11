@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderCon
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverConfigurationFactoryPass;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
+use Pimcore\Extension\Bundle\Installer\InstallerInterface;
 use Pimcore\Extension\Bundle\Traits\PackageVersionTrait;
 use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
@@ -38,6 +39,9 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
         return 'pimcore/data-importer';
     }
 
+    /**
+     * @return string[]
+     */
     public function getCssPaths()
     {
         return [
@@ -45,6 +49,9 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
         ];
     }
 
+    /**
+     * @return string[]
+     */
     public function getJsPaths()
     {
         return [
@@ -138,6 +145,9 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
         $collection->addBundle(new FlysystemBundle());
     }
 
+    /**
+     * @return object|Installer|InstallerInterface|null
+     */
     public function getInstaller()
     {
         return $this->container->get(Installer::class);

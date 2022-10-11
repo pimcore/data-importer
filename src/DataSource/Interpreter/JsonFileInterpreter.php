@@ -104,13 +104,6 @@ class JsonFileInterpreter extends AbstractInterpreter
         }
     }
 
-    /**
-     * @param string $path
-     * @param int $recordNumber
-     * @param array $mappedColumns
-     *
-     * @return PreviewData
-     */
     public function previewData(string $path, int $recordNumber = 0, array $mappedColumns = []): PreviewData
     {
         $previewData = [];

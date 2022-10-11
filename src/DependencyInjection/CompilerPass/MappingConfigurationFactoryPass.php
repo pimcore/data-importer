@@ -25,9 +25,6 @@ class MappingConfigurationFactoryPass implements CompilerPassInterface
     const operator_tag = 'pimcore.datahub.data_importer.operator';
     const data_target_tag = 'pimcore.datahub.data_importer.data_target';
 
-    /**
-     * @param ContainerBuilder $container
-     */
     public function process(ContainerBuilder $container)
     {
         $taggedServices = $container->findTaggedServiceIds(self::operator_tag);

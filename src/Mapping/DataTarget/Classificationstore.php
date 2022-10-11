@@ -57,6 +57,14 @@ class Classificationstore implements DataTargetInterface
         $this->language = $settings['language'] ?? null;
     }
 
+    /**
+     * @param ElementInterface $element
+     * @param mixed $data
+     *
+     * @return void
+     *
+     * @throws InvalidConfigurationException
+     */
     public function assignData(ElementInterface $element, $data)
     {
         $getter = 'get' . ucfirst($this->fieldName);

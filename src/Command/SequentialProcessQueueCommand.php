@@ -15,6 +15,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Command;
 
+use Doctrine\DBAL\Driver\Exception;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Console\AbstractCommand;
@@ -56,6 +58,16 @@ class SequentialProcessQueueCommand extends AbstractCommand
         ;
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     *
+     * @return int|void
+     *
+     * @throws Exception
+     * @throws \Doctrine\DBAL\Exception
+     * @throws InvalidConfigurationException
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         if (!$this->lock()) {

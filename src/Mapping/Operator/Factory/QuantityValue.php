@@ -37,9 +37,6 @@ class QuantityValue extends AbstractOperator
      */
     protected $unitNullIfNoValue;
 
-    /**
-     * @param array $settings
-     */
     public function setSettings(array $settings): void
     {
         $this->unitSource = $settings['unitSourceSelect'] ?? 'id';
