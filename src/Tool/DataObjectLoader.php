@@ -105,7 +105,13 @@ class DataObjectLoader
             if (empty($attributeLanguage) === false) {
                 $element = $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
             } else {
-                $element = $className::$getter($identifier, $limit, 0, $objectTypes);
+                if(method_exists($className, $getter)){
+                    $element = $className::$getter($identifier);
+                }
+
+                if(!$element) {
+                    $element = $className::$getter($identifier, $limit, 0, $objectTypes);
+                }
             }
         } else {
             $queryFieldName = $attributeName;
