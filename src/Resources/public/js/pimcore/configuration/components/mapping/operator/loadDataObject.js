@@ -99,7 +99,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.operat
             }
         });
 
-        const systemAttributes = ['id', 'fullpath', 'key'];
+        const systemAttributes = ['id', 'path', 'key'];
 
         const partialMatch = Ext.create('Ext.form.field.Checkbox', {
             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_accept_partial_match'),
