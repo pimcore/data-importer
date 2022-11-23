@@ -225,8 +225,8 @@ class TransformationDataTypeService
                     'title' => 'SYSTEM Key',
                     'localized' => false
                 ];
-                $attributes['fullpath'] = [
-                    'key' => 'fullpath',
+                $attributes['path'] = [
+                    'key' => 'path',
                     'title' => 'SYSTEM Fullpath',
                     'localized' => false
                 ];
