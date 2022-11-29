@@ -12,7 +12,7 @@
   "require": {
     "php": "^8.0",
     "pimcore/pimcore": "^10.6 || 11.x-dev as 11.0",
-    "pimcore/data-hub": "^1.5 || ^2.0",
+    "pimcore/data-hub": "1.x-dev as 1.6",
     "phpoffice/phpspreadsheet": "^1.15",
     "dragonmantank/cron-expression": "^3.1",
     "nesbot/carbon": "^2.27",
