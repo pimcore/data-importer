@@ -15,9 +15,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle;
 
-use Pimcore\Model\User\Permission;
-use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20220304130000;
+use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
+use Pimcore\Model\User\Permission;
 
 class Installer extends SettingsStoreAwareInstaller
 {
