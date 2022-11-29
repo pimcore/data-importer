@@ -2,9 +2,10 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
+use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\AttributeBasedStrategy;
 
-class AttributeBasedStrategyTest extends \Codeception\Test\Unit
+class AttributeBasedStrategyTest extends Unit
 {
     protected $tester;
 

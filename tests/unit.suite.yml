@@ -2,7 +2,7 @@ actor: UnitTester
 modules:
     enabled:
         - \Pimcore\Bundle\DataImporterBundle\Tests\Helper\Unit
-        - \Pimcore\Tests\Helper\Pimcore:
+        - \Pimcore\Tests\Support\Helper\Pimcore:
               connect_db: true
               cache_router: false
         - \Pimcore\Bundle\DataImporterBundle\Tests\Helper\Service

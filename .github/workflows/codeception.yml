@@ -28,9 +28,9 @@ jobs:
         strategy:
             matrix:
                 include:
-                    - { php-version: 8.0, database: "mariadb:10.7", pimcore_version: "", dependencies: highest, experimental: false }
-                    - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "", dependencies: highest, experimental: false }
-                    - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "11.x-dev", dependencies: highest, experimental: true }
+                    - { php-version: 8.0, database: "mariadb:10.7", pimcore_version: "dev-test_support_fc_layer as 10.6.0", dependencies: lowest, experimental: false }
+                    - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "dev-test_support_fc_layer as 10.6.0", dependencies: highest, experimental: false }
+                    - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "11.x-dev as 11.0.0", dependencies: highest, experimental: true }
         services:
             mariadb:
                 image: "${{ matrix.database }}"
@@ -69,7 +69,7 @@ jobs:
                   PIMCORE_VERSION: "${{ matrix.pimcore_version }}"
               run: |
                   if [ ! -z "$PIMCORE_VERSION" ]; then
-                        composer require --no-update pimcore/pimcore:"${PIMCORE_VERSION} as 10.99.9"
+                        composer require --no-update pimcore/pimcore:"${PIMCORE_VERSION}"
                   fi    
 
             - name: "Install dependencies with Composer"
