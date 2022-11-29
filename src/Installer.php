@@ -15,8 +15,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle;
 
-use Pimcore\Bundle\DataImporterBundle\Migrations\Version20220304130000;
+use Pimcore\Model\User\Permission;
 use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
+use Pimcore\Bundle\DataImporterBundle\Migrations\Version20220304130000;
 
 class Installer extends SettingsStoreAwareInstaller
 {
@@ -29,11 +30,15 @@ class Installer extends SettingsStoreAwareInstaller
 
     /**
      * {@inheritdoc}
+     *
+     * @throws \Exception
      */
-    public function install()
+    public function install(): bool
     {
         // create backend permission
-        \Pimcore\Model\User\Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION)->setCategory(\Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY)->save();
+        Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION)
+            ->setCategory(\Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY)
+            ->save();
 
         parent::install();
 
