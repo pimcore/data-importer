@@ -28,7 +28,7 @@ class QueueService
     /**
      * @return Connection
      */
-    protected function getDb()
+    protected function getDb(): Connection
     {
         /** @var Connection $db */
         $db = Db::get();
@@ -49,7 +49,7 @@ class QueueService
      * @param string $jobType
      * @param string $data
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws Exception
      */
     public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data): void
     {
@@ -112,8 +112,7 @@ class QueueService
      *
      * @return array
      *
-     * @throws \Doctrine\DBAL\Driver\Exception
-     * @throws \Doctrine\DBAL\Exception
+     * @throws \Doctrine\DBAL\Driver\Exception|Exception
      */
     public function getAllQueueEntryIds(string $executionType, int $limit = 100000, bool $dispatch = false): array
     {
@@ -149,7 +148,7 @@ class QueueService
      *
      * @return array
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws Exception
      */
     public function getQueueEntryById(int $id): array
     {
@@ -184,9 +183,9 @@ class QueueService
     /**
      * @param int $id
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws Exception
      */
-    public function markQueueEntryAsProcessed($id)
+    public function markQueueEntryAsProcessed($id): void
     {
         try {
             $this->getDb()->executeQuery(
@@ -201,7 +200,7 @@ class QueueService
     /**
      * @param string $configName
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws Exception
      */
     public function cleanupQueueItems(string $configName): void
     {

@@ -617,10 +617,8 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param ImportProcessingService $importProcessingService
      *
      * @return JsonResponse
-     *
-     * @throws \Doctrine\DBAL\DBALException
      */
-    public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService)
+    public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService): JsonResponse
     {
         $configName = $request->get('config_name');
         $importProcessingService->cancelImportAndCleanupQueue($configName);

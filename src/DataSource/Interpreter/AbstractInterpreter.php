@@ -237,9 +237,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
         }
     }
 
-    /**
-     * @throws \Doctrine\DBAL\DBALException
-     */
     protected function cleanupElements(): void
     {
         if (!$this->doCleanup) {
