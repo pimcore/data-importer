@@ -1,7 +1,6 @@
 <?php
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
-
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 
