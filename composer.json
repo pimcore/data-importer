@@ -10,11 +10,11 @@
     }
   },
   "require": {
-    "php": "^8.0",
+    "php": "^8.0 || ^8.1",
     "pimcore/pimcore": "10.6.x-dev as 10.6 || ^11.0",
     "pimcore/data-hub": "1.x-dev as 1.6",
     "dragonmantank/cron-expression": "^3.1",
-    "league/flysystem-sftp": "^2.0 ||^3.0"
+    "league/flysystem-sftp": "^2.0 || ^3.0"
   },
   "require-dev": {
     "phpstan/phpstan": "^1.2",
