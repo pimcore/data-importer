@@ -618,7 +618,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      *
      * @return JsonResponse
      */
-    public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService): JsonResponse
+    public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService)
     {
         $configName = $request->get('config_name');
         $importProcessingService->cancelImportAndCleanupQueue($configName);

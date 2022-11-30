@@ -28,7 +28,7 @@ class QueueService
     /**
      * @return Connection
      */
-    protected function getDb(): Connection
+    protected function getDb()
     {
         /** @var Connection $db */
         $db = Db::get();
