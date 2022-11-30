@@ -1,11 +1,10 @@
 <?php
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
-use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 
-class QueueTest extends Unit
+class QueueTest extends \Codeception\Test\Unit
 {
     /**
      * @var \Pimcore\Bundle\DataHubSimpleRestBundle\Tests\ServiceTester

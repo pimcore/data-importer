@@ -2,7 +2,6 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Carbon\Carbon;
-use Codeception\Test;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsArray;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsColor;
@@ -28,7 +27,7 @@ use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Pimcore\Tests\Util\TestHelper;
 
-class FactoryOperatorTest extends Test\Unit
+class FactoryOperatorTest extends \Codeception\Test\Unit
 {
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
