@@ -28,8 +28,8 @@ jobs:
         strategy:
             matrix:
                 include:
-                    - { php-version: 8.0, database: "mariadb:10.7", pimcore_version: "dev-test_support_fc_layer as 10.6.0", dependencies: lowest, experimental: false }
-                    - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "dev-test_support_fc_layer as 10.6.0", dependencies: highest, experimental: false }
+                    - { php-version: 8.0, database: "mariadb:10.7", pimcore_version: "", dependencies: lowest, experimental: false }
+                    - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "", dependencies: highest, experimental: false }
                     - { php-version: 8.1, database: "mariadb:10.7", pimcore_version: "11.x-dev as 11.0.0", dependencies: highest, experimental: true }
         services:
             mariadb:
