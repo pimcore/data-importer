@@ -10,15 +10,11 @@
     }
   },
   "require": {
-    "php": "^8.0",
-    "pimcore/pimcore": "^10.5 || ^11.0",
-    "pimcore/data-hub": "^1.2",
-    "phpoffice/phpspreadsheet": "^1.15",
+    "php": "^8.0 || ^8.1",
+    "pimcore/pimcore": "10.6.x-dev as 10.6 || ^11.0",
+    "pimcore/data-hub": "1.x-dev as 1.6",
     "dragonmantank/cron-expression": "^3.1",
-    "nesbot/carbon": "^2.27",
-    "league/flysystem-sftp": "^2.0 ||^3.0",
-    "ext-json": "*",
-    "ext-fileinfo": "*"
+    "league/flysystem-sftp": "^2.0 || ^3.0"
   },
   "require-dev": {
     "phpstan/phpstan": "^1.2",

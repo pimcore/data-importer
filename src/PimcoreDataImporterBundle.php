@@ -42,7 +42,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     /**
      * @return string[]
      */
-    public function getCssPaths()
+    public function getCssPaths(): array
     {
         return [
             '/bundles/pimcoredataimporter/css/icons.css'
@@ -52,7 +52,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     /**
      * @return string[]
      */
-    public function getJsPaths()
+    public function getJsPaths(): array
     {
         return [
             '/bundles/pimcoredataimporter/js/pimcore/startup.js',
@@ -129,7 +129,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
         ];
     }
 
-    public function build(ContainerBuilder $container)
+    public function build(ContainerBuilder $container): void
     {
         $container
             ->addCompilerPass(new MappingConfigurationFactoryPass())
@@ -140,15 +140,12 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
         ;
     }
 
-    public static function registerDependentBundles(BundleCollection $collection)
+    public static function registerDependentBundles(BundleCollection $collection): void
     {
         $collection->addBundle(new FlysystemBundle());
     }
 
-    /**
-     * @return object|Installer|InstallerInterface|null
-     */
-    public function getInstaller()
+    public function getInstaller(): ?InstallerInterface
     {
         return $this->container->get(Installer::class);
     }
