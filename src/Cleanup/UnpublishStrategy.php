@@ -19,9 +19,9 @@ use Pimcore\Model\Element\ElementInterface;
 
 class UnpublishStrategy implements CleanupStrategyInterface
 {
-    public function doCleanup(ElementInterface $element = null): void
+    public function doCleanup(ElementInterface $element): void
     {
-        if ($element && method_exists($element, 'setPublished')) {
+        if (method_exists($element, 'setPublished')) {
             $element->setPublished(false);
             $element->save();
         }
