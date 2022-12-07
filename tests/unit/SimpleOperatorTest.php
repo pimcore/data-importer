@@ -2,7 +2,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Codeception\Test\Unit;
-use Pimcore\Tests\SUpport\Util\TestHelper;
+use Pimcore\Tests\Support\Util\TestHelper;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StaticText;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StringReplace;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
