@@ -25,9 +25,10 @@ use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
-use Pimcore\Tests\Util\TestHelper;
+use Pimcore\Tests\Support\Util\TestHelper;
+use Codeception\Test;
 
-class FactoryOperatorTest extends \Codeception\Test\Unit
+class FactoryOperatorTest extends Test\Unit
 {
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester

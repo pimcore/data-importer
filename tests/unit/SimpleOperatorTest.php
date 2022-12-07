@@ -1,12 +1,13 @@
 <?php
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
-use Pimcore\Tests\Util\TestHelper;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Codeception\Test\Unit;
+use Pimcore\Tests\Support\Util\TestHelper;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StaticText;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StringReplace;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 
-class SimpleOperatorTest extends \Codeception\Test\Unit
+class SimpleOperatorTest extends Unit
 {
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
