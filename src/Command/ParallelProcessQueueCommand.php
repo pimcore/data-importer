@@ -49,7 +49,7 @@ class ParallelProcessQueueCommand extends AbstractCommand
 
     protected function configure()
     {
-        self::configureParallelization($this);
+        self::configureCommand($this);
 
         $this
             ->setName('datahub:data-importer:process-queue-parallel')
