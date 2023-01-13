@@ -27,7 +27,7 @@ class RestartQueueWorkersTask implements TaskInterface
     ) {
     }
 
-    public function execute()
+    public function execute(): void
     {
         if ($this->messengerQueueActivated === true) {
             $this->dataImporterHandler->dispatchMessages(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);

@@ -33,7 +33,7 @@ class Installer extends SettingsStoreAwareInstaller
      *
      * @throws \Exception
      */
-    public function install(): bool
+    public function install(): void
     {
         // create backend permission
         Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION)
@@ -41,8 +41,6 @@ class Installer extends SettingsStoreAwareInstaller
             ->save();
 
         parent::install();
-
-        return true;
     }
 
     public function getLastMigrationVersionClassName(): ?string

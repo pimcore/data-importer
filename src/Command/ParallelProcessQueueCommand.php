@@ -69,7 +69,7 @@ class ParallelProcessQueueCommand extends AbstractCommand
      *
      * @return string[] The items to process
      */
-    protected function fetchItems(InputInterface $input): array
+    protected function fetchItems(InputInterface $input, OutputInterface $output): iterable
     {
         return $this->queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_PARALLEL);
     }
