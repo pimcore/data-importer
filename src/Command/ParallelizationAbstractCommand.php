@@ -23,7 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 //BC layer to support Pimcore 10
 //TODO remove when remove support for Pimcore 10
-if (Version::MAJOR_VERSION === 11) {
+if (Version::MAJOR_VERSION === 11) { // @phpstan-ignore-line
     abstract class ParallelizationAbstractCommand extends AbstractCommand
     {
         use Parallelization
