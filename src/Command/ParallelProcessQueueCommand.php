@@ -17,8 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Command;
 
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
-use Pimcore\Console\AbstractCommand;
-use Pimcore\Console\Traits\Parallelization;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
