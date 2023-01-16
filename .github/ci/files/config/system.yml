@@ -10,8 +10,7 @@ pimcore:
             en: ''
             de: ''
         default_language: ''
-        disable_usage_statistics: false
-        instance_identifier: ''
+        disable_usage_statistics: false        
     documents:
         versions:
             days: null
