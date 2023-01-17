@@ -17,19 +17,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Command;
 
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
-use Pimcore\Console\AbstractCommand;
-use Pimcore\Console\Traits\Parallelization;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ParallelProcessQueueCommand extends AbstractCommand
+class ParallelProcessQueueCommand extends ParallelizationAbstractCommand
 {
-    use Parallelization
-    {
-        Parallelization::runBeforeFirstCommand as parentRunBeforeFirstCommand;
-        Parallelization::runAfterBatch as parentRunAfterBatch;
-    }
-
     /**
      * @var ImportProcessingService
      */
@@ -49,7 +41,7 @@ class ParallelProcessQueueCommand extends AbstractCommand
 
     protected function configure()
     {
-        self::configureCommand($this);
+        parent::configure();
 
         $this
             ->setName('datahub:data-importer:process-queue-parallel')
@@ -64,12 +56,8 @@ class ParallelProcessQueueCommand extends AbstractCommand
      * you want to process here. These will be passed to runSingleCommand().
      *
      * This method is called exactly once in the master process.
-     *
-     * @param InputInterface $input The console input
-     *
-     * @return string[] The items to process
      */
-    protected function fetchItems(InputInterface $input): array
+    protected function doFetchItems(InputInterface $input, ?OutputInterface $output): array
     {
         return $this->queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_PARALLEL);
     }
