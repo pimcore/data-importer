@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
 use Pimcore\Model\Element\Service;
@@ -62,6 +63,16 @@ class ManyToManyRelation extends Direct
         }
 
         $fieldDefinition = $definition->getFieldDefinition($fieldName);
+        if ($fieldDefinition === null) {
+            $localizedFields = $definition->getFieldDefinition('localizedfields');
+            if ($localizedFields instanceof LocalizedFields) {
+                $fieldDefinition = $localizedFields->getFieldDefinition($fieldName);
+            }
+        }
+
+        if ($fieldDefinition === null) {
+            throw new InvalidConfigurationException(sprintf('Field definition for field "%s" not found.', $fieldName));
+        }
 
         switch ($fieldDefinition->getFieldtype()) {
             case 'manyToManyRelation':
