@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
@@ -55,6 +56,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
         $this
             ->setName('datahub:data-importer:process-queue-sequential')
             ->setDescription('Processes all items of the queue that need to be executed sequential.')
+            ->addOption('no-logs', null, InputOption::VALUE_NONE, 'Add this option to suppress info logs')
         ;
     }
 
@@ -84,7 +86,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
         $progressBar->start();
 
         foreach ($itemIds as $id) {
-            $this->importProcessingService->processQueueItem($id);
+            $this->importProcessingService->processQueueItem($id, !$input->getOption('no-logs'));
             $progressBar->advance();
         }
 
