@@ -10,6 +10,7 @@
     }
   },
   "require": {
+    "php": "~8.0.0 || ~8.1.0",
     "ext-fileinfo": "*",
     "ext-json": "*",
     "dragonmantank/cron-expression": "^3.1",
