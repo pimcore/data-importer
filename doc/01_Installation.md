@@ -4,11 +4,29 @@ to be installed first.
 
 To install Pimcore Data Importer use following commands:
 
+Run 
+
 ```bash
 composer require pimcore/data-importer --with-all-dependencies
+```
+
+to require `pimcore/data-importer`.
+
+Run
+
+```bash
 ./bin/console pimcore:bundle:enable PimcoreDataImporterBundle
+```
+
+to enable the `PimcoreDataImporterBundle`.
+
+Run
+
+```bash
 ./bin/console pimcore:bundle:install PimcoreDataImporterBundle
 ```
+
+to install the `PimcoreDataImporterBundle`.
 
 > Make sure, that priority of Datahub bundle is higher than priority of Data Importer bundle.
 > This can be specified as parameter during bundle enablement or in Pimcore extension manager.
