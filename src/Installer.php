@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle;
 
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20220304130000;
 use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
+use Pimcore\Extension\Bundle\PimcoreBundleManager;
 use Pimcore\Model\User\Permission;
 
 class Installer extends SettingsStoreAwareInstaller
@@ -35,6 +36,18 @@ class Installer extends SettingsStoreAwareInstaller
      */
     public function install(): void
     {
+        /**
+         * The application logger can be deactivated from Pimcore 11 on. But it is necessary for the data-importer,
+         * so we have to make sure that it is activated & installed.
+         */
+        if(\Pimcore\Version::getMajorVersion() >= 11) {
+            $appLoggerInstaller = \Pimcore::getContainer()->get(\Pimcore\Bundle\ApplicationLoggerBundle\Installer::class);
+
+            if(!$appLoggerInstaller->isInstalled()) {
+                $appLoggerInstaller->install();
+            }
+        }
+
         // create backend permission
         Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION)
             ->setCategory(\Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY)

@@ -23,6 +23,7 @@ use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingCo
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverConfigurationFactoryPass;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
 use Pimcore\Extension\Bundle\Installer\InstallerInterface;
+use Pimcore\Extension\Bundle\PimcoreBundleManager;
 use Pimcore\Extension\Bundle\Traits\PackageVersionTrait;
 use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
@@ -144,11 +145,6 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     {
         $collection->addBundle(new FlysystemBundle());
 
-        /**
-         * BC-layer for pimcore 10 and 11. Since the applicationLogger was moved to its own bundle in Pimcore 11,
-         * we have to check the version here and register the bundle if necessary.
-         * TODO: Remove this layer as soon as Pimcore 10 isn´t supported anymore.
-         */
         if (\Pimcore\Version::getMajorVersion() >= 11) {
             $collection->addBundle(new \Pimcore\Bundle\ApplicationLoggerBundle\PimcoreApplicationLoggerBundle());
         }
