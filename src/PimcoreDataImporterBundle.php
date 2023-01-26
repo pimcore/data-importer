@@ -150,7 +150,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
          * we have to check the version here and register the bundle if necessary.
          * TODO: Remove this layer as soon as Pimcore 10 isn´t supported anymore.
          */
-        if(\Pimcore\Version::getMajorVersion() >= 11) {
+        if (\Pimcore\Version::getMajorVersion() >= 11) {
             $collection->addBundle(new PimcoreApplicationLoggerBundle());
         }
     }
