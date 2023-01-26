@@ -144,7 +144,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     public static function registerDependentBundles(BundleCollection $collection): void
     {
         $collection->addBundle(new FlysystemBundle());
-        if(\Pimcore\Version::getMajorVersion() >= 11) {
+        if (\Pimcore\Version::getMajorVersion() >= 11) {
             $collection->addBundle(new PimcoreApplicationLoggerBundle());
         }
     }
