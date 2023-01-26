@@ -12,7 +12,13 @@
  */
 
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab');
-pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab = Class.create(pimcore.log.admin, {
+if(pimcore.log) {
+    baseClass = pimcore.log.admin;
+}
+else {
+    baseClass = pimcore.bundle.applicationlogger.log.admin;
+}
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab = Class.create(baseClass, {
 
     componentPrefix: 'DATA-IMPORTER ',
 
