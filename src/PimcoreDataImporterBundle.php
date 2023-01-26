@@ -144,6 +144,12 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     public static function registerDependentBundles(BundleCollection $collection): void
     {
         $collection->addBundle(new FlysystemBundle());
+
+        /**
+         * BC-layer for pimcore 10 and 11. Since the applicationLogger was moved to its own bundle in Pimcore 11,
+         * we have to check the version here and register the bundle if necessary.
+         * TODO: Remove this layer as soon as Pimcore 10 isn´t supported anymore.
+         */
         if(\Pimcore\Version::getMajorVersion() >= 11) {
             $collection->addBundle(new PimcoreApplicationLoggerBundle());
         }
