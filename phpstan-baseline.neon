@@ -4,10 +4,16 @@ parameters:
 			message: "#^Class Pimcore\\\\Bundle\\\\ApplicationLoggerBundle\\\\Installer not found.$#"
 			reportUnmatched: false
 			count: 1
-			path: bundles/DataImporter/src/Installer.php
+			path: src/Installer.php
 
 		-
 			message: "#^Instantiated class Pimcore\\\\Bundle\\\\ApplicationLoggerBundle\\\\PimcoreApplicationLoggerBundle not found.$#"
 			reportUnmatched: false
 			count: 1
-			path: bundles/DataImporter/src/PimcoreDataImporterBundle.php
+			path: src/PimcoreDataImporterBundle.php
+
+		-
+			message: "#^Class Pimcore\\\\Bundle\\\\ApplicationLoggerBundle\\\\PimcoreApplicationLoggerBundle not found.$#"
+			reportUnmatched: false
+			count: 1
+			path: src/PimcoreDataImporterBundle.php
