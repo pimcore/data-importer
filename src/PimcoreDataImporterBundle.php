@@ -16,7 +16,6 @@
 namespace Pimcore\Bundle\DataImporterBundle;
 
 use League\FlysystemBundle\FlysystemBundle;
-use Pimcore\Bundle\ApplicationLoggerBundle\PimcoreApplicationLoggerBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\InterpreterConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderConfigurationFactoryPass;
@@ -151,7 +150,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
          * TODO: Remove this layer as soon as Pimcore 10 isn´t supported anymore.
          */
         if (\Pimcore\Version::getMajorVersion() >= 11) {
-            $collection->addBundle(new PimcoreApplicationLoggerBundle());
+            $collection->addBundle(new \Pimcore\Bundle\ApplicationLoggerBundle\PimcoreApplicationLoggerBundle());
         }
     }
 
