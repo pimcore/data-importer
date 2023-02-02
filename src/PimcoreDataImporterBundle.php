@@ -15,6 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle;
 
+use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use League\FlysystemBundle\FlysystemBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\InterpreterConfigurationFactoryPass;
@@ -142,6 +143,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
 
     public static function registerDependentBundles(BundleCollection $collection): void
     {
+        $collection->addBundle(PimcoreDataHubBundle::class, 20);
         $collection->addBundle(new FlysystemBundle());
     }
 
