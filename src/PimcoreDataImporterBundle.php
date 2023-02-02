@@ -15,8 +15,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle;
 
-use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use League\FlysystemBundle\FlysystemBundle;
+use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\InterpreterConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderConfigurationFactoryPass;
