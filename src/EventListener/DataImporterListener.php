@@ -28,8 +28,10 @@ class DataImporterListener
 
     public function importPrepared(PostPreparationEvent $event)
     {
-        if ($this->messengerQueueActivated === true) {
-            $this->dataImporterHandler->dispatchMessages($event->getExecutionType());
+        if (!$this->messengerQueueActivated) {
+            return;
         }
+
+        $this->dataImporterHandler->dispatchMessages($event->getExecutionType());
     }
 }

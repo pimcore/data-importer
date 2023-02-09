@@ -13,7 +13,6 @@ flysystem:
 
 
 framework:
-
     messenger:
         transports:
             pimcore_data_import:
@@ -21,3 +20,7 @@ framework:
 
         routing:
             'Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage': pimcore_data_import
+
+pimcore_data_hub:
+    supported_types:
+        dataImporterDataObject: "Pimcore\\Bundle\\DataImporterBundle"
