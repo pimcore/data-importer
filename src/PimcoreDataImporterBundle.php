@@ -145,6 +145,10 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     {
         $collection->addBundle(PimcoreDataHubBundle::class, 20);
         $collection->addBundle(new FlysystemBundle());
+
+        if (\Pimcore\Version::getMajorVersion() >= 11) {
+            $collection->addBundle(\Pimcore\Bundle\ApplicationLoggerBundle\PimcoreApplicationLoggerBundle::class);
+        }
     }
 
     public function getInstaller(): ?InstallerInterface

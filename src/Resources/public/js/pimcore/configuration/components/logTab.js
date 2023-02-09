@@ -12,7 +12,19 @@
  */
 
 pimcore.registerNS('pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab');
-pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab = Class.create(pimcore.log.admin, {
+
+/**
+ * BC-layer for pimcore 10 and 11. Since the applicationLogger was moved to its own bundle in Pimcore 11, we have to check the namespaces here.
+ * TODO: Remove this layer as soon as Pimcore 10 isn´t supported anymore.
+ */
+
+if(pimcore.log) {
+    baseClass = pimcore.log.admin;
+}
+else {
+    baseClass = pimcore.bundle.applicationlogger.log.admin;
+}
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.logTab = Class.create(baseClass, {
 
     componentPrefix: 'DATA-IMPORTER ',
 

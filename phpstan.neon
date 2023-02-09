@@ -6,3 +6,6 @@ parameters:
         - phpstan-bootstrap.php
     excludePaths:
         - src/Command/DummyDataCommand.php
+
+includes:
+    - phpstan-baseline.neon
