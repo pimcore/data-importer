@@ -56,7 +56,6 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     public function getJsPaths(): array
     {
         return [
-            '/bundles/pimcoredataimporter/js/pimcore/startup.js',
             '/bundles/pimcoredataimporter/js/pimcore/helper/ext_extensions.js',
             '/bundles/pimcoredataimporter/js/pimcore/helper/abstractOptionType.js',
             '/bundles/pimcoredataimporter/js/pimcore/adapter/dataImporterDataObject.js',
