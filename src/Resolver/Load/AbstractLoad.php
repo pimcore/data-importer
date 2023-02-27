@@ -94,6 +94,6 @@ abstract class AbstractLoad implements LoadStrategyInterface
      */
     public function extractIdentifierFromData(array $inputData)
     {
-        return $inputData[$this->dataSourceIndex] ?? throw new \InvalidArgumentException("Identifier not set.");
+        return $inputData[$this->dataSourceIndex] ?? throw new \InvalidArgumentException('Identifier not set.');
     }
 }

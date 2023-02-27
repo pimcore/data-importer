@@ -148,8 +148,7 @@ class ImportProcessingService
             } else {
                 throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
             }
-        }
-        catch(\Exception $e) {
+        } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $fileObject = $queueItem ? new FileObject(json_encode($queueItem['data'])) : null;
 
@@ -157,8 +156,7 @@ class ImportProcessingService
                 'component' => $component,
                 'fileObject' => $fileObject
             ]);
-        }
-        finally {
+        } finally {
             $this->queueService->markQueueEntryAsProcessed($id);
         }
     }
