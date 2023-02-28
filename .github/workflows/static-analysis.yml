@@ -21,6 +21,7 @@ jobs:
                 include:
                     - { php-version: "8.0", dependencies: "lowest" }
                     - { php-version: "8.1", dependencies: "highest" }
+                    - { php-version: "8.2", dependencies: "highest" }
         steps:
             - name: "Checkout code"
               uses: "actions/checkout@v2"
