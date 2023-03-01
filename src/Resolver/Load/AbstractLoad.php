@@ -80,7 +80,7 @@ abstract class AbstractLoad implements LoadStrategyInterface
      *
      * @return ElementInterface|null
      *
-     * @throws InvalidConfigurationException
+     * @throws \InvalidArgumentException
      */
     public function loadElement(array $inputData): ?ElementInterface
     {
@@ -94,6 +94,6 @@ abstract class AbstractLoad implements LoadStrategyInterface
      */
     public function extractIdentifierFromData(array $inputData)
     {
-        return $inputData[$this->dataSourceIndex] ?? null;
+        return $inputData[$this->dataSourceIndex] ?? throw new \InvalidArgumentException('Identifier not set.');
     }
 }

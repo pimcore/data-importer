@@ -115,38 +115,50 @@ class ImportProcessingService
 
     public function processQueueItem(int $id)
     {
-        //get queue item
-        $queueItem = $this->queueService->getQueueEntryById($id);
-        if (empty($queueItem)) {
-            return;
+        $configName = null;
+        $queueItem = null;
+        try {
+            //get queue item
+            $queueItem = $this->queueService->getQueueEntryById($id);
+            if (empty($queueItem)) {
+                return;
+            }
+
+            //get config
+            $configName = $queueItem['configName'];
+            $config = $this->configLoader->prepareConfiguration($configName, null, true);
+
+            //init resolver and mapping
+            if (empty($this->mappingConfigurationCache[$configName])) {
+                $this->mappingConfigurationCache[$configName] = $this->mappingConfigurationFactory->loadMappingConfiguration($configName, $config['mappingConfig']);
+            }
+            $mapping = $this->mappingConfigurationCache[$configName];
+
+            if (empty($this->resolverCache[$configName])) {
+                $this->resolverCache[$configName] = $this->resolverFactory->loadResolver($config['resolverConfig']);
+            }
+            $resolver = $this->resolverCache[$configName];
+
+            //process element
+            if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
+                $data = json_decode($queueItem['data'], true);
+                $this->processElement($configName, $data, $resolver, $mapping);
+            } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
+                $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
+            } else {
+                throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
+            }
+        } catch (\Exception $e) {
+            $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
+            $fileObject = $queueItem ? new FileObject(json_encode($queueItem['data'])) : null;
+
+            $this->applicationLogger->error($e->getMessage() . $e->getMessage(), [
+                'component' => $component,
+                'fileObject' => $fileObject
+            ]);
+        } finally {
+            $this->queueService->markQueueEntryAsProcessed($id);
         }
-
-        //get config
-        $configName = $queueItem['configName'];
-        $config = $this->configLoader->prepareConfiguration($configName, null, true);
-
-        //init resolver and mapping
-        if (empty($this->mappingConfigurationCache[$configName])) {
-            $this->mappingConfigurationCache[$configName] = $this->mappingConfigurationFactory->loadMappingConfiguration($configName, $config['mappingConfig']);
-        }
-        $mapping = $this->mappingConfigurationCache[$configName];
-
-        if (empty($this->resolverCache[$configName])) {
-            $this->resolverCache[$configName] = $this->resolverFactory->loadResolver($config['resolverConfig']);
-        }
-        $resolver = $this->resolverCache[$configName];
-
-        //process element
-        if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
-            $data = json_decode($queueItem['data'], true);
-            $this->processElement($configName, $data, $resolver, $mapping);
-        } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
-            $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
-        } else {
-            throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
-        }
-
-        $this->queueService->markQueueEntryAsProcessed($id);
     }
 
     private function flattenArray(array $arr): array
