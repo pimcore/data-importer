@@ -1,3 +1,7 @@
+---
+title: Data Importer
+---
+
 # Pimcore Data Importer
 
 This extension adds a comprehensive import functionality to Pimcore Datahub. It allows importing data from external 
