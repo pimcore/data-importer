@@ -71,24 +71,25 @@ class FindOrCreateFolderStrategy implements LocationStrategyInterface
     public function updateParent(ElementInterface $element, array $inputData): ElementInterface
     {
         $newParent = null;
-
         $identifier = $inputData[$this->dataSourceIndex] ?? null;
 
-        $newParent = $this->dataObjectLoader->loadByPath($identifier);
+        if ($identifier) {
+            $newParent = $this->dataObjectLoader->loadByPath($identifier);
 
-        if (!($newParent instanceof DataObject) && $identifier) {
-            $newParent = Service::createFolderByPath($identifier);
+            if (!($newParent instanceof DataObject)) {
+                $newParent = Service::createFolderByPath($identifier);
+            }
         }
 
         if (!($newParent instanceof DataObject) && $this->fallbackPath) {
             $newParent = DataObject::getByPath($this->fallbackPath);
         }
 
-        if ($newParent) {
-            return $element->setParent($newParent);
+        if (!($newParent)) {
+            $newParent = DataObject::getById(1);
         }
 
-        return $element;
+        return $element->setParent($newParent);
     }
 
     protected function loadById()
