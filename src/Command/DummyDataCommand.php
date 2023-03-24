@@ -16,12 +16,12 @@
 namespace Pimcore\Bundle\DataImporterBundle\Command;
 
 use Pimcore\Console\AbstractCommand;
-use Pimcore\File;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Car;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 class DummyDataCommand extends AbstractCommand
 {
@@ -133,7 +133,8 @@ class DummyDataCommand extends AbstractCommand
         $format = $input->getOption('targetType');
 
         $directory = PIMCORE_PRIVATE_VAR . '/tmp/datahub-dummyfiles';
-        File::mkdir($directory);
+        $fileSystem = new Filesystem();
+        $fileSystem->mkdir($directory, 0775);
         $filename = $directory . '/' . $input->getOption('targetFilename');
 
         $output->writeln('Writing file to ' . $filename);
