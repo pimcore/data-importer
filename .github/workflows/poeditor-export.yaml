@@ -19,4 +19,4 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.POEDITOR_ACTION_TRIGGER_TOKEN }}
               run: |
-                  gh workflow run -R pimcore/poeditor-export-action poeditor-export.yaml
+                  gh workflow run -R pimcore/poeditor-export-action poeditor-export.yml
