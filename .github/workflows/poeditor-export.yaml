@@ -6,7 +6,7 @@ on:
         branches:
             - "[0-9]+.x"
         paths:
-            - 'src/Resources/translations/admin.en.yaml'
+            - 'src/Resources/translations/admin.en.yml'
 
 permissions:
     contents: read
@@ -19,4 +19,4 @@ jobs:
               env:
                   GH_TOKEN: ${{ secrets.POEDITOR_ACTION_TRIGGER_TOKEN }}
               run: |
-                  gh workflow run -R pimcore/poeditor-export-action poeditor-export.yml
+                  gh workflow run -R pimcore/poeditor-export-action poeditor-export.yaml
