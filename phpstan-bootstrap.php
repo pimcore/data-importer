@@ -20,6 +20,3 @@ include PIMCORE_PROJECT_ROOT . '/vendor/autoload.php';
 if (!defined('PIMCORE_TEST')) {
     define('PIMCORE_TEST', true);
 }
-
-@class_alias(ApplicationLogger::class, 'Pimcore\Log\ApplicationLogger');
-@class_alias(FileObject::class, 'Pimcore\Log\FileObject');
