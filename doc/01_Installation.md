@@ -5,7 +5,7 @@ to be installed first.
 To install Pimcore Data Importer use following commands:
 
 ```bash
-composer require pimcore/data-importer --with-all-dependencies
+composer require pimcore/data-importer
 ./bin/console pimcore:bundle:enable PimcoreDataImporterBundle
 ./bin/console pimcore:bundle:install PimcoreDataImporterBundle
 ```
