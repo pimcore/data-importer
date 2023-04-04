@@ -7,7 +7,7 @@ title: Data Importer
 This extension adds a comprehensive import functionality to Pimcore Datahub. It allows importing data from external 
 sources and adjusting it to Pimcore Data Objects based on a configured mapping without writing any code.
 
-## Features in a nutshell
+## Features in a Nutshell
 - Multiple imports configuration directly in Datahub. 
 - Data import from various data sources.
 - Supported File Formats: `csv`, `xlsx`, `json`, `xml`.
