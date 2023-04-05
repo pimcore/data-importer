@@ -10,6 +10,7 @@
     }
   },
   "require": {
+    "pimcore/compatibility-bridge-v10": "1.x-dev",
     "php": "~8.0.0 || ~8.1.0 || ~8.2.0",
     "ext-fileinfo": "*",
     "ext-json": "*",
