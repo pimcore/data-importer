@@ -21,8 +21,8 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\PhpseclibV3\SftpAdapter;
 use League\Flysystem\PhpseclibV3\SftpConnectionProvider;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\File;
 use Pimcore\Logger;
+use Symfony\Component;
 
 class SftpLoader implements DataLoaderInterface
 {
@@ -56,10 +56,15 @@ class SftpLoader implements DataLoaderInterface
      */
     protected $password;
 
+    public function __construct(
+        protected Component\Filesystem\Filesystem $filesystem
+    ) {
+    }
+
     public function loadData(): string
     {
         $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/sftp-loader/';
-        File::mkdir($folder);
+        $this->filesystem->mkdir($folder, 0775);
 
         $this->importFilePath = $folder . uniqid('sftp-import-');
 

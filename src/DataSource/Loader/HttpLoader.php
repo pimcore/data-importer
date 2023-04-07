@@ -16,7 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\File;
+use Symfony\Component\Filesystem\Filesystem;
 
 class HttpLoader implements DataLoaderInterface
 {
@@ -35,10 +35,15 @@ class HttpLoader implements DataLoaderInterface
      */
     protected $importFilePath;
 
+    public function __construct(
+        protected Filesystem $filesystem
+    ) {
+    }
+
     public function loadData(): string
     {
         $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/http-loader/';
-        File::mkdir($folder);
+        $this->filesystem->mkdir($folder, 0775);
 
         $this->importFilePath = $folder . uniqid('http-import-');
         $fullUrl = $this->schema . $this->url;
