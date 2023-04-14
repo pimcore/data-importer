@@ -33,7 +33,7 @@ return [
 bin/console pimcore:bundle:install PimcoreDataImporterBundle
 ```
 
-### For older versions:
+### For Older Versions:
 
 To install the Data Importer bundle for older versions of Pimcore, please run the following commands instead:
 
