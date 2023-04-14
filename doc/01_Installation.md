@@ -1,17 +1,49 @@
 # Installation
-This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs
-to be installed first.
+This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs to be installed first.
 
-To install Pimcore Data Importer use following commands:
+### For Pimcore 11.x:
+To install Pimcore Data Importer for Pimcore 11.x, follow the three steps below:
+
+1. Install the required dependencies:
+```bash
+composer require pimcore/data-importer
+```
+
+2. Make sure the bundle is enabled in the `config/bundles.php` file. The following lines should be added:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+// ...
+
+return [
+    // ...
+    // make sure PimcoreDataHubBundle is added before to that list
+    // ...
+    PimcoreDataImporterBundle::class => ['all' => true],
+    // ...
+];
+```
+
+
+3. Install the bundle:
+
+```bash
+bin/console pimcore:bundle:install PimcoreDataImporterBundle
+```
+
+### For older versions:
+
+To install the Data Importer bundle for older versions of Pimcore, please run the following commands instead:
 
 ```bash
 composer require pimcore/data-importer
-./bin/console pimcore:bundle:enable PimcoreDataImporterBundle
-./bin/console pimcore:bundle:install PimcoreDataImporterBundle
+bin/console pimcore:bundle:enable PimcoreDataImporterBundle
+bin/console pimcore:bundle:install PimcoreDataImporterBundle
 ```
 
-> Make sure, that priority of Datahub bundle is higher than priority of Data Importer bundle.
-> This can be specified as parameter during bundle enablement or in Pimcore extension manager.
+> Make sure the Datahub bundle's priority is higher than the Data Importer bundle's.
+> 
+> This can be specified as a parameter during bundle enablement or in the Pimcore extension manager.
  
 
 ## Bundle Configuration
