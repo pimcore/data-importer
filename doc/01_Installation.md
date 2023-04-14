@@ -1,6 +1,8 @@
 # Installation
+## Required Bundles
 This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs to be installed first.
 
+## Installation Process
 ### For Pimcore 11.x:
 To install Pimcore Data Importer for Pimcore 11.x, follow the three steps below:
 
