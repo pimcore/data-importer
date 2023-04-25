@@ -116,7 +116,7 @@ class ConfigDataObjectController extends UserAwareController
         array $config,
         InterpreterFactory $interpreterFactory
     ) {
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         if (is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
@@ -191,7 +191,7 @@ class ConfigDataObjectController extends UserAwareController
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getAdminUser());
+            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getPimcoreUser());
             @unlink($sourcePath);
 
             return new JsonResponse(['success' => true]);
@@ -244,7 +244,7 @@ class ConfigDataObjectController extends UserAwareController
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getAdminUser());
+            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getPimcoreUser());
 
             $loader->cleanup();
 
@@ -284,7 +284,7 @@ class ConfigDataObjectController extends UserAwareController
         $dataPreview = null;
         $hasData = false;
         $errorMessage = '';
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         if (is_file($previewFilePath)) {
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
@@ -370,7 +370,7 @@ class ConfigDataObjectController extends UserAwareController
 
         $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         $importDataRow = [];
         $transformationResults = [];
         $errorMessage = '';
