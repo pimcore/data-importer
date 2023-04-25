@@ -638,7 +638,7 @@ class ConfigDataObjectController extends UserAwareController
      * @param Request $request
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      *
-     * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     * @return JsonResponse
      *
      * @throws \League\Flysystem\FilesystemException
      */
@@ -694,7 +694,7 @@ class ConfigDataObjectController extends UserAwareController
      * @param Translator $translator
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      *
-     * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     * @return JsonResponse
      */
     public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
