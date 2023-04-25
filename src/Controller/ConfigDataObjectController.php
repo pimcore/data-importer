@@ -30,6 +30,8 @@ use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Controller\Traits\JsonHelperTrait;
+use Pimcore\Controller\UserAwareController;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
@@ -41,8 +43,10 @@ use Symfony\Component\Routing\Annotation\Route;
 /**
  * @Route("/admin/pimcoredataimporter/dataobject/config")
  */
-class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\AdminController
+class ConfigDataObjectController extends UserAwareController
 {
+    use JsonHelperTrait;
+
     public const CONFIG_NAME = 'plugin_datahub_config';
 
     /**
@@ -194,7 +198,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
@@ -248,7 +252,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
@@ -657,7 +661,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
@@ -705,7 +709,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);

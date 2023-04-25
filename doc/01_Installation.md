@@ -3,7 +3,7 @@
 This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs to be installed first.
 
 ## Installation Process
-### For Pimcore >= 10.5
+### For Pimcore >= 10.5 & < 11
 To install Pimcore Data Importer for Pimcore 10.5 or higher, follow the three steps below:
 
 1. Install the required dependencies:
@@ -30,6 +30,13 @@ return [
 
 ```bash
 bin/console pimcore:bundle:install PimcoreDataImporterBundle
+```
+### For Pimcore 11
+
+You need to follow the steps mentioned above and additionally run the following command:
+
+```bash
+composer require pimcore/admin-ui-classic-bundle
 ```
 
 ### For Older Versions
