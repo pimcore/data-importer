@@ -19,9 +19,9 @@ jobs:
         strategy:
             matrix:
                 include:
-                    - { php-version: "8.0", dependencies: "lowest" }
-                    - { php-version: "8.1", dependencies: "highest" }
-                    - { php-version: "8.2", dependencies: "highest" }
+                    - { php-version: "8.0", dependencies: "lowest", require_admin_bundle: false }
+                    - { php-version: "8.1", dependencies: "highest", require_admin_bundle: true }
+                    - { php-version: "8.2", dependencies: "highest", require_admin_bundle: true }
         steps:
             - name: "Checkout code"
               uses: "actions/checkout@v2"
@@ -33,6 +33,8 @@ jobs:
                   php-version: "${{ matrix.php-version }}"
 
             - name: "Setup Pimcore environment"
+              env:
+                  PIMCORE_VERSION: "${{ matrix.pimcore_version }}"
               run: |
                   .github/ci/scripts/setup-pimcore-environment.sh
 
