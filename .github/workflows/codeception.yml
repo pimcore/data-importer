@@ -61,7 +61,7 @@ jobs:
 
             - name: "Setup Pimcore environment"
               env:
-                  PIMCORE_VERSION: "${{ matrix.pimcore_version }}"
+                  REQUIRE_ADMIN_BUNDLE: "${{ matrix.require_admin_bundle }}"
               run: |
                   mysql -e "CREATE DATABASE pimcore_test CHARSET=utf8mb4;"
                   chmod 755 .github/ci/scripts/setup-pimcore-environment.sh

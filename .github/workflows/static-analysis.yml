@@ -34,7 +34,7 @@ jobs:
 
             - name: "Setup Pimcore environment"
               env:
-                  PIMCORE_VERSION: "${{ matrix.pimcore_version }}"
+                  REQUIRE_ADMIN_BUNDLE: "${{ matrix.require_admin_bundle }}"
               run: |
                   .github/ci/scripts/setup-pimcore-environment.sh
 
