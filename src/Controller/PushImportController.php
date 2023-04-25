@@ -15,12 +15,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Logger;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Annotation\Route;
