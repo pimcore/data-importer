@@ -16,8 +16,6 @@
 namespace Pimcore\Bundle\DataImporterBundle;
 
 use League\FlysystemBundle\FlysystemBundle;
-use Pimcore\Bundle\AdminBundle\Support\BundleAdminSupportTrait;
-use Pimcore\Bundle\AdminBundle\Support\PimcoreBundleAdminSupportInterface;
 use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\InterpreterConfigurationFactoryPass;
@@ -26,14 +24,16 @@ use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingCo
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverConfigurationFactoryPass;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
 use Pimcore\Extension\Bundle\Installer\InstallerInterface;
+use Pimcore\Extension\Bundle\PimcoreBundleAdminClassicInterface;
+use Pimcore\Extension\Bundle\Traits\BundleAdminClassicTrait;
 use Pimcore\Extension\Bundle\Traits\PackageVersionTrait;
 use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface, PimcoreBundleAdminSupportInterface
+class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface, PimcoreBundleAdminClassicInterface
 {
-    use BundleAdminSupportTrait;
+    use BundleAdminClassicTrait;
     use PackageVersionTrait;
 
     const LOGGER_COMPONENT_PREFIX = 'DATA-IMPORTER ';

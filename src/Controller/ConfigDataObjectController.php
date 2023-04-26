@@ -30,6 +30,8 @@ use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Controller\Traits\JsonHelperTrait;
+use Pimcore\Controller\UserAwareController;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
@@ -41,8 +43,10 @@ use Symfony\Component\Routing\Annotation\Route;
 /**
  * @Route("/admin/pimcoredataimporter/dataobject/config")
  */
-class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\AdminController
+class ConfigDataObjectController extends UserAwareController
 {
+    use JsonHelperTrait;
+
     public const CONFIG_NAME = 'plugin_datahub_config';
 
     /**
@@ -112,7 +116,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         array $config,
         InterpreterFactory $interpreterFactory
     ) {
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         if (is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
@@ -187,14 +191,14 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getAdminUser());
+            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getPimcoreUser());
             @unlink($sourcePath);
 
             return new JsonResponse(['success' => true]);
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
@@ -240,7 +244,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
                 throw new \Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getAdminUser());
+            $this->previewService->writePreviewFile($request->get('config_name'), $sourcePath, $this->getPimcoreUser());
 
             $loader->cleanup();
 
@@ -248,7 +252,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
@@ -280,7 +284,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         $dataPreview = null;
         $hasData = false;
         $errorMessage = '';
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         if (is_file($previewFilePath)) {
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
@@ -366,7 +370,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
 
         $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getAdminUser());
+        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         $importDataRow = [];
         $transformationResults = [];
         $errorMessage = '';
@@ -634,7 +638,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Request $request
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      *
-     * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     * @return JsonResponse
      *
      * @throws \League\Flysystem\FilesystemException
      */
@@ -657,7 +661,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
@@ -690,7 +694,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
      * @param Translator $translator
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      *
-     * @return \Pimcore\Bundle\AdminBundle\HttpFoundation\JsonResponse|JsonResponse
+     * @return JsonResponse
      */
     public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
@@ -705,7 +709,7 @@ class ConfigDataObjectController extends \Pimcore\Bundle\AdminBundle\Controller\
         } catch (\Exception $e) {
             Logger::error($e);
 
-            return $this->adminJson([
+            return $this->jsonResponse([
                 'success' => false,
                 'message' => $e->getMessage(),
             ]);
