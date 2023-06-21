@@ -9,7 +9,7 @@ on:
         paths:
             - 'doc/**'
             - '.github/workflows/docs.yaml'
-            - 'README.md'            
+            - 'README.md'
     push:
         branches:
             - "[0-9]+.[0-9]+"
@@ -18,7 +18,7 @@ on:
         paths:
             - 'doc/**'
             - '.github/workflows/docs.yaml'
-            - 'README.md'                
+            - 'README.md'
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
             - name: "Checkout code"
               uses: "actions/checkout@v3"
               with:
-                ref: ${{ github.event.pull_request.head.sha }}              
+                ref: ${{ github.event.pull_request.head.sha }}
 
             - name: "Checkout Docs Generator"
               uses: "actions/checkout@v3"
@@ -62,7 +62,7 @@ jobs:
                   
                   # use special docusaurus config (to exclude search plugin) and check for broken links
                   mv docusaurus.config.js.repos-tests docusaurus.config.js
-                  
+
             - name: Build Docs
               working-directory: "./docs-generator"
               run: |
