@@ -335,7 +335,7 @@ class ImportProcessingService
 
         if (is_string($data) && $data !== '') {
             return $data;
-        } elseif (empty($data)) {
+        } elseif (empty($data) && !($operator instanceof Boolean)) {
             return '-- EMPTY --';
         } elseif (is_array($data)) {
             $dataStrings = [];
