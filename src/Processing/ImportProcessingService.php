@@ -21,6 +21,7 @@ use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Boolean;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
@@ -335,7 +336,7 @@ class ImportProcessingService
 
         if (is_string($data) && $data !== '') {
             return $data;
-        } elseif (empty($data)) {
+        } elseif (empty($data) && !($operator instanceof Boolean)) {
             return '-- EMPTY --';
         } elseif (is_array($data)) {
             $dataStrings = [];
