@@ -24,7 +24,7 @@ class InputQuantityValue extends QuantityValue
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return QuantityValue
+     * @return \Pimcore\Model\DataObject\Data\QuantityValue
      */
     public function process($inputData, bool $dryRun = false)
     {
@@ -45,7 +45,12 @@ class InputQuantityValue extends QuantityValue
     public function evaluateReturnType(string $inputType, int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for input quantity value operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(
+                sprintf(
+                    "Unsupported input type '%s' for input quantity value operator at transformation position %s",
+                    $inputType,
+                    $index)
+            );
         }
 
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE;
@@ -59,7 +64,9 @@ class InputQuantityValue extends QuantityValue
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
-            return 'InputQuantityValue: ' . $inputData->getValue() . ' ' . ($inputData->getUnit() ? $inputData->getUnit()->getAbbreviation() : '');
+            return 'InputQuantityValue: ' .
+                $inputData->getValue() . ' ' .
+                ($inputData->getUnit() ? $inputData->getUnit()->getAbbreviation() : '');
         }
 
         return $inputData;
