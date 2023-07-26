@@ -68,8 +68,8 @@ class InputQuantityValue extends QuantityValue
     {
         if ($inputData instanceof \Pimcore\Model\DataObject\Data\InputQuantityValue) {
             return 'InputQuantityValue: ' .
-                $inputData->getValue() . ' ' .
-                ($inputData->getUnit() ? '['.$inputData->getUnit()->getAbbreviation().']' : '');
+                $inputData->getValue() .
+                ($inputData->getUnit() ? ' ['.$inputData->getUnit()->getAbbreviation().']' : '');
         }
 
         return $inputData;
