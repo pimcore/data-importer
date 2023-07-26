@@ -235,7 +235,7 @@ class FactoryOperatorTest extends Test\Unit
         $result = $inputQuantityValue->process(['12']);
         $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());
-        $this->assertNull($result->getUnitId());
+        $this->assertEquals('', $result->getUnitId());
 
         $result = $inputQuantityValue->process([null, 'm']);
         $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
