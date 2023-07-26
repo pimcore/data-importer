@@ -28,7 +28,7 @@ class InputQuantityValue extends QuantityValue
      */
     public function process($inputData, bool $dryRun = false)
     {
-       $unit = Unit::getByAbbreviation($inputData[1] ?? null);
+        $unit = Unit::getByAbbreviation($inputData[1] ?? null);
 
         return new \Pimcore\Model\DataObject\Data\InputQuantityValue(
             $inputData[0] ?? null,
