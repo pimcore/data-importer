@@ -239,7 +239,14 @@ class FactoryOperatorTest extends Test\Unit
 
         $result = $inputQuantityValue->process([null, 'm']);
         $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
-        $this->assertNull($result->getValue());
+
+        // In Pimcore 10, value is typecasted to string, in 11, it's nullable
+        // TODO: Remove assertEquals once Pimcore 10 support is dropped
+        if (!is_null($result->getValue())) {
+            $this->assertEquals('', $result->getValue());
+        }else{
+            $this->assertNull($result->getValue());
+        }
         $this->assertEquals('m', $result->getUnitId());
 
         $preview = $inputQuantityValue->generateResultPreview($result);
