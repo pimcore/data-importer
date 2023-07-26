@@ -24,11 +24,11 @@ class InputQuantityValue extends QuantityValue
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return \Pimcore\Model\DataObject\Data\QuantityValue
+     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue
      */
     public function process($inputData, bool $dryRun = false)
     {
-        return new \Pimcore\Model\DataObject\Data\QuantityValue(
+        return new \Pimcore\Model\DataObject\Data\InputQuantityValue(
             $inputData[0] ?? null,
             $inputData[1] ?? null
         );
@@ -63,7 +63,7 @@ class InputQuantityValue extends QuantityValue
      */
     public function generateResultPreview($inputData)
     {
-        if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
+        if ($inputData instanceof \Pimcore\Model\DataObject\Data\InputQuantityValue) {
             return 'InputQuantityValue: ' .
                 $inputData->getValue() . ' ' .
                 ($inputData->getUnit() ? $inputData->getUnit()->getAbbreviation() : '');
