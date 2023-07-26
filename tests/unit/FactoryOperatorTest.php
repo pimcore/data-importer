@@ -24,6 +24,7 @@ use Pimcore\Model\DataObject\Data\GeoCoordinates;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\DataObject\Data\QuantityValue;
+use Pimcore\Model\DataObject\Data\InputQuantityValue as ModelInputQuantityValue;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Codeception\Test;
@@ -226,18 +227,18 @@ class FactoryOperatorTest extends Test\Unit
         $inputQuantityValue = $this->tester->grabService(InputQuantityValue::class);
 
         $result = $inputQuantityValue->process(['12', 'm']);
-        $this->assertInstanceOf(QuantityValue::class, $result);
+        $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());
         $this->assertEquals('m', $result->getUnitId());
         $this->assertEquals('Meter', $result->getUnit()->getLongname());
 
         $result = $inputQuantityValue->process(['12']);
-        $this->assertInstanceOf(QuantityValue::class, $result);
+        $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());
         $this->assertNull($result->getUnitId());
 
         $result = $inputQuantityValue->process([null, 'm']);
-        $this->assertInstanceOf(QuantityValue::class, $result);
+        $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
         $this->assertNull($result->getValue());
         $this->assertEquals('m', $result->getUnitId());
 
