@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Model\DataObject\QuantityValue\Unit;
 
 class InputQuantityValue extends QuantityValue
 {
@@ -24,7 +25,7 @@ class InputQuantityValue extends QuantityValue
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue
+     * @return \Pimcore\Model\DataObject\Data\QuantityValue
      */
     public function process($inputData, bool $dryRun = false)
     {
