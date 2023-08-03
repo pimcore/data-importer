@@ -106,7 +106,7 @@ class LoadDataObject extends AbstractOperator
         foreach ($inputData as $data) {
             $object = null;
             $logMessage = '';
-            if (empty($data) === false) {
+            if (empty($data) === false || $data === "0") {
                 if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
                     $object = $this->dataObjectLoader->loadByPath(trim($data));
                     $logMessage = 'by path `' . trim($data) . '`';
