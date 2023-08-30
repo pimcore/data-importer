@@ -1,6 +1,6 @@
 # Installation
 ## Required Bundles
-This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs to be installed first.
+This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub) and Pimcore ApplicationLogger bundle. Those need to be installed and registered first.
 
 ## Installation Process
 ### For Pimcore >= 10.5
