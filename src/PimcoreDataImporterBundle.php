@@ -103,6 +103,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/trim.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/numeric.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asArray.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asStructuredTable.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asCountries.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asGeopoint.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/asGeobounds.js',
