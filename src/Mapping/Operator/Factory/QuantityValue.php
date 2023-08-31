@@ -48,7 +48,7 @@ class QuantityValue extends AbstractOperator
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return \Pimcore\Model\DataObject\Data\QuantityValue|null
+     * @return \Pimcore\Model\DataObject\Data\AbstractQuantityValue|null
      */
     public function process($inputData, bool $dryRun = false)
     {

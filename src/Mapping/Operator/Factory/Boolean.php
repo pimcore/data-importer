@@ -33,11 +33,7 @@ class Boolean extends AbstractOperator
             $inputData = reset($inputData);
         }
 
-        if ($inputData === 'false') {
-            return false;
-        }
-
-        return boolval($inputData);
+        return filter_var($inputData, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**

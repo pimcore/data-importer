@@ -17,7 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Model\DataObject\Data\QuantityValue;
+use Pimcore\Model\DataObject\QuantityValue\Unit;
 
 class InputQuantityValue extends QuantityValue
 {
@@ -25,13 +25,15 @@ class InputQuantityValue extends QuantityValue
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return QuantityValue
+     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue
      */
     public function process($inputData, bool $dryRun = false)
     {
-        return new \Pimcore\Model\DataObject\Data\QuantityValue(
+        $unit = isset($inputData[1]) ? Unit::getByAbbreviation($inputData[1]) : null;
+
+        return new \Pimcore\Model\DataObject\Data\InputQuantityValue(
             $inputData[0] ?? null,
-            $inputData[1] ?? null
+                $unit
         );
     }
 
@@ -46,7 +48,12 @@ class InputQuantityValue extends QuantityValue
     public function evaluateReturnType(string $inputType, int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for input quantity value operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(
+                sprintf(
+                    "Unsupported input type '%s' for input quantity value operator at transformation position %s",
+                    $inputType,
+                    $index)
+            );
         }
 
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE;
@@ -59,8 +66,10 @@ class InputQuantityValue extends QuantityValue
      */
     public function generateResultPreview($inputData)
     {
-        if ($inputData instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
-            return 'InputQuantityValue: ' . $inputData->getValue() . ' ' . ($inputData->getUnit() ? $inputData->getUnit()->getAbbreviation() : '');
+        if ($inputData instanceof \Pimcore\Model\DataObject\Data\InputQuantityValue) {
+            return 'InputQuantityValue: ' .
+                $inputData->getValue() .
+                ($inputData->getUnit() ? ' ['.$inputData->getUnit()->getAbbreviation().']' : '');
         }
 
         return $inputData;
