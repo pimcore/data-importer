@@ -33,6 +33,9 @@ class AsStructuredTable extends AbstractOperator
             $inputData = [$inputData];
         }
         if ($dryRun) {
+            if (empty($inputData)) {
+                return "";
+            }
             return (new StructuredTable($inputData))->getHtmlTable(
                 array_map(function ($value, $label) use ($inputData) {
                     return [
