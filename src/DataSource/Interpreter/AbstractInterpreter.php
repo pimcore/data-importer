@@ -247,6 +247,9 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $elementsToCleanup = array_diff($existingElements, $this->identifierCache);
 
         foreach ($elementsToCleanup as $identifier) {
+            if ($identifier === null) {
+                continue;
+            }
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to cleanup queue.', $identifier, $this->configName));
             $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_CLEANUP, $identifier);
         }
