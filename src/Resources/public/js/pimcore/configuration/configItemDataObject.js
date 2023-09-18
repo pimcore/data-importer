@@ -69,7 +69,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
 
         this.tab.on("activate", this.tabactivated.bind(this));
         this.tab.on("destroy", this.tabdestroy.bind(this));
-        this.tab.on('render', this.isValid.bind(this, false));
         this.setupChangeDetector();
 
         this.parent.configPanel.editPanel.add(this.tab);
