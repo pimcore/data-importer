@@ -151,7 +151,6 @@ class Direct implements DataTargetInterface
         return true;
     }
 
-
     /**
      * @param DataObject\Concrete|DataObject\Objectbrick\Data\AbstractData $valueContainer
      * @param string $fieldName
@@ -161,8 +160,7 @@ class Direct implements DataTargetInterface
     protected function getFieldDefinition(
         Object $valueContainer,
         string $fieldName
-    ): Data
-    {
+    ): Data {
         if ($valueContainer instanceof DataObject\Concrete) {
             $definition = $valueContainer->getClass();
         } elseif ($valueContainer instanceof DataObject\Objectbrick\Data\AbstractData) {
