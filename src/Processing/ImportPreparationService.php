@@ -202,9 +202,6 @@ class ImportPreparationService
         if (!($config['general']['active'] ?? false)) {
             $message = "Configuration '$configName' is not active, skipping preparation execution.";
             $this->logger->info($message);
-            $this->applicationLogger->info($message, [
-                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName
-            ]);
 
             return false;
         }
