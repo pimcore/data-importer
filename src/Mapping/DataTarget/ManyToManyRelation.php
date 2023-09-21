@@ -54,25 +54,7 @@ class ManyToManyRelation extends Direct
      */
     protected function doAssignData($valueContainer, $fieldName, $data)
     {
-        if ($valueContainer instanceof DataObject\Concrete) {
-            $definition = $valueContainer->getClass();
-        } elseif ($valueContainer instanceof DataObject\Objectbrick\Data\AbstractData) {
-            $definition = $valueContainer->getDefinition();
-        } else {
-            throw new InvalidConfigurationException('Invalid container type for data attribute.');
-        }
-
-        $fieldDefinition = $definition->getFieldDefinition($fieldName);
-        if ($fieldDefinition === null) {
-            $localizedFields = $definition->getFieldDefinition('localizedfields');
-            if ($localizedFields instanceof LocalizedFields) {
-                $fieldDefinition = $localizedFields->getFieldDefinition($fieldName);
-            }
-        }
-
-        if ($fieldDefinition === null) {
-            throw new InvalidConfigurationException(sprintf('Field definition for field "%s" not found.', $fieldName));
-        }
+        $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
 
         switch ($fieldDefinition->getFieldtype()) {
             case 'manyToManyRelation':
