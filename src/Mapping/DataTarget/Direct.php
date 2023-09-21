@@ -140,7 +140,7 @@ class Direct implements DataTargetInterface
 
         $fieldName = lcfirst(str_replace('get', '', $getter));
         $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
-        if (!$fieldDefinition->isEmpty($currentData) && $this->writeIfTargetIsNotEmpty === false) {
+        if ($this->writeIfTargetIsNotEmpty === false && !$fieldDefinition->isEmpty($currentData)) {
             return false;
         }
 
