@@ -309,8 +309,7 @@ class ImportProcessingService
     public function generateTransformationResultPreview(
         array $importDataRow,
         MappingConfiguration $mappingConfiguration
-    ): string
-    {
+    ): string {
 
         // extract raw data
         $data = null;
