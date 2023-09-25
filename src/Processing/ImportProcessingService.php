@@ -306,7 +306,10 @@ class ImportProcessingService
         return $transformationDataType;
     }
 
-    public function generateTransformationResultPreview(array $importDataRow, MappingConfiguration $mappingConfiguration): string
+    public function generateTransformationResultPreview(
+        array $importDataRow,
+        MappingConfiguration $mappingConfiguration
+    ): string
     {
 
         // extract raw data
@@ -336,6 +339,8 @@ class ImportProcessingService
 
         if (is_string($data) && $data !== '') {
             return $data;
+        } elseif (is_numeric($data) && !($operator instanceof Boolean)) {
+            return (string) $data;
         } elseif (empty($data) && !($operator instanceof Boolean)) {
             return '-- EMPTY --';
         } elseif (is_array($data)) {
