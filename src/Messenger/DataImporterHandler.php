@@ -50,8 +50,13 @@ class DataImporterHandler
 
     public function __invoke(DataImporterMessage $message)
     {
-        foreach ($message->getIds() as $id) {
+        foreach ($message->getIds() as $i => $id) {
             $this->importProcessingService->processQueueItem($id);
+
+            // call the garbage collector to avoid too many connections & memory issue
+            if (($i + 1) % 200 === 0) {
+                \Pimcore::collectGarbage();
+            }
         }
 
         $this->removeMessage($message->getMessageId());

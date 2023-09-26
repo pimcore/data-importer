@@ -68,5 +68,10 @@ class ParallelProcessQueueCommand extends ParallelizationAbstractCommand
     protected function runSingleCommand(string $item, InputInterface $input, OutputInterface $output): void
     {
         $this->importProcessingService->processQueueItem((int) $item);
+
+        // call the garbage collector if memory consumption is > 100MB
+        if (memory_get_usage() > 100000000) {
+            \Pimcore::collectGarbage();
+        }
     }
 }
