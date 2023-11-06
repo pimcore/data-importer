@@ -57,7 +57,7 @@ class FindParentStrategy implements LocationStrategyInterface
      */
     protected $attributeLanguage;
 
-    protected bool $saveAsVariant;
+    protected bool $saveAsVariant = false;
 
     public function __construct(protected DataObjectLoader $dataObjectLoader)
     {
@@ -77,7 +77,7 @@ class FindParentStrategy implements LocationStrategyInterface
             throw new InvalidConfigurationException('Empty find strategy.');
         }
 
-        $this->saveAsVariant = !empty($settings['asVariant']) && $settings['asVariant'] === 'on';
+        $this->saveAsVariant = isset($settings['asVariant']) && $settings['asVariant'] === 'on';
 
         $this->findStrategy = $settings['findStrategy'];
 
