@@ -57,6 +57,8 @@ class FindParentStrategy implements LocationStrategyInterface
      */
     protected $attributeLanguage;
 
+    protected bool $saveAsVariant;
+
     public function __construct(protected DataObjectLoader $dataObjectLoader)
     {
     }
@@ -74,6 +76,8 @@ class FindParentStrategy implements LocationStrategyInterface
         if (empty($settings['findStrategy'])) {
             throw new InvalidConfigurationException('Empty find strategy.');
         }
+
+        $this->saveAsVariant = !empty($settings['asVariant']) && $settings['asVariant'] === 'on';
 
         $this->findStrategy = $settings['findStrategy'];
 
@@ -129,8 +133,20 @@ class FindParentStrategy implements LocationStrategyInterface
         }
 
         if ($newParent) {
+            if (
+                $this->saveAsVariant &&
+                $newParent instanceof DataObject\Concrete &&
+                $newParent::class === $element::class &&
+                $newParent->getClass()->getAllowVariants()
+            ) {
+                /** @var DataObject\Concrete $element */
+                $element->setType(DataObject::OBJECT_TYPE_VARIANT);
+            }
+
             return $element->setParent($newParent);
         }
+
+        // Save the element as variant: The parent and element need to be of the same dataobject type.
 
         return $element;
     }

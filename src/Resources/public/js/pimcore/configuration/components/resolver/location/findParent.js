@@ -154,6 +154,12 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.locat
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_fallback_path'),
                         name: this.dataNamePrefix + 'fallbackPath',
                         value: this.data.fallbackPath
+                    },
+                    {
+                        xtype: 'checkbox',
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_as_variant'),
+                        name: this.dataNamePrefix + 'asVariant',
+                        value: this.data.asVariant
                     }
                 ]
             });
