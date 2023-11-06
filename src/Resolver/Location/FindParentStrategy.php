@@ -155,6 +155,8 @@ class FindParentStrategy implements LocationStrategyInterface
             return $element->setParent($newParent);
         }
 
+        // Save the element as variant: The parent and element need to be of the same dataobject type.
+
         return $element;
     }
 
