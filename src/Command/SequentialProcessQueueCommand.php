@@ -83,9 +83,14 @@ class SequentialProcessQueueCommand extends AbstractCommand
         $progressBar = new ProgressBar($output, $itemCount);
         $progressBar->start();
 
-        foreach ($itemIds as $id) {
+        foreach ($itemIds as $i => $id) {
             $this->importProcessingService->processQueueItem($id);
             $progressBar->advance();
+
+            // call the garbage collector to avoid too many connections & memory issue
+            if (($i + 1) % 200 === 0) {
+                \Pimcore::collectGarbage();
+            }
         }
 
         $progressBar->finish();
