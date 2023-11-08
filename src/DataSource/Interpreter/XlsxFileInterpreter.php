@@ -15,8 +15,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
+use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 class XlsxFileInterpreter extends AbstractInterpreter
 {
@@ -46,13 +46,11 @@ class XlsxFileInterpreter extends AbstractInterpreter
     public function fileValid(string $path, bool $originalFilename = false): bool
     {
         //if we can't open the reader, then the file is not valid
-        try
-        {
+        try {
             $reader = new XlsxReader();
             $reader->open($path);
             $reader->close();
-        }
-        catch(\Exception){
+        } catch (\Exception) {
             return false;
         }
 
@@ -66,7 +64,6 @@ class XlsxFileInterpreter extends AbstractInterpreter
         $readRecordNumber = 0;
 
         if ($this->fileValid($path)) {
-
             $data = $this->getExcelData($path, $this->sheetName);
 
             if ($this->skipFirstRow) {
@@ -103,23 +100,24 @@ class XlsxFileInterpreter extends AbstractInterpreter
         $this->sheetName = $settings['sheetName'] ?? 'Sheet1';
     }
 
-    private function getExcelData(string $file, string $sheet) : array{
-        $data=array();
+    private function getExcelData(string $file, string $sheet): array
+    {
+        $data = [];
         $reader = new XlsxReader();
         $reader->open($file);
 
-        foreach($reader->getSheetIterator() as $currentSheet){
-            if($currentSheet->getName() != $sheet){
+        foreach ($reader->getSheetIterator() as $currentSheet) {
+            if ($currentSheet->getName() != $sheet) {
                 continue;
             }
 
-            foreach($currentSheet->getRowIterator() as $row){
+            foreach ($currentSheet->getRowIterator() as $row) {
                 $cells = $row->getCells();
                 $dataRow = [];
                 foreach ($cells as $cell) {
                     $dataRow[] = $cell->getValue();
                 }
-                $data[]=$dataRow;
+                $data[] = $dataRow;
             }
         }
 
