@@ -15,8 +15,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 
 class XlsxFileInterpreter extends AbstractInterpreter
 {
@@ -32,13 +32,7 @@ class XlsxFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        $reader = IOFactory::createReaderForFile($path);
-        $reader->setReadDataOnly(true);
-        $spreadSheet = $reader->load($path);
-
-        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
-
-        $data = $spreadSheet->getActiveSheet()->toArray();
+        $data = $this->getExcelData($path, $this->sheetName);
 
         if ($this->skipFirstRow) {
             array_shift($data);
@@ -51,9 +45,18 @@ class XlsxFileInterpreter extends AbstractInterpreter
 
     public function fileValid(string $path, bool $originalFilename = false): bool
     {
-        $reader = IOFactory::createReaderForFile($path);
+        //if we can't open the reader, then the file is not valid
+        try
+        {
+            $reader = new XlsxReader();
+            $reader->open($path);
+            $reader->close();
+        }
+        catch(\Exception){
+            return false;
+        }
 
-        return $reader->canRead($path);
+        return true;
     }
 
     public function previewData(string $path, int $recordNumber = 0, array $mappedColumns = []): PreviewData
@@ -63,13 +66,8 @@ class XlsxFileInterpreter extends AbstractInterpreter
         $readRecordNumber = 0;
 
         if ($this->fileValid($path)) {
-            $reader = IOFactory::createReaderForFile($path);
-            $reader->setReadDataOnly(true);
-            $spreadSheet = $reader->load($path);
 
-            $spreadSheet->setActiveSheetIndexByName($this->sheetName);
-
-            $data = $spreadSheet->getActiveSheet()->toArray();
+            $data = $this->getExcelData($path, $this->sheetName);
 
             if ($this->skipFirstRow) {
                 $firstRow = array_shift($data);
@@ -103,5 +101,30 @@ class XlsxFileInterpreter extends AbstractInterpreter
     {
         $this->skipFirstRow = $settings['skipFirstRow'] ?? false;
         $this->sheetName = $settings['sheetName'] ?? 'Sheet1';
+    }
+
+    private function getExcelData(string $file, string $sheet) : array{
+        $data=array();
+        $reader = new XlsxReader();
+        $reader->open($file);
+
+        foreach($reader->getSheetIterator() as $currentSheet){
+            if($currentSheet->getName() != $sheet){
+                continue;
+            }
+
+            foreach($currentSheet->getRowIterator() as $row){
+                $cells = $row->getCells();
+                $dataRow = [];
+                foreach ($cells as $cell) {
+                    $dataRow[] = $cell->getValue();
+                }
+                $data[]=$dataRow;
+            }
+        }
+
+        $reader->close();
+
+        return $data;
     }
 }
