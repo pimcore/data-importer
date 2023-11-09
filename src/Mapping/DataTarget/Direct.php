@@ -126,6 +126,7 @@ class Direct implements DataTargetInterface
      * @param string $getter
      *
      * @return bool
+     *
      * @throws InvalidConfigurationException
      */
     protected function checkAssignData($newData, $valueContainer, $getter)
