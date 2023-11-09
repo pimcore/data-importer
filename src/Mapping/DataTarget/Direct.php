@@ -138,7 +138,7 @@ class Direct implements DataTargetInterface
         $currentData = $valueContainer->$getter($this->language);
         DataObject::setHideUnpublished($hideUnpublished);
 
-        $fieldName = lcfirst(str_replace('get', '', $getter));
+        $fieldName = $this->fieldName;
         $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
         if ($this->writeIfTargetIsNotEmpty === false && !$fieldDefinition->isEmpty($currentData)) {
             return false;
