@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
@@ -133,11 +134,19 @@ class FindParentStrategy implements LocationStrategyInterface
         }
 
         if ($newParent) {
+            if ($newParent->getType() === DataObject::OBJECT_TYPE_VARIANT) {
+                throw new InvalidInputException(
+                    'The elements desired parent is a variant which cannot have any child elements'
+                );
+            }
+
+            // Check if element should be saved as a variant.
             if (
-                $this->saveAsVariant &&
-                $newParent instanceof DataObject\Concrete &&
-                $newParent::class === $element::class &&
-                $newParent->getClass()->getAllowVariants()
+                $this->saveAsVariant
+                && $element instanceof DataObject\Concrete
+                && $element::class === $newParent::class
+                && $element->getClass()->getAllowVariants()
+                && !$element->hasChildren()
             ) {
                 /** @var DataObject\Concrete $element */
                 $element->setType(DataObject::OBJECT_TYPE_VARIANT);
@@ -145,8 +154,6 @@ class FindParentStrategy implements LocationStrategyInterface
 
             return $element->setParent($newParent);
         }
-
-        // Save the element as variant: The parent and element need to be of the same dataobject type.
 
         return $element;
     }
