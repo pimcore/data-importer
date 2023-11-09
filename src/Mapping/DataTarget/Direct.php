@@ -126,6 +126,7 @@ class Direct implements DataTargetInterface
      * @param string $getter
      *
      * @return bool
+     * @throws InvalidConfigurationException
      */
     protected function checkAssignData($newData, $valueContainer, $getter)
     {
@@ -138,7 +139,13 @@ class Direct implements DataTargetInterface
         $currentData = $valueContainer->$getter($this->language);
         DataObject::setHideUnpublished($hideUnpublished);
 
-        $fieldName = lcfirst(str_replace('get', '', $getter));
+        $fieldName = $this->fieldName;
+        //brick attribute
+        $fieldNameParts = explode('.', $this->fieldName);
+        if (count($fieldNameParts) === 3) {
+            $fieldName = $fieldNameParts[2];
+        }
+
         $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
         if ($this->writeIfTargetIsNotEmpty === false && !$fieldDefinition->isEmpty($currentData)) {
             return false;
