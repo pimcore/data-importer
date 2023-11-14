@@ -24,6 +24,7 @@ use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 abstract class AbstractInterpreter implements InterpreterInterface
 {
@@ -43,6 +44,11 @@ abstract class AbstractInterpreter implements InterpreterInterface
      * @var ApplicationLogger
      */
     protected $applicationLogger;
+
+    /**
+     * @var ExpressionLanguage
+     */
+    protected $expressionLanguage;
 
     /**
      * @var string
@@ -85,6 +91,11 @@ abstract class AbstractInterpreter implements InterpreterInterface
     protected $identifierCache;
 
     /**
+     * @var string
+     */
+    protected $filter;
+
+    /**
      * AbstractInterpreter constructor.
      *
      * @param DeltaChecker $deltaChecker
@@ -96,6 +107,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->deltaChecker = $deltaChecker;
         $this->queueService = $queueService;
         $this->applicationLogger = $applicationLogger;
+        $this->expressionLanguage = new ExpressionLanguage();
     }
 
     public function getConfigName(): string
@@ -199,10 +211,16 @@ abstract class AbstractInterpreter implements InterpreterInterface
         return $success;
     }
 
+    public function setFilter(?string $filter): void
+    {
+        $this->filter = $filter;
+    }
+
     abstract protected function doInterpretFileAndCallProcessRow(string $path): void;
 
     protected function processImportRow(array $data)
     {
+
         $createQueueItem = true;
 
         $this->addToIdentifierCache($data);
@@ -210,6 +228,12 @@ abstract class AbstractInterpreter implements InterpreterInterface
         //check delta
         if ($this->doDeltaCheck) {
             $createQueueItem = $this->deltaChecker->hasChanged($this->configName, $this->idDataIndex, $data);
+        }
+
+        if(!is_null($this->filter)){
+            $rowIncluded = $this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
+
+            $createQueueItem = $createQueueItem && $rowIncluded;
         }
 
         //create queue item

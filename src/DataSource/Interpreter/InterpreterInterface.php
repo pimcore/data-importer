@@ -99,4 +99,11 @@ interface InterpreterInterface extends SettingsAwareInterface
      * @param Resolver $resolver
      */
     public function setResolver(Resolver $resolver): void;
+
+    /**
+     * Symfony filter to use to filter data in datasource
+     *
+     * @param string $filter
+     */
+    public function setFilter(?string $filter): void;
 }

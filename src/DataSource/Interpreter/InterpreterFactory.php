@@ -60,6 +60,8 @@ class InterpreterFactory
         $loader->setDoCleanup($processingConfiguration['cleanup']['doCleanup'] ?? false);
         $loader->setDoArchiveImportFile($processingConfiguration['doArchiveImportFile'] ?? false);
 
+        $loader->setFilter($interpreterConfiguration['filter'] ?? null);
+
         if ($resolver) {
             $loader->setResolver($resolver);
         }

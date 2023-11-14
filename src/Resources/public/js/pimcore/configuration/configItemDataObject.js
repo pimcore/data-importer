@@ -238,7 +238,6 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
 
         const interpreterSettingsPanel = Ext.create('Ext.Panel', {width: 900});
 
-
         this.interpreterForm = Ext.create('DataHub.DataImporter.StructuredValueForm', {
             items: [
                 {
@@ -256,10 +255,19 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                             settingsValues: this.data.interpreterConfig.settings
                         },
                         interpreterSettingsPanel,
+                        {
+                            xtype: 'textfield',
+                            fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_filter'),
+                            name: 'filter',
+                            value: this.data.interpreterConfig.filter || '',
+                            tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_filtering_tooltip')
+                        }
                     ]
                 }
             ]
         });
+
+        
 
 
         return Ext.create('Ext.Panel', {
