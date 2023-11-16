@@ -220,7 +220,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function processImportRow(array $data)
     {
-
         $createQueueItem = true;
 
         $this->addToIdentifierCache($data);
@@ -230,7 +229,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
             $createQueueItem = $this->deltaChecker->hasChanged($this->configName, $this->idDataIndex, $data);
         }
 
-        if(!is_null($this->filter)){
+        if (!is_null($this->filter)) {
             $rowIncluded = $this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
 
             $createQueueItem = $createQueueItem && $rowIncluded;
