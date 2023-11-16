@@ -9,8 +9,8 @@
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- * @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- * @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
@@ -40,6 +40,7 @@ class PropertyLoadStrategy extends AbstractLoad
         }
 
         $cid = $cidResults[0]['cid'];
+
         return $this->dataObjectLoader->loadById($cid, $this->getClassName());
     }
 
@@ -70,6 +71,6 @@ class PropertyLoadStrategy extends AbstractLoad
      */
     public function loadFullIdentifierList(): array
     {
-        return array();
+        return [];
     }
 }
