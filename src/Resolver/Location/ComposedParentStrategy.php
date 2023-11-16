@@ -16,11 +16,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Tool\ComposedPathBuilder;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
-use Pimcore\Bundle\DataImporterBundle\Tool\ComposedPathBuilder;
 
 class ComposedParentStrategy implements LocationStrategyInterface
 {
@@ -33,7 +33,6 @@ class ComposedParentStrategy implements LocationStrategyInterface
      * @var string
      */
     protected string $fallbackPath;
-
 
     /**
      * @param DataObjectLoader $dataObjectLoader

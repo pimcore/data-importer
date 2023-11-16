@@ -16,13 +16,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\Element\ElementInterface;
-use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Bundle\DataImporterBundle\Tool\ComposedPathBuilder;
+use Pimcore\Model\Element\ElementInterface;
 
 class ComposedPathStrategy extends AbstractLoad
 {
-
     private string $composedPath;
 
     /**
@@ -61,7 +59,6 @@ class ComposedPathStrategy extends AbstractLoad
 
         return $this->db->fetchCol($sql);
     }
-
 
     public function setSettings(array $settings): void
     {
