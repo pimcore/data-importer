@@ -83,6 +83,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/load/attribute.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/load/notLoad.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/load/composedPath.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/load/property.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/location/staticPath.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/location/findParent.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/resolver/location/findOrCreateFolder.js',

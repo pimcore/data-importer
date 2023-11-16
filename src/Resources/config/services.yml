@@ -124,6 +124,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.load", type: "composedPath" }
 
+    Pimcore\Bundle\DataImporterBundle\Resolver\Load\PropertyLoadStrategy:
+        tags:
+            - { name: "pimcore.datahub.data_importer.resolver.load", type: "property" }
+
     Pimcore\Bundle\DataImporterBundle\Resolver\Location\FindParentStrategy:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.location", type: "findParent" }
