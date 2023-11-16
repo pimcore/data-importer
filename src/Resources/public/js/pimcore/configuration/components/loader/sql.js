@@ -41,7 +41,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.sql = C
                         xtype: 'combobox',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_sql_connection'),
                         name: this.dataNamePrefix + 'connection',
-                        value: this.data.connectionName,
+                        value: this.data.connection,
                         allowBlank: false,
                         msgTarget: 'under',
                         displayField: 'name',
