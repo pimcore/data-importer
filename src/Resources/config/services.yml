@@ -120,6 +120,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.load", type: "notLoad" }
 
+    Pimcore\Bundle\DataImporterBundle\Resolver\Load\ComposedPathStrategy:
+        tags:
+            - { name: "pimcore.datahub.data_importer.resolver.load", type: "composedPath" }
+
     Pimcore\Bundle\DataImporterBundle\Resolver\Location\FindParentStrategy:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.location", type: "findParent" }
@@ -139,6 +143,10 @@ services:
     Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy:
         tags:
             - { name: "pimcore.datahub.data_importer.resolver.location", type: "doNotCreate" }
+
+    Pimcore\Bundle\DataImporterBundle\Resolver\Location\ComposedParentStrategy:
+        tags:
+            - { name: "pimcore.datahub.data_importer.resolver.location", type: "composedParent" }
 
     Pimcore\Bundle\DataImporterBundle\Resolver\Publish\AlwaysPublishStrategy:
         tags:
