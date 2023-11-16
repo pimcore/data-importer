@@ -95,6 +95,13 @@ services:
             - { name: monolog.logger, channel: 'DATA-IMPORTER' }
             - { name: "pimcore.datahub.data_importer.interpreter", type: "xml" }
 
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\SqlFileInterpreter:
+        calls:
+            - [ setLogger, [ '@logger' ] ]
+        tags:
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+            - { name: "pimcore.datahub.data_importer.interpreter", type: "sql" }
+
     Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory: ~
 
     Pimcore\Bundle\DataImporterBundle\Cleanup\DeleteStrategy:
