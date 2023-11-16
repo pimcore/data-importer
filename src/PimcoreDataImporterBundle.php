@@ -70,6 +70,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/asset.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/upload.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/push.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/loader/sql.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/interpreter/csv.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/interpreter/json.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/interpreter/xlsx.js',

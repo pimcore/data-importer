@@ -4,6 +4,12 @@ _data_hub_data_importer_data_object_admin:
     options:
         expose: true
 
+_data_hub_data_importer_connections:
+    resource: "@PimcoreDataImporterBundle/Controller/ConnectionController.php"
+    type:     annotation
+    options:
+        expose: true
+
 _data_hub_data_importer_data_object_push:
     resource: "@PimcoreDataImporterBundle/Controller/PushImportController.php"
     type:     annotation
