@@ -220,8 +220,9 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function processImportRow(array $data)
     {
-        if (!is_null($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data])){
+        if (!is_null($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data])) {
             $this->logger->debug(sprintf("Import data of item `%s` of `%s` didn't pass filter %s, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName, $this->filter));
+
             return;
         }
 
