@@ -15,6 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
+use Doctrine\DBAL\Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -22,6 +23,11 @@ class PropertyLoadStrategy extends AbstractLoad
 {
     private string $propertyName;
 
+    /**
+     * @param array $settings
+     * @return void
+     * @throws InvalidConfigurationException
+     */
     public function setSettings(array $settings): void
     {
         if (!array_key_exists('propertyName', $settings) || $settings['propertyName'] === null) {
@@ -38,7 +44,7 @@ class PropertyLoadStrategy extends AbstractLoad
      *
      * @return ElementInterface|null
      *
-     * @throws InvalidConfigurationException
+     * @throws InvalidConfigurationException|Exception
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
@@ -54,6 +60,7 @@ class PropertyLoadStrategy extends AbstractLoad
 
     /**
      * @return array
+     * @throws Exception
      */
     public function loadFullIdentifierList(): array
     {
