@@ -19,46 +19,9 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Tool\ComposedPathBuilder;
 use Pimcore\Model\Element\ElementInterface;
 
-class ComposedPathStrategy extends AbstractLoad
+class ComposedPathStrategy extends PathStrategy
 {
     private string $composedPath;
-
-    /**
-     * @param array $inputData
-     *
-     * @return ElementInterface|null
-     *
-     * @throws InvalidConfigurationException
-     */
-    public function loadElement(array $inputData): ?ElementInterface
-    {
-        $path = ComposedPathBuilder::buildPath($inputData, $this->composedPath);
-
-        return $this->dataObjectLoader->loadByPath($path, $this->getClassName());
-    }
-
-    /**
-     * @param string $identifier
-     *
-     * @return ElementInterface|null
-     *
-     * @throws InvalidConfigurationException
-     */
-    public function loadElementByIdentifier($identifier): ?ElementInterface
-    {
-        return $this->dataObjectLoader->loadByPath($identifier,
-                                                   $this->getClassName());
-    }
-
-    /**
-     * @return array
-     */
-    public function loadFullIdentifierList(): array
-    {
-        $sql = sprintf('SELECT CONCAT(`o_path`, `o_key`) FROM object_%s', $this->dataObjectClassId);
-
-        return $this->db->fetchCol($sql);
-    }
 
     public function setSettings(array $settings): void
     {
@@ -67,5 +30,15 @@ class ComposedPathStrategy extends AbstractLoad
         }
 
         $this->composedPath = $settings['composedPath'];
+    }
+
+    /**
+     * @param array $inputData
+     *
+     * @return mixed
+     */
+    public function extractIdentifierFromData(array $inputData): string
+    {
+        return ComposedPathBuilder::buildPath($inputData, $this->composedPath);
     }
 }
