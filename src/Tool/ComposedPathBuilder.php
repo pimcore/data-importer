@@ -26,7 +26,7 @@ class ComposedPathBuilder
         foreach ($parts as $partIndex => $part) {
             $matches = [];
 
-            preg_match_all('/\$((\[[0-9A-Za-z]+\])+)/', $part, $matches);
+            preg_match_all('/\$((\[[0-9A-Za-z_-]+\])+)/', $part, $matches);
 
             if (count($matches) && count($matches[0])) {
                 foreach ($matches[0] as $mIndex => $m) {
@@ -44,8 +44,6 @@ class ComposedPathBuilder
             $parts[$partIndex] = ElementService::getValidKey($parts[$partIndex], $type);
         }
 
-        $path = implode('/', $parts);
-
-        return $path;
+        return implode('/', $parts);
     }
 }
