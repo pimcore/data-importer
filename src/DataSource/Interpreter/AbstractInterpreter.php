@@ -220,6 +220,11 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function processImportRow(array $data)
     {
+        if (!is_null($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data])){
+            $this->logger->debug(sprintf("Import data of item `%s` of `%s` didn't pass filter %s, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName, $this->filter));
+            return;
+        }
+
         $createQueueItem = true;
 
         $this->addToIdentifierCache($data);
@@ -227,12 +232,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
         //check delta
         if ($this->doDeltaCheck) {
             $createQueueItem = $this->deltaChecker->hasChanged($this->configName, $this->idDataIndex, $data);
-        }
-
-        if (!is_null($this->filter)) {
-            $rowIncluded = $this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
-
-            $createQueueItem = $createQueueItem && $rowIncluded;
         }
 
         //create queue item
