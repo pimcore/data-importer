@@ -31,16 +31,22 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.
                 border: false,
                 items: [
                     {
+                        xtype: 'combo',
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_data_source_index'),
+                        name: this.dataNamePrefix + 'dataSourceIndex',
+                        value: this.data.dataSourceIndex,
+                        store: this.configItemRootContainer.columnHeaderStore,
+                        displayField: 'label',
+                        valueField: 'dataIndex',
+                        forceSelection: false,
+                        queryMode: 'local',
+                        triggerOnClick: false
+                    },
+                    {
                         xtype: 'textfield',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_property_name'),
                         name: this.dataNamePrefix + 'propertyName',
                         value: this.data.propertyName
-                    },
-                    {
-                        xtype: 'textfield',
-                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_value_index'),
-                        name: this.dataNamePrefix + 'valueIndex',
-                        value: this.data.valueIndex
                     }
                 ]
             });
