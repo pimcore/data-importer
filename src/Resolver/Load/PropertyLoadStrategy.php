@@ -55,6 +55,7 @@ class PropertyLoadStrategy extends AbstractLoad
         }
 
         $cid = $cidResults[0]['cid'];
+
         return $this->dataObjectLoader->loadById($cid, $this->getClassName());
     }
 
@@ -64,6 +65,6 @@ class PropertyLoadStrategy extends AbstractLoad
      */
     public function loadFullIdentifierList(): array
     {
-        return $this->db->fetchFirstColumn("SELECT data FROM properties WHERE name = ? AND ctype = ?", [$this->propertyName,  'object']);
+        return $this->db->fetchFirstColumn('SELECT data FROM properties WHERE name = ? AND ctype = ?', [$this->propertyName,  'object']);
     }
 }
