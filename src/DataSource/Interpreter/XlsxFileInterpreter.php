@@ -17,12 +17,12 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use Carbon\Carbon;
 use Doctrine\DBAL\Exception;
-use OpenSpout\Common\Exception\IOException;
-use OpenSpout\Reader\XLSX\Reader as XlsxReader;
-use OpenSpout\Writer\CSV\Writer as CSVWriter;
-use OpenSpout\Writer\CSV\Options as CSVOptions;
 use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Exception\IOException;
+use OpenSpout\Reader\XLSX\Reader as XlsxReader;
+use OpenSpout\Writer\CSV\Options as CSVOptions;
+use OpenSpout\Writer\CSV\Writer as CSVWriter;
 use OpenSpout\Writer\Exception\WriterNotOpenedException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
@@ -58,8 +58,9 @@ class XlsxFileInterpreter extends AbstractInterpreter
             array_shift($data);
         }
 
-        if($this->bulkQueue){
+        if ($this->bulkQueue) {
             $this->bulkLoadData($data);
+
             return;
         }
 
@@ -169,8 +170,7 @@ class XlsxFileInterpreter extends AbstractInterpreter
         $db = Db::get();
 
         foreach ($data as $rowData) {
-
-            if($this->rowFiltered($rowData)){
+            if ($this->rowFiltered($rowData)) {
                 continue;
             }
 
