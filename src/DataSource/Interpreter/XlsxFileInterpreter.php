@@ -15,27 +15,52 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use Carbon\Carbon;
+use Doctrine\DBAL\Exception;
+use OpenSpout\Common\Exception\IOException;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
+use OpenSpout\Writer\CSV\Writer as CSVWriter;
+use OpenSpout\Writer\CSV\Options as CSVOptions;
+use OpenSpout\Common\Entity\Cell;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\Exception\WriterNotOpenedException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Db;
 
 class XlsxFileInterpreter extends AbstractInterpreter
 {
     /**
      * @var bool
      */
-    protected $skipFirstRow;
+    protected bool $skipFirstRow;
 
     /**
      * @var string
      */
-    protected $sheetName;
+    protected string $sheetName;
 
+    /**
+     * @var bool
+     */
+    protected bool $bulkQueue;
+
+    /**
+     * @throws WriterNotOpenedException
+     * @throws IOException
+     * @throws Exception
+     */
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
         $data = $this->getExcelData($path, $this->sheetName);
 
         if ($this->skipFirstRow) {
             array_shift($data);
+        }
+
+        if($this->bulkQueue){
+            $this->bulkLoadData($data);
+            return;
         }
 
         foreach ($data as $rowData) {
@@ -98,6 +123,7 @@ class XlsxFileInterpreter extends AbstractInterpreter
     {
         $this->skipFirstRow = $settings['skipFirstRow'] ?? false;
         $this->sheetName = $settings['sheetName'] ?? 'Sheet1';
+        $this->bulkQueue = $settings['bulkQueue'] ?? false;
     }
 
     private function getExcelData(string $file, string $sheet): array
@@ -124,5 +150,61 @@ class XlsxFileInterpreter extends AbstractInterpreter
         $reader->close();
 
         return $data;
+    }
+
+    /**
+     * @throws WriterNotOpenedException
+     * @throws IOException
+     * @throws Exception
+     */
+    private function bulkLoadData(array &$data): void
+    {
+        $tmpCsv = tempnam(sys_get_temp_dir(), 'pimcore_bulk_load');
+        $options = new CSVOptions();
+        $options->FIELD_ENCLOSURE = "'";
+        $writer = new CSVWriter($options);
+        $writer->openToFile($tmpCsv);
+
+        $carbonNow = Carbon::now();
+        $db = Db::get();
+
+        foreach ($data as $rowData) {
+
+            if($this->rowFiltered($rowData)){
+                continue;
+            }
+
+            $json = json_encode($rowData);
+
+            $c = Cell::fromValue($json);
+            $cells = [
+                Cell::fromValue((int)($carbonNow->getTimestamp() . str_pad((string)$carbonNow->milli, 3, '0'))),
+                Cell::fromValue($this->configName),
+                $c,
+                Cell::fromValue($this->executionType),
+                Cell::fromValue(ImportProcessingService::JOB_TYPE_PROCESS)
+            ];
+
+            $row = new Row($cells);
+            $writer->addRow($row);
+        }
+
+        $writer->close();
+
+        $quote = "'";
+        $sql = <<<SQL
+        LOAD DATA LOCAL INFILE $quote$tmpCsv$quote INTO TABLE bundle_data_hub_data_importer_queue
+            FIELDS
+                TERMINATED BY ','
+                ENCLOSED BY "'"
+                ESCAPED BY ''
+            LINES TERMINATED BY '\n'
+
+            (timestamp, configName, data, executionType, jobType)
+        SQL;
+
+        $db->executeQuery($sql);
+
+        unlink($tmpCsv);
     }
 }

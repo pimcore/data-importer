@@ -220,7 +220,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function processImportRow(array $data)
     {
-        if (!is_null($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data])){
+        if ($this->rowFiltered($data)){
             $this->logger->debug(sprintf("Import data of item `%s` of `%s` didn't pass filter %s, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName, $this->filter));
             return;
         }
@@ -277,11 +277,16 @@ abstract class AbstractInterpreter implements InterpreterInterface
         }
     }
 
-    protected function updateExecutionPackageInformation()
+    protected function updateExecutionPackageInformation(): void
     {
         $totalItem = $this->queueService->getQueueItemCount($this->configName);
         $infoEntryId = ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName;
         TmpStore::delete($infoEntryId);
         TmpStore::add($infoEntryId, $totalItem);
+    }
+
+    protected function rowFiltered(array &$data): bool
+    {
+        return !is_null($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
     }
 }

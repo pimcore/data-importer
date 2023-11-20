@@ -37,6 +37,12 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.interpreter.xl
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_xlsx_sheet'),
                         name: this.dataNamePrefix + 'sheetName',
                         value: this.data.sheetName || 'Sheet1'
+                    },{
+                        xtype: 'checkbox',
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_xlsx_bulk'),
+                        name: this.dataNamePrefix + 'bulkQueue',
+                        value: this.data.hasOwnProperty('bulkQueue') ? this.data.bulkQueue : false,
+                        inputValue: true
                     }
                 ]
             });
