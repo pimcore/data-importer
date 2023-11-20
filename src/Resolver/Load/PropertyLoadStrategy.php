@@ -25,7 +25,9 @@ class PropertyLoadStrategy extends AbstractLoad
 
     /**
      * @param array $settings
+     *
      * @return void
+     *
      * @throws InvalidConfigurationException
      */
     public function setSettings(array $settings): void
@@ -61,6 +63,7 @@ class PropertyLoadStrategy extends AbstractLoad
 
     /**
      * @return array
+     *
      * @throws Exception
      */
     public function loadFullIdentifierList(): array

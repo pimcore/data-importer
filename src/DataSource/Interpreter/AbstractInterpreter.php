@@ -222,6 +222,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
     {
         if ($this->rowFiltered($data)){
             $this->logger->debug(sprintf("Import data of item `%s` of `%s` didn't pass filter %s, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName, $this->filter));
+
             return;
         }
 

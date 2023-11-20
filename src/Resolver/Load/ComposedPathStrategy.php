@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Tool\ComposedPathBuilder;
-use Pimcore\Model\Element\ElementInterface;
 
 class ComposedPathStrategy extends PathStrategy
 {
