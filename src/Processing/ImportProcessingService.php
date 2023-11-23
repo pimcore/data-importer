@@ -192,6 +192,12 @@ class ImportProcessingService
             $element = $resolver->loadOrCreateAndPrepareElement($importDataRow, $createNew);
 
             if ($element instanceof ElementInterface) {
+                $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                    null,
+                    'relatedObject' => $element
+                ]);
+
                 foreach ($mapping as $mappingConfiguration) {
 
                     // extract raw data
@@ -217,11 +223,6 @@ class ImportProcessingService
                     $dataTarget = $mappingConfiguration->getDataTarget();
                     $dataTarget->assignData($element, $data);
                 }
-                $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    null,
-                    'relatedObject' => $element
-                ]);
 
                 $event = new PreSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
@@ -247,7 +248,7 @@ class ImportProcessingService
                     'fileObject' => new FileObject(json_encode($importDataRow))
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (\Exception | \TypeError $e) {
             $message = "Error processing element: {$importDataRowString}";
             $this->logger->error($message . $e);
 
@@ -306,8 +307,10 @@ class ImportProcessingService
         return $transformationDataType;
     }
 
-    public function generateTransformationResultPreview(array $importDataRow, MappingConfiguration $mappingConfiguration): string
-    {
+    public function generateTransformationResultPreview(
+        array $importDataRow,
+        MappingConfiguration $mappingConfiguration
+    ): string {
 
         // extract raw data
         $data = null;
@@ -336,6 +339,8 @@ class ImportProcessingService
 
         if (is_string($data) && $data !== '') {
             return $data;
+        } elseif (is_numeric($data) && !($operator instanceof Boolean)) {
+            return (string) $data;
         } elseif (empty($data) && !($operator instanceof Boolean)) {
             return '-- EMPTY --';
         } elseif (is_array($data)) {

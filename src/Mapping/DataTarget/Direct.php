@@ -17,7 +17,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject;
-use Pimcore\Model\DataObject\Data\QuantityValue;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
 
 class Direct implements DataTargetInterface
@@ -125,6 +126,8 @@ class Direct implements DataTargetInterface
      * @param string $getter
      *
      * @return bool
+     *
+     * @throws InvalidConfigurationException
      */
     protected function checkAssignData($newData, $valueContainer, $getter)
     {
@@ -137,13 +140,55 @@ class Direct implements DataTargetInterface
         $currentData = $valueContainer->$getter($this->language);
         DataObject::setHideUnpublished($hideUnpublished);
 
-        if (!empty($currentData) && $this->writeIfTargetIsNotEmpty === false) {
+        $fieldName = $this->fieldName;
+        //brick attribute
+        $fieldNameParts = explode('.', $this->fieldName);
+        if (count($fieldNameParts) === 3) {
+            $fieldName = $fieldNameParts[2];
+        }
+
+        $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
+        if ($this->writeIfTargetIsNotEmpty === false && !$fieldDefinition->isEmpty($currentData)) {
             return false;
         }
-        if ($this->writeIfSourceIsEmpty === false && (empty($newData) || ($newData instanceof QuantityValue && empty($newData->getValue())))) {
+
+        if ($this->writeIfSourceIsEmpty === false && $fieldDefinition->isEmpty($newData)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * @param DataObject\Concrete|DataObject\Objectbrick\Data\AbstractData $valueContainer
+     * @param string $fieldName
+     *
+     * @throws InvalidConfigurationException
+     */
+    protected function getFieldDefinition(
+        Object $valueContainer,
+        string $fieldName
+    ): Data {
+        if ($valueContainer instanceof DataObject\Concrete) {
+            $definition = $valueContainer->getClass();
+        } elseif ($valueContainer instanceof DataObject\Objectbrick\Data\AbstractData) {
+            $definition = $valueContainer->getDefinition();
+        } else {
+            throw new InvalidConfigurationException('Invalid container type for data attribute.');
+        }
+
+        $fieldDefinition = $definition->getFieldDefinition($fieldName);
+        if ($fieldDefinition === null) {
+            $localizedFields = $definition->getFieldDefinition('localizedfields');
+            if ($localizedFields instanceof LocalizedFields) {
+                $fieldDefinition = $localizedFields->getFieldDefinition($fieldName);
+            }
+        }
+
+        if ($fieldDefinition === null) {
+            throw new InvalidConfigurationException(sprintf('Field definition for field "%s" not found.', $fieldName));
+        }
+
+        return $fieldDefinition;
     }
 }
