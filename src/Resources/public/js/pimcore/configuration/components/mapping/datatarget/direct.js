@@ -125,6 +125,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     languageSelection,
                     {
                         xtype: 'fieldcontainer',
+                        cls: 'dataimporter-direct-overwrite-container',
                         fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_label'),
                         defaultType: 'checkboxfield',
                         items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]

@@ -174,6 +174,8 @@ class XlsxFileInterpreter extends AbstractInterpreter
                 continue;
             }
 
+            $this->addToIdentifierCache($rowData);
+
             $json = json_encode($rowData);
 
             $c = Cell::fromValue($json);

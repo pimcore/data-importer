@@ -15,11 +15,15 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
+use DataHubBundle\Tests\Helper\Model;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct\ModelAndTargetField;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\Objectbrick;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\ModelInterface;
 
 class Direct implements DataTargetInterface
 {
@@ -72,43 +76,20 @@ class Direct implements DataTargetInterface
      */
     public function assignData(ElementInterface $element, $data): void
     {
-        $setterParts = explode('.', $this->fieldName);
+        $modelWithGetter = $this->getModelWithTarget($element);
 
-        if (count($setterParts) === 1) {
-            //direct class attribute
-            $getter = 'get' . ucfirst($this->fieldName);
-            if (!$this->checkAssignData($data, $element, $getter)) {
-                return;
-            }
-            $this->doAssignData($element, $this->fieldName, $data);
-        } elseif (count($setterParts) === 3) {
-            //brick attribute
+        $model = $modelWithGetter->getModel();
+        $getter = 'get' . ucfirst($modelWithGetter->getTargetField());
 
-            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
-            $brickContainer = $element->$brickContainerGetter();
-
-            $brickGetter = 'get' . ucfirst($setterParts[1]);
-            $brick = $brickContainer->$brickGetter();
-
-            if (empty($brick)) {
-                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
-                $brick = new $brickClassName($element);
-                $brickSetter = 'set' . ucfirst($setterParts[1]);
-                $brickContainer->$brickSetter($brick);
-            }
-
-            $getter = 'get' . ucfirst($setterParts[2]);
-            if (!$this->checkAssignData($data, $brick, $getter)) {
-                return;
-            }
-            $this->doAssignData($brick, $setterParts[2], $data);
-        } else {
-            throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
+        if (!$this->checkAssignData($data, $model, $getter)) {
+            return;
         }
+
+        $this->doAssignData($model, $modelWithGetter->getTargetField(), $data);
     }
 
     /**
-     * @param ElementInterface $valueContainer
+     * @param ModelInterface $valueContainer
      * @param string $fieldName
      * @param mixed $data
      *
@@ -182,5 +163,37 @@ class Direct implements DataTargetInterface
         }
 
         return $fieldDefinition;
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    protected function getModelWithTarget(ElementInterface $element): ModelAndTargetField
+    {
+        $setterParts = explode('.', $this->fieldName);
+
+        if (count($setterParts) === 1) {
+            return new ModelAndTargetField($element, $this->fieldName);
+        } elseif (count($setterParts) === 3) {
+            //brick attribute
+            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
+            $brickContainer = $element->$brickContainerGetter();
+
+            $brickGetter = 'get' . ucfirst($setterParts[1]);
+
+            /** @var Objectbrick $brick */
+            $brick = $brickContainer->$brickGetter();
+
+            if (empty($brick)) {
+                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
+                $brick = new $brickClassName($element);
+                $brickSetter = 'set' . ucfirst($setterParts[1]);
+                $brickContainer->$brickSetter($brick);
+            }
+
+            return new ModelAndTargetField($brick, $setterParts[2]);
+        } else {
+            throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
+        }
     }
 }
