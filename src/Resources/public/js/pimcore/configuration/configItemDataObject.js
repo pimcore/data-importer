@@ -257,6 +257,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                         interpreterSettingsPanel,
                         {
                             xtype: 'textfield',
+                            allowBlank: true,
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_filter'),
                             name: 'filter',
                             value: this.data.interpreterConfig.filter || '',

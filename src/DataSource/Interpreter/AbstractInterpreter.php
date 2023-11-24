@@ -288,6 +288,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function rowFiltered(array &$data): bool
     {
-        return !is_null($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
+        return !empty($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
     }
 }
