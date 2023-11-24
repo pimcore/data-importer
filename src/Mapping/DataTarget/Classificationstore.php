@@ -51,7 +51,6 @@ class Classificationstore implements DataTargetInterface
      */
     protected bool $writeIfTargetIsNotEmpty;
 
-
     public function setSettings(array $settings): void
     {
         if (empty($settings['fieldName'])) {
@@ -88,7 +87,7 @@ class Classificationstore implements DataTargetInterface
 
         $currentValue = $classificationStore->getLocalizedKeyValue($this->groupId, $this->keyId);
 
-        if(!$this->shouldAssignData($data, $currentValue)) {
+        if (!$this->shouldAssignData($data, $currentValue)) {
             return;
         }
 
@@ -100,8 +99,7 @@ class Classificationstore implements DataTargetInterface
         }
     }
 
-
-    private function shouldAssignData($newValue, $currentValue) :bool
+    private function shouldAssignData($newValue, $currentValue): bool
     {
         if ($this->writeIfTargetIsNotEmpty === true && $this->writeIfSourceIsEmpty === true) {
             return true;

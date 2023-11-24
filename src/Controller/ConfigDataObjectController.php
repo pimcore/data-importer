@@ -509,10 +509,9 @@ class ConfigDataObjectController extends UserAwareController
             ];
 
             //accounting for possible bug in Pimcore Source
-            if(isset($item->sorter )){
+            if (isset($item->sorter)) {
                 $item['sorter'] = $config->getSorter();
-            }
-            else{
+            } else {
                 $item['sorter'] = 0;
             }
 
