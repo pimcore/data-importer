@@ -162,6 +162,34 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                 }.bind(this)
             );
 
+            const writeIfTargetIsNotEmpty = Ext.create('Ext.form.Checkbox', {
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifTargetIsNotEmpty'),
+                name: this.dataNamePrefix + 'writeIfTargetIsNotEmpty',
+                value: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? this.data.writeIfTargetIsNotEmpty : true,
+                inputValue: true,
+                uncheckedValue: false,
+                listeners: {
+                    change: function (checkbox, value) {
+                        if (value) {
+                            writeIfSourceIsEmpty.setReadOnly(false);
+                            writeIfSourceIsEmpty.setValue(true);
+                        } else {
+                            writeIfSourceIsEmpty.setValue(false);
+                            writeIfSourceIsEmpty.setReadOnly(true);
+                        }
+                    }
+                }
+            });
+
+            const writeIfSourceIsEmpty = Ext.create('Ext.form.Checkbox', {
+                boxLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_ifSourceIsEmpty'),
+                name: this.dataNamePrefix + 'writeIfSourceIsEmpty',
+                value: this.data.hasOwnProperty('writeIfSourceIsEmpty') ? this.data.writeIfSourceIsEmpty : true,
+                uncheckedValue: false,
+                readOnly: this.data.hasOwnProperty('writeIfTargetIsNotEmpty') ? !this.data.writeIfTargetIsNotEmpty : false,
+                inputValue: true
+            });
+
             this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
                 defaults: {
                     labelWidth: 120,
@@ -175,7 +203,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     attributeSelection,
                     clsKeySelection,
                     clsKeySelectionValue,
-                    languageSelection
+                    languageSelection,
+                    {
+                        xtype: 'fieldcontainer',
+                        fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_dataTarget.type_direct_write_settings_label'),
+                        defaultType: 'checkboxfield',
+                        items: [writeIfTargetIsNotEmpty, writeIfSourceIsEmpty]
+                    }
                 ]
             });
 

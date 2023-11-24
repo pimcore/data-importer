@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\Element\ElementInterface;
 
 class Classificationstore implements DataTargetInterface
@@ -23,22 +24,33 @@ class Classificationstore implements DataTargetInterface
     /**
      * @var string
      */
-    protected $fieldName;
+    protected string $fieldName;
 
     /**
      * @var string
      */
-    protected $language;
+    protected string $language;
 
     /**
      * @var int
      */
-    protected $keyId;
+    protected int $keyId;
 
     /**
      * @var int
      */
-    protected $groupId;
+    protected int $groupId;
+
+    /**
+     * @var bool
+     */
+    protected bool $writeIfSourceIsEmpty;
+
+    /**
+     * @var bool
+     */
+    protected bool $writeIfTargetIsNotEmpty;
+
 
     public function setSettings(array $settings): void
     {
@@ -55,6 +67,10 @@ class Classificationstore implements DataTargetInterface
         $this->groupId = (int) $keyParts[0];
         $this->keyId = (int) $keyParts[1];
         $this->language = $settings['language'] ?? null;
+
+        //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
+        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
+        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
     }
 
     /**
@@ -70,11 +86,35 @@ class Classificationstore implements DataTargetInterface
         $getter = 'get' . ucfirst($this->fieldName);
         $classificationStore = $element->$getter();
 
+        $currentValue = $classificationStore->getLocalizedKeyValue($this->groupId, $this->keyId);
+
+        if(!$this->shouldAssignData($data, $currentValue)) {
+            return;
+        }
+
         if ($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
             $classificationStore->setLocalizedKeyValue($this->groupId, $this->keyId, $data, $this->language);
             $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$this->groupId => true]);
         } else {
             throw new InvalidConfigurationException('Field ' . $this->fieldName . ' is not a classification store.');
         }
+    }
+
+
+    private function shouldAssignData($newValue, $currentValue) :bool
+    {
+        if ($this->writeIfTargetIsNotEmpty === true && $this->writeIfSourceIsEmpty === true) {
+            return true;
+        }
+
+        if (!empty($currentValue) && $this->writeIfTargetIsNotEmpty === false) {
+            return false;
+        }
+
+        if ($this->writeIfSourceIsEmpty === false && (empty($newValue) || ($newValue instanceof QuantityValue && empty($newValue->getValue())))) {
+            return false;
+        }
+
+        return true;
     }
 }
