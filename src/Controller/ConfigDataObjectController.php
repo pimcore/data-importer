@@ -506,8 +506,15 @@ class ConfigDataObjectController extends UserAwareController
                 'keyName' => $config->getName(),
                 'keyDescription' => $config->getDescription(),
                 'id' => $config->getGroupId() . '-' . $config->getKeyId(),
-                'sorter' => $config->getSorter(),
             ];
+
+            //accounting for possible bug in Pimcore Source
+            if(isset($item->sorter )){
+                $item['sorter'] = $config->getSorter();
+            }
+            else{
+                $item['sorter'] = 0;
+            }
 
             $groupConfig = DataObject\Classificationstore\GroupConfig::getById($config->getGroupId());
             if ($groupConfig) {
