@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
-use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 
 class Property implements DataTargetInterface
 {
@@ -50,7 +49,6 @@ class Property implements DataTargetInterface
      */
     public function assignData(ElementInterface $element, $data): void
     {
-        $element->setProperty($this->propertyName, "text", $data);
+        $element->setProperty($this->propertyName, 'text', $data);
     }
-
 }
