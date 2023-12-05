@@ -37,3 +37,6 @@ For more details and examples see [Classification Store Batch Details](./05_Clas
 
 ### Image Gallery Appender
 This allows a single image to be added to an image gallery field. The transformations should Load/Import an Asset (expecting an Image Asset) and then transform "As Gallery".
+
+### Property
+This allows setting a text property on a Data Object.

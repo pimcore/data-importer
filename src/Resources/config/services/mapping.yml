@@ -164,3 +164,7 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ImageGalleryAppender:
         tags:
             - { name: "pimcore.datahub.data_importer.data_target", type: "imageGalleryAppender" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Property:
+        tags:
+            - { name: "pimcore.datahub.data_importer.data_target", type: "property" }
