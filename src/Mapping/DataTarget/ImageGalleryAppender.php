@@ -1,11 +1,22 @@
 <?php
 
+/**
+ * Pimcore
+ *
+ * This source file is available under two different licenses:
+ * - GNU General Public License version 3 (GPLv3)
+ * - Pimcore Commercial License (PCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
+ *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ */
+
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\ImageGallery;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\ModelInterface;
 
 class ImageGalleryAppender extends Direct
@@ -21,7 +32,7 @@ class ImageGalleryAppender extends Direct
      */
     protected function checkAssignData($newData, $valueContainer, $getter): bool
     {
-        if(empty($newData) || count($newData->getItems()) == 0){
+        if (empty($newData) || count($newData->getItems()) == 0) {
             return false;
         }
 
@@ -32,8 +43,8 @@ class ImageGalleryAppender extends Direct
             $galleryItems = $gallery->getItems();
             $newImage = $newData->getItems()[0];
 
-            foreach($galleryItems as $galleryItem) {
-                if($galleryItem->getImage()->getId() == $newImage->getImage()->getId()) {
+            foreach ($galleryItems as $galleryItem) {
+                if ($galleryItem->getImage()->getId() == $newImage->getImage()->getId()) {
                     return false;
                 }
             }
@@ -59,8 +70,7 @@ class ImageGalleryAppender extends Direct
 
         if (!$gallery) {
             $gallery = $data;
-        }
-        else{
+        } else {
             $galleryItems = $gallery->getItems();
             $newImage = $data->getItems()[0];
             $galleryItems[] = $newImage;

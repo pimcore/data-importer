@@ -15,7 +15,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
-use DataHubBundle\Tests\Helper\Model;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct\ModelAndTargetField;
 use Pimcore\Model\DataObject;
