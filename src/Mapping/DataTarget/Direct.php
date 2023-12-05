@@ -110,7 +110,7 @@ class Direct implements DataTargetInterface
     }
 
     /**
-     * @param ModelInterface $valueContainer
+     * @param ElementInterface $valueContainer
      * @param string $fieldName
      * @param mixed $data
      *
