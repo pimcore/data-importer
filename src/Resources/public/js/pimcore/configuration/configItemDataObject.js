@@ -259,8 +259,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.configItemDataObject = Cl
                             xtype: 'textfield',
                             allowBlank: true,
                             fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_filter'),
-                            name: 'filter',
-                            value: this.data.interpreterConfig.filter || '',
+                            name: 'filterExpression',
+                            value: this.data.interpreterConfig.filterExpression || '',
                             tooltip: t('plugin_pimcore_datahub_data_importer_configpanel_filtering_tooltip')
                         }
                     ]

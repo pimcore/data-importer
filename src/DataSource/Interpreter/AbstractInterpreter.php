@@ -93,7 +93,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
     /**
      * @var string
      */
-    protected $filter;
+    protected $filterExpression;
 
     /**
      * AbstractInterpreter constructor.
@@ -211,9 +211,9 @@ abstract class AbstractInterpreter implements InterpreterInterface
         return $success;
     }
 
-    public function setFilter(?string $filter): void
+    public function setFilterExpression(?string $filterExpression): void
     {
-        $this->filter = $filter;
+        $this->filterExpression = $filterExpression;
     }
 
     abstract protected function doInterpretFileAndCallProcessRow(string $path): void;
@@ -221,7 +221,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
     protected function processImportRow(array $data)
     {
         if ($this->rowFiltered($data)) {
-            $this->logger->debug(sprintf("Import data of item `%s` of `%s` didn't pass filter %s, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName, $this->filter));
+            $this->logger->debug(sprintf("Import data of item `%s` of `%s` didn't pass filter %s, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName, $this->filterExpression));
 
             return;
         }
@@ -288,6 +288,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function rowFiltered(array &$data): bool
     {
-        return !empty($this->filter) && !$this->expressionLanguage->evaluate($this->filter, ['row' => $data]);
+        return !empty($this->filterExpression) && !$this->expressionLanguage->evaluate($this->filterExpression, ['row' => $data]);
     }
 }
