@@ -19,7 +19,6 @@ use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Tool\ComposedPathBuilder;
-use Pimcore\Model\Asset;
 use Pimcore\Model\Element\DuplicateFullPathException;
 
 class ImportAssetComposedPath extends ImportAsset
@@ -30,7 +29,7 @@ class ImportAssetComposedPath extends ImportAsset
     {
         parent::setSettings($settings);
 
-        $this->urlPropertyName = $settings["urlPropertyName"] ?? null;
+        $this->urlPropertyName = $settings['urlPropertyName'] ?? null;
     }
 
     /**
@@ -44,10 +43,9 @@ class ImportAssetComposedPath extends ImportAsset
      */
     public function process($inputData, bool $dryRun = false)
     {
-        if(empty($inputData)){
+        if (empty($inputData)) {
             return false;
-        }
-        else if (is_string($inputData)) {
+        } elseif (is_string($inputData)) {
             $inputData = [$inputData];
         }
 
@@ -57,7 +55,7 @@ class ImportAssetComposedPath extends ImportAsset
         $assetReturn = parent::process($rawUrl, $dryRun);
 
         if (!empty($this->urlPropertyName)) {
-            $assetReturn->setProperty($this->urlPropertyName, "text", $rawUrl);
+            $assetReturn->setProperty($this->urlPropertyName, 'text', $rawUrl);
             $assetReturn->save();
         }
 
@@ -72,6 +70,4 @@ class ImportAssetComposedPath extends ImportAsset
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for import/load asset operator at transformation position %s", $inputType, $index));
         }
     }
-
-
 }
