@@ -32,6 +32,18 @@ Look for data objects based on a specific attribute (e.g. Remote Id, EAN, ...).
 - **Data Source Index**: Field of import that contains the attribute value to look for. 
 - **Attribute Name**: Attribute of data object to look for. 
 
+#### Loading Strategy: `Composed Path`
+
+This allows loading objects using the **Composed Path** syntax described below.
+
+Using the example Excel file in the **Composed Path** section you could load the Data Object at `/Products/Cars/GMC/Sierra/2015` using Path Syntax `/Products/Cars/$[1]/$[2]/$[0]`.  Note that any mapped in values that are not valid for the key field will be passed through `ElementService::getValidKey` to ensure a valid key is created when performing the lookup.
+
+#### Property
+
+This allows a data object to be loaded based on the value of a property stored on it.
+
+**This assumes that the property value is unique**. If a non-unique value exists, it'll be a random object returned that matches the criteria.
+
 
 ### Element Creation 
 Define location of new created data objects. 
@@ -49,7 +61,13 @@ Find parent based on a strategy.
     - Class: Data object class to look for (can be different one that the imported data object class)
     - Attribute Name: Attribute of data object to look for. 
 - **Data Source Index**: Field of import that contains the value to look for.
-- **Fallback Path**: Folder to use if parent cannot be found. 
+- **Fallback Path**: Folder to use if parent cannot be found.
+
+#### Location Strategy: `Composed Parent`
+
+This allows locating objects using the **Composed Path** syntax described below.
+
+Using the example Excel file in the **Composed Path** section you could create a Data Object with parent `/Products/Cars/GMC/Sierra/2015` using Path Syntax `/Products/Cars/$[1]/$[2]/$[0]`. 
 
 
 ### Element Location Update
@@ -68,3 +86,36 @@ Following strategies are available:
 - **Attribute Based**: Set publish state based on a field of the import data.
 - **No Change, Publish New**: Do not change existing data objects and set new data objects to `published`.
 - **No Change, Unpublish New**: Do not change existing data objects and set new data objects to `unpublished`. 
+
+
+### Composed Paths
+
+Any Loading or Location strategy that references **Composed Paths** allows for paths to be created based on values in the import. 
+
+Take for example an Excel File:
+| Year | Make | Model | Color |
+| ---  | ---  | ---   | ---   |
+| 2015 | GMC  | Sierra| White |
+| 2001 | Chevrolet | Silverado | Blue |
+
+To build the Path `/Products/Cars/GMC/Sierra/2015` using the Composed Path Syntax would be `/Products/Cars/$[1]/$[2]/$[0]`. The numerical values correspond to the indexes of the values in the Excel file (starting at 0).
+
+For an XML file:
+
+```
+<Cars>
+    <Car>
+        <Make>GMC</Make>
+        <Model>Sierra</Model>
+        <Year>2015</Year>
+        <Color>White</Color>
+    </Car>
+    <Car>
+        <Make>Chevrolet</Make>
+        <Model>Silverado</Model>
+        <Year>2001</Year>
+        <Color>Blue</Color>
+    </Car>
+</Cars>
+```
+the **Composed Path Syntax** would use the Attribute names instead `/Products/Cars/$[Make]/$[Model]/$[Year]`

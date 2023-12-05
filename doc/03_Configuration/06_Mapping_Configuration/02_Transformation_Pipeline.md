@@ -52,11 +52,15 @@ and the second item reflects the value for the longitude attribute.
   Depending if `Do not flatten sub arrays` is set, the operator results in one flat array with all items, or in an array with sub arrays. 
 - **Flatten Array**: Converts one array with potential sub arrays into one flat array with all items and sub items in one level. 
 - **HTML Decode**: Applies `html_entity_decode` to input data.
+- **Constant**: Returns a constant string, despite what is mapped in.
+- **Safe Key**: Ensures that whatever values are mapped in are safe to use as a key for a DataObject. 
 - **Import Asset**: Expects a URL as input, downloads data via `file_get_contents` and stores it as new asset in configured 
    target folder. File name is extracted from URL via `basename`. If asset with same name already exists, either it is 
     reused (when `Use Existing Asset` activated), or a new asset with suffix in file name is generated. 
+- **Import Asset Composed Path**: Behaves the same as **Import Asset** except the file name can be composed (See Composed Path details in Resolver settings). Note that when mapping a composed path, the fields from the object must be mapped into the "Source Attributes" of the mapping and their indexes are relative to this mapping. This means the indexes may vary from that inside of the Resolver settings.
 - **Load Asset**: Loads existing asset based on path or id
 - **Load DataObject**: Loads existing data object based on id, path or specific attribute. With specific attribute it is possible to find the object with a partial match of the attribute value (e.g. data value `%foo%` would find an object with attribute value `barfoobar`)
+
 - **Reduce Array KeyValue Pairs**: Reduces a flat array `['k1', 'v1', 'k2', 'v2']` 
    to key-value pair array `['k1' => 'v1', 'k2' => 'v2']`. 
 - **Trim**: Removes leading and/or tailing white spaces from string.
