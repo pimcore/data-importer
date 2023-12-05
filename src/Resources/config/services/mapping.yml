@@ -70,6 +70,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "safeKey" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ImportAssetComposedPath:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "importAssetComposedPath" }
+
     # -------------------
     # factory operators
     # -------------------
