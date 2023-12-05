@@ -16,13 +16,10 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct\ModelAndTargetField;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
-use Pimcore\Model\DataObject\Objectbrick;
 use Pimcore\Model\Element\ElementInterface;
-use Pimcore\Model\ModelInterface;
 
 class Direct implements DataTargetInterface
 {
@@ -75,16 +72,41 @@ class Direct implements DataTargetInterface
      */
     public function assignData(ElementInterface $element, $data): void
     {
-        $modelWithGetter = $this->getModelWithTarget($element);
+        $setterParts = explode('.', $this->fieldName);
 
-        $model = $modelWithGetter->getModel();
-        $getter = 'get' . ucfirst($modelWithGetter->getTargetField());
+        if ($this->fieldName === 'key') {
+            $this->doAssignData($element, $this->fieldName, $data);
+        } elseif (count($setterParts) === 1) {
+            //direct class attribute
+            $getter = 'get' . ucfirst($this->fieldName);
+            if (!$this->checkAssignData($data, $element, $getter)) {
+                return;
+            }
+            $this->doAssignData($element, $this->fieldName, $data);
+        } elseif (count($setterParts) === 3) {
+            //brick attribute
 
-        if (!$this->checkAssignData($data, $model, $getter)) {
-            return;
+            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
+            $brickContainer = $element->$brickContainerGetter();
+
+            $brickGetter = 'get' . ucfirst($setterParts[1]);
+            $brick = $brickContainer->$brickGetter();
+
+            if (empty($brick)) {
+                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
+                $brick = new $brickClassName($element);
+                $brickSetter = 'set' . ucfirst($setterParts[1]);
+                $brickContainer->$brickSetter($brick);
+            }
+
+            $getter = 'get' . ucfirst($setterParts[2]);
+            if (!$this->checkAssignData($data, $brick, $getter)) {
+                return;
+            }
+            $this->doAssignData($brick, $setterParts[2], $data);
+        } else {
+            throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
         }
-
-        $this->doAssignData($model, $modelWithGetter->getTargetField(), $data);
     }
 
     /**
@@ -106,6 +128,8 @@ class Direct implements DataTargetInterface
      * @param string $getter
      *
      * @return bool
+     *
+     * @throws InvalidConfigurationException
      */
     protected function checkAssignData($newData, $valueContainer, $getter)
     {
@@ -118,7 +142,13 @@ class Direct implements DataTargetInterface
         $currentData = $valueContainer->$getter($this->language);
         DataObject::setHideUnpublished($hideUnpublished);
 
-        $fieldName = lcfirst(str_replace('get', '', $getter));
+        $fieldName = $this->fieldName;
+        //brick attribute
+        $fieldNameParts = explode('.', $this->fieldName);
+        if (count($fieldNameParts) === 3) {
+            $fieldName = $fieldNameParts[2];
+        }
+
         $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
         if ($this->writeIfTargetIsNotEmpty === false && !$fieldDefinition->isEmpty($currentData)) {
             return false;
@@ -162,37 +192,5 @@ class Direct implements DataTargetInterface
         }
 
         return $fieldDefinition;
-    }
-
-    /**
-     * @throws InvalidConfigurationException
-     */
-    protected function getModelWithTarget(ElementInterface $element): ModelAndTargetField
-    {
-        $setterParts = explode('.', $this->fieldName);
-
-        if (count($setterParts) === 1) {
-            return new ModelAndTargetField($element, $this->fieldName);
-        } elseif (count($setterParts) === 3) {
-            //brick attribute
-            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
-            $brickContainer = $element->$brickContainerGetter();
-
-            $brickGetter = 'get' . ucfirst($setterParts[1]);
-
-            /** @var Objectbrick $brick */
-            $brick = $brickContainer->$brickGetter();
-
-            if (empty($brick)) {
-                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
-                $brick = new $brickClassName($element);
-                $brickSetter = 'set' . ucfirst($setterParts[1]);
-                $brickContainer->$brickSetter($brick);
-            }
-
-            return new ModelAndTargetField($brick, $setterParts[2]);
-        } else {
-            throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
-        }
     }
 }

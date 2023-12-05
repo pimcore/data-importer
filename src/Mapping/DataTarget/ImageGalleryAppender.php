@@ -50,7 +50,7 @@ class ImageGalleryAppender extends Direct
             }
         }
 
-        //not calling parent as it's only dealing with overwrites which don't apply
+        //not calling parent implementation as it's only dealing with overwrites which don't apply
         return true;
     }
 
