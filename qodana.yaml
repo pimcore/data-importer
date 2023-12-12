@@ -1,5 +1,5 @@
 version: "1.0"
-linter: pimcoregithubdeploy/qodana:2023.2.MP
+linter: pimcoregithubdeploy/qodana:2023.3
 profile:
   path: .qodana-profile.xml
 php:
