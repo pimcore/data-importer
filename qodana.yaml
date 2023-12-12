@@ -5,6 +5,8 @@ linter: jetbrains/qodana-php:latest
 php:
   version: "8.1"
 failThreshold: 0
+plugins:
+    - id: com.kalessil.phpStorm.phpInspectionsEA
 exclude:
   - name: All
     paths:
