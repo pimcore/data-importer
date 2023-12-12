@@ -1,7 +1,7 @@
 version: "1.0"
 profile:
   path: .qodana-profile.xml
-linter: jetbrains/qodana-php:2023.3
+linter: jetbrains/qodana-php:latest
 php:
   version: "8.1"
 failThreshold: 0
