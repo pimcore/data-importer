@@ -1,11 +1,10 @@
 version: "1.0"
+linter: pimcoregithubdeploy/qodana:2023.3
 profile:
   path: .qodana-profile.xml
 php:
   version: "8.1"
 failThreshold: 0
-plugins:
-    - id: com.kalessil.phpStorm.phpInspectionsEA
 exclude:
   - name: All
     paths:
