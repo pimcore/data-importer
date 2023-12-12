@@ -52,4 +52,3 @@ jobs:
           args: --baseline,qodana.sarif.json
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
-          QODANA_BRANCH: ${GITHUB_REF_NAME}
