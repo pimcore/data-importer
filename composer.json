@@ -1,7 +1,8 @@
 {
   "name": "pimcore/data-importer",
-  "license": "GPL-3.0+",
+  "license": "GPL-3.0-or-later",
   "type": "pimcore-bundle",
+  "description": "Adds a comprehensive import functionality to Pimcore Datahub",
   "config": {
     "sort-packages": true,
     "preferred-install": {
