@@ -69,6 +69,8 @@ This allows locating objects using the **Composed Path** syntax described below.
 
 Using the example Excel file in the **Composed Path** section you could create a Data Object with parent `/Products/Cars/GMC/Sierra/2015` using Path Syntax `/Products/Cars/$[1]/$[2]/$[0]`. 
 
+Be careful using this with parallel executed jobs, as if multiple threads are trying to create the same folders at the same time it can cause issues.
+
 
 ### Element Location Update
 Define location updates of data objects. The importer applies the location update strategy to all imported data objects -
