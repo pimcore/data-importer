@@ -15,10 +15,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -134,25 +136,28 @@ class FindParentStrategy implements LocationStrategyInterface
         }
 
         if ($newParent) {
-            if ($newParent->getType() === DataObject::OBJECT_TYPE_VARIANT) {
+            if ($newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT) {
                 throw new InvalidInputException(
                     'The elements desired parent is a variant which cannot have any child elements'
                 );
             }
 
-            // Check if element should be saved as a variant.
-            if (
-                $this->saveAsVariant
-                && $element instanceof DataObject\Concrete
-                && $element::class === $newParent::class
-                && $element->getClass()->getAllowVariants()
-                && !$element->hasChildren()
-            ) {
-                /** @var DataObject\Concrete $element */
-                $element->setType(DataObject::OBJECT_TYPE_VARIANT);
-            }
+            try {
+                // Check if element should be saved as a variant.
+                if (
+                    $this->saveAsVariant
+                    && $element instanceof DataObject\Concrete
+                    && $element::class === $newParent::class
+                    && !$element->hasChildren()
+                    && $element->getClass()->getAllowVariants()
+                ) {
+                    $element->setType(AbstractObject::OBJECT_TYPE_VARIANT);
+                }
 
-            return $element->setParent($newParent);
+                return $element->setParent($newParent);
+            } catch (Exception) {
+                // Exception might be thrown by $element->getClass().
+            }
         }
 
         return $element;
