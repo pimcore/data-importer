@@ -46,7 +46,9 @@ class Date extends AbstractOperator
         }
 
         foreach ($inputData as &$data) {
-            if (!empty($data)) {
+            if (empty($data)) {
+                $data = null;
+            } else {
                 $data = \Carbon\Carbon::createFromFormat($this->format, $data);
             }
         }
