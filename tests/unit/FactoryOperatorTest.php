@@ -138,6 +138,9 @@ class FactoryOperatorTest extends Test\Unit
         $preview = $date->generateResultPreview($resultArray);
         $this->assertIsArray($preview);
 
+        $result = $date->process('');
+        $this->assertNull($result);
+
     }
 
     public function testGallery() {
