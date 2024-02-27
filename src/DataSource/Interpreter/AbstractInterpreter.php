@@ -20,8 +20,8 @@ use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
-use Pimcore\Log\ApplicationLogger;
-use Pimcore\Log\FileObject;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerAwareTrait;
 

@@ -26,7 +26,7 @@ use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\SchedulerFactory;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\Log\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
