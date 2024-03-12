@@ -48,6 +48,8 @@ class Date extends AbstractOperator
         foreach ($inputData as &$data) {
             if (!empty($data)) {
                 $data = \Carbon\Carbon::createFromFormat($this->format, $data);
+            } else {
+                $data = null;
             }
         }
 
