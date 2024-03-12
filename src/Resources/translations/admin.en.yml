@@ -205,3 +205,5 @@ plugin_pimcore_datahub_data_importer_configpanel_execution_date_format: Date &am
 plugin_pimcore_datahub_data_importer_configpanel_logs: Import Logs
 plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type_error: Type not supported for Many To Many Relation assignment.
 plugin_pimcore_datahub_data_importer_configpanel_mtm_relation_type: Make sure transformation results in a 'dataObjectArray' or an 'assetArray'.
+plugin_pimcore_datahub_data_importer_configpanel_type_sql: SQL
+plugin_pimcore_datahub_data_importer_configpanel_sql_connection: Connection

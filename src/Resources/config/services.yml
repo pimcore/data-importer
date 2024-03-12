@@ -59,6 +59,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.loader", type: "push" }
 
+    Pimcore\Bundle\DataImporterBundle\DataSource\Loader\SqlLoader:
+        tags:
+            - { name: "pimcore.datahub.data_importer.loader", type: "sql" }
+
     Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker: ~
 
     Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory: ~
@@ -90,6 +94,13 @@ services:
         tags:
             - { name: monolog.logger, channel: 'DATA-IMPORTER' }
             - { name: "pimcore.datahub.data_importer.interpreter", type: "xml" }
+
+    Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\SqlFileInterpreter:
+        calls:
+            - [ setLogger, [ '@logger' ] ]
+        tags:
+            - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+            - { name: "pimcore.datahub.data_importer.interpreter", type: "sql" }
 
     Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory: ~
 

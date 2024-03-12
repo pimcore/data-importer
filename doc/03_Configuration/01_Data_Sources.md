@@ -52,3 +52,42 @@ The URL for the endpoint is: `http(s)://<YOUR_DOMAIN>>/pimcore-datahub-import/<I
 (see also [Import Execution Details](../04_Import_Execution_Details.md)). Thus pushing data to the 
 endpoint when import queue is not empty would result in an error. Activating this flag will ignore 
 existing items in the queue and always adds items to the queue when data is pushed to the endpoint.
+
+
+### SQL
+
+<div class="image-as-lightbox"></div>
+
+![Data Source SQL](../img/datasource_sql.png)
+
+Loads data from a defined doctrine connection.
+
+The SQL Data Loader uses [DBAL](https://www.doctrine-project.org/projects/dbal.html) to allow data to be 
+loaded from a SQL source. Connections to any database supported by DBAL will work provided they are 
+configured correctly inside of `database.yaml`. (Database configuration can be placed in any valid 
+Symfony config file, provided its in the correct format as can be seen in `database.yaml`).
+
+Example connection:
+```yaml
+doctrine:
+    dbal:
+        connections:
+            new_connection:
+                host: db
+                port: '3306'
+                user: sample_user
+                password: sample_password
+                dbname: sample_dbname
+                driver: any_supported_by_doctrine
+```
+
+For different drivers some additional configuration could be needed.
+
+##### Configuration Options: 
+- **Connection**: Connection from which data will be loaded
+- **SELECT**: Valid SQL `SELECT`
+- **FROM**: Valid SQL `FROM`
+- **WHERE**: Valid SQL `WHERE`
+- **GROUP BY**: Valid SQL `GROUP BY`
+
+Ensure to select **SQL** under File Format! 
