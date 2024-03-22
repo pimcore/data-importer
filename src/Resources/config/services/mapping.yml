@@ -129,6 +129,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "asCountries" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsStructuredTable:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asStructuredTable" }
+
 
     # ---------------------
     # data target services

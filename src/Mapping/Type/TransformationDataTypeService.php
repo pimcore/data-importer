@@ -67,7 +67,9 @@ class TransformationDataTypeService
         self::DEFAULT_ARRAY => [
             'multiselect',
             'countrymultiselect',
-            'languages'
+            'languages',
+            'table',
+            'structuredTable'
         ],
         self::QUANTITY_VALUE => [
             'quantityValue'
