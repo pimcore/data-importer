@@ -136,9 +136,16 @@ class FindParentStrategy implements LocationStrategyInterface
         }
 
         if ($newParent) {
-            if ($newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT) {
+
+            if (
+                $newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT &&
+                (
+                    $element->getType() !== AbstractObject::OBJECT_TYPE_VARIANT ||
+                    $element::class !== $newParent::class
+                )
+            ) {
                 throw new InvalidInputException(
-                    'The elements desired parent is a variant which cannot have any child elements'
+                    "An element can only have a variant as a parent if it's of the same class."
                 );
             }
 
