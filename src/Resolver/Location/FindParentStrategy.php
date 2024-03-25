@@ -145,7 +145,7 @@ class FindParentStrategy implements LocationStrategyInterface
                 )
             ) {
                 throw new InvalidInputException(
-                    "An element can only have a variant as a parent if it's of the same class."
+                    "An element can only have a variant as a parent if it's a variant itself and of the same class."
                 );
             }
 
