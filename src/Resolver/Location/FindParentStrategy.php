@@ -136,7 +136,6 @@ class FindParentStrategy implements LocationStrategyInterface
         }
 
         if ($newParent) {
-
             if (
                 $newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT &&
                 (
