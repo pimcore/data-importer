@@ -163,7 +163,7 @@ class FindParentStrategy implements LocationStrategyInterface
     /**
      * @throws InvalidInputException
      */
-    private function setElementType(ElementInterface $element, DataObject|ElementInterface $newParent): void
+    private function setElementType(ElementInterface $element, DataObject | ElementInterface $newParent): void
     {
         // Check if element should be saved as a variant if not already.
         if (
