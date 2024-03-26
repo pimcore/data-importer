@@ -135,6 +135,11 @@ class FindParentStrategy implements LocationStrategyInterface
             $newParent = DataObject::getByPath($this->fallbackPath);
         }
 
+        // If parent has not changed - no need to update.
+        if ($element->getParentId() && $element->getParentId() === $newParent?->getId()) {
+            return $element;
+        }
+
         if ($newParent) {
             if (
                 $newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT &&
