@@ -197,7 +197,7 @@ class FindParentStrategy implements LocationStrategyInterface
         }
     }
 
-    private function getElementClassDefinition(ElementInterface $element): ?ClassDefinition
+    private function getElementClassDefinition(DataObject\Concrete $element): ?ClassDefinition
     {
         try {
             return $element->getClass();
