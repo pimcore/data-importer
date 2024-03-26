@@ -135,11 +135,6 @@ class FindParentStrategy implements LocationStrategyInterface
             $newParent = DataObject::getByPath($this->fallbackPath);
         }
 
-        // If parent has not changed - no need to update.
-        if ($element->getParentId() && $element->getParentId() === $newParent?->getId()) {
-            return $element;
-        }
-
         if ($newParent) {
             if (
                 $newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT &&
@@ -153,22 +148,9 @@ class FindParentStrategy implements LocationStrategyInterface
                 );
             }
 
-            try {
-                // Check if element should be saved as a variant.
-                if (
-                    $this->saveAsVariant
-                    && $element instanceof DataObject\Concrete
-                    && $element::class === $newParent::class
-                    && !$element->hasChildren()
-                    && $element->getClass()->getAllowVariants()
-                ) {
-                    $element->setType(AbstractObject::OBJECT_TYPE_VARIANT);
-                }
+            $this->setElementType($element, $newParent);
 
-                return $element->setParent($newParent);
-            } catch (Exception) {
-                // Exception might be thrown by $element->getClass().
-            }
+            return $element->setParent($newParent);
         }
 
         return $element;
@@ -176,5 +158,51 @@ class FindParentStrategy implements LocationStrategyInterface
 
     protected function loadById()
     {
+    }
+
+    /**
+     * @throws InvalidInputException
+     */
+    private function setElementType(ElementInterface $element, DataObject|ElementInterface $newParent): void
+    {
+        // Check if element should be saved as a variant if not already.
+        if (
+            $this->saveAsVariant && $element->getType() !== AbstractObject::OBJECT_TYPE_VARIANT
+        ) {
+            if (
+                !$element instanceof DataObject\Concrete
+                || $element::class !== $newParent::class
+            ) {
+                throw new InvalidInputException(
+                    'Only concrete objects of the same class can be saved as a variant.'
+                );
+            }
+
+            if ($element->hasChildren()) {
+                throw new InvalidInputException(
+                    'Only objects without any children can be saved as a variant.'
+                );
+            }
+
+            if (!$this->getElementClassDefinition($element)?->getAllowVariants()) {
+                throw new InvalidInputException(
+                    sprintf(
+                        'Class `%s` is not configured to allow the creation of variants.',
+                        $this->getElementClassDefinition($element)?->getName(),
+                    )
+                );
+            }
+
+            $element->setType(AbstractObject::OBJECT_TYPE_VARIANT);
+        }
+    }
+
+    private function getElementClassDefinition(ElementInterface $element): ?ClassDefinition
+    {
+        try {
+            return $element->getClass();
+        } catch (Exception) {
+            return null;
+        }
     }
 }
