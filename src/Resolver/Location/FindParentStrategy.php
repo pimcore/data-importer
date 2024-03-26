@@ -15,9 +15,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -57,6 +60,8 @@ class FindParentStrategy implements LocationStrategyInterface
      */
     protected $attributeLanguage;
 
+    protected bool $saveAsVariant = false;
+
     public function __construct(protected DataObjectLoader $dataObjectLoader)
     {
     }
@@ -74,6 +79,8 @@ class FindParentStrategy implements LocationStrategyInterface
         if (empty($settings['findStrategy'])) {
             throw new InvalidConfigurationException('Empty find strategy.');
         }
+
+        $this->saveAsVariant = isset($settings['asVariant']) && $settings['asVariant'] === 'on';
 
         $this->findStrategy = $settings['findStrategy'];
 
@@ -129,6 +136,20 @@ class FindParentStrategy implements LocationStrategyInterface
         }
 
         if ($newParent) {
+            if (
+                $newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT &&
+                (
+                    $element->getType() !== AbstractObject::OBJECT_TYPE_VARIANT ||
+                    $element::class !== $newParent::class
+                )
+            ) {
+                throw new InvalidInputException(
+                    "An element can only have a variant as a parent if it's a variant itself and of the same class."
+                );
+            }
+
+            $this->setElementType($element, $newParent);
+
             return $element->setParent($newParent);
         }
 
@@ -137,5 +158,51 @@ class FindParentStrategy implements LocationStrategyInterface
 
     protected function loadById()
     {
+    }
+
+    /**
+     * @throws InvalidInputException
+     */
+    private function setElementType(ElementInterface $element, DataObject | ElementInterface $newParent): void
+    {
+        // Check if element should be saved as a variant if not already.
+        if (
+            $this->saveAsVariant && $element->getType() !== AbstractObject::OBJECT_TYPE_VARIANT
+        ) {
+            if (
+                !$element instanceof DataObject\Concrete
+                || $element::class !== $newParent::class
+            ) {
+                throw new InvalidInputException(
+                    'Only concrete objects of the same class can be saved as a variant.'
+                );
+            }
+
+            if ($element->hasChildren()) {
+                throw new InvalidInputException(
+                    'Only objects without any children can be saved as a variant.'
+                );
+            }
+
+            if (!$this->getElementClassDefinition($element)?->getAllowVariants()) {
+                throw new InvalidInputException(
+                    sprintf(
+                        'Class `%s` is not configured to allow the creation of variants.',
+                        $this->getElementClassDefinition($element)?->getName(),
+                    )
+                );
+            }
+
+            $element->setType(AbstractObject::OBJECT_TYPE_VARIANT);
+        }
+    }
+
+    private function getElementClassDefinition(DataObject\Concrete $element): ?ClassDefinition
+    {
+        try {
+            return $element->getClass();
+        } catch (Exception) {
+            return null;
+        }
     }
 }

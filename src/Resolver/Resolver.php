@@ -15,10 +15,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Factory\FactoryInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\PublishStrategyInterface;
+use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\Element\ElementInterface;
 
 class Resolver
@@ -134,6 +136,9 @@ class Resolver
         return $this->getLoadingStrategy()->loadElementByIdentifier($identifier);
     }
 
+    /**
+     * @throws InvalidInputException
+     */
     public function loadOrCreateAndPrepareElement(array $inputData, bool $createNew = true): ?ElementInterface
     {
         $element = $this->loadElement($inputData);
@@ -149,7 +154,18 @@ class Resolver
             $this->getCreateLocationStrategy()->updateParent($element, $inputData);
             $justCreated = true;
         } else {
+            $oldParentId = $element->getParentId();
             $this->getLocationUpdateStrategy()->updateParent($element, $inputData);
+
+            // The parent of a variant cannot be changed anymore.
+            if (
+                $oldParentId !== $element->getParentId()
+                && $element->getType() === AbstractObject::OBJECT_TYPE_VARIANT
+            ) {
+                throw new InvalidInputException(
+                    "Element with id `{$element->getId()}` is a variant and cannot change its parent anymore"
+                );
+            }
         }
 
         $this->getPublishingStrategy()->updatePublishState($element, $justCreated, $inputData);
