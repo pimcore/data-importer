@@ -174,26 +174,36 @@ class FindParentStrategy implements LocationStrategyInterface
                 || $element::class !== $newParent::class
             ) {
                 throw new InvalidInputException(
-                    'Only concrete objects of the same class can be saved as a variant.'
+                    'Changing type not possible: Only concrete objects of the same class can be saved as a variant.'
                 );
             }
 
             if ($element->hasChildren()) {
                 throw new InvalidInputException(
-                    'Only objects without any children can be saved as a variant.'
+                    'Changing type not possible: Only objects without any children can be saved as a variant.'
                 );
             }
 
             if (!$this->getElementClassDefinition($element)?->getAllowVariants()) {
                 throw new InvalidInputException(
                     sprintf(
-                        'Class `%s` is not configured to allow the creation of variants.',
+                        'Changing type not possible: Class `%s` is not configured to allow the creation of variants.',
                         $this->getElementClassDefinition($element)?->getName(),
                     )
                 );
             }
 
             $element->setType(AbstractObject::OBJECT_TYPE_VARIANT);
+        } elseif (
+            !$this->saveAsVariant && $element->getType() !== AbstractObject::OBJECT_TYPE_OBJECT
+        ) {
+            if ($newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT) {
+                throw new InvalidInputException(
+                    'Changing type not possible: An object cannot be a child of a variant.'
+                );
+            }
+
+            $element->setType(AbstractObject::OBJECT_TYPE_OBJECT);
         }
     }
 
