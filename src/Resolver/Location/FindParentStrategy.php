@@ -195,7 +195,9 @@ class FindParentStrategy implements LocationStrategyInterface
 
             $element->setType(AbstractObject::OBJECT_TYPE_VARIANT);
         } elseif (
-            !$this->saveAsVariant && $element->getType() !== AbstractObject::OBJECT_TYPE_OBJECT
+            !$this->saveAsVariant
+            && $element instanceof AbstractObject
+            && $element->getType() === AbstractObject::OBJECT_TYPE_VARIANT
         ) {
             if ($newParent->getType() === AbstractObject::OBJECT_TYPE_VARIANT) {
                 throw new InvalidInputException(
