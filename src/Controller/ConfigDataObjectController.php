@@ -662,10 +662,10 @@ class ConfigDataObjectController extends UserAwareController
                 throw new Exception('The filename of the upload data is empty');
             }
 
-            /*$target = $this->getImportFilePath($request->query->get('config_name'));
+            $target = $this->getImportFilePath($request->query->get('config_name'));
             $pimcoreDataImporterUploadStorage->write($target, file_get_contents($sourcePath));
 
-            @unlink($sourcePath);*/
+            @unlink($sourcePath);
 
             return new JsonResponse(['success' => true]);
         } catch (Exception $e) {
