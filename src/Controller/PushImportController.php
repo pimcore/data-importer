@@ -52,20 +52,24 @@ class PushImportController
      *
      * @return JsonResponse
      */
-    public function pushAction(Request $request, ConfigurationPreparationService $configurationLoaderService, DataLoaderFactory $dataLoaderFactory, ImportPreparationService $importPreparationService)
+    public function pushAction(
+        string $config,
+        Request $request,
+        ConfigurationPreparationService $configurationLoaderService,
+        DataLoaderFactory $dataLoaderFactory,
+        ImportPreparationService $importPreparationService
+    )
     {
         try {
-            $configName = $request->get('config');
-            $config = $configurationLoaderService->prepareConfiguration($configName, null, true);
-
-            $loader = $dataLoaderFactory->loadDataLoader($config['loaderConfig']);
+            $configuration = $configurationLoaderService->prepareConfiguration($config, null, true);
+            $loader = $dataLoaderFactory->loadDataLoader($configuration['loaderConfig']);
 
             if (!$loader instanceof PushLoader) {
                 return new JsonResponse(['success' => false, 'message' => 'Endpoint not has no Push data source configured.'], 405);
             }
 
             $this->validateAuthorization($request, $loader);
-            $success = $importPreparationService->prepareImport($configName, false, $loader->isIgnoreNotEmptyQueue());
+            $success = $importPreparationService->prepareImport($config, false, $loader->isIgnoreNotEmptyQueue());
 
             if ($success) {
                 return new JsonResponse(['success' => $success]);
