@@ -426,7 +426,7 @@ class ConfigDataObjectController extends UserAwareController
             $mappingConfiguration = $factory->loadMappingConfigurationItem($configName, $currentConfig, true);
 
             return new JsonResponse($importProcessingService->evaluateTransformationResultDataType($mappingConfiguration));
-        } catch (Exception|InvalidConfigurationException $e) {
+        } catch (Exception | InvalidConfigurationException $e) {
             return new JsonResponse('ERROR: ' . $e->getMessage());
         }
     }

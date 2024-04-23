@@ -58,8 +58,7 @@ class PushImportController
         ConfigurationPreparationService $configurationLoaderService,
         DataLoaderFactory $dataLoaderFactory,
         ImportPreparationService $importPreparationService
-    )
-    {
+    ) {
         try {
             $configuration = $configurationLoaderService->prepareConfiguration($config, null, true);
             $loader = $dataLoaderFactory->loadDataLoader($configuration['loaderConfig']);
