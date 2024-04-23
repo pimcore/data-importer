@@ -330,7 +330,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @return JsonResponse
      *
-     * @throws \Pimcore\Bundle\DataImporterBundleException\InvalidConfigurationException|Exception
+     * @throws Exception
      */
     public function loadAvailableColumnHeadersAction(
         Request $request,
