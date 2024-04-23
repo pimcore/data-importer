@@ -150,7 +150,7 @@ class ConfigDataObjectController extends UserAwareController
     ): JsonResponse {
         $this->checkPermission(self::CONFIG_NAME);
 
-        $name = $request->query->getString('name');
+        $name = $request->query->get('name');
         $config = $configurationPreparationService->prepareConfiguration($name);
 
         return new JsonResponse(
@@ -193,7 +193,7 @@ class ConfigDataObjectController extends UserAwareController
                 throw new Exception('File it too big for preview file, please create a smaller one');
             }
 
-            $this->previewService->writePreviewFile($request->query->getString('config_name'), $sourcePath, $this->getPimcoreUser());
+            $this->previewService->writePreviewFile($request->query->get('config_name'), $sourcePath, $this->getPimcoreUser());
             @unlink($sourcePath);
 
             return new JsonResponse(['success' => true]);
@@ -224,8 +224,8 @@ class ConfigDataObjectController extends UserAwareController
         DataLoaderFactory $dataLoaderFactory
     ) {
         try {
-            $configName = $request->request->getString('config_name');
-            $currentConfig = $request->request->getString('current_config');
+            $configName = $request->request->get('config_name');
+            $currentConfig = $request->request->get('current_config');
 
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
             $loader = $dataLoaderFactory->loadDataLoader($config['loaderConfig']);
@@ -279,8 +279,8 @@ class ConfigDataObjectController extends UserAwareController
         InterpreterFactory $interpreterFactory,
         Translator $translator
     ) {
-        $configName = $request->request->getString('config_name');
-        $currentConfig = $request->request->getString('current_config');
+        $configName = $request->request->get('config_name');
+        $currentConfig = $request->request->get('current_config');
         $recordNumber = $request->request->getInt('record_number');
 
         $dataPreview = null;
@@ -337,8 +337,8 @@ class ConfigDataObjectController extends UserAwareController
         ConfigurationPreparationService $configurationPreparationService,
         InterpreterFactory $interpreterFactory
     ) {
-        $configName = $request->request->getString('config_name');
-        $currentConfig = $request->request->getString('current_config');
+        $configName = $request->request->get('config_name');
+        $currentConfig = $request->request->get('current_config');
         $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
         return new JsonResponse([
@@ -366,8 +366,8 @@ class ConfigDataObjectController extends UserAwareController
         InterpreterFactory $interpreterFactory,
         ImportProcessingService $importProcessingService
     ) {
-        $configName = $request->request->getString('config_name');
-        $currentConfig = $request->request->getString('current_config');
+        $configName = $request->request->get('config_name');
+        $currentConfig = $request->request->get('current_config');
         $recordNumber = $request->request->getInt('current_preview_record');
 
         $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
@@ -417,12 +417,12 @@ class ConfigDataObjectController extends UserAwareController
     ) {
         try {
             $currentConfig = json_decode(
-                $request->request->getString('current_config'),
+                $request->request->get('current_config'),
                 true,
                 512,
                 JSON_THROW_ON_ERROR
             );
-            $configName = $request->request->getString('config_name');
+            $configName = $request->request->get('config_name');
             $mappingConfiguration = $factory->loadMappingConfigurationItem($configName, $currentConfig, true);
 
             return new JsonResponse($importProcessingService->evaluateTransformationResultDataType($mappingConfiguration));
@@ -443,7 +443,7 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function loadDataObjectAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService)
     {
-        $classId = $request->query->getString('class_id');
+        $classId = $request->query->get('class_id');
         if (empty($classId)) {
             return new JsonResponse([]);
         }
@@ -470,7 +470,7 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function loadDataObjectClassificationStoreAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService)
     {
-        $classId = $request->query->getString('class_id');
+        $classId = $request->query->get('class_id');
         if (empty($classId)) {
             return new JsonResponse([]);
         }
@@ -492,18 +492,18 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService)
     {
-        $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->getString('sort')]);
+        $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->get('sort')]);
 
         $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
-            strip_tags($request->query->getString('class_id')),
-            strip_tags($request->query->getString('field_name')),
-            strip_tags($request->query->getString('transformation_result_type')),
+            strip_tags($request->query->get('class_id')),
+            strip_tags($request->query->get('field_name')),
+            strip_tags($request->query->get('transformation_result_type')),
             $sortParams['orderKey'] ?? 'name',
             $sortParams['order'] ?? 'ASC',
             $request->query->getInt('start'),
             $request->query->getInt('limit'),
-            strip_tags($request->query->getString('searchfilter')),
-            strip_tags($request->query->getString('filter'))
+            strip_tags($request->query->get('searchfilter')),
+            strip_tags($request->query->get('filter'))
         );
 
         $data = [];
@@ -543,7 +543,7 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function loadDataObjectClassificationStoreKeyNameAction(Request $request)
     {
-        $keyId = $request->query->getString('key_id');
+        $keyId = $request->query->get('key_id');
         $keyParts = explode('-', $keyId);
         if (count($keyParts) === 2) {
             $keyGroupRelation = DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId((int)$keyParts[0], (int)$keyParts[1]);
@@ -574,7 +574,7 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function startBatchImportAction(Request $request, ImportPreparationService $importPreparationService)
     {
-        $configName = $request->request->getString('config_name');
+        $configName = $request->request->get('config_name');
         $success = $importPreparationService->prepareImport($configName, true);
 
         return new JsonResponse([
@@ -592,7 +592,7 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function checkImportProgressAction(Request $request, ImportProcessingService $importProcessingService)
     {
-        $configName = $request->query->getString('config_name');
+        $configName = $request->query->get('config_name');
 
         return new JsonResponse($importProcessingService->getImportStatus($configName));
     }
@@ -608,7 +608,7 @@ class ConfigDataObjectController extends UserAwareController
     {
         $message = '';
         $success = true;
-        $cronExpression = $request->query->getString('cron_expression');
+        $cronExpression = $request->query->get('cron_expression');
         if (!empty($cronExpression)) {
             try {
                 new CronExpression($cronExpression);
@@ -634,7 +634,7 @@ class ConfigDataObjectController extends UserAwareController
      */
     public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService)
     {
-        $configName = $request->request->getString('config_name');
+        $configName = $request->request->get('config_name');
         $importProcessingService->cancelImportAndCleanupQueue($configName);
 
         return new JsonResponse([
@@ -662,7 +662,7 @@ class ConfigDataObjectController extends UserAwareController
                 throw new Exception('The filename of the upload data is empty');
             }
 
-            /*$target = $this->getImportFilePath($request->query->getString('config_name'));
+            /*$target = $this->getImportFilePath($request->query->get('config_name'));
             $pimcoreDataImporterUploadStorage->write($target, file_get_contents($sourcePath));
 
             @unlink($sourcePath);*/
@@ -709,7 +709,7 @@ class ConfigDataObjectController extends UserAwareController
     public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
         try {
-            $importFile = $this->getImportFilePath($request->query->getString('config_name'));
+            $importFile = $this->getImportFilePath($request->query->get('config_name'));
 
             if ($pimcoreDataImporterUploadStorage->fileExists($importFile)) {
                 return new JsonResponse(['success' => true, 'filePath' => $importFile, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists', [], 'admin')]);
