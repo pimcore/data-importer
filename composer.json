@@ -14,7 +14,7 @@
   "minimum-stability": "dev",
   "require": {
     "pimcore/compatibility-bridge-v10": "^1.0",
-    "php": "~8.0.0 || ~8.1.0 || ~8.2.0",
+    "php": "~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0",
     "ext-fileinfo": "*",
     "ext-json": "*",
     "dragonmantank/cron-expression": "^3.1",

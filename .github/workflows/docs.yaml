@@ -27,6 +27,7 @@ jobs:
     docs:
         name: "Generate docs Pimcore Docs Generator"
         runs-on: "ubuntu-latest"
+        if: ${{ github.repository == 'pimcore/data-importer' }}
         steps:
             - name: "Checkout code"
               uses: "actions/checkout@v3"
@@ -68,4 +69,3 @@ jobs:
               run: |
                   npm install
                   npm run build
-                  
