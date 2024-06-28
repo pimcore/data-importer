@@ -124,7 +124,7 @@ class FindParentStrategy implements LocationStrategyInterface
                                                                         $this->attributeName,
                                                                         $identifier,
                                                                         $this->attributeLanguage,
-                                                                        false,
+                                                                        true,
                                                                         1
                     );
                     break;
