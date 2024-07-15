@@ -125,6 +125,7 @@ class ImportProcessingService
             if (empty($queueItem)) {
                 return;
             }
+            $userOwner = $queueItem['userOwner'];
 
             //get config
             $configName = $queueItem['configName'];
@@ -144,7 +145,7 @@ class ImportProcessingService
             //process element
             if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
                 $data = json_decode($queueItem['data'], true);
-                $this->processElement($configName, $data, $resolver, $mapping);
+                $this->processElement($configName, $data, $resolver, $mapping, $userOwner);
             } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
                 $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
             } else {
@@ -179,7 +180,7 @@ class ImportProcessingService
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      */
-    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping)
+    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping, int $userOwner)
     {
         $element = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
@@ -227,7 +228,9 @@ class ImportProcessingService
                 $event = new PreSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
 
-                $element->save();
+                $element
+                    ->setUserModification($userOwner)
+                    ->save();
 
                 $event = new PostSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);

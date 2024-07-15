@@ -51,25 +51,26 @@ class QueueService
      *
      * @throws Exception
      */
-    public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data): void
+    public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data, int $userOwner = 0): void
     {
         $db = $this->getDb();
         try {
             $db->executeQuery(sprintf(
                 'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp)',
                 self::QUEUE_TABLE_NAME,
-                implode(',', ['timestamp', 'configName', 'data', 'executionType', 'jobType']),
+                implode(',', ['timestamp', 'configName', 'data', 'executionType', 'jobType', 'userOwner']),
                 implode(',', [
                     $this->getCurrentQueueTableOperationTime(),
                     $db->quote($configName),
                     $db->quote($data),
                     $db->quote($executionType),
-                    $db->quote($jobType)
+                    $db->quote($jobType),
+                    $userOwner
                 ])
             ));
         } catch (TableNotFoundException $exception) {
-            $this->createQueueTableIfNotExisting(function () use ($configName, $executionType, $jobType, $data) {
-                $this->addItemToQueue($configName, $executionType, $jobType, $data);
+            $this->createQueueTableIfNotExisting(function () use ($configName, $executionType, $jobType, $data, $userOwner) {
+                $this->addItemToQueue($configName, $executionType, $jobType, $data, $userOwner);
             });
         }
     }
@@ -86,6 +87,7 @@ class QueueService
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             id bigint AUTO_INCREMENT,
             timestamp bigint NULL,
+            userOwner int unsigned NOT NULL DEFAULT \'0\',
             configName varchar(80) NULL,
             `data` TEXT null,
             executionType varchar(20) NULL,
@@ -95,7 +97,8 @@ class QueueService
             PRIMARY KEY (id),
             KEY `bundle_index_queue_configName_index` (`configName`),
             KEY `bundle_index_queue_executiontype_workerId` (`executionType`, `workerId`),
-            KEY `bundle_index_queue_configName_index_executionType` (`configName`, `executionType`))
+            KEY `bundle_index_queue_configName_index_executionType` (`configName`, `executionType`),
+            KEY `bundle_index_queue_executiontype_userOwner` (`userOwner`))
         ', self::QUEUE_TABLE_NAME));
 
         if ($callable) {

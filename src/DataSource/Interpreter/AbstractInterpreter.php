@@ -23,6 +23,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
+use Pimcore\Tool;
 use Psr\Log\LoggerAwareTrait;
 
 abstract class AbstractInterpreter implements InterpreterInterface
@@ -212,10 +213,12 @@ abstract class AbstractInterpreter implements InterpreterInterface
             $createQueueItem = $this->deltaChecker->hasChanged($this->configName, $this->idDataIndex, $data);
         }
 
+        $userOwner = Tool\Admin::getCurrentUser()?->getId() ?? 0;
+
         //create queue item
         if ($createQueueItem) {
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to processing queue.', ($data[$this->idDataIndex] ?? null), $this->configName));
-            $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_PROCESS, json_encode($data));
+            $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_PROCESS, json_encode($data), $userOwner);
         } else {
             $message = sprintf("Import data of item `%s` of `%s` didn't change, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName);
             $this->logger->debug($message);

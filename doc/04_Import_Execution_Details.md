@@ -47,6 +47,7 @@ The actual processing is the same for both types and consists of following steps
 - Update published state of element based on publish strategy.
 - Process mappings and transformation pipelines for each mapping.
 - Assign transformation result to data element based on data target definition.
+- Assign userModification to data element if possible.
 
 Cleanup jobs are simpler and consist of following steps: 
 - Look for existing data element based on loading strategy.
