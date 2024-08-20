@@ -24,6 +24,7 @@ use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool;
+use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
 
 abstract class AbstractInterpreter implements InterpreterInterface
@@ -213,7 +214,8 @@ abstract class AbstractInterpreter implements InterpreterInterface
             $createQueueItem = $this->deltaChecker->hasChanged($this->configName, $this->idDataIndex, $data);
         }
 
-        $userOwner = Tool\Admin::getCurrentUser()?->getId() ?? 0;
+        // If there is no user logged in, we use the system user (ID 0) as userOwner
+        $userOwner = Admin::getCurrentUser()?->getId() ?? 0;
 
         //create queue item
         if ($createQueueItem) {
