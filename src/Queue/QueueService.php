@@ -87,7 +87,8 @@ class QueueService
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             id bigint AUTO_INCREMENT,
             timestamp bigint NULL,
-            userOwner int unsigned NOT NULL DEFAULT \'0\',
+            userOwner int unsigned NOT NULL DEFAULT 0,
+
             configName varchar(80) NULL,
             `data` TEXT null,
             executionType varchar(20) NULL,
