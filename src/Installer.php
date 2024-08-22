@@ -15,7 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle;
 
-use Pimcore\Bundle\DataImporterBundle\Migrations\Version20220304130000;
+use Pimcore\Bundle\DataImporterBundle\Migrations\Version20240715160305;
 use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
 use Pimcore\Model\User\Permission;
 
@@ -57,6 +57,6 @@ class Installer extends SettingsStoreAwareInstaller
 
     public function getLastMigrationVersionClassName(): ?string
     {
-        return Version20220304130000::class;
+        return Version20240715160305::class;
     }
 }
