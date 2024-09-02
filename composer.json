@@ -20,7 +20,7 @@
     "dragonmantank/cron-expression": "^3.1",
     "league/flysystem-sftp-v3": "^3.0",
     "nesbot/carbon": "^2.27",
-    "phpoffice/phpspreadsheet": "^1.24 || ^2.1",
+    "phpoffice/phpspreadsheet": "^1.24 || ^2.2",
     "pimcore/data-hub": "^1.6",
     "pimcore/pimcore": "^10.6 || ^11.0",
     "symfony/mime": "^5.2 || ^6.2",
