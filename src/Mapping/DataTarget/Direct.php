@@ -75,6 +75,9 @@ class Direct implements DataTargetInterface
         $setterParts = explode('.', $this->fieldName);
 
         if ($this->fieldName === 'key') {
+            if (!$this->checkAssignData($data, $element, 'getKey')) {
+                return;
+            }
             $this->doAssignData($element, $this->fieldName, $data);
         } elseif (count($setterParts) === 1) {
             //direct class attribute
