@@ -152,13 +152,13 @@ class Direct implements DataTargetInterface
             $fieldName = $fieldNameParts[2];
         }
 
-        try {
+        if ($this->fieldName === 'key'){
+            $currentDataIsEmpty = empty($currentData);
+            $newDataIsEmpty = empty($newData);
+        } else {
             $fieldDefinition = $this->getFieldDefinition($valueContainer, $fieldName);
             $currentDataIsEmpty = $fieldDefinition->isEmpty($currentData);
             $newDataIsEmpty = $fieldDefinition->isEmpty($newData);
-        } catch (InvalidConfigurationException $e) {
-            $currentDataIsEmpty = empty($currentData);
-            $newDataIsEmpty = empty($newData);
         }
 
         if ($this->writeIfTargetIsNotEmpty === false && !$currentDataIsEmpty) {
