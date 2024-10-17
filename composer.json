@@ -36,9 +36,6 @@
     "phpstan/phpstan": "1.12.5",
     "phpunit/phpunit": "^9.3"
   },
-  "suggest": {
-    "pimcore/admin-ui-classic-bundle": "Required for Pimcore 11"
-  },
   "autoload": {
     "psr-4": {
       "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
