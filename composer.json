@@ -19,7 +19,7 @@
     "doctrine/dbal": "^3.8",
     "dragonmantank/cron-expression": "^3.1",
     "league/flysystem-sftp-v3": "^3.0",
-    "nesbot/carbon": "^3.8.0",
+    "nesbot/carbon": "^2.65",
     "phpoffice/phpspreadsheet": "^3.3.0",
     "pimcore/compatibility-bridge-v10": "^1.0",
     "pimcore/data-hub": "^1.6",
