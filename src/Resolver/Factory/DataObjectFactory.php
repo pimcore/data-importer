@@ -62,7 +62,7 @@ class DataObjectFactory implements FactoryInterface
             );
         }
 
-        if($assignUniqueIdAsKey) {
+        if ($assignUniqueIdAsKey) {
             $element->setKey(uniqid('import-', true));
         }
 
