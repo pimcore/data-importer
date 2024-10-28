@@ -150,8 +150,15 @@ class Resolver
         }
 
         if (empty($element)) {
-            $hasKeySet = array_key_exists('key', $inputData) && !empty($inputData['key']);
-            $element = $this->getElementFactory()->createNewElement($hasKeySet);
+            $element = $this->getElementFactory()->createNewElement();
+            /**
+             * Reset key for new element, otherwise a key, that gets passed in the input data, would not be used.
+             * See checkKey method in ImportProcessingService, which adds the key again if necessary.
+             * @see \Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService::checkKey
+             *
+             * Needs to be done here, because adding a parameter to createNewElement would be a bc break.
+             */
+            $element->setKey('');
             $this->getCreateLocationStrategy()->updateParent($element, $inputData);
             $justCreated = true;
         } else {

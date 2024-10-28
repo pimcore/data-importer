@@ -15,6 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Factory;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
@@ -44,9 +45,9 @@ class DataObjectFactory implements FactoryInterface
 
     /**
      * @throws InvalidConfigurationException
-     * @throws \Exception
+     * @throws Exception
      */
-    public function createNewElement(bool $assignUniqueIdAsKey = true): ElementInterface
+    public function createNewElement(): ElementInterface
     {
         $class = ClassDefinition::getById($this->subType);
         if (empty($class)) {
@@ -62,9 +63,7 @@ class DataObjectFactory implements FactoryInterface
             );
         }
 
-        if($assignUniqueIdAsKey) {
-            $element->setKey(uniqid('import-', true));
-        }
+        $element->setKey(uniqid('import-', true));
 
         return $element;
     }
