@@ -150,7 +150,8 @@ class Resolver
         }
 
         if (empty($element)) {
-            $element = $this->getElementFactory()->createNewElement();
+            $hasKeySet = array_key_exists('key', $inputData) && !empty($inputData['key']);
+            $element = $this->getElementFactory()->createNewElement($hasKeySet);
             $this->getCreateLocationStrategy()->updateParent($element, $inputData);
             $justCreated = true;
         } else {

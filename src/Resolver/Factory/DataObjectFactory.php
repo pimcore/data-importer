@@ -42,7 +42,11 @@ class DataObjectFactory implements FactoryInterface
         $this->subType = $subType;
     }
 
-    public function createNewElement(): ElementInterface
+    /**
+     * @throws InvalidConfigurationException
+     * @throws \Exception
+     */
+    public function createNewElement(bool $assignUniqueIdAsKey = true): ElementInterface
     {
         $class = ClassDefinition::getById($this->subType);
         if (empty($class)) {
@@ -52,12 +56,16 @@ class DataObjectFactory implements FactoryInterface
         $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
         $element = $this->modelFactory->build($className);
 
-        if ($element instanceof ElementInterface) {
-            $element->setKey(uniqid('import-', true));
-
-            return $element;
+        if (!($element instanceof ElementInterface)) {
+            throw new InvalidConfigurationException(
+                "Object of class `{$this->subType}` could not be created."
+            );
         }
 
-        throw new InvalidConfigurationException("Object of class `{$this->subType}` could not be created.");
+        if($assignUniqueIdAsKey) {
+            $element->setKey(uniqid('import-', true));
+        }
+
+        return $element;
     }
 }

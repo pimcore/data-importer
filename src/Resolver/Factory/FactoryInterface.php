@@ -31,5 +31,5 @@ interface FactoryInterface
      *
      * @return ElementInterface
      */
-    public function createNewElement(): ElementInterface;
+    public function createNewElement(bool $assignUniqueIdAsKey = true): ElementInterface;
 }
