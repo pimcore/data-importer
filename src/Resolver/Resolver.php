@@ -154,6 +154,7 @@ class Resolver
             /**
              * Reset key for new element, otherwise a key, that gets passed in the input data, would not be used.
              * See checkKey method in ImportProcessingService, which adds the key again if necessary.
+             *
              * @see \Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService::checkKey
              *
              * Needs to be done here, because adding a parameter to createNewElement would be a bc break.

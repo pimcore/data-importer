@@ -394,7 +394,7 @@ class ImportProcessingService
 
     private function checkKey(ElementInterface $element): void
     {
-        if(empty($element->getKey())) {
+        if (empty($element->getKey())) {
             $element->setKey(uniqid('import-', true));
         }
     }
