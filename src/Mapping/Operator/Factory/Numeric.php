@@ -27,7 +27,7 @@ class Numeric extends AbstractOperator
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return float
+     * @return float|null
      */
     public function process($inputData, bool $dryRun = false)
     {
