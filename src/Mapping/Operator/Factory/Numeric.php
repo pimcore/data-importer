@@ -35,11 +35,13 @@ class Numeric extends AbstractOperator
             $inputData = reset($inputData);
         }
 
-        if ($this->returnNullIfEmpty && empty($inputData)) {
+        $floatValue = floatval($inputData);
+
+        if ($this->returnNullIfEmpty && empty($floatValue)) {
             return null;
         }
 
-        return floatval($inputData);
+        return $floatValue;
     }
 
     /**
