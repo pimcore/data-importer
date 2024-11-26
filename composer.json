@@ -13,17 +13,17 @@
   "prefer-stable": true,
   "minimum-stability": "dev",
   "require": {
-    "php": "~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0",
+    "php": "~8.1.0 || ~8.2.0 || ~8.3.0",
     "ext-fileinfo": "*",
     "ext-json": "*",
-    "doctrine/dbal": "^2.12 || ^3.5",
+    "doctrine/dbal": "^2.12 || ^3.8",
     "dragonmantank/cron-expression": "^3.1",
     "league/flysystem-sftp-v3": "^3.0",
-    "nesbot/carbon": "^2.27",
-    "phpoffice/phpspreadsheet": "^1.24 || ^2.2",
-    "pimcore/compatibility-bridge-v10": "^1.0",
+    "nesbot/carbon": "^2.72",
+    "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
+    "pimcore/admin-ui-classic-bundle": "^1.0",
     "pimcore/data-hub": "^1.6",
-    "pimcore/pimcore": "^10.6 || ^11.0",
+    "pimcore/pimcore": "^11.2",
     "symfony/mime": "^5.2 || ^6.2",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
   },
@@ -32,11 +32,8 @@
     "codeception/module-asserts": "^2",
     "codeception/module-symfony": "^1.6.0 || ^3.1.0",
     "codeception/phpunit-wrapper": "^9",
-    "phpstan/phpstan": "^1.9.11",
+    "phpstan/phpstan": "1.12.5",
     "phpunit/phpunit": "^9.3"
-  },
-  "suggest": {
-    "pimcore/admin-ui-classic-bundle": "Required for Pimcore 11"
   },
   "autoload": {
     "psr-4": {
