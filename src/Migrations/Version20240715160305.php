@@ -36,20 +36,45 @@ class Version20240715160305 extends BundleAwareMigration
 {
     public function up(Schema $schema): void
     {
-        if ($schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
-            $queueTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
-            $queueTable->addColumn('userOwner', 'integer', ['notnull' => true, 'default' => 0])->setUnsigned(true);
-            $queueTable->addIndex(['userOwner'], 'bundle_index_queue_executiontype_userOwner');
+        if (!$schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
+            return;
         }
+
+        $queueTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
+
+        if ($queueTable->hasColumn('userOwner')) {
+            return;
+        }
+
+        $queueTable->addColumn('userOwner', 'integer', ['notnull' => true, 'default' => 0])->setUnsigned(true);
+
+        if ($queueTable->hasIndex('bundle_index_queue_executiontype_userOwner')) {
+            return;
+        }
+
+        $queueTable->addIndex(['userOwner'], 'bundle_index_queue_executiontype_userOwner');
     }
 
     public function down(Schema $schema): void
     {
-        if ($schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
-            $queueTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
-            $queueTable->dropColumn('userOwner');
-            $queueTable->dropIndex('bundle_index_queue_executiontype_userOwner');
+
+        if (!$schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
+            return;
         }
+
+        $queueTable = $schema->getTable(QueueService::QUEUE_TABLE_NAME);
+
+        if (!$queueTable->hasColumn('userOwner')) {
+            return;
+        }
+
+        $queueTable->dropColumn('userOwner');
+
+        if (!$queueTable->hasIndex('bundle_index_queue_executiontype_userOwner')) {
+            return;
+        }
+
+        $queueTable->dropIndex('bundle_index_queue_executiontype_userOwner');
     }
 
     protected function getBundleName(): string
