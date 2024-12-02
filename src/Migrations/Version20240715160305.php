@@ -57,7 +57,6 @@ class Version20240715160305 extends BundleAwareMigration
 
     public function down(Schema $schema): void
     {
-
         if (!$schema->hasTable(QueueService::QUEUE_TABLE_NAME)) {
             return;
         }
