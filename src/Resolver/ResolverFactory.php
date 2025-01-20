@@ -111,7 +111,7 @@ class ResolverFactory
         return $publishStrategy;
     }
 
-    protected function buildElementFactory(string $type, string $subType = null): FactoryInterface
+    protected function buildElementFactory(string $type, ?string $subType = null): FactoryInterface
     {
         if (empty($type) || !array_key_exists($type, $this->factoryBlueprints)) {
             throw new InvalidConfigurationException('Unknown publishing strategy type `' . $type . '`');

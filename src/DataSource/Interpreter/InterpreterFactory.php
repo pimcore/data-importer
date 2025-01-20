@@ -46,7 +46,7 @@ class InterpreterFactory
      *
      * @throws InvalidConfigurationException
      */
-    public function loadInterpreter(string $configName, array $interpreterConfiguration, array $processingConfiguration, Resolver $resolver = null)
+    public function loadInterpreter(string $configName, array $interpreterConfiguration, array $processingConfiguration, ?Resolver $resolver = null)
     {
         if (empty($interpreterConfiguration['type']) || !array_key_exists($interpreterConfiguration['type'], $this->interpreterBluePrints)) {
             throw new InvalidConfigurationException('Unknown loader type `' . ($interpreterConfiguration['type'] ?? '') . '`');

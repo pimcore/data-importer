@@ -41,7 +41,7 @@ class AsArray extends AbstractOperator
      *
      * @return string
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string
+    public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         return TransformationDataTypeService::DEFAULT_ARRAY;
     }

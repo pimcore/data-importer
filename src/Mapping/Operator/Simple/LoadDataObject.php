@@ -190,7 +190,7 @@ class LoadDataObject extends AbstractOperator
      *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string
+    public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType === TransformationDataTypeService::DEFAULT_TYPE) {
             return TransformationDataTypeService::DATA_OBJECT;

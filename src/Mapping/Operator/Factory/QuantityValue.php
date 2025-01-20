@@ -110,7 +110,7 @@ class QuantityValue extends AbstractOperator
      *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string
+    public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($this->unitSource !== 'static') {
             if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {

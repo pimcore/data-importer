@@ -37,7 +37,7 @@ interface OperatorInterface extends SettingsAwareInterface
      *
      * @return string
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string;
+    public function evaluateReturnType(string $inputType, ?int $index = null): string;
 
     /**
      * Generate string representation of given input

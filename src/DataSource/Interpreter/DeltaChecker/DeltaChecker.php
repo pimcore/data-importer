@@ -40,7 +40,7 @@ class DeltaChecker
      *
      * @throws Exception
      */
-    protected function createTableIfNotExisting(\Closure $callable = null)
+    protected function createTableIfNotExisting(?\Closure $callable = null)
     {
         $this->db->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             configName varchar(80) NOT NULL,

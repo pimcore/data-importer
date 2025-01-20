@@ -82,7 +82,7 @@ class QueueService
      *
      * @throws Exception
      */
-    protected function createQueueTableIfNotExisting(\Closure $callable = null)
+    protected function createQueueTableIfNotExisting(?\Closure $callable = null)
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             id bigint AUTO_INCREMENT,

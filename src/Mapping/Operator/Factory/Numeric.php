@@ -52,7 +52,7 @@ class Numeric extends AbstractOperator
      *
      * @throws InvalidConfigurationException
      */
-    public function evaluateReturnType(string $inputType, int $index = null): string
+    public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::BOOLEAN])) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for numeric operator at transformation position %s", $inputType, $index));

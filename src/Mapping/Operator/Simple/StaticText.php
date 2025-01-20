@@ -92,7 +92,7 @@ class StaticText extends AbstractOperator
         }
     }
 
-    public function evaluateReturnType(string $inputType, int $index = null): string
+    public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
             throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for static t ext operator at transformation position %s", $inputType, $index));
