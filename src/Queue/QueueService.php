@@ -38,7 +38,7 @@ class QueueService
 
     protected function getCurrentQueueTableOperationTime(): int
     {
-        $carbonNow = Carbon::now();
+        $carbonNow = Carbon::now(date_default_timezone_get());
 
         return (int)($carbonNow->getTimestamp() . str_pad((string)$carbonNow->milli, 3, '0'));
     }
