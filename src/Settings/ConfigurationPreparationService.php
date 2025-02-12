@@ -15,9 +15,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
-use http\Exception\InvalidArgumentException;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ConfigurationPreparationService
 {
@@ -40,7 +40,7 @@ class ConfigurationPreparationService
         } else {
             $configuration = Configuration::getByName($configName);
             if (!$configuration) {
-                throw new InvalidArgumentException(
+                throw new NotFoundHttpException(
                     sprintf(
                         'Configuration with name %s not found',
                         $configName
