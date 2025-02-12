@@ -22,7 +22,7 @@
     "nesbot/carbon": "^2.72",
     "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
     "pimcore/admin-ui-classic-bundle": "^1.0 || 2.x-dev",
-    "pimcore/data-hub": "^1.6",
+    "pimcore/data-hub": "^1.6 || ^2.0",
     "pimcore/pimcore": "^11.2 || ^12.0",
     "symfony/mime": "^5.2 || ^6.2",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"

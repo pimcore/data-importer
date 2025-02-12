@@ -15,6 +15,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Command;
 
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Console\AbstractCommand;
@@ -56,7 +57,7 @@ class CronExecutionCommand extends AbstractCommand
 
         if (empty($configNames)) {
             $configNames = [];
-            $allDataHubConfiguations = Dao::getList();
+            $allDataHubConfiguations = Configuration::getList();
             foreach ($allDataHubConfiguations as $dataHubConfig) {
                 if (in_array($dataHubConfig->getType(), ['dataImporterDataObject'])) {
                     $configNames[] = $dataHubConfig->getName();
