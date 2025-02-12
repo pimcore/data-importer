@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
 use http\Exception\InvalidArgumentException;
 use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ConfigurationPreparationService

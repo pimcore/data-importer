@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Preview;
 
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 use Pimcore\Model\User;
 
