@@ -17,9 +17,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
 use Cron\CronExpression;
 use Exception;
+use http\Exception\InvalidArgumentException;
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
-use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
@@ -49,6 +50,7 @@ class ConfigDataObjectController extends UserAwareController
     use JsonHelperTrait;
 
     public const CONFIG_NAME = 'plugin_datahub_config';
+    private const CONFIG_DOES_NOT_EXIST_MSG = 'Configuration %s does not exist.';
 
     /**
      * @var PreviewService
@@ -78,25 +80,31 @@ class ConfigDataObjectController extends UserAwareController
             $data = $request->request->get('data');
             $modificationDate = $request->request->getInt('modificationDate');
 
-            if ($modificationDate < Dao::getConfigModificationDate()) {
-                throw new Exception('The configuration was modified during editing, please reload the configuration and make your changes again');
-            }
-
             $dataDecoded = json_decode($data, true);
 
             $name = $dataDecoded['general']['name'];
             $dataDecoded['general']['active'] = $dataDecoded['general']['active'] ?? false;
-            $config = Dao::getByName($name);
+            $config = Configuration::getByName($name);
+            if (!$config) {
+                throw new InvalidArgumentException(
+                    sprintf(
+                        self::CONFIG_DOES_NOT_EXIST_MSG,
+                        $name
+                    )
+                );
+            }
+            if ($modificationDate < $config->getModificationDate()) {
+                throw new Exception('The configuration was modified during editing, please reload the configuration and make your changes again');
+            }
             if (!$config->isAllowed('update')) {
                 throw $this->createAccessDeniedHttpException();
             }
             $config->setConfiguration($dataDecoded);
 
-            // @phpstan-ignore-next-line isAllowed return can changed now
             if ($config->isAllowed('read') && $config->isAllowed('update')) {
                 $config->save();
 
-                return $this->json(['success' => true, 'modificationDate' => Dao::getConfigModificationDate()]);
+                return $this->json(['success' => true, 'modificationDate' => $config->getModificationDate()]);
             } else {
                 return $this->json(['success' => false, 'permissionError' => true]);
             }
@@ -164,6 +172,15 @@ class ConfigDataObjectController extends UserAwareController
         $this->checkPermission(self::CONFIG_NAME);
 
         $name = $request->query->get('name');
+        $configuration = Configuration::getByName($name);
+        if (!$configuration) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    self::CONFIG_DOES_NOT_EXIST_MSG,
+                    $name
+                )
+            );
+        }
         $config = $configurationPreparationService->prepareConfiguration($name);
 
         return new JsonResponse(
@@ -171,7 +188,7 @@ class ConfigDataObjectController extends UserAwareController
                 'name' => $name,
                 'configuration' => $config,
                 'userPermissions' => $config['userPermissions'],
-                'modificationDate' => Dao::getConfigModificationDate(),
+                'modificationDate' => $configuration->getModificationDate(),
                 'columnHeaders' => $this->loadAvailableColumnHeaders($name, $config, $interpreterFactory)
             ]
         );
@@ -708,14 +725,17 @@ class ConfigDataObjectController extends UserAwareController
      */
     protected function getImportFilePath(string $configName): string
     {
-        $configuration = Dao::getByName($configName);
+        $configuration = Configuration::getByName($configName);
         if (!$configuration) {
-            throw new Exception('Configuration ' . $configName . ' does not exist.');
+            throw new InvalidArgumentException(
+                sprintf(
+                    self::CONFIG_DOES_NOT_EXIST_MSG,
+                    $configName
+                )
+            );
         }
 
-        $filePath = $configuration->getName() . '/upload.import';
-
-        return $filePath;
+        return $configuration->getName() . '/upload.import';
     }
 
     /**

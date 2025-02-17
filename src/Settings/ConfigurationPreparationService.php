@@ -15,8 +15,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
-use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ConfigurationPreparationService
 {
@@ -37,9 +38,14 @@ class ConfigurationPreparationService
             }
             $config = $currentConfig;
         } else {
-            $configuration = Dao::getByName($configName);
+            $configuration = Configuration::getByName($configName);
             if (!$configuration) {
-                throw new \Exception('Configuration ' . $configName . ' does not exist.');
+                throw new NotFoundHttpException(
+                    sprintf(
+                        'Configuration with name %s not found',
+                        $configName
+                    )
+                );
             }
 
             $config = $configuration->getConfiguration();

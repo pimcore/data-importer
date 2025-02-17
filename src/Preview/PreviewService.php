@@ -16,7 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Preview;
 
 use League\Flysystem\FilesystemOperator;
-use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 use Pimcore\Model\User;
 
@@ -47,7 +47,7 @@ class PreviewService
      */
     protected function getPreviewFilePath(string $configName, User $user): string
     {
-        $configuration = Dao::getByName($configName);
+        $configuration = Configuration::getByName($configName);
         if (!$configuration) {
             throw new \Exception('Configuration ' . $configName . ' does not exist.');
         }
