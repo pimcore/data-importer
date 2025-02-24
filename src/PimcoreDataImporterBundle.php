@@ -23,6 +23,7 @@ use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\Interpret
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverConfigurationFactoryPass;
+use Pimcore\Bundle\DataImporterBundle\DependencyInjection\PimcoreDataImporterExtension;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
 use Pimcore\Extension\Bundle\Installer\InstallerInterface;
 use Pimcore\Extension\Bundle\PimcoreBundleAdminClassicInterface;
@@ -31,6 +32,7 @@ use Pimcore\Extension\Bundle\Traits\PackageVersionTrait;
 use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
 class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface, PimcoreBundleAdminClassicInterface
 {
@@ -42,6 +44,11 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     protected function getComposerPackageName(): string
     {
         return 'pimcore/data-importer';
+    }
+
+    public function getContainerExtension(): ExtensionInterface
+    {
+        return new PimcoreDataImporterExtension();
     }
 
     /**
