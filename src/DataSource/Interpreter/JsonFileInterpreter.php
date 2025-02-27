@@ -15,11 +15,17 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use JmesPath\Parser as Parser;
+use JmesPath\Env as JmesPath;
+use JmesPath\SyntaxErrorException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 
 class JsonFileInterpreter extends AbstractInterpreter
 {
+    protected string $path;
+
     /**
      * @var array|null
      */
@@ -30,15 +36,24 @@ class JsonFileInterpreter extends AbstractInterpreter
      */
     protected $cachedFilePath = null;
 
+    protected function loadDataRaw(string $path): array
+    {
+        $content = file_get_contents($path);
+        return json_decode($this->prepareContent($content), true);
+    }
+
     protected function loadData(string $path): array
     {
         if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
-            $content = file_get_contents($path);
-
-            return json_decode($this->prepareContent($content), true);
+            $data = $this->loadDataRaw($path);
         } else {
-            return $this->cachedContent;
+            $data = $this->cachedContent;
         }
+
+        if (!empty($this->path)) {
+            return $this->getValueFromPath($data);
+        }
+        return $data;
     }
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
@@ -52,7 +67,16 @@ class JsonFileInterpreter extends AbstractInterpreter
 
     public function setSettings(array $settings): void
     {
-        //nothing to do
+        $path = $settings['path'];
+        if (!empty($path)) {
+            try {
+                (new Parser)->parse($path);
+            } catch (SyntaxErrorException $e) {
+                throw new InvalidConfigurationException("Invalid JMESPath expression: " . $e->getMessage());
+            }
+        }
+
+        $this->path = $path;
     }
 
     /**
@@ -86,9 +110,7 @@ class JsonFileInterpreter extends AbstractInterpreter
             }
         }
 
-        $content = file_get_contents($path);
-
-        $data = json_decode($this->prepareContent($content), true);
+        $data = $this->loadDataRaw($path);
 
         if (json_last_error() === JSON_ERROR_NONE) {
             $this->cachedContent = $data;
@@ -131,5 +153,13 @@ class JsonFileInterpreter extends AbstractInterpreter
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
+    }
+
+    /**
+     * Returns a value from the specified path in a nested array `$data`.
+     */
+    private function getValueFromPath(array $data): mixed
+    {
+        return JmesPath::search($this->path, $data);
     }
 }

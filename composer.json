@@ -19,6 +19,7 @@
     "doctrine/dbal": "^2.12 || ^3.8",
     "dragonmantank/cron-expression": "^3.1",
     "league/flysystem-sftp-v3": "^3.0",
+    "mtdowling/jmespath.php": "^2.8",
     "nesbot/carbon": "^2.72 || ^3.8.4",
     "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
     "pimcore/admin-ui-classic-bundle": "^1.0 || ^2.0",
