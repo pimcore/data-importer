@@ -15,12 +15,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use JmesPath\Parser as Parser;
 use JmesPath\Env as JmesPath;
+use JmesPath\Parser as Parser;
 use JmesPath\SyntaxErrorException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 
 class JsonFileInterpreter extends AbstractInterpreter
 {
@@ -39,6 +39,7 @@ class JsonFileInterpreter extends AbstractInterpreter
     protected function loadDataRaw(string $path): array
     {
         $content = file_get_contents($path);
+
         return json_decode($this->prepareContent($content), true);
     }
 
@@ -53,6 +54,7 @@ class JsonFileInterpreter extends AbstractInterpreter
         if (!empty($this->path)) {
             return $this->getValueFromPath($data);
         }
+
         return $data;
     }
 
@@ -72,7 +74,7 @@ class JsonFileInterpreter extends AbstractInterpreter
             try {
                 (new Parser)->parse($path);
             } catch (SyntaxErrorException $e) {
-                throw new InvalidConfigurationException("Invalid JMESPath expression: " . $e->getMessage());
+                throw new InvalidConfigurationException('Invalid JMESPath expression: ' . $e->getMessage());
             }
         }
 
