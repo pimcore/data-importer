@@ -73,7 +73,7 @@ class DataObjectLoader
             $className::setHideUnpublished(false);
         }
 
-        if ($this->isObjectBrickAttribute($attributeName) === false && $operator === '=') {
+        if ($this->isObjectBrickAttribute($attributeName) === false && $operator === '=' && $identifier !== '') {
             $getter = 'getBy' . $attributeName;
             if (empty($attributeLanguage) === false) {
                 $element = $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
@@ -93,7 +93,16 @@ class DataObjectLoader
                 $queryFieldName = $this->getAttributeNameFromParts($objectBrickParts, false);
                 $conditions = ['objectbricks' => [$objectBrickParts[self::BRICK_NAME]]];
             }
-            $conditions['condition'] = $queryFieldName . ' ' . $operator . ' ' . Db::get()->quote($identifier);
+
+            // Pimcore stores empty string as NULL so we need to use IS NULL for lookup
+            if ($operator === '=' && $identifier === '') {
+                $identifierQuoted  = 'NULL';
+                $operator = 'IS';
+            } else {
+                $identifierQuoted = Db::get()->quote($identifier);
+            }
+
+            $conditions['condition'] = $queryFieldName . ' ' . $operator . ' ' . $identifierQuoted;
             if ($limit > 0) {
                 $conditions['limit'] = $limit;
             }
