@@ -96,7 +96,7 @@ class DataObjectLoader
 
             // Pimcore stores empty string as NULL so we need to use IS NULL for lookup
             if ($operator === '=' && $identifier === '') {
-                $identifierQuoted  = 'NULL';
+                $identifierQuoted = 'NULL';
                 $operator = 'IS';
             } else {
                 $identifierQuoted = Db::get()->quote($identifier);
