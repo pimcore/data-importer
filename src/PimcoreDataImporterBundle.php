@@ -133,6 +133,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/gallery.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/imageAdvanced.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/loadDataObject.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/objectField.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/reduceArrayKeyValuePairs.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/flattenArray.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/staticText.js',

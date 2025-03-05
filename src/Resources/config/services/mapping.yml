@@ -62,6 +62,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "loadDataObject" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "objectField" }
+
     # -------------------
     # factory operators
     # -------------------
