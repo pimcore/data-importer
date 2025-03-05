@@ -107,6 +107,7 @@ class CsvFileInterpreter extends AbstractInterpreter
         ];
 
         $mime = $mimeTypes->guessMimeType($path);
+
         return in_array($mime, $csvMimes);
     }
 
