@@ -21,7 +21,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Element\ElementInterface;
 
-
 class ObjectField extends AbstractOperator
 {
     private string $attribute;
@@ -45,12 +44,14 @@ class ObjectField extends AbstractOperator
     public function process(mixed $inputData, bool $dryRun = false): mixed
     {
         if (!$inputData instanceof ElementInterface) {
-            $this->logWarning("Receveid a non ElementInterface to process.");
+            $this->logWarning('Receveid a non ElementInterface to process.');
+
             return null;
         }
 
         if (!$this->attribute) {
-            $this->logWarning("No attribute provided.");
+            $this->logWarning('No attribute provided.');
+
             return null;
         }
 
@@ -58,7 +59,8 @@ class ObjectField extends AbstractOperator
         $getter = 'get' . ucfirst($this->attribute);
 
         if (!method_exists($inputData, $getter)) {
-            $this->logWarning("Method " .  $getter . " not found on provided object.");
+            $this->logWarning('Method ' .  $getter . ' not found on provided object.');
+
             return null;
         }
 
