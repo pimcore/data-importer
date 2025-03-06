@@ -16,7 +16,6 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
-use Pimcore\Helper\MimeTypeHelper;
 use Pimcore\Version;
 use Symfony\Component\Mime\MimeTypes;
 
@@ -81,7 +80,9 @@ class CsvFileInterpreter extends AbstractInterpreter
 
     public function fileValid(string $path, bool $originalFilename = false): bool
     {
-        $mimeTypes = Version::getMajorVersion() >= 12 ? new MimeTypeHelper() : new MimeTypes();
+        $mimeTypes = Version::getMajorVersion() >= 12 ?
+            new \Pimcore\Helper\MimeTypeHelper() :
+            new MimeTypes();
         if ($originalFilename) {
             $filename = $path;
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
