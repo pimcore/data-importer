@@ -80,9 +80,6 @@ class CsvFileInterpreter extends AbstractInterpreter
 
     public function fileValid(string $path, bool $originalFilename = false): bool
     {
-        $mimeTypes = Version::getMajorVersion() >= 12 ?
-            new \Pimcore\Helper\MimeTypeHelper() :
-            new MimeTypes();
         if ($originalFilename) {
             $filename = $path;
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
@@ -107,7 +104,11 @@ class CsvFileInterpreter extends AbstractInterpreter
             'text/plain'
         ];
 
-        $mime = $mimeTypes->guessMimeType($path);
+        if(Version::getMajorVersion() >= 12) {
+            $mime = (new \Pimcore\Helper\MimeTypeHelper())->guessMimeType($path);
+        } else {
+            $mime = (new MimeTypes())->guessMimeType($path);
+        }
 
         return in_array($mime, $csvMimes);
     }
