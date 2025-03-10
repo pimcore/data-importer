@@ -16,6 +16,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Version;
 use Symfony\Component\Mime\MimeTypes;
 
 class CsvFileInterpreter extends AbstractInterpreter
@@ -88,9 +89,26 @@ class CsvFileInterpreter extends AbstractInterpreter
         }
 
         // csv that has html tags might be recognized as text/html
-        $csvMimes = ['text/html', 'text/x-comma-separated-values', 'text/comma-separated-values', 'application/octet-stream', 'application/vnd.ms-excel', 'application/x-csv', 'text/x-csv', 'text/csv', 'application/csv', 'application/excel', 'application/vnd.msexcel', 'text/plain'];
-        $mimeTypes = new MimeTypes();
-        $mime = $mimeTypes->guessMimeType($path);
+        $csvMimes = [
+            'text/html',
+            'text/x-comma-separated-values',
+            'text/comma-separated-values',
+            'application/octet-stream',
+            'application/vnd.ms-excel',
+            'application/x-csv',
+            'text/x-csv',
+            'text/csv',
+            'application/csv',
+            'application/excel',
+            'application/vnd.msexcel',
+            'text/plain'
+        ];
+
+        if (Version::getMajorVersion() >= 12) {
+            $mime = (new \Pimcore\Helper\MimeTypeHelper())->guessMimeType($path);
+        } else {
+            $mime = (new MimeTypes())->guessMimeType($path);
+        }
 
         return in_array($mime, $csvMimes);
     }

@@ -17,3 +17,14 @@ parameters:
 			reportUnmatched: false
 			count: 1
 			path: src/PimcoreDataImporterBundle.php
+		-
+			message: "#^Call to method guessMimeType\\(\\) on an unknown class Pimcore\\\\Helper\\\\MimeTypeHelper\\.$#"
+			reportUnmatched: false
+			count: 1
+			path: src/DataSource/Interpreter/CsvFileInterpreter.php
+
+		-
+			message: "#^Instantiated class Pimcore\\\\Helper\\\\MimeTypeHelper not found\\.$#"
+			reportUnmatched: false
+			count: 1
+			path: src/DataSource/Interpreter/CsvFileInterpreter.php
