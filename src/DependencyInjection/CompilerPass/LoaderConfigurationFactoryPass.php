@@ -24,7 +24,7 @@ class LoaderConfigurationFactoryPass implements CompilerPassInterface
 {
     const loader_tag = 'pimcore.datahub.data_importer.loader';
 
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $taggedServices = $container->findTaggedServiceIds(self::loader_tag);
         $loader = [];
