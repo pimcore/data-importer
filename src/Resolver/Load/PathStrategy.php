@@ -36,7 +36,8 @@ class PathStrategy extends AbstractLoad
 
     public function loadFullIdentifierList(): array
     {
-        $sql = sprintf('SELECT CONCAT(`path`, `key`) FROM object_%s',
+        $sql = sprintf(
+            'SELECT CONCAT(`path`, `key`) FROM object_%s',
             $this->dataObjectClassId
         );
 

@@ -36,7 +36,8 @@ class IdStrategy extends AbstractLoad
 
     public function loadFullIdentifierList(): array
     {
-        $sql = sprintf('SELECT `id` FROM object_%s',
+        $sql = sprintf(
+            'SELECT `id` FROM object_%s',
             $this->dataObjectClassId
         );
 
