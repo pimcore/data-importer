@@ -16,7 +16,6 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 
 class PathStrategy extends AbstractLoad
@@ -36,10 +35,10 @@ class PathStrategy extends AbstractLoad
 
     public function loadFullIdentifierList(): array
     {
-        $sql = sprintf('SELECT CONCAT(`%s`, `%s`) FROM object_%s',
-            Service::getVersionDependentDatabaseColumnName('o_path'),
-            Service::getVersionDependentDatabaseColumnName('o_key'),
-            $this->dataObjectClassId);
+        $sql = sprintf(
+            'SELECT CONCAT(`path`, `key`) FROM object_%s',
+            $this->dataObjectClassId
+        );
 
         return $this->db->fetchFirstColumn($sql);
     }

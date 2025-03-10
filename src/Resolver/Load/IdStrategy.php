@@ -16,7 +16,6 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 
 class IdStrategy extends AbstractLoad
@@ -36,7 +35,10 @@ class IdStrategy extends AbstractLoad
 
     public function loadFullIdentifierList(): array
     {
-        $sql = sprintf('SELECT `%s` FROM object_%s', Service::getVersionDependentDatabaseColumnName('o_id'), $this->dataObjectClassId);
+        $sql = sprintf(
+            'SELECT `id` FROM object_%s',
+            $this->dataObjectClassId
+        );
 
         return $this->db->fetchFirstColumn($sql);
     }
