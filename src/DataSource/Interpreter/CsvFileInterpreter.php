@@ -104,7 +104,7 @@ class CsvFileInterpreter extends AbstractInterpreter
             'text/plain'
         ];
 
-        if(Version::getMajorVersion() >= 12) {
+        if (Version::getMajorVersion() >= 12) {
             $mime = (new \Pimcore\Helper\MimeTypeHelper())->guessMimeType($path);
         } else {
             $mime = (new MimeTypes())->guessMimeType($path);
