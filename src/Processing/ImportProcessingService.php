@@ -261,7 +261,9 @@ class ImportProcessingService
 
             $message . $e->getMessage();
 
-            if ($currentMapping)  $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
+            if ($currentMapping) {
+                $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
+            }
 
             $this->applicationLogger->error($message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
