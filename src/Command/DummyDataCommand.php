@@ -25,7 +25,7 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class DummyDataCommand extends AbstractCommand
 {
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('datahub:data-importer:create-dummy-data')

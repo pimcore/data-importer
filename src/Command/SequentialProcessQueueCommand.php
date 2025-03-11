@@ -50,7 +50,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
         $this->queueService = $queueService;
     }
 
-    public function configure()
+    public function configure(): void
     {
         $this
             ->setName('datahub:data-importer:process-queue-sequential')

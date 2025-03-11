@@ -35,7 +35,7 @@ class CronExecutionCommand extends AbstractCommand
         $this->importPreparationService = $importPreparationService;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('datahub:data-importer:execute-cron')
