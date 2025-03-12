@@ -259,7 +259,7 @@ class ImportProcessingService
             $message = "Error processing element: {$importDataRowString}";
             $this->logger->error($message . $e);
 
-            $message . $e->getMessage();
+            $message .= $e->getMessage();
 
             if ($currentMapping !== null) {
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
