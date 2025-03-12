@@ -261,7 +261,7 @@ class ImportProcessingService
 
             $message . $e->getMessage();
 
-            if ($currentMapping) {
+            if ($currentMapping !== null) {
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
             }
 
