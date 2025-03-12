@@ -44,8 +44,10 @@ class XmlFileInterpreter extends AbstractInterpreter
      */
     protected $cachedFilePath = null;
 
-    protected function loadDataRaw(string $path){
+    protected function loadDataRaw(string $path)
+    {
         $schema = $this->schema;
+
         return XmlUtils::loadFile($path, function ($dom) use ($schema) {
             if (!empty($schema)) {
                 return @$dom->schemaValidateSource($schema);
