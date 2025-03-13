@@ -63,7 +63,7 @@ class SqlLoader implements DataLoaderInterface
             $queryBuilder->groupBy($this->groupBy);
         }
 
-        $result = $queryBuilder->execute()->fetchAllAssociative();
+        $result = $this->databaseConnection->execute()->fetchAllAssociative();
 
         $filesystemLocal = new Filesystem(new LocalFilesystemAdapter('/'));
         $stream = fopen('php://temp', 'r+');
