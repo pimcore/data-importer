@@ -23,7 +23,7 @@ use Pimcore\Logger;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 class PushImportController
 {
@@ -43,8 +43,6 @@ class PushImportController
     }
 
     /**
-     * @Route("/pimcore-datahub-import/{config}/push", name="data_hub_data_importer_push", methods={"POST"}, requirements={"config"="[\w-]+"})
-     *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationLoaderService
      * @param DataLoaderFactory $dataLoaderFactory
@@ -52,6 +50,12 @@ class PushImportController
      *
      * @return JsonResponse
      */
+    #[Route(
+        '/pimcore-datahub-import/{config}/push',
+        name: 'data_hub_data_importer_push',
+        methods: ['POST'],
+        requirements: ['config' => '[\w-]+']
+    )]
     public function pushAction(
         string $config,
         Request $request,

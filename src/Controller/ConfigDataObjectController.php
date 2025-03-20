@@ -40,11 +40,9 @@ use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Pimcore\Translation\Translator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route("/admin/pimcoredataimporter/dataobject/config")
- */
+#[Route('/admin/pimcoredataimporter/dataobject/config')]
 class ConfigDataObjectController extends UserAwareController
 {
     use JsonHelperTrait;
@@ -68,10 +66,9 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/save")
-     *
      * @throws Exception
      */
+    #[Route('/save')]
     public function saveAction(Request $request): ?JsonResponse
     {
         $this->checkPermission(self::CONFIG_NAME);
@@ -154,8 +151,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/get")
-     *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
@@ -164,6 +159,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
+    #[Route('/get')]
     public function getAction(
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
@@ -195,14 +191,13 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/upload-preview", methods={"POST"})
-     *
      * @param Request $request
      *
      * @return JsonResponse
      *
      * @throws Exception
      */
+    #[Route('/upload-preview', methods: ['POST'])]
     public function uploadPreviewDataAction(Request $request)
     {
         try {
@@ -238,8 +233,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/copy-preview", methods={"POST"})
-     *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param DataLoaderFactory $dataLoaderFactory
@@ -248,6 +241,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
+    #[Route('/copy-preview', methods: ['POST'])]
     public function copyPreviewDataAction(
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
@@ -292,8 +286,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-preview-data", methods={"POST"})
-     *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
@@ -303,6 +295,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
+    #[Route('/load-preview-data', methods: ['POST'])]
     public function loadDataPreviewAction(
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
@@ -360,8 +353,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-column-headers", methods={"POST"})
-     *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param InterpreterFactory $interpreterFactory
@@ -370,6 +361,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
+    #[Route('/load-column-headers', methods: ['POST'])]
     public function loadAvailableColumnHeadersAction(
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
@@ -385,8 +377,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-transformation-result", methods={"POST"})
-     *
      * @param Request $request
      * @param ConfigurationPreparationService $configurationPreparationService
      * @param MappingConfigurationFactory $factory
@@ -397,6 +387,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws InvalidConfigurationException|Exception
      */
+    #[Route('/load-transformation-result', methods: ['POST'])]
     public function loadTransformationResultPreviewsAction(
         Request $request,
         ConfigurationPreparationService $configurationPreparationService,
@@ -440,14 +431,13 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/calculate-transformation-result-type", methods={"POST"})
-     *
      * @param Request $request
      * @param MappingConfigurationFactory $factory
      * @param ImportProcessingService $importProcessingService
      *
      * @return JsonResponse
      */
+    #[Route('/calculate-transformation-result-type', methods: ['POST'])]
     public function calculateTransformationResultTypeAction(
         Request $request,
         MappingConfigurationFactory $factory,
@@ -470,8 +460,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-class-attributes", methods={"GET"})
-     *
      * @param Request $request
      * @param TransformationDataTypeService $transformationDataTypeService
      *
@@ -479,6 +467,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
+    #[Route('/load-class-attributes', methods: ['GET'])]
     public function loadDataObjectAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService)
     {
         $classId = $request->query->get('class_id');
@@ -499,13 +488,12 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-class-classificationstore-attributes", methods={"GET"})
-     *
      * @param Request $request
      * @param TransformationDataTypeService $transformationDataTypeService
      *
      * @return JsonResponse
      */
+    #[Route('/load-class-classificationstore-attributes', methods: ['GET'])]
     public function loadDataObjectClassificationStoreAttributesAction(Request $request, TransformationDataTypeService $transformationDataTypeService)
     {
         $classId = $request->query->get('class_id');
@@ -519,8 +507,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-class-classificationstore-keys", methods={"GET"})
-     *
      * @param Request $request
      * @param ClassificationStoreDataTypeService $classificationStoreDataTypeService
      *
@@ -528,6 +514,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
+    #[Route('/load-class-classificationstore-keys', methods: ['GET'])]
     public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService)
     {
         $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->get('sort')]);
@@ -571,14 +558,13 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-class-classificationstore-key-name", methods={"GET"})
-     *
      * @param Request $request
      *
      * @return JsonResponse
      *
      * @throws Exception
      */
+    #[Route('/load-class-classificationstore-key-name', methods: ['GET'])]
     public function loadDataObjectClassificationStoreKeyNameAction(Request $request)
     {
         $keyId = $request->query->get('key_id');
@@ -603,13 +589,12 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/start-import", methods={"PUT"})
-     *
      * @param Request $request
      * @param ImportPreparationService $importPreparationService
      *
      * @return JsonResponse
      */
+    #[Route('/start-import', methods: ['PUT'])]
     public function startBatchImportAction(Request $request, ImportPreparationService $importPreparationService)
     {
         $configName = $request->request->get('config_name');
@@ -621,13 +606,12 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/check-import-progress", methods={"GET"})
-     *
      * @param Request $request
      * @param ImportProcessingService $importProcessingService
      *
      * @return JsonResponse
      */
+    #[Route('/check-import-progress', methods: ['GET'])]
     public function checkImportProgressAction(Request $request, ImportProcessingService $importProcessingService)
     {
         $configName = $request->query->get('config_name');
@@ -636,12 +620,11 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/check-crontab", methods={"GET"})
-     *
      * @param Request $request
      *
      * @return JsonResponse
      */
+    #[Route('/check-crontab', methods: ['GET'])]
     public function isCronExpressionValidAction(Request $request)
     {
         $message = '';
@@ -663,13 +646,12 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/cancel-execution", methods={"PUT"})
-     *
      * @param Request $request
      * @param ImportProcessingService $importProcessingService
      *
      * @return JsonResponse
      */
+    #[Route('/cancel-execution', methods: ['PUT'])]
     public function cancelExecutionAction(Request $request, ImportProcessingService $importProcessingService)
     {
         $configName = $request->request->get('config_name');
@@ -681,8 +663,6 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/upload-import-file", methods={"POST"})
-     *
      * @param Request $request
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      *
@@ -690,6 +670,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws \League\Flysystem\FilesystemException
      */
+    #[Route('/upload-import-file', methods: ['POST'])]
     public function uploadImportFileAction(Request $request, FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
         try {
@@ -739,14 +720,13 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/has-import-file-uploaded", methods={"GET"})
-     *
      * @param Request $request
      * @param Translator $translator
      * @param FilesystemOperator $pimcoreDataImporterUploadStorage
      *
      * @return JsonResponse
      */
+    #[Route('/has-import-file-uploaded', methods: ['GET'])]
     public function hasImportFileUploadedAction(Request $request, Translator $translator, FilesystemOperator $pimcoreDataImporterUploadStorage)
     {
         try {
@@ -768,12 +748,11 @@ class ConfigDataObjectController extends UserAwareController
     }
 
     /**
-     * @Route("/load-unit-data", methods={"GET"})
-     *
      * @param Request $request
      *
      * @return JsonResponse
      */
+    #[Route('/load-unit-data', methods: ['GET'])]
     public function loadUnitDataAction(Request $request): JsonResponse
     {
         $unitList = new Unit\Listing();

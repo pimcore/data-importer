@@ -27,7 +27,7 @@ class ResolverConfigurationFactoryPass implements CompilerPassInterface
     const publish_tag = 'pimcore.datahub.data_importer.resolver.publish';
     const factory_tag = 'pimcore.datahub.data_importer.resolver.factory';
 
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $taggedServices = $container->findTaggedServiceIds(self::load_tag);
         $loadStrategies = [];

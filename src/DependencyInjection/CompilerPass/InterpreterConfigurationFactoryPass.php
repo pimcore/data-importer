@@ -24,7 +24,7 @@ class InterpreterConfigurationFactoryPass implements CompilerPassInterface
 {
     const interpreter_tag = 'pimcore.datahub.data_importer.interpreter';
 
-    public function process(ContainerBuilder $container)
+    public function process(ContainerBuilder $container): void
     {
         $taggedServices = $container->findTaggedServiceIds(self::interpreter_tag);
         $interpreters = [];

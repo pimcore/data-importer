@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class LoadDataObject extends AbstractOperator
 {
@@ -63,8 +64,8 @@ class LoadDataObject extends AbstractOperator
 
     /**
      * @param DataObjectLoader $dataObjectLoader
-     * @required
      */
+    #[Required]
     public function setDataObjectLoader(DataObjectLoader $dataObjectLoader)
     {
         $this->dataObjectLoader = $dataObjectLoader;

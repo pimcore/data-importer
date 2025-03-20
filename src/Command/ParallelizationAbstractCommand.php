@@ -28,7 +28,7 @@ abstract class ParallelizationAbstractCommand extends AbstractCommand
         Parallelization::runAfterBatch as parentRunAfterBatch;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         self::configureCommand($this);
     }

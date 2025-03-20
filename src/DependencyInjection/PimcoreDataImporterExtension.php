@@ -35,7 +35,7 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
     /**
      * {@inheritdoc}
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
@@ -55,7 +55,7 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
     }
 
-    public function prepend(ContainerBuilder $container)
+    public function prepend(ContainerBuilder $container): void
     {
         if ($container->hasExtension('doctrine_migrations')) {
             $loader = new YamlFileLoader(

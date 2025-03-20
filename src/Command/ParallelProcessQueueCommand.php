@@ -39,7 +39,7 @@ class ParallelProcessQueueCommand extends ParallelizationAbstractCommand
         $this->queueService = $queueService;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         parent::configure();
 

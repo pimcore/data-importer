@@ -20,18 +20,15 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller;
 use Exception;
 use Pimcore\Controller\UserAwareController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route("/admin/pimcoredataimporter/")
- */
+#[Route('/admin/pimcoredataimporter/')]
 class ConnectionController extends UserAwareController
 {
     /**
-     * @Route("connections", name="pimcore_dataimporter_connections", methods={"GET"})
-     *
      * @throws Exception
      */
+    #[Route('/connections', name: 'pimcore_dataimporter_connections', methods: ['GET'])]
     public function connectionAction(): JsonResponse
     {
         $connections = $this->getParameter('doctrine.connections');
