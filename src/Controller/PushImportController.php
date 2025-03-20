@@ -50,7 +50,12 @@ class PushImportController
      *
      * @return JsonResponse
      */
-    #[Route('/pimcore-datahub-import/{config}/push', name: 'data_hub_data_importer_push', methods: ['POST'], requirements: ['config' => '[\w-]+'])]
+    #[Route(
+        '/pimcore-datahub-import/{config}/push',
+        name: 'data_hub_data_importer_push',
+        methods: ['POST'],
+        requirements: ['config' => '[\w-]+']
+    )]
     public function pushAction(
         string $config,
         Request $request,
