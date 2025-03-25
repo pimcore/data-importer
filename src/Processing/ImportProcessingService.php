@@ -183,6 +183,7 @@ class ImportProcessingService
     protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping, int $userOwner)
     {
         $element = null;
+        $currentMapping = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
         try {
             //resolve data object
@@ -203,6 +204,7 @@ class ImportProcessingService
 
                     // extract raw data
                     $data = null;
+                    $currentMapping = $mappingConfiguration;
                     if (is_array($mappingConfiguration->getDataSourceIndex())) {
                         $data = [];
                         foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
@@ -224,6 +226,7 @@ class ImportProcessingService
                     $dataTarget = $mappingConfiguration->getDataTarget();
                     $dataTarget->assignData($element, $data);
                 }
+                $currentMapping = null;
 
                 $event = new PreSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
@@ -256,7 +259,15 @@ class ImportProcessingService
             $message = "Error processing element: {$importDataRowString}";
             $this->logger->error($message . $e);
 
-            $this->applicationLogger->error($message . $e->getMessage(), [
+            $message .= $e->getMessage();
+            // $currentMapping can be null before and after the loop above
+            // will have a value if it errors out during the loop
+            // @phpstan-ignore-next-line
+            if ($currentMapping !== null) {
+                $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
+            }
+
+            $this->applicationLogger->error($message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                 'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element,
