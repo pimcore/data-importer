@@ -1,15 +1,15 @@
 _data_hub_data_importer_data_object_admin:
     resource: "@PimcoreDataImporterBundle/Controller/ConfigDataObjectController.php"
-    type:     annotation
+    type:     attribute
     options:
         expose: true
 
 _data_hub_data_importer_connections:
     resource: "@PimcoreDataImporterBundle/Controller/ConnectionController.php"
-    type:     annotation
+    type:     attribute
     options:
         expose: true
 
 _data_hub_data_importer_data_object_push:
     resource: "@PimcoreDataImporterBundle/Controller/PushImportController.php"
-    type:     annotation
+    type:     attribute
