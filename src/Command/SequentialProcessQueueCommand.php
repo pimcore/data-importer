@@ -19,6 +19,7 @@ use Doctrine\DBAL\Driver\Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Cache\RuntimeCache;
 use Pimcore\Console\AbstractCommand;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
@@ -90,6 +91,9 @@ class SequentialProcessQueueCommand extends AbstractCommand
 
                 // call the garbage collector to avoid too many connections & memory issue
                 if (($i + 1) % 200 === 0) {
+                    // Clear runtime cache so that pimcore memory usage does not go overboard 🫠
+                    // https://github.com/pimcore/pimcore/issues/15866
+                    \Pimcore\RuntimeCache::clear();
                     \Pimcore::collectGarbage();
                 }
             }
