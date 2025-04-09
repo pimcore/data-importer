@@ -68,7 +68,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
      * @throws \Doctrine\DBAL\Exception
      * @throws InvalidConfigurationException
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->lock()) {
             $this->writeError('The command is already running.');

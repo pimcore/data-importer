@@ -54,7 +54,7 @@ class PrepareImportCommand extends AbstractCommand
      *
      * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $configNames = $input->getArgument('config_name');
 
