@@ -90,10 +90,7 @@ class SequentialProcessQueueCommand extends AbstractCommand
 
                 // call the garbage collector to avoid too many connections & memory issue
                 if (($i + 1) % 200 === 0) {
-                    // Clear runtime cache so that pimcore memory usage does not go overboard 🫠
-                    // https://github.com/pimcore/pimcore/issues/15866
-                    // https://docs.pimcore.com/platform/Pimcore/Objects/External_System_Interaction/#memory-issues
-                    \Pimcore\RuntimeCache::clear();
+                    \Pimcore\Cache\RuntimeCache::clear();
                     \Pimcore::collectGarbage();
                 }
             }
