@@ -59,7 +59,7 @@ class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
     /**
      * @return string[]
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             ConfigurationEvents::CONFIGURATION_POST_DELETE => 'postDelete',
