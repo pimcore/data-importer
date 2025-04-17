@@ -44,6 +44,19 @@ class XmlFileInterpreter extends AbstractInterpreter
      */
     protected $cachedFilePath = null;
 
+    protected function loadDataRaw(string $path)
+    {
+        $schema = $this->schema;
+
+        return XmlUtils::loadFile($path, function ($dom) use ($schema) {
+            if (!empty($schema)) {
+                return @$dom->schemaValidateSource($schema);
+            }
+
+            return true;
+        });
+    }
+
     /**
      * @param string $path
      *
@@ -53,15 +66,8 @@ class XmlFileInterpreter extends AbstractInterpreter
      */
     protected function loadData(string $path)
     {
-        if ($this->cachedFilePath === $path && !empty($this->cachedContent)) {
-            $schema = $this->schema;
-            $dom = XmlUtils::loadFile($path, function ($dom) use ($schema) {
-                if (!empty($schema)) {
-                    return @$dom->schemaValidateSource($schema);
-                }
-
-                return true;
-            });
+        if ($this->cachedFilePath !== $path || !empty($this->cachedContent)) {
+            $dom = $this->loadDataRaw($path);
         } else {
             $dom = $this->cachedContent;
         }
@@ -100,14 +106,7 @@ class XmlFileInterpreter extends AbstractInterpreter
         }
 
         try {
-            $schema = $this->schema;
-            $dom = XmlUtils::loadFile($path, function ($dom) use ($schema) {
-                if (!empty($schema)) {
-                    return @$dom->schemaValidateSource($schema);
-                }
-
-                return true;
-            });
+            $dom = $this->loadDataRaw($path);
         } catch (XmlParsingException $exception) {
             $message = 'Error validating XML: ' . $exception->getMessage();
             $this->applicationLogger->info($message, [
