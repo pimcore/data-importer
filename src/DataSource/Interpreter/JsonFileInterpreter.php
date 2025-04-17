@@ -69,7 +69,7 @@ class JsonFileInterpreter extends AbstractInterpreter
 
     public function setSettings(array $settings): void
     {
-        $path = $settings['path'];
+        $path = $settings['path'] ?? '';
         if (!empty($path)) {
             try {
                 (new Parser)->parse($path);
