@@ -124,7 +124,7 @@ class DataObjectLoader
     public function loadById(string $identifier,
                              string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {
-        return $className::getById($identifier);
+        return $className::getById((int) $identifier);
     }
 
     public function loadByPath(string $identifier,
