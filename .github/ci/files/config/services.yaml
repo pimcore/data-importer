@@ -1,3 +1,6 @@
+parameters:
+    secret: ThisTokenIsNotSoSecretChangeIt
+
 services:
     # default configuration for services in *this* file
     _defaults:
