@@ -40,6 +40,8 @@ jobs:
             - name: Parse PHP versions from composer.json
               id: parse-php-versions
               run: |
+                  echo "MY_SECRET=${PIMCORE_INSTANCE_IDENTIFIER}"
+                  echo "MY_SECRET2=${PIMCORE_ENCRYPTION_SECRET}"
                   if [ -f composer.json ]; then
                     php_versions=$(jq -r '.require.php' composer.json | grep -oP '\d+\.\d+' | tr '\n' ',' | sed 's/,$//')
                     if [ -z "$php_versions" ]; then
