@@ -1,4 +1,12 @@
+pimcore:
+    product_registration:
+        instance_identifier: '%env(PIMCORE_INSTANCE_IDENTIFIER)%'
+        product_key: '%env(PIMCORE_PRODUCT_KEY)%'
+
 parameters:
+    pimcore_test.db.dsn: '%env(PIMCORE_TEST_DB_DSN)%'
+    env(PIMCORE_TEST_DB_DSN): ~
+    pimcore.encryption.secret: '%env(PIMCORE_ENCRYPTION_SECRET)%'
     secret: ThisTokenIsNotSoSecretChangeIt
 
 services:
