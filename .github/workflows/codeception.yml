@@ -13,9 +13,6 @@ on:
         types: [opened, synchronize, reopened]
 
 env:
-    PIMCORE_INSTANCE_IDENTIFIER: ${{ secrets.PIMCORE_CI_INSTANCE_IDENTIFIER }}
-    PIMCORE_ENCRYPTION_SECRET: ${{ secrets.PIMCORE_CI_ENCRYPTION_SECRET }}
-    PIMCORE_PRODUCT_KEY: ${{ secrets.PIMCORE_CI_PRODUCT_KEY }}
     PIMCORE_PROJECT_ROOT: ${{ github.workspace }}
     PRIVATE_REPO: ${{ github.event.repository.private }}
 
@@ -40,8 +37,6 @@ jobs:
             - name: Parse PHP versions from composer.json
               id: parse-php-versions
               run: |
-                  echo "MY_SECRET=${PIMCORE_INSTANCE_IDENTIFIER}"
-                  echo "MY_SECRET2=${PIMCORE_ENCRYPTION_SECRET}"
                   if [ -f composer.json ]; then
                     php_versions=$(jq -r '.require.php' composer.json | grep -oP '\d+\.\d+' | tr '\n' ',' | sed 's/,$//')
                     if [ -z "$php_versions" ]; then
@@ -98,3 +93,6 @@ jobs:
         secrets:
             SSH_PRIVATE_KEY_PIMCORE_DEPLOYMENTS_USER: ${{ secrets.SSH_PRIVATE_KEY_PIMCORE_DEPLOYMENTS_USER }}
             COMPOSER_PIMCORE_REPO_PACKAGIST_TOKEN: ${{ secrets.COMPOSER_PIMCORE_REPO_PACKAGIST_TOKEN }}
+            PIMCORE_INSTANCE_IDENTIFIER: ${{ secrets.PIMCORE_CI_INSTANCE_IDENTIFIER }}
+            PIMCORE_ENCRYPTION_SECRET: ${{ secrets.PIMCORE_CI_ENCRYPTION_SECRET }}
+            PIMCORE_PRODUCT_KEY: ${{ secrets.PIMCORE_CI_PRODUCT_KEY }}
