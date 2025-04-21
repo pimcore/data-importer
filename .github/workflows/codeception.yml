@@ -82,7 +82,6 @@ jobs:
         with:
             APP_ENV: test
             PIMCORE_TEST: 1
-            CACHE_CLEAR: true
             PRIVATE_REPO: ${{ needs.setup-matrix.outputs.private_repo}}
             PHP_VERSION: ${{ matrix.matrix.php-version }}
             DATABASE: ${{ matrix.matrix.database }}
@@ -96,4 +95,3 @@ jobs:
             PIMCORE_INSTANCE_IDENTIFIER: ${{ secrets.PIMCORE_CI_INSTANCE_IDENTIFIER }}
             PIMCORE_ENCRYPTION_SECRET: ${{ secrets.PIMCORE_CI_ENCRYPTION_SECRET }}
             PIMCORE_PRODUCT_KEY: ${{ secrets.PIMCORE_CI_PRODUCT_KEY }}
-            GOOGLE_CLIENT_ID: "foobar"
