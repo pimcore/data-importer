@@ -1,6 +1,6 @@
 {
   "name": "pimcore/data-importer",
-  "license": "Pimcore Open Core License (POCL)",
+  "license": "proprietary",
   "type": "pimcore-bundle",
   "description": "Adds a comprehensive import functionality to Pimcore Datahub",
   "config": {
