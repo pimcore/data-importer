@@ -1,16 +1,13 @@
 <?php
 
 /**
- * Pimcore
- *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Controller;
@@ -48,6 +45,7 @@ class ConfigDataObjectController extends UserAwareController
     use JsonHelperTrait;
 
     public const CONFIG_NAME = 'plugin_datahub_config';
+
     private const CONFIG_DOES_NOT_EXIST_MSG = 'Configuration %s does not exist.';
 
     /**
@@ -332,6 +330,7 @@ class ConfigDataObjectController extends UserAwareController
                     $preview = $dataPreview->getDataPreview();
                     if (!$this->isValidJson($preview)) {
                         unlink($previewFilePath);
+
                         throw new \Exception('Invalid data preview. Deleted preview data.');
                     }
                     $dataPreviewData = $preview;

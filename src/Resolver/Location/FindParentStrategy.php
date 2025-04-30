@@ -1,16 +1,13 @@
 <?php
 
 /**
- * Pimcore
- *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
@@ -27,7 +24,9 @@ use Pimcore\Model\Element\ElementInterface;
 class FindParentStrategy implements LocationStrategyInterface
 {
     const FIND_BY_ID = 'id';
+
     const FIND_BY_PATH = 'path';
+
     const FIND_BY_ATTRIBUTE = 'attribute';
 
     /**
@@ -110,9 +109,11 @@ class FindParentStrategy implements LocationStrategyInterface
             switch ($this->findStrategy) {
                 case self::FIND_BY_ID:
                     $newParent = $this->dataObjectLoader->loadById($identifier);
+
                     break;
                 case self::FIND_BY_PATH:
                     $newParent = $this->dataObjectLoader->loadByPath($identifier);
+
                     break;
                 case self::FIND_BY_ATTRIBUTE:
                     $class = ClassDefinition::getById($this->attributeDataObjectClassId);
@@ -121,12 +122,13 @@ class FindParentStrategy implements LocationStrategyInterface
                     }
                     $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
                     $newParent = $this->dataObjectLoader->loadByAttribute($className,
-                                                                        $this->attributeName,
-                                                                        $identifier,
-                                                                        $this->attributeLanguage,
-                                                                        true,
-                                                                        1
+                        $this->attributeName,
+                        $identifier,
+                        $this->attributeLanguage,
+                        true,
+                        1
                     );
+
                     break;
             }
         }
