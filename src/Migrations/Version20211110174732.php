@@ -1,16 +1,13 @@
 <?php
 
 /**
- * Pimcore
- *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Migrations;
@@ -21,7 +18,9 @@ use Pimcore\Migrations\BundleAwareMigration;
 class Version20211110174732 extends BundleAwareMigration
 {
     protected const DELTA_CACHE_TABLE = 'bundle_data_hub_data_importer_delta_cache';
+
     protected const LAST_CRON_TABLE = 'bundle_data_hub_data_importer_last_cron_execution';
+
     protected const IMPORTER_QUEUE_TABLE = 'bundle_data_hub_data_importer_queue';
 
     protected function getBundleName(): string

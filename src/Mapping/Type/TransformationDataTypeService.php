@@ -1,16 +1,13 @@
 <?php
 
 /**
- * Pimcore
- *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
@@ -21,28 +18,51 @@ use Pimcore\Model\DataObject\Objectbrick\Definition;
 class TransformationDataTypeService
 {
     const DEFAULT_TYPE = 'default';
+
     const DEFAULT_ARRAY = 'array';
+
     const NUMERIC = 'numeric';
+
     const BOOLEAN = 'boolean';
+
     const QUANTITY_VALUE = 'quantityValue';
+
     const QUANTITY_VALUE_ARRAY = 'quantityValueArray';
+
     const INPUT_QUANTITY_VALUE = 'inputQuantityValue';
+
     const INPUT_QUANTITY_VALUE_ARRAY = 'inputQuantityValueArray';
+
     const DATE = 'date';
+
     const DATE_ARRAY = 'dateArray';
+
     const ASSET = 'asset';
+
     const ASSET_ARRAY = 'assetArray';
+
     const GALLERY = 'gallery';
+
     const IMAGE_ADVANCED = 'imageAdvanced';
+
     const DATA_OBJECT = 'dataObject';
+
     const DATA_OBJECT_ARRAY = 'dataObjectArray';
+
     const ADVANCED_DATA_OBJECT_ARRAY = 'advancedDataObjectArray';
+
     const ADVANCED_ASSET_ARRAY = 'advancedAssetArray';
+
     const GEOPOINT_VALUE = 'geoPoint';
+
     const GEOBOUNDS_VALUE = 'geoBounds';
+
     const GEOPOLYGON_VALUE = 'geoPolygon';
+
     const GEOPOLYLINE_VALUE = 'geoPolyline';
+
     const RGBA_COLOR = 'rgbaColor';
+
     const COUNTRY_ARRAY = 'countryArray';
 
     protected $transformationDataTypesMapping = [

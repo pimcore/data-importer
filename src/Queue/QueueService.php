@@ -1,16 +1,13 @@
 <?php
 
 /**
- * Pimcore
- *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\Queue;
@@ -54,6 +51,7 @@ class QueueService
     public function addItemToQueue(string $configName, string $executionType, string $jobType, string $data, int $userOwner = 0): void
     {
         $db = $this->getDb();
+
         try {
             $db->executeQuery(sprintf(
                 'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE timestamp = VALUES(timestamp)',
@@ -175,7 +173,7 @@ class QueueService
         try {
             return $this->getDb()->fetchOne(
                 sprintf('SELECT count(*) as count FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),
-                    [$configName]
+                [$configName]
             ) ?? 0;
         } catch (TableNotFoundException $exception) {
             return $this->createQueueTableIfNotExisting(function () use ($configName) {
