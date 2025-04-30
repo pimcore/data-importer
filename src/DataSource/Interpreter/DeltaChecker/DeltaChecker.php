@@ -1,16 +1,13 @@
 <?php
 
 /**
- * Pimcore
- *
- * This source file is available under two different licenses:
- * - GNU General Public License version 3 (GPLv3)
- * - Pimcore Commercial License (PCL)
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
  * Full copyright and license information is available in
  * LICENSE.md which is distributed with this source code.
  *
- *  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.org)
- *  @license    http://www.pimcore.org/license     GPLv3 and PCL
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
  */
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker;
@@ -60,9 +57,9 @@ class DeltaChecker
     {
         try {
             return $this->db->fetchOne(
-                    sprintf('SELECT hash FROM %s WHERE configName = ? AND id = ?', self::CACHE_TABLE_NAME),
-                    [$configName, $id]
-                ) ?? '';
+                sprintf('SELECT hash FROM %s WHERE configName = ? AND id = ?', self::CACHE_TABLE_NAME),
+                [$configName, $id]
+            ) ?? '';
         } catch (TableNotFoundException $exception) {
             return $this->createTableIfNotExisting(function () use ($configName, $id) {
                 return $this->getCurrentHash($configName, $id);
