@@ -1,20 +1,21 @@
-name: PHP Style
+name: "PHP-CS-Fixer"
 
-on: [push]
+on:
+    push:
+        branches:
+            - "[0-9]+.[0-9]+"
+            - "[0-9]+.x"
+
+permissions:
+    contents: write
 
 jobs:
-    php-cs-fixer:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-              with:
-                  ref: ${{ github.head_ref }}
-
-            - name: PHP-CS-Fixer
-              uses: docker://oskarstark/php-cs-fixer-ga:2.19.0
-              with:
-                args: --config=.php_cs.dist --allow-risky yes
-
-            - uses: stefanzweifel/git-auto-commit-action@v4
-              with:
-                  commit_message: Apply php-cs-fixer changes
+    php-style:
+        uses: pimcore/workflows-collection-public/.github/workflows/reusable-php-cs-fixer.yaml@main
+        if: github.repository_owner == 'pimcore'
+        secrets:
+            PHP_CS_FIXER_GITHUB_TOKEN: ${{ secrets.PHP_CS_FIXER_GITHUB_TOKEN }}
+        with:
+            head_ref: ${{ github.event.pull_request.head.ref }}
+            repository: ${{ github.event.pull_request.head.repo.full_name }}
+            config_file: .php-cs-fixer.dist.php
