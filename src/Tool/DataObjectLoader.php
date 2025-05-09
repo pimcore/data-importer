@@ -74,18 +74,14 @@ class DataObjectLoader
         }
 
         if ($this->isObjectBrickAttribute($attributeName) === false && $operator === '=' && $identifier !== '') {
-            $getter = 'getBy' . $attributeName;
-            if (empty($attributeLanguage) === false) {
-                $element = $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
-            } else {
-                if (method_exists($className, $getter)) {
-                    $element = $className::$getter($identifier);
-                }
-
-                if (!$element) {
-                    $element = $className::$getter($identifier, $limit, 0, $objectTypes);
-                }
-            }
+           $element = $this->getDataObject(
+                $attributeName,
+                $className,
+                $identifier,
+                $attributeLanguage,
+                $limit,
+                $objectTypes
+            );
         } else {
             $queryFieldName = $attributeName;
             if ($this->isObjectBrickAttribute($attributeName) === true) {
@@ -131,5 +127,26 @@ class DataObjectLoader
         string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {
         return $className::getByPath($identifier);
+    }
+
+    private function getDataObject(
+        string $attributeName,
+        string $className,
+        string $identifier,
+        string $attributeLanguage,
+        int $limit,
+        array $objectTypes
+    ): ?ElementInterface {
+        $getter = 'getBy' . $attributeName;
+
+        if (empty($attributeLanguage) === false) {
+            return $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
+        }
+
+        if(method_exists($className, $getter)) {
+            return $className::$getter($identifier);
+        }
+
+        return $className::$getter($identifier, $limit, 0, $objectTypes);
     }
 }
