@@ -74,7 +74,7 @@ class DataObjectLoader
         }
 
         if ($this->isObjectBrickAttribute($attributeName) === false && $operator === '=' && $identifier !== '') {
-           $element = $this->getDataObject(
+            $element = $this->getDataObject(
                 $attributeName,
                 $className,
                 $identifier,
@@ -143,7 +143,7 @@ class DataObjectLoader
             return $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
         }
 
-        if(method_exists($className, $getter)) {
+        if (method_exists($className, $getter)) {
             return $className::$getter($identifier);
         }
 
