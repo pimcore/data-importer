@@ -78,7 +78,8 @@ class TransformationDataTypeService
             'firstname',
             'lastname',
             'email',
-            'gender'
+            'gender',
+            'calculatedValue'
         ],
         self::NUMERIC => [
             'numeric',
