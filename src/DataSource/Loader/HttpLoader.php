@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -40,15 +41,23 @@ class HttpLoader implements DataLoaderInterface
     public function loadData(): string
     {
         $folder = PIMCORE_PRIVATE_VAR . '/tmp/datahub/dataimporter/http-loader/';
-        $this->filesystem->mkdir($folder, 0775);
 
         $this->importFilePath = $folder . uniqid('http-import-');
         $fullUrl = $this->schema . $this->url;
 
-        if (copy($fullUrl, $this->importFilePath)) {
+        try {
+            $this->filesystem->copy($fullUrl, $this->importFilePath, true);
             return $this->importFilePath;
-        } else {
-            throw new InvalidConfigurationException(sprintf('Could not copy from remote location `%s` to local tmp file `%s`', $fullUrl, $this->importFilePath));
+        } catch (Exception $ex){
+            throw new InvalidConfigurationException(
+                sprintf(
+                    'Could not copy from remote location `%s` to local tmp file `%s`',
+                    $fullUrl,
+                    $this->importFilePath
+                ),
+                0,
+                $ex
+            );
         }
     }
 
