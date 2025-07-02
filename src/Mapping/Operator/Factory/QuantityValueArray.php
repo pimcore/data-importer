@@ -41,6 +41,8 @@ class QuantityValueArray extends AbstractOperator
             if (($value === null || $value === '') && $unitId === null) {
                 $result[$key] = null;
                 continue;
+            } elseif (($value !== null || $value !== '') && $unitId === null) {
+                $unitId = $this->getDefaultUnitForClassificationKey($key);
             }
             $result[$key] = new \Pimcore\Model\DataObject\Data\QuantityValue(
                 $value === null ? null : floatval($value),
@@ -49,6 +51,36 @@ class QuantityValueArray extends AbstractOperator
         }
 
         return $result;
+    }
+
+    private function getDefaultUnitForClassificationKey(string $key): ?string
+    {
+        $keyParts = explode('-', $key);
+        if (count($keyParts) !== 2) {
+            throw new \Exception('Key not format <GROUP_ID>-<KEY_ID>: ' . $key);
+        }
+
+        if (!is_numeric($keyParts[0])) {
+            throw new \Exception('groupId not valid');
+        }
+
+        if (!is_numeric($keyParts[1])) {
+            throw new \Exception('keyId not valid');
+        }
+
+        // Try to set the default unit
+        $keyConfig = \Pimcore\Model\DataObject\Classificationstore\DefinitionCache::get((int)$keyParts[1]);
+        $dataDefinition = \Pimcore\Model\DataObject\Classificationstore\Service::getFieldDefinitionFromKeyConfig(
+            $keyConfig
+        );
+
+        if ($dataDefinition instanceof \Pimcore\Model\DataObject\ClassDefinition\Data\QuantityValue
+            && $dataDefinition->getDefaultUnit() !== null
+        ) {
+            return $dataDefinition->getDefaultUnit();
+        }
+
+        return null;
     }
 
     /**
