@@ -252,7 +252,7 @@ class ImportProcessingService
                     'fileObject' => new FileObject(json_encode($importDataRow))
                 ]);
             }
-        } catch (\Exception | \TypeError $e) {
+        } catch (\Throwable $e) {
             $message = "Error processing element: {$importDataRowString}";
             $this->logger->error($message . $e);
 
