@@ -65,6 +65,8 @@ class TransformationDataTypeService
 
     const COUNTRY_ARRAY = 'countryArray';
 
+    const FIELD_COLLECTION = 'fieldCollection';
+
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
             'input',
@@ -152,6 +154,9 @@ class TransformationDataTypeService
         ],
         self::COUNTRY_ARRAY => [
             'countrymultiselect'
+        ],
+        self::FIELD_COLLECTION => [
+            'fieldcollections'
         ]
     ];
 
