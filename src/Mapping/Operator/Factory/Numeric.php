@@ -37,7 +37,7 @@ class Numeric extends AbstractOperator
 
         $floatValue = floatval($inputData);
 
-        if ($this->returnNullIfEmpty && empty($floatValue)) {
+        if ($this->returnNullIfEmpty && !is_numeric($inputData) && $floatValue === 0.0) {
             return null;
         }
 
@@ -68,7 +68,7 @@ class Numeric extends AbstractOperator
      */
     public function generateResultPreview($inputData)
     {
-        if ($this->returnNullIfEmpty && empty($inputData)) {
+        if ($this->returnNullIfEmpty && !is_numeric($inputData)) {
             return null;
         }
 
