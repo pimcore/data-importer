@@ -152,7 +152,7 @@ class Direct implements DataTargetInterface
             $fieldName = $fieldNameParts[2];
         }
 
-        if ($this->fieldName === 'key') {
+        if ($this->fieldName === 'key' || $this->fieldName === 'type') {
             $currentDataIsEmpty = empty($currentData);
             $newDataIsEmpty = empty($newData);
         } else {
