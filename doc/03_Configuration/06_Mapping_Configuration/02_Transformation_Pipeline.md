@@ -35,7 +35,15 @@ Their name is usually prefixed with `As`.
   input quanitity value, expects first item in array to be value, second item in array to be unit id. 
 - **As Input Quantity Value Array**: Same like `As Input Quantity Value`, but for arrays of values. Expects an array
   with sub-arrays where first item to be value and second item to be unit id each and results in an array of quantity value objects.
-- **As Numeric**: Converts data to a numeric by using `floatval`.
+- **As Numeric**: Converts data to a numeric with type casting.
+  - `Return null if empty` option:
+
+    | Input   | Output     |
+    | ------- | ---------- |
+    | 1234    | 1234       |
+    | String  | --EMPTY--  |
+    |         | --EMPTY--  |
+    | 0       | 0          |
 - **As Quantity Value**: Converts an array to a quantity value object for 
     quanitity value, expects first item in array to be value, second item in array to be unit id.
 - **As Quantity Value Array**: Same like `As Quantity Value`, but for arrays of values. Expects an array
