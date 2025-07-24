@@ -51,7 +51,8 @@ class PushImportController
         '/pimcore-datahub-import/{config}/push',
         name: 'data_hub_data_importer_push',
         methods: ['POST'],
-        requirements: ['config' => '[\w-]+']
+        requirements: ['config' => '[\w-]+'],
+        options: ['expose' => true]
     )]
     public function pushAction(
         string $config,

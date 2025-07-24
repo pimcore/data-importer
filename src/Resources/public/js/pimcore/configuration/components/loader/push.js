@@ -62,7 +62,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.push = 
                         items: [
                             {
                                 xtype: 'label',
-                                text: location.protocol + '//' + location.host + '/pimcore-datahub-import/' + this.initContext.configName + '/push'
+                                text: location.protocol + '//' + location.host + Routing.generate('data_hub_data_importer_push', {config: this.initContext.configName})
                             }
                         ]
                     }
