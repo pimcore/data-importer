@@ -263,7 +263,6 @@ class ImportProcessingService
             $message .= $e->getMessage();
             // $currentMapping can be null before and after the loop above
             // will have a value if it errors out during the loop
-            // @phpstan-ignore-next-line
             if ($currentMapping !== null) {
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
             }
