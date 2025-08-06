@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Event\DataObject;
 
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Model\Element\ElementInterface;
 use Throwable;
 
@@ -22,7 +23,8 @@ class ProcessElementExceptionEvent extends AbstractDataObjectImportEvent
         array $rawData,
         ElementInterface $dataObject,
         private ?string $message,
-        private Throwable $exception
+        private Throwable $exception,
+        private ?MappingConfiguration $mappingConfiguration
     ) {
         parent::__construct($configName, $rawData, $dataObject);
     }
@@ -35,5 +37,14 @@ class ProcessElementExceptionEvent extends AbstractDataObjectImportEvent
     public function getException(): Throwable
     {
         return $this->exception;
+    }
+
+    /**
+     * This is the last mapping configuration that was being processed when the exception was thrown. No value will be set if all transformations were completed.
+     * @return null|MappingConfiguration 
+     */
+    public function getMappingConfiguration(): ?MappingConfiguration
+    {
+        return $this->mappingConfiguration;
     }
 }
