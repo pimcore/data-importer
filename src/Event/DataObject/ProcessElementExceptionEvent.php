@@ -42,7 +42,7 @@ class ProcessElementExceptionEvent extends AbstractDataObjectImportEvent
     /**
      * This is the last mapping configuration that was being processed when the exception was thrown.
      * No value will be set if all transformations were completed.
-     * @return null|MappingConfiguration 
+     * @return null|MappingConfiguration
      */
     public function getMappingConfiguration(): ?MappingConfiguration
     {
