@@ -268,7 +268,14 @@ class ImportProcessingService
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
             }
 
-            $event = new ProcessElementExceptionEvent($configName, $importDataRow, $element, $message, $e, $currentMapping);
+            $event = new ProcessElementExceptionEvent(
+                $configName,
+                $importDataRow,
+                $element,
+                $message,
+                $e,
+                $currentMapping
+            );
             $this->eventDispatcher->dispatch($event);
 
             $this->applicationLogger->error($message, [
