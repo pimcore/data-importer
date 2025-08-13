@@ -65,6 +65,8 @@ class TransformationDataTypeService
 
     const COUNTRY_ARRAY = 'countryArray';
 
+    const CALCULATED = 'calculated';
+
     protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
             'input',
@@ -79,7 +81,6 @@ class TransformationDataTypeService
             'lastname',
             'email',
             'gender',
-            'calculatedValue'
         ],
         self::NUMERIC => [
             'numeric',
@@ -153,7 +154,10 @@ class TransformationDataTypeService
         ],
         self::COUNTRY_ARRAY => [
             'countrymultiselect'
-        ]
+        ],
+        self::CALCULATED =>[
+            'calculatedValue'
+        ],
     ];
 
     public function appendTypeMapping(string $pimcoreDataType, string $transformationTargetType): void
@@ -236,6 +240,10 @@ class TransformationDataTypeService
 
         if (in_array(self::DEFAULT_TYPE, $transformationTargetType)) {
             if ($includeSystemRead) {
+                // Allow reading from calculated fields
+                foreach ($class->getFieldDefinitions() as $definition) {
+                    $this->addTypesToAttributesArray($definition, self::CALCULATED, $attributes);
+                }
                 $attributes['id'] = [
                     'key' => 'id',
                     'title' => 'SYSTEM ID',
