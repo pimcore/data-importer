@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
@@ -266,6 +267,16 @@ class ImportProcessingService
             if ($currentMapping !== null) {
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
             }
+
+            $event = new ProcessElementExceptionEvent(
+                $configName,
+                $importDataRow,
+                $element,
+                $message,
+                $e,
+                $currentMapping
+            );
+            $this->eventDispatcher->dispatch($event);
 
             $this->applicationLogger->error($message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
