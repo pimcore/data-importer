@@ -266,9 +266,14 @@ class ImportProcessingService
      * @param ElementInterface $element
      * @param array $importDataRow  
      * @param MappingConfiguration[] $mapping
-     * @return MappingConfiguration|null Returns the mapping that was being processed. Wrapped with a try/catch will allow user to view the last mapping being processed.
+     * @return MappingConfiguration|null Returns the mapping that was being processed.
      */
-    public function processElementTransformations(ElementInterface $element, array $importDataRow, array $mapping, &$currentMapping = null): void
+    public function processElementTransformations(
+        ElementInterface $element,
+        array $importDataRow,
+        array $mapping,
+        &$currentMapping = null
+    ): void
     {
         foreach ($mapping as $mappingConfiguration) {
             $currentMapping = $mappingConfiguration;
