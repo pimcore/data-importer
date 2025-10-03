@@ -18,6 +18,10 @@ final class Version20251003105903 extends BundleAwareMigration
     public function up(Schema $schema): void
     {
         $queueTableName = QueueService::QUEUE_TABLE_NAME;
+        if (!$schema->hasTable($queueTableName)) {
+            return;
+        }
+
         $this->addSql("
             ALTER TABLE $queueTableName
             MODIFY COLUMN `data` MEDIUMTEXT
@@ -30,6 +34,10 @@ final class Version20251003105903 extends BundleAwareMigration
     public function down(Schema $schema): void
     {
         $queueTableName = QueueService::QUEUE_TABLE_NAME;
+        if (!$schema->hasTable($queueTableName)) {
+            return;
+        }
+
         $this->addSql("
             ALTER TABLE $queueTableName
             MODIFY COLUMN `data` TEXT
