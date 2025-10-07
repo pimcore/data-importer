@@ -88,7 +88,7 @@ class QueueService
             userOwner int unsigned NOT NULL DEFAULT 0,
 
             configName varchar(80) NULL,
-            `data` TEXT null,
+            `data` MEDIUMTEXT null,
             executionType varchar(20) NULL,
             jobType varchar(20) NULL,
             dispatched bigint NULL,
