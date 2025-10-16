@@ -265,8 +265,8 @@ class ImportProcessingService
      * 
      * @param MappingConfiguration[] $mapping Array of mapping configurations.
      * @param-out mixed &$currentMapping Output variable that will contain the current mapping.
+     *
      * @throws \Throwable If the processing or a transformation fails
-     * @return void
      */
     public function processElementTransformations(
         ElementInterface $element,
