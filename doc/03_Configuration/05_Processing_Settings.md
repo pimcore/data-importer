@@ -10,8 +10,7 @@ For details see [Import Execution Details](../04_Import_Execution_Details.md).
 Define if the importer should archive the imported file for later traceability. When activated, 
 the importer will create an application logger entry with the imported file as file object attached. 
 
-Be aware of needed disk space for archiving the data and that the importer creates a log entry of every 
-single data row in application logger anyway. For details also see 
+Be aware of needed disk space for archiving the data. For details also see 
 [Import Process and Logging](../05_Import_Progress_and_Logging.md).
    
 
@@ -40,3 +39,13 @@ anymore. There are two cleanup strategies available:
 Only activate this option, if the imports are always full-imports. Otherwise there might be data loss. 
 
 For details see also [Import Execution Details](../04_Import_Execution_Details.md). 
+
+### Logging Settings
+The importer allows fine-grained control over application logger output to reduce log volume and server inode consumption during large imports.
+
+- **Disable Info Logs**: Prevents all info-level application logger entries for this import configuration.
+- **Disable Info File Objects**: Disables file object attachments in info logs while keeping the log messages.
+- **Disable Error Logs**: Prevents all error-level application logger entries for this import configuration.
+- **Disable Error File Objects**: Disables file object attachments in error logs while keeping the log messages.
+
+For details about logging see also [Import Process and Logging](../05_Import_Progress_and_Logging.md). 
