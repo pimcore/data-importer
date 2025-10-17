@@ -202,33 +202,7 @@ class ImportProcessingService
                     'relatedObject' => $element
                 ]);
 
-                foreach ($mapping as $mappingConfiguration) {
-
-                    // extract raw data
-                    $data = null;
-                    $currentMapping = $mappingConfiguration;
-                    if (is_array($mappingConfiguration->getDataSourceIndex())) {
-                        $data = [];
-                        foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
-                            $data[] = $importDataRow[$index] ?? null;
-                        }
-
-                        if (count($data) === 1) {
-                            $data = $data[0];
-                        }
-                    } else {
-                        $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
-                    }
-
-                    // process pipeline
-                    foreach ($mappingConfiguration->getTransformationPipeline() as $operator) {
-                        $data = $operator->process($data);
-                    }
-
-                    $dataTarget = $mappingConfiguration->getDataTarget();
-                    $dataTarget->assignData($element, $data);
-                }
-                $currentMapping = null;
+                $this->processElementTransformations($element, $importDataRow, $mapping, $currentMapping);
 
                 $event = new PreSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
@@ -284,6 +258,51 @@ class ImportProcessingService
                 'relatedObject' => $element,
             ]);
         }
+    }
+
+    /**
+     * Process transformations for an element
+     * 
+     * @param MappingConfiguration[] $mapping Array of mapping configurations.
+     * @param-out mixed &$currentMapping Output variable that will contain the current mapping.
+     *
+     * @throws \Throwable If the processing or a transformation fails
+     */
+    public function processElementTransformations(
+        ElementInterface $element,
+        array $importDataRow,
+        array $mapping,
+        &$currentMapping = null
+    ): void
+    {
+        foreach ($mapping as $mappingConfiguration) {
+            $currentMapping = $mappingConfiguration;
+            
+            // extract raw data
+            $data = null;
+            if (is_array($mappingConfiguration->getDataSourceIndex())) {
+                $data = [];
+                foreach ($mappingConfiguration->getDataSourceIndex() as $index) {
+                    $data[] = $importDataRow[$index] ?? null;
+                }
+
+                if (count($data) === 1) {
+                    $data = $data[0];
+                }
+            } else {
+                $data = $importDataRow[$mappingConfiguration->getDataSourceIndex()] ?? null;
+            }
+
+            // process pipeline
+            foreach ($mappingConfiguration->getTransformationPipeline() as $operator) {
+                $data = $operator->process($data);
+            }
+
+            $dataTarget = $mappingConfiguration->getDataTarget();
+            $dataTarget->assignData($element, $data);
+        }
+        
+        $currentMapping = null; // Success - clear current mapping
     }
 
     protected function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
