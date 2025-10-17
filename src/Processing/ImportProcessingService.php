@@ -262,8 +262,9 @@ class ImportProcessingService
 
     /**
      * Process transformations for an element
-     * 
+     *
      * @param MappingConfiguration[] $mapping Array of mapping configurations.
+     *
      * @param-out mixed &$currentMapping Output variable that will contain the current mapping.
      *
      * @throws \Throwable If the processing or a transformation fails
@@ -273,11 +274,10 @@ class ImportProcessingService
         array $importDataRow,
         array $mapping,
         &$currentMapping = null
-    ): void
-    {
+    ): void {
         foreach ($mapping as $mappingConfiguration) {
             $currentMapping = $mappingConfiguration;
-            
+
             // extract raw data
             $data = null;
             if (is_array($mappingConfiguration->getDataSourceIndex())) {
@@ -301,7 +301,7 @@ class ImportProcessingService
             $dataTarget = $mappingConfiguration->getDataTarget();
             $dataTarget->assignData($element, $data);
         }
-        
+
         $currentMapping = null; // Success - clear current mapping
     }
 
