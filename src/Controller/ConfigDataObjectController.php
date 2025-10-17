@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
+use Pimcore\Helper\ParameterBagHelper;
 use Cron\CronExpression;
 use Exception;
 use http\Exception\InvalidArgumentException;
@@ -73,7 +74,7 @@ class ConfigDataObjectController extends UserAwareController
 
         try {
             $data = $request->request->get('data');
-            $modificationDate = $request->request->getInt('modificationDate');
+            $modificationDate = ParameterBagHelper::getInt($request->request, 'modificationDate');
 
             $dataDecoded = json_decode($data, true);
 
@@ -302,7 +303,7 @@ class ConfigDataObjectController extends UserAwareController
     ) {
         $configName = $request->request->get('config_name');
         $currentConfig = $request->request->get('current_config');
-        $recordNumber = $request->request->getInt('record_number');
+        $recordNumber = ParameterBagHelper::getInt($request->request, 'record_number');
 
         $dataPreview = null;
         $hasData = false;
@@ -396,7 +397,7 @@ class ConfigDataObjectController extends UserAwareController
     ) {
         $configName = $request->request->get('config_name');
         $currentConfig = $request->request->get('current_config');
-        $recordNumber = $request->request->getInt('current_preview_record');
+        $recordNumber = ParameterBagHelper::getInt($request->request, 'current_preview_record');
 
         $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
@@ -524,8 +525,8 @@ class ConfigDataObjectController extends UserAwareController
             strip_tags($request->query->get('transformation_result_type')),
             $sortParams['orderKey'] ?? 'name',
             $sortParams['order'] ?? 'ASC',
-            $request->query->getInt('start'),
-            $request->query->getInt('limit'),
+            ParameterBagHelper::getInt($request->query, 'start'),
+            ParameterBagHelper::getInt($request->query, 'limit'),
             strip_tags($request->query->get('searchfilter')),
             strip_tags($request->query->get('filter'))
         );
