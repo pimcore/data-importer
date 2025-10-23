@@ -33,6 +33,8 @@ jobs:
             - name: Checkout PR head (for push or other events)
               if: github.event_name != 'pull_request_target'
               uses: "actions/checkout@v4"
+              with:
+                  ref: ${{ github.ref }}
 
             - name: Checkout reusable workflow repo
               uses: actions/checkout@v4
