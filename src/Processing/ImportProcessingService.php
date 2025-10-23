@@ -12,27 +12,27 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
+use Pimcore\Log\FileObject;
+use Psr\Log\LoggerAwareTrait;
+use Pimcore\Model\Tool\TmpStore;
+use Pimcore\Log\ApplicationLogger;
+use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
-use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
-use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Boolean;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
-use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
-use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\Log\ApplicationLogger;
-use Pimcore\Log\FileObject;
-use Pimcore\Model\Element\ElementInterface;
-use Pimcore\Model\Tool\TmpStore;
-use Psr\Log\LoggerAwareTrait;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
 
 class ImportProcessingService
 {
@@ -265,7 +265,7 @@ class ImportProcessingService
      *
      * @param MappingConfiguration[] $mapping Array of mapping configurations.
      *
-     * @param-out mixed &$currentMapping Output variable that will contain the current mapping.
+     * @param-out mixed $currentMapping Output variable that will contain the current mapping.
      *
      * @throws \Throwable If the processing or a transformation fails
      */
