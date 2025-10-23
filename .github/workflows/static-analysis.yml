@@ -10,7 +10,8 @@ on:
             - "[0-9]+.x"
             - "feature-*"
     pull_request:
-        types: [opened, synchronize, reopened]
+        types: [ opened, synchronize, reopened ]
+
 
 env:
     PIMCORE_PROJECT_ROOT: ${{ github.workspace }}
