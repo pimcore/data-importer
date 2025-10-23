@@ -12,7 +12,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
-use Pimcore\Helper\ParameterBagHelper;
 use Cron\CronExpression;
 use Exception;
 use http\Exception\InvalidArgumentException;
@@ -32,6 +31,7 @@ use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Controller\Traits\JsonHelperTrait;
 use Pimcore\Controller\UserAwareController;
+use Pimcore\Helper\ParameterBagHelper;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
