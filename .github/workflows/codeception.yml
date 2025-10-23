@@ -2,7 +2,7 @@ name: "Codeception Tests centralised"
 
 on:
     schedule:
-        - cron: '0 3 * * 1,3,5'
+        - cron: "0 3 * * 1,3,5"
     workflow_dispatch:
     push:
         branches:
@@ -33,6 +33,8 @@ jobs:
             - name: Checkout PR head (for push or other events)
               if: github.event_name != 'pull_request_target'
               uses: "actions/checkout@v4"
+              with:
+                  ref: ${{ github.ref }}
 
             - name: Checkout reusable workflow repo
               uses: actions/checkout@v4
@@ -63,11 +65,11 @@ jobs:
               id: set-matrix
               run: |
                   php_versions="${{ steps.parse-php-versions.outputs.php_versions }}"
-                  
+
                   MATRIX_JSON=$(cat reusable-workflows/codeception-tests-configuration/matrix-config.json)
-                  
+
                   IFS=',' read -ra VERSIONS_ARRAY <<< "$php_versions"
-                  
+
                   FILTERED_MATRIX_JSON=$(echo $MATRIX_JSON | jq --arg php_versions "$php_versions" '
                   {
                     matrix: [
@@ -76,9 +78,9 @@ jobs:
                       .matrix[]
                     ]
                   }')
-                  
+
                   ENCODED_MATRIX_JSON=$(echo $FILTERED_MATRIX_JSON | jq -c .)
-                  
+
                   echo "matrix=${ENCODED_MATRIX_JSON}" >> $GITHUB_OUTPUT
 
     codeception-tests:
@@ -95,7 +97,7 @@ jobs:
             SERVER_VERSION: ${{ matrix.matrix.server_version }}
             DEPENDENCIES: ${{ matrix.matrix.dependencies }}
             EXPERIMENTAL: ${{ matrix.matrix.experimental }}
-            PIMCORE_VERSION: ${{ matrix.matrix.pimcore_version }}      
+            PIMCORE_VERSION: ${{ matrix.matrix.pimcore_version }}
         secrets:
             SSH_PRIVATE_KEY_PIMCORE_DEPLOYMENTS_USER: ${{ secrets.SSH_PRIVATE_KEY_PIMCORE_DEPLOYMENTS_USER }}
             COMPOSER_PIMCORE_REPO_PACKAGIST_TOKEN: ${{ secrets.COMPOSER_PIMCORE_REPO_PACKAGIST_TOKEN }}
