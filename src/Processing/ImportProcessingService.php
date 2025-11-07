@@ -136,7 +136,7 @@ class ImportProcessingService
             //get config
             $configName = $queueItem['configName'];
             $config = $this->configLoader->prepareConfiguration($configName, null, true);
-            
+
             if (empty($this->loggingConfigCache[$configName])) {
                 $this->loggingConfigCache[$configName] = $config['processingConfig']['logging'] ?? [];
             }
@@ -186,12 +186,13 @@ class ImportProcessingService
     private function logInfo(?string $configName, string $message, array $context = []): void
     {
         $this->logger->info($message);
-        
+
         if (!$configName) {
             $this->applicationLogger->info($message, $context);
+
             return;
         }
-        
+
         $config = $this->loggingConfigCache[$configName] ?? [];
         if (!($config['disableInfoLogs'] ?? false)) {
             if (isset($context['fileObject']) && ($config['disableInfoFileObjects'] ?? false)) {
@@ -204,12 +205,13 @@ class ImportProcessingService
     private function logError(?string $configName, string $message, array $context = []): void
     {
         $this->logger->error($message);
-        
+
         if (!$configName) {
             $this->applicationLogger->error($message, $context);
+
             return;
         }
-        
+
         $config = $this->loggingConfigCache[$configName] ?? [];
         if (!($config['disableErrorLogs'] ?? false)) {
             if (isset($context['fileObject']) && ($config['disableErrorFileObjects'] ?? false)) {
