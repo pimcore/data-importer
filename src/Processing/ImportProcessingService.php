@@ -94,6 +94,11 @@ class ImportProcessingService
     protected $eventDispatcher;
 
     /**
+     * @var array
+     */
+    protected $loggingConfigCache = [];
+
+    /**
      * ImportProcessingService constructor.
      *
      * @param QueueService $queueService
@@ -131,6 +136,10 @@ class ImportProcessingService
             //get config
             $configName = $queueItem['configName'];
             $config = $this->configLoader->prepareConfiguration($configName, null, true);
+            
+            if (empty($this->loggingConfigCache[$configName])) {
+                $this->loggingConfigCache[$configName] = $config['processingConfig']['logging'] ?? [];
+            }
 
             //init resolver and mapping
             if (empty($this->mappingConfigurationCache[$configName])) {
@@ -154,12 +163,11 @@ class ImportProcessingService
             }
         } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
-            $fileObject = $queueItem ? new FileObject(json_encode($queueItem['data'])) : null;
-
-            $this->applicationLogger->error($e->getMessage() . $e->getMessage(), [
-                'component' => $component,
-                'fileObject' => $fileObject
-            ]);
+            $context = ['component' => $component];
+            if ($queueItem) {
+                $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
+            }
+            $this->logError($configName, $e->getMessage(), $context);
         } finally {
             $this->queueService->markQueueEntryAsProcessed($id);
         }
@@ -173,6 +181,42 @@ class ImportProcessingService
         });
 
         return $flattenedArray;
+    }
+
+    private function logInfo(?string $configName, string $message, array $context = []): void
+    {
+        $this->logger->info($message);
+        
+        if (!$configName) {
+            $this->applicationLogger->info($message, $context);
+            return;
+        }
+        
+        $config = $this->loggingConfigCache[$configName] ?? [];
+        if (!($config['disableInfoLogs'] ?? false)) {
+            if (isset($context['fileObject']) && ($config['disableInfoFileObjects'] ?? false)) {
+                unset($context['fileObject']);
+            }
+            $this->applicationLogger->info($message, $context);
+        }
+    }
+
+    private function logError(?string $configName, string $message, array $context = []): void
+    {
+        $this->logger->error($message);
+        
+        if (!$configName) {
+            $this->applicationLogger->error($message, $context);
+            return;
+        }
+        
+        $config = $this->loggingConfigCache[$configName] ?? [];
+        if (!($config['disableErrorLogs'] ?? false)) {
+            if (isset($context['fileObject']) && ($config['disableErrorFileObjects'] ?? false)) {
+                unset($context['fileObject']);
+            }
+            $this->applicationLogger->error($message, $context);
+        }
     }
 
     /**
@@ -196,9 +240,8 @@ class ImportProcessingService
             $element = $resolver->loadOrCreateAndPrepareElement($importDataRow, $createNew);
 
             if ($element instanceof ElementInterface) {
-                $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
+                $this->logInfo($configName, "⭢ Processing DataRow {$importDataRowString}", [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    null,
                     'relatedObject' => $element
                 ]);
 
@@ -216,8 +259,7 @@ class ImportProcessingService
                 $this->eventDispatcher->dispatch($event);
 
                 $message = "Element {$element->getId()} imported successfully.";
-                $this->logger->info($message);
-                $this->applicationLogger->info($message, [
+                $this->logInfo($configName, $message, [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'fileObject' => new FileObject(json_encode($importDataRow)),
                     'relatedObject' => $element
@@ -225,15 +267,13 @@ class ImportProcessingService
             } else {
                 $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
                 $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
-                $this->logger->info($message);
-                $this->applicationLogger->info($message, [
+                $this->logInfo($configName, $message, [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'fileObject' => new FileObject(json_encode($importDataRow))
                 ]);
             }
         } catch (\Throwable $e) {
             $message = "Error processing element: {$importDataRowString}";
-            $this->logger->error($message . $e);
 
             $message .= $e->getMessage();
             // $currentMapping can be null before and after the loop above
@@ -252,7 +292,7 @@ class ImportProcessingService
             );
             $this->eventDispatcher->dispatch($event);
 
-            $this->applicationLogger->error($message, [
+            $this->logError($configName, $message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                 'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element,
@@ -317,16 +357,14 @@ class ImportProcessingService
                     $cleanupStrategy->doCleanup($element);
 
                     $message = "Element {$identifier} cleaned up ({$cleanupConfig['strategy']}) successfully.";
-                    $this->logger->info($message);
-                    $this->applicationLogger->info($message, [
+                    $this->logInfo($configName, $message, [
                         'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                         'relatedObject' => $element
                     ]);
                 }
             } catch (\Exception $e) {
                 $message = 'Error cleaning up element: ';
-                $this->logger->error($message . $e);
-                $this->applicationLogger->error($message . $e->getMessage(), [
+                $this->logError($configName, $message . $e->getMessage(), [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'relatedObject' => $element,
                 ]);

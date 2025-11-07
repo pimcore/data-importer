@@ -286,7 +286,79 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                 },
                 doDeltaCheckCheckbox,
                 doCleanup,
-                cleanupStrategy
+                cleanupStrategy,
+                {
+                    xtype: 'fieldset',
+                    title: t('plugin_pimcore_datahub_data_importer_configpanel_logging_settings'),
+                    defaults: panelDefaults,
+                    width: 850,
+                    items: [
+                        {
+                            xtype: 'fieldset',
+                            title: t('plugin_pimcore_datahub_data_importer_configpanel_logging_info'),
+                            defaults: panelDefaults,
+                            width: 800,
+                            items: [
+                                {
+                                    xtype: 'checkbox',
+                                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_disable_info_logs'),
+                                    name: 'logging.disableInfoLogs',
+                                    inputValue: true,
+                                    value: this.processingConfigData.logging && this.processingConfigData.logging.hasOwnProperty('disableInfoLogs') ? this.processingConfigData.logging.disableInfoLogs : false,
+                                    listeners: {
+                                        change: function(checkbox, newValue) {
+                                            const fileObjectCheckbox = checkbox.up('fieldset').down('[name="logging.disableInfoFileObjects"]');
+                                            fileObjectCheckbox.setDisabled(newValue);
+                                            if (newValue) {
+                                                fileObjectCheckbox.setValue(true);
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'checkbox',
+                                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_disable_info_file_objects'),
+                                    name: 'logging.disableInfoFileObjects',
+                                    inputValue: true,
+                                    value: this.processingConfigData.logging && this.processingConfigData.logging.hasOwnProperty('disableInfoFileObjects') ? this.processingConfigData.logging.disableInfoFileObjects : false,
+                                    disabled: this.processingConfigData.logging && this.processingConfigData.logging.disableInfoLogs
+                                }
+                            ]
+                        },
+                        {
+                            xtype: 'fieldset',
+                            title: t('plugin_pimcore_datahub_data_importer_configpanel_logging_error'),
+                            defaults: panelDefaults,
+                            width: 800,
+                            items: [
+                                {
+                                    xtype: 'checkbox',
+                                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_disable_error_logs'),
+                                    name: 'logging.disableErrorLogs',
+                                    inputValue: true,
+                                    value: this.processingConfigData.logging && this.processingConfigData.logging.hasOwnProperty('disableErrorLogs') ? this.processingConfigData.logging.disableErrorLogs : false,
+                                    listeners: {
+                                        change: function(checkbox, newValue) {
+                                            const fileObjectCheckbox = checkbox.up('fieldset').down('[name="logging.disableErrorFileObjects"]');
+                                            fileObjectCheckbox.setDisabled(newValue);
+                                            if (newValue) {
+                                                fileObjectCheckbox.setValue(true);
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    xtype: 'checkbox',
+                                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_disable_error_file_objects'),
+                                    name: 'logging.disableErrorFileObjects',
+                                    inputValue: true,
+                                    value: this.processingConfigData.logging && this.processingConfigData.logging.hasOwnProperty('disableErrorFileObjects') ? this.processingConfigData.logging.disableErrorFileObjects : false,
+                                    disabled: this.processingConfigData.logging && this.processingConfigData.logging.disableErrorLogs
+                                }
+                            ]
+                        }
+                    ]
+                }
             ]
         });
 
