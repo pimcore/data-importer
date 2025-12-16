@@ -295,7 +295,7 @@ class ImportProcessingService
                 );
                 $this->eventDispatcher->dispatch($event);
             } else {
-                $message .= "\nProcessElementExceptionEvent skipped as element is not found.";
+                $message .= "\nProcessElementExceptionEvent skipped as the element was not found.";
             }
 
             $this->logError($configName, $message, [
