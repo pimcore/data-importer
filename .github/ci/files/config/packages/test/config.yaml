@@ -3,6 +3,8 @@ imports:
 
 # this cache is used during tests when setting up pimcore
 framework:
+    profiler:
+        collect: false
     cache:
         pools:
             pimcore.cache.pool:
