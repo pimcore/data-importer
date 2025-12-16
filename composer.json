@@ -25,7 +25,6 @@
     "pimcore/admin-ui-classic-bundle": "^2.0",
     "pimcore/data-hub": "^2.3",
     "pimcore/pimcore": "^12.3",
-    "symfony/serializer": "7.3.5",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
   },
   "require-dev": {
