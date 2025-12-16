@@ -284,15 +284,19 @@ class ImportProcessingService
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
             }
 
-            $event = new ProcessElementExceptionEvent(
-                $configName,
-                $importDataRow,
-                $element,
-                $message,
-                $e,
-                $currentMapping
-            );
-            $this->eventDispatcher->dispatch($event);
+            if ($element instanceof ElementInterface) {
+                $event = new ProcessElementExceptionEvent(
+                    $configName,
+                    $importDataRow,
+                    $element,
+                    $message,
+                    $e,
+                    $currentMapping
+                );
+                $this->eventDispatcher->dispatch($event);
+            } else {
+                $message .= "\nProcessElementExceptionEvent skipped as the element was not found.";
+            }
 
             $this->logError($configName, $message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
