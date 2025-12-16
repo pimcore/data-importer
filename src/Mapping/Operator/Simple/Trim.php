@@ -49,7 +49,7 @@ class Trim extends AbstractOperator
         }
 
         // Remove null values
-        $inputData = array_filter($inputData, static fn($v) => $v !== null);
+        $inputData = array_filter($inputData, static fn ($v) => $v !== null);
 
         foreach ($inputData as &$data) {
             if (!is_string($data)) {
