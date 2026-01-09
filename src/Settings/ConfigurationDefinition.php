@@ -525,13 +525,14 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->isRequired()
-            /** @phpstan-ignore-next-line */
             ->children()
+                /** @phpstan-ignore-next-line */
                 ->enumNode('type')
                     ->isRequired()
                     ->values(array_keys($this->dataLoaderLocator->getProvidedServices()))
                     ->info('Type of data loader (e.g., asset, http, sftp, upload)')
                 ->end()
+                /** @phpstan-ignore-next-line */
                 ->variableNode('settings')
                     ->defaultValue([])
                     ->info('Loader-specific settings (validated by loader service)')
@@ -553,13 +554,14 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->isRequired()
-            /** @phpstan-ignore-next-line */
             ->children()
+                /** @phpstan-ignore-next-line */
                 ->enumNode('type')
                     ->isRequired()
                     ->values(array_keys($this->interpreterLocator->getProvidedServices()))
                     ->info('Type of data interpreter (e.g., csv, json, xml, xlsx)')
                 ->end()
+                /** @phpstan-ignore-next-line */
                 ->variableNode('settings')
                     ->defaultValue([])
                     ->info('Interpreter-specific settings (validated by interpreter service)')
@@ -664,8 +666,8 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->addDefaultsIfNotSet()
-            /** @phpstan-ignore-next-line */
             ->children()
+                /** @phpstan-ignore-next-line */
                 ->enumNode('executionType')
                     ->values([
                         ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
@@ -722,18 +724,20 @@ class ConfigurationDefinition implements ConfigurationInterface
             ->isRequired()
             ->requiresAtLeastOneElement()
             ->arrayPrototype()
-                /** @phpstan-ignore-next-line */
                 ->children()
+                    /** @phpstan-ignore-next-line */
                     ->scalarNode('label')
                         ->isRequired()
                         ->cannotBeEmpty()
                         ->info('Label for this mapping')
                     ->end()
+                    /** @phpstan-ignore-next-line */
                     ->arrayNode('dataSourceIndex')
                         ->isRequired()
                         ->scalarPrototype()->end()
                         ->info('Array of source field names to map from')
                     ->end()
+                    /** @phpstan-ignore-next-line */
                     ->scalarNode('transformationResultType')
                         ->defaultNull()
                         ->info('Expected result type after transformations')
@@ -786,8 +790,8 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->addDefaultsIfNotSet()
-            /** @phpstan-ignore-next-line */
             ->children()
+                /** @phpstan-ignore-next-line */
                 ->enumNode('scheduleType')
                     ->values(['recurring', 'cron'])
                     ->defaultNull()
