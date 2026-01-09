@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\GeopolyAbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeopolyline extends GeopolyAbstractOperator
+class AsGeopolyline extends GeopolyAbstractOperator implements SchemaAwareInterface
 {
     /**
      * @param string $inputType
@@ -33,5 +35,16 @@ class AsGeopolyline extends GeopolyAbstractOperator
         }
 
         return TransformationDataTypeService::GEOPOLYLINE_VALUE;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of coordinates into a geopolyline. Accepts an array of coordinate pairs that define the polyline path.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

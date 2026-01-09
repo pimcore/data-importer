@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class FlattenArray extends AbstractOperator
+class FlattenArray extends AbstractOperator implements SchemaAwareInterface
 {
     public function setSettings(array $settings): void
     {
@@ -58,5 +60,16 @@ class FlattenArray extends AbstractOperator
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Flattens a multi-dimensional array into a single-level array by recursively extracting all leaf values.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

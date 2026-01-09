@@ -14,6 +14,17 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-class SqlFileInterpreter extends JsonFileInterpreter
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+
+class SqlFileInterpreter extends JsonFileInterpreter implements SchemaAwareInterface
 {
+    public function getSchemaDescription(): string
+    {
+        return 'Interpret SQL query results (inherits JSON interpreter settings)';
+    }
+
+    public function getConfigTreeBuilder(): \Symfony\Component\Config\Definition\Builder\TreeBuilder
+    {
+        return parent::getConfigTreeBuilder();
+    }
 }

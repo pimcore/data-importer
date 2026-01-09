@@ -15,9 +15,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeopoint extends AbstractOperator
+class AsGeopoint extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -59,5 +61,16 @@ class AsGeopoint extends AbstractOperator
         }
 
         return TransformationDataTypeService::GEOPOINT_VALUE;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of coordinates into a GeoCoordinates object (geopoint). Expects an array with 2 values: [latitude, longitude].';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

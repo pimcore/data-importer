@@ -13,10 +13,12 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Version;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Mime\MimeTypes;
 
-class CsvFileInterpreter extends AbstractInterpreter
+class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     private const UTF8_BOM = "\xEF\xBB\xBF";
 
@@ -73,6 +75,45 @@ class CsvFileInterpreter extends AbstractInterpreter
         $this->delimiter = $settings['delimiter'] ?? ',';
         $this->enclosure = $settings['enclosure'] ?? '"';
         $this->escape = $settings['escape'] ?? '\\';
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Interpret CSV file data';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->booleanNode('skipFirstRow')
+                    ->defaultValue(false)
+                    ->info('Skip the first row of the CSV file (header row)')
+                ->end()
+                ->booleanNode('saveHeaderName')
+                    ->defaultValue(false)
+                    ->info('Use header names as array keys for data rows')
+                ->end()
+                ->scalarNode('delimiter')
+                    ->defaultValue(',')
+                    ->info('Field delimiter character')
+                ->end()
+                ->scalarNode('enclosure')
+                    ->defaultValue('"')
+                    ->info('Field enclosure character')
+                ->end()
+                ->scalarNode('escape')
+                    ->defaultValue('\\')
+                    ->info('Escape character')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool

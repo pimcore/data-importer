@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class QuantityValueArray extends AbstractOperator
+class QuantityValueArray extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -88,5 +90,16 @@ class QuantityValueArray extends AbstractOperator
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of value-unit pairs into an array of QuantityValue objects. Each item should be [value, unitId].';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

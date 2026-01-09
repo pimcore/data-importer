@@ -16,12 +16,14 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class LoadDataObject extends AbstractOperator
+class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
 {
     const LOAD_STRATEGY_ID = 'id';
 
@@ -225,5 +227,49 @@ class LoadDataObject extends AbstractOperator
         } else {
             return $inputData;
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Loads existing Pimcore data objects by ID, path, or attribute value. Supports partial matching and loading unpublished objects.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->enumNode('loadStrategy')
+                    ->info('Strategy for loading objects: "id" (by numeric ID), "path" (by full path), or "attribute" (by field value)')
+                    ->values([self::LOAD_STRATEGY_ID, self::LOAD_STRATEGY_PATH, self::LOAD_STRATEGY_ATTRIBUTE])
+                    ->defaultValue(self::LOAD_STRATEGY_ID)
+                ->end()
+                ->scalarNode('attributeLanguage')
+                    ->info('Language for localized attribute lookup (only for "attribute" load strategy)')
+                    ->defaultValue(null)
+                ->end()
+                ->scalarNode('attributeName')
+                    ->info('Field name to search by (only for "attribute" load strategy)')
+                    ->defaultValue(null)
+                ->end()
+                ->scalarNode('attributeDataObjectClassId')
+                    ->info('Data object class ID to limit search scope (only for "attribute" load strategy)')
+                    ->defaultValue(null)
+                ->end()
+                ->booleanNode('partialMatch')
+                    ->info('If true, uses LIKE matching for attribute values (only for "attribute" load strategy)')
+                    ->defaultValue(false)
+                ->end()
+                ->booleanNode('loadUnpublished')
+                    ->info('If true, also loads unpublished objects')
+                    ->defaultValue(false)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

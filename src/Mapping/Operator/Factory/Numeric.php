@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Numeric extends AbstractOperator
+class Numeric extends AbstractOperator implements SchemaAwareInterface
 {
     private bool $returnNullIfEmpty = false;
 
@@ -75,5 +77,28 @@ class Numeric extends AbstractOperator
     public function setSettings(array $settings): void
     {
         $this->returnNullIfEmpty = (bool) ($settings['returnNullIfEmpty'] ?? false);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts input data to a numeric (float) value. Can optionally return null for empty/non-numeric inputs.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->booleanNode('returnNullIfEmpty')
+                    ->info('If true, returns null when input is empty or non-numeric (instead of 0.0)')
+                    ->defaultValue(false)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

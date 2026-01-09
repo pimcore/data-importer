@@ -17,6 +17,7 @@ use Pimcore\Bundle\AdminBundle\PimcoreAdminBundle;
 use Pimcore\Bundle\ApplicationLoggerBundle\PimcoreApplicationLoggerBundle;
 use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
+use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ConfigurationDefinitionPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\InterpreterConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\LoaderConfigurationFactoryPass;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\MappingConfigurationFactoryPass;
@@ -149,6 +150,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             ->addCompilerPass(new LoaderConfigurationFactoryPass())
             ->addCompilerPass(new InterpreterConfigurationFactoryPass())
             ->addCompilerPass(new CleanupStrategyConfigurationFactoryPass())
+            ->addCompilerPass(new ConfigurationDefinitionPass())
         ;
     }
 

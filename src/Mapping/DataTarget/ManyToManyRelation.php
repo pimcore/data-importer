@@ -17,6 +17,7 @@ use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
 use Pimcore\Model\Element\Service;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 class ManyToManyRelation extends Direct
 {
@@ -169,5 +170,29 @@ class ManyToManyRelation extends Direct
         }
 
         return array_values($newData);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Many-to-many relation field mapping target with merge/replace modes';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $parentTreeBuilder = parent::getConfigTreeBuilder();
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $parentTreeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->enumNode('overwriteMode')
+                    ->info('How to handle existing relations: merge with existing or replace completely')
+                    ->values([self::OVERWRITE_MODE_MERGE, self::OVERWRITE_MODE_REPLACE])
+                    ->defaultValue(self::OVERWRITE_MODE_REPLACE)
+                ->end()
+            ->end();
+
+        return $parentTreeBuilder;
     }
 }

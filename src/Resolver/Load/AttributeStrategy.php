@@ -13,9 +13,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AttributeStrategy extends AbstractLoad
+class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
 {
     /**
      * @var string
@@ -77,5 +79,36 @@ class AttributeStrategy extends AbstractLoad
         $sql = sprintf('SELECT `%s` FROM %s', $this->attributeName, $tableName);
 
         return $this->db->fetchFirstColumn($sql);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Loads data objects by matching a specific attribute value';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('attributeName')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Name of the attribute to search by')
+                ->end()
+                ->scalarNode('language')
+                    ->info('Language code for localized attributes')
+                ->end()
+                ->booleanNode('includeUnpublished')
+                    ->defaultValue(false)
+                    ->info('Whether to include unpublished objects in the search')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

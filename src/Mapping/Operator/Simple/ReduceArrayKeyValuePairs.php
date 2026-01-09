@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ReduceArrayKeyValuePairs extends AbstractOperator
+class ReduceArrayKeyValuePairs extends AbstractOperator implements SchemaAwareInterface
 {
     public function setSettings(array $settings): void
     {
@@ -58,5 +60,16 @@ class ReduceArrayKeyValuePairs extends AbstractOperator
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts a flat array into an associative array by treating alternating elements as keys and values. Example: ["key1", "value1", "key2", "value2"] becomes ["key1" => "value1", "key2" => "value2"].';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

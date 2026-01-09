@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Explode extends AbstractOperator
+class Explode extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @var string
@@ -80,5 +82,32 @@ class Explode extends AbstractOperator
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Splits strings into arrays using a delimiter. Can optionally preserve sub-arrays when processing nested arrays.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('delimiter')
+                    ->info('The delimiter string used to split the input')
+                    ->defaultValue(' ')
+                ->end()
+                ->booleanNode('keepSubArrays')
+                    ->info('If true, preserves sub-array structure when exploding arrays; if false, merges all results')
+                    ->defaultValue(false)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

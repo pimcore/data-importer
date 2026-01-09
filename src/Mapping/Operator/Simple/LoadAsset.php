@@ -14,9 +14,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class LoadAsset extends ImportAsset
+class LoadAsset extends ImportAsset implements SchemaAwareInterface
 {
     const LOAD_STRATEGY_ID = 'id';
 
@@ -81,5 +83,29 @@ class LoadAsset extends ImportAsset
         } else {
             return $assets;
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Loads existing Pimcore assets by ID or path. Does not create new assets.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->enumNode('loadStrategy')
+                    ->info('Strategy for loading assets: "path" (by full path) or "id" (by numeric ID)')
+                    ->values([self::LOAD_STRATEGY_PATH, self::LOAD_STRATEGY_ID])
+                    ->defaultValue(self::LOAD_STRATEGY_PATH)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

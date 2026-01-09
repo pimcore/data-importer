@@ -15,10 +15,12 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ImageAdvanced extends AbstractOperator
+class ImageAdvanced extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -68,5 +70,16 @@ class ImageAdvanced extends AbstractOperator
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an image asset into a Hotspotimage object (advanced image with hotspot/marker support).';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

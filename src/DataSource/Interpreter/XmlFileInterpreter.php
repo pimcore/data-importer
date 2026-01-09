@@ -16,10 +16,12 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Util\Exception\XmlParsingException;
 use Symfony\Component\Config\Util\XmlUtils;
 
-class XmlFileInterpreter extends AbstractInterpreter
+class XmlFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     /**
      * @var string|null
@@ -154,5 +156,33 @@ class XmlFileInterpreter extends AbstractInterpreter
         }
         $this->xpath = $settings['xpath'];
         $this->schema = $settings['schema'];
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Interpret XML file data using XPath expressions';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('xpath')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('XPath expression to select elements to import')
+                ->end()
+                ->scalarNode('schema')
+                    ->defaultValue('')
+                    ->info('Optional XSD schema for validation')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

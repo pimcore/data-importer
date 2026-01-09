@@ -1,7 +1,19 @@
 <?php
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Carbon\Carbon;
+use Codeception\Test;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsArray;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsColor;
@@ -23,11 +35,10 @@ use Pimcore\Model\DataObject\Data\Geobounds;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
-use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\DataObject\Data\InputQuantityValue as ModelInputQuantityValue;
+use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Pimcore\Tests\Support\Util\TestHelper;
-use Codeception\Test;
 
 class FactoryOperatorTest extends Test\Unit
 {
@@ -61,7 +72,8 @@ class FactoryOperatorTest extends Test\Unit
 
     }
 
-    public function testBoolean() {
+    public function testBoolean()
+    {
 
         /**
          * @var Boolean $boolean
@@ -90,7 +102,8 @@ class FactoryOperatorTest extends Test\Unit
 
     }
 
-    public function testDate() {
+    public function testDate()
+    {
 
         /**
          * @var Date $date
@@ -110,7 +123,6 @@ class FactoryOperatorTest extends Test\Unit
         $preview = $date->generateResultPreview($result);
         $this->assertEquals($result->format('c'), $preview);
 
-
         $date->setSettings(['format' => 'Y.m.d']);
         $result = $date->process('2022.08.01');
         $this->assertInstanceOf(Carbon::class, $result);
@@ -118,7 +130,6 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals(8, $result->month);
         $preview = $date->generateResultPreview($result);
         $this->assertEquals($result->format('c'), $preview);
-
 
         $dates = ['2022.08.01', '1950.09.01', '2250.12.01'];
         $dateParts = [
@@ -129,7 +140,7 @@ class FactoryOperatorTest extends Test\Unit
         $resultArray = $date->process($dates);
 
         $this->assertIsArray($resultArray);
-        foreach($resultArray as $index => $result) {
+        foreach ($resultArray as $index => $result) {
             $this->assertInstanceOf(Carbon::class, $result);
             $this->assertEquals($dateParts[$index]['year'], $result->year);
             $this->assertEquals($dateParts[$index]['month'], $result->month);
@@ -142,7 +153,8 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertNull($result);
     }
 
-    public function testGallery() {
+    public function testGallery()
+    {
 
         /**
          * @var Gallery $gallery
@@ -166,13 +178,13 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals(0, count($result->getItems()));
     }
 
-    public function testImageAdvanced() {
+    public function testImageAdvanced()
+    {
 
         /**
          * @var ImageAdvanced $imageAdvanced
          */
         $imageAdvanced = $this->tester->grabService(ImageAdvanced::class);
-
 
         $result = $imageAdvanced->process([]);
         $this->assertNull($result);
@@ -199,7 +211,8 @@ class FactoryOperatorTest extends Test\Unit
 
     }
 
-    public function testNumeric() {
+    public function testNumeric()
+    {
 
         /**
          * @var Numeric $numeric
@@ -215,7 +228,8 @@ class FactoryOperatorTest extends Test\Unit
 
     }
 
-    public function testInputQuantityValue() {
+    public function testInputQuantityValue()
+    {
 
         $unit = new Unit();
         $unit->setId('m');
@@ -246,7 +260,7 @@ class FactoryOperatorTest extends Test\Unit
         // TODO: Remove assertEquals once Pimcore 10 support is dropped
         if (!is_null($result->getValue())) {
             $this->assertEquals('', $result->getValue());
-        }else{
+        } else {
             $this->assertNull($result->getValue());
         }
         $this->assertEquals('m', $result->getUnitId());
@@ -257,8 +271,8 @@ class FactoryOperatorTest extends Test\Unit
         $unit->delete();
     }
 
-
-    public function testQuantityValue() {
+    public function testQuantityValue()
+    {
 
         $unit = new Unit();
         $unit->setId('1');
@@ -307,7 +321,6 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals('1', $result->getUnitId());
         $this->assertEquals('Meter', $result->getUnit()->getLongname());
 
-
         $quantityValue->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => '1']);
 
         $result = $quantityValue->process(['12']);
@@ -322,7 +335,6 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals('1', $result->getUnitId());
         $this->assertEquals('Meter', $result->getUnit()->getLongname());
 
-
         $result = $quantityValue->process('12');
         $this->assertInstanceOf(QuantityValue::class, $result);
         $this->assertEquals('12', $result->getValue());
@@ -332,14 +344,12 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertInstanceOf(QuantityValue::class, $result);
         $this->assertEquals('1', $result->getUnitId());
 
-
         $quantityValue->setSettings(['unitSourceSelect' => 'abbr', 'unitNullIfNoValueCheckbox' => true]);
         $result = $quantityValue->process([null, 'm']);
         $this->assertNull($result);
 
         $result = $quantityValue->process([]);
         $this->assertNull($result);
-
 
         $quantityValue->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => '1', 'unitNullIfNoValueCheckbox' => true]);
         $result = $quantityValue->process([null, 'm']);
@@ -351,8 +361,6 @@ class FactoryOperatorTest extends Test\Unit
         $unit->delete();
     }
 
-
-
     public function testQuantityArray()
     {
         $unit = new Unit();
@@ -360,7 +368,6 @@ class FactoryOperatorTest extends Test\Unit
         $unit->setAbbreviation('m');
         $unit->setLongname('Meter');
         $unit->save();
-
 
         $operator = $this->tester->grabService(QuantityValueArray::class);
 
@@ -386,7 +393,6 @@ class FactoryOperatorTest extends Test\Unit
         $preview = $operator->generateResultPreview($result);
         $this->assertStringContainsString('Quantity', $preview[0]);
 
-
         $unit->delete();
     }
 
@@ -398,12 +404,11 @@ class FactoryOperatorTest extends Test\Unit
         $unit->setLongname('Meter');
         $unit->save();
 
-
         $operator = $this->tester->grabService(InputQuantityValueArray::class);
 
         /**
-          * @var \Pimcore\Model\DataObject\Data\InputQuantityValue $result
-        */
+         * @var \Pimcore\Model\DataObject\Data\InputQuantityValue $result
+         */
         $result = $operator->process([['12', 'm']]);
         $this->assertInstanceOf(\Pimcore\Model\DataObject\Data\InputQuantityValue::class, $result[0]);
         $this->assertEquals('12', $result[0]->getValue());
@@ -417,90 +422,96 @@ class FactoryOperatorTest extends Test\Unit
 
         $result = $operator->process([[null, 'm']]);
         $this->assertInstanceOf(\Pimcore\Model\DataObject\Data\InputQuantityValue::class, $result[0]);
-        $this->assertEquals( '',$result[0]->getValue());
+        $this->assertEquals('', $result[0]->getValue());
         $this->assertEquals('m', $result[0]->getUnitId());
 
         $preview = $operator->generateResultPreview($result);
         $this->assertStringContainsString('Quantity', $preview[0]);
 
-
         $unit->delete();
     }
 
-    public function testAsGeopoint() {
+    public function testAsGeopoint()
+    {
         $service = $this->tester->grabService(AsGeopoint::class);
-        $data = $service->process(["47.83595982332057", "13.06517167884434"]);
+        $data = $service->process(['47.83595982332057', '13.06517167884434']);
         $this->assertInstanceOf(GeoCoordinates::class, $data);
-        $this->assertEquals($data->getLatitude(), "47.83595982332057");
-        $this->assertEquals($data->getLongitude(), "13.06517167884434");
+        $this->assertEquals($data->getLatitude(), '47.83595982332057');
+        $this->assertEquals($data->getLongitude(), '13.06517167884434');
     }
 
-    public function testAsGeobounds() {
+    public function testAsGeobounds()
+    {
         $service = $this->tester->grabService(AsGeobounds::class);
-        $data = $service->process(["47.83595982332057", "13.06517167884434", "47.810540991091045", "13.073721286556358"]);
+        $data = $service->process(['47.83595982332057', '13.06517167884434', '47.810540991091045', '13.073721286556358']);
         $this->assertInstanceOf(Geobounds::class, $data);
 
         $northEast = $data->getNorthEast();
         $southWest = $data->getSouthWest();
 
-        $this->assertEquals($northEast->getLatitude(), "47.83595982332057");
-        $this->assertEquals($northEast->getLongitude(), "13.06517167884434");
+        $this->assertEquals($northEast->getLatitude(), '47.83595982332057');
+        $this->assertEquals($northEast->getLongitude(), '13.06517167884434');
 
-        $this->assertEquals($southWest->getLatitude(), "47.810540991091045");
-        $this->assertEquals($southWest->getLongitude(), "13.073721286556358");
+        $this->assertEquals($southWest->getLatitude(), '47.810540991091045');
+        $this->assertEquals($southWest->getLongitude(), '13.073721286556358');
     }
 
-    public function testAsGeopolygon() {
+    public function testAsGeopolygon()
+    {
         $service = $this->tester->grabService(AsGeopolygon::class);
-        $data = $service->process(["47.83595982332057", "13.06517167884434", "47.810540991091045", "13.073721286556358"]);
+        $data = $service->process(['47.83595982332057', '13.06517167884434', '47.810540991091045', '13.073721286556358']);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), "47.83595982332057");
-        $this->assertEquals($data[0]->getLongitude(), "13.06517167884434");
+        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
+        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
 
-        $this->assertEquals($data[1]->getLatitude(), "47.810540991091045");
-        $this->assertEquals($data[1]->getLongitude(), "13.073721286556358");
+        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
+        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
     }
 
-    public function testAsGeopolygonArray() {
+    public function testAsGeopolygonArray()
+    {
         $service = $this->tester->grabService(AsGeopolygon::class);
-        $data = $service->process([0 => ["47.83595982332057", "13.06517167884434"], 1 => ["47.810540991091045", "13.073721286556358"]]);
+        $data = $service->process([0 => ['47.83595982332057', '13.06517167884434'], 1 => ['47.810540991091045', '13.073721286556358']]);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), "47.83595982332057");
-        $this->assertEquals($data[0]->getLongitude(), "13.06517167884434");
+        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
+        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
 
-        $this->assertEquals($data[1]->getLatitude(), "47.810540991091045");
-        $this->assertEquals($data[1]->getLongitude(), "13.073721286556358");
+        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
+        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
     }
 
-    public function testAsGeopolyline() {
+    public function testAsGeopolyline()
+    {
         $service = $this->tester->grabService(AsGeopolyline::class);
-        $data = $service->process(["47.83595982332057", "13.06517167884434", "47.810540991091045", "13.073721286556358"]);
+        $data = $service->process(['47.83595982332057', '13.06517167884434', '47.810540991091045', '13.073721286556358']);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), "47.83595982332057");
-        $this->assertEquals($data[0]->getLongitude(), "13.06517167884434");
+        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
+        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
 
-        $this->assertEquals($data[1]->getLatitude(), "47.810540991091045");
-        $this->assertEquals($data[1]->getLongitude(), "13.073721286556358");
+        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
+        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
     }
 
-    public function testAsGeopolylineArray() {
+    public function testAsGeopolylineArray()
+    {
         $service = $this->tester->grabService(AsGeopolyline::class);
-        $data = $service->process([0 => ["47.83595982332057", "13.06517167884434"], 1 => ["47.810540991091045", "13.073721286556358"]]);
+        $data = $service->process([0 => ['47.83595982332057', '13.06517167884434'], 1 => ['47.810540991091045', '13.073721286556358']]);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), "47.83595982332057");
-        $this->assertEquals($data[0]->getLongitude(), "13.06517167884434");
+        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
+        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
 
-        $this->assertEquals($data[1]->getLatitude(), "47.810540991091045");
-        $this->assertEquals($data[1]->getLongitude(), "13.073721286556358");
+        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
+        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
     }
 
-    public function testAsColorArray() {
+    public function testAsColorArray()
+    {
         $service = $this->tester->grabService(AsColor::class);
-        $data = $service->process([15,44,73,255]);
+        $data = $service->process([15, 44, 73, 255]);
 
         $this->assertEquals($data->getR(), 15);
         $this->assertEquals($data->getG(), 44);
@@ -508,9 +519,10 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals($data->getA(), 255);
     }
 
-    public function testAsColorHex() {
+    public function testAsColorHex()
+    {
         $service = $this->tester->grabService(AsColor::class);
-        $data = $service->process("#0f2c49FF");
+        $data = $service->process('#0f2c49FF');
 
         $this->assertEquals($data->getR(), 15);
         $this->assertEquals($data->getG(), 44);
@@ -518,37 +530,40 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals($data->getA(), 255);
     }
 
-
-    public function testAsColorHexWrongInput(){
+    public function testAsColorHexWrongInput()
+    {
         $this->expectException(\Exception::class);
         $service = $this->tester->grabService(AsColor::class);
-        $service->process("#0f2c49F");
+        $service->process('#0f2c49F');
     }
 
-    public function testAsCountries() {
+    public function testAsCountries()
+    {
         $service = $this->tester->grabService(AsCountries::class);
-        $data = $service->process(["China", "Germany", "Austria"]);
+        $data = $service->process(['China', 'Germany', 'Austria']);
         $this->assertIsArray($data);
 
-        $this->assertEquals("CN", $data[0]);
-        $this->assertEquals("DE", $data[1]);
-        $this->assertEquals("AT", $data[2]);
+        $this->assertEquals('CN', $data[0]);
+        $this->assertEquals('DE', $data[1]);
+        $this->assertEquals('AT', $data[2]);
     }
 
-    public function testAsCountriesWithWhiteSpace() {
+    public function testAsCountriesWithWhiteSpace()
+    {
         $service = $this->tester->grabService(AsCountries::class);
-        $data = $service->process(["China ", " Germany", " Austria "]);
+        $data = $service->process(['China ', ' Germany', ' Austria ']);
         $this->assertIsArray($data);
 
-        $this->assertEquals("CN", $data[0]);
-        $this->assertEquals("DE", $data[1]);
-        $this->assertEquals("AT", $data[2]);
+        $this->assertEquals('CN', $data[0]);
+        $this->assertEquals('DE', $data[1]);
+        $this->assertEquals('AT', $data[2]);
     }
 
-    public function testAsCountriesWithWrongInputType() {
+    public function testAsCountriesWithWrongInputType()
+    {
         $this->expectException(InvalidConfigurationException::class);
 
         $service = $this->tester->grabService(AsCountries::class);
-        $service->evaluateReturnType("default");
+        $service->evaluateReturnType('default');
     }
 }

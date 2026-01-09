@@ -14,8 +14,10 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class XlsxFileInterpreter extends AbstractInterpreter
+class XlsxFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     /**
      * @var bool
@@ -100,5 +102,32 @@ class XlsxFileInterpreter extends AbstractInterpreter
     {
         $this->skipFirstRow = $settings['skipFirstRow'] ?? false;
         $this->sheetName = $settings['sheetName'] ?? 'Sheet1';
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Interpret Excel (.xlsx) file data';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->booleanNode('skipFirstRow')
+                    ->defaultValue(false)
+                    ->info('Skip the first row (header row)')
+                ->end()
+                ->scalarNode('sheetName')
+                    ->defaultValue('Sheet1')
+                    ->info('Name of the Excel sheet to read')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

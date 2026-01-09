@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StaticText extends AbstractOperator
+class StaticText extends AbstractOperator implements SchemaAwareInterface
 {
     const MODE_APPEND = 'append';
 
@@ -99,5 +101,37 @@ class StaticText extends AbstractOperator
         }
 
         return $inputType;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Appends or prepends static text to input values. Can optionally add text even when input is empty.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->enumNode('mode')
+                    ->info('Mode for adding text: "append" (default) or "prepend"')
+                    ->values([self::MODE_APPEND, self::MODE_PREPEND])
+                    ->defaultValue(self::MODE_APPEND)
+                ->end()
+                ->scalarNode('text')
+                    ->info('The static text to add')
+                    ->defaultValue('')
+                ->end()
+                ->booleanNode('alwaysAdd')
+                    ->info('If true, adds text even when input is empty')
+                    ->defaultValue(false)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

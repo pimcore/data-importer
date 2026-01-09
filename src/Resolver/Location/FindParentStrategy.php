@@ -15,13 +15,15 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class FindParentStrategy implements LocationStrategyInterface
+class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
     const FIND_BY_ID = 'id';
 
@@ -218,5 +220,48 @@ class FindParentStrategy implements LocationStrategyInterface
         } catch (Exception) {
             return null;
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Finds and sets the parent object based on ID, path, or attribute value from input data';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('dataSourceIndex')
+                    ->isRequired()
+                    ->info('Index in input data array containing the parent identifier')
+                ->end()
+                ->scalarNode('findStrategy')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('How to find the parent: "id", "path", or "attribute"')
+                ->end()
+                ->scalarNode('fallbackPath')
+                    ->info('Fallback path if parent is not found')
+                ->end()
+                ->scalarNode('asVariant')
+                    ->info('Whether to save the element as a variant (value: "on")')
+                ->end()
+                ->scalarNode('attributeDataObjectClassId')
+                    ->info('Data object class ID for attribute-based parent lookup (required when findStrategy is "attribute")')
+                ->end()
+                ->scalarNode('attributeName')
+                    ->info('Attribute name for parent lookup (required when findStrategy is "attribute")')
+                ->end()
+                ->scalarNode('attributeLanguage')
+                    ->info('Language code for localized attribute lookup')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

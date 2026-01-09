@@ -15,9 +15,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class QuantityValue extends AbstractOperator
+class QuantityValue extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @var string
@@ -137,5 +139,37 @@ class QuantityValue extends AbstractOperator
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts input data into a QuantityValue object with a numeric value and unit. Supports unit by ID, abbreviation, or static unit selection.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->enumNode('unitSourceSelect')
+                    ->info('How to determine the unit: "id" (unit ID from input), "abbr" (abbreviation from input), or "static" (fixed unit)')
+                    ->values(['id', 'abbr', 'static'])
+                    ->defaultValue('id')
+                ->end()
+                ->scalarNode('staticUnitSelect')
+                    ->info('Unit ID to use when unitSourceSelect is "static"')
+                    ->defaultValue(null)
+                ->end()
+                ->booleanNode('unitNullIfNoValueCheckbox')
+                    ->info('If true, sets unit to null when value is null or empty')
+                    ->defaultValue(false)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

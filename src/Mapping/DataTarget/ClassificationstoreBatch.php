@@ -14,9 +14,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ClassificationstoreBatch implements DataTargetInterface
+class ClassificationstoreBatch implements DataTargetInterface, SchemaAwareInterface
 {
     /**
      * @var string
@@ -80,5 +82,33 @@ class ClassificationstoreBatch implements DataTargetInterface
         } else {
             throw new InvalidConfigurationException('Field ' . $this->fieldName . ' is not a classification store.');
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Classification store batch mapping target for multiple keys at once';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('fieldName')
+                    ->info('Name of the classification store field')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('language')
+                    ->info('Language for localized classification store values')
+                    ->defaultValue(null)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

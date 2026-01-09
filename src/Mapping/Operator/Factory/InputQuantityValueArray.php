@@ -14,8 +14,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class InputQuantityValueArray extends QuantityValueArray
+class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -80,5 +82,16 @@ class InputQuantityValueArray extends QuantityValueArray
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of value-unit pairs into an array of InputQuantityValue objects. Each item should be [value, unit].';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

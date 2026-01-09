@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class HtmlDecode extends AbstractOperator
+class HtmlDecode extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -62,5 +64,16 @@ class HtmlDecode extends AbstractOperator
         }
 
         return $inputType;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Decodes HTML entities in string values, converting HTML entity codes back to their corresponding characters.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

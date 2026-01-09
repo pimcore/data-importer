@@ -15,8 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Combine extends AbstractOperator
+class Combine extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @var string
@@ -58,5 +60,28 @@ class Combine extends AbstractOperator
         }
 
         return TransformationDataTypeService::DEFAULT_TYPE;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Combines array elements into a single string by joining them with a specified delimiter (glue).';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('glue')
+                    ->info('The delimiter string used to join array elements')
+                    ->defaultValue(' ')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

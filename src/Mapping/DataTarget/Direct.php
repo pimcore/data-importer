@@ -13,12 +13,14 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Direct implements DataTargetInterface
+class Direct implements DataTargetInterface, SchemaAwareInterface
 {
     /**
      * @var string
@@ -200,5 +202,41 @@ class Direct implements DataTargetInterface
         }
 
         return $fieldDefinition;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Direct field mapping target';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('fieldName')
+                    ->info('Name of the target field')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('language')
+                    ->info('Language for localized fields')
+                    ->defaultValue(null)
+                ->end()
+                ->booleanNode('writeIfSourceIsEmpty')
+                    ->info('Write to target even if source data is empty')
+                    ->defaultValue(true)
+                ->end()
+                ->booleanNode('writeIfTargetIsNotEmpty')
+                    ->info('Write to target even if target already has a value')
+                    ->defaultValue(true)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

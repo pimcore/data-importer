@@ -16,11 +16,13 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
 use Pimcore\Model\Element\DuplicateFullPathException;
 use Pimcore\Model\Element\Service;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ImportAsset extends AbstractOperator
+class ImportAsset extends AbstractOperator implements SchemaAwareInterface
 {
     /**
      * @var string
@@ -221,5 +223,40 @@ class ImportAsset extends AbstractOperator
         } else {
             return $inputData;
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Downloads and imports assets from URLs into the Pimcore DAM. Optionally uses existing assets or overwrites them. Supports regex pattern matching for filename extraction.';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('parentFolder')
+                    ->info('Target folder path in Pimcore DAM where assets will be imported')
+                    ->defaultValue('/')
+                ->end()
+                ->booleanNode('useExisting')
+                    ->info('If true, uses existing asset if found at target path instead of creating new one')
+                    ->defaultValue(false)
+                ->end()
+                ->booleanNode('overwriteExisting')
+                    ->info('If true, overwrites existing asset data if content has changed')
+                    ->defaultValue(false)
+                ->end()
+                ->scalarNode('pregMatch')
+                    ->info('Regular expression pattern to extract filename from URL. Matched groups are joined with hyphens.')
+                    ->defaultValue('')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

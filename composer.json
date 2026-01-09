@@ -8,6 +8,9 @@
     "preferred-install": {
       "pimcore/pimcore": "source",
       "*": "dist"
+    },
+    "allow-plugins": {
+      "php-http/discovery": false
     }
   },
   "prefer-stable": true,

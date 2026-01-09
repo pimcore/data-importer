@@ -13,7 +13,7 @@ services:
     php-fpm:
         #user: '1000:1000' # set to your uid:gid
         #image: pimcore/pimcore:PHP8.1-fpm-debug
-        image: pimcore/pimcore:PHP8.1-fpm
+        image: pimcore/pimcore:php8.3-debug-latest
         environment:
             PHP_IDE_CONFIG: "serverName=localhost"
             COMPOSER_HOME: /var/www/html
@@ -23,6 +23,8 @@ services:
             PIMCORE_TEST_DB_DSN: "mysql://pimcore:pimcore@db:3306/pimcore_test"
         depends_on:
             - db
+        env_file:
+            -   ../../../../../.env.local            
         volumes:
             - ../../.:/var/www/html
             - /var/www/html/vendor
