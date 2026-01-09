@@ -39,62 +39,39 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
             return;
         }
 
-        // Collect all tagged services
-        $dataLoaders = [];
-        foreach ($container->findTaggedServiceIds(LoaderConfigurationFactoryPass::loader_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $dataLoaders[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $interpreters = [];
-        foreach ($container->findTaggedServiceIds(InterpreterConfigurationFactoryPass::interpreter_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $interpreters[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $loadStrategies = [];
-        foreach ($container->findTaggedServiceIds(ResolverConfigurationFactoryPass::load_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $loadStrategies[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $locationStrategies = [];
-        foreach ($container->findTaggedServiceIds(ResolverConfigurationFactoryPass::location_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $locationStrategies[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $publishStrategies = [];
-        foreach ($container->findTaggedServiceIds(ResolverConfigurationFactoryPass::publish_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $publishStrategies[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $operators = [];
-        foreach ($container->findTaggedServiceIds(MappingConfigurationFactoryPass::operator_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $operators[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $dataTargets = [];
-        foreach ($container->findTaggedServiceIds(MappingConfigurationFactoryPass::data_target_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $dataTargets[$attributes['type']] = new Reference($id);
-            }
-        }
-
-        $cleanupStrategies = [];
-        foreach ($container->findTaggedServiceIds(CleanupStrategyConfigurationFactoryPass::cleanup_tag) as $id => $tags) {
-            foreach ($tags as $attributes) {
-                $cleanupStrategies[$attributes['type']] = new Reference($id);
-            }
-        }
+        // Collect all tagged services using helper method to reduce duplication
+        $dataLoaders = $this->collectServicesByType(
+            $container,
+            LoaderConfigurationFactoryPass::loader_tag
+        );
+        $interpreters = $this->collectServicesByType(
+            $container,
+            InterpreterConfigurationFactoryPass::interpreter_tag
+        );
+        $loadStrategies = $this->collectServicesByType(
+            $container,
+            ResolverConfigurationFactoryPass::load_tag
+        );
+        $locationStrategies = $this->collectServicesByType(
+            $container,
+            ResolverConfigurationFactoryPass::location_tag
+        );
+        $publishStrategies = $this->collectServicesByType(
+            $container,
+            ResolverConfigurationFactoryPass::publish_tag
+        );
+        $operators = $this->collectServicesByType(
+            $container,
+            MappingConfigurationFactoryPass::operator_tag
+        );
+        $dataTargets = $this->collectServicesByType(
+            $container,
+            MappingConfigurationFactoryPass::data_target_tag
+        );
+        $cleanupStrategies = $this->collectServicesByType(
+            $container,
+            CleanupStrategyConfigurationFactoryPass::cleanup_tag
+        );
 
         // Create ServiceLocators for each category
         $dataLoaderLocator = ServiceLocatorTagPass::register($container, $dataLoaders);
@@ -130,8 +107,10 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
             $schemaDefinition = $container->getDefinition(ConfigurationSchemaService::class);
             // Create ConfigurationSchemaLocators bundle
             if (!$container->hasDefinition(ConfigurationSchemaLocators::class)) {
-                $locatorsDefinition = $container->register(ConfigurationSchemaLocators::class, ConfigurationSchemaLocators::class)
-                    ->setArguments([
+                $locatorsDefinition = $container->register(
+                    ConfigurationSchemaLocators::class,
+                    ConfigurationSchemaLocators::class
+                )->setArguments([
                         $dataLoaderLocator,
                         $interpreterLocator,
                         $loadStrategyLocator,
@@ -157,5 +136,25 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
             // Inject locators bundle into schema service
             $schemaDefinition->setArgument('$locators', $locatorsDefinition);
         }
+    }
+
+    /**
+     * Helper method to collect services by tag and organize by type attribute
+     *
+     * @param ContainerBuilder $container
+     * @param string $tagName
+     *
+     * @return array<string, Reference>
+     */
+    private function collectServicesByType(ContainerBuilder $container, string $tagName): array
+    {
+        $services = [];
+        foreach ($container->findTaggedServiceIds($tagName) as $id => $tags) {
+            foreach ($tags as $attributes) {
+                $services[$attributes['type']] = new Reference($id);
+            }
+        }
+
+        return $services;
     }
 }

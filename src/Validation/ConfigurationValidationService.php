@@ -159,21 +159,13 @@ class ConfigurationValidationService
         }
 
         // Validate settings using SchemaAwareInterface if available
-        if ($this->dataLoaderLocator->has($config['type'])) {
-            $loader = $this->dataLoaderLocator->get($config['type']);
-            if ($loader instanceof SchemaAwareInterface) {
-                $treeBuilder = $loader->getConfigTreeBuilder();
-                if ($treeBuilder !== null && !empty($config['settings'])) {
-                    try {
-                        $this->configProcessor->process($treeBuilder->buildTree(), [$config['settings']]);
-                    } catch (\Exception $e) {
-                        $errors[] = new ValidationError('loaderConfig.settings', $e->getMessage());
-
-                        return $errors;
-                    }
-                }
-            }
-        }
+        $schemaErrors = $this->validateSchemaAwareSettings(
+            'loaderConfig',
+            $this->dataLoaderLocator,
+            $config['type'],
+            $config['settings'] ?? []
+        );
+        $errors = array_merge($errors, $schemaErrors);
 
         // Also try to instantiate through factory to check dependencies
         try {
@@ -203,21 +195,13 @@ class ConfigurationValidationService
         }
 
         // Validate settings using SchemaAwareInterface if available
-        if ($this->interpreterLocator->has($config['type'])) {
-            $interpreter = $this->interpreterLocator->get($config['type']);
-            if ($interpreter instanceof SchemaAwareInterface) {
-                $treeBuilder = $interpreter->getConfigTreeBuilder();
-                if ($treeBuilder !== null && !empty($config['settings'])) {
-                    try {
-                        $this->configProcessor->process($treeBuilder->buildTree(), [$config['settings']]);
-                    } catch (\Exception $e) {
-                        $errors[] = new ValidationError('interpreterConfig.settings', $e->getMessage());
-
-                        return $errors;
-                    }
-                }
-            }
-        }
+        $schemaErrors = $this->validateSchemaAwareSettings(
+            'interpreterConfig',
+            $this->interpreterLocator,
+            $config['type'],
+            $config['settings'] ?? []
+        );
+        $errors = array_merge($errors, $schemaErrors);
 
         // Also try to instantiate through factory to check dependencies
         try {
@@ -281,25 +265,17 @@ class ConfigurationValidationService
         // Validate cleanup strategy settings using SchemaAwareInterface if available
         if (!empty($config['cleanup']['strategy'])) {
             $strategyType = $config['cleanup']['strategy'];
-            if ($this->cleanupStrategyLocator->has($strategyType)) {
-                $strategy = $this->cleanupStrategyLocator->get($strategyType);
-                if ($strategy instanceof SchemaAwareInterface) {
-                    $treeBuilder = $strategy->getConfigTreeBuilder();
-                    if ($treeBuilder !== null && !empty($config['cleanup']['settings'])) {
-                        try {
-                            $this->configProcessor->process($treeBuilder->buildTree(), [$config['cleanup']['settings']]);
-                        } catch (\Exception $e) {
-                            $errors[] = new ValidationError('processingConfig.cleanup.settings', $e->getMessage());
-
-                            return $errors;
-                        }
-                    }
-                }
-            }
+            $schemaErrors = $this->validateSchemaAwareSettings(
+                'processingConfig.cleanup',
+                $this->cleanupStrategyLocator,
+                $strategyType,
+                $config['cleanup']['settings'] ?? []
+            );
+            $errors = array_merge($errors, $schemaErrors);
 
             // Also try to instantiate through factory to check dependencies
             try {
-                $this->cleanupStrategyFactory->loadCleanupStrategy($config['cleanup']['strategy']);
+                $this->cleanupStrategyFactory->loadCleanupStrategy($strategyType);
             } catch (InvalidConfigurationException $e) {
                 $errors[] = new ValidationError('processingConfig.cleanup.strategy', $e->getMessage());
             }
@@ -349,6 +325,47 @@ class ConfigurationValidationService
             $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
         } catch (\Exception $e) {
             $errors[] = new ValidationError('executionConfig', 'Validation failed: ' . $e->getMessage());
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Helper method to validate settings using SchemaAwareInterface
+     *
+     * @param string $path Error path prefix
+     * @param ServiceLocator $locator Service locator
+     * @param string $type Service type
+     * @param array $settings Settings to validate
+     *
+     * @return ValidationError[]
+     */
+    private function validateSchemaAwareSettings(
+        string $path,
+        ServiceLocator $locator,
+        string $type,
+        array $settings
+    ): array {
+        $errors = [];
+
+        if (!$locator->has($type)) {
+            return $errors;
+        }
+
+        $service = $locator->get($type);
+        if (!$service instanceof SchemaAwareInterface) {
+            return $errors;
+        }
+
+        $treeBuilder = $service->getConfigTreeBuilder();
+        if ($treeBuilder === null || empty($settings)) {
+            return $errors;
+        }
+
+        try {
+            $this->configProcessor->process($treeBuilder->buildTree(), [$settings]);
+        } catch (\Exception $e) {
+            $errors[] = new ValidationError($path . '.settings', $e->getMessage());
         }
 
         return $errors;
