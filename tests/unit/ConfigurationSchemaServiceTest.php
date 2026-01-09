@@ -16,6 +16,9 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
 use Pimcore\Tests\Support\Util\TestHelper;
 
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class ConfigurationSchemaServiceTest extends Unit
 {
     /**
@@ -25,6 +28,8 @@ class ConfigurationSchemaServiceTest extends Unit
 
     protected function _before()
     {
+        // Intentionally left blank. No per-test setup required, but the
+        // method is kept for consistency with Codeception lifecycle hooks.
     }
 
     protected function _after()

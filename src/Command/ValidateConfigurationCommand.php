@@ -32,6 +32,16 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class ValidateConfigurationCommand extends Command
 {
+    private const AVAILABLE_SECTIONS = [
+        'general',
+        'loaderConfig',
+        'interpreterConfig',
+        'resolverConfig',
+        'processingConfig',
+        'mappingConfig',
+        'executionConfig',
+    ];
+
     protected ConfigurationValidationService $validationService;
 
     protected ConfigurationSchemaService $schemaService;
@@ -51,7 +61,13 @@ class ValidateConfigurationCommand extends Command
             ->setDescription('Validate data importer configuration or show schema information')
             ->addArgument('config-name', InputArgument::OPTIONAL, 'Name of the configuration to validate')
             ->addOption('schema', null, InputOption::VALUE_NONE, 'Show complete configuration schema')
-            ->addOption('schema-section', null, InputOption::VALUE_REQUIRED, 'Show schema for specific section (loaderConfig, interpreterConfig, etc.)')
+            ->addOption(
+                'schema-section',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Show schema for specific section (' .
+                'loaderConfig, interpreterConfig, etc.)'
+            )
             ->addOption('json', null, InputOption::VALUE_NONE, 'Output as JSON')
         ;
     }
@@ -85,7 +101,7 @@ class ValidateConfigurationCommand extends Command
             $method = 'get' . ucfirst($section) . 'Schema';
             if (!method_exists($this->schemaService, $method)) {
                 $io->error("Unknown schema section: $section");
-                $io->note('Available sections: general, loaderConfig, interpreterConfig, resolverConfig, processingConfig, mappingConfig, executionConfig');
+                $this->renderAvailableSections($io);
 
                 return Command::FAILURE;
             }
@@ -123,25 +139,7 @@ class ValidateConfigurationCommand extends Command
             $output = json_encode($result->toArray(), JSON_PRETTY_PRINT);
             $io->writeln($output);
         } else {
-            if ($result->isValid()) {
-                $io->success('Configuration is valid');
-            } else {
-                $io->error('Configuration has errors');
-
-                if ($result->hasErrors()) {
-                    $io->section('Errors:');
-                    foreach ($result->getErrors() as $error) {
-                        $io->writeln("  • {$error->getPath()}: {$error->getMessage()}");
-                    }
-                }
-
-                if ($result->hasWarnings()) {
-                    $io->section('Warnings:');
-                    foreach ($result->getWarnings() as $warning) {
-                        $io->writeln("  • {$warning->getPath()}: {$warning->getMessage()}");
-                    }
-                }
-            }
+            $this->renderValidationResult($io, $result);
         }
 
         return $result->isValid() ? Command::SUCCESS : Command::FAILURE;
@@ -157,47 +155,118 @@ class ValidateConfigurationCommand extends Command
         }
 
         if (isset($schema['availableTypes'])) {
-            $io->section('Available Types:');
-            foreach ($schema['availableTypes'] as $type => $info) {
-                $io->writeln("  <info>$type</info>");
-                if (isset($info['description'])) {
-                    $io->writeln('    ' . $info['description']);
-                }
-                if (isset($info['settings']) && !empty($info['settings'])) {
-                    $io->writeln('    Settings:');
-                    foreach ($info['settings'] as $settingName => $settingInfo) {
-                        $required = $settingInfo['required'] ?? false;
-                        $requiredLabel = $required ? '<fg=red>*</>' : ' ';
-                        $io->writeln("      $requiredLabel $settingName ({$settingInfo['type']})");
-                        if (isset($settingInfo['description'])) {
-                            $io->writeln('        ' . $settingInfo['description']);
-                        }
-                    }
-                }
-                $io->newLine();
-            }
+            $this->renderAvailableTypes($io, $schema['availableTypes']);
         }
 
         if (isset($schema['properties']) && !isset($schema['availableTypes'])) {
-            $io->section('Properties:');
-            foreach ($schema['properties'] as $propName => $propInfo) {
-                $required = $propInfo['required'] ?? false;
-                $requiredLabel = $required ? '<fg=red>*</>' : ' ';
-                $type = $propInfo['type'] ?? 'unknown';
-                $io->writeln("  $requiredLabel <info>$propName</info> ($type)");
-                if (isset($propInfo['description'])) {
-                    $io->writeln('    ' . $propInfo['description']);
-                }
-                if (isset($propInfo['enum'])) {
-                    $io->writeln('    Allowed values: ' . implode(', ', $propInfo['enum']));
-                }
-                if (isset($propInfo['default'])) {
-                    $defaultValue = is_bool($propInfo['default'])
-                        ? ($propInfo['default'] ? 'true' : 'false')
-                        : $propInfo['default'];
-                    $io->writeln("    Default: $defaultValue");
-                }
-                $io->newLine();
+            $this->renderProperties($io, $schema['properties']);
+        }
+    }
+
+    private function renderAvailableSections(SymfonyStyle $io): void
+    {
+        $io->note('Available sections: ' . implode(', ', self::AVAILABLE_SECTIONS));
+    }
+
+    private function renderAvailableTypes(SymfonyStyle $io, array $availableTypes): void
+    {
+        $io->section('Available Types:');
+        foreach ($availableTypes as $type => $info) {
+            $io->writeln("  <info>$type</info>");
+            if (isset($info['description'])) {
+                $io->writeln('    ' . $info['description']);
+            }
+            $this->renderTypeSettings($io, $info['settings'] ?? []);
+            $io->newLine();
+        }
+    }
+
+    private function renderProperties(SymfonyStyle $io, array $properties): void
+    {
+        $io->section('Properties:');
+        foreach ($properties as $propName => $propInfo) {
+            $required = $propInfo['required'] ?? false;
+            $requiredLabel = $required ? '<fg=red>*</>' : ' ';
+            $type = $propInfo['type'] ?? 'unknown';
+            $io->writeln("  $requiredLabel <info>$propName</info> ($type)");
+            $this->renderPropertyDetails($io, $propInfo);
+            $io->newLine();
+        }
+    }
+
+    private function renderPropertyDetails(SymfonyStyle $io, array $propInfo): void
+    {
+        if (isset($propInfo['description'])) {
+            $io->writeln('    ' . $propInfo['description']);
+        }
+
+        if (isset($propInfo['enum'])) {
+            $io->writeln('    Allowed values: ' . implode(', ', $propInfo['enum']));
+        }
+
+        if (!isset($propInfo['default'])) {
+            return;
+        }
+
+        $defaultValue = $propInfo['default'];
+        if (is_bool($defaultValue)) {
+            $defaultValue = $defaultValue ? 'true' : 'false';
+        }
+
+        $io->writeln("    Default: $defaultValue");
+    }
+
+    private function renderValidationResult(SymfonyStyle $io, object $result): void
+    {
+        if ($result->isValid()) {
+            $io->success('Configuration is valid');
+
+            return;
+        }
+
+        $io->error('Configuration has errors');
+        $this->renderErrors($io, $result);
+        $this->renderWarnings($io, $result);
+    }
+
+    private function renderErrors(SymfonyStyle $io, object $result): void
+    {
+        if (!$result->hasErrors()) {
+            return;
+        }
+
+        $io->section('Errors:');
+        foreach ($result->getErrors() as $error) {
+            $io->writeln("  • {$error->getPath()}: {$error->getMessage()}");
+        }
+    }
+
+    private function renderWarnings(SymfonyStyle $io, object $result): void
+    {
+        if (!$result->hasWarnings()) {
+            return;
+        }
+
+        $io->section('Warnings:');
+        foreach ($result->getWarnings() as $warning) {
+            $io->writeln("  • {$warning->getPath()}: {$warning->getMessage()}");
+        }
+    }
+
+    private function renderTypeSettings(SymfonyStyle $io, array $settings): void
+    {
+        if (empty($settings)) {
+            return;
+        }
+
+        $io->writeln('    Settings:');
+        foreach ($settings as $settingName => $settingInfo) {
+            $required = $settingInfo['required'] ?? false;
+            $requiredLabel = $required ? '<fg=red>*</>' : ' ';
+            $typeLabel = $settingInfo['type'] ?? 'unknown';
+            $io->writeln("      $requiredLabel $settingName ($typeLabel)");
+            if (isset($settingInfo['description'])) {
+                $io->writeln('        ' . $settingInfo['description']);
             }
         }
     }

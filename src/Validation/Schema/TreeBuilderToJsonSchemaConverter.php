@@ -54,35 +54,28 @@ class TreeBuilderToJsonSchemaConverter
      */
     private function convertNode(NodeInterface $node): array
     {
-        $schema = [];
+        $schema = $this->determineTypeSchema($node);
 
-        // Determine JSON type
         if ($node instanceof ArrayNode) {
-            $schema['type'] = 'object';
-            $properties = [];
-            $required = [];
+            $this->populateArrayNodeSchema($node, $schema);
+        }
 
-            foreach ($node->getChildren() as $childName => $child) {
-                $properties[$childName] = $this->convertNode($child);
+        $this->augmentWithDescription($node, $schema);
+        $this->augmentWithDefault($node, $schema);
 
-                if ($child->isRequired()) {
-                    $required[] = $childName;
-                }
-            }
+        return $schema;
+    }
 
-            if (!empty($properties)) {
-                $schema['properties'] = $properties;
-            }
+    private function determineTypeSchema(NodeInterface $node): array
+    {
+        $schema = ['type' => 'string'];
 
-            if (!empty($required)) {
-                $schema['required'] = $required;
-            }
+        if ($node instanceof ArrayNode) {
+            $schema = ['type' => 'object'];
         } elseif ($node instanceof BooleanNode) {
-            $schema['type'] = 'boolean';
+            $schema = ['type' => 'boolean'];
         } elseif ($node instanceof IntegerNode) {
-            $schema['type'] = 'integer';
-
-            // Add integer constraints
+            $schema = ['type' => 'integer'];
             if (method_exists($node, 'getMin') && $node->getMin() !== null) {
                 $schema['minimum'] = $node->getMin();
             }
@@ -90,37 +83,51 @@ class TreeBuilderToJsonSchemaConverter
                 $schema['maximum'] = $node->getMax();
             }
         } elseif ($node instanceof FloatNode) {
-            $schema['type'] = 'number';
+            $schema = ['type' => 'number'];
         } elseif ($node instanceof EnumNode) {
-            $schema['type'] = 'string';
-            $schema['enum'] = $node->getValues();
+            $schema = ['type' => 'string', 'enum' => $node->getValues()];
         } elseif ($node instanceof ScalarNode) {
-            $schema['type'] = 'string';
-        } else {
-            // Fallback for unknown node types
-            $schema['type'] = 'string';
+            $schema = ['type' => 'string'];
         }
 
-        // Add description if available
-        // getInfo() is only available on specific node types, not on base NodeInterface
+        return $schema;
+    }
+
+    private function populateArrayNodeSchema(ArrayNode $node, array &$schema): void
+    {
+        $properties = [];
+        $required = [];
+
+        foreach ($node->getChildren() as $childName => $child) {
+            $properties[$childName] = $this->convertNode($child);
+            if ($child->isRequired()) {
+                $required[] = $childName;
+            }
+        }
+
+        if (!empty($properties)) {
+            $schema['properties'] = $properties;
+        }
+        if (!empty($required)) {
+            $schema['required'] = $required;
+        }
+    }
+
+    private function augmentWithDescription(NodeInterface $node, array &$schema): void
+    {
         if (method_exists($node, 'getInfo') && $node->getInfo()) {
             $schema['description'] = $node->getInfo();
         }
+    }
 
-        // Add default value if it exists
+    private function augmentWithDefault(NodeInterface $node, array &$schema): void
+    {
         if ($node->hasDefaultValue()) {
             $defaultValue = $node->getDefaultValue();
-
-            // Only include non-null defaults
             if ($defaultValue !== null) {
                 $schema['default'] = $defaultValue;
             }
         }
-
-        // Mark as required if the node cannot be empty
-        // (This is captured at the parent level, but good to know)
-
-        return $schema;
     }
 
     /**

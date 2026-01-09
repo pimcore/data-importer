@@ -51,25 +51,18 @@ class ConfigurationSchemaService
     protected ConfigurationDefinition $configDefinition;
 
     public function __construct(
-        ServiceLocator $dataLoaderLocator,
-        ServiceLocator $interpreterLocator,
-        ServiceLocator $loadStrategyLocator,
-        ServiceLocator $locationStrategyLocator,
-        ServiceLocator $publishStrategyLocator,
-        ServiceLocator $operatorLocator,
-        ServiceLocator $dataTargetLocator,
-        ServiceLocator $cleanupStrategyLocator,
+        ConfigurationSchemaLocators $locators,
         TreeBuilderToJsonSchemaConverter $jsonSchemaConverter,
         ConfigurationDefinition $configDefinition
     ) {
-        $this->dataLoaderLocator = $dataLoaderLocator;
-        $this->interpreterLocator = $interpreterLocator;
-        $this->loadStrategyLocator = $loadStrategyLocator;
-        $this->locationStrategyLocator = $locationStrategyLocator;
-        $this->publishStrategyLocator = $publishStrategyLocator;
-        $this->operatorLocator = $operatorLocator;
-        $this->dataTargetLocator = $dataTargetLocator;
-        $this->cleanupStrategyLocator = $cleanupStrategyLocator;
+        $this->dataLoaderLocator = $locators->dataLoader();
+        $this->interpreterLocator = $locators->interpreter();
+        $this->loadStrategyLocator = $locators->loadStrategy();
+        $this->locationStrategyLocator = $locators->locationStrategy();
+        $this->publishStrategyLocator = $locators->publishStrategy();
+        $this->operatorLocator = $locators->operator();
+        $this->dataTargetLocator = $locators->dataTarget();
+        $this->cleanupStrategyLocator = $locators->cleanupStrategy();
         $this->jsonSchemaConverter = $jsonSchemaConverter;
         $this->configDefinition = $configDefinition;
     }
@@ -235,16 +228,18 @@ class ConfigurationSchemaService
 
         // Add available types to the schema
         if (isset($baseSchema['items']['properties']['transformationPipeline'])) {
-            $baseSchema['items']['properties']['transformationPipeline']['availableOperators'] = $operators;
-            if (isset($baseSchema['items']['properties']['transformationPipeline']['items']['properties']['type']['enum'])) {
-                $baseSchema['items']['properties']['transformationPipeline']['items']['properties']['type']['enum'] = array_keys($operators);
+            $tp = &$baseSchema['items']['properties']['transformationPipeline'];
+            $tp['availableOperators'] = $operators;
+            if (isset($tp['items']['properties']['type']['enum'])) {
+                $tp['items']['properties']['type']['enum'] = array_keys($operators);
             }
         }
 
         if (isset($baseSchema['items']['properties']['dataTarget'])) {
-            $baseSchema['items']['properties']['dataTarget']['availableTargets'] = $dataTargets;
-            if (isset($baseSchema['items']['properties']['dataTarget']['properties']['type']['enum'])) {
-                $baseSchema['items']['properties']['dataTarget']['properties']['type']['enum'] = array_keys($dataTargets);
+            $dt = &$baseSchema['items']['properties']['dataTarget'];
+            $dt['availableTargets'] = $dataTargets;
+            if (isset($dt['properties']['type']['enum'])) {
+                $dt['properties']['type']['enum'] = array_keys($dataTargets);
             }
         }
 
@@ -291,13 +286,13 @@ class ConfigurationSchemaService
                     }
                 } else {
                     // Fallback for services that don't implement SchemaAwareInterface
-                    $schema['description'] = $this->getFallbackDescription($type, $class);
+                    $schema['description'] = $this->getFallbackDescription($class);
                     $schema['settings'] = [];
                 }
             }
         } catch (\Exception $e) {
             // If service cannot be instantiated, use fallback
-            $schema['description'] = $this->getFallbackDescription($type, $class);
+            $schema['description'] = $this->getFallbackDescription($class);
             $schema['settings'] = [];
         }
 
@@ -307,7 +302,7 @@ class ConfigurationSchemaService
     /**
      * Get fallback description for services that don't implement SchemaAwareInterface
      */
-    protected function getFallbackDescription(string $type, string $class): string
+    protected function getFallbackDescription(string $class): string
     {
         // Extract simple description from class name
         $parts = explode('\\', $class);

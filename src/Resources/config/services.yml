@@ -37,6 +37,7 @@ services:
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition: ~
     Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService: ~
     Pimcore\Bundle\DataImporterBundle\Validation\Schema\TreeBuilderToJsonSchemaConverter: ~
+    Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators: ~
     Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService:
         public: true
 

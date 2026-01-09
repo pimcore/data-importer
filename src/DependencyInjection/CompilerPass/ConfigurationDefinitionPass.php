@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
+use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -127,14 +128,34 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
         // Inject into ConfigurationSchemaService (needs all ServiceLocators)
         if ($container->hasDefinition(ConfigurationSchemaService::class)) {
             $schemaDefinition = $container->getDefinition(ConfigurationSchemaService::class);
-            $schemaDefinition->setArgument('$dataLoaderLocator', $dataLoaderLocator);
-            $schemaDefinition->setArgument('$interpreterLocator', $interpreterLocator);
-            $schemaDefinition->setArgument('$loadStrategyLocator', $loadStrategyLocator);
-            $schemaDefinition->setArgument('$locationStrategyLocator', $locationStrategyLocator);
-            $schemaDefinition->setArgument('$publishStrategyLocator', $publishStrategyLocator);
-            $schemaDefinition->setArgument('$operatorLocator', $operatorLocator);
-            $schemaDefinition->setArgument('$dataTargetLocator', $dataTargetLocator);
-            $schemaDefinition->setArgument('$cleanupStrategyLocator', $cleanupStrategyLocator);
+            // Create ConfigurationSchemaLocators bundle
+            if (!$container->hasDefinition(ConfigurationSchemaLocators::class)) {
+                $locatorsDefinition = $container->register(ConfigurationSchemaLocators::class, ConfigurationSchemaLocators::class)
+                    ->setArguments([
+                        $dataLoaderLocator,
+                        $interpreterLocator,
+                        $loadStrategyLocator,
+                        $locationStrategyLocator,
+                        $publishStrategyLocator,
+                        $operatorLocator,
+                        $dataTargetLocator,
+                        $cleanupStrategyLocator,
+                    ]);
+            } else {
+                $locatorsDefinition = $container->getDefinition(ConfigurationSchemaLocators::class);
+                $locatorsDefinition->setArguments([
+                    $dataLoaderLocator,
+                    $interpreterLocator,
+                    $loadStrategyLocator,
+                    $locationStrategyLocator,
+                    $publishStrategyLocator,
+                    $operatorLocator,
+                    $dataTargetLocator,
+                    $cleanupStrategyLocator,
+                ]);
+            }
+            // Inject locators bundle into schema service
+            $schemaDefinition->setArgument('$locators', $locatorsDefinition);
         }
     }
 }

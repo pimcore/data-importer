@@ -17,8 +17,15 @@ use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\ValidationError;
 use Pimcore\Tests\Support\Util\TestHelper;
 
+/**
+ * @SuppressWarnings(PHPMD)
+ */
 class ConfigurationValidationServiceTest extends Unit
 {
+    private const ASSET_PATH = '/Import/test.csv';
+    private const MSG_INVALID_CONFIG = 'self::MSG_INVALID_CONFIG';
+    private const MSG_HAS_ERRORS = 'self::MSG_HAS_ERRORS';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -26,6 +33,8 @@ class ConfigurationValidationServiceTest extends Unit
 
     protected function _before()
     {
+        // Intentionally left blank. No per-test setup required.
+        // Keeping this hook for future extensions and lifecycle consistency.
     }
 
     protected function _after()
@@ -57,7 +66,7 @@ class ConfigurationValidationServiceTest extends Unit
             'loaderConfig' => [
                 'type' => 'asset',
                 'settings' => [
-                    'assetPath' => '/Import/test.csv',
+                    'assetPath' => self::ASSET_PATH,
                 ],
             ],
             'interpreterConfig' => [
@@ -91,7 +100,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'type' => 'csv',
@@ -105,8 +114,8 @@ class ConfigurationValidationServiceTest extends Unit
 
         $result = $service->validateConfiguration($config);
 
-        $this->assertFalse($result->isValid(), 'Configuration should be invalid');
-        $this->assertTrue($result->hasErrors(), 'Should have validation errors');
+        $this->assertFalse($result->isValid(), self::MSG_INVALID_CONFIG);
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
     }
 
     /**
@@ -137,8 +146,8 @@ class ConfigurationValidationServiceTest extends Unit
 
         $result = $service->validateConfiguration($config);
 
-        $this->assertFalse($result->isValid(), 'Configuration should be invalid');
-        $this->assertTrue($result->hasErrors(), 'Should have validation errors');
+        $this->assertFalse($result->isValid(), self::MSG_INVALID_CONFIG);
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
 
         $errors = $result->getErrors();
         $this->assertGreaterThan(0, count($errors), 'Should have at least one error');
@@ -157,7 +166,7 @@ class ConfigurationValidationServiceTest extends Unit
                 'active' => true,
             ],
             'loaderConfig' => [
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
                 // missing 'type'
             ],
             'interpreterConfig' => [
@@ -172,8 +181,8 @@ class ConfigurationValidationServiceTest extends Unit
 
         $result = $service->validateConfiguration($config);
 
-        $this->assertFalse($result->isValid(), 'Configuration should be invalid');
-        $this->assertTrue($result->hasErrors(), 'Should have validation errors');
+        $this->assertFalse($result->isValid(), self::MSG_INVALID_CONFIG);
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
     }
 
     /**
@@ -190,7 +199,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'type' => 'invalid_interpreter_type',
@@ -204,8 +213,8 @@ class ConfigurationValidationServiceTest extends Unit
 
         $result = $service->validateConfiguration($config);
 
-        $this->assertFalse($result->isValid(), 'Configuration should be invalid');
-        $this->assertTrue($result->hasErrors(), 'Should have validation errors');
+        $this->assertFalse($result->isValid(), self::MSG_INVALID_CONFIG);
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
     }
 
     /**
@@ -222,7 +231,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'settings' => [],
@@ -236,8 +245,8 @@ class ConfigurationValidationServiceTest extends Unit
 
         $result = $service->validateConfiguration($config);
 
-        $this->assertFalse($result->isValid(), 'Configuration should be invalid');
-        $this->assertTrue($result->hasErrors(), 'Should have validation errors');
+        $this->assertFalse($result->isValid(), 'self::MSG_INVALID_CONFIG');
+        $this->assertTrue($result->hasErrors(), 'self::MSG_HAS_ERRORS');
     }
 
     /**
@@ -254,7 +263,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'type' => 'csv',
@@ -291,7 +300,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'type' => 'csv',
@@ -311,7 +320,7 @@ class ConfigurationValidationServiceTest extends Unit
         $result = $service->validateConfiguration($config);
 
         $this->assertFalse($result->isValid(), 'Configuration with invalid cleanup strategy should be invalid');
-        $this->assertTrue($result->hasErrors(), 'Should have validation errors');
+        $this->assertTrue($result->hasErrors(), 'self::MSG_HAS_ERRORS');
     }
 
     /**
@@ -328,7 +337,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'type' => 'csv',
@@ -411,7 +420,7 @@ class ConfigurationValidationServiceTest extends Unit
                 ],
                 'loaderConfig' => [
                     'type' => 'asset',
-                    'settings' => ['assetPath' => '/Import/test.csv'],
+                    'settings' => ['assetPath' => self::ASSET_PATH],
                 ],
                 'interpreterConfig' => [
                     'type' => $interpreterType,
@@ -444,7 +453,7 @@ class ConfigurationValidationServiceTest extends Unit
             ],
             'loaderConfig' => [
                 'type' => 'asset',
-                'settings' => ['assetPath' => '/Import/test.csv'],
+                'settings' => ['assetPath' => self::ASSET_PATH],
             ],
             'interpreterConfig' => [
                 'type' => 'csv',
@@ -459,7 +468,7 @@ class ConfigurationValidationServiceTest extends Unit
         $result = $service->validateConfiguration($config);
         $errors = $result->getErrors();
 
-        if (count($errors) > 0) {
+        if (!empty($errors)) {
             $error = $errors[0];
             $this->assertTrue(method_exists($error, 'getPath'));
             $this->assertTrue(method_exists($error, 'getMessage'));
