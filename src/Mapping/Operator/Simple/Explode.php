@@ -77,8 +77,15 @@ class Explode extends AbstractOperator implements SchemaAwareInterface
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (! in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for explode operator at transformation position %s", $inputType, $index));
+        if (! in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for explode operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
@@ -86,7 +93,8 @@ class Explode extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Splits strings into arrays using a delimiter. Can optionally preserve sub-arrays when processing nested arrays.';
+        return 'Splits strings into arrays using a delimiter. '
+            . 'Can optionally preserve sub-arrays when processing nested arrays.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

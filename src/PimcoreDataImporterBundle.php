@@ -33,7 +33,9 @@ use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
-class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface, PimcoreBundleAdminClassicInterface
+class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements
+    DependentBundleInterface,
+    PimcoreBundleAdminClassicInterface
 {
     use BundleAdminClassicTrait;
     use PackageVersionTrait;
@@ -103,10 +105,14 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/mappingConfigurationItem.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/transformationResultHandler.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/direct.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/manyToManyRelation.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/classificationstore.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/classificationstoreBatch.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/tools/classificationStoreKeySearchWindow.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/'
+                . 'manyToManyRelation.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/'
+                . 'classificationstore.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/datatarget/'
+                . 'classificationstoreBatch.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/tools/'
+                . 'classificationStoreKeySearchWindow.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/abstractOperator.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/trim.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/numeric.js',
@@ -123,7 +129,8 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/quantityValue.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/quantityValueArray.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/inputQuantityValue.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/inputQuantityValueArray.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/'
+                . 'inputQuantityValueArray.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/boolean.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/date.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/importAsset.js',
@@ -132,10 +139,12 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/imageAdvanced.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/loadDataObject.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/objectField.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/reduceArrayKeyValuePairs.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/'
+                . 'reduceArrayKeyValuePairs.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/flattenArray.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/staticText.js',
-            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/conditionalConversion.js',
+            '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/'
+                . 'conditionalConversion.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/mapping/operator/stringReplace.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/execution.js',
             '/bundles/pimcoredataimporter/js/pimcore/configuration/components/logTab.js',

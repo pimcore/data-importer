@@ -115,12 +115,19 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface
     {
         if ($this->unitSource !== 'static') {
             if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-                throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for quantity value operator at transformation position %s",
-                    $inputType, $index));
+                throw new InvalidConfigurationException(sprintf(
+                    "Unsupported input type '%s' for quantity value operator at transformation position %s",
+                    $inputType,
+                    $index
+                ));
             }
         } elseif ($inputType !== TransformationDataTypeService::DEFAULT_TYPE) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for quantity value operator with static unit at transformation position %s",
-                $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for quantity value operator with static unit at " .
+                "transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::QUANTITY_VALUE;
@@ -143,7 +150,8 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts input data into a QuantityValue object with a numeric value and unit. Supports unit by ID, abbreviation, or static unit selection.';
+        return 'Converts input data into a QuantityValue object with a numeric value and unit. '
+            . 'Supports unit by ID, abbreviation, or static unit selection.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder
@@ -156,7 +164,10 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface
         $rootNode
             ->children()
                 ->enumNode('unitSourceSelect')
-                    ->info('How to determine the unit: "id" (unit ID from input), "abbr" (abbreviation from input), or "static" (fixed unit)')
+                    ->info(
+                        'How to determine the unit: "id" (unit ID from input), '
+                        . '"abbr" (abbreviation from input), or "static" (fixed unit)'
+                    )
                     ->values(['id', 'abbr', 'static'])
                     ->defaultValue('id')
                 ->end()

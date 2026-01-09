@@ -57,7 +57,11 @@ class AsGeopoint extends AbstractOperator implements SchemaAwareInterface
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for geoPoint operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for geoPoint operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GEOPOINT_VALUE;
@@ -65,7 +69,8 @@ class AsGeopoint extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts an array of coordinates into a GeoCoordinates object (geopoint). Expects an array with 2 values: [latitude, longitude].';
+        return 'Converts an array of coordinates into a GeoCoordinates object (geopoint). '
+            . 'Expects an array with 2 values: [latitude, longitude].';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

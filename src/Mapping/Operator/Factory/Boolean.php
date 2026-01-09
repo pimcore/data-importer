@@ -45,8 +45,15 @@ class Boolean extends AbstractOperator implements SchemaAwareInterface
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::BOOLEAN])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for boolean operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::BOOLEAN
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for boolean operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::BOOLEAN;
@@ -54,7 +61,8 @@ class Boolean extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts input data to boolean value. Uses PHP filter_var with FILTER_VALIDATE_BOOLEAN to evaluate the input.';
+        return 'Converts input data to boolean value. '
+            . 'Uses PHP filter_var with FILTER_VALIDATE_BOOLEAN to evaluate the input.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

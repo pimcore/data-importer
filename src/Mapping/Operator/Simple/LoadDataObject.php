@@ -120,7 +120,9 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
                         $operator = '=';
                         $class = ClassDefinition::getById($this->attributeDataObjectClassId);
                         if (empty($class)) {
-                            throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
+                            throw new InvalidConfigurationException(
+                                "Class `{$this->attributeDataObjectClassId}` not found."
+                            );
                         }
                         $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
                         if ($this->partialMatch) {
@@ -129,18 +131,40 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
 
                             if ($this->attributeLanguage) {
                                 $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`, language `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data,
+                                    $this->attributeLanguage
+                                );
                             } else {
                                 $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data
+                                );
                             }
                         } else {
                             if ($this->attributeLanguage) {
                                 $logMessage = 'by attribute `%s` (class `%s`, value `%s`, language `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data,
+                                    $this->attributeLanguage
+                                );
                             } else {
                                 $logMessage = 'by attribute `%s` (class `%s`, value `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data
+                                );
                             }
                         }
                         $object = $this->dataObjectLoader->loadByAttribute($className,
@@ -199,7 +223,11 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
         } elseif ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::DATA_OBJECT_ARRAY;
         } else {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for load data object operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for load data object operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
     }
 
@@ -231,7 +259,8 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Loads existing Pimcore data objects by ID, path, or attribute value. Supports partial matching and loading unpublished objects.';
+        return 'Loads existing Pimcore data objects by ID, path, or attribute value. '
+            . 'Supports partial matching and loading unpublished objects.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder
@@ -244,7 +273,10 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
         $rootNode
             ->children()
                 ->enumNode('loadStrategy')
-                    ->info('Strategy for loading objects: "id" (by numeric ID), "path" (by full path), or "attribute" (by field value)')
+                    ->info(
+                        'Strategy for loading objects: "id" (by numeric ID), '
+                        . '"path" (by full path), or "attribute" (by field value)'
+                    )
                     ->values([self::LOAD_STRATEGY_ID, self::LOAD_STRATEGY_PATH, self::LOAD_STRATEGY_ATTRIBUTE])
                     ->defaultValue(self::LOAD_STRATEGY_ID)
                 ->end()

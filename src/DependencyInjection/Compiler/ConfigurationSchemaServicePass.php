@@ -47,7 +47,10 @@ class ConfigurationSchemaServicePass implements CompilerPassInterface
         $definition->setArgument('$loadStrategyLocator', $loadStrategyLocator);
 
         // Collect location strategies
-        $locationStrategies = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.resolver.location');
+        $locationStrategies = $this->collectTaggedServices(
+            $container,
+            'pimcore.datahub.data_importer.resolver.location'
+        );
         $locationStrategyLocator = ServiceLocatorTagPass::register($container, $locationStrategies);
         $definition->setArgument('$locationStrategyLocator', $locationStrategyLocator);
 

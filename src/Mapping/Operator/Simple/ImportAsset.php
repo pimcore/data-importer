@@ -195,7 +195,11 @@ class ImportAsset extends AbstractOperator implements SchemaAwareInterface
         } elseif ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::ASSET_ARRAY;
         } else {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for import/load asset operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for import/load asset operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
     }
 
@@ -227,7 +231,9 @@ class ImportAsset extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Downloads and imports assets from URLs into the Pimcore DAM. Optionally uses existing assets or overwrites them. Supports regex pattern matching for filename extraction.';
+        return 'Downloads and imports assets from URLs into the Pimcore DAM. '
+            . 'Optionally uses existing assets or overwrites them. '
+            . 'Supports regex pattern matching for filename extraction.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder
@@ -252,7 +258,10 @@ class ImportAsset extends AbstractOperator implements SchemaAwareInterface
                     ->defaultValue(false)
                 ->end()
                 ->scalarNode('pregMatch')
-                    ->info('Regular expression pattern to extract filename from URL. Matched groups are joined with hyphens.')
+                    ->info(
+                        'Regular expression pattern to extract filename from URL. '
+                        . 'Matched groups are joined with hyphens.'
+                    )
                     ->defaultValue('')
                 ->end()
             ->end();

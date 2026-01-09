@@ -125,7 +125,10 @@ class ManyToManyRelation extends Direct
                     }
                 }
                 foreach ($data as $dataObject) {
-                    if ($this->overwriteMode == self::OVERWRITE_MODE_REPLACE || !isset($newData[$dataObject->getId()])) {
+                    if (
+                        $this->overwriteMode == self::OVERWRITE_MODE_REPLACE ||
+                        !isset($newData[$dataObject->getId()])
+                    ) {
                         $metaDataObject = new ObjectMetadata($this->fieldName, [], $dataObject);
                         $newData[$metaDataObject->getObject()->getId()] = $metaDataObject;
                     }

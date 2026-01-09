@@ -75,8 +75,15 @@ class ClassificationstoreBatch implements DataTargetInterface, SchemaAwareInterf
                         throw new \Exception('keyId not valid');
                     }
 
-                    $classificationStore->setLocalizedKeyValue((int)$keyParts[0], (int)$keyParts[1], $value, $this->language);
-                    $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$keyParts[0] => true]);
+                    $classificationStore->setLocalizedKeyValue(
+                        (int)$keyParts[0],
+                        (int)$keyParts[1],
+                        $value,
+                        $this->language
+                    );
+                    $classificationStore->setActiveGroups(
+                        $classificationStore->getActiveGroups() + [$keyParts[0] => true]
+                    );
                 }
             }
         } else {

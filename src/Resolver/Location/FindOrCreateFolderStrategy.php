@@ -58,7 +58,11 @@ class FindOrCreateFolderStrategy implements LocationStrategyInterface, SchemaAwa
 
     public function setSettings(array $settings): void
     {
-        if ($settings['dataSourceIndex'] !== 0 && $settings['dataSourceIndex'] !== '0' && empty($settings['dataSourceIndex'])) {
+        if (
+            $settings['dataSourceIndex'] !== 0 &&
+            $settings['dataSourceIndex'] !== '0' &&
+            empty($settings['dataSourceIndex'])
+        ) {
             throw new InvalidConfigurationException('Empty data source index.');
         }
 

@@ -56,7 +56,11 @@ class FlattenArray extends AbstractOperator implements SchemaAwareInterface
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for flatten array operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for flatten array operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
@@ -64,7 +68,8 @@ class FlattenArray extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Flattens a multi-dimensional array into a single-level array by recursively extracting all leaf values.';
+        return 'Flattens a multi-dimensional array into a single-level array '
+            . 'by recursively extracting all leaf values.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

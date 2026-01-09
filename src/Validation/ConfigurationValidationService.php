@@ -39,6 +39,8 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
  */
 class ConfigurationValidationService
 {
+    private const MSG_VALIDATION_FAILED = 'Validation failed: ';
+
     protected ConfigurationPreparationService $configurationPreparationService;
 
     protected DataLoaderFactory $dataLoaderFactory;
@@ -153,7 +155,7 @@ class ConfigurationValidationService
             $treeBuilder = $this->configDefinition->getLoaderConfigTreeBuilder();
             $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
         } catch (\Exception $e) {
-            $errors[] = new ValidationError('loaderConfig', 'Validation failed: ' . $e->getMessage());
+            $errors[] = new ValidationError('loaderConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
 
             return $errors;
         }
@@ -189,7 +191,7 @@ class ConfigurationValidationService
             $treeBuilder = $this->configDefinition->getInterpreterConfigTreeBuilder();
             $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
         } catch (\Exception $e) {
-            $errors[] = new ValidationError('interpreterConfig', 'Validation failed: ' . $e->getMessage());
+            $errors[] = new ValidationError('interpreterConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
 
             return $errors;
         }
@@ -230,7 +232,7 @@ class ConfigurationValidationService
             $treeBuilder = $this->configDefinition->getResolverConfigTreeBuilder();
             $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
         } catch (\Exception $e) {
-            $errors[] = new ValidationError('resolverConfig', 'Validation failed: ' . $e->getMessage());
+            $errors[] = new ValidationError('resolverConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
 
             return $errors;
         }
@@ -257,7 +259,7 @@ class ConfigurationValidationService
             $treeBuilder = $this->configDefinition->getProcessingConfigTreeBuilder();
             $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
         } catch (\Exception $e) {
-            $errors[] = new ValidationError('processingConfig', 'Validation failed: ' . $e->getMessage());
+            $errors[] = new ValidationError('processingConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
 
             return $errors;
         }
@@ -324,7 +326,7 @@ class ConfigurationValidationService
             $treeBuilder = $this->configDefinition->getExecutionConfigTreeBuilder();
             $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
         } catch (\Exception $e) {
-            $errors[] = new ValidationError('executionConfig', 'Validation failed: ' . $e->getMessage());
+            $errors[] = new ValidationError('executionConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
         }
 
         return $errors;

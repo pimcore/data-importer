@@ -55,7 +55,11 @@ class AsCountries extends AbstractOperator implements SchemaAwareInterface
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType != TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for as countries operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for as countries operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::COUNTRY_ARRAY;
@@ -63,7 +67,8 @@ class AsCountries extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts country names to country codes. Takes an array of country display names and converts them to their corresponding ISO country codes.';
+        return 'Converts country names to country codes. '
+            . 'Takes an array of country display names and converts them to their corresponding ISO country codes.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

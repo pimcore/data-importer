@@ -66,7 +66,8 @@ class AsColor extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts input data into an RGBA color object. Accepts either an array of numeric RGB(A) values or a hex color string starting with #.';
+        return 'Converts input data into an RGBA color object. '
+            . 'Accepts either an array of numeric RGB(A) values or a hex color string starting with #.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

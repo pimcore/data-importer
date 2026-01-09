@@ -42,6 +42,12 @@ use Pimcore\Tests\Support\Util\TestHelper;
 
 class FactoryOperatorTest extends Test\Unit
 {
+    private const LAT_NORTH = '47.83595982332057';
+    private const LON_EAST = '13.06517167884434';
+    private const LAT_SOUTH = '47.810540991091045';
+    private const LON_WEST = '13.073721286556358';
+    private const TEST_STRING = 'Hello Test';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -283,7 +289,9 @@ class FactoryOperatorTest extends Test\Unit
         /**
          * @var \Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValue $quantityValue
          */
-        $quantityValue = $this->tester->grabService(\Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValue::class);
+        $quantityValue = $this->tester->grabService(
+            \Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValue::class
+        );
 
         /**
          * @var QuantityValue $result
@@ -351,7 +359,11 @@ class FactoryOperatorTest extends Test\Unit
         $result = $quantityValue->process([]);
         $this->assertNull($result);
 
-        $quantityValue->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => '1', 'unitNullIfNoValueCheckbox' => true]);
+        $quantityValue->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => '1',
+            'unitNullIfNoValueCheckbox' => true
+        ]);
         $result = $quantityValue->process([null, 'm']);
         $this->assertNull($result);
 
@@ -410,7 +422,10 @@ class FactoryOperatorTest extends Test\Unit
          * @var \Pimcore\Model\DataObject\Data\InputQuantityValue $result
          */
         $result = $operator->process([['12', 'm']]);
-        $this->assertInstanceOf(\Pimcore\Model\DataObject\Data\InputQuantityValue::class, $result[0]);
+        $this->assertInstanceOf(
+            \Pimcore\Model\DataObject\Data\InputQuantityValue::class,
+            $result[0]
+        );
         $this->assertEquals('12', $result[0]->getValue());
         $this->assertEquals('m', $result[0]->getUnitId());
         $this->assertEquals('Meter', $result[0]->getUnit()->getLongname());
@@ -434,78 +449,78 @@ class FactoryOperatorTest extends Test\Unit
     public function testAsGeopoint()
     {
         $service = $this->tester->grabService(AsGeopoint::class);
-        $data = $service->process(['47.83595982332057', '13.06517167884434']);
+        $data = $service->process([self::LAT_NORTH, self::LON_EAST]);
         $this->assertInstanceOf(GeoCoordinates::class, $data);
-        $this->assertEquals($data->getLatitude(), '47.83595982332057');
-        $this->assertEquals($data->getLongitude(), '13.06517167884434');
+        $this->assertEquals($data->getLatitude(), self::LAT_NORTH);
+        $this->assertEquals($data->getLongitude(), self::LON_EAST);
     }
 
     public function testAsGeobounds()
     {
         $service = $this->tester->grabService(AsGeobounds::class);
-        $data = $service->process(['47.83595982332057', '13.06517167884434', '47.810540991091045', '13.073721286556358']);
+        $data = $service->process([self::LAT_NORTH, self::LON_EAST, self::LAT_SOUTH, self::LON_WEST]);
         $this->assertInstanceOf(Geobounds::class, $data);
 
         $northEast = $data->getNorthEast();
         $southWest = $data->getSouthWest();
 
-        $this->assertEquals($northEast->getLatitude(), '47.83595982332057');
-        $this->assertEquals($northEast->getLongitude(), '13.06517167884434');
+        $this->assertEquals($northEast->getLatitude(), self::LAT_NORTH);
+        $this->assertEquals($northEast->getLongitude(), self::LON_EAST);
 
-        $this->assertEquals($southWest->getLatitude(), '47.810540991091045');
-        $this->assertEquals($southWest->getLongitude(), '13.073721286556358');
+        $this->assertEquals($southWest->getLatitude(), self::LAT_SOUTH);
+        $this->assertEquals($southWest->getLongitude(), self::LON_WEST);
     }
 
     public function testAsGeopolygon()
     {
         $service = $this->tester->grabService(AsGeopolygon::class);
-        $data = $service->process(['47.83595982332057', '13.06517167884434', '47.810540991091045', '13.073721286556358']);
+        $data = $service->process([self::LAT_NORTH, self::LON_EAST, self::LAT_SOUTH, self::LON_WEST]);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
-        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
+        $this->assertEquals($data[0]->getLatitude(), self::LAT_NORTH);
+        $this->assertEquals($data[0]->getLongitude(), self::LON_EAST);
 
-        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
-        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
+        $this->assertEquals($data[1]->getLatitude(), self::LAT_SOUTH);
+        $this->assertEquals($data[1]->getLongitude(), self::LON_WEST);
     }
 
     public function testAsGeopolygonArray()
     {
         $service = $this->tester->grabService(AsGeopolygon::class);
-        $data = $service->process([0 => ['47.83595982332057', '13.06517167884434'], 1 => ['47.810540991091045', '13.073721286556358']]);
+        $data = $service->process([0 => [self::LAT_NORTH, self::LON_EAST], 1 => [self::LAT_SOUTH, self::LON_WEST]]);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
-        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
+        $this->assertEquals($data[0]->getLatitude(), self::LAT_NORTH);
+        $this->assertEquals($data[0]->getLongitude(), self::LON_EAST);
 
-        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
-        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
+        $this->assertEquals($data[1]->getLatitude(), self::LAT_SOUTH);
+        $this->assertEquals($data[1]->getLongitude(), self::LON_WEST);
     }
 
     public function testAsGeopolyline()
     {
         $service = $this->tester->grabService(AsGeopolyline::class);
-        $data = $service->process(['47.83595982332057', '13.06517167884434', '47.810540991091045', '13.073721286556358']);
+        $data = $service->process([self::LAT_NORTH, self::LON_EAST, self::LAT_SOUTH, self::LON_WEST]);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
-        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
+        $this->assertEquals($data[0]->getLatitude(), self::LAT_NORTH);
+        $this->assertEquals($data[0]->getLongitude(), self::LON_EAST);
 
-        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
-        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
+        $this->assertEquals($data[1]->getLatitude(), self::LAT_SOUTH);
+        $this->assertEquals($data[1]->getLongitude(), self::LON_WEST);
     }
 
     public function testAsGeopolylineArray()
     {
         $service = $this->tester->grabService(AsGeopolyline::class);
-        $data = $service->process([0 => ['47.83595982332057', '13.06517167884434'], 1 => ['47.810540991091045', '13.073721286556358']]);
+        $data = $service->process([0 => [self::LAT_NORTH, self::LON_EAST], 1 => [self::LAT_SOUTH, self::LON_WEST]]);
         $this->assertIsArray($data);
 
-        $this->assertEquals($data[0]->getLatitude(), '47.83595982332057');
-        $this->assertEquals($data[0]->getLongitude(), '13.06517167884434');
+        $this->assertEquals($data[0]->getLatitude(), self::LAT_NORTH);
+        $this->assertEquals($data[0]->getLongitude(), self::LON_EAST);
 
-        $this->assertEquals($data[1]->getLatitude(), '47.810540991091045');
-        $this->assertEquals($data[1]->getLongitude(), '13.073721286556358');
+        $this->assertEquals($data[1]->getLatitude(), self::LAT_SOUTH);
+        $this->assertEquals($data[1]->getLongitude(), self::LON_WEST);
     }
 
     public function testAsColorArray()

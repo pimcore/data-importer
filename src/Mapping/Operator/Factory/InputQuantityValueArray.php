@@ -54,7 +54,11 @@ class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareI
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for input quantity value operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for input quantity value operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE_ARRAY;
@@ -72,7 +76,8 @@ class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareI
 
             foreach ($inputData as $key => $data) {
                 if ($data instanceof \Pimcore\Model\DataObject\Data\InputQuantityValue) {
-                    $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' . ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
+                    $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' .
+                        ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
                 } else {
                     $preview[$key] = $data;
                 }
@@ -86,7 +91,8 @@ class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareI
 
     public function getSchemaDescription(): string
     {
-        return 'Converts an array of value-unit pairs into an array of InputQuantityValue objects. Each item should be [value, unit].';
+        return 'Converts an array of value-unit pairs into an array of InputQuantityValue objects. '
+            . 'Each item should be [value, unit].';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

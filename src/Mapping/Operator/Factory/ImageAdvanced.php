@@ -52,7 +52,11 @@ class ImageAdvanced extends AbstractOperator implements SchemaAwareInterface
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if (!in_array($inputType, [TransformationDataTypeService::ASSET])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for image advanced operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for image advanced operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::IMAGE_ADVANCED;

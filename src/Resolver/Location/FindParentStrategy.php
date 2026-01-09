@@ -69,7 +69,11 @@ class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterf
 
     public function setSettings(array $settings): void
     {
-        if ($settings['dataSourceIndex'] !== 0 && $settings['dataSourceIndex'] !== '0' && empty($settings['dataSourceIndex'])) {
+        if (
+            $settings['dataSourceIndex'] !== 0 &&
+            $settings['dataSourceIndex'] !== '0' &&
+            empty($settings['dataSourceIndex'])
+        ) {
             throw new InvalidConfigurationException('Empty data source index.');
         }
 
@@ -120,7 +124,9 @@ class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterf
                 case self::FIND_BY_ATTRIBUTE:
                     $class = ClassDefinition::getById($this->attributeDataObjectClassId);
                     if (empty($class)) {
-                        throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
+                        throw new InvalidConfigurationException(
+                            "Class `{$this->attributeDataObjectClassId}` not found."
+                        );
                     }
                     $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
                     $newParent = $this->dataObjectLoader->loadByAttribute($className,
@@ -252,7 +258,10 @@ class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterf
                     ->info('Whether to save the element as a variant (value: "on")')
                 ->end()
                 ->scalarNode('attributeDataObjectClassId')
-                    ->info('Data object class ID for attribute-based parent lookup (required when findStrategy is "attribute")')
+                    ->info(
+                        'Data object class ID for attribute-based parent lookup '
+                        . '(required when findStrategy is "attribute")'
+                    )
                 ->end()
                 ->scalarNode('attributeName')
                     ->info('Attribute name for parent lookup (required when findStrategy is "attribute")')

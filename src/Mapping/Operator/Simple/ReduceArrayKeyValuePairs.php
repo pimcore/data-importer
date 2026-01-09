@@ -56,7 +56,11 @@ class ReduceArrayKeyValuePairs extends AbstractOperator implements SchemaAwareIn
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for reduce array key value pairs operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for reduce array key value pairs operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
@@ -64,7 +68,8 @@ class ReduceArrayKeyValuePairs extends AbstractOperator implements SchemaAwareIn
 
     public function getSchemaDescription(): string
     {
-        return 'Converts a flat array into an associative array by treating alternating elements as keys and values. Example: ["key1", "value1", "key2", "value2"] becomes ["key1" => "value1", "key2" => "value2"].';
+        return 'Converts a flat array into an associative array by treating alternating elements as keys and values. '
+            . 'Example: ["key1", "value1", "key2", "value2"] becomes ["key1" => "value1", "key2" => "value2"].';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

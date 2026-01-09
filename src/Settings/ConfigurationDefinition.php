@@ -32,6 +32,7 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
  */
 class ConfigurationDefinition implements ConfigurationInterface
 {
+    private const INFO_STRATEGY_SETTINGS = 'Strategy-specific settings';
     protected ServiceLocator $dataLoaderLocator;
 
     protected ServiceLocator $interpreterLocator;
@@ -246,7 +247,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -260,7 +261,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -274,7 +275,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -288,7 +289,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -330,7 +331,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->enumNode('strategy')
                             ->defaultNull()
-                            ->values(array_merge([null], array_keys($this->cleanupStrategyLocator->getProvidedServices())))
+                            ->values(array_merge(
+                                [null],
+                                array_keys($this->cleanupStrategyLocator->getProvidedServices())
+                            ))
                             ->info('Cleanup strategy to use')
                         ->end()
                         ->variableNode('settings')
@@ -594,7 +598,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -608,7 +612,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -622,7 +626,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -636,7 +640,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()
@@ -690,7 +694,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->end()
                         ->variableNode('settings')
                             ->defaultValue([])
-                            ->info('Strategy-specific settings')
+                            ->info(self::INFO_STRATEGY_SETTINGS)
                         ->end()
                     ->end()
                 ->end()

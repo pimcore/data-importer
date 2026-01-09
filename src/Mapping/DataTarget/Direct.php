@@ -57,8 +57,12 @@ class Direct implements DataTargetInterface, SchemaAwareInterface
         $this->language = $settings['language'] ?? null;
 
         //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
-        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
-        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
+        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty'])
+            ? $settings['writeIfSourceIsEmpty']
+            : true;
+        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty'])
+            ? $settings['writeIfTargetIsNotEmpty']
+            : true;
     }
 
     /**

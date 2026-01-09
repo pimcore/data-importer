@@ -50,7 +50,11 @@ class HttpLoader implements DataLoaderInterface, SchemaAwareInterface
         if (copy($fullUrl, $this->importFilePath)) {
             return $this->importFilePath;
         } else {
-            throw new InvalidConfigurationException(sprintf('Could not copy from remote location `%s` to local tmp file `%s`', $fullUrl, $this->importFilePath));
+            throw new InvalidConfigurationException(sprintf(
+                'Could not copy from remote location `%s` to local tmp file `%s`',
+                $fullUrl,
+                $this->importFilePath
+            ));
         }
     }
 

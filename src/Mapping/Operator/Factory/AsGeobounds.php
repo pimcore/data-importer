@@ -61,7 +61,11 @@ class AsGeobounds extends AbstractOperator implements SchemaAwareInterface
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for geoBounds operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for geoBounds operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GEOBOUNDS_VALUE;
@@ -69,7 +73,8 @@ class AsGeobounds extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts an array of coordinates into a Geobounds object. Expects an array with 4 values: [northEastLat, northEastLong, southWestLat, southWestLong].';
+        return 'Converts an array of coordinates into a Geobounds object. '
+            . 'Expects an array with 4 values: [northEastLat, northEastLong, southWestLat, southWestLong].';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

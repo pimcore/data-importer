@@ -99,7 +99,8 @@ class ObjectField extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Extracts a specific field value from a Pimcore data object or element. Converts element references to full paths.';
+        return 'Extracts a specific field value from a Pimcore data object or element. '
+            . 'Converts element references to full paths.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

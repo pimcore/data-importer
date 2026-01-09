@@ -59,8 +59,15 @@ class HtmlDecode extends AbstractOperator implements SchemaAwareInterface
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for html decode operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for html decode operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return $inputType;
@@ -68,7 +75,8 @@ class HtmlDecode extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Decodes HTML entities in string values, converting HTML entity codes back to their corresponding characters.';
+        return 'Decodes HTML entities in string values, '
+            . 'converting HTML entity codes back to their corresponding characters.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

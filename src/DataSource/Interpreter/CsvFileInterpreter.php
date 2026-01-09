@@ -178,7 +178,10 @@ class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwareInter
             }
 
             $previousData = null;
-            while ($readRecordNumber < $recordNumber && ($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false) {
+            while (
+                $readRecordNumber < $recordNumber &&
+                ($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false
+            ) {
                 if ($header !== null) {
                     $data = array_combine($header, $data);
                 }

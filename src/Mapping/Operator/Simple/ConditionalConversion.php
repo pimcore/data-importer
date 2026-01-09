@@ -77,8 +77,15 @@ class ConditionalConversion extends AbstractOperator implements SchemaAwareInter
 
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for simple test operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for simple test operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return $inputType;
@@ -86,7 +93,9 @@ class ConditionalConversion extends AbstractOperator implements SchemaAwareInter
 
     public function getSchemaDescription(): string
     {
-        return 'Converts input values based on conditional mapping. Maps original values to converted values using pipe-separated lists. Supports wildcard (*) for default conversions.';
+        return 'Converts input values based on conditional mapping. '
+            . 'Maps original values to converted values using pipe-separated lists. '
+            . 'Supports wildcard (*) for default conversions.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder
@@ -99,7 +108,10 @@ class ConditionalConversion extends AbstractOperator implements SchemaAwareInter
         $rootNode
             ->children()
                 ->scalarNode('original')
-                    ->info('Pipe-separated list of original values to match (e.g., "yes|true|1"). Use "*" as wildcard for any unmatched value.')
+                    ->info(
+                        'Pipe-separated list of original values to match (e.g., "yes|true|1"). '
+                        . 'Use "*" as wildcard for any unmatched value.'
+                    )
                     ->defaultValue('')
                 ->end()
                 ->scalarNode('converted')

@@ -31,7 +31,11 @@ class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterfa
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for geoPolygon operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for geoPolygon operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GEOPOLYGON_VALUE;
@@ -39,7 +43,8 @@ class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterfa
 
     public function getSchemaDescription(): string
     {
-        return 'Converts an array of coordinates into a geopolygon. Accepts an array of coordinate pairs that define the polygon vertices.';
+        return 'Converts an array of coordinates into a geopolygon. '
+            . 'Accepts an array of coordinate pairs that define the polygon vertices.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

@@ -53,8 +53,15 @@ class Numeric extends AbstractOperator implements SchemaAwareInterface
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::BOOLEAN])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for numeric operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::BOOLEAN
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for numeric operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::NUMERIC;
@@ -81,7 +88,8 @@ class Numeric extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts input data to a numeric (float) value. Can optionally return null for empty/non-numeric inputs.';
+        return 'Converts input data to a numeric (float) value. '
+            . 'Can optionally return null for empty/non-numeric inputs.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

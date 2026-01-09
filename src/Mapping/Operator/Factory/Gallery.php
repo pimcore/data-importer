@@ -57,8 +57,15 @@ class Gallery extends AbstractOperator implements SchemaAwareInterface
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::ASSET, TransformationDataTypeService::ASSET_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for gallery operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::ASSET,
+            TransformationDataTypeService::ASSET_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for gallery operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GALLERY;
@@ -86,7 +93,8 @@ class Gallery extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts image assets into an ImageGallery object. Takes single or multiple asset images and creates a gallery with hotspot image items.';
+        return 'Converts image assets into an ImageGallery object. '
+            . 'Takes single or multiple asset images and creates a gallery with hotspot image items.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

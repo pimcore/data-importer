@@ -31,7 +31,12 @@ class QueueTest extends Unit
          */
         $queueService = $this->tester->grabService(QueueService::class);
 
-        $queueService->addItemToQueue('tmp', ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL, ImportProcessingService::JOB_TYPE_PROCESS, 'some data');
+        $queueService->addItemToQueue(
+            'tmp',
+            ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
+            ImportProcessingService::JOB_TYPE_PROCESS,
+            'some data'
+        );
         $count = $queueService->getQueueItemCount('tmp');
         $this->assertEquals($count, 1, 'Queue Item count check');
 

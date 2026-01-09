@@ -47,7 +47,8 @@ class AsArray extends AbstractOperator implements SchemaAwareInterface
 
     public function getSchemaDescription(): string
     {
-        return 'Converts input data into an array. If the input is not already an array, it wraps the value in an array.';
+        return 'Converts input data into an array. '
+            . 'If the input is not already an array, it wraps the value in an array.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

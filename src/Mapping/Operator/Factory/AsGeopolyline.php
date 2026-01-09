@@ -31,7 +31,11 @@ class AsGeopolyline extends GeopolyAbstractOperator implements SchemaAwareInterf
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for geoPolyline operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for geoPolyline operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GEOPOLYLINE_VALUE;
@@ -39,7 +43,8 @@ class AsGeopolyline extends GeopolyAbstractOperator implements SchemaAwareInterf
 
     public function getSchemaDescription(): string
     {
-        return 'Converts an array of coordinates into a geopolyline. Accepts an array of coordinate pairs that define the polyline path.';
+        return 'Converts an array of coordinates into a geopolyline. '
+            . 'Accepts an array of coordinate pairs that define the polyline path.';
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder
