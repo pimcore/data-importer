@@ -227,6 +227,7 @@ class ConfigurationDefinition implements ConfigurationInterface
     {
         $node
             ->isRequired()
+            /** @phpstan-ignore-next-line */
             ->children()
                 ->enumNode('elementType')
                     ->isRequired()
@@ -524,6 +525,7 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->isRequired()
+            /** @phpstan-ignore-next-line */
             ->children()
                 ->enumNode('type')
                     ->isRequired()
@@ -551,6 +553,7 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->isRequired()
+            /** @phpstan-ignore-next-line */
             ->children()
                 ->enumNode('type')
                     ->isRequired()
@@ -578,6 +581,7 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->isRequired()
+            /** @phpstan-ignore-next-line */
             ->children()
                 ->enumNode('elementType')
                     ->isRequired()
@@ -660,6 +664,7 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->addDefaultsIfNotSet()
+            /** @phpstan-ignore-next-line */
             ->children()
                 ->enumNode('executionType')
                     ->values([
@@ -717,6 +722,7 @@ class ConfigurationDefinition implements ConfigurationInterface
             ->isRequired()
             ->requiresAtLeastOneElement()
             ->arrayPrototype()
+                /** @phpstan-ignore-next-line */
                 ->children()
                     ->scalarNode('label')
                         ->isRequired()
@@ -780,6 +786,7 @@ class ConfigurationDefinition implements ConfigurationInterface
 
         $node
             ->addDefaultsIfNotSet()
+            /** @phpstan-ignore-next-line */
             ->children()
                 ->enumNode('scheduleType')
                     ->values(['recurring', 'cron'])
