@@ -46,7 +46,6 @@ class FactoryOperatorTest extends Test\Unit
     private const LON_EAST = '13.06517167884434';
     private const LAT_SOUTH = '47.810540991091045';
     private const LON_WEST = '13.073721286556358';
-    private const TEST_STRING = 'Hello Test';
 
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
