@@ -478,6 +478,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->isRequired()
             ->children()
@@ -523,6 +524,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->isRequired()
             ->children()
@@ -552,6 +554,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->isRequired()
             ->children()
@@ -581,6 +584,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->isRequired()
             /** @phpstan-ignore-next-line */
@@ -664,6 +668,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->addDefaultsIfNotSet()
             ->children()
@@ -720,6 +725,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->isRequired()
             ->requiresAtLeastOneElement()
@@ -788,6 +794,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
+        /** @phpstan-ignore-next-line */
         $node
             ->addDefaultsIfNotSet()
             ->children()
