@@ -14,7 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller;
 
 use Cron\CronExpression;
 use Exception;
-use http\Exception\InvalidArgumentException;
+use InvalidArgumentException;
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration;
