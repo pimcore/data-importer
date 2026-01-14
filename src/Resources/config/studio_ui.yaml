@@ -7,11 +7,3 @@ services:
   Pimcore\Bundle\DataImporterBundle\Webpack\WebpackEntryPointProvider:
     tags:
       - { name: 'pimcore_studio_ui.webpack_entry_point_provider' }
-
-pimcore_studio_ui:
-  static_resources:
-    editmode:
-      css:
-        - '/bundles/pimcoredataimporter/css/editmode.css'
-      js:
-        - '/bundles/pimcoredataimporter/js/editmode.js'
