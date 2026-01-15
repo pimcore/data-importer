@@ -12,7 +12,12 @@ the importer will create an application logger entry with the imported file as f
 
 Be aware of needed disk space for archiving the data. For details also see 
 [Import Process and Logging](../05_Import_Progress_and_Logging.md).
-   
+
+### Disable Versioning
+When enabled this option will disable Pimcore's versioning when saving the element during the import process. This option is particularly useful when only the final version matters. For example, initial data loads where multiple import scripts are ran and the last import script is the one that matters.
+
+The versioning state is automatically restored after each element is processed, ensuring it doesn't affect
+other operations in the system.
 
 ### Delta Check
 > This option requires an id field in the import data.
