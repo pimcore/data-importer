@@ -31,9 +31,9 @@ use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
+use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use \Pimcore\Model\Version;
 
 class ImportProcessingService
 {
