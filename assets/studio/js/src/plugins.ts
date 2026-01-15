@@ -11,7 +11,9 @@
 import { type IAbstractPlugin } from '@pimcore/studio-ui-bundle'
 import { DataImporterModule } from './modules/data-importer/index'
 
-if (module.hot !== undefined) {}
+if (module.hot !== undefined) {
+  module.hot.accept()
+}
 
 export const DataImporterPlugin: IAbstractPlugin = {
   name: 'data-importer-plugin',
