@@ -51,6 +51,8 @@ class ConfigurationValidationService
 
     protected MappingConfigurationFactory $mappingConfigurationFactory;
 
+    protected ImportProcessingService $importProcessingService;
+
     protected CleanupStrategyFactory $cleanupStrategyFactory;
 
     protected ServiceLocator $dataLoaderLocator;
@@ -69,6 +71,7 @@ class ConfigurationValidationService
         InterpreterFactory $interpreterFactory,
         ResolverFactory $resolverFactory,
         MappingConfigurationFactory $mappingConfigurationFactory,
+        ImportProcessingService $importProcessingService,
         CleanupStrategyFactory $cleanupStrategyFactory,
         ServiceLocator $dataLoaderLocator,
         ServiceLocator $interpreterLocator,
@@ -80,6 +83,7 @@ class ConfigurationValidationService
         $this->interpreterFactory = $interpreterFactory;
         $this->resolverFactory = $resolverFactory;
         $this->mappingConfigurationFactory = $mappingConfigurationFactory;
+        $this->importProcessingService = $importProcessingService;
         $this->cleanupStrategyFactory = $cleanupStrategyFactory;
         $this->dataLoaderLocator = $dataLoaderLocator;
         $this->interpreterLocator = $interpreterLocator;
@@ -132,7 +136,8 @@ class ConfigurationValidationService
         // Validate mappingConfig
         $mappingErrors = $this->validateMappingConfig(
             $configuration['general']['name'] ?? 'validation',
-            $config['mappingConfig'] ?? []
+            $config['mappingConfig'] ?? [],
+            $config['resolverConfig'] ?? []
         );
         $errors = array_merge($errors, $mappingErrors);
 
@@ -289,8 +294,12 @@ class ConfigurationValidationService
     /**
      * Validate mapping configuration
      */
-    protected function validateMappingConfig(string $configName, array $mappingConfig): array
-    {
+    protected function validateMappingConfig(
+        string $configName,
+        array $mappingConfig,
+        array $resolverConfig
+    ): array {
+
         $errors = [];
 
         if (empty($mappingConfig)) {
@@ -299,19 +308,106 @@ class ConfigurationValidationService
             return $errors;
         }
 
+        // Validate using TreeBuilder from ConfigurationDefinition (includes cleanup strategy enum validation)
+        try {
+            $treeBuilder = $this->configDefinition->getMappingConfigTreeBuilder();
+            $this->configProcessor->process($treeBuilder->buildTree(), [$mappingConfig]);
+        } catch (\Exception $e) {
+            $errors[] = new ValidationError('mappingConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
+
+            return $errors;
+        }
+
         foreach ($mappingConfig as $index => $mappingItem) {
             try {
-                $this->mappingConfigurationFactory->loadMappingConfigurationItem(
+                $mappingConfiguration = $this->mappingConfigurationFactory->loadMappingConfigurationItem(
                     $configName,
                     $mappingItem,
                     false
                 );
+
+                // Evaluate transformation result data type
+                $transformationResultType = null;
+                try {
+                    $transformationResultType = 
+                        $this->importProcessingService
+                        ->evaluateTransformationResultDataType(
+                            $mappingConfiguration
+                        );
+                } catch (\Exception $e) {
+                    $errors[] = new ValidationError(
+                        "mappingConfig[$index].transformationPipeline",
+                        'Transformation result type evaluation failed: ' .
+                        $e->getMessage()
+                    );
+                }
+
+                // Validate data target field compatibility
+                if ($transformationResultType !== null) {
+                    try {
+                        $this->validateDataTargetField(
+                            $mappingConfiguration,
+                            $transformationResultType,
+                            $resolverConfig,
+                            $index
+                        );
+                    } catch (\Exception $e) {
+                        $errors[] = new ValidationError(
+                            "mappingConfig[$index].dataTarget",
+                            'Field validation failed: ' . $e->getMessage()
+                        );
+                    }
+                }
             } catch (InvalidConfigurationException $e) {
                 $errors[] = new ValidationError("mappingConfig[$index]", $e->getMessage());
             }
         }
 
         return $errors;
+    }
+
+    /**
+     * Validate data target field compatibility with transformation
+     * result type
+     */
+    protected function validateDataTargetField(
+        object $mappingConfiguration,
+        string $transformationResultType,
+        array $resolverConfig,
+        int $index
+    ): void {
+        // Get data target from mapping configuration
+        $dataTarget = $mappingConfiguration->getDataTarget();
+
+        // Only validate if data target implements the validator interface
+        if (!$dataTarget instanceof 
+            \Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetFieldValidatorInterface
+        ) {
+            return;
+        }
+
+        // Extract class ID from resolver config
+        $elementType = $resolverConfig['elementType'] ?? null;
+        
+        // Only validate for dataObject imports
+        if ($elementType !== 'dataObject') {
+            return;
+        }
+
+        $classId = $resolverConfig['dataObjectClassId'] ?? null;
+
+        if (empty($classId)) {
+            throw new InvalidConfigurationException(
+                'dataObjectClassId is required in resolverConfig for ' .
+                'field validation'
+            );
+        }
+
+        // Perform field validation
+        $dataTarget->validateTargetField(
+            $transformationResultType,
+            $classId
+        );
     }
 
     /**

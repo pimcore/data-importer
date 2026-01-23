@@ -14,12 +14,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class QuantityValue extends AbstractOperator implements SchemaAwareInterface
+class QuantityValue extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @var string
@@ -121,7 +123,10 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface
                     $index
                 ));
             }
-        } elseif ($inputType !== TransformationDataTypeService::DEFAULT_TYPE) {
+        } elseif (
+            $inputType !== TransformationDataTypeService::DEFAULT_TYPE &&
+            $inputType !== TransformationDataTypeService::NUMERIC
+        ) {
             throw new InvalidConfigurationException(sprintf(
                 "Unsupported input type '%s' for quantity value operator with static unit at " .
                 "transformation position %s",
@@ -152,6 +157,23 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface
     {
         return 'Converts input data into a QuantityValue object with a numeric value and unit. '
             . 'Supports unit by ID, abbreviation, or static unit selection.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY,
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::NUMERIC
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::QUANTITY_VALUE
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

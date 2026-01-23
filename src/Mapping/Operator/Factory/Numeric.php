@@ -14,11 +14,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Numeric extends AbstractOperator implements SchemaAwareInterface
+class Numeric extends AbstractOperator implements
+    SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     private bool $returnNullIfEmpty = false;
 
@@ -90,6 +93,21 @@ class Numeric extends AbstractOperator implements SchemaAwareInterface
     {
         return 'Converts input data to a numeric (float) value. '
             . 'Can optionally return null for empty/non-numeric inputs.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::BOOLEAN
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::NUMERIC
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

@@ -14,13 +14,15 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ObjectField extends AbstractOperator implements SchemaAwareInterface
+class ObjectField extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     private string $attribute;
 
@@ -101,6 +103,21 @@ class ObjectField extends AbstractOperator implements SchemaAwareInterface
     {
         return 'Extracts a specific field value from a Pimcore data object or element. '
             . 'Converts element references to full paths.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DATA_OBJECT
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

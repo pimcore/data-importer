@@ -79,6 +79,21 @@ class InputQuantityValue extends QuantityValue implements SchemaAwareInterface
         return 'Converts an array into an InputQuantityValue object. Expects an array with [value, unitAbbreviation].';
     }
 
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::INPUT_QUANTITY_VALUE
+        ];
+    }
+
     public function getConfigTreeBuilder(): ?TreeBuilder
     {
         // No configuration options - return null for better performance

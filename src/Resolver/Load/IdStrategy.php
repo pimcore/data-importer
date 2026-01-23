@@ -49,7 +49,6 @@ class IdStrategy extends AbstractLoad implements SchemaAwareInterface
 
     public function getConfigTreeBuilder(): ?TreeBuilder
     {
-        // No configuration options - return null for better performance
-        return null;
+        return $this->getBaseConfigTreeBuilder();
     }
 }

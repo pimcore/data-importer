@@ -14,11 +14,13 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Boolean extends AbstractOperator implements SchemaAwareInterface
+class Boolean extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -63,6 +65,22 @@ class Boolean extends AbstractOperator implements SchemaAwareInterface
     {
         return 'Converts input data to boolean value. '
             . 'Uses PHP filter_var with FILTER_VALIDATE_BOOLEAN to evaluate the input.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::BOOLEAN
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::BOOLEAN
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

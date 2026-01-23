@@ -13,11 +13,13 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsArray extends AbstractOperator implements SchemaAwareInterface
+class AsArray extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -49,6 +51,19 @@ class AsArray extends AbstractOperator implements SchemaAwareInterface
     {
         return 'Converts input data into an array. '
             . 'If the input is not already an array, it wraps the value in an array.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::ALL_TYPES
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return $this->getAcceptedInputTypes();
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

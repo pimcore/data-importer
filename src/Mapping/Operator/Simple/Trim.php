@@ -14,11 +14,13 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Trim extends AbstractOperator implements SchemaAwareInterface
+class Trim extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     const MODE_BOTH = 'both';
 
@@ -106,6 +108,20 @@ class Trim extends AbstractOperator implements SchemaAwareInterface
         return 'Trims whitespace from string values. Supports trimming both sides, left only, or right only.';
     }
 
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return $this->getAcceptedInputTypes();
+    }
+
     public function getConfigTreeBuilder(): ?TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
@@ -116,9 +132,9 @@ class Trim extends AbstractOperator implements SchemaAwareInterface
         $rootNode
             ->children()
                 ->enumNode('mode')
-                    ->info('Trimming mode: "both" (default), "left", or "right"')
+                    ->info('Trimming mode: "both", "left", or "right"')
                     ->values([self::MODE_BOTH, self::MODE_LEFT, self::MODE_RIGHT])
-                    ->defaultValue(self::MODE_BOTH)
+                    ->isRequired()
                 ->end()
             ->end();
 

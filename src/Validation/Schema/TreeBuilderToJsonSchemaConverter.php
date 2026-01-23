@@ -21,6 +21,7 @@ use Symfony\Component\Config\Definition\EnumNode;
 use Symfony\Component\Config\Definition\FloatNode;
 use Symfony\Component\Config\Definition\IntegerNode;
 use Symfony\Component\Config\Definition\NodeInterface;
+use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\Config\Definition\ScalarNode;
 
 /**
@@ -56,7 +57,11 @@ class TreeBuilderToJsonSchemaConverter
     {
         $schema = $this->determineTypeSchema($node);
 
-        if ($node instanceof ArrayNode) {
+        if ($node instanceof PrototypedArrayNode) {
+            // Handle array with repeated items (prototype pattern)
+            $this->populatePrototypedArraySchema($node, $schema);
+        } elseif ($node instanceof ArrayNode) {
+            // Handle object with named properties
             $this->populateArrayNodeSchema($node, $schema);
         }
 
@@ -70,7 +75,10 @@ class TreeBuilderToJsonSchemaConverter
     {
         $schema = ['type' => 'string'];
 
-        if ($node instanceof ArrayNode) {
+        if ($node instanceof PrototypedArrayNode) {
+            // PrototypedArrayNode is an array with repeated items
+            $schema = ['type' => 'array'];
+        } elseif ($node instanceof ArrayNode) {
             $schema = ['type' => 'object'];
         } elseif ($node instanceof BooleanNode) {
             $schema = ['type' => 'boolean'];
@@ -111,6 +119,15 @@ class TreeBuilderToJsonSchemaConverter
         if (!empty($required)) {
             $schema['required'] = $required;
         }
+    }
+
+    private function populatePrototypedArraySchema(
+        PrototypedArrayNode $node,
+        array &$schema
+    ): void {
+        // Convert the prototype (template) to JSON Schema
+        $prototype = $node->getPrototype();
+        $schema['items'] = $this->convertNode($prototype);
     }
 
     private function augmentWithDescription(NodeInterface $node, array &$schema): void

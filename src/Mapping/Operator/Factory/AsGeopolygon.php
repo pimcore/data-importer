@@ -14,11 +14,12 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\GeopolyAbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterface
+class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param string $inputType
@@ -45,6 +46,21 @@ class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterfa
     {
         return 'Converts an array of coordinates into a geopolygon. '
             . 'Accepts an array of coordinate pairs that define the polygon vertices.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::GEOPOLYGON_VALUE
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

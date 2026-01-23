@@ -14,11 +14,13 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ConditionalConversion extends AbstractOperator implements SchemaAwareInterface
+class ConditionalConversion extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @var string
@@ -96,6 +98,20 @@ class ConditionalConversion extends AbstractOperator implements SchemaAwareInter
         return 'Converts input values based on conditional mapping. '
             . 'Maps original values to converted values using pipe-separated lists. '
             . 'Supports wildcard (*) for default conversions.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return $this->getAcceptedInputTypes();
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

@@ -139,6 +139,10 @@ class DataObjectLoader
     ): ?ElementInterface {
         $getter = 'getBy' . $attributeName;
 
+        if($attributeName === 'id') {
+            return $className::getById((int) $identifier);
+        }
+
         if (empty($attributeLanguage) === false) {
             return $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
         }

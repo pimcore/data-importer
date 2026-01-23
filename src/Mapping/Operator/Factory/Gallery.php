@@ -14,6 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
@@ -21,7 +22,8 @@ use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Gallery extends AbstractOperator implements SchemaAwareInterface
+class Gallery extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -95,6 +97,22 @@ class Gallery extends AbstractOperator implements SchemaAwareInterface
     {
         return 'Converts image assets into an ImageGallery object. '
             . 'Takes single or multiple asset images and creates a gallery with hotspot image items.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::ASSET,
+            TransformationDataTypeService::ASSET_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::GALLERY
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

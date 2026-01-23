@@ -14,11 +14,13 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StringReplace extends AbstractOperator implements SchemaAwareInterface
+class StringReplace extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     protected string $search;
 
@@ -86,6 +88,20 @@ class StringReplace extends AbstractOperator implements SchemaAwareInterface
     public function getSchemaDescription(): string
     {
         return 'Replaces all occurrences of a search string with a replacement string.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return $this->getAcceptedInputTypes();
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

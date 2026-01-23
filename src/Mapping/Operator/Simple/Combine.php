@@ -14,11 +14,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Combine extends AbstractOperator implements SchemaAwareInterface
+class Combine extends AbstractOperator implements
+    SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @var string
@@ -69,6 +72,20 @@ class Combine extends AbstractOperator implements SchemaAwareInterface
     public function getSchemaDescription(): string
     {
         return 'Combines array elements into a single string by joining them with a specified delimiter (glue).';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

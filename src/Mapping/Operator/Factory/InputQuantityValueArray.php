@@ -95,6 +95,21 @@ class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareI
             . 'Each item should be [value, unit].';
     }
 
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::INPUT_QUANTITY_VALUE_ARRAY
+        ];
+    }
+
     public function getConfigTreeBuilder(): ?TreeBuilder
     {
         // No configuration options - return null for better performance

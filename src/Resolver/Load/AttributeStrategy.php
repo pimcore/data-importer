@@ -13,9 +13,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
 {
@@ -34,6 +36,17 @@ class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
      */
     protected $includeUnpublished;
 
+    protected TransformationDataTypeService $transformationDataTypeService;
+
+    #[Required]
+    public function setTransformationDataTypeService(
+        TransformationDataTypeService $transformationDataTypeService
+    ): void {
+        $this->transformationDataTypeService =
+            $transformationDataTypeService;
+    }
+
+
     /**
      * @param array $settings
      *
@@ -50,6 +63,25 @@ class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
         $this->attributeName = $settings['attributeName'];
         $this->attributeLanguage = $settings['language'] ?? null;
         $this->includeUnpublished = $settings['includeUnpublished'] ?? false;
+
+        //to validate if an existing classId is set
+        $this->getClassName();
+
+        if (empty($this->attributeName)) {
+            throw new InvalidConfigurationException('The attributeName attribute is required');
+        }
+
+        $this->transformationDataTypeService
+            ->checkFieldAvailable(
+                $this->attributeName,
+                $this->dataObjectClassId,
+                [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
+                true,
+                true,
+                true,
+                true
+            );
+
     }
 
     /**
@@ -88,7 +120,7 @@ class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
 
     public function getConfigTreeBuilder(): ?TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('settings');
+        $treeBuilder = $this->getBaseConfigTreeBuilder();
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
         $rootNode = $treeBuilder->getRootNode();
 
@@ -105,7 +137,10 @@ class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
                 ->end()
                 ->booleanNode('includeUnpublished')
                     ->defaultValue(false)
-                    ->info('Whether to include unpublished objects in the search')
+                    ->info(
+                        'Whether to include unpublished objects in the ' .
+                        'search'
+                    )
                 ->end()
             ->end();
 

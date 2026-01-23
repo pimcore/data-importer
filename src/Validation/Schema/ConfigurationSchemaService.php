@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Validation\Schema;
 
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\DependencyInjection\ServiceLocator;
@@ -50,10 +51,13 @@ class ConfigurationSchemaService
 
     protected ConfigurationDefinition $configDefinition;
 
+    protected \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService $transformationDataTypeService;
+
     public function __construct(
         ConfigurationSchemaLocators $locators,
         TreeBuilderToJsonSchemaConverter $jsonSchemaConverter,
-        ConfigurationDefinition $configDefinition
+        ConfigurationDefinition $configDefinition,
+        \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService $transformationDataTypeService
     ) {
         $this->dataLoaderLocator = $locators->dataLoader();
         $this->interpreterLocator = $locators->interpreter();
@@ -65,6 +69,7 @@ class ConfigurationSchemaService
         $this->cleanupStrategyLocator = $locators->cleanupStrategy();
         $this->jsonSchemaConverter = $jsonSchemaConverter;
         $this->configDefinition = $configDefinition;
+        $this->transformationDataTypeService = $transformationDataTypeService;
     }
 
     /**
@@ -258,10 +263,15 @@ class ConfigurationSchemaService
 
     /**
      * Get schema information from a service
-     * Checks if service implements SchemaAwareInterface and converts TreeBuilder to JSON Schema
+     * Checks if service implements SchemaAwareInterface and converts
+     * TreeBuilder to JSON Schema. Also includes transformation type
+     * information for operators.
      */
-    protected function getServiceSchema(string $type, string $class, ServiceLocator $locator): array
-    {
+    protected function getServiceSchema(
+        string $type,
+        string $class,
+        ServiceLocator $locator
+    ): array {
         $schema = [
             'type' => $type,
             'class' => $class,
@@ -272,31 +282,97 @@ class ConfigurationSchemaService
                 $service = $locator->get($type);
 
                 if ($service instanceof SchemaAwareInterface) {
-                    $schema['description'] = $service->getSchemaDescription();
+                    $schema['description'] =
+                        $service->getSchemaDescription();
 
                     // Convert TreeBuilder to JSON Schema
                     $treeBuilder = $service->getConfigTreeBuilder();
                     if ($treeBuilder !== null) {
-                        $jsonSchema = $this->jsonSchemaConverter->convert($treeBuilder);
-                        // Extract properties from the converted schema
-                        $schema['settings'] = $jsonSchema['properties'] ?? [];
+                        $jsonSchema = $this->jsonSchemaConverter
+                            ->convert($treeBuilder);
+                        // Extract properties from converted schema
+                        $schema['settings'] =
+                            $jsonSchema['properties'] ?? [];
                     } else {
                         // Service has no settings
                         $schema['settings'] = [];
                     }
                 } else {
-                    // Fallback for services that don't implement SchemaAwareInterface
-                    $schema['description'] = $this->getFallbackDescription($class);
+                    // Fallback for services that don't implement
+                    // SchemaAwareInterface
+                    $schema['description'] =
+                        $this->getFallbackDescription($class);
                     $schema['settings'] = [];
+                }
+
+                // Add transformation type info for operators
+                if ($service instanceof
+                    TransformationTypeAwareInterface) {
+                    $schema['acceptedInputTypes'] =
+                        $service->getAcceptedInputTypes();
+                    $schema['outputTypes'] = $service->getOutputTypes();
                 }
             }
         } catch (\Exception $e) {
             // If service cannot be instantiated, use fallback
-            $schema['description'] = $this->getFallbackDescription($class);
+            $schema['description'] =
+                $this->getFallbackDescription($class);
             $schema['settings'] = [];
         }
 
         return $schema;
+    }
+
+    /**
+     * Get field type matrix showing which fields of a class
+     * can be used with which transformation target types
+     *
+     * @param string $classNameOrId The Pimcore class name or ID to analyze
+     *
+     * @return array<string, array<string>> Matrix of
+     *     [transformationType => [fieldName1, fieldName2, ...]]
+     */
+    public function getFieldTypeMatrix(string $classNameOrId): array
+    {
+        // Try to get class by name first, then by ID
+        $class = \Pimcore\Model\DataObject\ClassDefinition::getByName(
+            $classNameOrId
+        );
+        if (!$class) {
+            $class = \Pimcore\Model\DataObject\ClassDefinition::getById(
+                $classNameOrId
+            );
+        }
+
+        if (!$class) {
+            return []; // Class not found
+        }
+
+        $classId = $class->getId();
+        $matrix = [];
+
+        // Get all registered transformation target types
+        $targetTypes = $this->transformationDataTypeService
+            ->getAllTransformationTargetTypes();
+
+        // For each transformation type, get which fields support it
+        foreach ($targetTypes as $transformationType) {
+            $supportedFields = $this->transformationDataTypeService
+                ->getPimcoreDataTypes(
+                    $classId,
+                    $transformationType,
+                    false,  // includeSystemRead
+                    false,  // includeSystemWrite
+                    true   // includeAdvancedRelations
+                );
+
+            // Extract field names from the result
+            $fieldNames = array_column($supportedFields, 'key');
+
+            $matrix[$transformationType] = $fieldNames;
+        }
+
+        return $matrix;
     }
 
     /**

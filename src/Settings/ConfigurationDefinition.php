@@ -200,21 +200,25 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->cannotBeEmpty()
                     ->info('Unique name of the configuration')
                 ->end()
+                ->scalarNode('type')
+                    ->isRequired()
+                    ->validate()
+                        ->ifNotInArray(['dataImporterDataObject'])
+                        ->thenInvalid('Type must be "dataImporterDataObject"')
+                    ->end()
+                    ->info('Configuration type - must be "dataImporterDataObject"')
+                ->end()
                 ->booleanNode('active')
                     ->isRequired()
-                    ->defaultTrue()
                     ->info('Whether the configuration is active')
                 ->end()
                 ->scalarNode('description')
-                    ->defaultNull()
                     ->info('Optional description of the configuration')
                 ->end()
                 ->scalarNode('group')
-                    ->defaultNull()
                     ->info('Optional group name for organizing configurations')
                 ->end()
                 ->scalarNode('path')
-                    ->defaultNull()
                     ->info('Optional path for the configuration')
                 ->end()
             ->end();
@@ -235,8 +239,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->info('Type of element to create/update')
                 ->end()
                 ->scalarNode('dataObjectClassId')
-                    ->defaultNull()
-                    ->info('ID of the data object class (required when elementType is dataObject)')
+                    ->info(
+                        'ID of the data object class ' .
+                        '(required when elementType is dataObject)'
+                    )
                 ->end()
                 ->arrayNode('loadingStrategy')
                     ->isRequired()
@@ -247,8 +253,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                             ->info('Type of loading strategy')
                         ->end()
                         ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
+                            ->info(
+                                self::INFO_STRATEGY_SETTINGS .
+                                ' - if no specific settings needed, use empty object {}'
+                            )
                         ->end()
                     ->end()
                 ->end()
@@ -261,8 +269,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                             ->info('Type of location strategy for creating new elements')
                         ->end()
                         ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
+                            ->info(
+                                self::INFO_STRATEGY_SETTINGS .
+                                ' - if no specific settings needed, use empty object {}'
+                            )
                         ->end()
                     ->end()
                 ->end()
@@ -275,8 +285,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                             ->info('Type of location strategy for updating existing elements')
                         ->end()
                         ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
+                            ->info(
+                                self::INFO_STRATEGY_SETTINGS .
+                                ' - if no specific settings needed, use empty object {}'
+                            )
                         ->end()
                     ->end()
                 ->end()
@@ -289,8 +301,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                             ->info('Type of publishing strategy')
                         ->end()
                         ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
+                            ->info(
+                                self::INFO_STRATEGY_SETTINGS .
+                                ' - if no specific settings needed, use empty object {}'
+                            )
                         ->end()
                     ->end()
                 ->end()
@@ -309,38 +323,52 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
                         ImportProcessingService::EXECUTION_TYPE_PARALLEL
                     ])
-                    ->defaultValue(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL)
-                    ->info('How to execute the import (sequential or parallel)')
+                    ->info(
+                        'How to execute the import (sequential or parallel) - ' .
+                        'if not specified, use "sequential"'
+                    )
                 ->end()
                 ->scalarNode('idDataIndex')
-                    ->defaultNull()
-                    ->info('Data index field containing unique identifier for records')
+                    ->info(
+                        'Data index field containing unique identifier for records - ' .
+                        'optional, omit if not needed'
+                    )
                 ->end()
                 ->booleanNode('doDeltaCheck')
-                    ->defaultFalse()
-                    ->info('Whether to perform delta checks to skip unchanged records')
+                    ->info(
+                        'Whether to perform delta checks to skip unchanged records - ' .
+                        'if not specified, use false'
+                    )
                 ->end()
                 ->booleanNode('doArchiveImportFile')
-                    ->defaultFalse()
-                    ->info('Whether to archive import files after processing')
+                    ->info(
+                        'Whether to archive import files after processing - ' .
+                        'if not specified, use false'
+                    )
                 ->end()
                 ->arrayNode('cleanup')
                     ->children()
                         ->booleanNode('doCleanup')
-                            ->defaultFalse()
-                            ->info('Whether to perform cleanup of elements not in import')
+                            ->info(
+                                'Whether to perform cleanup of elements not in import - ' .
+                                'if not specified, use false'
+                            )
                         ->end()
                         ->enumNode('strategy')
-                            ->defaultNull()
                             ->values(array_merge(
                                 [null],
                                 array_keys($this->cleanupStrategyLocator->getProvidedServices())
                             ))
-                            ->info('Cleanup strategy to use')
+                            ->isRequired()
+                            ->info(
+                                'Cleanup strategy to use, use unpublish by default'
+                            )
                         ->end()
                         ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info('Cleanup strategy-specific settings')
+                            ->info(
+                                'Cleanup strategy-specific settings - ' .
+                                'if no specific settings needed, use empty object {}'
+                            )
                         ->end()
                     ->end()
                 ->end()
@@ -356,16 +384,22 @@ class ConfigurationDefinition implements ConfigurationInterface
             ->children()
                 ->enumNode('scheduleType')
                     ->values(['recurring', 'cron'])
-                    ->defaultNull()
-                    ->info('Type of scheduling (recurring or cron)')
+                    ->info(
+                        'Type of scheduling (recurring or cron) - ' .
+                        'optional, omit if not needed'
+                    )
                 ->end()
                 ->scalarNode('cronDefinition')
-                    ->defaultNull()
-                    ->info('Cron expression for scheduling (when scheduleType is cron)')
+                    ->info(
+                        'Cron expression for scheduling (when scheduleType is cron) - ' .
+                        'optional, omit if not needed'
+                    )
                 ->end()
                 ->scalarNode('scheduledAt')
-                    ->defaultNull()
-                    ->info('Timestamp or date for scheduled execution')
+                    ->info(
+                        'Timestamp or date for scheduled execution - ' .
+                        'optional, omit if not needed'
+                    )
                 ->end()
             ->end();
     }
@@ -384,8 +418,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->info('Type of data loader (e.g., asset, http, sftp, upload)')
                 ->end()
                 ->variableNode('settings')
-                    ->defaultValue([])
-                    ->info('Loader-specific settings (validated by loader service)')
+                    ->info(
+                        'Loader-specific settings (validated by loader service) - ' .
+                        'if no specific settings needed, use empty object {}'
+                    )
                 ->end()
             ->end();
     }
@@ -404,8 +440,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->info('Type of data interpreter (e.g., csv, json, xml, xlsx)')
                 ->end()
                 ->variableNode('settings')
-                    ->defaultValue([])
-                    ->info('Interpreter-specific settings (validated by interpreter service)')
+                    ->info(
+                        'Interpreter-specific settings (validated by interpreter service) - ' .
+                        'if no specific settings needed, use empty object {}'
+                    )
                 ->end()
             ->end();
     }
@@ -428,11 +466,22 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->arrayNode('dataSourceIndex')
                         ->isRequired()
                         ->scalarPrototype()->end()
-                        ->info('Array of source field names to map from')
+                        ->info('Array of source field names to map from. for csv files it is the number ' .
+                                'of the column starting from 0, for json/xml it is field name.')
                     ->end()
                     ->scalarNode('transformationResultType')
-                        ->defaultNull()
-                        ->info('Expected result type after transformations')
+                        ->isRequired()
+                        ->cannotBeEmpty()
+                        ->info('Name of the result type of the transformation pipeline. ' .
+                            'This is used to validate compatibility with the data target. ' . 
+                            'Default value is `default`, other values are possible. '.
+                            'Type can be calculated automatically using the tool enrich_configuration_with_transformation_result_types.')
+                    ->end()                    
+                    ->scalarNode('transformationResultType')
+                        ->info(
+                            'Expected result type after transformations - ' .
+                            'optional, omit if not needed'
+                        )
                     ->end()
                     ->arrayNode('transformationPipeline')
                         ->arrayPrototype()
@@ -443,8 +492,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                                     ->info('Type of operator')
                                 ->end()
                                 ->variableNode('settings')
-                                    ->defaultValue([])
-                                    ->info('Operator-specific settings')
+                                    ->info(
+                                        'Operator-specific settings - ' .
+                                        'if no specific settings needed, use empty object {}'
+                                    )
                                 ->end()
                             ->end()
                         ->end()
@@ -459,8 +510,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                                 ->info('Type of data target')
                             ->end()
                             ->variableNode('settings')
-                                ->defaultValue([])
-                                ->info('Target-specific settings')
+                                ->info(
+                                    'Target-specific settings - ' .
+                                    'if no specific settings needed, use empty object {}'
+                                )
                             ->end()
                         ->end()
                         ->info('Configuration for where to write the data')
@@ -478,38 +531,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->isRequired()
-            ->children()
-                ->scalarNode('name')
-                    ->isRequired()
-                    ->cannotBeEmpty()
-                    ->info('Unique name of the configuration')
-                ->end()
-                ->scalarNode('type')
-                    ->isRequired()
-                    ->defaultValue('dataImporterDataObject')
-                    ->info('Configuration type')
-                ->end()
-                ->booleanNode('active')
-                    ->isRequired()
-                    ->defaultTrue()
-                    ->info('Whether the configuration is active')
-                ->end()
-                ->scalarNode('description')
-                    ->defaultNull()
-                    ->info('Optional description of the configuration')
-                ->end()
-                ->scalarNode('group')
-                    ->defaultNull()
-                    ->info('Optional group name for organizing configurations')
-                ->end()
-                ->scalarNode('path')
-                    ->defaultNull()
-                    ->info('Optional path for the configuration')
-                ->end()
-            ->end();
+        $this->applyGeneralConfigDefinition($node);
 
         return $node;
     }
@@ -524,22 +546,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->isRequired()
-            ->children()
-                /** @phpstan-ignore-next-line */
-                ->enumNode('type')
-                    ->isRequired()
-                    ->values(array_keys($this->dataLoaderLocator->getProvidedServices()))
-                    ->info('Type of data loader (e.g., asset, http, sftp, upload)')
-                ->end()
-                /** @phpstan-ignore-next-line */
-                ->variableNode('settings')
-                    ->defaultValue([])
-                    ->info('Loader-specific settings (validated by loader service)')
-                ->end()
-            ->end();
+        $this->applyLoaderConfigDefinition($node);
 
         return $node;
     }
@@ -554,22 +561,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->isRequired()
-            ->children()
-                /** @phpstan-ignore-next-line */
-                ->enumNode('type')
-                    ->isRequired()
-                    ->values(array_keys($this->interpreterLocator->getProvidedServices()))
-                    ->info('Type of data interpreter (e.g., csv, json, xml, xlsx)')
-                ->end()
-                /** @phpstan-ignore-next-line */
-                ->variableNode('settings')
-                    ->defaultValue([])
-                    ->info('Interpreter-specific settings (validated by interpreter service)')
-                ->end()
-            ->end();
+        $this->applyInterpreterConfigDefinition($node);
 
         return $node;
     }
@@ -584,77 +576,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->isRequired()
-            /** @phpstan-ignore-next-line */
-            ->children()
-                ->enumNode('elementType')
-                    ->isRequired()
-                    ->values(['dataObject', 'asset'])
-                    ->info('Type of element to create/update')
-                ->end()
-                ->scalarNode('dataObjectClassId')
-                    ->defaultNull()
-                    ->info('ID of the data object class (required when elementType is dataObject)')
-                ->end()
-                ->arrayNode('loadingStrategy')
-                    ->isRequired()
-                    ->children()
-                        ->enumNode('type')
-                            ->isRequired()
-                            ->values(array_keys($this->loadStrategyLocator->getProvidedServices()))
-                            ->info('Type of loading strategy')
-                        ->end()
-                        ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('createLocationStrategy')
-                    ->isRequired()
-                    ->children()
-                        ->enumNode('type')
-                            ->isRequired()
-                            ->values(array_keys($this->locationStrategyLocator->getProvidedServices()))
-                            ->info('Type of location strategy for creating new elements')
-                        ->end()
-                        ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('locationUpdateStrategy')
-                    ->isRequired()
-                    ->children()
-                        ->enumNode('type')
-                            ->isRequired()
-                            ->values(array_keys($this->locationStrategyLocator->getProvidedServices()))
-                            ->info('Type of location strategy for updating existing elements')
-                        ->end()
-                        ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('publishingStrategy')
-                    ->isRequired()
-                    ->children()
-                        ->enumNode('type')
-                            ->isRequired()
-                            ->values(array_keys($this->publishStrategyLocator->getProvidedServices()))
-                            ->info('Type of publishing strategy')
-                        ->end()
-                        ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
-                        ->end()
-                    ->end()
-                ->end()
-            ->end();
+        $this->applyResolverConfigDefinition($node);
 
         return $node;
     }
@@ -668,49 +590,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->addDefaultsIfNotSet()
-            ->children()
-                /** @phpstan-ignore-next-line */
-                ->enumNode('executionType')
-                    ->values([
-                        ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
-                        ImportProcessingService::EXECUTION_TYPE_PARALLEL
-                    ])
-                    ->defaultValue(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL)
-                    ->info('How to execute the import')
-                ->end()
-                ->scalarNode('idDataIndex')
-                    ->defaultNull()
-                    ->info('Data index field that contains unique identifier for records')
-                ->end()
-                ->booleanNode('doDeltaCheck')
-                    ->defaultFalse()
-                    ->info('Whether to perform delta checks to skip unchanged records')
-                ->end()
-                ->booleanNode('doArchiveImportFile')
-                    ->defaultFalse()
-                    ->info('Whether to archive import files after processing')
-                ->end()
-                ->arrayNode('cleanup')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('doCleanup')
-                            ->defaultFalse()
-                            ->info('Whether to perform cleanup')
-                        ->end()
-                        ->scalarNode('strategy')
-                            ->defaultNull()
-                            ->info('Cleanup strategy to use (e.g., delete, unpublish)')
-                        ->end()
-                        ->variableNode('settings')
-                            ->defaultValue([])
-                            ->info(self::INFO_STRATEGY_SETTINGS)
-                        ->end()
-                    ->end()
-                ->end()
-            ->end();
+        $this->applyProcessingConfigDefinition($node);
 
         return $node;
     }
@@ -725,62 +605,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->isRequired()
-            ->requiresAtLeastOneElement()
-            ->arrayPrototype()
-                ->children()
-                    /** @phpstan-ignore-next-line */
-                    ->scalarNode('label')
-                        ->isRequired()
-                        ->cannotBeEmpty()
-                        ->info('Label for this mapping')
-                    ->end()
-                    /** @phpstan-ignore-next-line */
-                    ->arrayNode('dataSourceIndex')
-                        ->isRequired()
-                        ->scalarPrototype()->end()
-                        ->info('Array of source field names to map from')
-                    ->end()
-                    /** @phpstan-ignore-next-line */
-                    ->scalarNode('transformationResultType')
-                        ->defaultNull()
-                        ->info('Expected result type after transformations')
-                    ->end()
-                    ->arrayNode('transformationPipeline')
-                        ->arrayPrototype()
-                            ->children()
-                                ->scalarNode('type')
-                                    ->isRequired()
-                                    ->cannotBeEmpty()
-                                    ->info('Type of operator')
-                                ->end()
-                                ->variableNode('settings')
-                                    ->defaultValue([])
-                                    ->info('Operator-specific settings')
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->info('Pipeline of transformations to apply')
-                    ->end()
-                    ->arrayNode('dataTarget')
-                        ->isRequired()
-                        ->children()
-                            ->scalarNode('type')
-                                ->isRequired()
-                                ->cannotBeEmpty()
-                                ->info('Type of data target')
-                            ->end()
-                            ->variableNode('settings')
-                                ->defaultValue([])
-                                ->info('Target-specific settings')
-                            ->end()
-                        ->end()
-                        ->info('Configuration for where to write the data')
-                    ->end()
-                ->end()
-            ->end();
+        $this->applyMappingConfigDefinition($node);
 
         return $node;
     }
@@ -794,25 +619,7 @@ class ConfigurationDefinition implements ConfigurationInterface
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
         $node = $builder->getRootNode();
 
-        /** @phpstan-ignore-next-line */
-        $node
-            ->addDefaultsIfNotSet()
-            ->children()
-                /** @phpstan-ignore-next-line */
-                ->enumNode('scheduleType')
-                    ->values(['recurring', 'cron'])
-                    ->defaultNull()
-                    ->info('Type of scheduling')
-                ->end()
-                ->scalarNode('cronDefinition')
-                    ->defaultNull()
-                    ->info('Cron expression for scheduling (when scheduleType is cron)')
-                ->end()
-                ->scalarNode('scheduledAt')
-                    ->defaultNull()
-                    ->info('Timestamp or date for scheduled execution')
-                ->end()
-            ->end();
+        $this->applyExecutionConfigDefinition($node);
 
         return $node;
     }

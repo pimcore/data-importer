@@ -14,6 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
@@ -22,7 +23,8 @@ use Pimcore\Model\Element\DuplicateFullPathException;
 use Pimcore\Model\Element\Service;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ImportAsset extends AbstractOperator implements SchemaAwareInterface
+class ImportAsset extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @var string
@@ -234,6 +236,23 @@ class ImportAsset extends AbstractOperator implements SchemaAwareInterface
         return 'Downloads and imports assets from URLs into the Pimcore DAM. '
             . 'Optionally uses existing assets or overwrites them. '
             . 'Supports regex pattern matching for filename extraction.';
+    }
+
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::ASSET,
+            TransformationDataTypeService::ASSET_ARRAY
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

@@ -13,14 +13,20 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
-class Direct implements DataTargetInterface, SchemaAwareInterface
+class Direct implements
+    DataTargetInterface,
+    SchemaAwareInterface,
+    DataTargetFieldValidatorInterface
 {
     /**
      * @var string
@@ -41,6 +47,16 @@ class Direct implements DataTargetInterface, SchemaAwareInterface
      * @var bool
      */
     protected $writeIfTargetIsNotEmpty;
+
+    protected TransformationDataTypeService $transformationDataTypeService;
+
+    #[Required]
+    public function setTransformationDataTypeService(
+        TransformationDataTypeService $transformationDataTypeService
+    ): void {
+        $this->transformationDataTypeService =
+            $transformationDataTypeService;
+    }
 
     /**
      * @param array $settings
@@ -242,5 +258,21 @@ class Direct implements DataTargetInterface, SchemaAwareInterface
             ->end();
 
         return $treeBuilder;
+    }
+
+    public function validateTargetField(
+        string $transformationResultType,
+        string $classId
+    ): void {
+        $this->transformationDataTypeService
+            ->checkFieldAvailable(
+                $this->fieldName,
+                $classId,
+                [$transformationResultType],
+                false,
+                true,
+                true,
+                true
+            );
     }
 }

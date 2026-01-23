@@ -14,6 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
@@ -23,7 +24,8 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
+class LoadDataObject extends AbstractOperator implements SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     const LOAD_STRATEGY_ID = 'id';
 
@@ -63,6 +65,8 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
 
     protected DataObjectLoader $dataObjectLoader;
 
+    protected TransformationDataTypeService $transformationDataTypeService;
+
     /**
      * @param DataObjectLoader $dataObjectLoader
      */
@@ -72,14 +76,51 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
         $this->dataObjectLoader = $dataObjectLoader;
     }
 
+    #[Required]
+    public function setTransformationDataTypeService(
+        TransformationDataTypeService $transformationDataTypeService
+    ): void {
+        $this->transformationDataTypeService =
+            $transformationDataTypeService;
+    }
+
     public function setSettings(array $settings): void
     {
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_ID;
-        $this->attributeLanguage = $settings['attributeLanguage'];
-        $this->attributeName = $settings['attributeName'];
-        $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
+        $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
+        $this->attributeName = $settings['attributeName'] ?? '';
+        $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'] ?? '';
         $this->partialMatch = $settings['partialMatch'] ?? false;
         $this->loadUnpublished = $settings['loadUnpublished'] ?? false;
+
+        if ($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
+            if (empty($this->attributeDataObjectClassId)) {
+                throw new InvalidConfigurationException('The attributeDataObjectClassId attribute is required');
+            }
+
+            $attributeClass = ClassDefinition::getById($this->attributeDataObjectClassId);
+            if (empty($attributeClass)) {
+                throw new InvalidConfigurationException(
+                    "Class `{$this->attributeDataObjectClassId}` not found. " .
+                    'Make sure to use an existing data object class ID.'
+                );
+            }
+
+            if (empty($this->attributeName)) {
+                throw new InvalidConfigurationException('The attributeName attribute is required');
+            }
+
+            $this->transformationDataTypeService
+                ->checkFieldAvailable(
+                    $this->attributeName,
+                    $this->attributeDataObjectClassId,
+                    [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
+                    true,
+                    true,
+                    true,
+                    true
+                );
+        }
     }
 
     /**
@@ -263,6 +304,23 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
             . 'Supports partial matching and loading unpublished objects.';
     }
 
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DATA_OBJECT,
+            TransformationDataTypeService::DATA_OBJECT_ARRAY
+        ];
+    }
+
     public function getConfigTreeBuilder(): ?TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
@@ -273,32 +331,27 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface
         $rootNode
             ->children()
                 ->enumNode('loadStrategy')
+                    ->isRequired()
                     ->info(
                         'Strategy for loading objects: "id" (by numeric ID), '
                         . '"path" (by full path), or "attribute" (by field value)'
                     )
                     ->values([self::LOAD_STRATEGY_ID, self::LOAD_STRATEGY_PATH, self::LOAD_STRATEGY_ATTRIBUTE])
-                    ->defaultValue(self::LOAD_STRATEGY_ID)
                 ->end()
                 ->scalarNode('attributeLanguage')
                     ->info('Language for localized attribute lookup (only for "attribute" load strategy)')
-                    ->defaultValue(null)
                 ->end()
                 ->scalarNode('attributeName')
                     ->info('Field name to search by (only for "attribute" load strategy)')
-                    ->defaultValue(null)
                 ->end()
                 ->scalarNode('attributeDataObjectClassId')
                     ->info('Data object class ID to limit search scope (only for "attribute" load strategy)')
-                    ->defaultValue(null)
                 ->end()
                 ->booleanNode('partialMatch')
                     ->info('If true, uses LIKE matching for attribute values (only for "attribute" load strategy)')
-                    ->defaultValue(false)
                 ->end()
                 ->booleanNode('loadUnpublished')
                     ->info('If true, also loads unpublished objects')
-                    ->defaultValue(false)
                 ->end()
             ->end();
 

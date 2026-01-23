@@ -78,8 +78,8 @@ class ResolverFactory
         }
 
         $loadingStrategy = clone $this->loadingStrategyBlueprints[$config['type']];
-        $loadingStrategy->setSettings($config['settings'] ?? []);
         $loadingStrategy->setDataObjectClassId($classId);
+        $loadingStrategy->setSettings($config['settings'] ?? []);
 
         return $loadingStrategy;
     }
