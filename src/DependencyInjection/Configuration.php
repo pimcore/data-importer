@@ -52,6 +52,20 @@ class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
             ->end()
+            ->arrayNode('mcp_server')
+                ->addDefaultsIfNotSet()
+                ->info('[EXPERIMENTAL] Configure MCP (Model Context Protocol) server for AI integration')
+                ->children()
+                    ->booleanNode('enabled')
+                        ->defaultFalse()
+                        ->info('Enable the MCP server endpoint. When enabled, provides configuration and validation tools for AI agents.')
+                    ->end()
+                    ->arrayNode('bearer_tokens')
+                        ->scalarPrototype()->end()
+                        ->info('List of allowed bearer tokens for authentication. Provide secure random tokens here.')
+                    ->end()
+                ->end()
+            ->end()
         ->end();
 
         return $treeBuilder;

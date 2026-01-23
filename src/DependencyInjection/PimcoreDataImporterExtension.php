@@ -50,6 +50,21 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+
+        // MCP Server configuration
+        $container->setParameter(
+            'pimcore_data_importer.mcp_server.enabled',
+            $config['mcp_server']['enabled']
+        );
+        $container->setParameter(
+            'pimcore_data_importer.mcp_server.bearer_tokens',
+            $config['mcp_server']['bearer_tokens'] ?? []
+        );
+
+        // Load MCP services if enabled
+        if ($config['mcp_server']['enabled']) {
+            $loader->load('services/mcp.yml');
+        }
     }
 
     public function prepend(ContainerBuilder $container): void

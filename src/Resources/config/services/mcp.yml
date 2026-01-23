@@ -1,0 +1,59 @@
+# loaded only when mcp server is active
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # MCP Security
+    Pimcore\Bundle\DataImporterBundle\Mcp\Security\McpAuthenticationService:
+        arguments:
+            $allowedBearerTokens: '%pimcore_data_importer.mcp_server.bearer_tokens%'
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\ArgumentResolver\McpAuthContextResolver:
+        tags:
+            - { name: controller.argument_value_resolver, priority: 150 }
+
+    # PSR-16 Simple Cache for MCP sessions
+    pimcore.datahub.data-importer.mcp.cache.simple:
+        class: Symfony\Component\Cache\Psr16Cache
+        arguments:
+            - '@cache.app'
+
+    # Service locator for MCP tool/resource classes (enables PSR-11 container access)
+    pimcore.datahub.data-importer.mcp.service_locator:
+        class: Symfony\Component\DependencyInjection\ServiceLocator
+        arguments:
+            - Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool'
+        tags: ['container.service_locator']
+
+
+    # MCP Server
+    Pimcore\Bundle\DataImporterBundle\Mcp\Service\McpServerBuilder:
+        arguments:
+            $container: '@pimcore.datahub.data-importer.mcp.service_locator'
+            $logger: '@logger'
+            $cache: '@pimcore.datahub.data-importer.mcp.cache.simple'
+
+    pimcore.datahub.data-importer.mcp.server:
+        class: Mcp\Server
+        factory: ['@Pimcore\Bundle\DataImporterBundle\Mcp\Service\McpServerBuilder', 'buildServer']
+
+    # MCP Controller
+    Pimcore\Bundle\DataImporterBundle\Mcp\Controller\McpController:
+        public: true
+        arguments:
+            $server: '@pimcore.datahub.data-importer.mcp.server'
+        tags: ['controller.service_arguments']
+
+    # MCP Tools - Auto-discovered via attributes, but registered for DI
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool: ~
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool: ~
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool: ~
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: ~
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: ~

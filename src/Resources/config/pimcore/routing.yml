@@ -13,3 +13,7 @@ _data_hub_data_importer_connections:
 _data_hub_data_importer_data_object_push:
     resource: "@PimcoreDataImporterBundle/Controller/PushImportController.php"
     type:     attribute
+
+_data_hub_data_importer_mcp:
+    resource: "@PimcoreDataImporterBundle/Mcp/Controller"
+    type:     attribute

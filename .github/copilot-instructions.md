@@ -17,7 +17,7 @@ docker compose exec -T php php bin/console cache:clear
 docker compose exec -T php composer install
 ```
 
-**Important**: Always run commands from the project root directory (`/home/christian/sources/demo-enterprise-vscode`), not from the bundle directory.
+**Important**: Always run commands from the project root directory, not from the bundle directory.
 
 ## Code Quality Tools
 
@@ -27,7 +27,6 @@ PHPStan Level 5 is configured for this bundle. Always run PHPStan before committ
 
 ```bash
 # Run PHPStan analysis
-cd /home/christian/sources/demo-enterprise-vscode
 docker compose exec -T php vendor/bin/phpstan analyze \
   --configuration=/var/www/html/dev/pimcore/data-importer/phpstan.neon \
   --error-format=table \
@@ -47,7 +46,6 @@ PHP CS Fixer automatically formats code according to project standards.
 
 ```bash
 # Run PHP CS Fixer
-cd /home/christian/sources/demo-enterprise-vscode
 docker compose exec -T php /var/www/html/vendor/bin/php-cs-fixer fix \
   --config=/var/www/html/dev/pimcore/data-importer/.php-cs-fixer.dist.php \
   --verbose \
@@ -136,6 +134,207 @@ Always add PHPDoc type hints when PHPStan requires them:
 $rootNode = $treeBuilder->getRootNode();
 ```
 
+## MCP Tools
+
+### Creating New MCP Tools
+
+MCP (Model Context Protocol) tools enable AI agents to interact with the Data Importer programmatically.
+
+**Tool Creation Steps:**
+
+1. **Create Tool Class** in `src/Mcp/Tool/`:
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
+
+use Mcp\Capability\Attribute\McpTool;
+use Mcp\Capability\Attribute\Schema;
+use Mcp\Capability\Tool\CallToolResult;
+use Mcp\Capability\Tool\TextContent;
+
+class YourNewTool
+{
+    public function __construct(
+        private YourDependencyService $service
+    ) {}
+
+    #[McpTool(
+        name: 'your_tool_name',
+        description: 'Clear description of what the tool does'
+    )]
+    public function execute(
+        #[Schema(
+            type: 'string',
+            description: 'Parameter description'
+        )]
+        string $parameter
+    ): CallToolResult {
+        try {
+            $result = $this->service->doSomething($parameter);
+            
+            return new CallToolResult(
+                [new TextContent(json_encode($result, JSON_PRETTY_PRINT))],
+                isError: false
+            );
+        } catch (\Throwable $e) {
+            return new CallToolResult(
+                [new TextContent(json_encode([
+                    'error' => $e->getMessage()
+                ], JSON_PRETTY_PRINT))],
+                isError: true
+            );
+        }
+    }
+}
+```
+
+2. **Register in `src/Resources/config/services/mcp.yml`**:
+```yaml
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\YourNewTool:
+```
+and add it to the service locator
+```yaml
+    pimcore.datahub.data-importer.mcp.service_locator:
+        class: Symfony\Component\DependencyInjection\ServiceLocator
+        arguments:
+            - Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool'
+        tags: ['container.service_locator']
+```
+
+
+3. **Clear cache**:
+```bash
+docker compose exec -T php bin/console cache:clear
+```
+
+**Important:**
+- Constructor dependencies are autowired automatically
+- Use `#[McpTool]` attribute for tool registration
+- Use `#[Schema]` attribute for parameter descriptions
+- Always return `CallToolResult` with `isError` flag
+- Tool names use snake_case convention
+- Return data directly in same format as input (not wrapped in extra JSON)
+- Auto-detect input format when format parameter not specified
+
+### Testing MCP Tools
+
+MCP endpoint tests follow the pattern `test-*.sh` in some test directory.
+
+**Test Script Structure:**
+
+```bash
+#!/bin/bash
+set -e
+
+API_URL="http://nginx/dataimporter-mcp"
+BEARER_TOKEN="test-token-12345"
+
+# Function to make MCP requests with session handling
+mcp_request() {
+    local method=$1
+    local params=$2
+    local session_id=$3
+    
+    local payload=$(cat <<EOF
+{
+    "jsonrpc": "2.0",
+    "id": "$method",
+    "method": "$method",
+    "params": $params
+}
+EOF
+)
+    
+    if [ -n "$session_id" ]; then
+        curl -s -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $BEARER_TOKEN" \
+            -H "Mcp-Session-Id: $session_id" \
+            -d "$payload"
+    else
+        curl -s -X POST "$API_URL" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $BEARER_TOKEN" \
+            -d "$payload" \
+            -D /tmp/mcp_headers.txt
+    fi
+}
+
+# Extract session ID from headers
+extract_session_id() {
+    grep -i "Mcp-Session-Id:" /tmp/mcp_headers.txt | cut -d: -f2 | tr -d ' \r\n' || echo ""
+}
+
+echo "[1] Initializing MCP session..."
+mcp_request "initialize" '{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"}}' > /tmp/init_response.json
+SESSION_ID=$(extract_session_id)
+
+echo "[2] Testing tool..."
+TEST_DATA='{"your":"data"}'
+TEST_DATA_ENCODED=$(echo "$TEST_DATA" | php -r 'echo json_encode(file_get_contents("php://stdin"));')
+
+CALL_PAYLOAD=$(cat <<EOF
+{
+    "name": "your_tool_name",
+    "arguments": {
+        "parameter": $TEST_DATA_ENCODED
+    }
+}
+EOF
+)
+
+RESULT=$(mcp_request "tools/call" "$CALL_PAYLOAD" "$SESSION_ID")
+echo "$RESULT" | php -r 'print_r(json_decode(file_get_contents("php://stdin"), true));'
+```
+
+**Critical Testing Requirements:**
+
+1. **Session Initialization**: All MCP requests require a session
+   - First call `initialize` method to get session ID
+   - Extract session ID from `Mcp-Session-Id` response header
+   - Include session ID in all subsequent requests
+
+2. **JSON String Encoding**: Tool parameters expecting JSON strings must be double-encoded:
+   ```bash
+   # Wrong: Passes JSON object
+   "configuration": $CONFIG
+   
+   # Correct: Passes JSON string
+   CONFIG_ENCODED=$(echo "$CONFIG" | php -r 'echo json_encode(file_get_contents("php://stdin"));')
+   "configuration": $CONFIG_ENCODED
+   ```
+
+3. **Run Inside Container**: Tests execute inside PHP container:
+   ```bash
+   docker compose exec -T php bash << 'SCRIPT_END'
+   # Test commands here
+   SCRIPT_END
+   ```
+
+4. **Tool Discovery**: List available tools with session:
+   ```bash
+   mcp_request "tools/list" "{}" "$SESSION_ID"
+   ```
+
+**Common Issues:**
+- **"Authorization header missing"**: Missing or invalid bearer token
+- **"Too few arguments to function __construct()"**: Tool not registered in `mcp.yml` with `public: true`
+- **"Array to string conversion"**: JSON parameter not properly encoded as string
+- **HTTP 400/404**: Session not initialized or wrong endpoint URL
+
+**Testing Workflow:**
+1. Create test script: `test-your-feature.sh`
+2. Make executable: `chmod +x test-your-feature.sh`
+3. Run: `./test-your-feature.sh`
+4. Check logs on failure: `docker compose exec php tail -50 var/log/dev-error.log`
+
 ## Testing
 
 Tests run in a **separate Docker Compose environment** located in `tests/bin/docker-compose.yml`.
@@ -143,7 +342,7 @@ Tests run in a **separate Docker Compose environment** located in `tests/bin/doc
 ### One-time init + first run
 
 ```bash
-cd /home/christian/sources/demo-enterprise-vscode/dev/pimcore/data-importer/tests/bin
+cd dev/pimcore/data-importer/tests/bin
 bash init-tests.sh
 ```
 
@@ -152,7 +351,7 @@ This starts the dedicated test compose stack, sets up Pimcore for tests, install
 ### Re-run tests (environment already up)
 
 ```bash
-cd /home/christian/sources/demo-enterprise-vscode/dev/pimcore/data-importer/tests/bin
+cd dev/pimcore/data-importer/tests/bin
 docker compose exec php-fpm vendor/bin/codecept run -vv
 ```
 
