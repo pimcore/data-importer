@@ -166,11 +166,12 @@ class ConfigurationValidationService
         }
 
         // Validate settings using SchemaAwareInterface if available
+        $settings = $this->normalizeSettings($config['settings'] ?? []);
         $schemaErrors = $this->validateSchemaAwareSettings(
             'loaderConfig',
             $this->dataLoaderLocator,
             $config['type'],
-            $config['settings'] ?? []
+            $settings
         );
         $errors = array_merge($errors, $schemaErrors);
 
@@ -202,11 +203,12 @@ class ConfigurationValidationService
         }
 
         // Validate settings using SchemaAwareInterface if available
+        $settings = $this->normalizeSettings($config['settings'] ?? []);
         $schemaErrors = $this->validateSchemaAwareSettings(
             'interpreterConfig',
             $this->interpreterLocator,
             $config['type'],
-            $config['settings'] ?? []
+            $settings
         );
         $errors = array_merge($errors, $schemaErrors);
 
@@ -272,11 +274,14 @@ class ConfigurationValidationService
         // Validate cleanup strategy settings using SchemaAwareInterface if available
         if (!empty($config['cleanup']['strategy'])) {
             $strategyType = $config['cleanup']['strategy'];
+            $settings = $this->normalizeSettings(
+                $config['cleanup']['settings'] ?? []
+            );
             $schemaErrors = $this->validateSchemaAwareSettings(
                 'processingConfig.cleanup',
                 $this->cleanupStrategyLocator,
                 $strategyType,
-                $config['cleanup']['settings'] ?? []
+                $settings
             );
             $errors = array_merge($errors, $schemaErrors);
 
@@ -379,7 +384,7 @@ class ConfigurationValidationService
 
         // Only validate if data target implements the validator interface
         if (!$dataTarget instanceof
-            \Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetFieldValidatorInterface
+            \Pimcore\Bundle\DataImporterBundle\Settings\DataTargetFieldValidatorInterface
         ) {
             return;
         }
@@ -424,6 +429,43 @@ class ConfigurationValidationService
         }
 
         return $errors;
+    }
+
+    /**
+     * Normalize settings by validating proper format
+     *
+     * Ensures settings are arrays, not JSON strings. This enforces
+     * proper YAML nesting format in configurations.
+     *
+     * @param mixed $settings Settings value (must be array)
+     *
+     * @return array Validated settings array
+     *
+     * @throws InvalidConfigurationException if settings is a JSON string
+     */
+    private function normalizeSettings($settings): array
+    {
+        if (is_array($settings)) {
+            return $settings;
+        }
+
+        if (is_string($settings)) {
+            throw new InvalidConfigurationException(
+                'Settings must be a nested YAML structure, not a JSON ' .
+                'string. Use proper YAML nesting: "settings:\\n  ' .
+                'fieldName: value" instead of "settings: ' .
+                '\\"{\\\"fieldName\\\":\\\"value\\\"}\\""'
+            );
+        }
+
+        if ($settings === null) {
+            return [];
+        }
+
+        throw new InvalidConfigurationException(
+            'Settings must be an array or null, ' .
+            gettype($settings) . ' given'
+        );
     }
 
     /**
