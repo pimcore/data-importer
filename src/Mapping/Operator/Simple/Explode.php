@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Explode extends AbstractOperator implements SchemaAwareInterface,
+class Explode extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -98,7 +99,6 @@ class Explode extends AbstractOperator implements SchemaAwareInterface,
         return 'Splits strings into arrays using a delimiter. '
             . 'Can optionally preserve sub-arrays when processing nested arrays.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

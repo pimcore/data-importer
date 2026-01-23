@@ -16,8 +16,8 @@ namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
-use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
+use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

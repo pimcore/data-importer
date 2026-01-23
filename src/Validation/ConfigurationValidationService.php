@@ -333,6 +333,7 @@ class ConfigurationValidationService
 
                 // Evaluate transformation result data type
                 $transformationResultType = null;
+
                 try {
                     $transformationResultType =
                         $this->importProcessingService

@@ -21,7 +21,8 @@ use Pimcore\Localization\LocaleServiceInterface;
 use Pimcore\Log\ApplicationLogger;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsCountries extends AbstractOperator implements SchemaAwareInterface,
+class AsCountries extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     public function __construct(ApplicationLogger $applicationLogger, private LocaleServiceInterface $localeService)
@@ -72,7 +73,6 @@ class AsCountries extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts country names to country codes. '
             . 'Takes an array of country display names and converts them to their corresponding ISO country codes.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

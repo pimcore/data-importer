@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\DataObject\Data\RgbaColor;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsColor extends AbstractOperator implements SchemaAwareInterface,
+class AsColor extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -71,7 +72,6 @@ class AsColor extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts input data into an RGBA color object. '
             . 'Accepts either an array of numeric RGB(A) values or a hex color string starting with #.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

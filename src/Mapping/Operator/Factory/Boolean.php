@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Boolean extends AbstractOperator implements SchemaAwareInterface,
+class Boolean extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -66,7 +67,6 @@ class Boolean extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts input data to boolean value. '
             . 'Uses PHP filter_var with FILTER_VALIDATE_BOOLEAN to evaluate the input.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

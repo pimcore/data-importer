@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Trim extends AbstractOperator implements SchemaAwareInterface,
+class Trim extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     const MODE_BOTH = 'both';
@@ -107,7 +108,6 @@ class Trim extends AbstractOperator implements SchemaAwareInterface,
     {
         return 'Trims whitespace from string values. Supports trimming both sides, left only, or right only.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

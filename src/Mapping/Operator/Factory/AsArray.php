@@ -18,7 +18,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsArray extends AbstractOperator implements SchemaAwareInterface,
+class AsArray extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -52,7 +53,6 @@ class AsArray extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts input data into an array. '
             . 'If the input is not already an array, it wraps the value in an array.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

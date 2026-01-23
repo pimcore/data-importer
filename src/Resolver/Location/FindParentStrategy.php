@@ -109,7 +109,7 @@ class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterf
             $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
 
             $findClass = ClassDefinition::getById($this->attributeDataObjectClassId);
-            if(empty($findClass)) {
+            if (empty($findClass)) {
                 throw new InvalidConfigurationException(
                     "Class `{$this->attributeDataObjectClassId}` not found. Make sure to use an existing data object class ID."
                 );

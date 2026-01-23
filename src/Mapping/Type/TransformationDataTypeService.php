@@ -19,7 +19,7 @@ use Pimcore\Model\DataObject\Objectbrick\Definition;
 class TransformationDataTypeService
 {
     // Represents all types, needed for documentation of operators that accept all types
-    const ALL_TYPES = "any";
+    const ALL_TYPES = 'any';
 
     const DEFAULT_TYPE = 'default';
 
@@ -354,7 +354,7 @@ class TransformationDataTypeService
 
         $isValid = in_array($fieldName, $compatibleFieldKeys);
 
-        if($throwException && !$isValid) {
+        if ($throwException && !$isValid) {
 
             $msg = sprintf(
                 'Field "%s" is not compatible with transformation ' .
@@ -364,6 +364,7 @@ class TransformationDataTypeService
                 $classId,
                 implode(', ', $compatibleFieldKeys)
             );
+
             throw new InvalidConfigurationException($msg);
 
         }

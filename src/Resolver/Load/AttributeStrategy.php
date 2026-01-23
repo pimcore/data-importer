@@ -46,7 +46,6 @@ class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
             $transformationDataTypeService;
     }
 
-
     /**
      * @param array $settings
      *

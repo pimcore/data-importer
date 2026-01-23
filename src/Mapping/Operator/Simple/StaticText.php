@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StaticText extends AbstractOperator implements SchemaAwareInterface,
+class StaticText extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     const MODE_APPEND = 'append';
@@ -116,7 +117,6 @@ class StaticText extends AbstractOperator implements SchemaAwareInterface,
     {
         return 'Appends or prepends static text to input values. Can optionally add text even when input is empty.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

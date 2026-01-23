@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ConditionalConversion extends AbstractOperator implements SchemaAwareInterface,
+class ConditionalConversion extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -99,7 +100,6 @@ class ConditionalConversion extends AbstractOperator implements SchemaAwareInter
             . 'Maps original values to converted values using pipe-separated lists. '
             . 'Supports wildcard (*) for default conversions.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

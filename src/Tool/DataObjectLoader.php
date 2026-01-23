@@ -139,7 +139,7 @@ class DataObjectLoader
     ): ?ElementInterface {
         $getter = 'getBy' . $attributeName;
 
-        if($attributeName === 'id') {
+        if ($attributeName === 'id') {
             return $className::getById((int) $identifier);
         }
 

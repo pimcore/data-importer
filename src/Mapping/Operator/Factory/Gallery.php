@@ -22,7 +22,8 @@ use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Gallery extends AbstractOperator implements SchemaAwareInterface,
+class Gallery extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -98,7 +99,6 @@ class Gallery extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts image assets into an ImageGallery object. '
             . 'Takes single or multiple asset images and creates a gallery with hotspot image items.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class HtmlDecode extends AbstractOperator implements SchemaAwareInterface,
+class HtmlDecode extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -80,7 +81,6 @@ class HtmlDecode extends AbstractOperator implements SchemaAwareInterface,
         return 'Decodes HTML entities in string values, '
             . 'converting HTML entity codes back to their corresponding characters.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

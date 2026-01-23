@@ -21,7 +21,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ObjectField extends AbstractOperator implements SchemaAwareInterface,
+class ObjectField extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     private string $attribute;
@@ -104,7 +105,6 @@ class ObjectField extends AbstractOperator implements SchemaAwareInterface,
         return 'Extracts a specific field value from a Pimcore data object or element. '
             . 'Converts element references to full paths.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

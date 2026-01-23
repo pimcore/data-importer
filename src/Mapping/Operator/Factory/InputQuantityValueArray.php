@@ -95,7 +95,6 @@ class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareI
             . 'Each item should be [value, unit].';
     }
 
-
     public function getAcceptedInputTypes(): array
     {
         return [

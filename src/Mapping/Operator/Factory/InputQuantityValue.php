@@ -79,7 +79,6 @@ class InputQuantityValue extends QuantityValue implements SchemaAwareInterface
         return 'Converts an array into an InputQuantityValue object. Expects an array with [value, unitAbbreviation].';
     }
 
-
     public function getAcceptedInputTypes(): array
     {
         return [

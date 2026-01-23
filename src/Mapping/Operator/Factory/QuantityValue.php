@@ -20,7 +20,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class QuantityValue extends AbstractOperator implements SchemaAwareInterface,
+class QuantityValue extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -129,7 +130,7 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface,
         ) {
             throw new InvalidConfigurationException(sprintf(
                 "Unsupported input type '%s' for quantity value operator with static unit at " .
-                "transformation position %s",
+                'transformation position %s',
                 $inputType,
                 $index
             ));
@@ -158,7 +159,6 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts input data into a QuantityValue object with a numeric value and unit. '
             . 'Supports unit by ID, abbreviation, or static unit selection.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

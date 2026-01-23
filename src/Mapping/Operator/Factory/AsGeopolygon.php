@@ -48,7 +48,6 @@ class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterfa
             . 'Accepts an array of coordinate pairs that define the polygon vertices.';
     }
 
-
     public function getAcceptedInputTypes(): array
     {
         return [

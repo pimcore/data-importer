@@ -23,7 +23,8 @@ use Pimcore\Model\Element\DuplicateFullPathException;
 use Pimcore\Model\Element\Service;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ImportAsset extends AbstractOperator implements SchemaAwareInterface,
+class ImportAsset extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -237,7 +238,6 @@ class ImportAsset extends AbstractOperator implements SchemaAwareInterface,
             . 'Optionally uses existing assets or overwrites them. '
             . 'Supports regex pattern matching for filename extraction.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

@@ -21,7 +21,8 @@ use Pimcore\Model\DataObject\Data\Geobounds;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeobounds extends AbstractOperator implements SchemaAwareInterface,
+class AsGeobounds extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -78,7 +79,6 @@ class AsGeobounds extends AbstractOperator implements SchemaAwareInterface,
         return 'Converts an array of coordinates into a Geobounds object. '
             . 'Expects an array with 4 values: [northEastLat, northEastLong, southWestLat, southWestLong].';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

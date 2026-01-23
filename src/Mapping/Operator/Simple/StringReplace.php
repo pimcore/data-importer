@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StringReplace extends AbstractOperator implements SchemaAwareInterface,
+class StringReplace extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     protected string $search;
@@ -89,7 +90,6 @@ class StringReplace extends AbstractOperator implements SchemaAwareInterface,
     {
         return 'Replaces all occurrences of a search string with a replacement string.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ReduceArrayKeyValuePairs extends AbstractOperator implements SchemaAwareInterface,
+class ReduceArrayKeyValuePairs extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     public function setSettings(array $settings): void
@@ -73,7 +74,6 @@ class ReduceArrayKeyValuePairs extends AbstractOperator implements SchemaAwareIn
         return 'Converts a flat array into an associative array by treating alternating elements as keys and values. '
             . 'Example: ["key1", "value1", "key2", "value2"] becomes ["key1" => "value1", "key2" => "value2"].';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

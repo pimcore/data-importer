@@ -33,11 +33,15 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 class ConfigurationDefinition implements ConfigurationInterface
 {
     private const INFO_STRATEGY_SETTINGS = 'Strategy-specific settings';
+
     private const INFO_EMPTY_OBJECT_SUFFIX =
         ' - if no specific settings needed, use empty object {}';
+
     private const INFO_EMPTY_OBJECT =
         'if no specific settings needed, use empty object {}';
+
     private const INFO_OPTIONAL_OMIT = 'optional, omit if not needed';
+
     private const INFO_DEFAULT_FALSE = 'if not specified, use false';
 
     protected ServiceLocator $dataLoaderLocator;

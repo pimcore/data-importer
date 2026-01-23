@@ -48,7 +48,6 @@ class AsGeopolyline extends GeopolyAbstractOperator implements SchemaAwareInterf
             . 'Accepts an array of coordinate pairs that define the polyline path.';
     }
 
-
     public function getAcceptedInputTypes(): array
     {
         return [

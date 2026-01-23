@@ -24,7 +24,8 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class LoadDataObject extends AbstractOperator implements SchemaAwareInterface,
+class LoadDataObject extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     const LOAD_STRATEGY_ID = 'id';
@@ -303,7 +304,6 @@ class LoadDataObject extends AbstractOperator implements SchemaAwareInterface,
         return 'Loads existing Pimcore data objects by ID, path, or attribute value. '
             . 'Supports partial matching and loading unpublished objects.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

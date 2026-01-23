@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Date extends AbstractOperator implements SchemaAwareInterface,
+class Date extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -122,7 +123,6 @@ class Date extends AbstractOperator implements SchemaAwareInterface,
         return 'Parses date strings into DateTime objects using a specified format. '
             . 'Supports both single values and arrays.';
     }
-
 
     public function getAcceptedInputTypes(): array
     {

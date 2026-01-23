@@ -19,7 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class QuantityValueArray extends AbstractOperator implements SchemaAwareInterface,
+class QuantityValueArray extends AbstractOperator implements
+    SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
     /**
@@ -104,7 +105,6 @@ class QuantityValueArray extends AbstractOperator implements SchemaAwareInterfac
         return 'Converts an array of value-unit pairs into an array of QuantityValue objects. '
             . 'Each item should be [value, unitId].';
     }
-
 
     public function getAcceptedInputTypes(): array
     {
