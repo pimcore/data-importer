@@ -47,8 +47,9 @@ class HttpLoader implements DataLoaderInterface
 
         try {
             $this->filesystem->copy($fullUrl, $this->importFilePath, true);
+
             return $this->importFilePath;
-        } catch (Exception $ex){
+        } catch (Exception $ex) {
             throw new InvalidConfigurationException(
                 sprintf(
                     'Could not copy from remote location `%s` to local tmp file `%s`',
