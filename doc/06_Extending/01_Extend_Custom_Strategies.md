@@ -19,9 +19,80 @@ Extending one of the listed strategies and configuration options needs following
 implementations to see how things are working.
 
 #### 1) PHP Implementation
-PHP implementations always need to implement an interface (e.g. `DataLoaderInterface` for data sources). Sometimes there
-is also an abstract base class, that already implements certain functionality. Try to use them if possible
-(e.g. `AbstractInterpreter` for FileFormats). It is of course also possible to extend existing implementations.
+Implement the required interface (e.g. `DataLoaderInterface` for data sources). Use abstract base classes where available (e.g. `AbstractInterpreter` for file formats).
+
+**Recommended:** Implement `SchemaAwareInterface` for automatic validation and AI agent support:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+
+class CustomLoader implements DataLoaderInterface, SchemaAwareInterface
+{
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from custom source';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        $rootNode = $treeBuilder->getRootNode();
+        
+        $rootNode
+            ->children()
+                ->scalarNode('endpoint')->isRequired()->end()
+                ->integerNode('timeout')->defaultValue(30)->end()
+            ->end();
+        
+        return $treeBuilder;
+    }
+}
+```
+
+This provides:
+- Automatic settings validation
+- Schema introspection for tools
+- Better error messages
+
+**For Data Targets:** Implement `DataTargetFieldValidatorInterface` to validate field compatibility:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Settings\DataTargetFieldValidatorInterface;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+
+class CustomDataTarget implements DataTargetInterface, DataTargetFieldValidatorInterface
+{
+    public function validateTargetField(
+        string $transformationResultType,
+        string $classId
+    ): void {
+        // Validate field exists and is compatible with transformation type
+        if (!$this->isFieldCompatible($transformationResultType, $classId)) {
+            throw new InvalidConfigurationException('Field incompatible');
+        }
+    }
+}
+```
+
+**For Operators:** Implement `TransformationTypeAwareInterface` for type validation:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+
+class CustomOperator implements OperatorInterface, TransformationTypeAwareInterface
+{
+    public function getAcceptedInputTypes(): array
+    {
+        return ['default', 'numeric'];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return ['numeric'];
+    }
+}
+```
 
 #### 2) Registering implementation as symfony service
 The php implementation needs to be registered as symfony service and tagged accordingly.

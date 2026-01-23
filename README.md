@@ -31,6 +31,9 @@ sources and adjusting it to Pimcore Data Objects based on a configured mapping w
 - [Import Execution Details](./doc/04_Import_Execution_Details.md)
 - [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md)
 - [Extending](./doc/06_Extending/README.md)
+  - [Custom Strategies](./doc/06_Extending/01_Extend_Custom_Strategies.md)
+  - [Configuration Validation](./doc/06_Extending/02_Configuration_Validation.md)
+  - [MCP Server (Experimental)](./doc/06_Extending/04_MCP_Server.md)
 - [Troubleshooting/FAQ](./doc/06_Troubleshooting_FAQ.md) 
 
 ## Further Information

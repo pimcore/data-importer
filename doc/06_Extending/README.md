@@ -1,7 +1,13 @@
 # Extending
 
-The bundle architecture provides several extension possibilities for developers to customize the behaviour.
-Beside standard symfony extension and customization possibilities, there are two more specific options for extending: 
+Customize import behavior through custom strategies and leverage developer tools for validation and AI integration.
 
-- [Extend via Custom Strategies](./01_Extend_Custom_Strategies.md)
-- [Events](./03_Events.md)
+## Extension Points
+
+- [Custom Strategies](./01_Extend_Custom_Strategies.md) - Custom loaders, interpreters, operators, strategies
+- [Events](./03_Events.md) - Import lifecycle hooks
+
+## Developer Tools
+
+- [Configuration Validation](./02_Configuration_Validation.md) - Programmatic validation and schema introspection
+- [MCP Server (Experimental)](./04_MCP_Server.md) - AI agent integration

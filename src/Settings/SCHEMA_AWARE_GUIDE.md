@@ -1,409 +1,165 @@
 # Making Services Schema-Aware for AI Agents
 
-This document explains how to make your custom Data Importer services provide schema information for AI agents and automated configuration tools.
+Make custom Data Importer services self-documenting by implementing `SchemaAwareInterface`.
 
-## Overview
-
-The Data Importer uses the `SchemaAwareInterface` to allow services to provide their own metadata. This enables:
-- **Extensibility** - Custom services automatically appear in schema output
-- **Documentation** - Services document themselves
-- **AI Support** - Automated tools can discover and use custom services
-- **No Central Registry** - No need to modify ConfigurationSchemaService
-
-## The SchemaAwareInterface
-
-Located at `src/Settings/SchemaAwareInterface.php`, this interface has two methods:
+## The Interface
 
 ```php
 interface SchemaAwareInterface
 {
-    /**
-     * Get human-readable description of what this service does
-     */
     public function getSchemaDescription(): string;
-
-    /**
-     * Get schema for settings this service accepts
-     * Returns array with structure:
-     * [
-     *     'settingName' => [
-     *         'type' => 'string|integer|boolean|array|object',
-     *         'description' => 'What this setting does',
-     *         'required' => true|false,
-     *         'default' => 'default value' (optional),
-     *         'enum' => ['allowed', 'values'] (optional),
-     *     ]
-     * ]
-     */
-    public function getSettingsSchema(): array;
+    public function getConfigTreeBuilder(): ?TreeBuilder;
 }
 ```
 
-## Implementing SchemaAwareInterface
-
-### Example 1: Data Loader
-
-```php
-use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderInterface;
-use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
-
-class MyCustomLoader implements DataLoaderInterface, SchemaAwareInterface
-{
-    protected string $apiEndpoint;
-    protected ?string $apiKey;
-    protected int $timeout;
-
-    public function setSettings(array $settings): void
-    {
-        if (empty($settings['apiEndpoint'])) {
-            throw new InvalidConfigurationException('API endpoint is required');
-        }
-        
-        $this->apiEndpoint = $settings['apiEndpoint'];
-        $this->apiKey = $settings['apiKey'] ?? null;
-        $this->timeout = $settings['timeout'] ?? 30;
-    }
-
-    public function getSchemaDescription(): string
-    {
-        return 'Load data from custom REST API endpoint';
-    }
-
-    public function getSettingsSchema(): array
-    {
-        return [
-            'apiEndpoint' => [
-                'type' => 'string',
-                'description' => 'Full URL of the API endpoint to load data from',
-                'required' => true,
-            ],
-            'apiKey' => [
-                'type' => 'string',
-                'description' => 'Optional API key for authentication',
-                'required' => false,
-            ],
-            'timeout' => [
-                'type' => 'integer',
-                'description' => 'Request timeout in seconds',
-                'required' => false,
-                'default' => 30,
-            ],
-        ];
-    }
-
-    // ... implement other DataLoaderInterface methods
-}
-```
-
-### Example 2: Location Strategy
+## Implementation Example
 
 ```php
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class DynamicPathStrategy implements LocationStrategyInterface, SchemaAwareInterface
+class StaticPathStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
-    protected string $pathTemplate;
-    protected array $pathVariables;
+    private string $path;
 
     public function setSettings(array $settings): void
     {
-        $this->pathTemplate = $settings['pathTemplate'] ?? '/import/{year}/{month}';
-        $this->pathVariables = $settings['pathVariables'] ?? ['year', 'month'];
+        if (empty($settings['path'])) {
+            throw new InvalidConfigurationException('Empty path.');
+        }
+        $this->path = $settings['path'];
     }
 
     public function getSchemaDescription(): string
     {
-        return 'Create dynamic paths based on data fields and date patterns';
+        return 'Use a static path for all elements';
     }
 
-    public function getSettingsSchema(): array
+    public function getConfigTreeBuilder(): ?TreeBuilder
     {
-        return [
-            'pathTemplate' => [
-                'type' => 'string',
-                'description' => 'Path template with placeholders like /import/{year}/{category}',
-                'required' => true,
-                'default' => '/import/{year}/{month}',
-            ],
-            'pathVariables' => [
-                'type' => 'array',
-                'description' => 'Array of variable names to substitute in the template',
-                'required' => false,
-                'default' => ['year', 'month'],
-            ],
-        ];
-    }
+        $treeBuilder = new TreeBuilder('settings');
+        $rootNode = $treeBuilder->getRootNode();
 
-    // ... implement other LocationStrategyInterface methods
+        $rootNode
+            ->children()
+                ->scalarNode('path')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Static path where elements will be created (e.g., /import/products)')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
+    }
 }
 ```
 
-### Example 3: Transformation Operator
+## TreeBuilder Quick Reference
 
 ```php
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
-use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
-
-class EncryptOperator implements OperatorInterface, SchemaAwareInterface
-{
-    protected string $algorithm;
-    protected string $key;
-
-    public function setSettings(array $settings): void
-    {
-        $this->algorithm = $settings['algorithm'] ?? 'aes-256-gcm';
-        $this->key = $settings['key'];
-    }
-
-    public function getSchemaDescription(): string
-    {
-        return 'Encrypt field values using specified algorithm';
-    }
-
-    public function getSettingsSchema(): array
-    {
-        return [
-            'algorithm' => [
-                'type' => 'string',
-                'description' => 'Encryption algorithm to use',
-                'required' => false,
-                'default' => 'aes-256-gcm',
-                'enum' => ['aes-256-gcm', 'aes-256-cbc', 'aes-128-gcm'],
-            ],
-            'key' => [
-                'type' => 'string',
-                'description' => 'Encryption key (must be kept secret)',
-                'required' => true,
-            ],
-        ];
-    }
-
-    // ... implement other OperatorInterface methods
-}
+$rootNode
+    ->children()
+        // Required string
+        ->scalarNode('fieldName')
+            ->isRequired()
+            ->cannotBeEmpty()
+            ->info('Description')
+        ->end()
+        
+        // Optional with default
+        ->scalarNode('optional')
+            ->defaultValue('default')
+            ->info('Description')
+        ->end()
+        
+        // Integer with constraints
+        ->integerNode('count')
+            ->min(1)
+            ->max(100)
+            ->defaultValue(10)
+        ->end()
+        
+        // Boolean
+        ->booleanNode('enabled')
+            ->defaultTrue()
+        ->end()
+        
+        // Enum
+        ->enumNode('type')
+            ->values(['option1', 'option2', 'option3'])
+            ->defaultValue('option1')
+        ->end()
+        
+        // Array
+        ->arrayNode('items')
+            ->scalarPrototype()->end()
+        ->end()
+    ->end();
 ```
 
 ## Service Registration
 
-Register your service with appropriate tags:
-
 ```yaml
 # config/services.yaml
 services:
-    App\DataImporter\Loader\MyCustomLoader:
+    App\DataImporter\Loader\ApiLoader:
         tags:
-            - { name: "pimcore.datahub.data_importer.loader", type: "customApi" }
-
-    App\DataImporter\Location\DynamicPathStrategy:
-        tags:
-            - { name: "pimcore.datahub.data_importer.resolver.location", type: "dynamicPath" }
-
-    App\DataImporter\Operator\EncryptOperator:
-        tags:
-            - { name: "pimcore.datahub.data_importer.operator", type: "encrypt" }
+            - { name: pimcore.datahub.data_importer.loader, type: customApi }
 ```
 
-## Schema Output
+### Available Service Tags
 
-Once registered and implementing SchemaAwareInterface, your service automatically appears in schema queries:
+| Service Type | Tag |
+|-------------|-----|
+| Data Loaders | `pimcore.datahub.data_importer.loader` |
+| Interpreters | `pimcore.datahub.data_importer.interpreter` |
+| Load Strategies | `pimcore.datahub.data_importer.resolver.load` |
+| Location Strategies | `pimcore.datahub.data_importer.resolver.location` |
+| Publishing Strategies | `pimcore.datahub.data_importer.resolver.publish` |
+| Operators | `pimcore.datahub.data_importer.operator` |
+| Data Targets | `pimcore.datahub.data_importer.data_target` |
+| Cleanup Strategies | `pimcore.datahub.data_importer.cleanup` |
 
-### CLI Query
+## Viewing Schema Output
+
 ```bash
+# Show schema for specific section
 bin/console datahub:data-importer:validate-config --schema-section=loaderConfig
-```
 
-### Output
-```
-loaderConfig
-============
-
-Available Types:
-----------------
-
-  customApi
-    Load data from custom REST API endpoint
-    Settings:
-      * apiEndpoint (string)
-        Full URL of the API endpoint to load data from
-        apiKey (string)
-        Optional API key for authentication
-        timeout (integer)
-        Request timeout in seconds
-```
-
-### JSON Output for AI Agents
-```bash
+# JSON output for AI agents
 bin/console datahub:data-importer:validate-config --schema --json
 ```
 
-```json
-{
-  "loaderConfig": {
-    "availableTypes": {
-      "customApi": {
-        "type": "customApi",
-        "class": "App\\DataImporter\\Loader\\MyCustomLoader",
-        "description": "Load data from custom REST API endpoint",
-        "settings": {
-          "apiEndpoint": {
-            "type": "string",
-            "description": "Full URL of the API endpoint to load data from",
-            "required": true
-          },
-          "apiKey": {
-            "type": "string",
-            "description": "Optional API key for authentication",
-            "required": false
-          },
-          "timeout": {
-            "type": "integer",
-            "description": "Request timeout in seconds",
-            "required": false,
-            "default": 30
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-## Applicable Service Types
-
-You can implement SchemaAwareInterface on any of these service types:
-
-| Service Type | Tag | Interface |
-|-------------|-----|-----------|
-| Data Loaders | `pimcore.datahub.data_importer.loader` | `DataLoaderInterface` |
-| Interpreters | `pimcore.datahub.data_importer.interpreter` | `InterpreterInterface` |
-| Load Strategies | `pimcore.datahub.data_importer.resolver.load` | `LoadStrategyInterface` |
-| Location Strategies | `pimcore.datahub.data_importer.resolver.location` | `LocationStrategyInterface` |
-| Publishing Strategies | `pimcore.datahub.data_importer.resolver.publish` | `PublishStrategyInterface` |
-| Operators | `pimcore.datahub.data_importer.operator` | `OperatorInterface` |
-| Data Targets | `pimcore.datahub.data_importer.data_target` | `DataTargetInterface` |
-| Cleanup Strategies | `pimcore.datahub.data_importer.cleanup` | `CleanupStrategyInterface` |
-
 ## Best Practices
 
-### 1. Clear Descriptions
-Write descriptions that explain **what** the service does and **when** to use it:
-
+**Write specific descriptions:**
 ```php
-// ❌ Too vague
-public function getSchemaDescription(): string
-{
-    return 'Loads data';
-}
+// ❌ Vague
+return 'Loads data';
 
-// ✅ Clear and specific
-public function getSchemaDescription(): string
-{
-    return 'Load data from SFTP server with automatic retry and connection pooling';
-}
+// ✅ Specific  
+return 'Load data from SFTP server with automatic retry and connection pooling';
 ```
 
-### 2. Complete Settings Documentation
-Document all settings including optional ones:
+**Use TreeBuilder constraints for validation:**
+- `isRequired()` / `cannotBeEmpty()` for required fields
+- `min()` / `max()` for numeric ranges
+- `enumNode()` for limited options
+- `defaultValue()` for sensible defaults
+- `info()` for helpful descriptions
 
+**Return null for services without settings:**
 ```php
-public function getSettingsSchema(): array
+public function getConfigTreeBuilder(): ?TreeBuilder
 {
-    return [
-        'requiredField' => [
-            'type' => 'string',
-            'description' => 'Clear description of what this field does',
-            'required' => true,
-        ],
-        'optionalField' => [
-            'type' => 'integer',
-            'description' => 'What happens if this is not set',
-            'required' => false,
-            'default' => 100,
-        ],
-    ];
+    return null; // No settings required
 }
 ```
-
-### 3. Use Enums for Limited Options
-Specify allowed values when applicable:
-
-```php
-'format' => [
-    'type' => 'string',
-    'description' => 'Output format for the data',
-    'required' => false,
-    'enum' => ['json', 'xml', 'csv'],
-    'default' => 'json',
-],
-```
-
-### 4. Provide Examples in Descriptions
-Help users understand complex settings:
-
-```php
-'pathTemplate' => [
-    'type' => 'string',
-    'description' => 'Template with placeholders. Example: /import/{year}/{category}',
-    'required' => true,
-],
-```
-
-## Fallback Behavior
-
-If a service does NOT implement SchemaAwareInterface:
-- The ConfigurationSchemaService will show a basic description derived from the class name
-- Settings will be empty: `"settings": []`
-- Validation still works, but documentation is limited
-
-This ensures backward compatibility with existing services while encouraging new services to provide proper schema information.
 
 ## Benefits
 
-### For Developers
-- Self-documenting services
-- No need to update central schema service
-- Easier maintenance
-
-### For AI Agents
-- Complete service discovery
-- Automatic schema updates
-- Rich metadata for code generation
-
-### For Users
-- Better documentation
-- Clear settings requirements
-- Consistent configuration experience
-
-## Migration Guide
-
-To migrate existing services:
-
-1. Add `SchemaAwareInterface` to the class implements list
-2. Add the two required methods
-3. Move hardcoded descriptions from ConfigurationSchemaService to the service itself
-4. Test with: `bin/console datahub:data-importer:validate-config --schema-section=yourSection`
-
-Example migration:
-```php
-// Before
-class MyLoader implements DataLoaderInterface
-{
-    // ... existing code
-}
-
-// After
-class MyLoader implements DataLoaderInterface, SchemaAwareInterface
-{
-    // ... existing code
-    
-    public function getSchemaDescription(): string
-    {
-        return 'Your service description';
-    }
-
-    public function getSettingsSchema(): array
-    {
-        return [/* your settings */];
-    }
-}
-```
+- **Self-documenting** - Services describe themselves
+- **AI-friendly** - Automatic schema discovery for agents
+- **No central registry** - No need to modify ConfigurationSchemaService
+- **Backward compatible** - Services without interface still work
