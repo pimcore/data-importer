@@ -64,11 +64,9 @@ final readonly class GetClassFieldsForLoadingTool
             ];
 
             foreach ($relevantTypes as $type) {
-                if (isset($matrix[$type]) && is_array($matrix[$type])) {
-                    foreach ($matrix[$type] as $field) {
-                        if (!in_array($field, $filterableFields, true)) {
-                            $filterableFields[] = $field;
-                        }
+                foreach (($matrix[$type] ?? []) as $field) {
+                    if (!in_array($field, $filterableFields, true)) {
+                        $filterableFields[] = $field;
                     }
                 }
             }

@@ -328,11 +328,6 @@ class ConfigurationSchemaService
     /**
      * Get field type matrix showing which fields of a class
      * can be used with which transformation target types
-     *
-     * @param string $classNameOrId The Pimcore class name or ID to analyze
-     *
-     * @return array<string, array<string>> Matrix of
-     *     [transformationType => [fieldName1, fieldName2, ...]]
      */
     public function getFieldTypeMatrix(string $classNameOrId): array
     {
