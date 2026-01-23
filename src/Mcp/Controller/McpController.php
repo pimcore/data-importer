@@ -52,6 +52,11 @@ final readonly class McpController
     }
 
     /**
+     * AUTHENTICATION:
+     * This endpoint is automatically authenticated via the McpAuthContext parameter.
+     * When this parameter is type-hinted, Symfony's argument resolver system invokes
+     * the McpAuthContextResolver
+     *
      * @throws AccessDeniedException When Bearer token is missing or invalid
      */
     #[Route(

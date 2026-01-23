@@ -36,11 +36,13 @@ class Configuration implements ConfigurationInterface
                 ->children()
                     ->booleanNode('activated')
                         ->defaultFalse()
-                        ->info('Activate dispatching messages after import was prepared. Will start import as soon as messages are processed via symfony messenger.')
+                        ->info('Activate dispatching messages after import was prepared. Will start import as ' .
+                               'soon as messages are processed via symfony messenger.')
                     ->end()
                     ->integerNode('worker_count_lifetime')
                         ->defaultValue(60 * 30) //30 minutes
-                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared. Default to 30 minutes.')
+                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the ' .
+                               'value will be cleared. Default to 30 minutes.')
                     ->end()
                     ->integerNode('worker_count_parallel')
                         ->defaultValue(3)
@@ -58,7 +60,8 @@ class Configuration implements ConfigurationInterface
                 ->children()
                     ->booleanNode('enabled')
                         ->defaultFalse()
-                        ->info('Enable the MCP server endpoint. When enabled, provides configuration and validation tools for AI agents.')
+                        ->info('Enable the MCP server endpoint. When enabled, provides configuration and ' .
+                               'validation tools for AI agents.')
                     ->end()
                     ->arrayNode('bearer_tokens')
                         ->scalarPrototype()->end()

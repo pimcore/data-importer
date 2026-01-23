@@ -18,6 +18,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -143,7 +144,7 @@ final readonly class ValidateConfigurationTool
     /**
      * Parse configuration string to array based on format
      *
-     * @throws \Exception if parsing fails
+     * @throws InvalidInputException if parsing fails
      */
     private function parseConfiguration(string $config, ?string $format): array
     {
@@ -162,7 +163,7 @@ final readonly class ValidateConfigurationTool
         if ($format === 'json') {
             $result = json_decode($config, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \RuntimeException(
+                throw new InvalidInputException(
                     'Invalid JSON: ' . json_last_error_msg()
                 );
             }
@@ -174,14 +175,14 @@ final readonly class ValidateConfigurationTool
             try {
                 $result = Yaml::parse($config);
                 if (!is_array($result)) {
-                    throw new \RuntimeException(
+                    throw new InvalidInputException(
                         'YAML must parse to an array/object'
                     );
                 }
 
                 return $result;
             } catch (\Exception $e) {
-                throw new \RuntimeException(
+                throw new InvalidInputException(
                     'Invalid YAML: ' . $e->getMessage(),
                     0,
                     $e
@@ -189,7 +190,7 @@ final readonly class ValidateConfigurationTool
             }
         }
 
-        throw new \InvalidArgumentException(
+        throw new InvalidInputException(
             "Unsupported format: {$format}. Use 'json' or 'yaml'."
         );
     }
