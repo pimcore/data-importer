@@ -14,9 +14,9 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Validation\Schema;
 
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**

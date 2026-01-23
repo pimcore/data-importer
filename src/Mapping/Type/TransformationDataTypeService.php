@@ -12,11 +12,15 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 class TransformationDataTypeService
 {
+    // Represents all types, needed for documentation of operators that accept all types
+    const ALL_TYPES = "any";
+
     const DEFAULT_TYPE = 'default';
 
     const DEFAULT_ARRAY = 'array';
@@ -163,6 +167,16 @@ class TransformationDataTypeService
     public function appendTypeMapping(string $pimcoreDataType, string $transformationTargetType): void
     {
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
+    }
+
+    /**
+     * Get all registered transformation target types
+     *
+     * @return string[] List of all transformation target types
+     */
+    public function getAllTransformationTargetTypes(): array
+    {
+        return array_keys($this->transformationDataTypesMapping);
     }
 
     protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, ?string $keyPrefix = null)
@@ -313,5 +327,48 @@ class TransformationDataTypeService
     public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array
     {
         return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
+    }
+
+    /**
+     * Checks if a field is available for a specific transformation
+     * target type
+     */
+    public function checkFieldAvailable(
+        string $fieldName,
+        string $classId,
+        array $transformationResultType,
+        bool $includeSystemRead = false,
+        bool $includeSystemWrite = false,
+        bool $includeAdvancedRelations = true,
+        bool $throwException = false
+    ): bool {
+        $compatibleFields = $this->getPimcoreDataTypes(
+            $classId,
+            $transformationResultType,
+            $includeSystemRead,
+            $includeSystemWrite,
+            $includeAdvancedRelations
+        );
+
+        $compatibleFieldKeys = array_column($compatibleFields, 'key');
+
+        $isValid = in_array($fieldName, $compatibleFieldKeys);
+
+        if($throwException && !$isValid) {
+
+            $msg = sprintf(
+                'Field "%s" is not compatible with transformation ' .
+                'result type "%s" for classID "%s". Compatible fields: %s',
+                $fieldName,
+                implode(', ', $transformationResultType),
+                $classId,
+                implode(', ', $compatibleFieldKeys)
+            );
+            throw new InvalidConfigurationException($msg);
+
+        }
+
+        return $isValid;
+
     }
 }
