@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Pimcore\Model\DataObject\ClassDefinition;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**
@@ -335,12 +336,12 @@ class ConfigurationSchemaService
      */
     public function getFieldTypeMatrix(string $classNameOrId): array
     {
-        // Try to get class by name first, then by ID
-        $class = \Pimcore\Model\DataObject\ClassDefinition::getByName(
+        // Try to get class by ID first, then by name
+        $class = ClassDefinition::getById(
             $classNameOrId
         );
         if (!$class) {
-            $class = \Pimcore\Model\DataObject\ClassDefinition::getById(
+            $class = ClassDefinition::getByName(
                 $classNameOrId
             );
         }
@@ -362,8 +363,8 @@ class ConfigurationSchemaService
                 ->getPimcoreDataTypes(
                     $classId,
                     $transformationType,
-                    false,  // includeSystemRead
-                    false,  // includeSystemWrite
+                    true,  // includeSystemRead
+                    true,  // includeSystemWrite
                     true   // includeAdvancedRelations
                 );
 
@@ -374,6 +375,29 @@ class ConfigurationSchemaService
         }
 
         return $matrix;
+    }
+
+    /**
+     * Get list of available Pimcore Data Object classes
+     */
+    public function getAvailableClasses(): array
+    {
+        $listing = new ClassDefinition\Listing();
+        $listing->setOrderKey('name');
+        $listing->setOrder('ASC');
+
+        $classes = [];
+        foreach ($listing->load() as $class) {
+            $classes[] = [
+                'id' => $class->getId(),
+                'name' => $class->getName(),
+                'title' => $class->getTitle(),
+                'description' => $class->getDescription(),
+                'group' => $class->getGroup(),
+            ];
+        }
+
+        return $classes;
     }
 
     /**

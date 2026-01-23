@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
-use App\Service\DataModel\ClassDefinitionSchemaService;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -29,7 +29,7 @@ use Psr\Log\LoggerInterface;
 final readonly class ListAvailableClassesTool
 {
     public function __construct(
-        private ClassDefinitionSchemaService $classSchemaService,
+        private ConfigurationSchemaService $configurationSchemaService,
         private LoggerInterface $logger
     ) {
     }
@@ -43,7 +43,7 @@ final readonly class ListAvailableClassesTool
     public function execute(): CallToolResult
     {
         try {
-            $classes = $this->classSchemaService->listAvailableClasses();
+            $classes = $this->listAvailableClasses();
 
             return new CallToolResult(
                 [
@@ -82,4 +82,10 @@ final readonly class ListAvailableClassesTool
             );
         }
     }
+
+    private function listAvailableClasses(): array
+    {
+        return $this->configurationSchemaService->getAvailableClasses();
+    }
+
 }

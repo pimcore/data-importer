@@ -14,12 +14,10 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
-use App\Service\DataModel\ClassDefinitionSchemaService;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
-use Pimcore\Model\DataObject\ClassDefinition;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -34,7 +32,6 @@ final readonly class GetConfigurationContextTool
 {
     public function __construct(
         private ConfigurationSchemaService $configurationSchemaService,
-        private ClassDefinitionSchemaService $classSchemaService,
         private LoggerInterface $logger
     ) {
     }
@@ -59,14 +56,11 @@ final readonly class GetConfigurationContextTool
             'import targets (direct field, classification store, asset ' .
             'metadata) with required settings; (4) available_classes - ' .
             'list of Pimcore data object classes that can be used as ' .
-            'import targets. OPTIONALLY RETURNS (when className provided): ' .
-            '(5) class_schema - detailed field structure including field ' .
-            'types, localized fields, object bricks, and classification ' .
-            'store attributes for the specified class; (6) ' .
+            'import targets. OPTIONALLY RETURNS (when classId provided): ' .
             'field_type_matrix - matrix showing which class fields are ' .
             'compatible with which transformation result types (e.g., ' .
             'which fields accept numeric vs text vs asset data). ' .
-            'OPTIONALLY RETURNS (when includeExamples=true): (7) ' .
+            'OPTIONALLY RETURNS (when includeExamples=true): ' .
             'examples - working configuration samples demonstrating ' .
             'common import scenarios. Use this tool to gather all ' .
             'necessary information before generating or validating ' .
@@ -92,9 +86,6 @@ final readonly class GetConfigurationContextTool
             ];
 
             if ($classId !== null && $includeClassSchema) {
-                $context['class_schema'] = $this->getClassSchema(
-                    $classId
-                );
                 $context['field_type_matrix'] = $this->getFieldTypeMatrix(
                     $classId
                 );
@@ -112,7 +103,7 @@ final readonly class GetConfigurationContextTool
             $this->logger->error(
                 'Failed to get configuration context',
                 [
-                    'className' => $classId,
+                    'classId' => $classId,
                     'exception' => $e
                 ]
             );
@@ -175,29 +166,7 @@ final readonly class GetConfigurationContextTool
 
     private function getClasses(): array
     {
-        $classList = new ClassDefinition\Listing();
-        $classList->setOrderKey('name');
-        $classList->setOrder('ASC');
-
-        return array_map(
-            fn ($class) => [
-                'id' => $class->getId(),
-                'name' => $class->getName()
-            ],
-            $classList->load()
-        );
-    }
-
-    private function getClassSchema(string $classId): mixed
-    {
-        try {
-            return $this->classSchemaService->getClassSchema($classId);
-        } catch (\Exception $e) {
-            return [
-                'error' => "Class '{$classId}' not found",
-                'hint' => 'See available_classes in this response'
-            ];
-        }
+        return $this->configurationSchemaService->getAvailableClasses();
     }
 
     private function getExamples(): array
@@ -241,10 +210,10 @@ final readonly class GetConfigurationContextTool
         return $examples;
     }
 
-    private function getFieldTypeMatrix(string $className): array
+    private function getFieldTypeMatrix(string $classId): array
     {
         return $this->configurationSchemaService->getFieldTypeMatrix(
-            $className
+            $classId
         );
     }
 }

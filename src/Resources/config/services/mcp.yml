@@ -30,6 +30,7 @@ services:
               Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool'
               Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool'
               Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool'
         tags: ['container.service_locator']
 
 
@@ -57,3 +58,4 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool: ~
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: ~
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: ~
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool: ~

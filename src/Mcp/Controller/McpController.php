@@ -60,7 +60,7 @@ final readonly class McpController
      * @throws AccessDeniedException When Bearer token is missing or invalid
      */
     #[Route(
-        path: '/dataimporter-mcp',
+        path: '/pimcore-datahub-webservices/dataimporter/mcp',
         name: 'pimcore_dataimporter_mcp',
         methods: ['POST', 'GET']
     )]
