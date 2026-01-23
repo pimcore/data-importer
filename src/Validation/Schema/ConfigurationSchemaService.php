@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Validation\Schema;
 
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
@@ -51,13 +52,13 @@ class ConfigurationSchemaService
 
     protected ConfigurationDefinition $configDefinition;
 
-    protected \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService $transformationDataTypeService;
+    protected TransformationDataTypeService $transformationDataTypeService;
 
     public function __construct(
         ConfigurationSchemaLocators $locators,
         TreeBuilderToJsonSchemaConverter $jsonSchemaConverter,
         ConfigurationDefinition $configDefinition,
-        \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService $transformationDataTypeService
+        TransformationDataTypeService $transformationDataTypeService
     ) {
         $this->dataLoaderLocator = $locators->dataLoader();
         $this->interpreterLocator = $locators->interpreter();

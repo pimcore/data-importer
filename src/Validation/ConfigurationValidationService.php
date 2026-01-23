@@ -329,7 +329,7 @@ class ConfigurationValidationService
                 // Evaluate transformation result data type
                 $transformationResultType = null;
                 try {
-                    $transformationResultType = 
+                    $transformationResultType =
                         $this->importProcessingService
                         ->evaluateTransformationResultDataType(
                             $mappingConfiguration
@@ -348,8 +348,7 @@ class ConfigurationValidationService
                         $this->validateDataTargetField(
                             $mappingConfiguration,
                             $transformationResultType,
-                            $resolverConfig,
-                            $index
+                            $resolverConfig
                         );
                     } catch (\Exception $e) {
                         $errors[] = new ValidationError(
@@ -374,13 +373,12 @@ class ConfigurationValidationService
         object $mappingConfiguration,
         string $transformationResultType,
         array $resolverConfig,
-        int $index
     ): void {
         // Get data target from mapping configuration
         $dataTarget = $mappingConfiguration->getDataTarget();
 
         // Only validate if data target implements the validator interface
-        if (!$dataTarget instanceof 
+        if (!$dataTarget instanceof
             \Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetFieldValidatorInterface
         ) {
             return;
@@ -388,7 +386,7 @@ class ConfigurationValidationService
 
         // Extract class ID from resolver config
         $elementType = $resolverConfig['elementType'] ?? null;
-        
+
         // Only validate for dataObject imports
         if ($elementType !== 'dataObject') {
             return;

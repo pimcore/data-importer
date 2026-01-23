@@ -33,6 +33,13 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 class ConfigurationDefinition implements ConfigurationInterface
 {
     private const INFO_STRATEGY_SETTINGS = 'Strategy-specific settings';
+    private const INFO_EMPTY_OBJECT_SUFFIX =
+        ' - if no specific settings needed, use empty object {}';
+    private const INFO_EMPTY_OBJECT =
+        'if no specific settings needed, use empty object {}';
+    private const INFO_OPTIONAL_OMIT = 'optional, omit if not needed';
+    private const INFO_DEFAULT_FALSE = 'if not specified, use false';
+
     protected ServiceLocator $dataLoaderLocator;
 
     protected ServiceLocator $interpreterLocator;
@@ -255,7 +262,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->variableNode('settings')
                             ->info(
                                 self::INFO_STRATEGY_SETTINGS .
-                                ' - if no specific settings needed, use empty object {}'
+                                self::INFO_EMPTY_OBJECT_SUFFIX
                             )
                         ->end()
                     ->end()
@@ -271,7 +278,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->variableNode('settings')
                             ->info(
                                 self::INFO_STRATEGY_SETTINGS .
-                                ' - if no specific settings needed, use empty object {}'
+                                self::INFO_EMPTY_OBJECT_SUFFIX
                             )
                         ->end()
                     ->end()
@@ -287,7 +294,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->variableNode('settings')
                             ->info(
                                 self::INFO_STRATEGY_SETTINGS .
-                                ' - if no specific settings needed, use empty object {}'
+                                self::INFO_EMPTY_OBJECT_SUFFIX
                             )
                         ->end()
                     ->end()
@@ -303,7 +310,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->variableNode('settings')
                             ->info(
                                 self::INFO_STRATEGY_SETTINGS .
-                                ' - if no specific settings needed, use empty object {}'
+                                self::INFO_EMPTY_OBJECT_SUFFIX
                             )
                         ->end()
                     ->end()
@@ -331,19 +338,19 @@ class ConfigurationDefinition implements ConfigurationInterface
                 ->scalarNode('idDataIndex')
                     ->info(
                         'Data index field containing unique identifier for records - ' .
-                        'optional, omit if not needed'
+                        self::INFO_OPTIONAL_OMIT
                     )
                 ->end()
                 ->booleanNode('doDeltaCheck')
                     ->info(
                         'Whether to perform delta checks to skip unchanged records - ' .
-                        'if not specified, use false'
+                        self::INFO_DEFAULT_FALSE
                     )
                 ->end()
                 ->booleanNode('doArchiveImportFile')
                     ->info(
                         'Whether to archive import files after processing - ' .
-                        'if not specified, use false'
+                        self::INFO_DEFAULT_FALSE
                     )
                 ->end()
                 ->arrayNode('cleanup')
@@ -351,7 +358,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->booleanNode('doCleanup')
                             ->info(
                                 'Whether to perform cleanup of elements not in import - ' .
-                                'if not specified, use false'
+                                self::INFO_DEFAULT_FALSE
                             )
                         ->end()
                         ->enumNode('strategy')
@@ -367,7 +374,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->variableNode('settings')
                             ->info(
                                 'Cleanup strategy-specific settings - ' .
-                                'if no specific settings needed, use empty object {}'
+                                self::INFO_EMPTY_OBJECT
                             )
                         ->end()
                     ->end()
@@ -386,19 +393,19 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->values(['recurring', 'cron'])
                     ->info(
                         'Type of scheduling (recurring or cron) - ' .
-                        'optional, omit if not needed'
+                        self::INFO_OPTIONAL_OMIT
                     )
                 ->end()
                 ->scalarNode('cronDefinition')
                     ->info(
                         'Cron expression for scheduling (when scheduleType is cron) - ' .
-                        'optional, omit if not needed'
+                        self::INFO_OPTIONAL_OMIT
                     )
                 ->end()
                 ->scalarNode('scheduledAt')
                     ->info(
                         'Timestamp or date for scheduled execution - ' .
-                        'optional, omit if not needed'
+                        self::INFO_OPTIONAL_OMIT
                     )
                 ->end()
             ->end();
@@ -420,7 +427,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                 ->variableNode('settings')
                     ->info(
                         'Loader-specific settings (validated by loader service) - ' .
-                        'if no specific settings needed, use empty object {}'
+                        self::INFO_EMPTY_OBJECT
                     )
                 ->end()
             ->end();
@@ -442,7 +449,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                 ->variableNode('settings')
                     ->info(
                         'Interpreter-specific settings (validated by interpreter service) - ' .
-                        'if no specific settings needed, use empty object {}'
+                        self::INFO_EMPTY_OBJECT
                     )
                 ->end()
             ->end();
@@ -473,14 +480,15 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->isRequired()
                         ->cannotBeEmpty()
                         ->info('Name of the result type of the transformation pipeline. ' .
-                            'This is used to validate compatibility with the data target. ' . 
+                            'This is used to validate compatibility with the data target. ' .
                             'Default value is `default`, other values are possible. '.
-                            'Type can be calculated automatically using the tool enrich_configuration_with_transformation_result_types.')
-                    ->end()                    
+                            'Type can be calculated automatically using the tool ' .
+                            'enrich_configuration_with_transformation_result_types.')
+                    ->end()
                     ->scalarNode('transformationResultType')
                         ->info(
                             'Expected result type after transformations - ' .
-                            'optional, omit if not needed'
+                            self::INFO_OPTIONAL_OMIT
                         )
                     ->end()
                     ->arrayNode('transformationPipeline')
@@ -494,7 +502,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                                 ->variableNode('settings')
                                     ->info(
                                         'Operator-specific settings - ' .
-                                        'if no specific settings needed, use empty object {}'
+                                        self::INFO_EMPTY_OBJECT
                                     )
                                 ->end()
                             ->end()
@@ -512,7 +520,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                             ->variableNode('settings')
                                 ->info(
                                     'Target-specific settings - ' .
-                                    'if no specific settings needed, use empty object {}'
+                                    self::INFO_EMPTY_OBJECT
                                 )
                             ->end()
                         ->end()
