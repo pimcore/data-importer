@@ -29,6 +29,7 @@
     "pimcore/admin-ui-classic-bundle": "^2.0",
     "pimcore/data-hub": "^2.3",
     "pimcore/pimcore": "^12.3",
+    "symfony/psr-http-message-bridge": "^6.3 || ^7.0",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
   },
   "require-dev": {
