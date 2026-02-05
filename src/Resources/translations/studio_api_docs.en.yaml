@@ -1,0 +1,6 @@
+bundle_tag_data_importer_description: Operations related to Data Importer Bundle
+pimcore_studio_api_data_importer_config_get: Get Data Importer Configuration
+bundle_data_importer_config_get: Get Data Importer Configuration
+bundle_data_importer_config_get_description: Get a Data Importer configuration by name with full details including loader, interpreter, resolver, mapping, and execution settings
+bundle_data_importer_config_get_summary: Get Data Importer Configuration
+bundle_data_importer_config_get_success_response: Data Importer configuration details with column headers

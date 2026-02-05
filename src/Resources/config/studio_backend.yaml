@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Pimcore\Bundle\DataImporterBundle\Controller\Studio\:
+        resource: '../../Controller/Studio'
+        public: true
+        tags: [ 'controller.service_arguments' ]
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationService
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\ConfigurationDetailHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConfigurationDetailHydrator
