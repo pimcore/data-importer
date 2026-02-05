@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ConfigurationDeta
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ConfigurationDetail;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ValidationFailedException;
 use Pimcore\Logger;
 use Pimcore\Security\User\UserLoader;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -87,7 +88,7 @@ final readonly class ConfigurationDetailHydrator implements ConfigurationDetailH
 
             // Validate if the column headers are valid JSON
             if (!$this->isValidJson($columnHeaders)) {
-                throw new Exception('Invalid column headers.');
+                throw new ValidationFailedException('Invalid column headers format in preview data.');
             }
 
             return $columnHeaders;
