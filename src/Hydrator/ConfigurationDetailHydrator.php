@@ -15,14 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Hydrator;
 
 use Exception;
 use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ConfigurationDetailEvent;
-use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ConfigurationDetail;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ValidationFailedException;
-use Pimcore\Logger;
-use Pimcore\Security\User\UserLoader;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -32,9 +27,7 @@ final readonly class ConfigurationDetailHydrator implements ConfigurationDetailH
 {
     public function __construct(
         private ConfigurationPreparationService $configurationPreparationService,
-        private PreviewService $previewService,
-        private InterpreterFactory $interpreterFactory,
-        private UserLoader $userLoader,
+        private PreviewHydratorInterface $previewHydrator,
         private EventDispatcherInterface $eventDispatcher
     ) {
     }
@@ -46,63 +39,19 @@ final readonly class ConfigurationDetailHydrator implements ConfigurationDetailH
     {
         $name = $configuration->getName();
         $config = $this->configurationPreparationService->prepareConfiguration($name);
-        $columnHeaders = $this->loadAvailableColumnHeaders($name, $config);
+        $columnHeaders = $this->previewHydrator->loadAvailableColumnHeaders($name, $config);
 
         $hydratedConfig = new ConfigurationDetail(
-            name: $name,
-            configuration: $config,
-            userPermissions: $config['userPermissions'] ?? ['update' => false, 'delete' => false],
-            modificationDate: $configuration->getModificationDate(),
-            columnHeaders: $columnHeaders
+            $name,
+            $config,
+            $config['userPermissions'] ?? ['update' => false, 'delete' => false],
+            $configuration->getModificationDate(),
+            $columnHeaders
         );
 
         $event = new ConfigurationDetailEvent($hydratedConfig);
         $this->eventDispatcher->dispatch($event, ConfigurationDetailEvent::EVENT_NAME);
 
         return $event->getConfig();
-    }
-
-    /**
-     * Load available column headers from preview data
-     */
-    private function loadAvailableColumnHeaders(string $configName, array $config): array
-    {
-        $user = $this->userLoader->getUser();
-        if (!$user) {
-            return [];
-        }
-
-        $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $user);
-        if (!$previewFilePath || !is_file($previewFilePath)) {
-            return [];
-        }
-
-        try {
-            $interpreter = $this->interpreterFactory->loadInterpreter(
-                $configName,
-                $config['interpreterConfig'],
-                $config['processingConfig']
-            );
-            $dataPreview = $interpreter->previewData($previewFilePath);
-            $columnHeaders = $dataPreview->getDataColumnHeaders();
-
-            // Validate if the column headers are valid JSON
-            if (!$this->isValidJson($columnHeaders)) {
-                throw new ValidationFailedException('Invalid column headers format in preview data.');
-            }
-
-            return $columnHeaders;
-        } catch (Exception $e) {
-            Logger::warning($e->getMessage());
-
-            return [];
-        }
-    }
-
-    private function isValidJson(array $array): bool
-    {
-        json_encode($array);
-
-        return json_last_error() === \JSON_ERROR_NONE;
     }
 }

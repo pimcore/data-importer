@@ -12,5 +12,20 @@ services:
     Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationService
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeService
+
     Pimcore\Bundle\DataImporterBundle\Hydrator\ConfigurationDetailHydratorInterface:
         class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConfigurationDetailHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\ImportHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\ImportHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydrator
