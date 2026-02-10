@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Hydrator;
 
+use Exception;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\Schema\ConfigurationDetail;
 
@@ -22,7 +23,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ConfigurationDetail;
 interface ConfigurationDetailHydratorInterface
 {
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function hydrate(Configuration $configuration): ConfigurationDetail;
 }

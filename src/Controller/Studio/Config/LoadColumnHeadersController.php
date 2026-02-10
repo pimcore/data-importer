@@ -20,7 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\CopyPreviewParameters;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Path\IdParameter;
@@ -43,14 +43,11 @@ final class LoadColumnHeadersController extends AbstractApiController
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly ConfigurationServiceInterface $configurationService
+        private readonly PreviewDataServiceInterface $previewDataService
     ) {
         parent::__construct($serializer);
     }
 
-    /**
-     * @throws \Exception
-     */
     #[Route(
         path: self::ROUTE,
         name: 'pimcore_studio_api_data_importer_config_load_column_headers',
@@ -84,7 +81,7 @@ final class LoadColumnHeadersController extends AbstractApiController
         #[MapRequestPayload] CopyPreviewParameters $parameters
     ): JsonResponse {
         return $this->jsonResponse(
-            $this->configurationService->loadColumnHeaders(
+            $this->previewDataService->loadColumnHeaders(
                 $name,
                 $parameters->getCurrentConfig()
             )

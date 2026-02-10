@@ -17,7 +17,7 @@ use OpenApi\Attributes\Put;
 use OpenApi\Attributes\Schema;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\ImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Path\IdParameter;
@@ -38,14 +38,11 @@ final class CancelExecutionController extends AbstractApiController
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly ConfigurationServiceInterface $configurationService
+        private readonly ImportServiceInterface $importService
     ) {
         parent::__construct($serializer);
     }
 
-    /**
-     * @throws \Exception
-     */
     #[Route(
         path: self::ROUTE,
         name: 'pimcore_studio_api_data_importer_config_cancel_execution',
@@ -74,7 +71,7 @@ final class CancelExecutionController extends AbstractApiController
     ])]
     public function cancelExecution(string $name): Response
     {
-        $this->configurationService->cancelExecution($name);
+        $this->importService->cancelExecution($name);
 
         return new Response();
     }

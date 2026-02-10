@@ -48,9 +48,6 @@ final class LoadClassAttributesController extends AbstractApiController
         parent::__construct($serializer);
     }
 
-    /**
-     * @throws \Exception
-     */
     #[Route(
         path: self::ROUTE,
         name: 'pimcore_studio_api_data_importer_data_type_load_class_attributes',
@@ -112,7 +109,10 @@ final class LoadClassAttributesController extends AbstractApiController
 
         $transformationResultType = $parameters->getTransformationResultType();
         if ($transformationResultType === null) {
-            $transformationResultType = [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC];
+            $transformationResultType = [
+                TransformationDataTypeService::DEFAULT_TYPE,
+                TransformationDataTypeService::NUMERIC,
+            ];
         }
 
         return $this->jsonResponse(

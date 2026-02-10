@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Hydrator;
 
-use Exception;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ConfigurationDetailEvent;
 use Pimcore\Bundle\DataImporterBundle\Schema\ConfigurationDetail;
@@ -32,9 +31,6 @@ final readonly class ConfigurationDetailHydrator implements ConfigurationDetailH
     ) {
     }
 
-    /**
-     * @throws Exception
-     */
     public function hydrate(Configuration $configuration): ConfigurationDetail
     {
         $name = $configuration->getName();

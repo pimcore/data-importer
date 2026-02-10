@@ -41,9 +41,6 @@ final readonly class DataTypeService implements DataTypeServiceInterface
     ) {
     }
 
-    /**
-     * @throws \Exception
-     */
     public function loadClassAttributes(
         string $classId,
         string|array $transformationResultType,
@@ -69,9 +66,6 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         return $response;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function loadClassificationStoreAttributes(string $classId): ClassAttributesResponse
     {
         $attributes = $this->transformationDataTypeService->getClassificationStoreAttributes($classId);
@@ -86,9 +80,6 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         return $response;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function loadClassificationStoreKeys(
         ClassificationStoreKeyParameters $parameters
     ): ClassificationStoreKeysResponse {
@@ -135,9 +126,6 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         return $response;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function loadClassificationStoreKeyName(string $keyId): ClassificationStoreKeyNameResponse
     {
         $keyParts = explode('-', $keyId);
@@ -153,9 +141,8 @@ final readonly class DataTypeService implements DataTypeServiceInterface
 
                 if ($group) {
                     $response = $this->dataTypeHydrator->hydrateClassificationStoreKeyName(
-                        null,
-                        $group->getName(),
-                        $keyGroupRelation->getName()
+                        groupName: $group->getName(),
+                        keyName: $keyGroupRelation->getName()
                     );
 
                     $this->eventDispatcher->dispatch(

@@ -20,7 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\CalculateTransformationResultTypeParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultTypeResponse;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\TransformationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Path\IdParameter;
@@ -43,14 +43,11 @@ final class CalculateTransformationResultTypeController extends AbstractApiContr
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly ConfigurationServiceInterface $configurationService
+        private readonly TransformationServiceInterface $transformationService
     ) {
         parent::__construct($serializer);
     }
 
-    /**
-     * @throws \Exception
-     */
     #[Route(
         path: self::ROUTE,
         name: 'pimcore_studio_api_data_importer_config_calculate_transformation_result_type',
@@ -82,7 +79,7 @@ final class CalculateTransformationResultTypeController extends AbstractApiContr
         #[MapRequestPayload] CalculateTransformationResultTypeParameters $parameters
     ): JsonResponse {
         return $this->jsonResponse(
-            $this->configurationService->calculateTransformationResultType(
+            $this->transformationService->calculateTransformationResultType(
                 $name,
                 $parameters->getCurrentConfig()
             )

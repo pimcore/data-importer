@@ -26,9 +26,6 @@ final class ConfigurationDetailEvent extends AbstractPreResponseEvent
         parent::__construct($config);
     }
 
-    /**
-     * Use this to get additional infos out of the response object
-     */
     public function getConfig(): ConfigurationDetail
     {
         return $this->config;

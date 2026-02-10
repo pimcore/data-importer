@@ -47,9 +47,6 @@ final class LoadKeysController extends AbstractApiController
         parent::__construct($serializer);
     }
 
-    /**
-     * @throws \Exception
-     */
     #[Route(
         path: self::ROUTE,
         name: 'pimcore_studio_api_data_importer_classificationstore_load_keys',

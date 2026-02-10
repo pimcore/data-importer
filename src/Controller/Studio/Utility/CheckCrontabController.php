@@ -18,7 +18,7 @@ use OpenApi\Attributes\JsonContent;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\CronValidationResponse;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\ImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Query\StringParameter;
@@ -40,7 +40,7 @@ final class CheckCrontabController extends AbstractApiController
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly ConfigurationServiceInterface $configurationService
+        private readonly ImportServiceInterface $importService
     ) {
         parent::__construct($serializer);
     }
@@ -76,7 +76,7 @@ final class CheckCrontabController extends AbstractApiController
         $cronExpression = $request->query->getString('cronExpression', '');
 
         return $this->jsonResponse(
-            $this->configurationService->validateCronExpression($cronExpression)
+            $this->importService->validateCronExpression($cronExpression)
         );
     }
 }

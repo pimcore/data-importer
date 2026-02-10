@@ -12,6 +12,15 @@ services:
     Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationService
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\TransformationServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\TransformationService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ImportServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ImportService
+
     Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeService
 

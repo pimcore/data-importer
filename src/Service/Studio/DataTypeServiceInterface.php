@@ -24,9 +24,6 @@ use Pimcore\Bundle\DataImporterBundle\Schema\UnitDataResponse;
  */
 interface DataTypeServiceInterface
 {
-    /**
-     * @throws \Exception
-     */
     public function loadClassAttributes(
         string $classId,
         string|array $transformationResultType,
@@ -35,19 +32,12 @@ interface DataTypeServiceInterface
         bool $loadAdvancedRelations
     ): ClassAttributesResponse;
 
-    /**
-     * @throws \Exception
-     */
     public function loadClassificationStoreAttributes(string $classId): ClassAttributesResponse;
 
-    /**
-     * @throws \Exception
-     */
-    public function loadClassificationStoreKeys(ClassificationStoreKeyParameters $parameters): ClassificationStoreKeysResponse;
+    public function loadClassificationStoreKeys(
+        ClassificationStoreKeyParameters $parameters
+    ): ClassificationStoreKeysResponse;
 
-    /**
-     * @throws \Exception
-     */
     public function loadClassificationStoreKeyName(string $keyId): ClassificationStoreKeyNameResponse;
 
     public function loadUnitData(): UnitDataResponse;
