@@ -136,7 +136,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
         $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
 
-        if (!is_file($previewFilePath)) {
+        if ($previewFilePath === null || !is_file($previewFilePath)) {
             throw new NotFoundHttpException(
                 'No preview data available. Please upload or copy preview data first.'
             );

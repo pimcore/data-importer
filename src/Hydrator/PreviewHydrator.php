@@ -56,7 +56,7 @@ final readonly class PreviewHydrator implements PreviewHydratorInterface
         }
 
         $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
-        if (!is_file($previewFilePath)) {
+        if ($previewFilePath === null || !is_file($previewFilePath)) {
             return [];
         }
 

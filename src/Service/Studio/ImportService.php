@@ -29,10 +29,8 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ImportProgressResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ImportStartResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\ConfigurationPermissionTrait;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**

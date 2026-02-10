@@ -69,7 +69,7 @@ final readonly class TransformationService implements TransformationServiceInter
         $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
         $importDataRow = [];
 
-        if (is_file($previewFilePath)) {
+        if ($previewFilePath !== null && is_file($previewFilePath)) {
             $interpreter = $this->interpreterFactory->loadInterpreter(
                 $name,
                 $preparedConfig['interpreterConfig'],
