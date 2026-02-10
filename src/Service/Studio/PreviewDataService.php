@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
-use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
@@ -23,13 +22,13 @@ use Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\ConfigurationPermissionTrait;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
-use Pimcore\Model\User;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -39,6 +38,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 final readonly class PreviewDataService implements PreviewDataServiceInterface
 {
+    use ConfigurationPermissionTrait;
+    use CurrentUserResolverTrait;
+
     private const int MAX_FILE_SIZE = 10485760; // 10MB
 
     public function __construct(
@@ -213,46 +215,5 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         );
 
         return $response;
-    }
-
-    /**
-     * Load and validate a configuration by name, checking the given permission.
-     *
-     * @throws NotFoundHttpException if the configuration does not exist
-     * @throws ForbiddenException if the current user lacks the required permission
-     */
-    private function loadConfigurationWithPermission(string $name, string $permission): Configuration
-    {
-        $config = Configuration::getByName($name);
-
-        if (!$config) {
-            throw new NotFoundHttpException(
-                sprintf('Configuration with name "%s" not found', $name)
-            );
-        }
-
-        if (!$config->isAllowed($permission)) {
-            throw new ForbiddenException(
-                sprintf('Access denied to configuration "%s"', $name)
-            );
-        }
-
-        return $config;
-    }
-
-    /**
-     * Resolve the current user, ensuring it is a Pimcore User instance.
-     *
-     * @throws EnvironmentException if the current user cannot be resolved
-     */
-    private function resolveCurrentUser(): User
-    {
-        $user = $this->securityService->getCurrentUser();
-
-        if (!$user instanceof User) {
-            throw new EnvironmentException('Could not resolve current user');
-        }
-
-        return $user;
     }
 }

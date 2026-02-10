@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Schema\ConfigurationDetail;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ConflictException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
@@ -33,6 +34,7 @@ interface ConfigurationServiceInterface
      * @throws NotFoundHttpException
      * @throws ForbiddenException
      * @throws ConflictException
+     * @throws Exception
      */
     public function saveConfiguration(string $name, array $configuration, int $modificationDate): ConfigurationDetail;
 }

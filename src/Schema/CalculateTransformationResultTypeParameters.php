@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Schema;
 
+use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 
@@ -33,7 +34,7 @@ final readonly class CalculateTransformationResultTypeParameters
             properties: [
                 new Property(property: 'label', type: 'string'),
                 new Property(property: 'dataSourceIndex', description: 'Data source column indices'),
-                new Property(property: 'transformationPipeline', type: 'array'),
+                new Property(property: 'transformationPipeline', type: 'array', items: new Items(type: 'object')),
                 new Property(property: 'dataTarget', type: 'object'),
             ],
             type: 'object'

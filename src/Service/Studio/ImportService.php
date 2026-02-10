@@ -16,7 +16,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 use Cron\CronExpression;
 use Exception;
 use League\Flysystem\FilesystemOperator;
-use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\CronValidationEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ImportFileStatusEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ImportProgressEvent;
@@ -28,6 +27,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\CronValidationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ImportFileStatusResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ImportProgressResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ImportStartResponse;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\ConfigurationPermissionTrait;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -40,6 +40,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final readonly class ImportService implements ImportServiceInterface
 {
+    use ConfigurationPermissionTrait;
+
     public function __construct(
         private ImportHydratorInterface $importHydrator,
         private ImportPreparationService $importPreparationService,
@@ -192,30 +194,5 @@ final readonly class ImportService implements ImportServiceInterface
         );
 
         return $response;
-    }
-
-    /**
-     * Load and validate a configuration by name, checking the given permission.
-     *
-     * @throws NotFoundHttpException if the configuration does not exist
-     * @throws ForbiddenException if the current user lacks the required permission
-     */
-    private function loadConfigurationWithPermission(string $name, string $permission): Configuration
-    {
-        $config = Configuration::getByName($name);
-
-        if (!$config) {
-            throw new NotFoundHttpException(
-                sprintf('Configuration with name "%s" not found', $name)
-            );
-        }
-
-        if (!$config->isAllowed($permission)) {
-            throw new ForbiddenException(
-                sprintf('Access denied to configuration "%s"', $name)
-            );
-        }
-
-        return $config;
     }
 }

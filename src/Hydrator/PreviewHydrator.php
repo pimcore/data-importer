@@ -18,16 +18,18 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Logger;
-use Pimcore\Model\User;
 
 /**
  * @internal
  */
 final readonly class PreviewHydrator implements PreviewHydratorInterface
 {
+    use CurrentUserResolverTrait;
+
     public function __construct(
         private SecurityServiceInterface $securityService,
         private PreviewService $previewService,
@@ -84,21 +86,5 @@ final readonly class PreviewHydrator implements PreviewHydratorInterface
         json_encode($array);
 
         return json_last_error() === \JSON_ERROR_NONE;
-    }
-
-    /**
-     * Resolve the current user, ensuring it is a Pimcore User instance.
-     *
-     * @throws EnvironmentException if the current user cannot be resolved
-     */
-    private function resolveCurrentUser(): User
-    {
-        $user = $this->securityService->getCurrentUser();
-
-        if (!$user instanceof User) {
-            throw new EnvironmentException('Could not resolve current user');
-        }
-
-        return $user;
     }
 }

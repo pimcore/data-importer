@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyNameResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyParameters;
@@ -24,6 +25,9 @@ use Pimcore\Bundle\DataImporterBundle\Schema\UnitDataResponse;
  */
 interface DataTypeServiceInterface
 {
+    /**
+     * @throws Exception
+     */
     public function loadClassAttributes(
         string $classId,
         string|array $transformationResultType,
@@ -32,8 +36,14 @@ interface DataTypeServiceInterface
         bool $loadAdvancedRelations
     ): ClassAttributesResponse;
 
+    /**
+     * @throws Exception
+     */
     public function loadClassificationStoreAttributes(string $classId): ClassAttributesResponse;
 
+    /**
+     * @throws Exception
+     */
     public function loadClassificationStoreKeys(
         ClassificationStoreKeyParameters $parameters
     ): ClassificationStoreKeysResponse;

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
@@ -32,6 +33,7 @@ interface PreviewDataServiceInterface
      * @throws ForbiddenException
      * @throws EnvironmentException
      * @throws MaxFileSizeExceededException
+     * @throws Exception
      */
     public function uploadPreviewData(string $name, UploadedFile $file): void;
 
@@ -41,6 +43,7 @@ interface PreviewDataServiceInterface
      * @throws EnvironmentException
      * @throws MaxFileSizeExceededException
      * @throws InvalidConfigurationException
+     * @throws Exception
      */
     public function copyPreviewData(string $name, ?array $currentConfig): void;
 
@@ -49,6 +52,7 @@ interface PreviewDataServiceInterface
      * @throws ForbiddenException
      * @throws EnvironmentException
      * @throws InvalidConfigurationException
+     * @throws Exception
      */
     public function loadPreviewData(
         string $name,

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\QueueNotEmptyException;
 use Pimcore\Bundle\DataImporterBundle\Schema\CronValidationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ImportFileStatusResponse;
@@ -37,12 +38,14 @@ interface ImportServiceInterface
     /**
      * @throws NotFoundHttpException
      * @throws ForbiddenException
+     * @throws Exception
      */
     public function checkImportProgress(string $name): ImportProgressResponse;
 
     /**
      * @throws NotFoundHttpException
      * @throws ForbiddenException
+     * @throws Exception
      */
     public function cancelExecution(string $name): void;
 
@@ -51,6 +54,7 @@ interface ImportServiceInterface
     /**
      * @throws NotFoundHttpException
      * @throws ForbiddenException
+     * @throws Exception
      */
     public function uploadImportFile(string $name, UploadedFile $file): void;
 

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultPreviewsResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultTypeResponse;
@@ -30,6 +31,7 @@ interface TransformationServiceInterface
      * @throws ForbiddenException
      * @throws EnvironmentException
      * @throws InvalidConfigurationException
+     * @throws Exception
      */
     public function loadTransformationResultPreviews(
         string $name,
