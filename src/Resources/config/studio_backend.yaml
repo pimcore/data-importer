@@ -38,3 +38,11 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydratorInterface:
         class: Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ConnectionServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConnectionService
+        arguments:
+            $doctrineConnections: '%doctrine.connections%'
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydrator
