@@ -22,7 +22,7 @@
     "mtdowling/jmespath.php": "^2.8",
     "nesbot/carbon": "^2.72 || ^3.8.4",
     "phpoffice/phpspreadsheet": "^4.3 || ^5.1",
-    "pimcore/data-hub": "^2.3",
+    "pimcore/data-hub": "dev-remove-admin-classic",
     "pimcore/pimcore": "^12.3",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
   },
