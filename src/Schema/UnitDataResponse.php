@@ -31,6 +31,7 @@ use Pimcore\Bundle\StudioBackendBundle\Util\Trait\AdditionalAttributesTrait;
 final class UnitDataResponse implements AdditionalAttributesInterface
 {
     use AdditionalAttributesTrait;
+
     /**
      * @param array<int, array{unitId: string, abbreviation: string}> $unitList
      */
