@@ -1,0 +1,6 @@
+pimcore_data_importer_studio:
+    resource: "@PimcoreDataImporterBundle/Controller/Studio"
+    type: attribute
+    prefix: '%pimcore_studio_backend.url_prefix%/bundle/data-importer'
+    options:
+        expose: true

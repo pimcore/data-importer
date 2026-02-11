@@ -1,0 +1,48 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Pimcore\Bundle\DataImporterBundle\Controller\Studio\:
+        resource: '../../Controller/Studio'
+        public: true
+        tags: [ 'controller.service_arguments' ]
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\TransformationServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\TransformationService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ImportServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ImportService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeService
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\ConfigurationDetailHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConfigurationDetailHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\ImportHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\ImportHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ConnectionServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConnectionService
+        arguments:
+            $doctrineConnections: '%doctrine.connections%'
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydrator

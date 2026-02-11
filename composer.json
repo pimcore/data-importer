@@ -23,8 +23,9 @@
     "nesbot/carbon": "^2.72 || ^3.8.4",
     "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
     "pimcore/admin-ui-classic-bundle": "^2.0",
-    "pimcore/data-hub": "^2.3",
+    "pimcore/data-hub": "^2.4",
     "pimcore/pimcore": "^12.3",
+    "pimcore/studio-backend-bundle": "^1.0",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
   },
   "require-dev": {
