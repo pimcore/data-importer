@@ -31,6 +31,7 @@ use Pimcore\Log\ApplicationLogger;
 use Pimcore\Log\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
+use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -99,6 +100,11 @@ class ImportProcessingService
     protected $loggingConfigCache = [];
 
     /**
+     * @var array<string, bool>
+     */
+    protected $versioningConfigCache = [];
+
+    /**
      * ImportProcessingService constructor.
      *
      * @param QueueService $queueService
@@ -139,6 +145,10 @@ class ImportProcessingService
 
             if (empty($this->loggingConfigCache[$configName])) {
                 $this->loggingConfigCache[$configName] = $config['processingConfig']['logging'] ?? [];
+            }
+
+            if (empty($this->versioningConfigCache[$configName])) {
+                $this->versioningConfigCache[$configName] = $config['processingConfig']['disableVersioning'] ?? false;
             }
 
             //init resolver and mapping
@@ -249,16 +259,29 @@ class ImportProcessingService
 
                 $this->processElementTransformations($element, $importDataRow, $mapping, $currentMapping);
 
-                $event = new PreSaveEvent($configName, $importDataRow, $element);
-                $this->eventDispatcher->dispatch($event);
+                $shouldDisableVersioning = $this->versioningConfigCache[$configName] ?? false;
+                $versioningDisabledBackup = Version::$disabled;
 
-                $this->checkKey($element);
-                $element
-                    ->setUserModification($userOwner)
-                    ->save();
+                if ($shouldDisableVersioning) {
+                    Version::disable();
+                }
 
-                $event = new PostSaveEvent($configName, $importDataRow, $element);
-                $this->eventDispatcher->dispatch($event);
+                try {
+                    $event = new PreSaveEvent($configName, $importDataRow, $element);
+                    $this->eventDispatcher->dispatch($event);
+
+                    $this->checkKey($element);
+                    $element
+                        ->setUserModification($userOwner)
+                        ->save();
+
+                    $event = new PostSaveEvent($configName, $importDataRow, $element);
+                    $this->eventDispatcher->dispatch($event);
+                } finally {
+                    if ($shouldDisableVersioning && !$versioningDisabledBackup) {
+                        Version::enable();
+                    }
+                }
 
                 $message = "Element {$element->getId()} imported successfully.";
                 $this->logInfo($configName, $message, [

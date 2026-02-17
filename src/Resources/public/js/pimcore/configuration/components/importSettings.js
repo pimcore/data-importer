@@ -259,6 +259,13 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.importSettings
                     value: this.processingConfigData.hasOwnProperty('doArchiveImportFile') ? this.processingConfigData.doArchiveImportFile : false
                 },
                 {
+                    xtype: 'checkbox',
+                    fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_disable_versioning'),
+                    name: 'disableVersioning',
+                    inputValue: true,
+                    value: this.processingConfigData.hasOwnProperty('disableVersioning') ? this.processingConfigData.disableVersioning : false
+                },
+                {
                     xtype: 'combo',
                     fieldLabel: t('plugin_pimcore_datahub_data_importer_configpanel_id_data_index'),
                     name: 'idDataIndex',
