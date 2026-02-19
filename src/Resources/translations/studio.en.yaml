@@ -1,0 +1,94 @@
+data-importer.adapter.dataImporterDataObject: 'Data Importer - Data Objects'
+data-importer.tabs.general: 'General'
+data-importer.tabs.permissions: 'Permissions'
+data-importer.tabs.data-setup: 'Data Setup'
+
+# Data Setup Steps
+data-importer.data-setup.steps.data-source.title: 'Data Source'
+data-importer.data-setup.steps.data-source.description: 'Configure data source and file format'
+data-importer.data-setup.steps.preview-import.title: 'Preview Import'
+data-importer.data-setup.steps.preview-import.description: 'Preview the data to be imported'
+data-importer.data-setup.steps.resolver.title: 'Resolver'
+data-importer.data-setup.steps.resolver.description: 'Configure data resolution rules'
+data-importer.data-setup.steps.mapping.title: 'Mapping'
+data-importer.data-setup.steps.mapping.description: 'Map source fields to target fields'
+data-importer.data-setup.steps.processing-settings.title: 'Processing Settings'
+data-importer.data-setup.steps.processing-settings.description: 'Configure import processing settings'
+
+# Data Source
+data-importer.data-source.title: 'Data Source'
+data-importer.data-source.type: 'Type'
+
+# Loaders
+data-importer.loader.asset: 'Asset'
+data-importer.loader.upload: 'Upload'
+data-importer.loader.http: 'HTTP'
+data-importer.loader.sftp: 'SFTP'
+data-importer.loader.push: 'Push'
+data-importer.loader.sql: 'SQL'
+
+# Asset Loader
+data-importer.loader.asset.asset-path: 'Asset Path'
+
+# Upload Loader
+data-importer.loader.upload.status: 'Upload Status'
+data-importer.loader.upload.file-uploaded: 'File uploaded successfully'
+data-importer.loader.upload.no-file: 'No file uploaded yet'
+
+# HTTP Loader
+data-importer.loader.http.schema: 'Schema'
+data-importer.loader.http.url: 'URL'
+
+# SFTP Loader
+data-importer.loader.sftp.host: 'Host'
+data-importer.loader.sftp.port: 'Port'
+data-importer.loader.sftp.username: 'Username'
+data-importer.loader.sftp.password: 'Password'
+data-importer.loader.sftp.remote-path: 'Remote Path'
+
+# Push Loader
+data-importer.loader.push.api-key: 'API Key'
+data-importer.loader.push.api-key.generate: 'Generate API Key'
+data-importer.loader.push.ignore-not-empty-queue: 'Ignore Not Empty Queue'
+data-importer.loader.push.endpoint: 'Endpoint'
+
+# SQL Loader
+data-importer.loader.sql.connection: 'Database Connection'
+data-importer.loader.sql.select: 'SELECT'
+data-importer.loader.sql.from: 'FROM'
+data-importer.loader.sql.where: 'WHERE'
+data-importer.loader.sql.group-by: 'GROUP BY'
+
+# File Format
+data-importer.file-format.title: 'File Format'
+data-importer.file-format.type: 'Type'
+
+# Interpreters
+data-importer.interpreter.csv: 'CSV'
+data-importer.interpreter.json: 'JSON'
+data-importer.interpreter.xml: 'XML'
+data-importer.interpreter.xlsx: 'XLSX'
+data-importer.interpreter.sql: 'SQL'
+
+# CSV Interpreter
+data-importer.interpreter.csv.delimiter: 'Delimiter'
+data-importer.interpreter.csv.enclosure: 'Enclosure'
+data-importer.interpreter.csv.escape: 'Escape Character'
+data-importer.interpreter.csv.skip-first-row: 'Skip First Row'
+data-importer.interpreter.csv.save-header-name: 'Save Header Name'
+
+# JSON Interpreter
+data-importer.interpreter.json.jmes-path: 'JMESPath'
+
+# XML Interpreter
+data-importer.interpreter.xml.xpath: 'XPath'
+data-importer.interpreter.xml.schema: 'Schema'
+
+# XLSX Interpreter
+data-importer.interpreter.xlsx.sheet-name: 'Sheet Name'
+data-importer.interpreter.xlsx.skip-first-row: 'Skip First Row'
+data-importer.interpreter.xlsx.skip-rows: 'Skip Rows'
+
+# SQL Interpreter
+data-importer.interpreter.sql.info: 'SQL interpreter uses the query configuration from the SQL loader.'
+

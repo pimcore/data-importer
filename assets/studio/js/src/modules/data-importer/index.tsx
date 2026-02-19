@@ -8,9 +8,13 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { type AbstractModule } from '@pimcore/studio-ui-bundle'
+import { container, type AbstractModule } from '@pimcore/studio-ui-bundle'
+import { type DynamicTypeDataHubAdapterRegistry, bundleServiceIds as dataHubServiceIds } from '@pimcore/data-hub'
+import { bundleServiceIds } from '../../config/service-ids'
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
+    const adapterRegistry = container.get<DynamicTypeDataHubAdapterRegistry>(dataHubServiceIds['DataHub/DynamicTypes/Adapter/Registry'])
+    adapterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Adapter/DataImporterDataObject']))
   }
 }
