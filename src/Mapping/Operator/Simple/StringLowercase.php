@@ -41,15 +41,15 @@ class StringLowercase extends AbstractOperator
             $data = strtolower($data);
         }
 
-        if ($returnScalar) {
-            if (!empty($inputData)) {
-                return reset($inputData);
-            }
-
-            return null;
-        } else {
+        if ($returnScalar === false) {
             return $inputData;
+        } 
+        
+        if ($inputData !== []) {
+            return reset($inputData);
         }
+
+        return null;
     }
 
     /**
