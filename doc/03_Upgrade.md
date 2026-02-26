@@ -1,5 +1,9 @@
 # Update Notes
 
+## Upgrade to 2026.1.0
+- Added support to `PHP` `8.5`.
+- Removed support to `PHP` `8.3` and Symfony `v6`.
+
 ## Update to Version 1.11
 ### General
 - Added support of `doctrine/dbal` `v4`, dropped support of `doctrine/dbal` `v2`
