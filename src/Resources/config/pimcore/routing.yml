@@ -17,3 +17,8 @@ _data_hub_data_importer_data_object_push:
 _data_hub_data_importer_mcp:
     resource: "@PimcoreDataImporterBundle/Mcp/Controller"
     type:     attribute
+
+pimcore_data_importer_studio:
+    resource: .
+    type: pimcore_data_importer_studio
+
