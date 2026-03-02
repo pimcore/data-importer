@@ -20,6 +20,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -36,7 +37,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * @internal
  */
-final readonly class EnrichConfigurationTool
+final readonly class EnrichConfigurationTool implements McpToolInterface
 {
     private const MSG_ERROR_PARSING_CONFIG = 'Error parsing configuration: ';
 
@@ -52,7 +53,7 @@ final readonly class EnrichConfigurationTool
     }
 
     #[McpTool(
-        name: 'enrich_configuration_with_transformation_result_types',
+        name: 'pimcore_dataimporter_enrich_configuration',
         description: 'Enrich a Data Importer configuration by calculating '
             . 'and adding transformationResultType to all mapping items. '
             . 'This field is derived from transformation pipelines and '
@@ -79,11 +80,11 @@ final readonly class EnrichConfigurationTool
             type: 'string',
             description: 'Format: "json" or "yaml". ' . self::INFO_DEFAULT_JSON
         )]
-        ?string $format = null
+        string $format = ''
     ): CallToolResult {
         try {
             // Auto-detect format if not specified
-            $detectedFormat = $format ?? $this->detectFormat($configuration);
+            $detectedFormat = $format !== '' ? $format : $this->detectFormat($configuration);
             $configArray = $this->parseConfiguration($configuration, $detectedFormat);
             $isSingleItem = $this->isSingleMappingItem($configArray);
 
@@ -132,9 +133,9 @@ final readonly class EnrichConfigurationTool
 
     private function parseConfiguration(
         string $configuration,
-        ?string $format
+        string $format
     ): array {
-        $format = $format ?? $this->detectFormat($configuration);
+        $format = $format !== '' ? $format : $this->detectFormat($configuration);
 
         try {
             if ($format === 'yaml') {

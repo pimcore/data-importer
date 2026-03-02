@@ -18,6 +18,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -28,7 +29,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class GetConfigurationContextTool
+final readonly class GetConfigurationContextTool implements McpToolInterface
 {
     public function __construct(
         private ConfigurationSchemaService $configurationSchemaService,
@@ -37,7 +38,7 @@ final readonly class GetConfigurationContextTool
     }
 
     #[McpTool(
-        name: 'get_configuration_context',
+        name: 'pimcore_dataimporter_get_configuration_context',
         description: 'Get comprehensive configuration context in a single ' .
             'call for creating or modifying Data Importer configurations. ' .
             'ALWAYS RETURNS: (1) schema - complete JSON schema defining ' .
@@ -73,7 +74,7 @@ final readonly class GetConfigurationContextTool
             'boolean, outputs: numeric) -> target field (accepts: numeric).'
     )]
     public function execute(
-        ?string $classId = null,
+        string $classId = '',
         bool    $includeExamples = false,
         bool    $includeClassSchema = true
     ): CallToolResult {
@@ -85,7 +86,7 @@ final readonly class GetConfigurationContextTool
                 'available_classes' => $this->getClasses(),
             ];
 
-            if ($classId !== null && $includeClassSchema) {
+            if ($classId !== '' && $includeClassSchema) {
                 $context['field_type_matrix'] = $this->getFieldTypeMatrix(
                     $classId
                 );

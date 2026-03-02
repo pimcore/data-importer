@@ -56,16 +56,13 @@ class Configuration implements ConfigurationInterface
             ->end()
             ->arrayNode('mcp_server')
                 ->addDefaultsIfNotSet()
-                ->info('[EXPERIMENTAL] Configure MCP (Model Context Protocol) server for AI integration')
+                ->info('[EXPERIMENTAL] Configure MCP (Model Context Protocol) server for AI integration. ' .
+                       'Authentication is handled by the pimcore_mcp firewall (studio-backend-bundle).')
                 ->children()
                     ->booleanNode('enabled')
                         ->defaultFalse()
                         ->info('Enable the MCP server endpoint. When enabled, provides configuration and ' .
                                'validation tools for AI agents.')
-                    ->end()
-                    ->arrayNode('bearer_tokens')
-                        ->scalarPrototype()->end()
-                        ->info('List of allowed bearer tokens for authentication. Provide secure random tokens here.')
                     ->end()
                 ->end()
             ->end()

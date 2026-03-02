@@ -6,14 +6,7 @@ services:
         autoconfigure: true
         public: false
 
-    # MCP Security
-    Pimcore\Bundle\DataImporterBundle\Mcp\Security\McpAuthenticationService:
-        arguments:
-            $allowedBearerTokens: '%pimcore_data_importer.mcp_server.bearer_tokens%'
-
-    Pimcore\Bundle\DataImporterBundle\Mcp\ArgumentResolver\McpAuthContextResolver:
-        tags:
-            - { name: controller.argument_value_resolver, priority: 150 }
+    # Authentication is handled by the pimcore_mcp firewall (studio-backend-bundle)
 
     # PSR-16 Simple Cache for MCP sessions
     pimcore.datahub.data-importer.mcp.cache.simple:
@@ -31,6 +24,8 @@ services:
               Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool'
               Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool'
               Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\CreateDataImporterConfigTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\CreateDataImporterConfigTool'
+              Pimcore\Bundle\DataImporterBundle\Mcp\Tool\SaveDataImporterConfigTool: '@Pimcore\Bundle\DataImporterBundle\Mcp\Tool\SaveDataImporterConfigTool'
         tags: ['container.service_locator']
 
 
@@ -52,10 +47,39 @@ services:
             $server: '@pimcore.datahub.data-importer.mcp.server'
         tags: ['controller.service_arguments']
 
-    # MCP Tools - Auto-discovered via attributes, but registered for DI
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool: ~
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool: ~
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool: ~
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool: ~
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool: ~
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool: ~
+    # MCP Tools - Auto-discovered via attributes, but registered for DI.
+    # Tagged with pimcore.mcp_tool so the Agent bundle's McpToolRegistryPass
+    # can collect them into its registry (cross-bundle integration).
+    # If PimcoreAgentBundle is not installed, the tags are simply unused.
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ValidateConfigurationTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer',
+                description: 'Data Importer configuration and validation tools' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\EnrichConfigurationTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\CreateDataImporterConfigTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\SaveDataImporterConfigTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer' }

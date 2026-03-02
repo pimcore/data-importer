@@ -20,6 +20,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -28,7 +29,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * @internal
  */
-final readonly class ValidateConfigurationTool
+final readonly class ValidateConfigurationTool implements McpToolInterface
 {
     public function __construct(
         private ConfigurationValidationService $validationService,
@@ -37,7 +38,7 @@ final readonly class ValidateConfigurationTool
     }
 
     #[McpTool(
-        name: 'validate_configuration',
+        name: 'pimcore_dataimporter_validate_configuration',
         description: 'Validate a Data Importer configuration in JSON or '
             . 'YAML format. Returns success status and any validation '
             . 'errors. Always validate configurations before saving or '
@@ -62,7 +63,7 @@ final readonly class ValidateConfigurationTool
             description: 'Format of the configuration: "json" or "yaml". '
                 . 'Auto-detects if not specified.'
         )]
-        ?string $format = null
+        string $format = ''
     ): CallToolResult {
         try {
             // Parse configuration based on format
@@ -146,10 +147,10 @@ final readonly class ValidateConfigurationTool
      *
      * @throws InvalidInputException if parsing fails
      */
-    private function parseConfiguration(string $config, ?string $format): array
+    private function parseConfiguration(string $config, string $format): array
     {
         // Auto-detect format if not specified
-        if ($format === null) {
+        if ($format === '') {
             $trimmed = trim($config);
             if ($trimmed[0] === '{' || $trimmed[0] === '[') {
                 $format = 'json';

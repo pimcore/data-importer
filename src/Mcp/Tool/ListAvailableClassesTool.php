@@ -18,6 +18,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -26,7 +27,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class ListAvailableClassesTool
+final readonly class ListAvailableClassesTool implements McpToolInterface
 {
     public function __construct(
         private ConfigurationSchemaService $configurationSchemaService,
@@ -35,7 +36,7 @@ final readonly class ListAvailableClassesTool
     }
 
     #[McpTool(
-        name: 'list_available_classes',
+        name: 'pimcore_dataimporter_list_available_classes',
         description: 'List all available Pimcore Data Object classes '
             . 'that can be used as import targets. Returns class names '
             . 'and basic information.'

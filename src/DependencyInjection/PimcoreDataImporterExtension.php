@@ -61,12 +61,8 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
             'pimcore_data_importer.mcp_server.enabled',
             $config['mcp_server']['enabled']
         );
-        $container->setParameter(
-            'pimcore_data_importer.mcp_server.bearer_tokens',
-            $config['mcp_server']['bearer_tokens'] ?? []
-        );
 
-        // Load MCP services if enabled
+        // Load MCP services if enabled (auth handled by pimcore_mcp firewall)
         if ($config['mcp_server']['enabled']) {
             $loader->load('services/mcp.yml');
         }

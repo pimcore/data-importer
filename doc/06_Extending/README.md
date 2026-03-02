@@ -1,6 +1,6 @@
 # Extending
 
-Customize import behavior through custom strategies and leverage developer tools for validation and AI integration.
+Customize import behavior through custom strategies and developer tools.
 
 ## Extension Points
 
@@ -10,4 +10,3 @@ Customize import behavior through custom strategies and leverage developer tools
 ## Developer Tools
 
 - [Configuration Validation](./02_Configuration_Validation.md) - Programmatic validation and schema introspection
-- [MCP Server (Experimental)](./04_MCP_Server.md) - AI agent integration

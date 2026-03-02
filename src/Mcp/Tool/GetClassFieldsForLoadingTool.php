@@ -19,6 +19,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -30,7 +31,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class GetClassFieldsForLoadingTool
+final readonly class GetClassFieldsForLoadingTool implements McpToolInterface
 {
     public function __construct(
         private ConfigurationSchemaService $configurationSchemaService,
@@ -39,7 +40,7 @@ final readonly class GetClassFieldsForLoadingTool
     }
 
     #[McpTool(
-        name: 'get_class_fields_for_loading',
+        name: 'pimcore_dataimporter_get_class_fields_for_loading',
         description: 'Get filterable fields for a specific Pimcore Data ' .
             'Object class that can be used in data loading operations. ' .
             'Returns a flat list of field names that accept default, ' .

@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -28,7 +29,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class GetConfigurationExamplesTool
+final readonly class GetConfigurationExamplesTool implements McpToolInterface
 {
     private const EXAMPLES_PATH = __DIR__ . '/../../../doc/examples';
 
@@ -38,7 +39,7 @@ final readonly class GetConfigurationExamplesTool
     }
 
     #[McpTool(
-        name: 'get_configuration_examples',
+        name: 'pimcore_dataimporter_get_configuration_examples',
         description: 'Get real-world configuration examples demonstrating ' .
             'common import scenarios. Returns example configurations with ' .
             'explanations of patterns for CSV, XML, JSON imports, ' .

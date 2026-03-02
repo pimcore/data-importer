@@ -16,8 +16,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Mcp\Controller;
 
 use Mcp\Server;
 use Mcp\Server\Transport\StreamableHttpTransport;
-use Pimcore\Bundle\DataImporterBundle\Exception\AccessDeniedException;
-use Pimcore\Bundle\DataImporterBundle\Mcp\Security\McpAuthContext;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Symfony\Bridge\PsrHttpMessage\HttpFoundationFactoryInterface;
@@ -29,14 +27,8 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * MCP server endpoint controller for Data Importer.
  *
- * AUTHENTICATION:
- * This endpoint is automatically authenticated via the McpAuthContext
- * parameter. When this parameter is type-hinted, Symfony's argument
- * resolver system invokes the McpAuthContextResolver which:
- *   1. Extracts Bearer token from Authorization header
- *   2. Validates it against configured bearer tokens
- *   3. Injects McpAuthContext into request
- *   4. Throws AccessDeniedException if auth fails (returns 401)
+ * Authentication is handled by the `pimcore_mcp` firewall
+ * (session bridge + PAT authenticators).
  *
  * @internal
  */
@@ -51,23 +43,13 @@ final readonly class McpController
     ) {
     }
 
-    /**
-     * AUTHENTICATION:
-     * This endpoint is automatically authenticated via the McpAuthContext parameter.
-     * When this parameter is type-hinted, Symfony's argument resolver system invokes
-     * the McpAuthContextResolver
-     *
-     * @throws AccessDeniedException When Bearer token is missing or invalid
-     */
     #[Route(
-        path: '/pimcore-datahub-webservices/dataimporter/mcp',
+        path: '/pimcore-mcp/data-importer',
         name: 'pimcore_dataimporter_mcp',
         methods: ['POST', 'GET']
     )]
-    public function handle(
-        Request $request,
-        McpAuthContext $authContext
-    ): Response {
+    public function handle(Request $request): Response
+    {
         $transport = new StreamableHttpTransport(
             $this->httpMessageFactory->createRequest($request),
             $this->responseFactory,
