@@ -54,16 +54,10 @@ final readonly class EnrichConfigurationTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_enrich_configuration',
-        description: 'Enrich a Data Importer configuration by calculating '
-            . 'and adding transformationResultType to all mapping items. '
-            . 'This field is derived from transformation pipelines and '
-            . 'helps understand data flow. Use this after building a '
-            . 'configuration to ensure all mapping items have correct '
-            . 'result types before validation. Accepts full configuration '
-            . 'or single mapping item. Returns enriched configuration in '
-            . 'same format as input. IMPORTANT: When using YAML format, '
-            . 'ensure settings fields are nested YAML structures, NOT '
-            . 'JSON strings.'
+        description: 'Calculate and add transformationResultType to mapping items. This type is '
+            . 'derived from the transformation pipeline and cannot be determined without this tool. '
+            . 'Accepts full config or single mapping item (JSON/YAML). Returns enriched data in '
+            . 'same format. Call after building config, before validation.'
     )]
     public function execute(
         #[Schema(

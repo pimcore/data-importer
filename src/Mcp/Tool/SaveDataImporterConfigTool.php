@@ -40,13 +40,9 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_save_configuration',
-        description: 'Save (update) an existing Data Importer '
-            . 'configuration. The configuration must already exist '
-            . '(use pimcore_dataimporter_create_configuration to '
-            . 'create new ones). Replaces the entire configuration '
-            . 'with the provided data. Use '
-            . 'pimcore_dataimporter_validate_configuration first to '
-            . 'ensure the configuration is valid before saving.'
+        description: 'Update an existing Data Importer configuration by name. Replaces the full '
+            . 'configuration. Fails if name does not exist (use create_configuration for new ones). '
+            . 'Validate with validate_configuration first.'
     )]
     public function execute(
         #[Schema(

@@ -39,39 +39,13 @@ final readonly class GetConfigurationContextTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_get_configuration_context',
-        description: 'Get comprehensive configuration context in a single ' .
-            'call for creating or modifying Data Importer configurations. ' .
-            'ALWAYS RETURNS: (1) schema - complete JSON schema defining ' .
-            'valid configuration structure with required fields, data ' .
-            'types, and validation rules; (2) transformation_operators - ' .
-            'list of available data transformation operators (trim, ' .
-            'replace, split, numeric, boolean, etc.) with their settings ' .
-            'schemas, accepted input types, and output types. Each ' .
-            'operator includes acceptedInputTypes (array of data types ' .
-            'the operator can process: default, numeric, boolean, array, ' .
-            'dataObject, asset, etc.) and outputType (array of data types ' .
-            'the operator produces after transformation). Use this type ' .
-            'information to build valid transformation pipelines by ' .
-            'chaining operators where output types match next operator\'s ' .
-            'accepted input types; (3) data_target_types - available ' .
-            'import targets (direct field, classification store, asset ' .
-            'metadata) with required settings; (4) available_classes - ' .
-            'list of Pimcore data object classes that can be used as ' .
-            'import targets. OPTIONALLY RETURNS (when classId provided): ' .
-            'field_type_matrix - matrix showing which class fields are ' .
-            'compatible with which transformation result types (e.g., ' .
-            'which fields accept numeric vs text vs asset data). ' .
-            'OPTIONALLY RETURNS (when includeExamples=true): ' .
-            'examples - working configuration samples demonstrating ' .
-            'common import scenarios. Use this tool to gather all ' .
-            'necessary information before generating or validating ' .
-            'configurations. TRANSFORMATION PIPELINE VALIDATION: When ' .
-            'building multi-step transformations, ensure each operator\'s ' .
-            'outputType is compatible with the next operator\'s ' .
-            'acceptedInputTypes. For example: source data (default) -> ' .
-            'explode (outputs: array) -> trim on each element (accepts: ' .
-            'default, outputs: default) -> numeric (accepts: default/ ' .
-            'boolean, outputs: numeric) -> target field (accepts: numeric).'
+        description: 'Get all context needed to build Data Importer configurations. '
+            . 'Returns: schema (JSON schema for valid configs), transformation_operators '
+            . '(available operators with acceptedInputTypes and outputType — chain operators '
+            . 'where output types match next input types), data_target_types (field, '
+            . 'classification store, asset metadata), available_classes. Optional: '
+            . 'field_type_matrix (when classId given — which fields accept which data types), '
+            . 'examples (when includeExamples=true). Call this first before building configs.'
     )]
     public function execute(
         string $classId = '',

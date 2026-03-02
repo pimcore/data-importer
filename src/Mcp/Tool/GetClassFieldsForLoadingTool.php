@@ -41,15 +41,9 @@ final readonly class GetClassFieldsForLoadingTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_get_class_fields_for_loading',
-        description: 'Get filterable fields for a specific Pimcore Data ' .
-            'Object class that can be used in data loading operations. ' .
-            'Returns a flat list of field names that accept default, ' .
-            'numeric, or calculated transformation types. This is ' .
-            'essential for configuring the Load Data Object operator ' .
-            'when loading relations - these fields can be used as ' .
-            'filter criteria to identify which related objects to load. ' .
-            'Use this tool when you need to know which fields of a ' .
-            'target class can be filtered on during relation loading.'
+        description: 'Get fields of a class usable as filter criteria in the "Load Data Object" '
+            . 'relation-loading operator. Returns sorted field names accepting default, numeric, '
+            . 'or calculated types. Needed when configuring relation imports.'
     )]
     public function execute(string $classId): CallToolResult
     {

@@ -42,17 +42,10 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_create_configuration',
-        description: 'Create a new Data Importer configuration. '
-            . 'Creates the DataHub entry and saves the initial '
-            . 'configuration in one step. The configuration must '
-            . 'include all required sections: general, loaderConfig, '
-            . 'interpreterConfig, resolverConfig, processingConfig, '
-            . 'mappingConfig. Use pimcore_dataimporter_get_configuration_context '
-            . 'first to understand the schema, then '
-            . 'pimcore_dataimporter_validate_configuration to validate '
-            . 'before creating. IMPORTANT: The name parameter is the '
-            . 'unique identifier for the DataHub config entry. The '
-            . 'general.name inside configuration should match.'
+        description: 'Create a new Data Importer configuration in DataHub. Fails if name already '
+            . 'exists (use save_configuration to update). Created inactive by default. Must include '
+            . 'all sections: general, loaderConfig, interpreterConfig, resolverConfig, '
+            . 'processingConfig, mappingConfig. Validate with validate_configuration first.'
     )]
     public function execute(
         #[Schema(

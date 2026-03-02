@@ -39,16 +39,10 @@ final readonly class ValidateConfigurationTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_validate_configuration',
-        description: 'Validate a Data Importer configuration in JSON or '
-            . 'YAML format. Returns success status and any validation '
-            . 'errors. Always validate configurations before saving or '
-            . 'using them. IMPORTANT: When using YAML format, settings '
-            . 'must be nested YAML structures, NOT JSON strings. '
-            . 'Example: "settings:\n  assetPath: /path" NOT '
-            . '"settings: \'{\"assetPath\":\"/path\"}\'". '
-            . 'Use proper YAML nesting for all configuration nodes '
-            . 'including loaderConfig.settings, interpreterConfig.settings, '
-            . 'transformationPipeline settings, and dataTarget.settings.'
+        description: 'Validate a Data Importer configuration. Returns {valid: true} or '
+            . '{valid: false, errors: [{path, message}]}. Always validate before saving. '
+            . 'Accepts JSON or YAML (auto-detected). IMPORTANT: YAML settings must be nested '
+            . 'structures, not JSON strings embedded in YAML.'
     )]
     public function execute(
         #[Schema(

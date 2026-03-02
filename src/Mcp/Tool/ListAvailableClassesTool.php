@@ -37,9 +37,8 @@ final readonly class ListAvailableClassesTool implements McpToolInterface
 
     #[McpTool(
         name: 'pimcore_dataimporter_list_available_classes',
-        description: 'List all available Pimcore Data Object classes '
-            . 'that can be used as import targets. Returns class names '
-            . 'and basic information.'
+        description: 'List Pimcore Data Object classes available as import targets. '
+            . 'Returns class names and count. Use these class IDs in resolverConfig.dataObjectClassId.'
     )]
     public function execute(): CallToolResult
     {
