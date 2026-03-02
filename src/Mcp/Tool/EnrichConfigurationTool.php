@@ -19,6 +19,7 @@ use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
@@ -39,11 +40,9 @@ use Symfony\Component\Yaml\Yaml;
  */
 final readonly class EnrichConfigurationTool implements McpToolInterface
 {
-    private const MSG_ERROR_PARSING_CONFIG = 'Error parsing configuration: ';
+    use ConfigurationParserTrait;
 
     private const MSG_MISSING_MAPPING = 'Configuration must have mappingConfig';
-
-    private const INFO_DEFAULT_JSON = 'Default format is JSON';
 
     public function __construct(
         private MappingConfigurationFactory $mappingConfigurationFactory,
@@ -72,14 +71,13 @@ final readonly class EnrichConfigurationTool implements McpToolInterface
         string $configuration,
         #[Schema(
             type: 'string',
-            description: 'Format: "json" or "yaml". ' . self::INFO_DEFAULT_JSON
+            description: 'Format: "json" or "yaml". Auto-detects if not specified.'
         )]
         string $format = ''
     ): CallToolResult {
         try {
-            // Auto-detect format if not specified
-            $detectedFormat = $format !== '' ? $format : $this->detectFormat($configuration);
-            $configArray = $this->parseConfiguration($configuration, $detectedFormat);
+            $detectedFormat = $this->detectInputFormat($configuration, $format);
+            $configArray = $this->parseConfiguration($configuration, $format);
             $isSingleItem = $this->isSingleMappingItem($configArray);
 
             if ($isSingleItem) {
@@ -125,33 +123,15 @@ final readonly class EnrichConfigurationTool implements McpToolInterface
         }
     }
 
-    private function parseConfiguration(
-        string $configuration,
-        string $format
-    ): array {
-        $format = $format !== '' ? $format : $this->detectFormat($configuration);
-
-        try {
-            if ($format === 'yaml') {
-                return Yaml::parse($configuration);
-            }
-
-            return json_decode($configuration, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\Throwable $e) {
-            throw new \InvalidArgumentException(
-                self::MSG_ERROR_PARSING_CONFIG . $e->getMessage(),
-                0,
-                $e
-            );
-        }
-    }
-
-    private function detectFormat(string $configuration): string
+    private function detectInputFormat(string $configuration, string $format): string
     {
+        if ($format !== '') {
+            return strtolower($format);
+        }
+
         $trimmed = ltrim($configuration);
 
-        return str_starts_with($trimmed, '{') ||
-            str_starts_with($trimmed, '[')
+        return str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')
             ? 'json'
             : 'yaml';
     }

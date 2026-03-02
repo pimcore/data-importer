@@ -18,24 +18,28 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
-use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * MCP tool to create a new Data Importer configuration.
  *
- * Creates a DataHub configuration entry of type "dataImporterDataObject"
- * and saves the initial configuration data in one step.
+ * Delegates to the DataHub ConfigurationService for entry creation
+ * (with permission and writeable checks), then saves the initial
+ * configuration data via updateConfiguration.
  *
  * @internal
  */
 final readonly class CreateDataImporterConfigTool implements McpToolInterface
 {
+    use ConfigurationParserTrait;
+
     private const CONFIG_TYPE = 'dataImporterDataObject';
 
     public function __construct(
+        private ConfigurationServiceInterface $configurationService,
         private LoggerInterface $logger
     ) {
     }
@@ -71,46 +75,21 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
         string $format = ''
     ): CallToolResult {
         try {
-            $configArray = $this->parseConfiguration(
-                $configuration,
-                $format
-            );
+            $configArray = $this->parseConfiguration($configuration, $format);
 
-            // Ensure general.name matches the name parameter
             $configArray['general'] = $configArray['general'] ?? [];
             $configArray['general']['name'] = $name;
             $configArray['general']['type'] = self::CONFIG_TYPE;
 
-            // Check if config already exists
-            $existing = Configuration::getByName($name);
-            if ($existing instanceof Configuration) {
-                return new CallToolResult(
-                    [
-                        new TextContent(
-                            json_encode(
-                                [
-                                    'error' => 'Configuration "' . $name
-                                        . '" already exists.',
-                                    'hint' => 'Use '
-                                        . 'pimcore_dataimporter_save_configuration '
-                                        . 'to update an existing config.'
-                                ],
-                                JSON_PRETTY_PRINT
-                            )
-                        )
-                    ],
-                    isError: true
-                );
-            }
+            // Create the DataHub entry (checks permissions + writeable + uniqueness)
+            $this->configurationService->addConfiguration($name, self::CONFIG_TYPE, '');
 
-            // Create the DataHub configuration entry
-            $config = new Configuration(
-                self::CONFIG_TYPE,
-                null,
+            // Save the initial configuration data
+            $modificationDate = $this->configurationService->updateConfiguration(
                 $name,
+                $configArray,
+                0
             );
-            $config->setConfiguration($configArray);
-            $config->save();
 
             return new CallToolResult(
                 [
@@ -119,13 +98,11 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
                             [
                                 'success' => true,
                                 'name' => $name,
-                                'modificationDate' =>
-                                    $config->getModificationDate(),
+                                'modificationDate' => $modificationDate,
                                 'message' => 'Data Importer configuration "'
                                     . $name . '" created successfully.',
-                                'hint' => 'The configuration is inactive by '
-                                    . 'default. Set general.active to true '
-                                    . 'and save again to activate it.'
+                                'hint' => 'The configuration is inactive by default. '
+                                    . 'Set general.active to true and save again to activate it.'
                             ],
                             JSON_PRETTY_PRINT
                         )
@@ -136,61 +113,14 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Failed to create Data Importer configuration',
-                [
-                    'name' => $name,
-                    'exception' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]
+                ['name' => $name, 'exception' => $e->getMessage()]
             );
 
             return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'error' => $e->getMessage()
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
+                [new TextContent(json_encode(['error' => $e->getMessage()], JSON_PRETTY_PRINT))],
                 isError: true
             );
         }
     }
 
-    private function parseConfiguration(
-        string $config,
-        string $format
-    ): array {
-        if ($format === '') {
-            $trimmed = ltrim($config);
-            $format = str_starts_with($trimmed, '{')
-                || str_starts_with($trimmed, '[')
-                ? 'json'
-                : 'yaml';
-        }
-
-        $format = strtolower($format);
-
-        if ($format === 'json') {
-            $result = json_decode(
-                $config,
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
-
-            return $result;
-        }
-
-        $result = Yaml::parse($config);
-        if (!is_array($result)) {
-            throw new \InvalidArgumentException(
-                'Configuration must parse to an array'
-            );
-        }
-
-        return $result;
-    }
 }

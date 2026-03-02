@@ -18,22 +18,25 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
-use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * MCP tool to update an existing Data Importer configuration.
  *
- * Loads the current configuration to obtain the modification date
- * (for conflict detection), then saves the new configuration.
+ * Delegates to the DataHub ConfigurationService which handles permission
+ * checks, writeable validation, conflict detection, and dehydration.
  *
  * @internal
  */
 final readonly class SaveDataImporterConfigTool implements McpToolInterface
 {
+    use ConfigurationParserTrait;
+
     public function __construct(
+        private ConfigurationServiceInterface $configurationService,
         private LoggerInterface $logger
     ) {
     }
@@ -63,44 +66,26 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
             description: 'Format: "json" or "yaml". Auto-detects '
                 . 'if not specified.'
         )]
-        string $format = ''
+        string $format = '',
+        #[Schema(
+            type: 'integer',
+            description: 'Modification date (Unix timestamp) from a '
+                . 'previous get or create response. Used for conflict '
+                . 'detection. Pass 0 to skip conflict checking.'
+        )]
+        int $modificationDate = 0
     ): CallToolResult {
         try {
-            $configArray = $this->parseConfiguration(
-                $configuration,
-                $format
-            );
+            $configArray = $this->parseConfiguration($configuration, $format);
 
-            // Load existing configuration
-            $config = Configuration::getByName($name);
-            if (!$config instanceof Configuration) {
-                return new CallToolResult(
-                    [
-                        new TextContent(
-                            json_encode(
-                                [
-                                    'error' => 'Configuration "' . $name
-                                        . '" not found.',
-                                    'hint' => 'Use '
-                                        . 'pimcore_dataimporter_create_configuration '
-                                        . 'to create a new config first.'
-                                ],
-                                JSON_PRETTY_PRINT
-                            )
-                        )
-                    ],
-                    isError: true
-                );
-            }
-
-            // Ensure general section is consistent
             $configArray['general'] = $configArray['general'] ?? [];
             $configArray['general']['name'] = $name;
-            $configArray['general']['active'] =
-                $configArray['general']['active'] ?? false;
 
-            $config->setConfiguration($configArray);
-            $config->save();
+            $newModificationDate = $this->configurationService->updateConfiguration(
+                $name,
+                $configArray,
+                $modificationDate
+            );
 
             return new CallToolResult(
                 [
@@ -109,10 +94,8 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
                             [
                                 'success' => true,
                                 'name' => $name,
-                                'modificationDate' =>
-                                    $config->getModificationDate(),
-                                'message' => 'Configuration "'
-                                    . $name . '" saved successfully.'
+                                'modificationDate' => $newModificationDate,
+                                'message' => 'Configuration "' . $name . '" saved successfully.'
                             ],
                             JSON_PRETTY_PRINT
                         )
@@ -123,59 +106,14 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
         } catch (\Throwable $e) {
             $this->logger->error(
                 'Failed to save Data Importer configuration',
-                [
-                    'name' => $name,
-                    'exception' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]
+                ['name' => $name, 'exception' => $e->getMessage()]
             );
 
             return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'error' => $e->getMessage()
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
+                [new TextContent(json_encode(['error' => $e->getMessage()], JSON_PRETTY_PRINT))],
                 isError: true
             );
         }
     }
 
-    private function parseConfiguration(
-        string $config,
-        string $format
-    ): array {
-        if ($format === '') {
-            $trimmed = ltrim($config);
-            $format = str_starts_with($trimmed, '{')
-                || str_starts_with($trimmed, '[')
-                ? 'json'
-                : 'yaml';
-        }
-
-        $format = strtolower($format);
-
-        if ($format === 'json') {
-            return json_decode(
-                $config,
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            );
-        }
-
-        $result = Yaml::parse($config);
-        if (!is_array($result)) {
-            throw new \InvalidArgumentException(
-                'Configuration must parse to an array'
-            );
-        }
-
-        return $result;
-    }
 }
