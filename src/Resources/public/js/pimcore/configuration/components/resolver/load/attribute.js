@@ -43,7 +43,8 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.resolver.load.
                 proxy: {
                     type: 'ajax',
                     extraParams: {
-                        class_id: this.configItemRootContainer.currentDataValues.dataObjectClassId
+                        class_id: this.configItemRootContainer.currentDataValues.dataObjectClassId,
+                        system_read: 1
                     },
                     url: Routing.generate('pimcore_dataimporter_configdataobject_loaddataobjectattributes'),
                     reader: {
