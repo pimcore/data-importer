@@ -39,7 +39,7 @@ final readonly class GetConfigurationExamplesTool implements McpToolInterface
     }
 
     #[McpTool(
-        name: 'pimcore_dataimporter_get_configuration_examples',
+        name: 'get_configuration_examples',
         description: 'Get example configurations for common import scenarios (CSV, XML, JSON). '
             . 'Each example includes full configuration data and a summary with loader type, '
             . 'interpreter, target class, and operators used. Use as templates for new configs.'

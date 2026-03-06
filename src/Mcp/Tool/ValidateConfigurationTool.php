@@ -39,7 +39,7 @@ final readonly class ValidateConfigurationTool implements McpToolInterface
     }
 
     #[McpTool(
-        name: 'pimcore_dataimporter_validate_configuration',
+        name: 'validate_configuration',
         description: 'Validate a Data Importer configuration. Returns {valid: true} or '
             . '{valid: false, errors: [{path, message}]}. Always validate before saving. '
             . 'Accepts JSON or YAML (auto-detected). IMPORTANT: YAML settings must be nested '

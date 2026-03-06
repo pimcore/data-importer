@@ -103,24 +103,24 @@ Configure your MCP client to connect to the endpoint:
 
 | Tool                                                     | Purpose                                                       |
 |----------------------------------------------------------|---------------------------------------------------------------|
-| `pimcore_dataimporter_list_available_classes`             | List all Pimcore Data Object classes available as targets      |
-| `pimcore_dataimporter_get_configuration_context`         | Get schema, operators, data targets, and classes in one call   |
-| `pimcore_dataimporter_get_class_fields_for_loading`      | Get filterable fields for relation loading on a specific class |
-| `pimcore_dataimporter_get_configuration_examples`        | Get real-world example configurations with explanations        |
+| `list_available_classes`             | List all Pimcore Data Object classes available as targets      |
+| `get_configuration_context`         | Get schema, operators, data targets, and classes in one call   |
+| `get_class_fields_for_loading`      | Get filterable fields for relation loading on a specific class |
+| `get_configuration_examples`        | Get real-world example configurations with explanations        |
 
 ### Validation & Enrichment
 
 | Tool                                                     | Purpose                                                       |
 |----------------------------------------------------------|---------------------------------------------------------------|
-| `pimcore_dataimporter_validate_configuration`            | Validate a JSON/YAML configuration and return any errors      |
-| `pimcore_dataimporter_enrich_configuration`              | Calculate and add `transformationResultType` to mapping items  |
+| `validate_configuration`            | Validate a JSON/YAML configuration and return any errors      |
+| `enrich_configuration`              | Calculate and add `transformationResultType` to mapping items  |
 
 ### Configuration Management (write)
 
 | Tool                                                     | Purpose                                                       |
 |----------------------------------------------------------|---------------------------------------------------------------|
-| `pimcore_dataimporter_create_configuration`              | Create a new Data Importer configuration in DataHub            |
-| `pimcore_dataimporter_save_configuration`                | Update an existing Data Importer configuration                 |
+| `create_configuration`              | Create a new Data Importer configuration in DataHub            |
+| `save_configuration`                | Update an existing Data Importer configuration                 |
 
 ## Typical AI Agent Workflow
 
