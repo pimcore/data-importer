@@ -175,6 +175,10 @@ class ConfigurationValidationService
         );
         $errors = array_merge($errors, $schemaErrors);
 
+        if (!empty($errors)) {
+            return $errors;
+        }
+
         // Also try to instantiate through factory to check dependencies
         try {
             $this->dataLoaderFactory->loadDataLoader($config);
@@ -211,6 +215,10 @@ class ConfigurationValidationService
             $settings
         );
         $errors = array_merge($errors, $schemaErrors);
+
+        if (!empty($errors)) {
+            return $errors;
+        }
 
         // Also try to instantiate through factory to check dependencies
         try {
@@ -284,6 +292,10 @@ class ConfigurationValidationService
                 $settings
             );
             $errors = array_merge($errors, $schemaErrors);
+
+            if (!empty($schemaErrors)) {
+                return array_merge($errors, $schemaErrors);
+            }
 
             // Also try to instantiate through factory to check dependencies
             try {
@@ -497,7 +509,7 @@ class ConfigurationValidationService
         }
 
         $treeBuilder = $service->getConfigTreeBuilder();
-        if ($treeBuilder === null || empty($settings)) {
+        if ($treeBuilder === null) {
             return $errors;
         }
 
