@@ -330,6 +330,35 @@ class TransformationDataTypeService
     }
 
     /**
+     * Find all transformation result types that a given field accepts
+     *
+     * @return string[]
+     */
+    public function getAcceptedTypesForField(
+        string $fieldName,
+        string $classId
+    ): array {
+        $accepted = [];
+
+        foreach ($this->getAllTransformationTargetTypes() as $type) {
+            $fields = $this->getPimcoreDataTypes(
+                $classId,
+                $type,
+                true,
+                true,
+                true
+            );
+            $keys = array_column($fields, 'key');
+
+            if (in_array($fieldName, $keys, true)) {
+                $accepted[] = $type;
+            }
+        }
+
+        return $accepted;
+    }
+
+    /**
      * Checks if a field is available for a specific transformation
      * target type
      */
@@ -356,13 +385,25 @@ class TransformationDataTypeService
 
         if ($throwException && !$isValid) {
 
+            // Find which result types the target field actually accepts
+            $acceptedTypes = $this->getAcceptedTypesForField(
+                $fieldName,
+                $classId
+            );
+
             $msg = sprintf(
-                'Field "%s" is not compatible with transformation ' .
-                'result type "%s" for classID "%s". Compatible fields: %s',
+                'Field "%s" is not compatible with transformation '
+                . 'result type "%s" for classID "%s". '
+                . 'Compatible fields for this result type: %s. '
+                . 'The field "%s" accepts these result types: %s',
                 $fieldName,
                 implode(', ', $transformationResultType),
                 $classId,
-                implode(', ', $compatibleFieldKeys)
+                implode(', ', $compatibleFieldKeys),
+                $fieldName,
+                $acceptedTypes !== []
+                    ? implode(', ', $acceptedTypes)
+                    : 'none found'
             );
 
             throw new InvalidConfigurationException($msg);

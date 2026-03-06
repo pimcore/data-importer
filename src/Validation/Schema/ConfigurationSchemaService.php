@@ -276,7 +276,6 @@ class ConfigurationSchemaService
     ): array {
         $schema = [
             'type' => $type,
-            'class' => $class,
         ];
 
         try {

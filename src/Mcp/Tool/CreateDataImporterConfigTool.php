@@ -19,23 +19,21 @@ use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * MCP tool to create a new Data Importer configuration.
  *
- * Delegates to the DataHub ConfigurationService for entry creation
- * (with permission and writeable checks), then saves the initial
- * configuration data via updateConfiguration.
+ * Delegates to the DataHub ConfigurationService::addConfiguration
+ * (matching the AddController pattern) which handles permission checks,
+ * writeable validation, and uniqueness. Use save_configuration to
+ * populate the created entry with actual configuration data.
  *
  * @internal
  */
 final readonly class CreateDataImporterConfigTool implements McpToolInterface
 {
-    use ConfigurationParserTrait;
-
     private const CONFIG_TYPE = 'dataImporterDataObject';
 
     public function __construct(
@@ -45,11 +43,10 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
     }
 
     #[McpTool(
-        name: 'pimcore_dataimporter_create_configuration',
-        description: 'Create a new Data Importer configuration in DataHub. Fails if name already '
-            . 'exists (use save_configuration to update). Created inactive by default. Must include '
-            . 'all sections: general, loaderConfig, interpreterConfig, resolverConfig, '
-            . 'processingConfig, mappingConfig. Validate with validate_configuration first.'
+        name: 'create_configuration',
+        description: 'Create a new empty Data Importer configuration entry in DataHub. '
+            . 'Fails if name already exists. After creation, use save_configuration '
+            . 'to populate it with the actual configuration data.'
     )]
     public function execute(
         #[Schema(
@@ -61,34 +58,16 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
         string $name,
         #[Schema(
             type: 'string',
-            description: 'The full Data Importer configuration as '
-                . 'JSON or YAML string. Must include general, '
-                . 'loaderConfig, interpreterConfig, resolverConfig, '
-                . 'processingConfig, and mappingConfig sections.'
+            description: 'Configuration path in DataHub. '
+                . 'Leave empty for the default location.'
         )]
-        string $configuration,
-        #[Schema(
-            type: 'string',
-            description: 'Format of the configuration: "json" or '
-                . '"yaml". Auto-detects if not specified.'
-        )]
-        string $format = ''
+        string $path = ''
     ): CallToolResult {
         try {
-            $configArray = $this->parseConfiguration($configuration, $format);
-
-            $configArray['general'] = $configArray['general'] ?? [];
-            $configArray['general']['name'] = $name;
-            $configArray['general']['type'] = self::CONFIG_TYPE;
-
-            // Create the DataHub entry (checks permissions + writeable + uniqueness)
-            $this->configurationService->addConfiguration($name, self::CONFIG_TYPE, '');
-
-            // Save the initial configuration data
-            $modificationDate = $this->configurationService->updateConfiguration(
+            $this->configurationService->addConfiguration(
                 $name,
-                $configArray,
-                0
+                self::CONFIG_TYPE,
+                $path
             );
 
             return new CallToolResult(
@@ -98,11 +77,11 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
                             [
                                 'success' => true,
                                 'name' => $name,
-                                'modificationDate' => $modificationDate,
+                                'type' => self::CONFIG_TYPE,
                                 'message' => 'Data Importer configuration "'
                                     . $name . '" created successfully.',
-                                'hint' => 'The configuration is inactive by default. '
-                                    . 'Set general.active to true and save again to activate it.'
+                                'hint' => 'Use save_configuration to populate '
+                                    . 'it with the actual configuration data.'
                             ],
                             JSON_PRETTY_PRINT
                         )
@@ -122,5 +101,4 @@ final readonly class CreateDataImporterConfigTool implements McpToolInterface
             );
         }
     }
-
 }

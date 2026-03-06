@@ -440,6 +440,55 @@ class ConfigurationValidationServiceTest extends Unit
     }
 
     /**
+     * Test that upload loader with empty settings returns schema error, not PHP warning
+     */
+    public function testUploadLoaderWithEmptySettingsReturnsSchemaError()
+    {
+        $service = $this->tester->grabService(ConfigurationValidationService::class);
+
+        $config = [
+            'general' => [
+                'name' => 'TestUploadConfig',
+                'active' => true,
+            ],
+            'loaderConfig' => [
+                'type' => 'upload',
+                // no settings — uploadFilePath is required
+            ],
+            'interpreterConfig' => [
+                'type' => 'csv',
+                'settings' => [],
+            ],
+            'resolverConfig' => [],
+            'processingConfig' => [],
+            'mappingConfig' => [],
+            'executionConfig' => [],
+        ];
+
+        $result = $service->validateConfiguration($config);
+
+        $this->assertFalse($result->isValid(), self::MSG_INVALID_CONFIG);
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
+
+        $errorMessages = array_map(
+            fn (ValidationError $e) => $e->getMessage(),
+            $result->getErrors()
+        );
+        $combined = implode(' ', $errorMessages);
+
+        $this->assertStringNotContainsString(
+            'Undefined array key',
+            $combined,
+            'Should return a schema validation error, not a PHP warning'
+        );
+        $this->assertStringContainsString(
+            'uploadFilePath',
+            $combined,
+            'Error should mention the missing required field'
+        );
+    }
+
+    /**
      * Test error object structure
      */
     public function testErrorObjectStructure()

@@ -20,6 +20,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
+use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
@@ -37,15 +38,16 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
 
     public function __construct(
         private ConfigurationServiceInterface $configurationService,
+        private ConfigurationValidationService $validationService,
         private LoggerInterface $logger
     ) {
     }
 
     #[McpTool(
-        name: 'pimcore_dataimporter_save_configuration',
+        name: 'save_configuration',
         description: 'Update an existing Data Importer configuration by name. Replaces the full '
-            . 'configuration. Fails if name does not exist (use create_configuration for new ones). '
-            . 'Validate with validate_configuration first.'
+            . 'configuration. Validates before saving — returns validation errors if invalid. '
+            . 'Fails if name does not exist (use create_configuration for new ones).'
     )]
     public function execute(
         #[Schema(
@@ -66,14 +68,7 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
             description: 'Format: "json" or "yaml". Auto-detects '
                 . 'if not specified.'
         )]
-        string $format = '',
-        #[Schema(
-            type: 'integer',
-            description: 'Modification date (Unix timestamp) from a '
-                . 'previous get or create response. Used for conflict '
-                . 'detection. Pass 0 to skip conflict checking.'
-        )]
-        int $modificationDate = 0
+        string $format = ''
     ): CallToolResult {
         try {
             $configArray = $this->parseConfiguration($configuration, $format);
@@ -81,10 +76,33 @@ final readonly class SaveDataImporterConfigTool implements McpToolInterface
             $configArray['general'] = $configArray['general'] ?? [];
             $configArray['general']['name'] = $name;
 
+            $validationResult = $this->validationService->validateConfiguration($configArray);
+            if (!$validationResult->isValid()) {
+                $errors = [];
+                foreach ($validationResult->getErrors() as $error) {
+                    $errors[] = [
+                        'path' => $error->getPath(),
+                        'message' => $error->getMessage()
+                    ];
+                }
+
+                return new CallToolResult(
+                    [
+                        new TextContent(
+                            json_encode(
+                                ['valid' => false, 'errors' => $errors],
+                                JSON_PRETTY_PRINT
+                            )
+                        )
+                    ],
+                    isError: true
+                );
+            }
+
             $newModificationDate = $this->configurationService->updateConfiguration(
                 $name,
                 $configArray,
-                $modificationDate
+                time()
             );
 
             return new CallToolResult(
