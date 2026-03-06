@@ -71,6 +71,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
             //register listeners for class and type changes
             this.initContext.mappingConfigItemContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.transformationResultTypeChanged, function (newType) {
                 this.transformationResultType = newType;
+                this.dataApplied = false;
                 this.initAttributeStore(attributeStore);
             }.bind(this));
             this.configItemRootContainer.on(pimcore.plugin.pimcoreDataImporterBundle.configuration.events.classChanged,

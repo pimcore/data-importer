@@ -113,6 +113,7 @@ pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.datata
                     overwriteMode.show();
                     fieldContainerCB.show();
                     fieldContainerError.hide()
+                    this.dataApplied = false;
                     this.initAttributeStore(attributeStore);
                 } else {
                     attributeSelection.setValue('');
