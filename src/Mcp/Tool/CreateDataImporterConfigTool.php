@@ -19,7 +19,6 @@ use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -32,7 +31,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class CreateDataImporterConfigTool implements McpToolInterface
+final readonly class CreateDataImporterConfigTool
 {
     private const CONFIG_TYPE = 'dataImporterDataObject';
 

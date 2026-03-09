@@ -18,7 +18,6 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -29,7 +28,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class GetConfigurationContextTool implements McpToolInterface
+final readonly class GetConfigurationContextTool
 {
     private const SECTION_OPERATORS = 'operators';
     private const SECTION_TARGETS = 'targets';

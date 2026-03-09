@@ -19,7 +19,6 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -31,7 +30,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class GetClassFieldsForLoadingTool implements McpToolInterface
+final readonly class GetClassFieldsForLoadingTool
 {
     public function __construct(
         private ConfigurationSchemaService $configurationSchemaService,

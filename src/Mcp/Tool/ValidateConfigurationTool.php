@@ -20,7 +20,6 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -28,7 +27,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class ValidateConfigurationTool implements McpToolInterface
+final readonly class ValidateConfigurationTool
 {
     use ConfigurationParserTrait;
 

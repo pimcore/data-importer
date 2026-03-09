@@ -21,7 +21,6 @@ use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
@@ -38,7 +37,7 @@ use Symfony\Component\Yaml\Yaml;
  *
  * @internal
  */
-final readonly class EnrichConfigurationTool implements McpToolInterface
+final readonly class EnrichConfigurationTool
 {
     use ConfigurationParserTrait;
 

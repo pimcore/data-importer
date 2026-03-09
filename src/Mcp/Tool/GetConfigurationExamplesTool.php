@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -29,7 +28,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class GetConfigurationExamplesTool implements McpToolInterface
+final readonly class GetConfigurationExamplesTool
 {
     private const EXAMPLES_PATH = __DIR__ . '/../../../doc/examples';
 

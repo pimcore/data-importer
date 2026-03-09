@@ -21,7 +21,6 @@ use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\McpToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -32,7 +31,7 @@ use Psr\Log\LoggerInterface;
  *
  * @internal
  */
-final readonly class SaveDataImporterConfigTool implements McpToolInterface
+final readonly class SaveDataImporterConfigTool
 {
     use ConfigurationParserTrait;
 
