@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: pimcore/workflows-collection-public
-          ref: reusable-workflows
+          ref: main
           path: reusable-workflows
 
       - name: Parse PHP versions from composer.json
@@ -69,6 +69,10 @@ jobs:
           php_versions="${{ steps.parse-php-versions.outputs.php_versions }}"
           MATRIX_JSON=$(cat reusable-workflows/phpstan-configuration/matrix-config.json)
           FILTERED_MATRIX_JSON=$(echo "$MATRIX_JSON" | jq --arg php_versions "$php_versions" '{ include: [ .configs[] | select(.php_version == $php_versions) | .matrix[] ] }')
+          if [ "$(echo "$FILTERED_MATRIX_JSON" | jq '.include | length')" -eq 0 ]; then
+            echo "No exact match for php_versions=$php_versions, falling back to default"
+            FILTERED_MATRIX_JSON=$(echo "$MATRIX_JSON" | jq '{ include: [ .configs[] | select(.php_version == "default") | .matrix[] ] }')
+          fi
           ENCODED_MATRIX_JSON=$(echo "$FILTERED_MATRIX_JSON" | jq -c .)
           echo "phpstan_matrix=$ENCODED_MATRIX_JSON" >> "$GITHUB_OUTPUT"
 
