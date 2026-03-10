@@ -28,7 +28,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Log\FileObject;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;

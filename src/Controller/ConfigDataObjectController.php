@@ -16,7 +16,6 @@ use Cron\CronExpression;
 use Exception;
 use http\Exception\InvalidArgumentException;
 use League\Flysystem\FilesystemOperator;
-use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
@@ -517,7 +516,7 @@ class ConfigDataObjectController extends UserAwareController
     #[Route('/load-class-classificationstore-keys', methods: ['GET'])]
     public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService)
     {
-        $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->get('sort')]);
+        $sortParams = $this->extractSortingSettings(['sort' => $request->query->get('sort')]);
 
         $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
             strip_tags($request->query->get('class_id')),
@@ -763,5 +762,39 @@ class ConfigDataObjectController extends UserAwareController
         }
 
         return new JsonResponse(['UnitList' => $data]);
+    }
+
+    private function extractSortingSettings(array $params): array
+    {
+        $orderKey = null;
+        $order = null;
+
+        $sortParam = $params['sort'] ?? false;
+        if ($sortParam) {
+            $sortParam = json_decode($sortParam, true);
+            $sortParam = $sortParam[0];
+
+            $order = strtoupper($sortParam['direction']) === 'DESC' ? 'DESC' : 'ASC';
+            $orderKey = $sortParam['property'];
+
+            if (str_starts_with($orderKey, '~')) {
+                $parts = explode('~', $orderKey);
+                $fieldname = $parts[2];
+                $groupKeyId = explode('-', $parts[3]);
+                $groupId = (int) $groupKeyId[0];
+                $keyid = (int) $groupKeyId[1];
+
+                return [
+                    'orderKey' => $sortParam['property'],
+                    'fieldname' => $fieldname,
+                    'groupId' => $groupId,
+                    'keyId' => $keyid,
+                    'order' => $order,
+                    'isFeature' => 1,
+                ];
+            }
+        }
+
+        return ['orderKey' => $orderKey, 'order' => $order];
     }
 }
