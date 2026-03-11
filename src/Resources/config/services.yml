@@ -208,3 +208,8 @@ services:
         tags:
             - { name: routing.loader }
 
+    pimcore.datahub.data_importer.expression_language_provider:
+        class: Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage
+        public: true
+        arguments:
+            - !tagged_iterator pimcore.datahub.data_importer.expression_language_provider

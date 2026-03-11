@@ -66,6 +66,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "objectField" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\SymfonyExpression:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "symfonyExpression" }
+
     # -------------------
     # factory operators
     # -------------------
