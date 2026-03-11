@@ -10,6 +10,8 @@
 
 import { type IAbstractPlugin } from '@pimcore/studio-ui-bundle'
 import { DataImporterModule } from './modules/data-importer/index'
+import { bundleServiceIds } from './config/service-ids'
+import { DynamicTypeDataImporterDataObject } from './modules/data-importer/dynamic-types/dynamic-type-data-importer-data-object'
 
 if (module.hot !== undefined) {
   module.hot.accept()
@@ -19,7 +21,9 @@ export const DataImporterPlugin: IAbstractPlugin = {
   name: 'data-importer-plugin',
 
   // Register and overwrite services here
-  onInit: ({ container }): void => {},
+  onInit: ({ container }): void => {
+    container.bind(String(bundleServiceIds['DataImporter/DynamicTypes/Adapter/DataImporterDataObject'])).to(DynamicTypeDataImporterDataObject).inSingletonScope()
+  },
 
   // register modules here
   onStartup: ({ moduleSystem }): void => {

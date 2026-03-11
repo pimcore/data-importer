@@ -60,7 +60,7 @@ final class ImportProgressResponse implements AdditionalAttributesInterface
     ) {
     }
 
-    public function isRunning(): bool
+    public function getIsRunning(): bool
     {
         return $this->isRunning;
     }
