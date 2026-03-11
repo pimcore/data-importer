@@ -9,9 +9,8 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { theme } from 'antd'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { IconButton, Input, Spin } from '@pimcore/studio-ui-bundle/components'
+import { IconButton, SearchInput, Spin } from '@pimcore/studio-ui-bundle/components'
 import {
   useBundleDataImporterConfigLoadTransformationResultQuery
 } from '../../../../../data-importer-api-slice.gen'
@@ -45,7 +44,6 @@ export type PreviewPanelProps = ImportModeProps | ResultModeProps
 /* ── Component ───────────────────────────────────────────────────────────── */
 
 export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
-  const { token } = theme.useToken()
   const { t } = useTranslation()
   const { styles, cx } = useStyles()
 
@@ -203,34 +201,13 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
       <div className={ styles.wrapper }>
         { renderHeader(t('data-importer.mapping.advanced-modal.step-source.import-preview'), hasPrev, importLoading || isImportFetching, handleImportPrev, handleImportNext) }
 
-        <Input
+        <SearchInput
+          maxWidth={ '100%' }
           onChange={ (e) => { setSearchText(e.target.value) } }
-          placeholder={ t('data-importer.mapping.advanced-modal.step-source.search-placeholder') }
-          prefix={ (
-            <svg
-              fill="none"
-              height="14"
-              viewBox="0 0 14 14"
-              width="14"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M6.125 11.375C9.02246 11.375 11.375 9.02246 11.375 6.125C11.375 3.22754 9.02246 0.875 6.125 0.875C3.22754 0.875 0.875 3.22754 0.875 6.125C0.875 9.02246 3.22754 11.375 6.125 11.375Z"
-                stroke={ token.colorTextTertiary }
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M12.25 12.25L10.0625 10.0625"
-                stroke={ token.colorTextTertiary }
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-              />
-            </svg>
-          ) }
+          placeholder={ t('data-importer.mapping.advanced-modal.step-source.search-placeholder') + 'asdf' }
           value={ searchText }
+          withClear
+          withPrefix
         />
 
         <div className={ styles.tableWrapper }>

@@ -11,19 +11,16 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { container } from '@pimcore/studio-ui-bundle'
-import { Select, Dropdown, IconTextButton, IconButton } from '@pimcore/studio-ui-bundle/components'
-import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useSensors, useSensor, PointerSensor, KeyboardSensor, closestCenter } from '@dnd-kit/core'
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import { Dropdown, IconTextButton } from '@pimcore/studio-ui-bundle/components'
+import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { v4 as uuid } from 'uuid'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem, type TransformationPipelineItem } from '../../../../../types'
 import { type DynamicTypeTransformerRegistry } from '../../../../../dynamic-types/transformer'
 import { bundleServiceIds } from '../../../../../../../config/service-ids'
-import { PreviewPanel } from '../preview-panel/preview-panel'
-import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-transformations.styles'
-import { CardContent, SortableCard, type PipelineItemWithId } from './transformer-card/transformer-card'
+import { type PipelineItemWithId } from './transformer-card/transformer-card'
+import { TransformersDndList } from './transformers-dnd-list'
+import { StepTransformationsRightColumn } from './step-transformations-right-column'
 
 /** Enrich a raw pipeline item with a fresh UUID */
 const enrichWithId = (item: TransformationPipelineItem): PipelineItemWithId => ({
@@ -67,7 +64,6 @@ export const StepTransformations = ({
 }: StepTransformationsProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { styles: shared } = useSharedStepStyles()
 
   // ── Internal state ──────────────────────────────────────────────────────────
 
@@ -107,11 +103,6 @@ export const StepTransformations = ({
   const [activeId, setActiveId] = useState<string | null>(null)
 
   // ── DnD setup ───────────────────────────────────────────────────────────────
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
 
   const handleDragStart = (event: DragStartEvent): void => {
     setActiveId(String(event.active.id))
@@ -258,162 +249,38 @@ export const StepTransformations = ({
             </span>
           ) }
 
-          <DndContext
-            collisionDetection={ closestCenter }
-            modifiers={ [restrictToVerticalAxis] }
+          <TransformersDndList
+            activeId={ activeId }
+            collapsedCards={ collapsedCards }
+            items={ items }
             onDragEnd={ handleDragEnd }
             onDragStart={ handleDragStart }
-            sensors={ sensors }
-          >
-            <SortableContext
-              items={ items.map(it => it._id) }
-              strategy={ verticalListSortingStrategy }
-            >
-              { items.map((item, index) => {
-                const itemType = typeof item.type === 'string' ? item.type : ''
-                const transformerType = transformerRegistry.getDynamicType(itemType)
-                const isCollapsed = collapsedCards[item._id]
-                const itemSettings = (item.settings ?? {})
-
-                return (
-                  <SortableCard
-                    collapseTooltip={ isCollapsed
-                      ? t('data-importer.mapping.expand-all')
-                      : t('data-importer.mapping.collapse-all') }
-                    index={ index }
-                    isCollapsed={ isCollapsed }
-                    item={ item }
-                    key={ item._id }
-                    label={ transformerType?.label ?? itemType }
-                    onRemove={ removeTransformer }
-                    onToggleCollapse={ toggleCard }
-                    removeTooltip={ t('data-importer.mapping.advanced-modal.transformer.remove') }
-                  >
-                    { transformerType?.renderSettings(
-                      itemSettings,
-                      (s) => { updateTransformerSettings(index, s) }
-                    ) }
-                  </SortableCard>
-                )
-              }) }
-            </SortableContext>
-
-            <DragOverlay>
-              { (() => {
-                if (activeId === null) return null
-                const activeIndex = items.findIndex(it => it._id === activeId)
-                if (activeIndex === -1) return null
-                const activeItem = items[activeIndex]
-                const activeItemType = typeof activeItem.type === 'string' ? activeItem.type : ''
-                const transformerType = transformerRegistry.getDynamicType(activeItemType)
-                const isCollapsed = collapsedCards[activeItem._id]
-                const activeItemSettings = (activeItem.settings ?? {})
-                return (
-                  <div className={ styles.transformerCardOverlay }>
-                    <CardContent
-                      collapseTooltip={ isCollapsed
-                        ? t('data-importer.mapping.expand-all')
-                        : t('data-importer.mapping.collapse-all') }
-                      index={ activeIndex }
-                      isCollapsed={ isCollapsed }
-                      label={ transformerType?.label ?? activeItemType }
-                      onRemove={ removeTransformer }
-                      onToggleCollapse={ toggleCard }
-                      removeTooltip={ t('data-importer.mapping.advanced-modal.transformer.remove') }
-                    >
-                      { transformerType?.renderSettings(
-                        activeItemSettings,
-                        (s) => { updateTransformerSettings(activeIndex, s) }
-                      ) }
-                    </CardContent>
-                  </div>
-                )
-              })() }
-            </DragOverlay>
-          </DndContext>
+            onRemove={ removeTransformer }
+            onToggleCollapse={ toggleCard }
+            onUpdateSettings={ updateTransformerSettings }
+            transformerRegistry={ transformerRegistry }
+          />
         </div>
       </div>
 
-      {/* RIGHT: Source Attributes + Mapping preview + nav buttons */}
-      <div className={ styles.rightColumn }>
-        <div className={ styles.rightColumnTop }>
-
-          {/* Source Attribute(s) — read-only display with pencil to edit */}
-          <div className={ styles.sourceSection }>
-            <div className={ styles.sourceSectionHeader }>
-              <span className={ styles.sourceSectionTitle }>
-                { t('data-importer.mapping.advanced-modal.step-source.label') }
-              </span>
-              <IconButton
-                icon={ { value: 'edit-pen' } }
-                onClick={ () => { setEditingSource(v => !v) } }
-                size="small"
-                tooltip={ { title: t('data-importer.mapping.advanced-modal.transformer.edit-source') } }
-                type="text"
-              />
-            </div>
-
-            { editingSource
-              ? (
-                <Select
-                  className={ shared.selectFull }
-                  mode="multiple"
-                  onBlur={ () => { setEditingSource(false) } }
-                  onChange={ (v) => {
-                    onDataSourceIndexChange(Array.isArray(v) ? (v as string[]) : [])
-                    setEditingSource(false)
-                  } }
-                  options={ columnHeaderOptions }
-                  showSearch
-                  value={ dataSourceIndex }
-                />
-                )
-              : (
-                <div className={ styles.sourceValues }>
-                  { dataSourceIndex.length === 0
-                    ? <span className={ styles.emptyState }>{ '—' }</span>
-                    : dataSourceIndex.map((v, i) => (
-                      <React.Fragment key={ v }>
-                        { i > 0 && <span className={ styles.sourceSeparator }>{ ' | ' }</span> }
-                        <span>{ getSourceLabel(v) }</span>
-                      </React.Fragment>
-                    ))
-                  }
-                </div>
-                )
-            }
-          </div>
-
-          {/* Mapping preview — live panel */}
-          <div className={ styles.previewWrapper }>
-            <PreviewPanel
-              baseConfig={ baseConfig }
-              configName={ configName }
-              currentMappingItem={ currentMappingItem }
-              mode="result"
-              refreshToken={ previewRefreshToken }
-            />
-          </div>
-        </div>
-
-        {/* Previous / Next step buttons — bottom right */}
-        <div className={ shared.navButtons }>
-          <button
-            className={ shared.outlineButton }
-            onClick={ onPrev }
-            type="button"
-          >
-            { t('data-importer.mapping.advanced-modal.previous-step') }
-          </button>
-          <button
-            className={ shared.outlineButton }
-            onClick={ onNext }
-            type="button"
-          >
-            { t('data-importer.mapping.advanced-modal.next-step') }
-          </button>
-        </div>
-      </div>
+      <StepTransformationsRightColumn
+        baseConfig={ baseConfig }
+        columnHeaderOptions={ columnHeaderOptions }
+        configName={ configName }
+        currentMappingItem={ currentMappingItem }
+        dataSourceIndex={ dataSourceIndex }
+        editingSource={ editingSource }
+        getSourceLabel={ getSourceLabel }
+        onBlurSource={ () => { setEditingSource(false) } }
+        onChangeSource={ (v) => {
+          onDataSourceIndexChange(v)
+          setEditingSource(false)
+        } }
+        onNext={ onNext }
+        onPrev={ onPrev }
+        onToggleEditing={ () => { setEditingSource(v => !v) } }
+        previewRefreshToken={ previewRefreshToken }
+      />
 
     </div>
   )

@@ -8,6 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
+
 import { type DataImporterFormValues, type LoaderConfig, type InterpreterConfig, type ResolverConfig, type ProcessingConfig, type ExecutionConfig, type Permission, type MappingConfigItem } from '../types'
 import { ensureMappingId } from '../components/tabs/steps/mapping-step/utils/mapping-identity'
 

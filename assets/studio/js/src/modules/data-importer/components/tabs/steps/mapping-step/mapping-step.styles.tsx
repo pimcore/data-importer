@@ -8,6 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
+
 import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ css, token }) => {

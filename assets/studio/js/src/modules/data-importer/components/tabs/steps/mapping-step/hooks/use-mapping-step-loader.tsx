@@ -12,42 +12,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
 import { useAppDispatch } from '@pimcore/studio-ui-bundle/app'
 import { api, useBundleDataImporterConfigGetQuery } from '../../../../../data-importer-api-slice-enhanced'
-import {
-  useBundleDataImporterConfigLoadColumnHeadersQuery,
-  useBundleDataImporterConfigLoadPreviewQuery
-} from '../../../../../data-importer-api-slice.gen'
+import { useBundleDataImporterConfigLoadColumnHeadersQuery, useBundleDataImporterConfigLoadPreviewQuery } from '../../../../../data-importer-api-slice.gen'
 import { transformFormToBackend, type BackendConfiguration } from '../../../../../utils/transformers'
 import { normalizeDataRow } from '../../../../../utils/normalize-data-row'
 import { type DataImporterFormValues, type MappingConfigItem, type ClassAttribute, resolveAttrMapKey } from '../../../../../types'
 import { type SourceRow } from '../sources-panel/sources-panel'
-
-function parseClassAttribute (raw: object): ClassAttribute {
-  const obj = raw as Record<string, any>
-  return {
-    key: obj.key ?? obj.name ?? '',
-    title: obj.title ?? obj.name ?? obj.key ?? '',
-    localized: Boolean(obj.localized ?? false)
-  }
-}
-
-interface ColumnHeaderEntry {
-  id?: string
-  dataIndex?: string
-  label?: string
-}
-
-export interface UseMappingStepLoaderResult {
-  columnHeaderOptions: Array<{ value: string, label: string }>
-  initialLoadDone: boolean
-  sourceRows: SourceRow[]
-  hasPreviewError: boolean
-  attributesMap: Record<string, ClassAttribute[]>
-  setAttributesMap: React.Dispatch<React.SetStateAction<Record<string, ClassAttribute[]>>>
-  classId: string | undefined
-  mappingTrtList: string[] | undefined
-  getMappingConfig: () => MappingConfigItem[]
-}
-
+import { parseClassAttribute, type ColumnHeaderEntry, type UseMappingStepLoaderResult } from './use-mapping-step-loader.types'
 export function useMappingStepLoader (configName: string, isActive: boolean): UseMappingStepLoaderResult {
   const form = Form.useFormInstance()
   const dispatch = useAppDispatch()
@@ -118,7 +88,6 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
   const getBackendConfig = useCallback((): BackendConfiguration => {
     const formValues = form.getFieldsValue(true) as DataImporterFormValues
-
     const existingConfig = (configData?.configuration ?? {}) as BackendConfiguration
     return transformFormToBackend(formValues, existingConfig)
   }, [form, configData])
@@ -129,13 +98,12 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
       loaderConfig: backendConfig.loaderConfig,
       interpreterConfig: backendConfig.interpreterConfig
     }
-
     return sourcePreviewConfig
   }, [getBackendConfig])
 
   useEffect(() => {
     if (!isHeadersSuccess || headersResult === undefined) return
-    const columnHeaders = (headersResult).columnHeaders ?? []
+    const columnHeaders = headersResult.columnHeaders ?? []
     const headers = columnHeaders.map((h: ColumnHeaderEntry) => ({
       value: String(h.dataIndex ?? h.id ?? ''),
       label: String(h.label ?? h.dataIndex ?? h.id ?? '')

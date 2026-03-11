@@ -10,16 +10,16 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Input, Select, Switch, Text } from '@pimcore/studio-ui-bundle/components'
+import { Text } from '@pimcore/studio-ui-bundle/components'
 import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig } from '../../../../../types'
 import {
   useBundleDataImporterClassificationstoreLoadAttributesQuery,
   useBundleDataImporterClassificationstoreLoadKeyNameQuery
 } from '../../../../../data-importer-api-slice.gen'
-import { PreviewPanel } from '../preview-panel/preview-panel'
-import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-target.styles'
 import { ClassificationStoreKeyModal } from './classification-store-key-modal/classification-store-key-modal'
+import { StepTargetPreviewActions } from './step-target-preview-actions'
+import { StepTargetFields } from './step-target-fields'
 
 export interface StepTargetProps {
   attributesMap: Record<string, ClassAttribute[]>
@@ -54,7 +54,6 @@ export const StepTarget = ({
 }: StepTargetProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { styles: shared } = useSharedStepStyles()
   const [keyModalOpen, setKeyModalOpen] = useState(false)
 
   const prevTransformationResultTypeRef = useRef<string | undefined>(transformationResultType)
@@ -197,235 +196,33 @@ export const StepTarget = ({
           </Text>
         </div>
 
-        {/* Fields */}
-        <div className={ styles.fieldsContainer }>
-          {/* Type */}
-          <div>
-            <div className={ styles.fieldLabel }>
-              { t('data-importer.mapping.advanced-modal.step-target.type') }
-            </div>
-            <div className={ styles.selectSkeletonWrapper }>
-              <Select
-                className={ styles.selectFull }
-                onChange={ (v: string) => {
-                  const previousType = dataTarget?.type
-                  const isSwitchingToClassificationStore =
-                    (v === 'classificationstore' || v === 'classificationstoreBatch') &&
-                    (previousType === 'direct' || previousType === 'manyToManyRelation')
-
-                  const nextSettings = {
-                    ...dataTarget?.settings,
-                    overwriteMode: v === 'manyToManyRelation' ? dataTarget?.settings?.overwriteMode : undefined,
-                    keyId: (v === 'classificationstore' || v === 'classificationstoreBatch') ? dataTarget?.settings?.keyId : undefined,
-                    fieldName: isSwitchingToClassificationStore ? undefined : dataTarget?.settings?.fieldName,
-                    language: isSwitchingToClassificationStore ? undefined : dataTarget?.settings?.language,
-                    writeIfTargetIsNotEmpty: v === 'direct' || v === 'manyToManyRelation'
-                      ? (dataTarget?.settings?.writeIfTargetIsNotEmpty ?? true)
-                      : dataTarget?.settings?.writeIfTargetIsNotEmpty,
-                    writeIfSourceIsEmpty: v === 'direct' || v === 'manyToManyRelation'
-                      ? (dataTarget?.settings?.writeIfSourceIsEmpty ?? true)
-                      : dataTarget?.settings?.writeIfSourceIsEmpty
-                  }
-
-                  onDataTargetChange({
-                    ...dataTarget,
-                    type: v,
-                    settings: nextSettings
-                  })
-                } }
-                options={ [
-                  { value: 'direct', label: t('data-importer.mapping.item.data-target.type.direct') },
-                  { value: 'classificationstore', label: t('data-importer.mapping.item.data-target.type.classificationstore') },
-                  { value: 'classificationstoreBatch', label: t('data-importer.mapping.item.data-target.type.classificationstoreBatch') },
-                  { value: 'manyToManyRelation', label: t('data-importer.mapping.item.data-target.type.manyToManyRelation') }
-                ] }
-                value={ dataTarget?.type }
-              />
-            </div>
-          </div>
-
-          { hasTypeError && (
-            <div className={ styles.typeError }>
-              { typeErrorMessage }
-            </div>
-          ) }
-
-          { !hasTypeError && (
-            <>
-              {/* Field name */}
-              <div>
-                <div className={ styles.fieldLabel }>
-                  { t('data-importer.mapping.advanced-modal.step-target.field-name') }
-                </div>
-                <div className={ styles.selectSkeletonWrapper }>
-                  <Select
-                    className={ styles.selectFull }
-                    loadingSkeleton={ isFetchingClassificationStoreAttributes }
-                    onChange={ (v: string) => {
-                      onDataTargetChange({
-                        ...dataTarget,
-                        settings: {
-                          ...dataTarget?.settings,
-                          fieldName: v,
-                          language: undefined,
-                          keyId: isClassificationStore || isClassificationStoreBatch ? undefined : dataTarget?.settings?.keyId
-                        }
-                      })
-                    } }
-                    options={ attributeOptions }
-                    showSearch
-                    value={ dataTarget?.settings?.fieldName }
-                  />
-                </div>
-              </div>
-
-              {/* Classification store key selector */}
-              { isClassificationStore && (
-                <div>
-                  <div className={ styles.fieldLabel }>
-                    { t('data-importer.mapping.advanced-modal.step-target.classification-store-key') }
-                  </div>
-                  <div className={ styles.classificationStoreKeyRow }>
-                    <Input
-                      className={ styles.classificationStoreKeyInput }
-                      readOnly
-                      value={ keyLabel }
-                    />
-                    <Button
-                      disabled={ !canOpenKeyModal }
-                      onClick={ () => { setKeyModalOpen(true) } }
-                      type="default"
-                    >
-                      { t('common.search') }
-                    </Button>
-                  </div>
-                </div>
-              ) }
-
-              {/* Language selector — only when the selected field is localized */}
-              { isLocalized && (
-                <div>
-                  <div className={ styles.fieldLabel }>
-                    { t('data-importer.mapping.item.data-target.language-placeholder') }
-                  </div>
-                  <div className={ styles.selectSkeletonWrapper }>
-                    <Select
-                      className={ styles.selectFull }
-                      onChange={ (v: string) => {
-                        onDataTargetChange({
-                          ...dataTarget,
-                          settings: { ...dataTarget?.settings, language: v }
-                        })
-                      } }
-                      options={ languageOptions }
-                      showSearch
-                      value={ dataTarget?.settings?.language }
-                    />
-                  </div>
-                </div>
-              ) }
-            </>
-          ) }
-
-          {/* Overwrite / write settings */}
-          { showWriteSettings && !hasTypeError && (
-            <>
-              <div className={ styles.overwriteLabel }>
-                { t('data-importer.mapping.advanced-modal.step-target.overwrite') }
-              </div>
-
-              {/* Switch: Write if target is not empty */}
-              <Switch
-                checked={ dataTarget?.settings?.writeIfTargetIsNotEmpty ?? true }
-                labelRight={ <span className={ styles.switchLabel }>{ t('data-importer.mapping.advanced-modal.write-if-target-not-empty') }</span> }
-                onChange={ (checked) => {
-                  onDataTargetChange({
-                    ...dataTarget,
-                    settings: {
-                      ...dataTarget?.settings,
-                      writeIfTargetIsNotEmpty: checked,
-                      writeIfSourceIsEmpty: !!checked
-                    }
-                  })
-                } }
-                size="small"
-                tooltip={ t('data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip') }
-              />
-
-              {/* Overwrite mode — only for manyToManyRelation when writeIfTargetIsNotEmpty is true */}
-              { showOverwriteMode && (
-                <div>
-                  <div className={ styles.fieldLabel }>
-                    { t('data-importer.mapping.advanced-modal.step-target.overwrite-mode') }
-                  </div>
-                  <div className={ styles.selectSkeletonWrapper }>
-                    <Select
-                      className={ styles.selectFull }
-                      onChange={ (v: string) => {
-                        onDataTargetChange({
-                          ...dataTarget,
-                          settings: { ...dataTarget?.settings, overwriteMode: v }
-                        })
-                      } }
-                      options={ [
-                        { value: 'replace', label: t('data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace') },
-                        { value: 'merge', label: t('data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge') }
-                      ] }
-                      value={ dataTarget?.settings?.overwriteMode }
-                    />
-                  </div>
-                </div>
-              ) }
-
-              {/* Switch: Write if source is empty */}
-              <Switch
-                checked={ dataTarget?.settings?.writeIfSourceIsEmpty ?? true }
-                disabled={ !(dataTarget?.settings?.writeIfTargetIsNotEmpty ?? true) }
-                labelRight={ <span className={ styles.switchLabel }>{ t('data-importer.mapping.advanced-modal.write-if-source-empty') }</span> }
-                onChange={ (checked) => {
-                  onDataTargetChange({
-                    ...dataTarget,
-                    settings: { ...dataTarget?.settings, writeIfSourceIsEmpty: checked }
-                  })
-                } }
-                size="small"
-                tooltip={ t('data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip') }
-              />
-            </>
-          ) }
-        </div>
+        <StepTargetFields
+          attributeOptions={ attributeOptions }
+          canOpenKeyModal={ canOpenKeyModal }
+          dataTarget={ dataTarget }
+          hasTypeError={ hasTypeError }
+          isClassificationStore={ isClassificationStore }
+          isClassificationStoreBatch={ isClassificationStoreBatch }
+          isFetchingClassificationStoreAttributes={ isFetchingClassificationStoreAttributes }
+          isLocalized={ isLocalized }
+          keyLabel={ keyLabel }
+          languageOptions={ languageOptions }
+          onDataTargetChange={ onDataTargetChange }
+          setKeyModalOpen={ setKeyModalOpen }
+          showOverwriteMode={ showOverwriteMode }
+          showWriteSettings={ showWriteSettings }
+          typeErrorMessage={ typeErrorMessage }
+        />
       </div>
 
-      {/* RIGHT: Preview Result + buttons */}
-      <div className={ styles.rightColumn }>
-        {/* Top: Preview Result panel — always mounted to preserve fetched data */}
-        <div className={ styles.previewWrapper }>
-          <PreviewPanel
-            baseConfig={ baseConfig }
-            configName={ configName }
-            currentMappingItem={ currentMappingItem }
-            mode="result"
-            refreshToken={ previewRefreshToken }
-          />
-        </div>
-
-        {/* Bottom: Previous step + Confirm mapping */}
-        <div className={ shared.navButtons }>
-          <button
-            className={ shared.outlineButton }
-            onClick={ onPrev }
-            type="button"
-          >
-            { t('data-importer.mapping.advanced-modal.step-target.previous-step') }
-          </button>
-          <Button
-            onClick={ onConfirm }
-            type="primary"
-          >
-            { t('data-importer.mapping.advanced-modal.step-target.confirm-mapping') }
-          </Button>
-        </div>
-      </div>
+      <StepTargetPreviewActions
+        baseConfig={ baseConfig }
+        configName={ configName }
+        currentMappingItem={ currentMappingItem }
+        onConfirm={ onConfirm }
+        onPrev={ onPrev }
+        previewRefreshToken={ previewRefreshToken }
+      />
 
       { isClassificationStore && classId !== undefined && dataTarget?.settings?.fieldName !== undefined && transformationResultType !== undefined && (
         <ClassificationStoreKeyModal
