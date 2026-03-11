@@ -13,7 +13,6 @@
 namespace Pimcore\Bundle\DataImporterBundle;
 
 use League\FlysystemBundle\FlysystemBundle;
-use Pimcore\Bundle\AdminBundle\PimcoreAdminBundle;
 use Pimcore\Bundle\ApplicationLoggerBundle\PimcoreApplicationLoggerBundle;
 use Pimcore\Bundle\DataHubBundle\PimcoreDataHubBundle;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\CleanupStrategyConfigurationFactoryPass;
@@ -61,7 +60,6 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     {
         $collection->addBundle(PimcoreDataHubBundle::class, 20);
         $collection->addBundle(new FlysystemBundle());
-        $collection->addBundle(new PimcoreAdminBundle(), 60);
         $collection->addBundle(
             PimcoreApplicationLoggerBundle::class,
             10

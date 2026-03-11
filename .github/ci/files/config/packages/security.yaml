@@ -14,6 +14,14 @@ security:
             provider: pimcore_admin
             http_basic: ~
 
+        firewalls:
+            pimcore_studio: '%pimcore_studio_backend.firewall_settings%'
+
+        access_control:
+            # Pimcore admin ACl  // DO NOT CHANGE!
+            - { path: ^/pimcore-studio/api/(docs|docs/json|translations|user/reset-password)$, roles: PUBLIC_ACCESS }
+            - { path: ^/pimcore-studio/api, roles: ROLE_PIMCORE_USER }
+
     role_hierarchy:
         # Pimcore admin  // DO NOT CHANGE!
         ROLE_PIMCORE_ADMIN: [ROLE_PIMCORE_USER]
