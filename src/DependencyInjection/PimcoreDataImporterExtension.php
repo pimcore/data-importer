@@ -67,7 +67,9 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
         if ($container->hasExtension('doctrine_migrations')) {
             $loader->load('doctrine_migrations.yml');
         }
-
+        if ($container->hasExtension('pimcore_studio_ui')) {
+            $loader->load('studio_ui.yaml');
+        }
         if ($container->hasExtension('pimcore_studio_backend')) {
             $loader->load('pimcore/studio_backend.yaml');
         }
