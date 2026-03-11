@@ -24,17 +24,14 @@ use Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass\ResolverC
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\PimcoreDataImporterExtension;
 use Pimcore\Extension\Bundle\AbstractPimcoreBundle;
 use Pimcore\Extension\Bundle\Installer\InstallerInterface;
-use Pimcore\Extension\Bundle\PimcoreBundleAdminClassicInterface;
-use Pimcore\Extension\Bundle\Traits\BundleAdminClassicTrait;
 use Pimcore\Extension\Bundle\Traits\PackageVersionTrait;
 use Pimcore\HttpKernel\Bundle\DependentBundleInterface;
 use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
-class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface, PimcoreBundleAdminClassicInterface
+class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface
 {
-    use BundleAdminClassicTrait;
     use PackageVersionTrait;
 
     const LOGGER_COMPONENT_PREFIX = 'DATA-IMPORTER ';
@@ -47,22 +44,6 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
     public function getContainerExtension(): ExtensionInterface
     {
         return new PimcoreDataImporterExtension();
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getCssPaths(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getJsPaths(): array
-    {
-        return [];
     }
 
     public function build(ContainerBuilder $container): void
