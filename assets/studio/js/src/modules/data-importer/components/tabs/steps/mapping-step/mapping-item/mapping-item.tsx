@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Droppable,
   type DragAndDropInfo,
@@ -445,8 +445,8 @@ export const MappingItemWithFilter = React.memo((props: MappingItemWithFilterPro
     <div className={ cx(isHidden && styles.hiddenItem) }>
       {/* Drop zone before this item */}
       <MappingDropZone
-        add={ add }
         acceptedDataIndex={ acceptedDataIndex }
+        add={ add }
         insertIndex={ insertIndex }
         onDropped={ onDropped }
         onInsertItem={ onInsertItem }
@@ -458,8 +458,8 @@ export const MappingItemWithFilter = React.memo((props: MappingItemWithFilterPro
           dataSourceIndex={ dataSourceIndex }
           expanded={ expanded }
           fieldIndex={ fieldIndex }
-          mappingId={ mappingId }
           itemLabel={ item.label }
+          mappingId={ mappingId }
           onToggle={ onToggle }
           selectedFieldName={ item.dataTarget?.settings?.fieldName }
           transformationResultType={ item.transformationResultType }

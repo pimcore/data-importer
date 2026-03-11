@@ -152,7 +152,7 @@ function getLoaderSettings (loaderConfig: LoaderConfig | undefined): Record<stri
 }
 
 function normalizeLoaderConfig (loaderConfig: LoaderConfig | undefined): LoaderConfig | undefined {
-  if (loaderConfig === undefined || loaderConfig.type === undefined) {
+  if (loaderConfig?.type === undefined) {
     return loaderConfig
   }
 
@@ -229,7 +229,7 @@ function normalizeLoaderConfig (loaderConfig: LoaderConfig | undefined): LoaderC
 }
 
 function normalizeInterpreterConfig (interpreterConfig: InterpreterConfig | undefined): InterpreterConfig | undefined {
-  if (interpreterConfig === undefined || interpreterConfig.type === undefined) {
+  if (interpreterConfig?.type === undefined) {
     return interpreterConfig
   }
 

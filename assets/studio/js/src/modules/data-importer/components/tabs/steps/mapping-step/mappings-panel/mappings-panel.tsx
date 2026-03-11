@@ -327,8 +327,8 @@ const MappingsPanelContent = React.memo(({
         {/* Drop zone after the last item */}
         { hasItems && (
           <MappingDropZone
-            add={ add }
             acceptedDataIndex={ activeFilter ?? undefined }
+            add={ add }
             insertIndex={ fields.length }
             onDropped={ onDropped }
             onInsertItem={ onInsertItem }
@@ -337,9 +337,9 @@ const MappingsPanelContent = React.memo(({
 
         { activeFilter !== null && (
           <FilteredEmptyState
-            add={ add }
             activeFilter={ activeFilter }
             activeFilterLabel={ activeFilterLabel }
+            add={ add }
             fields={ fields }
             onAddMappingForFilter={ () => { onAddMappingForFilter(add) } }
             onDropped={ onDropped }
@@ -428,6 +428,7 @@ export const MappingsPanel = ({
               expandedKeys={ expandedKeys }
               fields={ fields }
               flashIndex={ flashIndex }
+              getMappingIdByIndex={ getMappingIdByIndex }
               hasItems={ hasItems }
               onAddItem={ onAddItem }
               onAddMappingForFilter={ onAddMappingForFilter }
@@ -435,7 +436,6 @@ export const MappingsPanel = ({
               onCollapseAll={ onCollapseAll }
               onDropped={ handleDropped }
               onInsertItem={ onInsertItem }
-              getMappingIdByIndex={ getMappingIdByIndex }
               onNewKey={ onNewKey }
               onRemoveItem={ onRemoveItem }
               onToggleKey={ onToggleKey }

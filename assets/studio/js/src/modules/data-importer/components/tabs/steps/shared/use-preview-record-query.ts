@@ -57,7 +57,7 @@ export function usePreviewRecordQuery ({
     error,
     refetch
   } = useBundleDataImporterConfigLoadPreviewQuery(
-    request as NonNullable<typeof request>,
+    request!,
     {
       skip: !enabled || request === undefined,
       refetchOnMountOrArgChange: false

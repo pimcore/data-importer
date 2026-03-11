@@ -79,7 +79,7 @@ export const PreviewImportStep = ({ configName, isActive }: PreviewImportStepPro
   }, [currentRecordIndex])
 
   useEffect(() => {
-    if (previewError === undefined) return
+    if (previewError === undefined || previewError === null) return
     if (isNotFoundError(previewError)) return
     trackError(new ApiError(previewError))
   }, [previewError])
@@ -226,7 +226,7 @@ export const PreviewImportStep = ({ configName, isActive }: PreviewImportStepPro
 
       <ImportModal
         action={ `${getPrefix()}/bundle/data-importer/config/${configName}/upload-preview` }
-        onOpenChange={ setUploadModalOpen }
+        onOpenChange={ (nextOpen) => { setUploadModalOpen(nextOpen) } }
         onUploadSuccess={ () => {
           setUploadModalOpen(false)
           fetchPreview(0, { forceRefetch: true })

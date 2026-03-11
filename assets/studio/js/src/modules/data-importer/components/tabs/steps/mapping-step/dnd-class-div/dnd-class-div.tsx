@@ -16,7 +16,7 @@ import { useDroppable } from '@pimcore/studio-ui-bundle/components'
 // Use it wherever you want visual DnD feedback inside a <Droppable>.
 
 export interface DndClassDivProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   className?: string
 }
 

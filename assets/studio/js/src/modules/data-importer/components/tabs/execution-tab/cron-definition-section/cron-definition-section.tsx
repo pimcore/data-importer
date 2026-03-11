@@ -23,14 +23,12 @@ import debounce from 'lodash/debounce'
 
 const CRON_DEBOUNCE_MS = 500
 
-export interface CronDefinitionSectionProps {}
-
 /**
  * Cron definition form field with debounced server-side validation.
  * Uses antd Form.Item rules so that form.validateFields() blocks save when invalid.
  * While the result is in-flight a spinner is shown as input suffix — no red border.
  */
-export const CronDefinitionSection = (_props: CronDefinitionSectionProps): React.JSX.Element => {
+export const CronDefinitionSection = (): React.JSX.Element => {
   const { t } = useTranslation()
   const form = Form.useFormInstance()
   const rawCronValue = (Form.useWatch(['executionConfig', 'cronDefinition']) as string | undefined) ?? ''
@@ -39,7 +37,6 @@ export const CronDefinitionSection = (_props: CronDefinitionSectionProps): React
   const [debouncedCron, setDebouncedCron] = useState(rawCronValue)
   const [isDebouncing, setIsDebouncing] = useState(false)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const applyDebounced = useCallback(
     debounce((value: string) => {
       setDebouncedCron(value)
@@ -82,18 +79,18 @@ export const CronDefinitionSection = (_props: CronDefinitionSectionProps): React
   // Returns reject to block save when in-flight; reject with error message when invalid.
   const { t: tValidator } = useTranslation()
   const cronValidator = useMemo(() => ({
-    validator (_: unknown, value: string): Promise<void> {
-      if (!value || value.trim().length === 0) {
-        return Promise.resolve()
+    async validator (_: unknown, value: string): Promise<void> {
+      if (value === undefined || value.trim().length === 0) {
+        await Promise.resolve(); return
       }
       if (isDebouncing || isFetching || cronValidation === undefined) {
         // Block save silently — the spinner suffix communicates the pending state
-        return Promise.reject(new Error(''))
+        await Promise.reject(new Error('')); return
       }
-      if (cronValidation.isValid === false) {
-        return Promise.reject(new Error(cronValidation.message))
+      if (!cronValidation.isValid) {
+        await Promise.reject(new Error(cronValidation.message)); return
       }
-      return Promise.resolve()
+      await Promise.resolve()
     }
   }), [isDebouncing, isFetching, cronValidation, tValidator])
 

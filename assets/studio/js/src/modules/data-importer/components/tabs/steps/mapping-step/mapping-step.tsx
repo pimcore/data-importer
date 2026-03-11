@@ -201,7 +201,7 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
   }
 
   return (
-      <Content loading={ !initialLoadDone }>
+    <Content loading={ !initialLoadDone }>
       <div className={ styles.mappingLayout }>
         {/* Left: sources panel — fixed 450px */}
         <div className={ styles.mappingLayoutLeft }>
@@ -273,12 +273,12 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
               columnHeaderOptions={ columnHeaderOptions }
               configName={ configName }
               expandedKeys={ expandedKeys }
+              getMappingIdByIndex={ getMappingIdByIndex }
               onAddItem={ handleAddItem }
               onAddMappingForFilter={ handleAddMappingForFilter }
               onAutoFill={ handleAutoFill }
               onCollapseAll={ collapseAll }
               onInsertItem={ handleInsertItem }
-              getMappingIdByIndex={ getMappingIdByIndex }
               onNewKey={ handleNewKey }
               onRemoveItem={ handleRemoveItem }
               onToggleKey={ handleToggleKey }

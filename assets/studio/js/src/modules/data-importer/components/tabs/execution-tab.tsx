@@ -90,7 +90,9 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
     const result = await startImport({ name: configName })
 
     if ('error' in result) {
-      trackError(new ApiError(result.error))
+      if (result.error !== undefined) {
+        trackError(new ApiError(result.error))
+      }
       void messageApi.error(t('data-importer.execution.start-import.error'))
       return
     }
@@ -111,7 +113,9 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
     const result = await cancelExecution({ name: configName })
 
     if ('error' in result) {
-      trackError(new ApiError(result.error))
+      if (result.error !== undefined) {
+        trackError(new ApiError(result.error))
+      }
       void messageApi.error(t('data-importer.execution.cancel.error'))
       return
     }

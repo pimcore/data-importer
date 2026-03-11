@@ -30,6 +30,12 @@ function parseClassAttribute (raw: object): ClassAttribute {
   }
 }
 
+interface ColumnHeaderEntry {
+  id?: string
+  dataIndex?: string
+  label?: string
+}
+
 export interface UseMappingStepLoaderResult {
   columnHeaderOptions: Array<{ value: string, label: string }>
   initialLoadDone: boolean
@@ -74,7 +80,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     isError: isHeadersError,
     isSuccess: isHeadersSuccess
   } = useBundleDataImporterConfigLoadColumnHeadersQuery(
-    headersRequest as NonNullable<typeof headersRequest>,
+    headersRequest!,
     {
       skip: headersRequest === undefined,
       refetchOnMountOrArgChange: false
@@ -88,7 +94,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     isError: isPreviewError,
     isSuccess: isPreviewSuccess
   } = useBundleDataImporterConfigLoadPreviewQuery(
-    previewRequest as NonNullable<typeof previewRequest>,
+    previewRequest!,
     {
       skip: previewRequest === undefined,
       refetchOnMountOrArgChange: false
@@ -119,15 +125,18 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
   const getSourcePreviewConfig = useCallback((): BackendConfiguration => {
     const backendConfig = getBackendConfig()
-    return {
+    const sourcePreviewConfig: BackendConfiguration = {
       loaderConfig: backendConfig.loaderConfig,
       interpreterConfig: backendConfig.interpreterConfig
-    } as BackendConfiguration
+    }
+
+    return sourcePreviewConfig
   }, [getBackendConfig])
 
   useEffect(() => {
     if (!isHeadersSuccess || headersResult === undefined) return
-    const headers = ((headersResult as any).columnHeaders ?? []).map((h: any) => ({
+    const columnHeaders = (headersResult).columnHeaders ?? []
+    const headers = columnHeaders.map((h: ColumnHeaderEntry) => ({
       value: String(h.dataIndex ?? h.id ?? ''),
       label: String(h.label ?? h.dataIndex ?? h.id ?? '')
     }))
@@ -142,7 +151,8 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
   useEffect(() => {
     if (!isPreviewSuccess || previewResult === undefined) return
 
-    const rows = ((previewResult as any).dataPreview ?? []).map((row: Record<string, any>) => normalizeDataRow(row))
+    const dataPreview = (previewResult).dataPreview ?? []
+    const rows = dataPreview.map((row: Record<string, any>) => normalizeDataRow(row))
     setSourceRows(rows)
     setHasPreviewError(rows.length === 0)
   }, [isPreviewSuccess, previewResult])
@@ -205,7 +215,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
         const classIdFromFormSync = form.getFieldValue(['resolverConfig', 'dataObjectClassId']) as string | undefined
         const effectiveClassId = classIdFromFormSync ?? classIdFromConfig
         const backendConfig = (configData?.configuration ?? {}) as BackendConfiguration
-        const items: MappingConfigItem[] = (backendConfig.mappingConfig as MappingConfigItem[] | undefined) ?? []
+        const items: MappingConfigItem[] = (backendConfig.mappingConfig) ?? []
 
         const uniqueTypes = new Set<string | undefined>()
         if (effectiveClassId !== undefined && effectiveClassId !== '') {
@@ -233,7 +243,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
           attrResults.forEach((result, i) => {
             const trt = typesArray[i]
             const mapKey = (trt === undefined || trt === '' || trt === 'default') ? '__default__' : trt
-            const attrs = ((result as any).data?.attributes ?? []).map(parseClassAttribute)
+            const attrs = (result.data?.attributes ?? []).map(parseClassAttribute)
             newMap[mapKey] = attrs
           })
           setAttributesMap(newMap)

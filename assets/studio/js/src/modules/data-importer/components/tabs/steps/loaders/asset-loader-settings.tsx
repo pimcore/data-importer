@@ -25,8 +25,8 @@ export const AssetLoaderSettings = (): React.JSX.Element => {
       ] }
     >
       <ManyToOneRelationPath
-        allowedAssetTypes={ ['text', 'document', 'unknown'] }
         allowPathTextInput
+        allowedAssetTypes={ ['text', 'document', 'unknown'] }
         assetsAllowed
       />
     </Form.Item>

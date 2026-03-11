@@ -94,7 +94,7 @@ export const AdvancedMappingModal = ({
     isFetching: isCalculating,
     refetch: refetchCalculateType
   } = useBundleDataImporterConfigCalculateTransformationResultTypeQuery(
-    calculateTypeRequest as NonNullable<typeof calculateTypeRequest>,
+    calculateTypeRequest!,
     {
       skip: calculateTypeRequest === undefined,
       refetchOnMountOrArgChange: false

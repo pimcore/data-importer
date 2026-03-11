@@ -94,16 +94,9 @@ export const ClassificationStoreKeyModal = ({
 
   const selectedRows = selectedRowId !== null ? { [selectedRowId]: true } : undefined
 
-  const handleOpenChange = (nextOpen: boolean): void => {
-    if (!nextOpen) {
-      onClose()
-    }
-  }
-
   return (
     <Modal
       footer={ null }
-      onOpenChange={ handleOpenChange }
       onCancel={ onClose }
       open={ open }
       size="XL"

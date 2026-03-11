@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react'
-import { Form, Select } from '@pimcore/studio-ui-bundle/components'
+import { Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { filterByLabel } from '../../select-utils'
 

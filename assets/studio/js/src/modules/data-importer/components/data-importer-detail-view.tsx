@@ -57,7 +57,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     })
 
     if ('error' in response) {
-      throw response.error
+      throw new ApiError(response.error ?? {})
     }
 
     return { modificationDate: response.data?.modificationDate }
@@ -85,8 +85,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     {
       key: 'data-setup',
       label: t('data-importer.tabs.data-setup'),
-      children: <DataSetupTab configName={ configName } />,
-      fullHeight: true
+      children: <DataSetupTab configName={ configName } />
     },
     {
       key: 'execution',
@@ -99,8 +98,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     {
       key: 'import-logs',
       label: t('data-importer.tabs.import-logs'),
-      children: <ImportLogsTab configName={ configName } />,
-      fullHeight: true
+      children: <ImportLogsTab configName={ configName } />
     },
     {
       key: 'permissions',

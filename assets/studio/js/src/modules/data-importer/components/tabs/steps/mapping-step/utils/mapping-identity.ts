@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { Form, type formInstanceType } from '@pimcore/studio-ui-bundle/components'
+import { type formInstanceType } from '@pimcore/studio-ui-bundle/components'
 import { createMappingItemId, type MappingConfigItem } from '../../../../../types'
 
 export function ensureMappingId (item: MappingConfigItem): MappingConfigItem {

@@ -15,14 +15,14 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 export const CsvInterpreterSettings = (): React.JSX.Element => {
   const { t } = useTranslation()
 
-  const singleCharRule = (fieldLabel: string) => ({
-    validator (_: unknown, value: string | undefined): Promise<void> {
+  const singleCharRule = (fieldLabel: string): { validator: (_: unknown, value: string | undefined) => Promise<void> } => ({
+    async validator (_: unknown, value: string | undefined): Promise<void> {
       const normalized = value ?? ''
       if (normalized.length <= 1) {
-        return Promise.resolve()
+        await Promise.resolve(); return
       }
 
-      return Promise.reject(new Error(t('data-importer.interpreter.csv.single-char-only', { field: fieldLabel })))
+      await Promise.reject(new Error(t('data-importer.interpreter.csv.single-char-only', { field: fieldLabel })))
     }
   })
 

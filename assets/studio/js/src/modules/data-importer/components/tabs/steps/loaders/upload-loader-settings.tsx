@@ -69,7 +69,7 @@ export const UploadLoaderSettings = ({ configName }: UploadLoaderSettingsProps):
             message={ statusMessage }
             type={ statusType }
           />
-        ) }
+          ) }
 
       <Form.Item
         hidden

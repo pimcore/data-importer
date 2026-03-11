@@ -82,7 +82,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     isFetching: isResultFetching,
     isError: isResultError
   } = useBundleDataImporterConfigLoadTransformationResultQuery(
-    resultRequest as NonNullable<typeof resultRequest>,
+    resultRequest!,
     {
       skip: props.mode !== 'result' || resultRequest === undefined,
       refetchOnMountOrArgChange: false

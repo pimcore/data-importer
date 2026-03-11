@@ -164,7 +164,6 @@ export const StepTarget = ({
         }
       })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [writeIfNotEmpty, showWriteSettings])
 
   // Match ExtJS behavior: changing transformation result type invalidates previously selected classification store key.
@@ -181,7 +180,6 @@ export const StepTarget = ({
         }
       })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transformationResultType, isClassificationStore, isClassificationStoreBatch])
 
   return (
@@ -346,9 +344,7 @@ export const StepTarget = ({
                     settings: {
                       ...dataTarget?.settings,
                       writeIfTargetIsNotEmpty: checked,
-                      writeIfSourceIsEmpty: checked
-                        ? true
-                        : false
+                      writeIfSourceIsEmpty: !!checked
                     }
                   })
                 } }

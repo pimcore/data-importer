@@ -32,7 +32,7 @@ const enrichWithId = (item: TransformationPipelineItem): PipelineItemWithId => (
 })
 
 /** Strip the client-side _id before passing back to the parent */
-const stripId = ({ _id: _, ...rest }: PipelineItemWithId): TransformationPipelineItem => rest
+const stripId = ({ _id: _discardedId, ...rest }: PipelineItemWithId): TransformationPipelineItem => rest
 
 // ── StepTransformations ───────────────────────────────────────────────────────
 
@@ -141,9 +141,9 @@ export const StepTransformations = ({
     []
   )
 
-  const transformerDropdownItems = useMemo(() => {
+  const transformerDropdownItems = useMemo((): Array<{ key: string, label: string, children: Array<{ key: string, label: string }> }> => {
     const allTypes = transformerRegistry.getAllTypes()
-    const byGroup = (group: string) => allTypes
+    const byGroup = (group: string): Array<{ key: string, label: string }> => allTypes
       .filter(t => t.group === group)
       .map(t => ({ key: t.id, label: t.label }))
 
@@ -169,9 +169,8 @@ export const StepTransformations = ({
     setItems(next)
     // Clean up collapse state for removed item
     setCollapsedCards(prev => {
-      const updated = { ...prev }
-      delete updated[removed._id]
-      return updated
+      const { [removed._id]: _removed, ...rest } = prev
+      return rest
     })
     onPipelineChange(next.map(stripId))
   }
@@ -226,7 +225,7 @@ export const StepTransformations = ({
           <Dropdown
             menu={ {
               items: transformerDropdownItems,
-              onClick: ({ key }) => { addTransformer(key) }
+              onClick: ({ key }) => { addTransformer(String(key)) }
             } }
             trigger={ ['click'] }
           >
@@ -271,8 +270,10 @@ export const StepTransformations = ({
               strategy={ verticalListSortingStrategy }
             >
               { items.map((item, index) => {
-                const transformerType = transformerRegistry.getDynamicType(item.type)
+                const itemType = typeof item.type === 'string' ? item.type : ''
+                const transformerType = transformerRegistry.getDynamicType(itemType)
                 const isCollapsed = collapsedCards[item._id]
+                const itemSettings = (item.settings ?? {})
 
                 return (
                   <SortableCard
@@ -283,13 +284,13 @@ export const StepTransformations = ({
                     isCollapsed={ isCollapsed }
                     item={ item }
                     key={ item._id }
-                    label={ transformerType?.label ?? item.type }
+                    label={ transformerType?.label ?? itemType }
                     onRemove={ removeTransformer }
                     onToggleCollapse={ toggleCard }
                     removeTooltip={ t('data-importer.mapping.advanced-modal.transformer.remove') }
                   >
                     { transformerType?.renderSettings(
-                      item.settings ?? {},
+                      itemSettings,
                       (s) => { updateTransformerSettings(index, s) }
                     ) }
                   </SortableCard>
@@ -303,8 +304,10 @@ export const StepTransformations = ({
                 const activeIndex = items.findIndex(it => it._id === activeId)
                 if (activeIndex === -1) return null
                 const activeItem = items[activeIndex]
-                const transformerType = transformerRegistry.getDynamicType(activeItem.type)
+                const activeItemType = typeof activeItem.type === 'string' ? activeItem.type : ''
+                const transformerType = transformerRegistry.getDynamicType(activeItemType)
                 const isCollapsed = collapsedCards[activeItem._id]
+                const activeItemSettings = (activeItem.settings ?? {})
                 return (
                   <div className={ styles.transformerCardOverlay }>
                     <CardContent
@@ -313,13 +316,13 @@ export const StepTransformations = ({
                         : t('data-importer.mapping.collapse-all') }
                       index={ activeIndex }
                       isCollapsed={ isCollapsed }
-                      label={ transformerType?.label ?? activeItem.type }
+                      label={ transformerType?.label ?? activeItemType }
                       onRemove={ removeTransformer }
                       onToggleCollapse={ toggleCard }
                       removeTooltip={ t('data-importer.mapping.advanced-modal.transformer.remove') }
                     >
                       { transformerType?.renderSettings(
-                        activeItem.settings ?? {},
+                        activeItemSettings,
                         (s) => { updateTransformerSettings(activeIndex, s) }
                       ) }
                     </CardContent>
@@ -356,7 +359,10 @@ export const StepTransformations = ({
                   className={ shared.selectFull }
                   mode="multiple"
                   onBlur={ () => { setEditingSource(false) } }
-                  onChange={ (v) => { onDataSourceIndexChange(v); setEditingSource(false) } }
+                  onChange={ (v) => {
+                    onDataSourceIndexChange(Array.isArray(v) ? (v as string[]) : [])
+                    setEditingSource(false)
+                  } }
                   options={ columnHeaderOptions }
                   showSearch
                   value={ dataSourceIndex }

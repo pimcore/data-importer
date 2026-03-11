@@ -53,7 +53,7 @@ export const LoadDataObjectTransformerForm = ({ settings, onChange }: LoadDataOb
 
   const { data: attrData, isLoading: isLoadingAttributes } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     { classId, systemRead: true },
-    { skip: !classId || !isAttribute }
+    { skip: classId === '' || !isAttribute }
   )
   const attributes = useMemo(
     () => (attrData?.attributes ?? []).map((raw: object) => {

@@ -67,7 +67,7 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
   // Fetch attributes for loading strategy (attribute type) — keyed by resolver class
   const { data: loadingAttrData, isLoading: isLoadingLoadingAttrs } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     { classId: dataObjectClassId ?? '' },
-    { skip: !dataObjectClassId || loadingStrategyType !== 'attribute' }
+    { skip: dataObjectClassId === undefined || dataObjectClassId === '' || loadingStrategyType !== 'attribute' }
   )
   const loadingAttributes = useMemo(() => (loadingAttrData?.attributes ?? []).map(parseClassAttribute), [loadingAttrData])
   const loadingAttributeOptions = loadingAttributes.map((a) => ({ value: a.key, label: a.title }))
@@ -76,7 +76,7 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
   // Fetch attributes for findParent (create location strategy) — keyed by its own classId
   const { data: createFindParentAttrData, isLoading: isLoadingCreateFindParentAttrs } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     { classId: createFindParentClassId ?? '', systemRead: true },
-    { skip: !createFindParentClassId || createFindStrategy !== 'attribute' }
+    { skip: createFindParentClassId === undefined || createFindParentClassId === '' || createFindStrategy !== 'attribute' }
   )
   const createFindParentAttributes = useMemo(
     () => (createFindParentAttrData?.attributes ?? []).map(parseClassAttribute),
@@ -86,9 +86,9 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
   const createFindParentAttrIsLocalized = createFindParentAttributes.find((a) => a.key === createFindParentAttrName)?.localized ?? false
 
   // Fetch attributes for findParent (update location strategy) — keyed by its own classId
-  const { data: updateFindParentAttrData, isLoading: isLoadingUpdateFindParentAttrs } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
+  const { data: updateFindParentAttrData } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     { classId: updateFindParentClassId ?? '', systemRead: true },
-    { skip: !updateFindParentClassId || updateFindStrategy !== 'attribute' }
+    { skip: updateFindParentClassId === undefined || updateFindParentClassId === '' || updateFindStrategy !== 'attribute' }
   )
   const updateFindParentAttributes = useMemo(
     () => (updateFindParentAttrData?.attributes ?? []).map(parseClassAttribute),
@@ -136,38 +136,38 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
       <>
         <StepHeading>{ t('data-importer.resolver.title') }</StepHeading>
 
-      <DataImporterPanel>
-        <Form.Item
-          label={ t('data-importer.resolver.class') }
-          name={ ['resolverConfig', 'dataObjectClassId'] }
-          required
-        >
-          <Select
-            filterOption={ filterByLabel }
-            loadingSkeleton={ isLoadingClasses }
-            options={ classOptions }
-            placeholder={ t('data-importer.resolver.class-placeholder') }
-            showSearch
-          />
-        </Form.Item>
-      </DataImporterPanel>
+        <DataImporterPanel>
+          <Form.Item
+            label={ t('data-importer.resolver.class') }
+            name={ ['resolverConfig', 'dataObjectClassId'] }
+            required
+          >
+            <Select
+              filterOption={ filterByLabel }
+              loadingSkeleton={ isLoadingClasses }
+              options={ classOptions }
+              placeholder={ t('data-importer.resolver.class-placeholder') }
+              showSearch
+            />
+          </Form.Item>
+        </DataImporterPanel>
 
-      { /* ── Element Loading ──────────────────────────────────────────────── */ }
-      <DataImporterPanel title={ t('data-importer.resolver.element-loading') }>
-        <Form.Item
-          label={ t('data-importer.resolver.loading-strategy') }
-          name={ ['resolverConfig', 'loadingStrategy', 'type'] }
-          tooltip={ t('data-importer.resolver.loading-strategy.tooltip') }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ loadingStrategyOptions }
-            showSearch
-          />
-        </Form.Item>
+        { /* ── Element Loading ──────────────────────────────────────────────── */ }
+        <DataImporterPanel title={ t('data-importer.resolver.element-loading') }>
+          <Form.Item
+            label={ t('data-importer.resolver.loading-strategy') }
+            name={ ['resolverConfig', 'loadingStrategy', 'type'] }
+            tooltip={ t('data-importer.resolver.loading-strategy.tooltip') }
+          >
+            <Select
+              filterOption={ filterByLabel }
+              options={ loadingStrategyOptions }
+              showSearch
+            />
+          </Form.Item>
 
-        { /* id strategy */ }
-        { loadingStrategyType === 'id' && (
+          { /* id strategy */ }
+          { loadingStrategyType === 'id' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.loading-strategy.id') }
@@ -184,10 +184,10 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
 
-        { /* path strategy */ }
-        { loadingStrategyType === 'path' && (
+          { /* path strategy */ }
+          { loadingStrategyType === 'path' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.loading-strategy.path') }
@@ -204,10 +204,10 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
 
-        { /* attribute strategy */ }
-        { loadingStrategyType === 'attribute' && (
+          { /* attribute strategy */ }
+          { loadingStrategyType === 'attribute' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.loading-strategy.attribute') }
@@ -258,24 +258,24 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
-      </DataImporterPanel>
+          ) }
+        </DataImporterPanel>
 
-      { /* ── Element Creation ─────────────────────────────────────────────── */ }
-      <DataImporterPanel title={ t('data-importer.resolver.element-creation') }>
-        <Form.Item
-          label={ t('data-importer.resolver.create-location-strategy') }
-          name={ ['resolverConfig', 'createLocationStrategy', 'type'] }
-          tooltip={ t('data-importer.resolver.create-location-strategy.tooltip') }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ createLocationStrategyOptions }
-            showSearch
-          />
-        </Form.Item>
+        { /* ── Element Creation ─────────────────────────────────────────────── */ }
+        <DataImporterPanel title={ t('data-importer.resolver.element-creation') }>
+          <Form.Item
+            label={ t('data-importer.resolver.create-location-strategy') }
+            name={ ['resolverConfig', 'createLocationStrategy', 'type'] }
+            tooltip={ t('data-importer.resolver.create-location-strategy.tooltip') }
+          >
+            <Select
+              filterOption={ filterByLabel }
+              options={ createLocationStrategyOptions }
+              showSearch
+            />
+          </Form.Item>
 
-        { createLocationType === 'staticPath' && (
+          { createLocationType === 'staticPath' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.location-strategy.staticPath') }
@@ -295,9 +295,9 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
 
-        { createLocationType === 'findOrCreateFolder' && (
+          { createLocationType === 'findOrCreateFolder' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.location-strategy.findOrCreateFolder') }
@@ -321,9 +321,9 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               <Input placeholder={ t('data-importer.resolver.location-strategy.fallback-path-placeholder') } />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
 
-        { createLocationType === 'findParent' && (
+          { createLocationType === 'findParent' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.location-strategy.findParent') }
@@ -404,24 +404,24 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
-      </DataImporterPanel>
+          ) }
+        </DataImporterPanel>
 
-      { /* ── Element Location Update ──────────────────────────────────────── */ }
-      <DataImporterPanel title={ t('data-importer.resolver.element-location-update') }>
-        <Form.Item
-          label={ t('data-importer.resolver.location-update-strategy') }
-          name={ ['resolverConfig', 'locationUpdateStrategy', 'type'] }
-          tooltip={ t('data-importer.resolver.location-update-strategy.tooltip') }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ locationUpdateStrategyOptions }
-            showSearch
-          />
-        </Form.Item>
+        { /* ── Element Location Update ──────────────────────────────────────── */ }
+        <DataImporterPanel title={ t('data-importer.resolver.element-location-update') }>
+          <Form.Item
+            label={ t('data-importer.resolver.location-update-strategy') }
+            name={ ['resolverConfig', 'locationUpdateStrategy', 'type'] }
+            tooltip={ t('data-importer.resolver.location-update-strategy.tooltip') }
+          >
+            <Select
+              filterOption={ filterByLabel }
+              options={ locationUpdateStrategyOptions }
+              showSearch
+            />
+          </Form.Item>
 
-        { updateLocationType === 'staticPath' && (
+          { updateLocationType === 'staticPath' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.location-strategy.staticPath') }
@@ -441,9 +441,9 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
 
-        { updateLocationType === 'findOrCreateFolder' && (
+          { updateLocationType === 'findOrCreateFolder' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.location-strategy.findOrCreateFolder') }
@@ -467,9 +467,9 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               <Input placeholder={ t('data-importer.resolver.location-strategy.fallback-path-placeholder') } />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
 
-        { updateLocationType === 'findParent' && (
+          { updateLocationType === 'findParent' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.location-strategy.findParent') }
@@ -548,24 +548,24 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
-      </DataImporterPanel>
+          ) }
+        </DataImporterPanel>
 
-      { /* ── Element Publishing ───────────────────────────────────────────── */ }
+        { /* ── Element Publishing ───────────────────────────────────────────── */ }
         <DataImporterPanel title={ t('data-importer.resolver.element-publishing') }>
-        <Form.Item
-          label={ t('data-importer.resolver.publishing-strategy') }
-          name={ ['resolverConfig', 'publishingStrategy', 'type'] }
-          tooltip={ t('data-importer.resolver.publishing-strategy.tooltip') }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ publishingStrategyOptions }
-            showSearch
-          />
-        </Form.Item>
+          <Form.Item
+            label={ t('data-importer.resolver.publishing-strategy') }
+            name={ ['resolverConfig', 'publishingStrategy', 'type'] }
+            tooltip={ t('data-importer.resolver.publishing-strategy.tooltip') }
+          >
+            <Select
+              filterOption={ filterByLabel }
+              options={ publishingStrategyOptions }
+              showSearch
+            />
+          </Form.Item>
 
-        { publishingStrategyType === 'attributeBased' && (
+          { publishingStrategyType === 'attributeBased' && (
           <DataImporterPanel
             theme="fieldset"
             title={ t('data-importer.resolver.publishing-strategy.attributeBased') }
@@ -582,7 +582,7 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
               />
             </Form.Item>
           </DataImporterPanel>
-        ) }
+          ) }
         </DataImporterPanel>
       </>
     </FieldWidthProvider>

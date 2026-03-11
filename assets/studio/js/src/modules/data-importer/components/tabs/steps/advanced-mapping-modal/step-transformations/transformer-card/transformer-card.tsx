@@ -12,7 +12,7 @@ import React from 'react'
 import { IconButton } from '@pimcore/studio-ui-bundle/components'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
-import { type TransformationPipelineItem } from '../../../../../../../../../types'
+import { type TransformationPipelineItem } from '../../../../../../types'
 import { useStyles } from './transformer-card.styles'
 
 /** Pipeline item enriched with a stable client-side id for dnd-kit */
