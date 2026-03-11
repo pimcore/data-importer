@@ -62,9 +62,6 @@ App\ExpressionLanguage\MyFunctionsProvider:
         - { name: 'pimcore.datahub.data_importer.expression_language_provider' }
 ```
 
-> **Note:** If you also want the same functions available in **Calculated Value** fields,
-> add the `pimcore.calculated_value.expression_language_provider` tag as well.
-
 ## Using functions in an expression
 
 Once registered, the function name is available directly in any Symfony Expression
@@ -73,3 +70,4 @@ operator. Input column values are exposed as `attributes[0]`, `attributes[1]`, e
 ```
 myFunction(attributes[0])
 ```
+
