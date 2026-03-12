@@ -10,7 +10,8 @@
 
 /* eslint-disable max-lines */
 
-import React, { useEffect, useState } from 'react'import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import React, { useEffect, useState } from 'react'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
 import {
   useBundleDataImporterConfigLoadTransformationResultQuery
