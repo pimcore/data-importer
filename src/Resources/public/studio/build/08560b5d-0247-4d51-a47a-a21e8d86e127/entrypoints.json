@@ -1,0 +1,35 @@
+{
+  "entrypoints": {
+    "main": {
+      "js": [
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/359.3ba5f4b6.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/645.97b421d0.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/658.520c3151.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/668.92531b7e.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/272.4302db3d.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/109.63fc8f63.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/main.8e239e4d.js"
+      ],
+      "css": []
+    },
+    "pimcore_dataimporter_bundle": {
+      "js": [
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/456.81448ccb.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/359.3ba5f4b6.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/645.97b421d0.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/__federation_expose_default_export.1b15040a.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/658.520c3151.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/668.92531b7e.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/async/272.4302db3d.js",
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/static/js/remoteEntry.js"
+      ],
+      "css": []
+    },
+    "exposeRemote": {
+      "js": [
+        "/bundles/pimcoredataimporter/studio/build/08560b5d-0247-4d51-a47a-a21e8d86e127/exposeRemote.js"
+      ],
+      "css": []
+    }
+  }
+}
