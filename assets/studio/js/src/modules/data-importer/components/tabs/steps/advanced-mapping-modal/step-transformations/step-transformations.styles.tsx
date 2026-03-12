@@ -25,7 +25,7 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     /**
-     * Header row: "Transformations" title + "+ New" button + "Collapse all" link.
+     * Header row: "Transformations" title + "+ New" button.
      * No background — sits directly on the step content area.
      */
     listHeader: css`
@@ -38,17 +38,6 @@ export const useStyles = createStyles(({ css, token }) => {
       font-weight: 600;
       color: ${token.colorPrimaryText};
       flex: 1;
-    `,
-
-    collapseAllLink: css`
-      font-size: 12px;
-      color: ${token.colorPrimaryText};
-      cursor: pointer;
-      white-space: nowrap;
-
-      &:hover {
-        text-decoration: underline;
-      }
     `,
 
     /* Scrollable list of transformer cards */

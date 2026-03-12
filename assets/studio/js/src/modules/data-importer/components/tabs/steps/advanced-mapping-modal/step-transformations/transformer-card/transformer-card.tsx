@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { Flex, IconButton } from '@pimcore/studio-ui-bundle/components'
+import { CollapseItem, Flex, IconButton } from '@pimcore/studio-ui-bundle/components'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
 import { type TransformationPipelineItem } from '../../../../../../types'
@@ -25,72 +25,70 @@ export interface PipelineItemWithId extends TransformationPipelineItem {
 
 export interface CardContentProps {
   label: string
-  isCollapsed: boolean
   children: React.ReactNode
   /** When true the drag handle receives dnd-kit attributes/listeners */
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
   index: number
-  onToggleCollapse: (index: number) => void
   onRemove: (index: number) => void
   removeTooltip: string
-  collapseTooltip: string
 }
 
 export const CardContent = (props: CardContentProps): React.JSX.Element => {
   const {
     label,
-    isCollapsed,
     children,
     dragHandleProps,
     index,
-    onToggleCollapse,
     onRemove,
-    removeTooltip,
-    collapseTooltip
+    removeTooltip
   } = props
   const { styles } = useStyles()
 
-  return (
-    <>
+  const cardLabel = (
+    <Flex
+      align="center"
+      gap="mini"
+    >
+      {/* Drag handle — only this area is draggable */}
       <Flex
         align="center"
-        gap="mini"
+        className={ styles.dragHandle }
+        { ...dragHandleProps }
       >
-        {/* Drag handle — only this area is draggable */}
-        <Flex
-          align="center"
-          className={ styles.dragHandle }
-          { ...dragHandleProps }
-        >
-          <span className={ styles.dragHandleIcon }>{ '⠿' }</span>
-        </Flex>
-
-        {/* Label + inline collapse toggle */}
-        <span className={ styles.transformerLabel }>
-          { label }
-        </span>
-        <IconButton
-          className={ styles.transformerCollapseIcon }
-          icon={ { value: isCollapsed ? 'chevron-down' : 'chevron-up' } }
-          onClick={ () => { onToggleCollapse(index) } }
-          size="small"
-          tooltip={ { title: collapseTooltip } }
-          type="text"
-        />
-
-        {/* Remove — pushed to far right via margin-left: auto */}
-        <IconButton
-          className={ styles.transformerDeleteButton }
-          icon={ { value: 'trash' } }
-          onClick={ () => { onRemove(index) } }
-          size="small"
-          tooltip={ { title: removeTooltip } }
-          type="text"
-        />
+        <span className={ styles.dragHandleIcon }>{ '⠿' }</span>
       </Flex>
 
-      { !isCollapsed && children }
-    </>
+      <span className={ styles.transformerLabel }>
+        { label }
+      </span>
+    </Flex>
+  )
+
+  const removeButton = (
+    <IconButton
+      className={ styles.transformerDeleteButton }
+      icon={ { value: 'trash' } }
+      onClick={ (e) => { e.stopPropagation(); onRemove(index) } }
+      size="small"
+      tooltip={ { title: removeTooltip } }
+      type="text"
+    />
+  )
+
+  return (
+    <div className={ styles.transformerCardWrapper }>
+      <CollapseItem
+        bordered={ false }
+        defaultActive={ true }
+        extra={ removeButton }
+        hasContentSeparator={ false }
+        label={ cardLabel }
+        size="small"
+        theme="primary"
+      >
+        { children }
+      </CollapseItem>
+    </div>
   )
 }
 
@@ -100,12 +98,9 @@ export interface SortableCardProps {
   item: PipelineItemWithId
   index: number
   label: string
-  isCollapsed: boolean
   children: React.ReactNode
-  onToggleCollapse: (index: number) => void
   onRemove: (index: number) => void
   removeTooltip: string
-  collapseTooltip: string
 }
 
 export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
@@ -113,14 +108,10 @@ export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
     item,
     index,
     label,
-    isCollapsed,
     children,
-    onToggleCollapse,
     onRemove,
-    removeTooltip,
-    collapseTooltip
+    removeTooltip
   } = props
-  const { styles } = useStyles()
 
   const {
     attributes,
@@ -138,25 +129,19 @@ export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
   }
 
   return (
-    <Flex
-      className={ styles.transformerCard }
-      gap="mini"
+    <div
       ref={ setNodeRef }
       style={ style }
-      vertical
     >
       <CardContent
-        collapseTooltip={ collapseTooltip }
         dragHandleProps={ { ...attributes, ...listeners } }
         index={ index }
-        isCollapsed={ isCollapsed }
         label={ label }
         onRemove={ onRemove }
-        onToggleCollapse={ onToggleCollapse }
         removeTooltip={ removeTooltip }
       >
         { children }
       </CardContent>
-    </Flex>
+    </div>
   )
 }

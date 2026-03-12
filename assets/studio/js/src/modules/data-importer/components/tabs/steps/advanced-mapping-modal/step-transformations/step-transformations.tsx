@@ -100,7 +100,6 @@ export const StepTransformations = ({
     })
   }, [pipeline])
 
-  const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({})
   const [editingSource, setEditingSource] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
 
@@ -157,14 +156,8 @@ export const StepTransformations = ({
   }
 
   const removeTransformer = (index: number): void => {
-    const removed = items[index]
     const next = items.filter((_, i) => i !== index)
     setItems(next)
-    // Clean up collapse state for removed item
-    setCollapsedCards(prev => {
-      const { [removed._id]: _removed, ...rest } = prev
-      return rest
-    })
     onPipelineChange(next.map(stripId))
   }
 
@@ -172,26 +165,6 @@ export const StepTransformations = ({
     const next = items.map((it, i) => i === index ? { ...it, settings } : it)
     setItems(next)
     onPipelineChange(next.map(stripId))
-  }
-
-  // ── Collapse helpers ────────────────────────────────────────────────────────
-
-  const toggleCard = (index: number): void => {
-    const id = items[index]?._id
-    if (id === undefined) return
-    setCollapsedCards(prev => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const allCollapsed = items.length > 0 && items.every(it => collapsedCards[it._id])
-
-  const collapseAll = (): void => {
-    if (allCollapsed) {
-      setCollapsedCards({})
-    } else {
-      const next: Record<string, boolean> = {}
-      items.forEach(it => { next[it._id] = true })
-      setCollapsedCards(next)
-    }
   }
 
   // ── Source label helper ─────────────────────────────────────────────────────
@@ -216,7 +189,7 @@ export const StepTransformations = ({
         vertical
       >
 
-        {/* Header row: "Transformations" + "+ New" dropdown + "Collapse all" link */}
+        {/* Header row: "Transformations" title + "+ New" dropdown */}
         <Flex
           align="center"
           className={ styles.listHeader }
@@ -241,17 +214,6 @@ export const StepTransformations = ({
               { t('data-importer.mapping.add') }
             </IconTextButton>
           </Dropdown>
-
-          { items.length > 0 && (
-            <span
-              className={ styles.collapseAllLink }
-              onClick={ collapseAll }
-            >
-              { allCollapsed
-                ? t('data-importer.mapping.expand-all')
-                : t('data-importer.mapping.collapse-all') }
-            </span>
-          ) }
         </Flex>
 
         {/* Sortable list of transformer cards */}
@@ -268,12 +230,10 @@ export const StepTransformations = ({
 
           <TransformersDndList
             activeId={ activeId }
-            collapsedCards={ collapsedCards }
             items={ items }
             onDragEnd={ handleDragEnd }
             onDragStart={ handleDragStart }
             onRemove={ removeTransformer }
-            onToggleCollapse={ toggleCard }
             onUpdateSettings={ updateTransformerSettings }
             transformerRegistry={ transformerRegistry }
           />

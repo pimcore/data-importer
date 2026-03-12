@@ -12,11 +12,14 @@ import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ css, token }) => {
   return {
-    transformerCard: css`
-      border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadiusSM}px;
-      padding: 6px ${token.paddingXS}px;
-      background: ${token.colorFillAdditional};
+    transformerCardWrapper: css`
+      & .ant-collapse.collapse-item--theme-primary {
+        background-color: ${token.colorFillAdditional};
+      }
+
+      & .ant-collapse-content {
+        background-color: ${token.colorFillAdditional} !important;
+      }
     `,
 
     dragHandle: css`
@@ -42,13 +45,7 @@ export const useStyles = createStyles(({ css, token }) => {
       color: ${token.colorText};
     `,
 
-    transformerCollapseIcon: css`
-      color: ${token.colorText};
-      flex-shrink: 0;
-    `,
-
     transformerDeleteButton: css`
-      margin-left: auto;
       color: ${token.colorPrimary} !important;
 
       &:hover {
