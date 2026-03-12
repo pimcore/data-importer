@@ -135,68 +135,68 @@ export const MappingItemContent = ({
             { t('data-importer.mapping.item.destination') }
           </div>
 
-          { isAdvanced
-            ? (
-              <>
-                <Flex
-                  className={ styles.destinationTextBlock }
-                  vertical
-                >
-                  <span>{ selectedAttr?.title ?? selectedFieldName ?? '' }</span>
-                </Flex>
-                <Form.Item
-                  hidden
-                  name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
-                  style={ { display: 'none' } }
-                >
-                  <Input />
-                </Form.Item>
-              </>
-              )
-            : isInProgressState
-              ? (
-                <>
-                  <div className={ styles.requiresAdvancedHint }>
-                    { t('data-importer.mapping.item.requires-advanced-setup') }
-                  </div>
-                  <Form.Item
-                    hidden
-                    name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
-                    style={ { display: 'none' } }
-                  >
-                    <Input />
-                  </Form.Item>
-                </>
-                )
-              : (
-                <>
-                  <Form.Item
-                    name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
-                    style={ { marginBottom: 0 } }
-                  >
-                    <Select
-                      filterOption={ filterByLabel }
-                      options={ attributeOptions }
-                      placeholder={ t('data-importer.mapping.item.destination-placeholder') }
-                      showSearch
-                    />
-                  </Form.Item>
+          { isAdvanced && (
+            <>
+              <Flex
+                className={ styles.destinationTextBlock }
+                vertical
+              >
+                <span>{ selectedAttr?.title ?? selectedFieldName ?? '' }</span>
+              </Flex>
+              <Form.Item
+                hidden
+                name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
+                style={ { display: 'none' } }
+              >
+                <Input />
+              </Form.Item>
+            </>
+          ) }
 
-                  { isLocalized && (
-                    <Form.Item
-                      name={ [fieldIndex, 'dataTarget', 'settings', 'language'] }
-                      style={ { marginBottom: 0 } }
-                    >
-                      <Select
-                        filterOption={ filterByLabel }
-                        options={ languageOptions }
-                        placeholder={ t('data-importer.mapping.item.data-target.language-placeholder') }
-                        showSearch
-                      />
-                    </Form.Item>
-                  ) }
-                </>
-                ) }
+          { !isAdvanced && isInProgressState && (
+            <>
+              <div className={ styles.requiresAdvancedHint }>
+                { t('data-importer.mapping.item.requires-advanced-setup') }
+              </div>
+              <Form.Item
+                hidden
+                name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
+                style={ { display: 'none' } }
+              >
+                <Input />
+              </Form.Item>
+            </>
+          ) }
+
+          { !isAdvanced && !isInProgressState && (
+            <>
+              <Form.Item
+                name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
+                style={ { marginBottom: 0 } }
+              >
+                <Select
+                  filterOption={ filterByLabel }
+                  options={ attributeOptions }
+                  placeholder={ t('data-importer.mapping.item.destination-placeholder') }
+                  showSearch
+                />
+              </Form.Item>
+
+              { isLocalized && (
+                <Form.Item
+                  name={ [fieldIndex, 'dataTarget', 'settings', 'language'] }
+                  style={ { marginBottom: 0 } }
+                >
+                  <Select
+                    filterOption={ filterByLabel }
+                    options={ languageOptions }
+                    placeholder={ t('data-importer.mapping.item.data-target.language-placeholder') }
+                    showSearch
+                  />
+                </Form.Item>
+              ) }
+            </>
+          ) }
         </Flex>
       </Flex>
     </div>

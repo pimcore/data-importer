@@ -234,7 +234,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
                   isHighlighted && styles.tableRowHighlighted,
                   !isLastRow && styles.tableRowBorder
                 ) }
-                key={ i }
+                key={ row.dataIndex }
               >
                 <Flex
                   align="center"
@@ -287,7 +287,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
         { !(isResultLoading || isResultFetching) && previews.map((line, i) => (
           <div
             className={ styles.previewLine }
-            key={ i }
+            key={ `preview-${i}` }
           >
             { line }
           </div>

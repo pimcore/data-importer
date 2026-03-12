@@ -14,6 +14,12 @@ export interface DataRow {
   value: string
 }
 
+function stringifyData (data: unknown): string {
+  if (typeof data === 'string') return data
+  if (data !== undefined) return JSON.stringify(data)
+  return ''
+}
+
 /**
  * Normalizes a raw data-preview row returned by the backend into a flat
  * `DataRow` shape suitable for display in preview panels and the mapping step.
@@ -25,6 +31,6 @@ export function normalizeDataRow (raw: Record<string, any>): DataRow {
   return {
     dataIndex: String(raw.dataIndex ?? ''),
     label: String(raw.label ?? raw.dataIndex ?? ''),
-    value: typeof raw.data === 'string' ? raw.data : (raw.data !== undefined ? JSON.stringify(raw.data) : '')
+    value: stringifyData(raw.data)
   }
 }

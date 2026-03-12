@@ -27,11 +27,11 @@ export const ManualExecutionButton = (props: ManualExecutionButtonProps): React.
   const push = loaderType === 'push'
   const disabled = push || isDirty || isStarting
 
-  const tooltipTitle = isDirty
-    ? t('data-importer.execution.start-import.tooltip-dirty')
-    : push
-      ? t('data-importer.execution.start-import.tooltip-push')
-      : undefined
+  const tooltipTitle = ((): string | undefined => {
+    if (isDirty) return t('data-importer.execution.start-import.tooltip-dirty')
+    if (push) return t('data-importer.execution.start-import.tooltip-push')
+    return undefined
+  })()
 
   return (
     <Tooltip title={ tooltipTitle }>

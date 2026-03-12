@@ -18,6 +18,12 @@ export interface UploadLoaderSettingsProps {
   configName: string
 }
 
+function resolveStatusType (isError: boolean, hasUploadedFile: boolean): 'success' | 'warning' | 'error' {
+  if (isError) return 'error'
+  if (hasUploadedFile) return 'success'
+  return 'warning'
+}
+
 export const UploadLoaderSettings = ({ configName }: UploadLoaderSettingsProps): React.JSX.Element => {
   const { t } = useTranslation()
   const form = Form.useFormInstance()
@@ -50,9 +56,7 @@ export const UploadLoaderSettings = ({ configName }: UploadLoaderSettingsProps):
   const hasUploadedFile = fileStatus?.exists === true
   const isCheckingStatus = isLoading || (isFetching && fileStatus === undefined)
 
-  const statusType: 'success' | 'warning' | 'error' = isError
-    ? 'error'
-    : (hasUploadedFile ? 'success' : 'warning')
+  const statusType = resolveStatusType(isError, hasUploadedFile)
   const statusMessage = fileStatus?.message ?? (hasUploadedFile
     ? t('data-importer.loader.upload.file-uploaded')
     : t('data-importer.loader.upload.no-file'))
