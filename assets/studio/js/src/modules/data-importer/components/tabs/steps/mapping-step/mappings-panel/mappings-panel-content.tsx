@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
-import { Divider, Flex, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
+import { Button, Divider, Flex, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
 import { useStyles } from '../mapping-step.styles'
@@ -175,14 +175,16 @@ export const MappingsPanelContent = React.memo(({
           </IconTextButton>
 
           { hasItems && (
-            <span
-              className={ styles.collapseAllLink }
+            <Button
               onClick={ () => { onCollapseAll(visibleKeys) } }
+              size="small"
+              style={ { marginLeft: 'auto' } }
+              type="link"
             >
               { allVisibleCollapsed
                 ? t('data-importer.mapping.expand-all')
                 : t('data-importer.mapping.collapse-all') }
-            </span>
+            </Button>
           ) }
         </Flex>
       </Flex>

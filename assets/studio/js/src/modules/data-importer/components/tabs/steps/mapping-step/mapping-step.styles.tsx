@@ -88,15 +88,6 @@ export const useStyles = createStyles(({ css, token }) => {
       margin: 0;
     `,
 
-    resetViewLink: css`
-      color: ${token.colorPrimary};
-      cursor: pointer;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    `,
-
     // ── Source row cards (Figma design) ───────────────────────────────────
 
     // Outer wrapper: left-border accent + card shadow + radius
@@ -267,16 +258,6 @@ export const useStyles = createStyles(({ css, token }) => {
     mappingsDivider: css`
       margin: 0;
       height: 16px;
-    `,
-
-    collapseAllLink: css`
-      color: ${token.colorPrimary};
-      cursor: pointer;
-      margin-left: auto;
-
-      &:hover {
-        text-decoration: underline;
-      }
     `,
 
     mappingsContent: css`

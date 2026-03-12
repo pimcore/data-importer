@@ -11,6 +11,7 @@
 import React, { useMemo } from 'react'
 import {
   Badge,
+  Button,
   Draggable,
   Flex,
   Form,
@@ -59,7 +60,6 @@ export const SourcesPanel = ({
       (values.mappingConfig ?? []).map((item) => item.dataSourceIndex ?? [])
   )
 
-  // Count how many mapping items reference each dataIndex
   const mappingCountByDataIndex = useMemo<Record<string, number>>(() => {
     const counts: Record<string, number> = {}
     ;(dataSourceIndices ?? []).forEach((indices: string[]) => {
@@ -78,7 +78,6 @@ export const SourcesPanel = ({
       className={ styles.sourcesPanel }
       vertical
     >
-      {/* Header */}
       <Flex
         align="center"
         className={ styles.sourcesHeader }
@@ -88,16 +87,16 @@ export const SourcesPanel = ({
           { t('data-importer.mapping.sources.title') }
         </Text>
         { isFilterActive && (
-          <span
-            className={ styles.resetViewLink }
+          <Button
             onClick={ () => { onSetFilter(null) } }
+            size="small"
+            type="link"
           >
             { t('data-importer.mapping.sources.reset-view') }
-          </span>
+          </Button>
         ) }
       </Flex>
 
-      {/* Source rows or empty state */}
       <Flex
         className={ styles.panelScrollable }
         vertical
@@ -124,8 +123,6 @@ export const SourcesPanel = ({
               const isFaded = isFilterActive && activeFilter !== row.dataIndex
 
               const handleRowClick = (): void => {
-                // Any row click toggles the filter for that source.
-                // If this row is already the active filter, clear it.
                 onSetFilter(activeFilter === row.dataIndex ? null : row.dataIndex)
               }
 
@@ -142,13 +139,11 @@ export const SourcesPanel = ({
                       data: { dataIndex: row.dataIndex, label: row.label }
                     } }
                   >
-                    {/* Entire inner row is clickable */}
                     <Flex
                       align="center"
                       className={ `${styles.sourceRowInner}${isMapped ? ` ${styles.sourceRowInnerMapped}` : ` ${styles.sourceRowInnerUnmapped}`}` }
                       onClick={ handleRowClick }
                     >
-                      {/* Left: tag + badge (mapped) OR just tag (unmapped) */}
                       <Flex
                         align="center"
                         className={ styles.sourceRowTagArea }
@@ -188,7 +183,6 @@ export const SourcesPanel = ({
                         ) }
                       </Flex>
 
-                      {/* Right: preview value */}
                       <span
                         className={ styles.sourceValue }
                         title={ row.value }

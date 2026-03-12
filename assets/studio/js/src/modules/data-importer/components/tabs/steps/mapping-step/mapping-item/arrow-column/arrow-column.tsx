@@ -74,9 +74,7 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
       justify="flex-start"
       vertical
     >
-      {/* Spacer matching label height + gap */}
       <div className={ styles.arrowLabelSpacer } />
-      {/* Arrow centred within the select row */}
       <Flex
         align="center"
         className={ styles.arrowSelectRow }

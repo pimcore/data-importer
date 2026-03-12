@@ -161,7 +161,6 @@ export const StepTransformations = ({
       gap="extra-small"
     >
 
-      {/* LEFT: Transformations list */}
       <Flex
         className={ styles.leftColumn }
         gap="extra-small"

@@ -187,12 +187,10 @@ export const StepTarget = ({
       gap="extra-small"
     >
 
-      {/* LEFT: Data Target config */}
       <Flex
         className={ styles.leftColumn }
         vertical
       >
-        {/* Header bar */}
         <Flex
           align="center"
           className={ styles.leftHeader }

@@ -44,7 +44,6 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
       align="center"
       gap="mini"
     >
-      {/* Drag handle */}
       <Flex
         align="center"
         className={ styles.dragHandle }

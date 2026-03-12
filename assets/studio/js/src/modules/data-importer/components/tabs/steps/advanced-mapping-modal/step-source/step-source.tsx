@@ -36,12 +36,10 @@ export const StepSource = ({
 
   return (
     <>
-      {/* Two-column layout */}
       <Flex
         className={ styles.twoColumnLayout }
         gap="extra-small"
       >
-        {/* LEFT: Source Attribute(s) */}
         <Flex
           className={ styles.leftColumn }
           gap={ 6 }
@@ -83,11 +81,10 @@ export const StepSource = ({
         </Flex>
       </Flex>
 
-      {/* Next step button */}
       <Flex
-        className={ styles.footer }
-        justify="flex-end"
-      >
+          className={ styles.footer }
+          justify="flex-end"
+        >
         <button
           className={ shared.outlineButton }
           onClick={ onNext }
