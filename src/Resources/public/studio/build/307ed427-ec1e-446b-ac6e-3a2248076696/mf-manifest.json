@@ -22,7 +22,7 @@
     "globalName": "pimcore_dataimporter_bundle",
     "pluginVersion": "0.14.3",
     "prefetchInterface": false,
-    "publicPath": "/bundles/pimcoredataimporter/studio/build/d071e073-0dab-41d1-a7b4-47bdfc2b168b/"
+    "publicPath": "/bundles/pimcoredataimporter/studio/build/307ed427-ec1e-446b-ac6e-3a2248076696/"
   },
   "shared": [
     {
@@ -55,6 +55,25 @@
           "async": [],
           "sync": [
             "static/js/async/645.97b421d0.js"
+          ]
+        },
+        "css": {
+          "async": [],
+          "sync": []
+        }
+      }
+    },
+    {
+      "id": "pimcore_dataimporter_bundle:classnames",
+      "name": "classnames",
+      "version": "2.5.1",
+      "singleton": true,
+      "requiredVersion": "^2.5.1",
+      "assets": {
+        "js": {
+          "async": [],
+          "sync": [
+            "static/js/async/67.5c1703b3.js"
           ]
         },
         "css": {
@@ -213,7 +232,7 @@
           "sync": [
             "static/js/async/359.3ba5f4b6.js",
             "static/js/async/456.81448ccb.js",
-            "static/js/async/__federation_expose_default_export.8830b431.js"
+            "static/js/async/__federation_expose_default_export.db0f0441.js"
           ],
           "async": []
         },
