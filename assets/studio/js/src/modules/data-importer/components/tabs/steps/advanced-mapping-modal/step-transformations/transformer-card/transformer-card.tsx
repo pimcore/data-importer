@@ -79,7 +79,7 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
     <div className={ styles.transformerCardWrapper }>
       <CollapseItem
         bordered={ false }
-        defaultActive={ true }
+        defaultActive
         extra={ removeButton }
         hasContentSeparator={ false }
         label={ cardLabel }

@@ -27,7 +27,6 @@ export interface TransformersDndListProps {
   onUpdateSettings: (index: number, settings: Record<string, any>) => void
 }
 
-
 export const TransformersDndList = ({
   items,
   activeId,
