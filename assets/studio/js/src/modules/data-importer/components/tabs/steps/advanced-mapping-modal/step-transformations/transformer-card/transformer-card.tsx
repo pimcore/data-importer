@@ -15,18 +15,13 @@ import { useSortable } from '@dnd-kit/sortable'
 import { type TransformationPipelineItem } from '../../../../../../types'
 import { useStyles } from './transformer-card.styles'
 
-/** Pipeline item enriched with a stable client-side id for dnd-kit */
 export interface PipelineItemWithId extends TransformationPipelineItem {
   _id: string
 }
 
-// ── CardContent ────────────────────────────────────────────────────────────────
-// Renders the visual card body; used both by SortableCard and the DragOverlay.
-
 export interface CardContentProps {
   label: string
   children: React.ReactNode
-  /** When true the drag handle receives dnd-kit attributes/listeners */
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>
   index: number
   onRemove: (index: number) => void
@@ -49,7 +44,7 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
       align="center"
       gap="mini"
     >
-      {/* Drag handle — only this area is draggable */}
+      {/* Drag handle */}
       <Flex
         align="center"
         className={ styles.dragHandle }
@@ -91,8 +86,6 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
     </div>
   )
 }
-
-// ── SortableCard ──────────────────────────────────────────────────────────────
 
 export interface SortableCardProps {
   item: PipelineItemWithId

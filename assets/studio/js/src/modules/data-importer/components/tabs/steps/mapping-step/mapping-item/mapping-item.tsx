@@ -42,7 +42,6 @@ export interface MappingItemProps {
   dataSourceIndex: string[] | undefined
   transformationResultType: string | undefined
   selectedFieldName: string | undefined
-  // Pre-loaded class attributes keyed by transformationResultType
   attributesMap: Record<string, ClassAttribute[]>
 }
 
@@ -72,9 +71,6 @@ export const MappingItem = React.memo(({
     [settings.validLanguages]
   )
 
-  // ── Panel state derivation ──────────────────────────────────────────────
-  // All values come from props (derived from parent's single Form.useWatch),
-  // so they are correct on the very first render — no staggered useWatch updates.
   const sourceCount = (dataSourceIndex ?? []).length
   const hasSource = sourceCount > 0
   const hasDestination = selectedFieldName !== undefined && selectedFieldName !== ''
@@ -82,17 +78,13 @@ export const MappingItem = React.memo(({
     transformationResultType !== '' &&
     transformationResultType !== 'default'
 
-  // warning: source is set but destination is still empty
   const isWarningState = hasSource && !hasDestination
-  // inProgress: multiple sources and destination not yet configured
   const isInProgressState = sourceCount > 1 && !hasDestination
 
   const getCurrentIndexByMappingId = useCallback((): number => {
     return findMappingIndexById(form, mappingId)
   }, [form, mappingId])
 
-  // Auto-fill label from the first selected source column when label is still empty.
-  // Uses mappingId-based lookup so index shifts cannot write into wrong items.
   useEffect(() => {
     const index = getCurrentIndexByMappingId()
     if (index < 0) return
@@ -109,8 +101,6 @@ export const MappingItem = React.memo(({
     }
   }, [columnHeaderOptions, form, getCurrentIndexByMappingId])
 
-  // Look up pre-loaded attributes from attributesMap — no RTK Query hook needed,
-  // so data is available on the very first render (no one-frame pop-in).
   const attrMapKey = resolveAttrMapKey(transformationResultType)
   const attributes: ClassAttribute[] = attributesMap[attrMapKey] ?? []
   const attributeOptions = useMemo(

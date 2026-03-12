@@ -47,12 +47,9 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
     getMappingConfig
   } = useMappingStepLoader(configName, isActive)
 
-  // expandedKeys: explicit Set of field.key values that are expanded.
-  // Empty set on init = all collapsed. New items add their key on creation.
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<number> | 'all'>(new Set())
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
 
-  // Derive active filter label from sourceRows for display in empty-state message
   const activeFilterLabel = useMemo(() => {
     if (activeFilter === null) return null
     return sourceRows.find((r) => r.dataIndex === activeFilter)?.label ?? activeFilter
@@ -61,7 +58,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
   const collapseAll = (visibleKeys: number[]): void => {
     setExpandedKeys((prev) => {
       const prevSet = prev === 'all' ? new Set(visibleKeys) : prev
-      // Toggle: if ALL visible keys are already collapsed, expand them; otherwise collapse them all
       const allCollapsed = visibleKeys.every((k) => !prevSet.has(k))
       if (allCollapsed) {
         const next = new Set(prevSet)
@@ -75,9 +71,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
     })
   }
 
-  // Called when the user clicks a single panel header to toggle collapse.
-  // allFieldKeys is the current full list of field keys from Form.List,
-  // needed to transition from the 'all' sentinel to an explicit Set.
   const handleToggleKey = (key: number, allFieldKeys: number[]): void => {
     setExpandedKeys((prev) => {
       const prevSet = prev === 'all' ? new Set(allFieldKeys) : new Set(prev)
@@ -100,10 +93,8 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
   }
 
   const handleRemoveItem = (remove: (index: number) => void, index: number): void => {
-    // Before removing, check if the active filter would become empty after deletion
     if (activeFilter !== null) {
       const currentItems = getMappingConfig()
-      // Items remaining after this removal
       const remaining = currentItems.filter((_, i) => i !== index)
       const stillReferenced = remaining.some((item) =>
         (item.dataSourceIndex ?? []).includes(activeFilter)
@@ -116,10 +107,7 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
   }
 
   const handleAddItem = (add: (value?: MappingConfigItem, insertIndex?: number) => void, count: number): void => {
-    // A ref shared between this closure and the modal content component.
-    // The component writes into it on every Select change; we read it in onOk.
     const selectedRef: React.MutableRefObject<string | undefined> = { current: undefined }
-    // The errorRef lets us trigger error display inside SourcePickerContent from onOk
     const errorRef: React.MutableRefObject<((show: boolean) => void) | undefined> = { current: undefined }
 
     modal.confirm({
@@ -136,7 +124,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
         const dataIndex = selectedRef.current
         if (dataIndex === undefined) {
           errorRef.current?.(true)
-          // Returning a rejected promise keeps the modal open
           return await Promise.reject(new Error('source required'))
         }
         const label = columnHeaderOptions.find((o) => o.value === dataIndex)?.label ?? dataIndex
@@ -190,7 +177,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
     form.setFieldValue('mappingConfig', [...currentItems, newItem], { triggerChange: true })
   }
 
-  // Called from FilteredEmptyState "Add" button: creates a mapping pre-filled with the active filter source
   const handleAddMappingForFilter = (add: (value?: MappingConfigItem, insertIndex?: number) => void): void => {
     if (activeFilter === null) return
     const label = activeFilterLabel ?? activeFilter
@@ -204,7 +190,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
   return (
     <Content loading={ !initialLoadDone }>
       <Flex className={ styles.mappingLayout }>
-        {/* Left: sources panel — fixed 450px */}
         <div className={ styles.mappingLayoutLeft }>
           <SourcesPanel
             activeFilter={ activeFilter }
@@ -216,7 +201,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
           />
         </div>
 
-        {/* Center: 46px gap column with sticky arrow */}
         <Flex
           align="center"
           className={ styles.mappingLayoutCenter }
@@ -271,7 +255,6 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
           </Flex>
         </Flex>
 
-        {/* Right: mappings panel — fills remaining space */}
         <div className={ styles.mappingLayoutRight }>
           <FieldWidthProvider fieldWidthValues={ { small: 9999, medium: 9999, large: 9999 } }>
             <MappingsPanel

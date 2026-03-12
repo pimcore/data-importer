@@ -14,8 +14,6 @@ import { type MappingConfigItem, type ClassAttribute } from '../../../../../type
 import { useStyles } from '../mapping-step.styles'
 import { MappingsPanelContent } from './mappings-panel-content'
 
-// ── MappingsPanel ──────────────────────────────────────────────────────────
-
 export interface MappingsPanelProps {
   classId: string | undefined
   configName: string
@@ -57,7 +55,6 @@ export const MappingsPanel = ({
 }: MappingsPanelProps): React.JSX.Element => {
   const { styles } = useStyles()
 
-  // Track which array index was most recently inserted via drop, to flash it.
   const [flashIndex, setFlashIndex] = useState<number | null>(null)
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -75,8 +72,6 @@ export const MappingsPanel = ({
       <Form.List name="mappingConfig">
         { (fields, { add, remove }) => {
           const hasItems = fields.length > 0
-          // allVisibleCollapsed: true only when expandedKeys is an explicit Set and none
-          // of the fields are in it. When expandedKeys === 'all', nothing is collapsed.
           const allVisibleCollapsed = expandedKeys !== 'all' && fields.every((f) => !expandedKeys.has(f.key))
 
           return (

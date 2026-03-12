@@ -24,16 +24,12 @@ import { type PipelineItemWithId } from './transformer-card/transformer-card'
 import { TransformersDndList } from './transformers-dnd-list'
 import { StepTransformationsRightColumn } from './step-transformations-right-column'
 
-/** Enrich a raw pipeline item with a fresh UUID */
 const enrichWithId = (item: TransformationPipelineItem): PipelineItemWithId => ({
   ...item,
   _id: uuid()
 })
 
-/** Strip the client-side _id before passing back to the parent */
 const stripId = ({ _id: _discardedId, ...rest }: PipelineItemWithId): TransformationPipelineItem => rest
-
-// ── StepTransformations ───────────────────────────────────────────────────────
 
 export interface StepTransformationsProps {
   configName: string
@@ -67,8 +63,6 @@ export const StepTransformations = ({
   const { t } = useTranslation()
   const { styles } = useStyles()
 
-  // ── Internal state ──────────────────────────────────────────────────────────
-
   /**
    * Local array with stable UUIDs attached.
    * Synced with `pipeline` prop: new items get a fresh UUID; existing items
@@ -78,17 +72,12 @@ export const StepTransformations = ({
     pipeline.map(enrichWithId)
   )
 
-  /**
-   * Track the previous pipeline reference so we can detect external changes
-   * (e.g. parent resets the pipeline) and re-sync without losing existing IDs.
-   */
   const prevPipelineRef = useRef(pipeline)
 
   useEffect(() => {
     if (pipeline === prevPipelineRef.current) return
     prevPipelineRef.current = pipeline
 
-    // Merge: keep existing _id for unchanged positions, add fresh UUID for new items
     setItems(prev => {
       return pipeline.map((item, i) => {
         const existing = prev[i]
@@ -102,8 +91,6 @@ export const StepTransformations = ({
 
   const [editingSource, setEditingSource] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
-
-  // ── DnD setup ───────────────────────────────────────────────────────────────
 
   const handleDragStart = (event: DragStartEvent): void => {
     setActiveId(String(event.active.id))
@@ -126,8 +113,6 @@ export const StepTransformations = ({
     onPipelineChange(next.map(stripId))
   }
 
-  // ── Registry ────────────────────────────────────────────────────────────────
-
   const transformerRegistry = useMemo(
     () => container.get<DynamicTypeTransformerRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Registry']),
     []
@@ -145,8 +130,6 @@ export const StepTransformations = ({
       { key: 'loadImport', label: t('data-importer.mapping.advanced-modal.transformer.group.load-import'), children: byGroup('loadImport') }
     ]
   }, [transformerRegistry])
-
-  // ── Pipeline mutations ──────────────────────────────────────────────────────
 
   const addTransformer = (type: string): void => {
     const newItem = enrichWithId({ type, settings: {} })
@@ -167,14 +150,10 @@ export const StepTransformations = ({
     onPipelineChange(next.map(stripId))
   }
 
-  // ── Source label helper ─────────────────────────────────────────────────────
-
   const getSourceLabel = (value: string): string => {
     const opt = columnHeaderOptions.find(o => o.value === value)
     return opt?.label ?? value
   }
-
-  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <Flex
@@ -189,7 +168,6 @@ export const StepTransformations = ({
         vertical
       >
 
-        {/* Header row: "Transformations" title + "+ New" dropdown */}
         <Flex
           align="center"
           className={ styles.listHeader }
@@ -216,7 +194,6 @@ export const StepTransformations = ({
           </Dropdown>
         </Flex>
 
-        {/* Sortable list of transformer cards */}
         <Flex
           className={ styles.itemsList }
           gap={ 6 }

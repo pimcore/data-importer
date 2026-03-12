@@ -244,9 +244,6 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     interpreterConfigType
   ])
 
-  // Runtime watcher: if a mapping item's transformationResultType changes to a value
-  // not yet in attributesMap, fetch it and merge it in. This handles the case where the
-  // user changes a mapping's advanced settings after initial load.
   useEffect(() => {
     const effectiveClassId = classId
     if (effectiveClassId === undefined || effectiveClassId === '' || !initialLoadDone) return

@@ -19,8 +19,6 @@ import { StepTransformations } from './step-transformations/step-transformations
 import { StepTarget } from './step-target/step-target'
 import { useStyles } from './advanced-mapping-modal.styles'
 
-// ── Types ─────────────────────────────────────────────────────────────────
-
 export type { ClassAttribute }
 
 export interface AdvancedMappingModalProps {
@@ -37,8 +35,6 @@ export interface AdvancedMappingModalProps {
   /** Saved loaderConfig + interpreterConfig + resolverConfig from the form — needed for the preview backend call */
   baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
 }
-
-// ── Main modal ─────────────────────────────────────────────────────────────
 
 export const AdvancedMappingModal = ({
   open,
@@ -59,13 +55,10 @@ export const AdvancedMappingModal = ({
     [settings.validLanguages]
   )
 
-  // Local copy of the item being edited
   const [localItem, setLocalItem] = useState<MappingConfigItem>(() => structuredClone(item))
 
-  // Track which sections are expanded
   const [expanded, setExpanded] = useState({ source: true, transformations: false, target: false })
 
-  // Incrementing token — bump on every pipeline change to trigger PreviewResultPanel refresh
   const [previewRefreshToken, setPreviewRefreshToken] = useState(0)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -122,8 +115,6 @@ export const AdvancedMappingModal = ({
     }))
   }
 
-  // ── Pipeline helpers ────────────────────────────────────────────────────
-
   const pipeline = localItem.transformationPipeline ?? []
 
   const updatePipeline = (next: TransformationPipelineItem[]): void => {
@@ -135,8 +126,6 @@ export const AdvancedMappingModal = ({
     setLocalItem(prev => ({ ...prev, dataSourceIndex: v }))
     schedulePreviewRefresh()
   }
-
-  // ── Recalculate transformation result type ───────────────────────────────
 
   const recalculateType = async (): Promise<void> => {
     const nextRequest = {
@@ -163,8 +152,6 @@ export const AdvancedMappingModal = ({
     }
   }
 
-  // ── Save ────────────────────────────────────────────────────────────────
-
   const handleSave = (): void => {
     onSave(localItem)
     onClose()
@@ -179,7 +166,6 @@ export const AdvancedMappingModal = ({
           gap="extra-small"
           justify="flex-end"
         >
-          {/* Ghost refresh icon button */}
           <IconButton
             disabled={ isCalculating }
             icon={ { value: 'refresh' } }
@@ -187,7 +173,6 @@ export const AdvancedMappingModal = ({
             title={ t('data-importer.mapping.advanced-modal.recalculate-result-type') }
           />
 
-          {/* Save button */}
           <Button
             onClick={ handleSave }
             type="primary"

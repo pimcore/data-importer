@@ -10,8 +10,7 @@
 
 /* eslint-disable max-lines */
 
-import React, { useEffect, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import React, { useEffect, useState } from 'react'import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
 import {
   useBundleDataImporterConfigLoadTransformationResultQuery
@@ -20,8 +19,6 @@ import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-d
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './preview-panel.styles'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
-
-/* ── Prop types ──────────────────────────────────────────────────────────── */
 
 interface ImportModeProps {
   mode: 'import'
@@ -43,13 +40,10 @@ interface ResultModeProps {
 
 export type PreviewPanelProps = ImportModeProps | ResultModeProps
 
-/* ── Component ───────────────────────────────────────────────────────────── */
-
 export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles, cx } = useStyles()
 
-  /* ── import mode state ── */
   const [rows, setRows] = useState<DataRow[]>([])
   const [importRecordNumber, setImportRecordNumber] = useState(0)
   const [actualRecordIndex, setActualRecordIndex] = useState(0)
@@ -66,7 +60,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     enabled: props.mode === 'import'
   })
 
-  /* ── result mode state ── */
   const [previews, setPreviews] = useState<string[]>([])
   const [resultRecordNumber, setResultRecordNumber] = useState(0)
   const [resultRequest, setResultRequest] = useState<{
@@ -102,7 +95,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     setRows([])
   }, [isImportError])
 
-  /* ── result mode fetch ── */
   const fetchResultPreview = (record: number): void => {
     const currentConfig: Record<string, object> | undefined = props.currentMappingItem !== undefined
       ? {
@@ -140,7 +132,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     fetchResultPreview(resultRecordNumber)
   }, [props.refreshToken])
 
-  /* ── import mode handlers ── */
   const handleImportPrev = (): void => {
     const next = Math.max(0, importRecordNumber - 1)
     setImportRecordNumber(next)
@@ -153,7 +144,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     fetchImportPreview(next)
   }
 
-  /* ── result mode handlers ── */
   const handleResultPrev = (): void => {
     const next = Math.max(0, resultRecordNumber - 1)
     setResultRecordNumber(next)
@@ -166,7 +156,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     fetchResultPreview(next)
   }
 
-  /* ── shared header ── */
   const renderHeader = (title: string, hasPrev: boolean, loading: boolean, onPrev: () => void, onNext: () => void): React.JSX.Element => (
     <Flex
       align="center"
@@ -193,7 +182,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     </Flex>
   )
 
-  /* ── import mode render ── */
   if (props.mode === 'import') {
     const hasPrev = actualRecordIndex > 0
     const filteredRows = searchText.trim() === ''
@@ -270,7 +258,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     )
   }
 
-  /* ── result mode render ── */
   const hasPrev = resultRecordNumber > 0
 
   return (

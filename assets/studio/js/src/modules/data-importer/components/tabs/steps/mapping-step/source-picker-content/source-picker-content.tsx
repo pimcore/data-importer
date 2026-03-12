@@ -19,18 +19,12 @@ export interface SourcePickerContentProps {
   errorRef: React.MutableRefObject<((show: boolean) => void) | undefined>
 }
 
-/**
- * Small controlled component rendered inside the "New mapping" confirm modal.
- * It writes the selected value into valueRef on every change so the caller
- * can read it in onOk without any async state.
- */
 export const SourcePickerContent = (props: SourcePickerContentProps): React.JSX.Element => {
   const { options, valueRef, errorRef } = props
   const { t } = useTranslation()
   const [value, setValue] = useState<string | undefined>(undefined)
   const [hasError, setHasError] = useState(false)
 
-  // Register the error setter so the parent (handleAddItem) can trigger it
   errorRef.current = setHasError
 
   const handleChange = (v: string | undefined): void => {
