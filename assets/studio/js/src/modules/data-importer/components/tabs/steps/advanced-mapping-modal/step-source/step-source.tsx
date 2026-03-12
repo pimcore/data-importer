@@ -82,9 +82,9 @@ export const StepSource = ({
       </Flex>
 
       <Flex
-          className={ styles.footer }
-          justify="flex-end"
-        >
+        className={ styles.footer }
+        justify="flex-end"
+      >
         <button
           className={ shared.outlineButton }
           onClick={ onNext }
