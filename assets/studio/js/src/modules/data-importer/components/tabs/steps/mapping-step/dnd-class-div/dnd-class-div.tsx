@@ -9,6 +9,7 @@
  */
 
 import React from 'react'
+import cn from 'classnames'
 import { useDroppable } from '@pimcore/studio-ui-bundle/components'
 
 // Generic div that reads the nearest Droppable context and applies the
@@ -22,10 +23,9 @@ export interface DndClassDivProps {
 
 export const DndClassDiv = ({ children, className }: DndClassDivProps): React.JSX.Element => {
   const { getStateClasses } = useDroppable()
-  const combinedClass = [className, ...getStateClasses()].filter(Boolean).join(' ')
 
   return (
-    <div className={ combinedClass }>
+    <div className={ cn(className, ...getStateClasses()) }>
       { children }
     </div>
   )

@@ -9,6 +9,7 @@
  */
 
 import React, { useMemo } from 'react'
+import cn from 'classnames'
 import {
   Badge,
   Button,
@@ -128,7 +129,7 @@ export const SourcesPanel = ({
 
               return (
                 <div
-                  className={ `${styles.sourceRowOuter}${isMapped ? ` ${styles.sourceRowOuterMapped}` : ''}${isFaded ? ` ${styles.sourceRowOuterFaded}` : ''}` }
+                  className={ cn(styles.sourceRowOuter, { [styles.sourceRowOuterMapped]: isMapped, [styles.sourceRowOuterFaded]: isFaded }) }
                   key={ row.dataIndex }
                 >
                   <Draggable
@@ -141,7 +142,7 @@ export const SourcesPanel = ({
                   >
                     <Flex
                       align="center"
-                      className={ `${styles.sourceRowInner}${isMapped ? ` ${styles.sourceRowInnerMapped}` : ` ${styles.sourceRowInnerUnmapped}`}` }
+                      className={ cn(styles.sourceRowInner, isMapped ? styles.sourceRowInnerMapped : styles.sourceRowInnerUnmapped) }
                       onClick={ handleRowClick }
                     >
                       <Flex

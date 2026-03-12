@@ -9,6 +9,7 @@
  */
 
 import React, { useState } from 'react'
+import cn from 'classnames'
 import { Steps, type StepItem, Flex } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { DataSourceStep } from './steps/data-source-step'
@@ -65,32 +66,32 @@ export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Eleme
         />
       </Box>
 
-      <div className={ `${styles.stepContentMapping}${isMappingStep ? '' : ` ${styles.stepContentMappingHidden}`}` }>
+      <div className={ cn(styles.stepContentMapping, !isMappingStep && styles.stepContentMappingHidden) }>
         <MappingStep
           configName={ configName }
           isActive={ isMappingStep }
         />
       </div>
 
-      <div className={ `${styles.stepContent}${currentStep === 0 ? '' : ` ${styles.stepContentHidden}`}` }>
+      <div className={ cn(styles.stepContent, currentStep !== 0 && styles.stepContentHidden) }>
         <DataSourceStep configName={ configName } />
       </div>
 
-      <div className={ `${styles.stepContent}${currentStep === 1 ? '' : ` ${styles.stepContentHidden}`}` }>
+      <div className={ cn(styles.stepContent, currentStep !== 1 && styles.stepContentHidden) }>
         <PreviewImportStep
           configName={ configName }
           isActive={ currentStep === 1 }
         />
       </div>
 
-      <div className={ `${styles.stepContent}${currentStep === 2 ? '' : ` ${styles.stepContentHidden}`}` }>
+      <div className={ cn(styles.stepContent, currentStep !== 2 && styles.stepContentHidden) }>
         <ResolverStep
           columnHeaderOptions={ columnHeaderOptions }
           configName={ configName }
         />
       </div>
 
-      <div className={ `${styles.stepContent}${currentStep === 4 ? '' : ` ${styles.stepContentHidden}`}` }>
+      <div className={ cn(styles.stepContent, currentStep !== 4 && styles.stepContentHidden) }>
         <ProcessingSettingsStep configName={ configName } />
       </div>
     </Flex>

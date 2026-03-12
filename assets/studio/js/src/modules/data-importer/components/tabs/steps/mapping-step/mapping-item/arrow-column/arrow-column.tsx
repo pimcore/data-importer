@@ -9,6 +9,7 @@
  */
 
 import React from 'react'
+import cn from 'classnames'
 import { theme } from 'antd'
 import { Flex, Icon } from '@pimcore/studio-ui-bundle/components'
 import { useStyles } from '../../mapping-step.styles'
@@ -48,7 +49,7 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
   if (isComplex) {
     return (
       <Flex
-        className={ [styles.arrowCol, styles.arrowColAdvanced].join(' ') }
+        className={ cn(styles.arrowCol, styles.arrowColAdvanced) }
         gap={ 10 }
         justify="center"
         vertical
@@ -70,7 +71,7 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
 
   return (
     <Flex
-      className={ [styles.arrowCol, styles.arrowColSimple].join(' ') }
+      className={ cn(styles.arrowCol, styles.arrowColSimple) }
       justify="flex-start"
       vertical
     >
