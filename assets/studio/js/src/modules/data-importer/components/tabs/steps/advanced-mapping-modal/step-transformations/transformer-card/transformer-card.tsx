@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { IconButton } from '@pimcore/studio-ui-bundle/components'
+import { Flex, IconButton } from '@pimcore/studio-ui-bundle/components'
 import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
 import { type TransformationPipelineItem } from '../../../../../../types'
@@ -52,14 +52,18 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
 
   return (
     <>
-      <div className={ styles.transformerCardHeader }>
+      <Flex
+        align="center"
+        gap="mini"
+      >
         {/* Drag handle — only this area is draggable */}
-        <div
+        <Flex
+          align="center"
           className={ styles.dragHandle }
           { ...dragHandleProps }
         >
           <span className={ styles.dragHandleIcon }>{ '⠿' }</span>
-        </div>
+        </Flex>
 
         {/* Label + inline collapse toggle */}
         <span className={ styles.transformerLabel }>
@@ -83,7 +87,7 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
           tooltip={ { title: removeTooltip } }
           type="text"
         />
-      </div>
+      </Flex>
 
       { !isCollapsed && children }
     </>
@@ -134,10 +138,12 @@ export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
   }
 
   return (
-    <div
+    <Flex
       className={ styles.transformerCard }
+      gap="mini"
       ref={ setNodeRef }
       style={ style }
+      vertical
     >
       <CardContent
         collapseTooltip={ collapseTooltip }
@@ -151,6 +157,6 @@ export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
       >
         { children }
       </CardContent>
-    </div>
+    </Flex>
   )
 }

@@ -12,37 +12,33 @@ import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ css, token }) => {
   return {
-    modalBody: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingSM}px;
+    sectionPanel: css`
+      & .ant-collapse.collapse-item--theme-default {
+        background-color: ${token.colorFillAlter};
+
+        & .ant-collapse-content {
+          background-color: ${token.colorBgContainer};
+        }
+      }
     `,
 
-    sectionWrapper: css`
-      border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadiusLG}px;
-      overflow: hidden;
-      background: ${token.colorBgContainer};
-    `,
-
-    sectionWrapperCollapsed: css`
-      background: ${token.colorFillAlter};
-    `,
-
-    sectionBody: css`
-      padding: ${token.paddingSM}px;
-      border-top: 1px solid ${token.colorBorderSecondary};
-    `,
-
-    sectionBodyHidden: css`
-      display: none;
+    stepBadge: css`
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background-color: ${token.colorPrimary};
+      color: ${token.colorTextLightSolid};
+      font-size: ${token.fontSizeSM}px;
+      font-weight: ${token.fontWeightStrong};
+      line-height: 20px;
+      margin-inline-end: ${token.marginXXS}px;
     `,
 
     footer: css`
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: ${token.paddingXS}px;
       border-top: 1px solid ${token.colorBorderSecondary};
       padding-top: ${token.paddingSM}px;
       margin-top: ${token.paddingXXS}px;

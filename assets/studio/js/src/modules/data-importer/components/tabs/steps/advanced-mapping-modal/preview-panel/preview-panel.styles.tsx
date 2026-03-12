@@ -13,16 +13,10 @@ import { createStyles } from 'antd-style'
 export const useStyles = createStyles(({ css, token }) => {
   return {
     wrapper: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXS}px;
       flex: 1;
     `,
 
     header: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       height: 32px;
     `,
 
@@ -30,11 +24,6 @@ export const useStyles = createStyles(({ css, token }) => {
       font-size: 12px;
       font-weight: 600;
       color: ${token.colorPrimaryText};
-    `,
-
-    buttonGroup: css`
-      display: flex;
-      gap: ${token.paddingXXS}px;
     `,
 
     /* ── import mode ── */
@@ -83,8 +72,6 @@ export const useStyles = createStyles(({ css, token }) => {
     tableCell: css`
       font-size: 12px;
       padding: 0 ${token.paddingXS}px;
-      display: flex;
-      align-items: center;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;

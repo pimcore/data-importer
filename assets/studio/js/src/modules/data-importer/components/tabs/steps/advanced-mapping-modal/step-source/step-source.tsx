@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Select, Text } from '@pimcore/studio-ui-bundle/components'
+import { Select, Text, Flex } from '@pimcore/studio-ui-bundle/components'
 import { PreviewPanel } from '../preview-panel/preview-panel'
 import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-source.styles'
@@ -37,9 +37,16 @@ export const StepSource = ({
   return (
     <>
       {/* Two-column layout */}
-      <div className={ styles.twoColumnLayout }>
+      <Flex
+        className={ styles.twoColumnLayout }
+        gap="extra-small"
+      >
         {/* LEFT: Source Attribute(s) */}
-        <div className={ styles.leftColumn }>
+        <Flex
+          className={ styles.leftColumn }
+          gap={ 6 }
+          vertical
+        >
           <Text
             className={ styles.labelSmall }
             strong
@@ -61,20 +68,26 @@ export const StepSource = ({
             showSearch
             value={ dataSourceIndex }
           />
-        </div>
+        </Flex>
 
         {/* RIGHT: Import Preview — always mounted to preserve fetched data */}
-        <div className={ styles.rightColumn }>
+        <Flex
+          className={ styles.rightColumn }
+          vertical
+        >
           <PreviewPanel
             configName={ configName }
             mode="import"
             selectedDataSourceIndex={ dataSourceIndex }
           />
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
       {/* Next step button */}
-      <div className={ styles.footer }>
+      <Flex
+        className={ styles.footer }
+        justify="flex-end"
+      >
         <button
           className={ shared.outlineButton }
           onClick={ onNext }
@@ -82,7 +95,7 @@ export const StepSource = ({
         >
           { t('data-importer.mapping.advanced-modal.next-step') }
         </button>
-      </div>
+      </Flex>
     </>
   )
 }

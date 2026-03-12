@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { Form, IconButton, IconTextButton, Input, Select } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Form, IconButton, IconTextButton, Input, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type ClassAttribute } from '../../../../../types'
 import { filterByLabel } from '../../select-utils'
@@ -57,7 +57,11 @@ export const MappingItemContent = ({
         <Input />
       </Form.Item>
 
-      <div className={ styles.mappingLabelRow }>
+      <Flex
+        align="center"
+        className={ styles.mappingLabelRow }
+        gap="extra-small"
+      >
         <div
           className={ styles.mappingLabelInput }
           style={ { flex: 1 } }
@@ -84,12 +88,19 @@ export const MappingItemContent = ({
           tooltip={ { title: t('data-importer.mapping.item.delete') } }
           type="default"
         />
-      </div>
+      </Flex>
 
       <div className={ styles.mappingDivider } />
 
-      <div className={ styles.sourcesDestRow }>
-        <div className={ styles.sourcesDestCol }>
+      <Flex
+        align="stretch"
+        className={ styles.sourcesDestRow }
+      >
+        <Flex
+          className={ styles.sourcesDestCol }
+          gap="mini"
+          vertical
+        >
           <div>
             { t('data-importer.mapping.item.source') }
           </div>
@@ -107,7 +118,7 @@ export const MappingItemContent = ({
               />
             </Form.Item>
           </div>
-        </div>
+        </Flex>
 
         <ArrowColumn
           isAdvanced={ isAdvanced }
@@ -115,7 +126,11 @@ export const MappingItemContent = ({
           isWarningState={ isWarningState }
         />
 
-        <div className={ styles.sourcesDestCol }>
+        <Flex
+          className={ styles.sourcesDestCol }
+          gap="mini"
+          vertical
+        >
           <div>
             { t('data-importer.mapping.item.destination') }
           </div>
@@ -123,9 +138,12 @@ export const MappingItemContent = ({
           { isAdvanced
             ? (
               <>
-                <div className={ styles.destinationTextBlock }>
+                <Flex
+                  className={ styles.destinationTextBlock }
+                  vertical
+                >
                   <span>{ selectedAttr?.title ?? selectedFieldName ?? '' }</span>
-                </div>
+                </Flex>
                 <Form.Item
                   hidden
                   name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
@@ -179,8 +197,8 @@ export const MappingItemContent = ({
                   ) }
                 </>
                 ) }
-        </div>
-      </div>
+        </Flex>
+      </Flex>
     </div>
   )
 }

@@ -12,6 +12,7 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import {
   Button,
+  Flex,
   Grid,
   Modal,
   Pagination,
@@ -102,7 +103,12 @@ export const ClassificationStoreKeyModal = ({
       size="XL"
       title={ t('data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title') }
     >
-      <div className={ styles.toolbar }>
+      <Flex
+        align="center"
+        className={ styles.toolbar }
+        gap="small"
+        justify="space-between"
+      >
         <Text>{ t('data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description') }</Text>
         <SearchInput
           className={ styles.search }
@@ -115,7 +121,7 @@ export const ClassificationStoreKeyModal = ({
           withClear
           withPrefix
         />
-      </div>
+      </Flex>
 
       <Grid
         columns={ columns }
@@ -129,7 +135,10 @@ export const ClassificationStoreKeyModal = ({
         setRowId={ (row) => row.id ?? '' }
       />
 
-      <div className={ styles.paginationRow }>
+      <Flex
+        className={ styles.paginationRow }
+        justify="flex-end"
+      >
         <Pagination
           current={ page }
           defaultPageSize={ pageSize }
@@ -142,9 +151,13 @@ export const ClassificationStoreKeyModal = ({
           total={ total }
         />
 
-      </div>
+      </Flex>
 
-      <div className={ styles.footer }>
+      <Flex
+        className={ styles.footer }
+        gap="extra-small"
+        justify="flex-end"
+      >
         <Button
           onClick={ onClose }
           type="default"
@@ -162,7 +175,7 @@ export const ClassificationStoreKeyModal = ({
         >
           { t('common.apply-selection') }
         </Button>
-      </div>
+      </Flex>
     </Modal>
   )
 }

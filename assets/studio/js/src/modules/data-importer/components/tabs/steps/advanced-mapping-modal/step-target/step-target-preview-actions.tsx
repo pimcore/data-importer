@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
 import { PreviewPanel } from '../preview-panel/preview-panel'
 import { useSharedStepStyles } from '../step-shared.styles'
@@ -38,7 +38,11 @@ export const StepTargetPreviewActions = ({
   const { styles: shared } = useSharedStepStyles()
 
   return (
-    <div className={ styles.rightColumn }>
+    <Flex
+      className={ styles.rightColumn }
+      justify="space-between"
+      vertical
+    >
       <div className={ styles.previewWrapper }>
         <PreviewPanel
           baseConfig={ baseConfig }
@@ -49,7 +53,10 @@ export const StepTargetPreviewActions = ({
         />
       </div>
 
-      <div className={ shared.navButtons }>
+      <Flex
+        gap="extra-small"
+        justify="flex-end"
+      >
         <button
           className={ shared.outlineButton }
           onClick={ onPrev }
@@ -63,7 +70,7 @@ export const StepTargetPreviewActions = ({
         >
           { t('data-importer.mapping.advanced-modal.step-target.confirm-mapping') }
         </Button>
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   )
 }

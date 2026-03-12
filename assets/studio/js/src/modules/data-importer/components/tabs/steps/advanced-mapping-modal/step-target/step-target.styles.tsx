@@ -13,8 +13,6 @@ import { createStyles } from 'antd-style'
 export const useStyles = createStyles(({ css, token }) => {
   return {
     twoColumnLayout: css`
-      display: flex;
-      gap: ${token.paddingXS}px;
       min-height: 240px;
     `,
 
@@ -23,15 +21,11 @@ export const useStyles = createStyles(({ css, token }) => {
       min-width: 0;
       background: ${token.colorFillAdditional};
       border-radius: ${token.borderRadius}px;
-      display: flex;
-      flex-direction: column;
     `,
 
     leftHeader: css`
       padding: ${token.paddingXXS}px ${token.paddingXS}px;
       height: 32px;
-      display: flex;
-      align-items: center;
     `,
 
     leftHeaderTitle: css`
@@ -40,9 +34,6 @@ export const useStyles = createStyles(({ css, token }) => {
 
     fieldsContainer: css`
       padding: 0 ${token.paddingXS}px ${token.paddingXS}px ${token.paddingXS}px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
       flex: 1;
 
       & > div {
@@ -89,12 +80,6 @@ export const useStyles = createStyles(({ css, token }) => {
       padding: ${token.paddingXXS}px ${token.paddingXS}px;
     `,
 
-    classificationStoreKeyRow: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXS}px;
-    `,
-
     classificationStoreKeyInput: css`
       flex: 1;
     `,
@@ -102,9 +87,6 @@ export const useStyles = createStyles(({ css, token }) => {
     rightColumn: css`
       flex: 0 0 calc(50% - 4px);
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
     `,
 
     previewWrapper: css`

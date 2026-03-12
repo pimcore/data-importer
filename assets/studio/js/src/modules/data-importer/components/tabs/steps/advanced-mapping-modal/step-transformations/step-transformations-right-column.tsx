@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { IconButton, Select } from '@pimcore/studio-ui-bundle/components'
+import { IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
 import { PreviewPanel } from '../preview-panel/preview-panel'
 import { useSharedStepStyles } from '../step-shared.styles'
@@ -52,10 +52,25 @@ export const StepTransformationsRightColumn = ({
   const { styles: shared } = useSharedStepStyles()
 
   return (
-    <div className={ styles.rightColumn }>
-      <div className={ styles.rightColumnTop }>
-        <div className={ styles.sourceSection }>
-          <div className={ styles.sourceSectionHeader }>
+    <Flex
+      className={ styles.rightColumn }
+      gap="extra-small"
+      justify="space-between"
+      vertical
+    >
+      <Flex
+        gap="extra-small"
+        vertical
+      >
+        <Flex
+          gap="mini"
+          vertical
+        >
+          <Flex
+            align="center"
+            className={ styles.sourceSectionHeader }
+            gap="mini"
+          >
             <span className={ styles.sourceSectionTitle }>
               { t('data-importer.mapping.advanced-modal.step-source.label') }
             </span>
@@ -66,7 +81,7 @@ export const StepTransformationsRightColumn = ({
               tooltip={ { title: t('data-importer.mapping.advanced-modal.transformer.edit-source') } }
               type="text"
             />
-          </div>
+          </Flex>
 
           { editingSource
             ? (
@@ -81,7 +96,10 @@ export const StepTransformationsRightColumn = ({
               />
               )
             : (
-              <div className={ styles.sourceValues }>
+              <Flex
+                className={ styles.sourceValues }
+                wrap="wrap"
+              >
                 { dataSourceIndex.length === 0
                   ? <span className={ styles.emptyState }>{ '—' }</span>
                   : dataSourceIndex.map((v, i) => (
@@ -91,9 +109,9 @@ export const StepTransformationsRightColumn = ({
                     </React.Fragment>
                   ))
                 }
-              </div>
+              </Flex>
               ) }
-        </div>
+        </Flex>
 
         <div className={ styles.previewWrapper }>
           <PreviewPanel
@@ -104,9 +122,12 @@ export const StepTransformationsRightColumn = ({
             refreshToken={ previewRefreshToken }
           />
         </div>
-      </div>
+      </Flex>
 
-      <div className={ shared.navButtons }>
+      <Flex
+        gap="extra-small"
+        justify="flex-end"
+      >
         <button
           className={ shared.outlineButton }
           onClick={ onPrev }
@@ -121,7 +142,7 @@ export const StepTransformationsRightColumn = ({
         >
           { t('data-importer.mapping.advanced-modal.next-step') }
         </button>
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   )
 }

@@ -16,33 +16,10 @@ export const useStyles = createStyles(({ css, token }) => {
       border: 1px solid ${token.colorBorderSecondary};
       border-radius: ${token.borderRadiusSM}px;
       padding: 6px ${token.paddingXS}px;
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXXS}px;
       background: ${token.colorFillAdditional};
-    `,
-
-    transformerCardOverlay: css`
-      border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadiusSM}px;
-      padding: 6px ${token.paddingXS}px;
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXXS}px;
-      background: ${token.colorFillAdditional};
-      box-shadow: ${token.boxShadowSecondary};
-      cursor: grabbing;
-    `,
-
-    transformerCardHeader: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXXS}px;
     `,
 
     dragHandle: css`
-      display: flex;
-      align-items: center;
       cursor: grab;
       user-select: none;
       flex-shrink: 0;
@@ -66,8 +43,6 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     transformerCollapseIcon: css`
-      display: flex;
-      align-items: center;
       color: ${token.colorText};
       flex-shrink: 0;
     `,

@@ -11,10 +11,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useSettings } from '@pimcore/studio-ui-bundle/modules/app'
-import { Modal, Button, IconButton } from '@pimcore/studio-ui-bundle/components'
+import { Modal, Button, IconButton, Panel, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem, type TransformationPipelineItem, type ClassAttribute } from '../../../../types'
 import { useBundleDataImporterConfigCalculateTransformationResultTypeQuery } from '../../../../data-importer-api-slice.gen'
-import { SectionHeader } from './section-header/section-header'
 import { StepSource } from './step-source/step-source'
 import { StepTransformations } from './step-transformations/step-transformations'
 import { StepTarget } from './step-target/step-target'
@@ -53,7 +52,7 @@ export const AdvancedMappingModal = ({
   baseConfig
 }: AdvancedMappingModalProps): React.JSX.Element => {
   const { t } = useTranslation()
-  const { styles, cx } = useStyles()
+  const { styles } = useStyles()
   const settings = useSettings()
   const languageOptions = useMemo(
     () => (settings.validLanguages ?? []).map((locale: string) => ({ value: locale, label: locale })),
@@ -174,7 +173,12 @@ export const AdvancedMappingModal = ({
   return (
     <Modal
       footer={ (
-        <div className={ styles.footer }>
+        <Flex
+          align="center"
+          className={ styles.footer }
+          gap="extra-small"
+          justify="flex-end"
+        >
           {/* Ghost refresh icon button */}
           <IconButton
             disabled={ isCalculating }
@@ -190,47 +194,54 @@ export const AdvancedMappingModal = ({
           >
             { t('data-importer.mapping.advanced-modal.save') }
           </Button>
-        </div>
+        </Flex>
       ) }
       onCancel={ onClose }
       open={ open }
       title={ t('data-importer.mapping.advanced-modal.title') }
       width={ 996 }
     >
-      <div className={ styles.modalBody }>
+      <Flex
+        gap="small"
+        vertical
+      >
 
-        {/* ── Step 1: Source ───────────────────────────────────────────── */}
-        <div className={ cx(styles.sectionWrapper, !expanded.source && styles.sectionWrapperCollapsed) }>
-          <SectionHeader
-            expanded={ expanded.source }
-            hasBorderBottom={ expanded.source }
-            onToggle={ () => { openSection('source') } }
-            step={ 1 }
-            title={ t('data-importer.mapping.advanced-modal.step-source') }
-          />
-          { expanded.source && (
-            <div className={ styles.sectionBody }>
-              <StepSource
-                columnHeaderOptions={ columnHeaderOptions }
-                configName={ configName }
-                dataSourceIndex={ localItem.dataSourceIndex ?? [] }
-                onDataSourceIndexChange={ updateDataSourceIndex }
-                onNext={ () => { openSection('transformations') } }
-              />
-            </div>
-          ) }
+        <div className={ styles.sectionPanel }>
+          <Panel
+            active={ expanded.source }
+            collapsible
+            onChange={ () => { openSection('source') } }
+            theme="default"
+            title={ (
+              <>
+                <span className={ styles.stepBadge }>1</span>
+                { t('data-importer.mapping.advanced-modal.step-source') }
+              </>
+            ) }
+          >
+            <StepSource
+              columnHeaderOptions={ columnHeaderOptions }
+              configName={ configName }
+              dataSourceIndex={ localItem.dataSourceIndex ?? [] }
+              onDataSourceIndexChange={ updateDataSourceIndex }
+              onNext={ () => { openSection('transformations') } }
+            />
+          </Panel>
         </div>
 
-        {/* ── Step 2: Transformations ──────────────────────────────────── */}
-        <div className={ cx(styles.sectionWrapper, !expanded.transformations && styles.sectionWrapperCollapsed) }>
-          <SectionHeader
-            expanded={ expanded.transformations }
-            hasBorderBottom={ expanded.transformations }
-            onToggle={ () => { openSection('transformations') } }
-            step={ 2 }
-            title={ t('data-importer.mapping.advanced-modal.step-transformations') }
-          />
-          <div className={ cx(styles.sectionBody, !expanded.transformations && styles.sectionBodyHidden) }>
+        <div className={ styles.sectionPanel }>
+          <Panel
+            active={ expanded.transformations }
+            collapsible
+            onChange={ () => { openSection('transformations') } }
+            theme="default"
+            title={ (
+              <>
+                <span className={ styles.stepBadge }>2</span>
+                { t('data-importer.mapping.advanced-modal.step-transformations') }
+              </>
+            ) }
+          >
             <StepTransformations
               baseConfig={ baseConfig }
               columnHeaderOptions={ columnHeaderOptions }
@@ -244,19 +255,22 @@ export const AdvancedMappingModal = ({
               pipeline={ pipeline }
               previewRefreshToken={ previewRefreshToken }
             />
-          </div>
+          </Panel>
         </div>
 
-        {/* ── Step 3: Data Target ──────────────────────────────────────── */}
-        <div className={ cx(styles.sectionWrapper, !expanded.target && styles.sectionWrapperCollapsed) }>
-          <SectionHeader
-            expanded={ expanded.target }
-            hasBorderBottom={ expanded.target }
-            onToggle={ () => { openSection('target') } }
-            step={ 3 }
-            title={ t('data-importer.mapping.advanced-modal.step-target') }
-          />
-          <div className={ cx(styles.sectionBody, !expanded.target && styles.sectionBodyHidden) }>
+        <div className={ styles.sectionPanel }>
+          <Panel
+            active={ expanded.target }
+            collapsible
+            onChange={ () => { openSection('target') } }
+            theme="default"
+            title={ (
+              <>
+                <span className={ styles.stepBadge }>3</span>
+                { t('data-importer.mapping.advanced-modal.step-target') }
+              </>
+            ) }
+          >
             <StepTarget
               attributesMap={ attributesMap }
               baseConfig={ baseConfig }
@@ -271,10 +285,9 @@ export const AdvancedMappingModal = ({
               previewRefreshToken={ previewRefreshToken }
               transformationResultType={ localItem.transformationResultType }
             />
-          </div>
+          </Panel>
         </div>
-
-      </div>
+      </Flex>
     </Modal>
   )
 }

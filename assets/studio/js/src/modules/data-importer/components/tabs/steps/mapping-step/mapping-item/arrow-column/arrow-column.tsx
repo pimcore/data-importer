@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { theme } from 'antd'
-import { Icon } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Icon } from '@pimcore/studio-ui-bundle/components'
 import { useStyles } from '../../mapping-step.styles'
 
 export interface ArrowColumnProps {
@@ -47,7 +47,12 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
 
   if (isComplex) {
     return (
-      <div className={ [styles.arrowCol, styles.arrowColAdvanced].join(' ') }>
+      <Flex
+        className={ [styles.arrowCol, styles.arrowColAdvanced].join(' ') }
+        gap={ 10 }
+        justify="center"
+        vertical
+      >
         { isAdvanced && !isWarningState && !isInProgressState && (
           <span className={ styles.arrowGearIcon }>
             <Icon value="settings" />
@@ -59,18 +64,25 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
           </span>
         ) }
         { arrowSvg }
-      </div>
+      </Flex>
     )
   }
 
   return (
-    <div className={ [styles.arrowCol, styles.arrowColSimple].join(' ') }>
+    <Flex
+      className={ [styles.arrowCol, styles.arrowColSimple].join(' ') }
+      justify="flex-start"
+      vertical
+    >
       {/* Spacer matching label height + gap */}
       <div className={ styles.arrowLabelSpacer } />
       {/* Arrow centred within the select row */}
-      <div className={ styles.arrowSelectRow }>
+      <Flex
+        align="center"
+        className={ styles.arrowSelectRow }
+      >
         { arrowSvg }
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   )
 }

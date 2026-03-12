@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect } from 'react'
-import { Select, Form, Switch } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Select, Form, Switch } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useBundleDataImporterConfigGetQuery } from '../../../../data-importer-api-slice-enhanced'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
@@ -159,7 +159,11 @@ export const ProcessingSettingsStep = ({ configName }: ProcessingSettingsStepPro
 
       { /* Logging */ }
       <DataImporterPanel title={ t('data-importer.processing.logging.title') }>
-        <div className={ styles.loggingGroups }>
+        <Flex
+          className={ styles.loggingGroups }
+          gap="small"
+          vertical
+        >
           <div className={ styles.loggingGroup }>
             <div className={ styles.loggingGroupTitle }>{ t('data-importer.processing.logging.info.title') }</div>
             <Form.Item
@@ -203,7 +207,7 @@ export const ProcessingSettingsStep = ({ configName }: ProcessingSettingsStepPro
               />
             </Form.Item>
           </div>
-        </div>
+        </Flex>
       </DataImporterPanel>
     </>
   )

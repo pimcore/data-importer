@@ -8,9 +8,11 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
+
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { IconButton, SearchInput, Spin } from '@pimcore/studio-ui-bundle/components'
+import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
 import {
   useBundleDataImporterConfigLoadTransformationResultQuery
 } from '../../../../../data-importer-api-slice.gen'
@@ -166,9 +168,13 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
 
   /* ── shared header ── */
   const renderHeader = (title: string, hasPrev: boolean, loading: boolean, onPrev: () => void, onNext: () => void): React.JSX.Element => (
-    <div className={ styles.header }>
+    <Flex
+      align="center"
+      className={ styles.header }
+      justify="space-between"
+    >
       <span className={ styles.title }>{ title }</span>
-      <div className={ styles.buttonGroup }>
+      <Space size="mini">
         <IconButton
           disabled={ !hasPrev || loading }
           icon={ { value: 'chevron-left' } }
@@ -183,8 +189,8 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
           size="small"
           type="default"
         />
-      </div>
-    </div>
+      </Space>
+    </Flex>
   )
 
   /* ── import mode render ── */
@@ -198,7 +204,11 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
       )
 
     return (
-      <div className={ styles.wrapper }>
+      <Flex
+        className={ styles.wrapper }
+        gap="extra-small"
+        vertical
+      >
         { renderHeader(t('data-importer.mapping.advanced-modal.step-source.import-preview'), hasPrev, importLoading || isImportFetching, handleImportPrev, handleImportNext) }
 
         <SearchInput
@@ -237,12 +247,18 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
                 ) }
                 key={ i }
               >
-                <div className={ cx(styles.tableCell, styles.tableCellBorder) }>
+                <Flex
+                  align="center"
+                  className={ cx(styles.tableCell, styles.tableCellBorder) }
+                >
                   { row.label }
-                </div>
-                <div className={ styles.tableCell }>
+                </Flex>
+                <Flex
+                  align="center"
+                  className={ styles.tableCell }
+                >
                   { row.value }
-                </div>
+                </Flex>
               </div>
             )
           }) }
@@ -250,7 +266,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
             <div className={ styles.stateMessage }>{ t('data-importer.mapping.advanced-modal.no-data') }</div>
           ) }
         </div>
-      </div>
+      </Flex>
     )
   }
 
@@ -258,7 +274,11 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
   const hasPrev = resultRecordNumber > 0
 
   return (
-    <div className={ styles.wrapper }>
+    <Flex
+      className={ styles.wrapper }
+      gap="extra-small"
+      vertical
+    >
       { renderHeader(
         t('data-importer.mapping.advanced-modal.step-target.preview-result'),
         hasPrev,
@@ -285,6 +305,6 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
           </div>
         )) }
       </div>
-    </div>
+    </Flex>
   )
 }

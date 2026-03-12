@@ -10,7 +10,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Text } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Text } from '@pimcore/studio-ui-bundle/components'
 import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig } from '../../../../../types'
 import {
   useBundleDataImporterClassificationstoreLoadAttributesQuery,
@@ -182,19 +182,28 @@ export const StepTarget = ({
   }, [transformationResultType, isClassificationStore, isClassificationStoreBatch])
 
   return (
-    <div className={ styles.twoColumnLayout }>
+    <Flex
+      className={ styles.twoColumnLayout }
+      gap="extra-small"
+    >
 
       {/* LEFT: Data Target config */}
-      <div className={ styles.leftColumn }>
+      <Flex
+        className={ styles.leftColumn }
+        vertical
+      >
         {/* Header bar */}
-        <div className={ styles.leftHeader }>
+        <Flex
+          align="center"
+          className={ styles.leftHeader }
+        >
           <Text
             className={ styles.leftHeaderTitle }
             strong
           >
             { t('data-importer.mapping.advanced-modal.step-target') }
           </Text>
-        </div>
+        </Flex>
 
         <StepTargetFields
           attributeOptions={ attributeOptions }
@@ -213,7 +222,7 @@ export const StepTarget = ({
           showWriteSettings={ showWriteSettings }
           typeErrorMessage={ typeErrorMessage }
         />
-      </div>
+      </Flex>
 
       <StepTargetPreviewActions
         baseConfig={ baseConfig }
@@ -244,6 +253,6 @@ export const StepTarget = ({
         />
       ) }
 
-    </div>
+    </Flex>
   )
 }

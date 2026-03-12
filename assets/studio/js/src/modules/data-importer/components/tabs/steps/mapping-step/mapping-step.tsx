@@ -11,6 +11,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   Content,
+  Flex,
   Form,
   useFormModal
 } from '@pimcore/studio-ui-bundle/components'
@@ -202,7 +203,7 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
 
   return (
     <Content loading={ !initialLoadDone }>
-      <div className={ styles.mappingLayout }>
+      <Flex className={ styles.mappingLayout }>
         {/* Left: sources panel — fixed 450px */}
         <div className={ styles.mappingLayoutLeft }>
           <SourcesPanel
@@ -216,8 +217,16 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
         </div>
 
         {/* Center: 46px gap column with sticky arrow */}
-        <div className={ styles.mappingLayoutCenter }>
-          <div className={ styles.mappingLayoutCenterArrow }>
+        <Flex
+          align="center"
+          className={ styles.mappingLayoutCenter }
+          vertical
+        >
+          <Flex
+            align="center"
+            className={ styles.mappingLayoutCenterArrow }
+            justify="center"
+          >
             <svg
               fill="none"
               height="38"
@@ -259,8 +268,8 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
                 </clipPath>
               </defs>
             </svg>
-          </div>
-        </div>
+          </Flex>
+        </Flex>
 
         {/* Right: mappings panel — fills remaining space */}
         <div className={ styles.mappingLayoutRight }>
@@ -285,7 +294,7 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
             />
           </FieldWidthProvider>
         </div>
-      </div>
+      </Flex>
     </Content>
   )
 }

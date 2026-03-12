@@ -12,6 +12,7 @@ import React, { useMemo } from 'react'
 import {
   Badge,
   Draggable,
+  Flex,
   Form,
   IconButton,
   NoContent,
@@ -73,9 +74,16 @@ export const SourcesPanel = ({
   const hasPreview = sourceRows.length > 0
 
   return (
-    <div className={ styles.sourcesPanel }>
+    <Flex
+      className={ styles.sourcesPanel }
+      vertical
+    >
       {/* Header */}
-      <div className={ styles.sourcesHeader }>
+      <Flex
+        align="center"
+        className={ styles.sourcesHeader }
+        justify="space-between"
+      >
         <Text className={ styles.sourcesTitle }>
           { t('data-importer.mapping.sources.title') }
         </Text>
@@ -87,14 +95,21 @@ export const SourcesPanel = ({
             { t('data-importer.mapping.sources.reset-view') }
           </span>
         ) }
-      </div>
+      </Flex>
 
       {/* Source rows or empty state */}
-      <div className={ styles.panelScrollable }>
+      <Flex
+        className={ styles.panelScrollable }
+        vertical
+      >
         { !hasPreview && hasPreviewError && (
-          <div className={ styles.noContentWrapper }>
+          <Flex
+            align="center"
+            className={ styles.noContentWrapper }
+            justify="center"
+          >
             <NoContent text={ t('data-importer.mapping.sources.empty') } />
-          </div>
+          </Flex>
         ) }
 
         { hasPreview && (
@@ -128,12 +143,17 @@ export const SourcesPanel = ({
                     } }
                   >
                     {/* Entire inner row is clickable */}
-                    <div
+                    <Flex
+                      align="center"
                       className={ `${styles.sourceRowInner}${isMapped ? ` ${styles.sourceRowInnerMapped}` : ` ${styles.sourceRowInnerUnmapped}`}` }
                       onClick={ handleRowClick }
                     >
                       {/* Left: tag + badge (mapped) OR just tag (unmapped) */}
-                      <div className={ styles.sourceRowTagArea }>
+                      <Flex
+                        align="center"
+                        className={ styles.sourceRowTagArea }
+                        gap="extra-small"
+                      >
                         <div className={ styles.sourceTagInner }>
                           <Space size="extra-small">
                             <Tag color={ isMapped ? 'purple' : undefined }>
@@ -166,7 +186,7 @@ export const SourcesPanel = ({
                             />
                           </span>
                         ) }
-                      </div>
+                      </Flex>
 
                       {/* Right: preview value */}
                       <span
@@ -175,14 +195,14 @@ export const SourcesPanel = ({
                       >
                         { row.value }
                       </span>
-                    </div>
+                    </Flex>
                   </Draggable>
                 </div>
               )
             }) }
           </Space>
         ) }
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   )
 }

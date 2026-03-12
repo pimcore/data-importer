@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
-import { Divider, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
+import { Divider, Flex, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
 import { useStyles } from '../mapping-step.styles'
@@ -139,12 +139,20 @@ export const MappingsPanelContent = React.memo(({
 
   return (
     <>
-      <div className={ styles.mappingsHeader }>
+      <Flex
+        align="center"
+        className={ styles.mappingsHeader }
+        gap="small"
+      >
         <Text className={ styles.mappingsTitle }>
           { t('data-importer.mapping.title-short') }
         </Text>
 
-        <div className={ styles.mappingsActions }>
+        <Flex
+          align="center"
+          className={ styles.mappingsActions }
+          gap="extra-small"
+        >
           <IconTextButton
             icon={ { value: 'new' } }
             onClick={ () => { onAddItem(add, fields.length) } }
@@ -176,10 +184,13 @@ export const MappingsPanelContent = React.memo(({
                 : t('data-importer.mapping.collapse-all') }
             </span>
           ) }
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
-      <div className={ styles.mappingsContent }>
+      <Flex
+        className={ styles.mappingsContent }
+        vertical
+      >
         { !hasItems && activeFilter === null && (
           <EmptyDropZone
             add={ add }
@@ -211,7 +222,7 @@ export const MappingsPanelContent = React.memo(({
             onInsertItem={ onInsertItem }
           />
         ) }
-      </div>
+      </Flex>
     </>
   )
 })

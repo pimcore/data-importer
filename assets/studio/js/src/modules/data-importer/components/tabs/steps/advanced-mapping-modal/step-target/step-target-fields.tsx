@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Input, Select } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, Input, Select } from '@pimcore/studio-ui-bundle/components'
 import { type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './step-target.styles'
 import { StepTargetWriteSettings } from './step-target-write-settings'
@@ -54,7 +54,11 @@ export const StepTargetFields = ({
   const { styles } = useStyles()
 
   return (
-    <div className={ styles.fieldsContainer }>
+    <Flex
+      className={ styles.fieldsContainer }
+      gap={ 6 }
+      vertical
+    >
       <div>
         <div className={ styles.fieldLabel }>
           { t('data-importer.mapping.advanced-modal.step-target.type') }
@@ -138,7 +142,10 @@ export const StepTargetFields = ({
               <div className={ styles.fieldLabel }>
                 { t('data-importer.mapping.advanced-modal.step-target.classification-store-key') }
               </div>
-              <div className={ styles.classificationStoreKeyRow }>
+              <Flex
+                align="center"
+                gap="extra-small"
+              >
                 <Input
                   className={ styles.classificationStoreKeyInput }
                   readOnly
@@ -151,7 +158,7 @@ export const StepTargetFields = ({
                 >
                   { t('common.search') }
                 </Button>
-              </div>
+              </Flex>
             </div>
           ) }
 
@@ -186,6 +193,6 @@ export const StepTargetFields = ({
         showOverwriteMode={ showOverwriteMode }
         showWriteSettings={ showWriteSettings }
       />
-    </div>
+    </Flex>
   )
 }

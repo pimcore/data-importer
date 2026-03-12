@@ -13,8 +13,6 @@ import { createStyles } from 'antd-style'
 export const useStyles = createStyles(({ css, token }) => {
   return {
     twoColumnLayout: css`
-      display: flex;
-      gap: ${token.paddingXS}px;
       min-height: 280px;
       width: 100%;
       overflow: hidden;
@@ -26,9 +24,6 @@ export const useStyles = createStyles(({ css, token }) => {
       background: ${token.colorFillAdditional};
       border-radius: ${token.borderRadius}px;
       padding: 10px ${token.paddingSM}px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
     `,
 
     labelSmall: css`
@@ -48,13 +43,9 @@ export const useStyles = createStyles(({ css, token }) => {
     rightColumn: css`
       flex: 1 1 0;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
     `,
 
     footer: css`
-      display: flex;
-      justify-content: flex-end;
       padding-top: ${token.paddingXS}px;
     `
   }

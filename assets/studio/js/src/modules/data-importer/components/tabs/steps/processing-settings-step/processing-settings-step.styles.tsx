@@ -12,13 +12,7 @@ import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ css, token }) => {
   return {
-    fullWidth: css`
-      width: 100%;
-    `,
     loggingGroups: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingSM}px;
       width: 100%;
     `,
     loggingGroup: css`

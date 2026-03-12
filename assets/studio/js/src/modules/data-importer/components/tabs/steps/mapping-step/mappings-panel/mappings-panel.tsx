@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useRef, useState } from 'react'
-import { Form } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Form } from '@pimcore/studio-ui-bundle/components'
 import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
 import { useStyles } from '../mapping-step.styles'
 import { MappingsPanelContent } from './mappings-panel-content'
@@ -68,7 +68,10 @@ export const MappingsPanel = ({
   }, [])
 
   return (
-    <div className={ styles.panel }>
+    <Flex
+      className={ styles.panel }
+      vertical
+    >
       <Form.List name="mappingConfig">
         { (fields, { add, remove }) => {
           const hasItems = fields.length > 0
@@ -105,6 +108,6 @@ export const MappingsPanel = ({
           )
         } }
       </Form.List>
-    </div>
+    </Flex>
   )
 }

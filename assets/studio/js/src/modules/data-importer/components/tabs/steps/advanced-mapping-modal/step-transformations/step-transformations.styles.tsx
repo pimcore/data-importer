@@ -13,8 +13,6 @@ import { createStyles } from 'antd-style'
 export const useStyles = createStyles(({ css, token }) => {
   return {
     twoColumnLayout: css`
-      display: flex;
-      gap: ${token.paddingXS}px;
       width: 100%;
       overflow: hidden;
     `,
@@ -24,9 +22,6 @@ export const useStyles = createStyles(({ css, token }) => {
     leftColumn: css`
       flex: 1 0 0;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXS}px;
     `,
 
     /**
@@ -34,9 +29,6 @@ export const useStyles = createStyles(({ css, token }) => {
      * No background — sits directly on the step content area.
      */
     listHeader: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXS}px;
       height: 32px;
       flex-shrink: 0;
     `,
@@ -61,9 +53,6 @@ export const useStyles = createStyles(({ css, token }) => {
 
     /* Scrollable list of transformer cards */
     itemsList: css`
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
       flex: 1;
       overflow-y: auto;
     `,
@@ -81,8 +70,6 @@ export const useStyles = createStyles(({ css, token }) => {
       border: 1px solid ${token.colorBorderSecondary};
       border-radius: ${token.borderRadiusSM}px;
       padding: 6px ${token.paddingXS}px;
-      display: flex;
-      flex-direction: column;
       gap: ${token.paddingXXS}px;
       background: ${token.colorFillAdditional};
       box-shadow: ${token.boxShadowSecondary};
@@ -94,32 +81,10 @@ export const useStyles = createStyles(({ css, token }) => {
     rightColumn: css`
       flex: 1 0 0;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: ${token.paddingXS}px;
       padding-left: ${token.paddingXXS}px;
     `,
 
-    rightColumnTop: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXS}px;
-    `,
-
-    /**
-     * Source Attribute(s) section — plain read-only display, no colored box.
-     */
-    sourceSection: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXXS}px;
-    `,
-
     sourceSectionHeader: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXXS}px;
       height: 32px;
     `,
 
@@ -135,8 +100,6 @@ export const useStyles = createStyles(({ css, token }) => {
       color: ${token.colorText};
       line-height: 22px;
       flex-wrap: wrap;
-      display: flex;
-      gap: 0;
     `,
 
     sourceSeparator: css`

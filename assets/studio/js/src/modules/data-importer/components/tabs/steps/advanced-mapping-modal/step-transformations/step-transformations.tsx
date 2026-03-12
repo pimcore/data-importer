@@ -8,10 +8,12 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
+
 import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { container } from '@pimcore/studio-ui-bundle'
-import { Dropdown, IconTextButton } from '@pimcore/studio-ui-bundle/components'
+import { Dropdown, Flex, IconTextButton } from '@pimcore/studio-ui-bundle/components'
 import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { v4 as uuid } from 'uuid'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem, type TransformationPipelineItem } from '../../../../../types'
@@ -202,13 +204,24 @@ export const StepTransformations = ({
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className={ styles.twoColumnLayout }>
+    <Flex
+      className={ styles.twoColumnLayout }
+      gap="extra-small"
+    >
 
       {/* LEFT: Transformations list */}
-      <div className={ styles.leftColumn }>
+      <Flex
+        className={ styles.leftColumn }
+        gap="extra-small"
+        vertical
+      >
 
         {/* Header row: "Transformations" + "+ New" dropdown + "Collapse all" link */}
-        <div className={ styles.listHeader }>
+        <Flex
+          align="center"
+          className={ styles.listHeader }
+          gap="extra-small"
+        >
           <span className={ styles.listHeaderTitle }>
             { t('data-importer.mapping.advanced-modal.step-transformations') }
           </span>
@@ -239,10 +252,14 @@ export const StepTransformations = ({
                 : t('data-importer.mapping.collapse-all') }
             </span>
           ) }
-        </div>
+        </Flex>
 
         {/* Sortable list of transformer cards */}
-        <div className={ styles.itemsList }>
+        <Flex
+          className={ styles.itemsList }
+          gap={ 6 }
+          vertical
+        >
           { items.length === 0 && (
             <span className={ styles.emptyState }>
               { t('data-importer.mapping.advanced-modal.no-transformers') }
@@ -260,8 +277,8 @@ export const StepTransformations = ({
             onUpdateSettings={ updateTransformerSettings }
             transformerRegistry={ transformerRegistry }
           />
-        </div>
-      </div>
+        </Flex>
+      </Flex>
 
       <StepTransformationsRightColumn
         baseConfig={ baseConfig }
@@ -282,6 +299,6 @@ export const StepTransformations = ({
         previewRefreshToken={ previewRefreshToken }
       />
 
-    </div>
+    </Flex>
   )
 }

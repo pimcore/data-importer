@@ -22,7 +22,6 @@ export const useStyles = createStyles(({ css, token }) => {
     // min-width:800px combined with overflow:auto on stepContentMapping shows a
     // horizontal scrollbar if the viewport is too narrow.
     mappingLayout: css`
-      display: flex;
       width: 100%;
       height: 100%;
       min-width: 900px;
@@ -32,7 +31,7 @@ export const useStyles = createStyles(({ css, token }) => {
       flex: 2;
       min-width: 0;
       height: 100%;
-      overflow-y: auto;
+      overflow-y: scroll;
     `,
 
     // Center column: full height, no overflow — contains the sticky arrow.
@@ -40,9 +39,6 @@ export const useStyles = createStyles(({ css, token }) => {
       width: 46px;
       flex-shrink: 0;
       height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     `,
 
     // Column is exactly the available height, so top:50% is the true midpoint.
@@ -51,9 +47,6 @@ export const useStyles = createStyles(({ css, token }) => {
       top: 50%;
       transform: translateY(-50%);
       pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       color: ${token.colorFillActive};
     `,
 
@@ -61,39 +54,31 @@ export const useStyles = createStyles(({ css, token }) => {
       flex: 3;
       min-width: 0;
       height: 100%;
-      overflow-y: auto;
+      overflow-y: scroll;
     `,
 
     panel: css`
-      display: flex;
-      flex-direction: column;
       height: 100%;
     `,
 
     panelScrollable: css`
       flex: 1;
       min-height: 0;
-      display: flex;
-      flex-direction: column;
       padding: 0 ${token.paddingSM}px ${token.paddingMD}px;
     `,
 
     // ── Sources panel ─────────────────────────────────────────────────────
 
     sourcesPanel: css`
-      display: flex;
-      flex-direction: column;
       height: 100%;
       background: ${token.colorFillTertiary};
     `,
 
     sourcesHeader: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${token.paddingSM}px ${token.paddingMD}px;
-      padding-bottom: ${token.paddingSM}px;
-      min-height: 52px;
+      padding: 0 ${token.paddingMD}px;
+      height: 52px;
+      box-sizing: border-box;
+      flex-shrink: 0;
     `,
 
     sourcesTitle: css`
@@ -144,8 +129,6 @@ export const useStyles = createStyles(({ css, token }) => {
       border: 1px solid ${token.colorBorderSecondary};
       border-left: none;
       border-radius: ${token.borderRadiusLG}px;
-      display: flex;
-      align-items: center;
       min-height: 40px;
       overflow: hidden;
     `,
@@ -163,9 +146,6 @@ export const useStyles = createStyles(({ css, token }) => {
     // Left half: tag area — flex: 1, padding, row with gap
     sourceRowTagArea: css`
       flex: 1;
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXS}px;
       padding: ${token.paddingXS}px ${token.paddingXS}px;
       min-width: 0;
     `,
@@ -201,9 +181,6 @@ export const useStyles = createStyles(({ css, token }) => {
     // Wrapper for NoContent in sources panel
     noContentWrapper: css`
       flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       padding: ${token.paddingXL}px ${token.paddingMD}px;
     `,
 
@@ -269,11 +246,10 @@ export const useStyles = createStyles(({ css, token }) => {
 
     // ── Mappings panel ────────────────────────────────────────────────────
     mappingsHeader: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingSM}px;
-      padding: ${token.paddingSM}px ${token.paddingMD}px ${token.paddingSM}px 0;
-      min-height: 52px;
+      padding: 0 ${token.paddingMD}px 0 0;
+      height: 52px;
+      box-sizing: border-box;
+      flex-shrink: 0;
     `,
 
     mappingsTitle: css`
@@ -285,9 +261,6 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     mappingsActions: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXS}px;
       flex: 1;
     `,
 
@@ -307,11 +280,9 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     mappingsContent: css`
-      display: flex;
-      flex-direction: column;
       flex: 1;
-      gap: 0;
       padding: 0 ${token.paddingMD}px ${token.paddingMD}px 0;
+      margin-top: -10px;
     `,
 
     // ── Empty state ───────────────────────────────────────────────────────
@@ -369,9 +340,6 @@ export const useStyles = createStyles(({ css, token }) => {
 
     // Figma: label row — gap-8px between input and buttons, px-4px horizontal padding
     mappingLabelRow: css`
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXS}px;
       padding: 0 ${token.paddingXXS}px;
     `,
 
@@ -391,8 +359,6 @@ export const useStyles = createStyles(({ css, token }) => {
     // items-stretch so the arrow column fills the full height of the row,
     // allowing it to vertically center its content (advanced state).
     sourcesDestRow: css`
-      display: flex;
-      align-items: stretch;
       padding-top: ${token.paddingSM}px;
     `,
 
@@ -400,9 +366,6 @@ export const useStyles = createStyles(({ css, token }) => {
     sourcesDestCol: css`
       flex: 1;
       min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: ${token.paddingXXS}px;
       padding: 0 ${token.paddingXXS}px;
     `,
 
@@ -412,15 +375,10 @@ export const useStyles = createStyles(({ css, token }) => {
     // Advanced state: justify-center + gap-10px so gear sits above arrow, both centered.
     arrowCol: css`
       flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       padding: 0 ${token.paddingSM}px;
     `,
 
-    arrowColSimple: css`
-      justify-content: flex-start;
-    `,
+    arrowColSimple: css``,
 
     // Spacer that offsets the arrow down by the height of the label line + gap,
     // so the arrow aligns with the vertical centre of the Select control.
@@ -431,15 +389,10 @@ export const useStyles = createStyles(({ css, token }) => {
 
     // Flex row that centres the arrow SVG within the select-row height.
     arrowSelectRow: css`
-      display: flex;
-      align-items: center;
       height: ${token.controlHeight}px;
     `,
 
-    arrowColAdvanced: css`
-      justify-content: center;
-      gap: 10px;
-    `,
+    arrowColAdvanced: css``,
 
     // Warning indicator: small orange exclamation circle shown above the arrow
     arrowWarningBadge: css`
@@ -472,10 +425,6 @@ export const useStyles = createStyles(({ css, token }) => {
     // Advanced destination: plain text lines (not a Select)
     destinationTextBlock: css`
       padding: 0 ${token.paddingXXS}px;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      justify-content: center;
       font-size: ${token.fontSizeSM}px;
       line-height: 22px;
       color: ${token.colorText};
@@ -487,11 +436,6 @@ export const useStyles = createStyles(({ css, token }) => {
       font-size: ${token.fontSizeSM}px;
       line-height: 22px;
       color: ${token.colorWarningText};
-    `,
-
-    languageRow: css`
-      display: flex;
-      justify-content: flex-end;
     `,
 
     languageSelect: css`

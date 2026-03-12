@@ -13,10 +13,6 @@ import { createStyles } from 'antd-style'
 export const useStyles = createStyles(({ css, token }) => {
   return {
     toolbar: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: ${token.paddingSM}px;
       margin-bottom: ${token.paddingSM}px;
     `,
 
@@ -26,15 +22,10 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     paginationRow: css`
-      display: flex;
-      justify-content: flex-end;
       margin-top: ${token.paddingSM}px;
     `,
 
     footer: css`
-      display: flex;
-      justify-content: flex-end;
-      gap: ${token.paddingXS}px;
       margin-top: ${token.paddingSM}px;
     `
   }

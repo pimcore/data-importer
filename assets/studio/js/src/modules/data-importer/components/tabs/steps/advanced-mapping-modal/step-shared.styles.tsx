@@ -19,24 +19,6 @@ import { createStyles } from 'antd-style'
 export const useSharedStepStyles = createStyles(({ css, token }) => {
   return {
     /**
-     * Standard 50/50 two-column layout used by step-source and step-target.
-     * step-transformations uses its own variant (flex:1 columns + overflow:hidden).
-     */
-    twoColumnLayout: css`
-      display: flex;
-      gap: ${token.paddingXS}px;
-    `,
-
-    /**
-     * Nav button row — right-aligned, used in every step footer.
-     */
-    navButtons: css`
-      display: flex;
-      justify-content: flex-end;
-      gap: ${token.paddingXS}px;
-    `,
-
-    /**
      * Outline (secondary) action button — purple border, transparent background.
      * Used for "Back" and secondary actions.
      */
