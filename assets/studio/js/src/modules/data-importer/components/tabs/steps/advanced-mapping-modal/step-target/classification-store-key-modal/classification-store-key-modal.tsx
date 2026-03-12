@@ -68,7 +68,7 @@ export const ClassificationStoreKeyModal = ({
       transformationResultType,
       start,
       limit: pageSize,
-      searchfilter: searchTerm !== '' ? searchTerm : undefined
+      searchfilter: searchTerm === '' ? undefined : searchTerm
     },
     {
       skip: !open
@@ -93,7 +93,7 @@ export const ClassificationStoreKeyModal = ({
     [t]
   )
 
-  const selectedRows = selectedRowId !== null ? { [selectedRowId]: true } : undefined
+  const selectedRows = selectedRowId === null ? undefined : { [selectedRowId]: true }
 
   return (
     <Modal

@@ -26,7 +26,7 @@ export const useRefreshInterval = (onRefresh: () => void): UseRefreshIntervalRet
       return
     }
 
-    const intervalMs = parseInt(refreshInterval) * 1000
+    const intervalMs = Number.parseInt(refreshInterval) * 1000
     const intervalId = setInterval(() => {
       stableOnRefresh()
     }, intervalMs)

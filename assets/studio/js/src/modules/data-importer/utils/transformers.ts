@@ -123,8 +123,8 @@ function mergeOptionConfig<T extends { type?: string, settings?: Record<string, 
     ...existingConfig,
     ...formConfig,
     settings: {
-      ...(existingConfig?.settings ?? {}),
-      ...(formConfig.settings ?? {})
+      ...existingConfig?.settings,
+      ...formConfig.settings
     }
   }
 }

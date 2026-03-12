@@ -19,7 +19,7 @@ import { StepTransformations } from './step-transformations/step-transformations
 import { StepTarget } from './step-target/step-target'
 import { useStyles } from './advanced-mapping-modal.styles'
 
-export type { ClassAttribute }
+export { type ClassAttribute } from '../../../../types'
 
 export interface AdvancedMappingModalProps {
   open: boolean

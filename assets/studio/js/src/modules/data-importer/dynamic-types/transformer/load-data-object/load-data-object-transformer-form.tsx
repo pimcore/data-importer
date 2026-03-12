@@ -15,7 +15,7 @@ import { useClassDefinitionCollectionQuery } from '@pimcore/studio-ui-bundle/api
 import { TransformerSettingsLayout } from '../transformer-settings-layout'
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../data-importer-api-slice.gen'
 
-const SYSTEM_ATTRIBUTES = ['id', 'path', 'key']
+const SYSTEM_ATTRIBUTES = new Set(['id', 'path', 'key'])
 
 interface LoadDataObjectTransformerConfig {
   loadStrategy?: string
@@ -73,7 +73,7 @@ export const LoadDataObjectTransformerForm = ({ settings, onChange }: LoadDataOb
     attributeName !== undefined &&
     attributeName !== null &&
     attributeName !== '' &&
-    !SYSTEM_ATTRIBUTES.includes(attributeName)
+    !SYSTEM_ATTRIBUTES.has(attributeName)
 
   return (
     <TransformerSettingsLayout>
@@ -162,7 +162,7 @@ export const LoadDataObjectTransformerForm = ({ settings, onChange }: LoadDataOb
             </>
           ) }
 
-          { !isAttribute && <div style={ { height: 0 } } /> }
+          { isAttribute ? null : <div style={ { height: 0 } } /> }
         </>
       ) }
     </TransformerSettingsLayout>

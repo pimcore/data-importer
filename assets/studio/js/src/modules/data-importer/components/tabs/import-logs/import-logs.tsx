@@ -142,7 +142,7 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
                   { value: '60', label: t('application-logger.refresh-interval.seconds', { seconds: 60 }) }
                 ] }
                 placeholder={ t('application-logger.refresh-interval.select') }
-                validate={ (value) => !isNaN(parseInt(value)) && parseInt(value) > 0 }
+                validate={ (value) => !Number.isNaN(Number.parseInt(value)) && Number.parseInt(value) > 0 }
                 value={ refreshInterval }
               />
             </Flex>

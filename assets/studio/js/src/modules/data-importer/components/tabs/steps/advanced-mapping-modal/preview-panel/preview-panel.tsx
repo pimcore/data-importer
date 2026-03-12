@@ -97,15 +97,15 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
   }, [isImportError])
 
   const fetchResultPreview = (record: number): void => {
-    const currentConfig: Record<string, object> | undefined = props.currentMappingItem !== undefined
-      ? {
+    const currentConfig: Record<string, object> | undefined = props.currentMappingItem === undefined
+      ? undefined
+      : {
           mappingConfig: [props.currentMappingItem] as object[],
           ...(props.baseConfig?.loaderConfig !== undefined && { loaderConfig: props.baseConfig.loaderConfig as object }),
           ...(props.baseConfig?.interpreterConfig !== undefined && { interpreterConfig: props.baseConfig.interpreterConfig as object }),
           ...(props.baseConfig?.resolverConfig !== undefined && { resolverConfig: props.baseConfig.resolverConfig as object }),
           ...(props.baseConfig?.processingConfig !== undefined && { processingConfig: props.baseConfig.processingConfig as object })
         }
-      : undefined
 
     setResultRequest({
       name: props.configName,
@@ -120,7 +120,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     if (props.mode !== 'result') return
     if (resultPreviewResponse === undefined) return
     const rawPreviews = resultPreviewResponse.transformationResultPreviews ?? []
-    setPreviews(props.currentMappingItem !== undefined ? rawPreviews.slice(0, 1) : rawPreviews)
+    setPreviews(props.currentMappingItem === undefined ? rawPreviews : rawPreviews.slice(0, 1))
   }, [props.mode, resultPreviewResponse, props.currentMappingItem])
 
   useEffect(() => {

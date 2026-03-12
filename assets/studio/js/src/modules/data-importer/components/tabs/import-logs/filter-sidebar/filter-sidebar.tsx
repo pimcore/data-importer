@@ -138,7 +138,7 @@ export const FilterSidebar = (): React.JSX.Element => {
               <Input
                 onChange={ (e) => {
                   const value = e.target.value
-                  setMessage(value !== '' ? value : null)
+                  setMessage(value === '' ? null : value)
                 } }
                 value={ message ?? undefined }
               />
@@ -152,7 +152,7 @@ export const FilterSidebar = (): React.JSX.Element => {
                 min="0"
                 onChange={ (e) => {
                   const value = e.target.value
-                  setRelatedObjectId(value !== '' ? parseInt(value) : null)
+                  setRelatedObjectId(value === '' ? null : Number.parseInt(value))
                 } }
                 step="1"
                 type="number"
@@ -168,7 +168,7 @@ export const FilterSidebar = (): React.JSX.Element => {
                 min="0"
                 onChange={ (e) => {
                   const value = e.target.value
-                  setPid(value !== '' ? parseInt(value) : null)
+                  setPid(value === '' ? null : Number.parseInt(value))
                 } }
                 step="1"
                 type="number"
