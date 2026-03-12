@@ -124,14 +124,6 @@ export interface MappingConfigItem {
   dataTarget?: DataTargetConfig
 }
 
-export function createMappingItemId (): string {
-  if (typeof globalThis.crypto?.randomUUID === 'function') {
-    return globalThis.crypto.randomUUID()
-  }
-
-  return `mapping-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-}
-
 export interface DataImporterFormValues {
   active: boolean
   name: string

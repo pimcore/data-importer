@@ -8,7 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { createMappingItemId, type MappingConfigItem } from '../../../../../types'
+import { uuid } from '@pimcore/studio-ui-bundle/utils'
+import type { MappingConfigItem } from '../../../../../types'
 
 export type MappingCreateMode = 'manual' | 'autofill'
 
@@ -18,7 +19,7 @@ export function createMappingItem (
   mode: MappingCreateMode = 'manual'
 ): MappingConfigItem {
   return {
-    mappingId: createMappingItemId(),
+    mappingId: uuid(),
     label,
     dataSourceIndex: [dataIndex],
     transformationResultType: mode === 'autofill' ? 'default' : undefined,

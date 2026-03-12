@@ -9,12 +9,13 @@
  */
 
 import { type formInstanceType } from '@pimcore/studio-ui-bundle/components'
-import { createMappingItemId, type MappingConfigItem } from '../../../../../types'
+import { uuid } from '@pimcore/studio-ui-bundle/utils'
+import type { MappingConfigItem } from '../../../../../types'
 
 export function ensureMappingId (item: MappingConfigItem): MappingConfigItem {
   return {
     ...item,
-    mappingId: item.mappingId ?? createMappingItemId()
+    mappingId: item.mappingId ?? uuid()
   }
 }
 
@@ -26,7 +27,7 @@ export function ensureMappingIdAtIndex (form: formInstanceType, index: number): 
     return existingId
   }
 
-  const generatedId = createMappingItemId()
+  const generatedId = uuid()
   form.setFieldValue(['mappingConfig', index, 'mappingId'], generatedId, { triggerChange: false })
   return generatedId
 }
