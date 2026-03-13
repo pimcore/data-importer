@@ -7,7 +7,7 @@
         window.alternativePluginExportPaths = {}
       }
 
-      window.pluginRemotes.pimcore_dataimporter_bundle = "/bundles/pimcoredataimporter/studio/build/025c8a90-dfbc-4444-afc7-07bba54d4843/static/js/remoteEntry.js"
+      window.pluginRemotes.pimcore_dataimporter_bundle = "/bundles/pimcoredataimporter/studio/build/521393a6-1b86-4fa6-9e10-974241dd4db9/static/js/remoteEntry.js"
 
       
     
