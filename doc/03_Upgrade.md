@@ -2,9 +2,9 @@
 
 ## Upgrade to 2026.1.0
 
-- Added support to `PHP` `8.5`.
-- Removed support to `PHP` `8.3` and Symfony `v6`.
-- Change namespave from `Pimcore\Log\ApplicationLogger` to `Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger`
+- Added support for `PHP` `8.5`.
+- Removed support for `PHP` `8.3` and Symfony `v6`.
+- Changed namespace from `Pimcore\Log\ApplicationLogger` to `Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger`
 
 ## Update to Version 1.11
 
