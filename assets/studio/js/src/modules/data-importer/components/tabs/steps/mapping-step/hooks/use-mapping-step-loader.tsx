@@ -8,7 +8,9 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { useCallback, useEffect, useState } from 'react'
+/* eslint-disable max-lines */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
 import { useAppDispatch } from '@pimcore/studio-ui-bundle/app'
 import { api, useBundleDataImporterConfigGetQuery } from '../../../../../data-importer-api-slice-enhanced'
@@ -18,6 +20,11 @@ import { normalizeDataRow } from '../../../../../utils/normalize-data-row'
 import { type DataImporterFormValues, type MappingConfigItem, type ClassAttribute, resolveAttrMapKey } from '../../../../../types'
 import { type SourceRow } from '../sources-panel/sources-panel'
 import { parseClassAttribute, type ColumnHeaderEntry, type UseMappingStepLoaderResult } from './use-mapping-step-loader.types'
+
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
+
 export function useMappingStepLoader (configName: string, isActive: boolean): UseMappingStepLoaderResult {
   const form = Form.useFormInstance()
   const dispatch = useAppDispatch()
@@ -75,10 +82,17 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
   const classIdFromForm = Form.useWatch(['resolverConfig', 'dataObjectClassId']) as string | undefined
   const classId = classIdFromForm ?? classIdFromConfig
 
-  const mappingTrtList = Form.useWatch(
+  // Serialize to a string so useWatch only triggers a re-render when the TRT
+  // list actually changes, not on every unrelated form field update (returning a
+  // new array reference on every call would always be referentially unequal).
+  const mappingTrtListJson = Form.useWatch(
     (values: { mappingConfig?: MappingConfigItem[] }) =>
-      (values.mappingConfig ?? []).map((item) => item.transformationResultType ?? '')
-  ) as string[] | undefined
+      JSON.stringify((values.mappingConfig ?? []).map((item) => item.transformationResultType ?? ''))
+  ) as string | undefined
+  const mappingTrtList = useMemo(
+    () => (mappingTrtListJson !== undefined ? JSON.parse(mappingTrtListJson) as string[] : undefined),
+    [mappingTrtListJson]
+  )
 
   const getMappingConfig = useCallback(
     (): MappingConfigItem[] =>
@@ -139,18 +153,56 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
   const loaderConfigType = Form.useWatch(['loaderConfig', 'type']) as string | undefined
   const interpreterConfigType = Form.useWatch(['interpreterConfig', 'type']) as string | undefined
-  const currentConfigFingerprint = JSON.stringify(getSourcePreviewConfig())
+  // Memoized so JSON.stringify + full form serialisation only runs when the
+  // fields that actually affect the source preview config change, not on every render.
+  const currentConfigFingerprint = useMemo(
+    () => JSON.stringify(getSourcePreviewConfig()),
+    [loaderConfigType, interpreterConfigType, configData]
+  )
   const [lastLoadedFingerprint, setLastLoadedFingerprint] = useState<string>('')
   const [lastLoadedRequestId, setLastLoadedRequestId] = useState<string | undefined>(undefined)
+  const loadCycleRef = useRef(0)
+  const prevIsActiveRef = useRef(false)
 
   useEffect(() => {
-    if (!isConfigLoaded || !isActive) return
+    if (!isConfigLoaded || !isActive) {
+      prevIsActiveRef.current = isActive
+      return
+    }
 
     const nextFingerprint = currentConfigFingerprint
     const argsChanged = nextFingerprint !== lastLoadedFingerprint
     const requestChanged = requestId !== undefined && requestId !== lastLoadedRequestId
+    // Detect tab re-visit: isActive just became true and a previous load exists.
+    // Re-fetch so fresh server-side preview data (e.g. after "Copy from source") is picked up.
+    const becameActive = !prevIsActiveRef.current && isActive
+    prevIsActiveRef.current = isActive
 
-    if (!argsChanged && !requestChanged) return
+    if (!argsChanged && !requestChanged) {
+      if (becameActive && headersRequest !== undefined && previewRequest !== undefined) {
+        void Promise.all([
+          refetchHeaders().catch(() => undefined),
+          refetchPreview().catch(() => undefined)
+        ])
+      }
+      return
+    }
+
+    const debugEnabled = isMappingDebugEnabled()
+    const cycleId = ++loadCycleRef.current
+    const cycleStartedAt = debugEnabled ? performance.now() : 0
+
+    if (debugEnabled) {
+      console.debug('[DI][Loader] source config refresh start', {
+        cycleId,
+        configName,
+        argsChanged,
+        requestChanged,
+        loaderConfigType,
+        interpreterConfigType,
+        classId: classIdFromConfig
+      })
+    }
 
     setInitialLoadDone(false)
     setAttrsDone(false)
@@ -172,6 +224,9 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     })
 
     if (requestChanged && !argsChanged && headersRequest !== undefined && previewRequest !== undefined) {
+      if (debugEnabled) {
+        console.debug('[DI][Loader] refetch headers+preview', { cycleId })
+      }
       void Promise.all([
         refetchHeaders().catch(() => undefined),
         refetchPreview().catch(() => undefined)
@@ -179,6 +234,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     }
 
     void (async () => {
+      const attrsStartedAt = debugEnabled ? performance.now() : 0
       try {
         const classIdFromFormSync = form.getFieldValue(['resolverConfig', 'dataObjectClassId']) as string | undefined
         const effectiveClassId = classIdFromFormSync ?? classIdFromConfig
@@ -192,6 +248,13 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
         }
 
         const typesArray = Array.from(uniqueTypes)
+        if (debugEnabled) {
+          console.debug('[DI][Loader] class attributes load start', {
+            cycleId,
+            effectiveClassId,
+            types: typesArray.map((t) => t ?? '__default__')
+          })
+        }
         const attrPromises = typesArray.map(async (trt) =>
           await dispatch(
             api.endpoints.bundleDataImporterDataTypeLoadClassAttributes.initiate({
@@ -207,19 +270,45 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
         const attrResults = await Promise.all(attrPromises)
 
         if (typesArray.length > 0) {
-          const newMap: Record<string, ClassAttribute[]> = {}
+          const newEntries: Record<string, ClassAttribute[]> = {}
           attrResults.forEach((result, i) => {
             const trt = typesArray[i]
             const mapKey = (trt === undefined || trt === '' || trt === 'default') ? '__default__' : trt
             const attrs = (result.data?.attributes ?? []).map(parseClassAttribute)
-            newMap[mapKey] = attrs
+            newEntries[mapKey] = attrs
           })
-          setAttributesMap(newMap)
+          // Merge new entries — only update the map object when content actually
+          // changed so consumers with referential equality checks (React.memo,
+          // useMemo) don't re-render when their own TRT's attrs are unchanged.
+          setAttributesMap((prev) => {
+            let changed = false
+            for (const key of Object.keys(newEntries)) {
+              if (prev[key] !== newEntries[key]) {
+                changed = true
+                break
+              }
+            }
+            if (!changed) return prev
+            return { ...prev, ...newEntries }
+          })
         }
       } finally {
+        if (debugEnabled) {
+          console.debug('[DI][Loader] class attributes load done', {
+            cycleId,
+            durationMs: Number((performance.now() - attrsStartedAt).toFixed(2))
+          })
+        }
         setAttrsDone(true)
       }
     })()
+
+    if (debugEnabled) {
+      console.debug('[DI][Loader] source config refresh queued', {
+        cycleId,
+        durationMs: Number((performance.now() - cycleStartedAt).toFixed(2))
+      })
+    }
 
     setLastLoadedFingerprint(nextFingerprint)
     setLastLoadedRequestId(requestId)
@@ -239,10 +328,40 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     dispatch,
     form,
     configData,
-    classIdFromConfig,
-    loaderConfigType,
-    interpreterConfigType
+    classIdFromConfig
   ])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isHeadersSuccess) return
+
+    console.debug('[DI][Loader] headers load success', {
+      count: headersResult?.columnHeaders?.length ?? 0
+    })
+  }, [isHeadersSuccess, headersResult])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isHeadersError) return
+
+    console.debug('[DI][Loader] headers load error')
+  }, [isHeadersError])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isPreviewSuccess) return
+
+    console.debug('[DI][Loader] preview load success', {
+      rowCount: (previewResult?.dataPreview ?? []).length
+    })
+  }, [isPreviewSuccess, previewResult])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isPreviewError) return
+
+    console.debug('[DI][Loader] preview load error')
+  }, [isPreviewError])
 
   useEffect(() => {
     const effectiveClassId = classId
@@ -274,11 +393,14 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
     void Promise.all(promises).then((results) => {
       setAttributesMap((prev) => {
-        const next = { ...prev }
+        const next: Record<string, ClassAttribute[]> = {}
         results.forEach((result, i) => {
           next[missingArray[i]] = (result.data?.attributes ?? []).map(parseClassAttribute)
         })
-        return next
+        // Only produce a new object if something actually changed.
+        const hasChanges = missingArray.some((key) => prev[key] !== next[key])
+        if (!hasChanges) return prev
+        return { ...prev, ...next }
       })
     })
   }, [mappingTrtList, initialLoadDone, classId])

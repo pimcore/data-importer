@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
+import { Button, IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
 import { PreviewPanel } from '../preview-panel/preview-panel'
 import { useSharedStepStyles } from '../step-shared.styles'
@@ -21,6 +21,7 @@ export interface StepTransformationsRightColumnProps {
   dataSourceIndex: string[]
   columnHeaderOptions: Array<{ value: string, label: string }>
   previewRefreshToken: number
+  forceRefreshToken: number
   currentMappingItem: MappingConfigItem
   baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
   editingSource: boolean
@@ -37,6 +38,7 @@ export const StepTransformationsRightColumn = ({
   dataSourceIndex,
   columnHeaderOptions,
   previewRefreshToken,
+  forceRefreshToken,
   currentMappingItem,
   baseConfig,
   editingSource,
@@ -118,6 +120,7 @@ export const StepTransformationsRightColumn = ({
             baseConfig={ baseConfig }
             configName={ configName }
             currentMappingItem={ currentMappingItem }
+            forceRefreshToken={ forceRefreshToken }
             mode="result"
             refreshToken={ previewRefreshToken }
           />
@@ -128,20 +131,18 @@ export const StepTransformationsRightColumn = ({
         gap="extra-small"
         justify="flex-end"
       >
-        <button
-          className={ shared.outlineButton }
+        <Button
           onClick={ onPrev }
-          type="button"
+          type="default"
         >
           { t('data-importer.mapping.advanced-modal.previous-step') }
-        </button>
-        <button
-          className={ shared.outlineButton }
+        </Button>
+        <Button
           onClick={ onNext }
-          type="button"
+          type="default"
         >
           { t('data-importer.mapping.advanced-modal.next-step') }
-        </button>
+        </Button>
       </Flex>
     </Flex>
   )

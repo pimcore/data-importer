@@ -10,10 +10,15 @@
 
 import React from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
-import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
+import { type MappingConfigItem } from '../../../../../types'
+import { useMappingItemContext } from '../mapping-item-context'
 import { useStyles } from '../mapping-step.styles'
 import { MappingDropZone } from './mapping-drop-zone'
 import { MappingItem } from './mapping-item'
+
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
 
 export interface MappingItemWithFilterProps {
   fieldIndex: number
@@ -21,12 +26,8 @@ export interface MappingItemWithFilterProps {
   insertIndex: number
   remove: (index: number) => void
   onRemoveItem: (index: number) => void
-  configName: string
-  columnHeaderOptions: Array<{ value: string, label: string }>
-  classId: string | undefined
   expanded: boolean
   onToggle: () => void
-  attributesMap: Record<string, ClassAttribute[]>
   activeFilter: string | null
   isNew: boolean
   add: (value?: MappingConfigItem, insertIndex?: number) => void
@@ -35,30 +36,40 @@ export interface MappingItemWithFilterProps {
   acceptedDataIndex?: string
 }
 
-export const MappingItemWithFilter = React.memo((props: MappingItemWithFilterProps): React.JSX.Element => {
-  const {
-    fieldIndex,
-    mappingId,
-    insertIndex,
-    activeFilter,
-    isNew,
-    add,
-    onDropped,
-    onInsertItem,
-    acceptedDataIndex,
-    attributesMap,
-    expanded,
-    onToggle,
-    ...itemProps
-  } = props
+export const MappingItemWithFilter = React.memo(({
+  fieldIndex,
+  mappingId,
+  insertIndex,
+  remove,
+  onRemoveItem,
+  expanded,
+  onToggle,
+  activeFilter,
+  isNew,
+  add,
+  onDropped,
+  onInsertItem,
+  acceptedDataIndex
+}: MappingItemWithFilterProps): React.JSX.Element => {
+  const renderCountRef = React.useRef(0)
+  renderCountRef.current += 1
 
+  if (isMappingDebugEnabled() && (renderCountRef.current === 1 || renderCountRef.current % 50 === 0)) {
+    console.debug('[DI][MappingItemWithFilter] render', {
+      fieldIndex,
+      mappingId,
+      renderCount: renderCountRef.current,
+      expanded,
+      activeFilter
+    })
+  }
+
+  const { configName, classId, columnHeaderOptions, attributesMap } = useMappingItemContext()
   const { styles, cx } = useStyles()
-  const form = Form.useFormInstance()
 
-  const mappingItems = (Form.useWatch('mappingConfig') as MappingConfigItem[] | undefined) ?? []
-  const itemById = mappingItems.find((entry) => entry.mappingId === mappingId)
-  const itemByIndex = form.getFieldValue(['mappingConfig', fieldIndex]) as MappingConfigItem | undefined
-  const item: MappingConfigItem = itemById ?? itemByIndex ?? {}
+  // Watch only this item's index in mappingConfig. Selector is O(1) by path.
+  const itemByIndex = Form.useWatch(['mappingConfig', fieldIndex]) as MappingConfigItem | undefined
+  const item: MappingConfigItem = itemByIndex ?? {}
 
   const dataSourceIndex = item.dataSourceIndex
   const isHidden = activeFilter !== null && !(dataSourceIndex ?? []).includes(activeFilter)
@@ -74,14 +85,19 @@ export const MappingItemWithFilter = React.memo((props: MappingItemWithFilterPro
       />
       <div className={ cx(isNew && styles.mappingItemNew) }>
         <MappingItem
-          { ...itemProps }
           attributesMap={ attributesMap }
+          classId={ classId }
+          columnHeaderOptions={ columnHeaderOptions }
+          configName={ configName }
           dataSourceIndex={ dataSourceIndex }
           expanded={ expanded }
           fieldIndex={ fieldIndex }
           itemLabel={ item.label }
+          language={ item.dataTarget?.settings?.language }
           mappingId={ mappingId }
+          onRemoveItem={ onRemoveItem }
           onToggle={ onToggle }
+          remove={ remove }
           selectedFieldName={ item.dataTarget?.settings?.fieldName }
           transformationResultType={ item.transformationResultType }
         />

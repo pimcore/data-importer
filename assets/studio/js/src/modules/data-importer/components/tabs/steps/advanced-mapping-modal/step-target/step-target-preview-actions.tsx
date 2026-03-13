@@ -13,12 +13,12 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
 import { PreviewPanel } from '../preview-panel/preview-panel'
-import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-target.styles'
 
 export interface StepTargetPreviewActionsProps {
   configName: string
   previewRefreshToken: number
+  forceRefreshToken: number
   currentMappingItem?: MappingConfigItem
   baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
   onPrev: () => void
@@ -28,6 +28,7 @@ export interface StepTargetPreviewActionsProps {
 export const StepTargetPreviewActions = ({
   configName,
   previewRefreshToken,
+  forceRefreshToken,
   currentMappingItem,
   baseConfig,
   onPrev,
@@ -35,7 +36,6 @@ export const StepTargetPreviewActions = ({
 }: StepTargetPreviewActionsProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { styles: shared } = useSharedStepStyles()
 
   return (
     <Flex
@@ -48,6 +48,7 @@ export const StepTargetPreviewActions = ({
           baseConfig={ baseConfig }
           configName={ configName }
           currentMappingItem={ currentMappingItem }
+          forceRefreshToken={ forceRefreshToken }
           mode="result"
           refreshToken={ previewRefreshToken }
         />
@@ -57,13 +58,12 @@ export const StepTargetPreviewActions = ({
         gap="extra-small"
         justify="flex-end"
       >
-        <button
-          className={ shared.outlineButton }
+        <Button
           onClick={ onPrev }
-          type="button"
+          type="default"
         >
           { t('data-importer.mapping.advanced-modal.step-target.previous-step') }
-        </button>
+        </Button>
         <Button
           onClick={ onConfirm }
           type="primary"

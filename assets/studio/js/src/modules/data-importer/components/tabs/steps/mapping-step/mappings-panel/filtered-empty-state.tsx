@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Droppable, type DragAndDropInfo, Form, IconTextButton } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type MappingConfigItem } from '../../../../../types'
@@ -38,7 +38,16 @@ export const FilteredEmptyState = ({
 }: FilteredEmptyStateProps): React.JSX.Element | null => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const allItems = Form.useWatch('mappingConfig') as MappingConfigItem[] | undefined ?? []
+
+  // Serialize only the dataSourceIndex arrays to avoid re-renders on unrelated field changes
+  const allItemsJson = Form.useWatch(
+    (values: { mappingConfig?: MappingConfigItem[] }) =>
+      JSON.stringify((values.mappingConfig ?? []).map((item) => item.dataSourceIndex ?? []))
+  ) as string | undefined
+  const allItemsDataSourceIndices = useMemo<string[][]>(
+    () => (allItemsJson !== undefined ? JSON.parse(allItemsJson) as string[][] : []),
+    [allItemsJson]
+  )
 
   const handleDrop = useCallback((info: DragAndDropInfo): void => {
     const { dataIndex, label } = info.data as { dataIndex: string, label: string }
@@ -48,9 +57,7 @@ export const FilteredEmptyState = ({
     onDropped(fields.length)
   }, [activeFilter, onInsertItem, add, fields.length, onDropped])
 
-  const hasMatch = allItems.some((item) =>
-    (item.dataSourceIndex ?? []).includes(activeFilter)
-  )
+  const hasMatch = allItemsDataSourceIndices.some((indices) => indices.includes(activeFilter))
 
   if (hasMatch) return null
 

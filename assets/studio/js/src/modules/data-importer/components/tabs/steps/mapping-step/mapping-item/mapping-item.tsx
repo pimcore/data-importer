@@ -25,6 +25,10 @@ import { DND_TYPE } from '../sources-panel/sources-panel'
 import { findMappingIndexById } from '../utils/mapping-identity'
 import { MappingItemContent } from './mapping-item-content'
 
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
+
 export interface MappingItemProps {
   fieldIndex: number
   mappingId: string
@@ -42,10 +46,11 @@ export interface MappingItemProps {
   dataSourceIndex: string[] | undefined
   transformationResultType: string | undefined
   selectedFieldName: string | undefined
+  language: string | undefined
   attributesMap: Record<string, ClassAttribute[]>
 }
 
-export const MappingItem = React.memo(({
+const MappingItemComponent = ({
   fieldIndex,
   mappingId,
   remove,
@@ -59,8 +64,23 @@ export const MappingItem = React.memo(({
   dataSourceIndex,
   transformationResultType,
   selectedFieldName,
+  language,
   attributesMap
 }: MappingItemProps): React.JSX.Element => {
+  const renderCountRef = React.useRef(0)
+  renderCountRef.current += 1
+
+  if (isMappingDebugEnabled() && (renderCountRef.current === 1 || renderCountRef.current % 50 === 0)) {
+    console.debug('[DI][MappingItem] render', {
+      fieldIndex,
+      mappingId,
+      renderCount: renderCountRef.current,
+      expanded,
+      hasDataSource: (dataSourceIndex ?? []).length > 0,
+      trt: transformationResultType ?? 'default'
+    })
+  }
+
   const { t } = useTranslation()
   const { styles } = useStyles()
   const form = Form.useFormInstance()
@@ -86,6 +106,8 @@ export const MappingItem = React.memo(({
   }, [form, mappingId])
 
   useEffect(() => {
+    if (!expanded) return
+
     const index = getCurrentIndexByMappingId()
     if (index < 0) return
 
@@ -99,16 +121,22 @@ export const MappingItem = React.memo(({
         form.setFieldValue(['mappingConfig', index, 'label'], match.label, { triggerChange: true })
       }
     }
-  }, [columnHeaderOptions, form, getCurrentIndexByMappingId])
+  }, [expanded, columnHeaderOptions, form, getCurrentIndexByMappingId])
 
   const attrMapKey = resolveAttrMapKey(transformationResultType)
   const attributes: ClassAttribute[] = attributesMap[attrMapKey] ?? []
-  const attributeOptions = useMemo(
-    () => attributes.map((a) => ({ value: a.key, label: a.title })),
-    [attributes]
-  )
 
-  const selectedAttr = attributes.find((a) => a.key === selectedFieldName)
+  // Only compute props needed by MappingItemContent when the panel is expanded.
+  // When collapsed, MappingItemContent is not mounted so this work is skipped.
+  const attributeOptions = useMemo(() => {
+    if (!expanded) return []
+    return attributes.map((a) => ({ value: a.key, label: a.title }))
+  }, [expanded, attributes])
+
+  const selectedAttr = useMemo(() => {
+    if (!expanded) return undefined
+    return attributes.find((a) => a.key === selectedFieldName)
+  }, [expanded, attributes, selectedFieldName])
   const isLocalized = selectedAttr?.localized ?? false
 
   const panelTitle = (itemLabel !== undefined && itemLabel !== '')
@@ -122,9 +150,20 @@ export const MappingItem = React.memo(({
     const droppedDataIndex = (info.data as { dataIndex: string }).dataIndex
     const current = (form.getFieldValue(['mappingConfig', index, 'dataSourceIndex']) ?? []) as string[]
     if (!current.includes(droppedDataIndex)) {
-      form.setFieldValue(['mappingConfig', index, 'dataSourceIndex'], [...current, droppedDataIndex], { triggerChange: true })
+      const newSources = [...current, droppedDataIndex]
+      form.setFieldValue(['mappingConfig', index, 'dataSourceIndex'], newSources, { triggerChange: true })
+      // When transitioning to multi-source, reset the transformation type and destination
+      // so the item correctly shows "Requires advanced setup" instead of a stale destination.
+      if (newSources.length > 1) {
+        form.setFieldValue(['mappingConfig', index, 'transformationResultType'], 'default')
+        form.setFieldValue(['mappingConfig', index, 'dataTarget', 'settings', 'fieldName'], undefined)
+        form.setFieldValue(['mappingConfig', index, 'dataTarget', 'settings', 'language'], undefined)
+      }
     }
   }, [form, getCurrentIndexByMappingId])
+
+  const handleOpenAdvanced = useCallback((): void => { setAdvancedOpen(true) }, [])
+  const handleRemove = useCallback((): void => { onRemoveItem(fieldIndex) }, [onRemoveItem, fieldIndex])
 
   return (
     <Droppable
@@ -140,24 +179,29 @@ export const MappingItem = React.memo(({
           border
           collapsible
           contentPadding="none"
-          onChange={ () => { onToggle() } }
+          onChange={ onToggle }
           theme="default"
           title={ panelTitle }
         >
-          <MappingItemContent
-            attributeOptions={ attributeOptions }
-            columnHeaderOptions={ columnHeaderOptions }
-            fieldIndex={ fieldIndex }
-            isAdvanced={ isAdvanced }
-            isInProgressState={ isInProgressState }
-            isLocalized={ isLocalized }
-            isWarningState={ isWarningState }
-            languageOptions={ languageOptions }
-            onOpenAdvanced={ () => { setAdvancedOpen(true) } }
-            onRemove={ () => { onRemoveItem(fieldIndex) } }
-            selectedAttr={ selectedAttr }
-            selectedFieldName={ selectedFieldName }
-          />
+          { expanded && (
+            <MappingItemContent
+              attributeOptions={ attributeOptions }
+              columnHeaderOptions={ columnHeaderOptions }
+              dataSourceIndex={ dataSourceIndex }
+              fieldIndex={ fieldIndex }
+              isAdvanced={ isAdvanced }
+              isInProgressState={ isInProgressState }
+              isLocalized={ isLocalized }
+              isWarningState={ isWarningState }
+              itemLabel={ itemLabel }
+              language={ language }
+              languageOptions={ languageOptions }
+              onOpenAdvanced={ handleOpenAdvanced }
+              onRemove={ handleRemove }
+              selectedAttr={ selectedAttr }
+              selectedFieldName={ selectedFieldName }
+            />
+          ) }
         </Panel>
       </DndClassDiv>
       { advancedOpen && (
@@ -193,6 +237,51 @@ export const MappingItem = React.memo(({
       ) }
     </Droppable>
   )
-})
+}
+
+function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProps): boolean {
+  const bothCollapsed = !prev.expanded && !next.expanded
+
+  if (bothCollapsed) {
+    return (
+      prev.expanded === next.expanded &&
+      prev.fieldIndex === next.fieldIndex &&
+      prev.mappingId === next.mappingId &&
+      prev.itemLabel === next.itemLabel &&
+      prev.onToggle === next.onToggle &&
+      prev.onRemoveItem === next.onRemoveItem &&
+      prev.remove === next.remove
+    )
+  }
+
+  const prevSrc = prev.dataSourceIndex
+  const nextSrc = next.dataSourceIndex
+  const dataSourceIndexEqual =
+    prevSrc === nextSrc ||
+    (prevSrc !== undefined &&
+      nextSrc !== undefined &&
+      prevSrc.length === nextSrc.length &&
+      prevSrc.every((v, i) => v === nextSrc[i]))
+
+  return (
+    prev.fieldIndex === next.fieldIndex &&
+    prev.mappingId === next.mappingId &&
+    prev.remove === next.remove &&
+    prev.onRemoveItem === next.onRemoveItem &&
+    prev.configName === next.configName &&
+    prev.columnHeaderOptions === next.columnHeaderOptions &&
+    prev.classId === next.classId &&
+    prev.expanded === next.expanded &&
+    prev.onToggle === next.onToggle &&
+    prev.itemLabel === next.itemLabel &&
+    dataSourceIndexEqual &&
+    prev.transformationResultType === next.transformationResultType &&
+    prev.selectedFieldName === next.selectedFieldName &&
+    prev.language === next.language &&
+    prev.attributesMap === next.attributesMap
+  )
+}
+
+export const MappingItem = React.memo(MappingItemComponent, areMappingItemPropsEqual)
 
 MappingItem.displayName = 'MappingItem'

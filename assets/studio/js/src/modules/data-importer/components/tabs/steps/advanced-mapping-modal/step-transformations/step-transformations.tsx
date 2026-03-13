@@ -37,6 +37,7 @@ export interface StepTransformationsProps {
   dataSourceIndex: string[]
   columnHeaderOptions: Array<{ value: string, label: string }>
   previewRefreshToken: number
+  forceRefreshToken: number
   /** Live snapshot of the full mapping item — forwarded to PreviewResultPanel */
   currentMappingItem: MappingConfigItem
   /** Saved loaderConfig + interpreterConfig + resolverConfig — needed so the backend can interpret the preview file */
@@ -53,6 +54,7 @@ export const StepTransformations = ({
   dataSourceIndex,
   columnHeaderOptions,
   previewRefreshToken,
+  forceRefreshToken,
   currentMappingItem,
   baseConfig,
   onPipelineChange,
@@ -223,6 +225,7 @@ export const StepTransformations = ({
         currentMappingItem={ currentMappingItem }
         dataSourceIndex={ dataSourceIndex }
         editingSource={ editingSource }
+        forceRefreshToken={ forceRefreshToken }
         getSourceLabel={ getSourceLabel }
         onBlurSource={ () => { setEditingSource(false) } }
         onChangeSource={ (v) => {

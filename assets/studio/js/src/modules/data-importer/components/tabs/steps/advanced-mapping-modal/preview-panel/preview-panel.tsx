@@ -10,7 +10,7 @@
 
 /* eslint-disable max-lines */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
 import {
@@ -25,6 +25,7 @@ interface ImportModeProps {
   mode: 'import'
   configName: string
   selectedDataSourceIndex: string[]
+  forceRefreshToken?: number
   refreshToken?: never
   currentMappingItem?: never
   baseConfig?: never
@@ -33,6 +34,7 @@ interface ImportModeProps {
 interface ResultModeProps {
   mode: 'result'
   configName: string
+  forceRefreshToken?: number
   refreshToken?: number
   currentMappingItem?: MappingConfigItem
   baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
@@ -58,7 +60,8 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     load: fetchImportPreview
   } = usePreviewRecordQuery({
     configName: props.configName,
-    enabled: props.mode === 'import'
+    enabled: props.mode === 'import',
+    forceRefreshToken: props.forceRefreshToken
   })
 
   const [previews, setPreviews] = useState<string[]>([])
@@ -74,7 +77,8 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     data: resultPreviewResponse,
     isLoading: isResultLoading,
     isFetching: isResultFetching,
-    isError: isResultError
+    isError: isResultError,
+    refetch: refetchResultPreview
   } = useBundleDataImporterConfigLoadTransformationResultQuery(
     resultRequest!,
     {
@@ -132,6 +136,22 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     if (props.mode !== 'result') return
     fetchResultPreview(resultRecordNumber)
   }, [props.refreshToken])
+
+  // On explicit "refresh all" — refetch the current result record without resetting the index.
+  const isFirstForceRefresh = useRef(true)
+  useEffect(() => {
+    if (props.mode !== 'result') return
+    if (props.forceRefreshToken === undefined || props.forceRefreshToken === 0) return
+    if (isFirstForceRefresh.current) {
+      isFirstForceRefresh.current = false
+      return
+    }
+    if (resultRequest === undefined) {
+      fetchResultPreview(resultRecordNumber)
+    } else {
+      void refetchResultPreview()
+    }
+  }, [props.forceRefreshToken])
 
   const handleImportPrev = (): void => {
     const next = Math.max(0, importRecordNumber - 1)
@@ -203,7 +223,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
         <SearchInput
           maxWidth={ '100%' }
           onChange={ (e) => { setSearchText(e.target.value) } }
-          placeholder={ t('data-importer.mapping.advanced-modal.step-source.search-placeholder') + 'asdf' }
+          placeholder={ t('data-importer.mapping.advanced-modal.step-source.search-placeholder') }
           value={ searchText }
           withClear
           withPrefix

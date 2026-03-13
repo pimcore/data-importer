@@ -9,7 +9,7 @@
  */
 
 import React, { useState } from 'react'
-import { Select } from '@pimcore/studio-ui-bundle/components'
+import { Form, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { filterByLabel } from '../../select-utils'
 
@@ -36,11 +36,13 @@ export const SourcePickerContent = (props: SourcePickerContentProps): React.JSX.
   }
 
   return (
-    <div style={ { marginTop: 12 } }>
-      <div style={ { marginBottom: 4 } }>
-        { t('data-importer.mapping.new-modal.source-label') }
-        <span style={ { color: '#ff4d4f', marginLeft: 4 } }>*</span>
-      </div>
+    <Form.Item
+      help={ hasError ? t('data-importer.mapping.new-modal.source-required') : undefined }
+      label={ t('data-importer.mapping.new-modal.source-label') }
+      required
+      style={ { marginTop: 12, marginBottom: 0 } }
+      validateStatus={ hasError ? 'error' : undefined }
+    >
       <Select
         allowClear
         filterOption={ filterByLabel }
@@ -48,15 +50,9 @@ export const SourcePickerContent = (props: SourcePickerContentProps): React.JSX.
         options={ options }
         placeholder={ t('data-importer.mapping.item.source-placeholder') }
         showSearch
-        status={ hasError ? 'error' : undefined }
         style={ { width: '100%' } }
         value={ value }
       />
-      { hasError && (
-        <div style={ { color: '#ff4d4f', fontSize: 12, marginTop: 4 } }>
-          { t('data-importer.mapping.new-modal.source-required') }
-        </div>
-      ) }
-    </div>
+    </Form.Item>
   )
 }

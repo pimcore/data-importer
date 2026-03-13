@@ -27,6 +27,7 @@ import { PublishingPanel } from './publishing-panel'
 export interface ResolverStepProps {
   configName: string
   columnHeaderOptions: Array<{ value: string, label: string }>
+  isActive: boolean
 }
 
 function parseClassAttribute (raw: object): ClassAttribute {
@@ -38,7 +39,7 @@ function parseClassAttribute (raw: object): ClassAttribute {
   }
 }
 
-export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: ResolverStepProps): React.JSX.Element => {
+export const ResolverStep = ({ configName: _configName, columnHeaderOptions, isActive }: ResolverStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const settings = useSettings()
 
@@ -47,7 +48,7 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions }: R
     [settings.validLanguages]
   )
 
-  const { data: classDefinitions, isLoading: isLoadingClasses } = useClassDefinitionCollectionQuery()
+  const { data: classDefinitions, isLoading: isLoadingClasses } = useClassDefinitionCollectionQuery(undefined, { skip: !isActive })
 
   const classOptions = (classDefinitions?.items ?? []).map((cls) => ({
     value: cls.id,

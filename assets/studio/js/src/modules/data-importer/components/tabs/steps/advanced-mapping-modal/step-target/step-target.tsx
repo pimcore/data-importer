@@ -29,6 +29,7 @@ export interface StepTargetProps {
   classId?: string
   configName: string
   previewRefreshToken: number
+  forceRefreshToken: number
   /** Live snapshot of the full mapping item — forwarded to PreviewPanel */
   currentMappingItem?: MappingConfigItem
   /** Saved loaderConfig + interpreterConfig + resolverConfig — needed for the preview backend call */
@@ -46,6 +47,7 @@ export const StepTarget = ({
   classId,
   configName,
   previewRefreshToken,
+  forceRefreshToken,
   currentMappingItem,
   baseConfig,
   onDataTargetChange,
@@ -226,6 +228,7 @@ export const StepTarget = ({
         baseConfig={ baseConfig }
         configName={ configName }
         currentMappingItem={ currentMappingItem }
+        forceRefreshToken={ forceRefreshToken }
         onConfirm={ onConfirm }
         onPrev={ onPrev }
         previewRefreshToken={ previewRefreshToken }

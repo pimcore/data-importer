@@ -60,6 +60,7 @@ export const AdvancedMappingModal = ({
   const [expanded, setExpanded] = useState({ source: true, transformations: false, target: false })
 
   const [previewRefreshToken, setPreviewRefreshToken] = useState(0)
+  const [forceRefreshToken, setForceRefreshToken] = useState(0)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const schedulePreviewRefresh = useCallback((): void => {
@@ -127,15 +128,19 @@ export const AdvancedMappingModal = ({
     schedulePreviewRefresh()
   }
 
-  const recalculateType = async (): Promise<void> => {
+  const localItemRef = useRef(localItem)
+  localItemRef.current = localItem
+
+  const recalculateType = useCallback(async (): Promise<void> => {
+    const current = localItemRef.current
     const nextRequest = {
       name: configName,
       bundleDataImporterCalculateTransformationResultTypeParameters: {
         currentConfig: {
-          label: localItem.label,
-          dataSourceIndex: localItem.dataSourceIndex,
-          transformationPipeline: localItem.transformationPipeline as object[] | undefined,
-          dataTarget: localItem.dataTarget as object | undefined
+          label: current.label,
+          dataSourceIndex: current.dataSourceIndex,
+          transformationPipeline: current.transformationPipeline as object[] | undefined,
+          dataTarget: current.dataTarget as object | undefined
         }
       }
     }
@@ -150,7 +155,12 @@ export const AdvancedMappingModal = ({
         // silently ignore — type stays as-is
       }
     }
-  }
+  }, [configName, calculateTypeRequest, refetchCalculateType])
+
+  const handleRefreshAll = useCallback((): void => {
+    void recalculateType()
+    setForceRefreshToken(n => n + 1)
+  }, [recalculateType])
 
   const handleSave = (): void => {
     onSave(localItem)
@@ -169,8 +179,8 @@ export const AdvancedMappingModal = ({
           <IconButton
             disabled={ isCalculating }
             icon={ { value: 'refresh' } }
-            onClick={ () => { void recalculateType() } }
-            title={ t('data-importer.mapping.advanced-modal.recalculate-result-type') }
+            onClick={ handleRefreshAll }
+            tooltip={ { title: t('data-importer.mapping.advanced-modal.refresh-all-previews') } }
           />
 
           <Button
@@ -208,6 +218,7 @@ export const AdvancedMappingModal = ({
               columnHeaderOptions={ columnHeaderOptions }
               configName={ configName }
               dataSourceIndex={ localItem.dataSourceIndex ?? [] }
+              forceRefreshToken={ forceRefreshToken }
               onDataSourceIndexChange={ updateDataSourceIndex }
               onNext={ () => { openSection('transformations') } }
             />
@@ -233,6 +244,7 @@ export const AdvancedMappingModal = ({
               configName={ configName }
               currentMappingItem={ localItem }
               dataSourceIndex={ localItem.dataSourceIndex ?? [] }
+              forceRefreshToken={ forceRefreshToken }
               onDataSourceIndexChange={ updateDataSourceIndex }
               onNext={ () => { openSection('target') } }
               onPipelineChange={ updatePipeline }
@@ -263,6 +275,7 @@ export const AdvancedMappingModal = ({
               configName={ configName }
               currentMappingItem={ localItem }
               dataTarget={ localItem.dataTarget }
+              forceRefreshToken={ forceRefreshToken }
               languageOptions={ languageOptions }
               onConfirm={ handleSave }
               onDataTargetChange={ (dataTarget) => { setLocalItem(prev => ({ ...prev, dataTarget })) } }

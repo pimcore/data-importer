@@ -86,7 +86,9 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
       key: 'data-setup',
       label: t('data-importer.tabs.data-setup'),
       fullHeight: true,
-      children: <DataSetupTab configName={ configName } />
+      children: <DataSetupTab
+        configName={ configName }
+                />
     },
     {
       key: 'execution',

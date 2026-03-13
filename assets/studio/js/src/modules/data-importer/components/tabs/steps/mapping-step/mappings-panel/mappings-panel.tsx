@@ -8,22 +8,19 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { Flex, Form } from '@pimcore/studio-ui-bundle/components'
-import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
+import { type MappingConfigItem } from '../../../../../types'
 import { useStyles } from '../mapping-step.styles'
 import { MappingsPanelContent } from './mappings-panel-content'
 
 export interface MappingsPanelProps {
-  classId: string | undefined
-  configName: string
-  columnHeaderOptions: Array<{ value: string, label: string }>
   activeFilter: string | null
   activeFilterLabel: string | null
   /** Set of field.key values that are currently expanded, or 'all' if everything is expanded */
   expandedKeys: ReadonlySet<number> | 'all'
-  /** Pre-loaded class attributes keyed by transformationResultType */
-  attributesMap: Record<string, ClassAttribute[]>
+  /** True while an expand-all transition is in flight — used to flip the button label eagerly */
+  expandAllPending: boolean
   onCollapseAll: (visibleKeys: number[]) => void
   onNewKey: (key: number) => void
   onToggleKey: (key: number, allFieldKeys: number[]) => void
@@ -36,13 +33,10 @@ export interface MappingsPanelProps {
 }
 
 export const MappingsPanel = ({
-  classId,
-  configName,
-  columnHeaderOptions,
   activeFilter,
   activeFilterLabel,
   expandedKeys,
-  attributesMap,
+  expandAllPending,
   onCollapseAll,
   onNewKey,
   onToggleKey,
@@ -64,26 +58,68 @@ export const MappingsPanel = ({
     flashTimerRef.current = setTimeout(() => { setFlashIndex(null) }, 400)
   }, [])
 
+  // Form.List's render prop gives new `add`/`remove` function references on every
+  // render. Wrapping them in refs and exposing stable callbacks prevents those
+  // references from busting React.memo on MappingsPanelContent (and the itemList
+  // memo inside it) on every unrelated re-render.
+  const addRef = useRef<(value?: MappingConfigItem, insertIndex?: number) => void>(() => undefined)
+  const removeRef = useRef<(index: number) => void>(() => undefined)
+
+  const stableAdd = useMemo<(value?: MappingConfigItem, insertIndex?: number) => void>(
+    () => (value, insertIndex) => { addRef.current(value, insertIndex) },
+  []
+  )
+  const stableRemove = useMemo<(index: number) => void>(
+    () => (index) => { removeRef.current(index) },
+  []
+  )
+
+  // Form.List re-renders whenever any value inside mappingConfig changes, producing
+  // a new `fields` array reference even when the list structure (length + keys) is
+  // identical. Stabilize it so the itemList memo in MappingsPanelContent only busts
+  // on actual structural changes (add/remove/move), not on field-value edits.
+  const stableFieldsRef = useRef<Array<{ name: number, key: number }>>([])
+  const stabilizeFields = useCallback(
+    (incoming: Array<{ name: number, key: number }>): Array<{ name: number, key: number }> => {
+      const prev = stableFieldsRef.current
+      if (
+        prev.length === incoming.length &&
+        incoming.every((f, i) => f.key === prev[i].key && f.name === prev[i].name)
+      ) {
+        return prev
+      }
+      stableFieldsRef.current = incoming
+      return incoming
+    },
+    []
+  )
+
   return (
     <Flex
       className={ styles.panel }
       vertical
     >
       <Form.List name="mappingConfig">
-        { (fields, { add, remove }) => {
+        { (rawFields, { add, remove }) => {
+          // Keep refs current so the stable wrappers always delegate to the latest
+          // functions provided by Form.List.
+          addRef.current = add
+          removeRef.current = remove
+
+          const fields = stabilizeFields(rawFields)
           const hasItems = fields.length > 0
-          const allVisibleCollapsed = expandedKeys !== 'all' && fields.every((f) => !expandedKeys.has(f.key))
+          // When an expand-all transition is in flight, treat as "all expanded"
+          // so the button label flips to "Collapse All" immediately.
+          const allVisibleCollapsed = !expandAllPending &&
+            expandedKeys !== 'all' &&
+            fields.every((f) => !expandedKeys.has(f.key))
 
           return (
             <MappingsPanelContent
               activeFilter={ activeFilter }
               activeFilterLabel={ activeFilterLabel }
-              add={ add }
+              add={ stableAdd }
               allVisibleCollapsed={ allVisibleCollapsed }
-              attributesMap={ attributesMap }
-              classId={ classId }
-              columnHeaderOptions={ columnHeaderOptions }
-              configName={ configName }
               expandedKeys={ expandedKeys }
               fields={ fields }
               flashIndex={ flashIndex }
@@ -98,7 +134,7 @@ export const MappingsPanel = ({
               onNewKey={ onNewKey }
               onRemoveItem={ onRemoveItem }
               onToggleKey={ onToggleKey }
-              remove={ remove }
+              remove={ stableRemove }
             />
           )
         } }

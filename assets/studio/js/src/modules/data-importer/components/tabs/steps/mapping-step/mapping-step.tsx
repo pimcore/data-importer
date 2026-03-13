@@ -8,7 +8,9 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo, useState } from 'react'
+/* eslint-disable max-lines */
+
+import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import {
   Content,
   Flex,
@@ -25,17 +27,25 @@ import { SourcePickerContent } from './source-picker-content/source-picker-conte
 import { useMappingStepLoader } from './hooks/use-mapping-step-loader'
 import { createMappingItem } from './utils/mapping-factory'
 import { ensureMappingIdAtIndex } from './utils/mapping-identity'
+import { PanelArrowIcon } from './panel-arrow-icon.inline'
+import { MappingItemContextProvider } from './mapping-item-context'
+
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
 
 export interface MappingStepProps {
   configName: string
   isActive: boolean
 }
 
-export const MappingStep = ({ configName, isActive }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = React.memo(({ configName, isActive }: MappingStepProps): React.JSX.Element => {
   const { styles } = useStyles()
   const { t } = useTranslation()
   const modal = useFormModal()
   const form = Form.useFormInstance()
+  const loaderConfigType = Form.useWatch(['loaderConfig', 'type']) as string | undefined
+  const interpreterConfigType = Form.useWatch(['interpreterConfig', 'type']) as string | undefined
 
   const {
     columnHeaderOptions,
@@ -48,30 +58,104 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
   } = useMappingStepLoader(configName, isActive)
 
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<number> | 'all'>(new Set())
+  const [expandAllPending, setExpandAllPending] = useState(false)
+  const [, expandTransition] = useTransition()
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const autoExpandNewKeysRef = useRef(true)
+  const prevLoaderTypeRef = useRef<string | undefined>(loaderConfigType)
+  const prevInterpreterTypeRef = useRef<string | undefined>(interpreterConfigType)
+  const bulkToggleTimingRef = useRef<{ action: 'expand-all' | 'collapse-all', startedAt: number } | null>(null)
+
+  // Ref so callbacks that only *read* activeFilter at call time don't need to
+  // capture it in their deps (which would make them new references on every filter change).
+  const activeFilterRef = useRef(activeFilter)
+  activeFilterRef.current = activeFilter
 
   const activeFilterLabel = useMemo(() => {
     if (activeFilter === null) return null
     return sourceRows.find((r) => r.dataIndex === activeFilter)?.label ?? activeFilter
   }, [activeFilter, sourceRows])
 
-  const collapseAll = (visibleKeys: number[]): void => {
-    setExpandedKeys((prev) => {
-      const prevSet = prev === 'all' ? new Set(visibleKeys) : prev
-      const allCollapsed = visibleKeys.every((k) => !prevSet.has(k))
-      if (allCollapsed) {
-        const next = new Set(prevSet)
-        visibleKeys.forEach((k) => next.add(k))
-        return next
-      } else {
-        const next = new Set(prevSet)
-        visibleKeys.forEach((k) => next.delete(k))
-        return next
-      }
-    })
-  }
+  const mappingItemContextValue = useMemo(
+    () => ({ configName, classId, columnHeaderOptions, attributesMap }),
+    [configName, classId, columnHeaderOptions, attributesMap]
+  )
 
-  const handleToggleKey = (key: number, allFieldKeys: number[]): void => {
+  useEffect(() => {
+    const loaderChanged = prevLoaderTypeRef.current !== loaderConfigType
+    const interpreterChanged = prevInterpreterTypeRef.current !== interpreterConfigType
+
+    if (!loaderChanged && !interpreterChanged) return
+
+    if (isMappingDebugEnabled()) {
+      console.debug('[DI][Action] reset expanded panels on source type change', {
+        prevLoaderType: prevLoaderTypeRef.current,
+        nextLoaderType: loaderConfigType,
+        prevInterpreterType: prevInterpreterTypeRef.current,
+        nextInterpreterType: interpreterConfigType
+      })
+    }
+
+    setExpandedKeys(new Set())
+    prevLoaderTypeRef.current = loaderConfigType
+    prevInterpreterTypeRef.current = interpreterConfigType
+  }, [loaderConfigType, interpreterConfigType])
+
+  const expandedKeysRef = useRef(expandedKeys)
+  expandedKeysRef.current = expandedKeys
+
+  const collapseAll = useCallback((visibleKeys: number[]): void => {
+    const prev = expandedKeysRef.current
+    const prevSet = prev === 'all' ? new Set(visibleKeys) : prev
+    const allCollapsed = visibleKeys.every((k) => !prevSet.has(k))
+    const action: 'expand-all' | 'collapse-all' = allCollapsed ? 'expand-all' : 'collapse-all'
+    bulkToggleTimingRef.current = { action, startedAt: performance.now() }
+
+    if (isMappingDebugEnabled()) {
+      console.debug('[DI][Action] toggle expand/collapse all', {
+        action,
+        visibleCount: visibleKeys.length,
+        previouslyExpandedVisibleCount: visibleKeys.filter((k) => prevSet.has(k)).length
+      })
+    }
+
+    if (allCollapsed) {
+      autoExpandNewKeysRef.current = true
+      // Use startTransition so React can interleave mounting the heavy
+      // MappingItemContent panels across frames, keeping the UI responsive.
+      setExpandAllPending(true)
+      expandTransition(() => {
+        setExpandedKeys('all')
+        setExpandAllPending(false)
+      })
+    } else {
+      autoExpandNewKeysRef.current = false
+      const next = new Set(prevSet)
+      visibleKeys.forEach((k) => next.delete(k))
+      setExpandedKeys(next)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (bulkToggleTimingRef.current === null) return
+
+    if (bulkToggleTimingRef.current.action !== 'collapse-all') return
+
+    const timing = bulkToggleTimingRef.current
+    bulkToggleTimingRef.current = null
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        console.debug('[DI][Perf] expand/collapse all painted', {
+          action: timing.action,
+          durationMs: Number((performance.now() - timing.startedAt).toFixed(2))
+        })
+      })
+    })
+  }, [expandedKeys])
+
+  const handleToggleKey = useCallback((key: number, allFieldKeys: number[]): void => {
     setExpandedKeys((prev) => {
       const prevSet = prev === 'all' ? new Set(allFieldKeys) : new Set(prev)
       if (prevSet.has(key)) {
@@ -81,32 +165,66 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
       }
       return prevSet
     })
-  }
+  }, [])
 
-  const handleNewKey = (key: number): void => {
+  const handleNewKey = useCallback((key: number): void => {
     setExpandedKeys((prev) => {
-      if (prev === 'all') return 'all' // already all expanded, new item is expanded too
+      if (!autoExpandNewKeysRef.current) {
+        return prev
+      }
+
+      if (prev === 'all') return 'all'
       const next = new Set(prev)
       next.add(key)
       return next
     })
-  }
+  }, [])
 
-  const handleRemoveItem = (remove: (index: number) => void, index: number): void => {
-    if (activeFilter !== null) {
-      const currentItems = getMappingConfig()
-      const remaining = currentItems.filter((_, i) => i !== index)
-      const stillReferenced = remaining.some((item) =>
-        (item.dataSourceIndex ?? []).includes(activeFilter)
-      )
-      if (!stillReferenced) {
-        setActiveFilter(null)
-      }
+  const handleRemoveItem = useCallback((remove: (index: number) => void, index: number): void => {
+    const debugEnabled = isMappingDebugEnabled()
+    if (debugEnabled) {
+      const beforeCount = getMappingConfig().length
+      console.debug('[DI][Action] remove mapping requested', {
+        index,
+        beforeCount,
+        activeFilter: activeFilterRef.current
+      })
     }
-    remove(index)
-  }
 
-  const handleAddItem = (add: (value?: MappingConfigItem, insertIndex?: number) => void, count: number): void => {
+    setActiveFilter((currentFilter) => {
+      if (currentFilter !== null) {
+        const currentItems = getMappingConfig()
+        const remaining = currentItems.filter((_, i) => i !== index)
+        const stillReferenced = remaining.some((item) =>
+          (item.dataSourceIndex ?? []).includes(currentFilter)
+        )
+        if (!stillReferenced) {
+          remove(index)
+          if (debugEnabled) {
+            console.debug('[DI][Action] remove mapping + clear filter', {
+              index,
+              clearedFilter: currentFilter
+            })
+          }
+          return null
+        }
+      }
+      remove(index)
+      if (debugEnabled) {
+        console.debug('[DI][Action] remove mapping done', {
+          index,
+          keptFilter: currentFilter
+        })
+      }
+      return currentFilter
+    })
+  }, [getMappingConfig])
+
+  const createMappingItemFromSource = useCallback((dataIndex: string, label: string): MappingConfigItem => {
+    return createMappingItem(dataIndex, label, 'manual')
+  }, [])
+
+  const handleAddItem = useCallback((add: (value?: MappingConfigItem, insertIndex?: number) => void, count: number): void => {
     const selectedRef: React.MutableRefObject<string | undefined> = { current: undefined }
     const errorRef: React.MutableRefObject<((show: boolean) => void) | undefined> = { current: undefined }
 
@@ -127,29 +245,44 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
           return await Promise.reject(new Error('source required'))
         }
         const label = columnHeaderOptions.find((o) => o.value === dataIndex)?.label ?? dataIndex
+        if (isMappingDebugEnabled()) {
+          console.debug('[DI][Action] add mapping via modal', {
+            dataIndex,
+            label,
+            insertIndex: 0,
+            beforeCount: getMappingConfig().length
+          })
+        }
+
         add(createMappingItemFromSource(dataIndex, label), 0)
 
-        if (activeFilter !== null && activeFilter !== dataIndex) {
+        const currentFilter = activeFilterRef.current
+        if (currentFilter !== null && currentFilter !== dataIndex) {
           setActiveFilter(dataIndex)
         }
       }
     })
-  }
+  }, [modal, t, columnHeaderOptions, createMappingItemFromSource, getMappingConfig])
 
-  const createMappingItemFromSource = (dataIndex: string, label: string): MappingConfigItem => {
-    return createMappingItem(dataIndex, label, 'manual')
-  }
-
-  const handleInsertItem = (
+  const handleInsertItem = useCallback((
     add: (value?: MappingConfigItem, insertIndex?: number) => void,
     insertIndex: number,
     dataIndex: string,
     label: string
   ): void => {
-    add(createMappingItemFromSource(dataIndex, label), insertIndex)
-  }
+    if (isMappingDebugEnabled()) {
+      console.debug('[DI][Action] insert mapping via drop', {
+        dataIndex,
+        label,
+        insertIndex,
+        beforeCount: getMappingConfig().length
+      })
+    }
 
-  const handleAutoFill = (
+    add(createMappingItemFromSource(dataIndex, label), insertIndex)
+  }, [createMappingItemFromSource, getMappingConfig])
+
+  const handleAutoFill = useCallback((
     fields: Array<{ name: number }>,
     add: (defaultValue?: MappingConfigItem, insertIndex?: number) => void
   ): void => {
@@ -167,117 +300,100 @@ export const MappingStep = ({ configName, isActive }: MappingStepProps): React.J
         })
       }
     })
-  }
 
-  const handleAddMappingFromSource = (dataIndex: string, label: string): void => {
+    if (isMappingDebugEnabled()) {
+      const addedCount = columnHeaderOptions.filter((opt) => !usedIndices.has(opt.value)).length
+      console.debug('[DI][Action] auto-fill mappings', {
+        addedCount,
+        beforeCount: currentItems.length,
+        sourceCount: columnHeaderOptions.length
+      })
+    }
+  }, [getMappingConfig, columnHeaderOptions])
+
+  const handleAddMappingFromSource = useCallback((dataIndex: string, label: string): void => {
     const currentItems = getMappingConfig()
-
     const newItem: MappingConfigItem = createMappingItemFromSource(dataIndex, label)
-
+    if (isMappingDebugEnabled()) {
+      console.debug('[DI][Action] add mapping from source panel', {
+        dataIndex,
+        label,
+        beforeCount: currentItems.length
+      })
+    }
     form.setFieldValue('mappingConfig', [...currentItems, newItem], { triggerChange: true })
-  }
+  }, [getMappingConfig, createMappingItemFromSource, form])
 
-  const handleAddMappingForFilter = (add: (value?: MappingConfigItem, insertIndex?: number) => void): void => {
-    if (activeFilter === null) return
-    const label = activeFilterLabel ?? activeFilter
-    add(createMappingItemFromSource(activeFilter, label))
-  }
+  const handleAddMappingForFilter = useCallback((add: (value?: MappingConfigItem, insertIndex?: number) => void): void => {
+    const currentFilter = activeFilterRef.current
+    if (currentFilter === null) return
+    const label = activeFilterLabel ?? currentFilter
+    if (isMappingDebugEnabled()) {
+      console.debug('[DI][Action] add mapping for active filter', {
+        dataIndex: currentFilter,
+        label,
+        beforeCount: getMappingConfig().length
+      })
+    }
+    add(createMappingItemFromSource(currentFilter, label))
+  }, [activeFilterLabel, createMappingItemFromSource, getMappingConfig])
 
-  const getMappingIdByIndex = (index: number): string => {
+  const getMappingIdByIndex = useCallback((index: number): string => {
     return ensureMappingIdAtIndex(form, index)
-  }
+  }, [form])
 
   return (
     <Content loading={ !initialLoadDone }>
-      <Flex className={ styles.mappingLayout }>
-        <div className={ styles.mappingLayoutLeft }>
-          <SourcesPanel
-            activeFilter={ activeFilter }
-            configName={ configName }
-            hasPreviewError={ hasPreviewError }
-            onAddMappingFromSource={ handleAddMappingFromSource }
-            onSetFilter={ setActiveFilter }
-            sourceRows={ sourceRows }
-          />
-        </div>
+      <MappingItemContextProvider value={ mappingItemContextValue }>
+        <Flex className={ styles.mappingLayout }>
+          <div className={ styles.mappingLayoutLeft }>
+            <SourcesPanel
+              activeFilter={ activeFilter }
+              configName={ configName }
+              hasPreviewError={ hasPreviewError }
+              onAddMappingFromSource={ handleAddMappingFromSource }
+              onSetFilter={ setActiveFilter }
+              sourceRows={ sourceRows }
+            />
+          </div>
 
-        <Flex
-          align="center"
-          className={ styles.mappingLayoutCenter }
-          vertical
-        >
           <Flex
             align="center"
-            className={ styles.mappingLayoutCenterArrow }
-            justify="center"
+            className={ styles.mappingLayoutCenter }
+            vertical
           >
-            <svg
-              fill="none"
-              height="38"
-              viewBox="0 0 38 38"
-              width="38"
-              xmlns="http://www.w3.org/2000/svg"
+            <Flex
+              align="center"
+              className={ styles.mappingLayoutCenterArrow }
+              justify="center"
             >
-              <g clipPath="url(#panel-arrow-clip)">
-                <path
-                  d="M26.9167 12.6641L33.25 18.9974L26.9167 25.3307"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M33.25 19L24.7095 19C22.9533 19.0001 21.2242 18.5666 19.6758 17.738C18.1274 16.9094 16.8075 15.7113 15.8333 14.25C14.8592 12.7887 13.5393 11.5906 11.9909 10.762C10.4424 9.93337 8.71337 9.49988 6.95717 9.5L4.75 9.5"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M33.25 19L24.7095 19C22.9533 18.9999 21.2242 19.4334 19.6758 20.262C18.1274 21.0906 16.8075 22.2887 15.8333 23.75C14.8592 25.2113 13.5393 26.4094 11.9909 27.238C10.4424 28.0666 8.71337 28.5001 6.95717 28.5L4.75 28.5"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                />
-              </g>
-              <defs>
-                <clipPath id="panel-arrow-clip">
-                  <rect
-                    fill="white"
-                    height="38"
-                    transform="translate(38 1.66103e-06) rotate(90)"
-                    width="38"
-                  />
-                </clipPath>
-              </defs>
-            </svg>
+              <PanelArrowIcon />
+            </Flex>
           </Flex>
-        </Flex>
 
-        <div className={ styles.mappingLayoutRight }>
-          <FieldWidthProvider fieldWidthValues={ { small: 9999, medium: 9999, large: 9999 } }>
-            <MappingsPanel
-              activeFilter={ activeFilter }
-              activeFilterLabel={ activeFilterLabel }
-              attributesMap={ attributesMap }
-              classId={ classId }
-              columnHeaderOptions={ columnHeaderOptions }
-              configName={ configName }
-              expandedKeys={ expandedKeys }
-              getMappingIdByIndex={ getMappingIdByIndex }
-              onAddItem={ handleAddItem }
-              onAddMappingForFilter={ handleAddMappingForFilter }
-              onAutoFill={ handleAutoFill }
-              onCollapseAll={ collapseAll }
-              onInsertItem={ handleInsertItem }
-              onNewKey={ handleNewKey }
-              onRemoveItem={ handleRemoveItem }
-              onToggleKey={ handleToggleKey }
-            />
-          </FieldWidthProvider>
-        </div>
-      </Flex>
+          <div className={ styles.mappingLayoutRight }>
+            <FieldWidthProvider fieldWidthValues={ { small: 9999, medium: 9999, large: 9999 } }>
+              <MappingsPanel
+                activeFilter={ activeFilter }
+                activeFilterLabel={ activeFilterLabel }
+                expandAllPending={ expandAllPending }
+                expandedKeys={ expandedKeys }
+                getMappingIdByIndex={ getMappingIdByIndex }
+                onAddItem={ handleAddItem }
+                onAddMappingForFilter={ handleAddMappingForFilter }
+                onAutoFill={ handleAutoFill }
+                onCollapseAll={ collapseAll }
+                onInsertItem={ handleInsertItem }
+                onNewKey={ handleNewKey }
+                onRemoveItem={ handleRemoveItem }
+                onToggleKey={ handleToggleKey }
+              />
+            </FieldWidthProvider>
+          </div>
+        </Flex>
+      </MappingItemContextProvider>
     </Content>
   )
-}
+})
+
+MappingStep.displayName = 'MappingStep'

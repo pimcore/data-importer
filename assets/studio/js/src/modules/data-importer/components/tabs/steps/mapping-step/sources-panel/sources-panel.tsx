@@ -55,10 +55,15 @@ export const SourcesPanel = ({
   const { t } = useTranslation()
   const { styles } = useStyles()
 
-  // Watch only dataSourceIndex arrays — label changes do NOT trigger a re-render here.
-  const dataSourceIndices = Form.useWatch(
+  // Serialize to a JSON string so the selector returns a stable primitive — avoids a new
+  // array reference (and therefore a re-render) on every unrelated form-store update.
+  const dataSourceIndicesJson = Form.useWatch(
     (values: { mappingConfig?: MappingConfigItem[] }) =>
-      (values.mappingConfig ?? []).map((item) => item.dataSourceIndex ?? [])
+      JSON.stringify((values.mappingConfig ?? []).map((item) => item.dataSourceIndex ?? []))
+  ) as string | undefined
+  const dataSourceIndices = useMemo<string[][] | undefined>(
+    () => (dataSourceIndicesJson !== undefined ? JSON.parse(dataSourceIndicesJson) as string[][] : undefined),
+    [dataSourceIndicesJson]
   )
 
   const mappingCountByDataIndex = useMemo<Record<string, number>>(() => {

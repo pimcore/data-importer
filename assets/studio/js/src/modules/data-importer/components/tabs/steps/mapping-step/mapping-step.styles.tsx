@@ -229,10 +229,8 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     // Source drop zone — structural only, no DnD visuals (panel wrapper handles those).
-    // No top padding so the Source select aligns with the Destination select.
     sourceDropZone: css`
       border-radius: ${token.borderRadius}px;
-      padding: 0 ${token.paddingXXS}px ${token.paddingXXS}px;
     `,
 
     // ── Mappings panel ────────────────────────────────────────────────────
@@ -321,6 +319,9 @@ export const useStyles = createStyles(({ css, token }) => {
 
     // Figma: label row — gap-8px between input and buttons, px-4px horizontal padding
     mappingLabelRow: css`
+      display: flex;
+      align-items: center;
+      gap: ${token.sizeXS}px;
       padding: 0 ${token.paddingXXS}px;
     `,
 
@@ -340,11 +341,16 @@ export const useStyles = createStyles(({ css, token }) => {
     // items-stretch so the arrow column fills the full height of the row,
     // allowing it to vertically center its content (advanced state).
     sourcesDestRow: css`
+      display: flex;
+      align-items: stretch;
       padding-top: ${token.paddingSM}px;
     `,
 
     // Figma: source/dest columns — gap-4px between label and select(s)
     sourcesDestCol: css`
+      display: flex;
+      flex-direction: column;
+      gap: ${token.sizeXXS}px;
       flex: 1;
       min-width: 0;
       padding: 0 ${token.paddingXXS}px;
@@ -359,7 +365,11 @@ export const useStyles = createStyles(({ css, token }) => {
       padding: 0 ${token.paddingSM}px;
     `,
 
-    arrowColSimple: css``,
+    arrowColSimple: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    `,
 
     // Spacer that offsets the arrow down by the height of the label line + gap,
     // so the arrow aligns with the vertical centre of the Select control.
@@ -370,10 +380,17 @@ export const useStyles = createStyles(({ css, token }) => {
 
     // Flex row that centres the arrow SVG within the select-row height.
     arrowSelectRow: css`
+      display: flex;
+      align-items: center;
       height: ${token.controlHeight}px;
     `,
 
-    arrowColAdvanced: css``,
+    arrowColAdvanced: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+    `,
 
     // Warning indicator: small orange exclamation circle shown above the arrow
     arrowWarningBadge: css`
@@ -405,6 +422,8 @@ export const useStyles = createStyles(({ css, token }) => {
 
     // Advanced destination: plain text lines (not a Select)
     destinationTextBlock: css`
+      display: flex;
+      flex-direction: column;
       padding: 0 ${token.paddingXXS}px;
       font-size: ${token.fontSizeSM}px;
       line-height: 22px;

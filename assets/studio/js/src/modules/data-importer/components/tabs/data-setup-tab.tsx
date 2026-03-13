@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import cn from 'classnames'
 import { Steps, type StepItem, Flex } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
@@ -25,30 +25,32 @@ export interface DataSetupTabProps {
   configName: string
 }
 
-const MAPPING_STEP_INDEX = 3
-
 export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const [currentStep, setCurrentStep] = useState(0)
 
   const { data: configData } = useBundleDataImporterConfigGetQuery({ name: configName })
-  const columnHeaderOptions = (configData?.columnHeaders ?? []).map((header) => {
-    // API returns objects {id, dataIndex, label}; type says string[] — handle both
-    const h = header as unknown as { dataIndex?: string, label?: string } | string
-    const value = typeof h === 'string' ? h : (h.dataIndex ?? '')
-    const label = typeof h === 'string' ? h : (h.label ?? h.dataIndex ?? '')
-    return { value, label }
-  })
+  const columnHeaderOptions = useMemo(
+    () => (configData?.columnHeaders ?? []).map((header) => {
+      // API returns objects {id, dataIndex, label}; type says string[] — handle both
+      const h = header as unknown as { dataIndex?: string, label?: string } | string
+      const value = typeof h === 'string' ? h : (h.dataIndex ?? '')
+      const label = typeof h === 'string' ? h : (h.label ?? h.dataIndex ?? '')
+      return { value, label }
+    }),
+    [configData?.columnHeaders]
+  )
 
-  const steps: StepItem[] = [
+  const steps: StepItem[] = useMemo(() => [
     { title: t('data-importer.data-setup.steps.data-source.title') },
     { title: t('data-importer.data-setup.steps.preview-import.title') },
     { title: t('data-importer.data-setup.steps.resolver.title') },
     { title: t('data-importer.data-setup.steps.mapping.title') },
     { title: t('data-importer.data-setup.steps.processing-settings.title') }
-  ]
+  ], [t])
 
+  const MAPPING_STEP_INDEX = 3
   const isMappingStep = currentStep === MAPPING_STEP_INDEX
 
   return (
@@ -88,6 +90,7 @@ export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Eleme
         <ResolverStep
           columnHeaderOptions={ columnHeaderOptions }
           configName={ configName }
+          isActive={ currentStep === 2 }
         />
       </div>
 

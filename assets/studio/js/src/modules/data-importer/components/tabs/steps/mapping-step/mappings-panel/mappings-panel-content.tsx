@@ -11,11 +11,15 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { Button, Divider, Flex, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
+import { type MappingConfigItem } from '../../../../../types'
 import { useStyles } from '../mapping-step.styles'
 import { MappingDropZone, MappingItemWithFilter } from '../mapping-item'
 import { EmptyDropZone } from './empty-drop-zone'
 import { FilteredEmptyState } from './filtered-empty-state'
+
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
 
 export interface MappingsPanelContentProps {
   fields: Array<{ name: number, key: number }>
@@ -23,14 +27,10 @@ export interface MappingsPanelContentProps {
   remove: (index: number) => void
   hasItems: boolean
   flashIndex: number | null
-  classId: string | undefined
-  configName: string
-  columnHeaderOptions: Array<{ value: string, label: string }>
-  activeFilter: string | null
-  activeFilterLabel: string | null
   expandedKeys: ReadonlySet<number> | 'all'
   allVisibleCollapsed: boolean
-  attributesMap: Record<string, ClassAttribute[]>
+  activeFilter: string | null
+  activeFilterLabel: string | null
   onCollapseAll: (visibleKeys: number[]) => void
   onNewKey: (key: number) => void
   onToggleKey: (key: number, allFieldKeys: number[]) => void
@@ -49,14 +49,10 @@ export const MappingsPanelContent = React.memo(({
   remove,
   hasItems,
   flashIndex,
-  classId,
-  configName,
-  columnHeaderOptions,
   activeFilter,
   activeFilterLabel,
   expandedKeys,
   allVisibleCollapsed,
-  attributesMap,
   onCollapseAll,
   onNewKey,
   onToggleKey,
@@ -70,26 +66,40 @@ export const MappingsPanelContent = React.memo(({
 }: MappingsPanelContentProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const renderCountRef = useRef(0)
+
+  renderCountRef.current += 1
+  if (isMappingDebugEnabled() && (renderCountRef.current === 1 || renderCountRef.current % 20 === 0)) {
+    console.debug('[DI][MappingsPanelContent] render', {
+      renderCount: renderCountRef.current,
+      fieldCount: fields.length,
+      activeFilter,
+      flashIndex,
+      expandedMode: expandedKeys === 'all' ? 'all' : 'set'
+    })
+  }
 
   const prevFieldKeysRef = useRef<Set<number>>(new Set(fields.map((f) => f.key)))
   useLayoutEffect(() => {
+    const debugEnabled = isMappingDebugEnabled()
     const currentKeySet = new Set(fields.map((f) => f.key))
-    currentKeySet.forEach((key) => {
-      if (!prevFieldKeysRef.current.has(key)) {
-        onNewKey(key)
-      }
-    })
+    const previousKeySet = prevFieldKeysRef.current
+    const addedKeys = Array.from(currentKeySet).filter((key) => !previousKeySet.has(key))
+
+    // Only auto-expand when exactly one item was added (regular add/insert flows).
+    // On hydration/reload or bulk operations (multiple new keys), skip auto-expand
+    // to avoid opening many heavy panels at once.
+    if (addedKeys.length === 1) {
+      onNewKey(addedKeys[0])
+    } else if (debugEnabled && addedKeys.length > 1) {
+      console.debug('[DI][MappingsPanelContent] skip auto-expand for bulk add', {
+        addedKeyCount: addedKeys.length,
+        fieldCount: fields.length
+      })
+    }
+
     prevFieldKeysRef.current = currentKeySet
   }, [fields, onNewKey])
-
-  const newlyAddedKeys = useMemo(() => {
-    const previousKeys = prevFieldKeysRef.current
-    return new Set(
-      fields
-        .map((f) => f.key)
-        .filter((key) => !previousKeys.has(key))
-    )
-  }, [fields])
 
   const visibleKeys = useMemo(
     () => fields.map((f) => f.key),
@@ -101,13 +111,34 @@ export const MappingsPanelContent = React.memo(({
     [onRemoveItem, remove]
   )
 
+  // Stable refs so per-item toggle closures don't need to be recreated when
+  // onToggleKey or fields change — the closure always reads the latest values.
+  const onToggleKeyRef = useRef(onToggleKey)
+  const fieldsRef = useRef(fields)
+  onToggleKeyRef.current = onToggleKey
+  fieldsRef.current = fields
+
+  // Per-key stable toggle callbacks keyed by field.key. New entries are only
+  // added when the set of keys grows; existing entries remain the same reference.
+  const toggleCallbacksRef = useRef<Map<number, () => void>>(new Map())
+  const getToggleCallback = useCallback((key: number): () => void => {
+    if (!toggleCallbacksRef.current.has(key)) {
+      toggleCallbacksRef.current.set(key, () => {
+        const allFieldKeys = fieldsRef.current.map((f) => f.key)
+        onToggleKeyRef.current(key, allFieldKeys)
+      })
+    }
+    return toggleCallbacksRef.current.get(key)!
+  }, [])
+
   const itemList = useMemo(() => {
-    const allFieldKeys = fields.map((f) => f.key)
+    const debugEnabled = isMappingDebugEnabled()
+    const startedAt = debugEnabled ? performance.now() : 0
     const acceptedDataIndex = activeFilter ?? undefined
 
-    return fields.map((field, arrayIndex) => {
+    const nextItemList = fields.map((field, arrayIndex) => {
       const mappingId = getMappingIdByIndex(field.name)
-      const isExpanded = expandedKeys === 'all' || expandedKeys.has(field.key) || newlyAddedKeys.has(field.key)
+      const isExpanded = expandedKeys === 'all' || expandedKeys.has(field.key)
 
       return (
         <React.Fragment key={ field.key }>
@@ -115,10 +146,6 @@ export const MappingsPanelContent = React.memo(({
             acceptedDataIndex={ acceptedDataIndex }
             activeFilter={ activeFilter }
             add={ add }
-            attributesMap={ attributesMap }
-            classId={ classId }
-            columnHeaderOptions={ columnHeaderOptions }
-            configName={ configName }
             expanded={ isExpanded }
             fieldIndex={ field.name }
             insertIndex={ arrayIndex }
@@ -127,15 +154,25 @@ export const MappingsPanelContent = React.memo(({
             onDropped={ onDropped }
             onInsertItem={ onInsertItem }
             onRemoveItem={ makeOnRemoveItem(field.name) }
-            onToggle={ () => { onToggleKey(field.key, allFieldKeys) } }
+            onToggle={ getToggleCallback(field.key) }
             remove={ remove }
           />
         </React.Fragment>
       )
     })
-  }, [fields, add, remove, activeFilter, attributesMap, classId, expandedKeys, newlyAddedKeys,
-    columnHeaderOptions, configName, flashIndex, onDropped,
-    onInsertItem, makeOnRemoveItem, onToggleKey, getMappingIdByIndex])
+
+    if (debugEnabled) {
+      console.debug('[DI][MappingsPanelContent] itemList built', {
+        itemCount: nextItemList.length,
+        durationMs: Number((performance.now() - startedAt).toFixed(2)),
+        activeFilter
+      })
+    }
+
+    return nextItemList
+  }, [fields, add, remove, activeFilter, expandedKeys,
+    flashIndex, onDropped,
+    onInsertItem, makeOnRemoveItem, getToggleCallback, getMappingIdByIndex])
 
   return (
     <>

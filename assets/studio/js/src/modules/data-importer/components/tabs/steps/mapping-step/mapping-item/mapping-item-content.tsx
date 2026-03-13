@@ -8,22 +8,29 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { Flex, Form, IconButton, IconTextButton, Input, Select } from '@pimcore/studio-ui-bundle/components'
+import React, { useEffect, useMemo, useState } from 'react'
+import { Form, IconButton, IconTextButton, Input, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type ClassAttribute } from '../../../../../types'
 import { filterByLabel } from '../../select-utils'
 import { useStyles } from '../mapping-step.styles'
 import { ArrowColumn } from './arrow-column/arrow-column'
 
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
+
 export interface MappingItemContentProps {
   fieldIndex: number
+  itemLabel: string | undefined
+  dataSourceIndex: string[] | undefined
   isAdvanced: boolean
   isInProgressState: boolean
   isWarningState: boolean
   selectedAttr: ClassAttribute | undefined
   selectedFieldName: string | undefined
   isLocalized: boolean
+  language: string | undefined
   columnHeaderOptions: Array<{ value: string, label: string }>
   attributeOptions: Array<{ value: string, label: string }>
   languageOptions: Array<{ value: string, label: string }>
@@ -31,14 +38,17 @@ export interface MappingItemContentProps {
   onRemove: () => void
 }
 
-export const MappingItemContent = ({
+export const MappingItemContent = React.memo(({
   fieldIndex,
+  itemLabel,
+  dataSourceIndex,
   isAdvanced,
   isInProgressState,
   isWarningState,
   selectedAttr,
   selectedFieldName,
   isLocalized,
+  language,
   columnHeaderOptions,
   attributeOptions,
   languageOptions,
@@ -47,31 +57,53 @@ export const MappingItemContent = ({
 }: MappingItemContentProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const form = Form.useFormInstance()
+  const [sourceOptionsReady, setSourceOptionsReady] = useState(false)
+  const [destinationOptionsReady, setDestinationOptionsReady] = useState(false)
+
+  const selectedSourceOptions = useMemo(() => {
+    if ((dataSourceIndex ?? []).length === 0) return []
+
+    const selectedSet = new Set(dataSourceIndex)
+    return columnHeaderOptions.filter((opt) => selectedSet.has(opt.value))
+  }, [dataSourceIndex, columnHeaderOptions])
+
+  const sourceOptions = sourceOptionsReady ? columnHeaderOptions : selectedSourceOptions
+
+  const selectedDestinationOption = useMemo(() => {
+    if (selectedFieldName === undefined || selectedFieldName === '') return []
+    return [{ value: selectedFieldName, label: selectedAttr?.title ?? selectedFieldName }]
+  }, [selectedAttr, selectedFieldName])
+
+  const destinationOptions = destinationOptionsReady ? attributeOptions : selectedDestinationOption
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+
+    const startedAt = performance.now()
+    requestAnimationFrame(() => {
+      console.debug('[DI][Perf] mapping item content painted', {
+        fieldIndex,
+        expandedState: 'expanded',
+        durationMs: Number((performance.now() - startedAt).toFixed(2))
+      })
+    })
+  }, [fieldIndex])
 
   return (
     <div className={ styles.mappingItemContent }>
-      <Form.Item
-        hidden
-        name={ [fieldIndex, 'transformationResultType'] }
-      >
-        <Input />
-      </Form.Item>
-
-      <Flex
-        align="center"
-        className={ styles.mappingLabelRow }
-        gap="extra-small"
-      >
+      <div className={ styles.mappingLabelRow }>
         <div
           className={ styles.mappingLabelInput }
           style={ { flex: 1 } }
         >
-          <Form.Item
-            name={ [fieldIndex, 'label'] }
-            style={ { marginBottom: 0 } }
-          >
-            <Input placeholder={ t('data-importer.mapping.item.label') } />
-          </Form.Item>
+          <Input
+            onChange={ (e) => {
+              form.setFieldValue(['mappingConfig', fieldIndex, 'label'], e.target.value, { triggerChange: true })
+            } }
+            placeholder={ t('data-importer.mapping.item.label') }
+            value={ itemLabel ?? '' }
+          />
         </div>
 
         <IconTextButton
@@ -88,37 +120,38 @@ export const MappingItemContent = ({
           tooltip={ { title: t('data-importer.mapping.item.delete') } }
           type="default"
         />
-      </Flex>
+      </div>
 
       <div className={ styles.mappingDivider } />
 
-      <Flex
-        align="stretch"
-        className={ styles.sourcesDestRow }
-      >
-        <Flex
-          className={ styles.sourcesDestCol }
-          gap="mini"
-          vertical
-        >
+      <div className={ styles.sourcesDestRow }>
+        <div className={ styles.sourcesDestCol }>
           <div>
             { t('data-importer.mapping.item.source') }
           </div>
           <div className={ styles.sourceDropZone }>
-            <Form.Item
-              name={ [fieldIndex, 'dataSourceIndex'] }
-              style={ { marginBottom: 0 } }
-            >
-              <Select
-                filterOption={ filterByLabel }
-                mode="multiple"
-                options={ columnHeaderOptions }
-                placeholder={ t('data-importer.mapping.item.source-placeholder') }
-                showSearch
-              />
-            </Form.Item>
+            <Select
+              filterOption={ filterByLabel }
+              mode="multiple"
+              onChange={ (value: string[]) => {
+                form.setFieldValue(['mappingConfig', fieldIndex, 'dataSourceIndex'], value, { triggerChange: true })
+                // When transitioning to multi-source, reset the transformation type and destination
+                // so the item correctly shows "Requires advanced setup" instead of a stale destination.
+                if (value.length > 1) {
+                  form.setFieldValue(['mappingConfig', fieldIndex, 'transformationResultType'], 'default')
+                  form.setFieldValue(['mappingConfig', fieldIndex, 'dataTarget', 'settings', 'fieldName'], undefined)
+                  form.setFieldValue(['mappingConfig', fieldIndex, 'dataTarget', 'settings', 'language'], undefined)
+                }
+              } }
+              onFocus={ () => { setSourceOptionsReady(true) } }
+              options={ sourceOptions }
+              placeholder={ t('data-importer.mapping.item.source-placeholder') }
+              showSearch
+              style={ { maxWidth: '100%' } }
+              value={ dataSourceIndex ?? [] }
+            />
           </div>
-        </Flex>
+        </div>
 
         <ArrowColumn
           isAdvanced={ isAdvanced }
@@ -126,79 +159,57 @@ export const MappingItemContent = ({
           isWarningState={ isWarningState }
         />
 
-        <Flex
-          className={ styles.sourcesDestCol }
-          gap="mini"
-          vertical
-        >
+        <div className={ styles.sourcesDestCol }>
           <div>
             { t('data-importer.mapping.item.destination') }
           </div>
 
           { isAdvanced && (
-            <>
-              <Flex
-                className={ styles.destinationTextBlock }
-                vertical
-              >
-                <span>{ selectedAttr?.title ?? selectedFieldName ?? '' }</span>
-              </Flex>
-              <Form.Item
-                hidden
-                name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
-                style={ { display: 'none' } }
-              >
-                <Input />
-              </Form.Item>
-            </>
+            <div className={ styles.destinationTextBlock }>
+              <span>{ selectedAttr?.title ?? selectedFieldName ?? '' }</span>
+            </div>
           ) }
 
           { !isAdvanced && isInProgressState && (
-            <>
-              <div className={ styles.requiresAdvancedHint }>
-                { t('data-importer.mapping.item.requires-advanced-setup') }
-              </div>
-              <Form.Item
-                hidden
-                name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
-                style={ { display: 'none' } }
-              >
-                <Input />
-              </Form.Item>
-            </>
+            <div className={ styles.requiresAdvancedHint }>
+              { t('data-importer.mapping.item.requires-advanced-setup') }
+            </div>
           ) }
 
           { !isAdvanced && !isInProgressState && (
             <>
-              <Form.Item
-                name={ [fieldIndex, 'dataTarget', 'settings', 'fieldName'] }
-                style={ { marginBottom: 0 } }
-              >
-                <Select
-                  filterOption={ filterByLabel }
-                  options={ attributeOptions }
-                  placeholder={ t('data-importer.mapping.item.destination-placeholder') }
-                  showSearch
-                />
-              </Form.Item>
+              <Select
+                filterOption={ filterByLabel }
+                onChange={ (value: string) => {
+                  form.setFieldValue(['mappingConfig', fieldIndex, 'dataTarget', 'settings', 'fieldName'], value, { triggerChange: true })
+                } }
+                onFocus={ () => { setDestinationOptionsReady(true) } }
+                options={ destinationOptions }
+                placeholder={ t('data-importer.mapping.item.destination-placeholder') }
+                showSearch
+                style={ { maxWidth: '100%' } }
+                value={ selectedFieldName ?? undefined }
+              />
 
               { isLocalized && (
-                <Form.Item
-                  name={ [fieldIndex, 'dataTarget', 'settings', 'language'] }
-                  style={ { marginBottom: 0 } }
-                >
-                  <Select
-                    filterOption={ filterByLabel }
-                    options={ languageOptions }
-                    placeholder={ t('data-importer.mapping.item.data-target.language-placeholder') }
-                    showSearch
-                  />
-                </Form.Item>
+                <Select
+                  filterOption={ filterByLabel }
+                  onChange={ (value: string) => {
+                    form.setFieldValue(['mappingConfig', fieldIndex, 'dataTarget', 'settings', 'language'], value, { triggerChange: true })
+                  } }
+                  options={ languageOptions }
+                  placeholder={ t('data-importer.mapping.item.data-target.language-placeholder') }
+                  showSearch
+                  style={ { maxWidth: '100%' } }
+                  value={ language ?? undefined }
+                />
               ) }
             </>
           ) }
-        </Flex>
-      </Flex>
+        </div>
+      </div>
     </div>
   )
-}
+})
+
+MappingItemContent.displayName = 'MappingItemContent'
