@@ -76,6 +76,7 @@ module.exports = {
                 "prop": "ignore"
             }
         ],
+        'max-lines': ['error', { max: 300 }],
         'header/header': [2, 'block', [
             '*',
             ' * This source file is available under the terms of the',

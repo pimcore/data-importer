@@ -2,6 +2,7 @@ import { defineConfig } from '@rsbuild/core'
 import { pluginReact } from '@rsbuild/plugin-react'
 import { pluginModuleFederation } from '@module-federation/rsbuild-plugin';
 import { pluginGenerateEntrypoints } from '@pimcore/studio-ui-bundle/rsbuild/plugins';
+import { createDynamicRemote } from '@pimcore/studio-ui-bundle/rsbuild/utils';
 import path from 'node:path'
 import fs from 'node:fs';
 import { v4 } from 'uuid';
@@ -72,48 +73,8 @@ export default defineConfig({
       },
       dts: false,
       remotes: {
-        '@pimcore/studio-ui-bundle': `promise new Promise(resolve => {
-          const studioUIBundleRemoteUrl = window.StudioUIBundleRemoteUrl
-          const script = document.createElement('script')
-          let hasScript = false;
-          document.querySelectorAll('script').forEach((el) => {
-            const elPathname = el.src.replace(/https?:\\/\\/[^/]+/, '')
-            const studioUIBundleRemoteUrlPathname = studioUIBundleRemoteUrl.replace(/https?:\\/\\/[^/]+/, '')
-            if (elPathname === studioUIBundleRemoteUrlPathname) {
-              hasScript = true;
-              return;
-            }
-          })
-          if (hasScript) {
-            resolve({
-              get: (request) => window['pimcore_studio_ui_bundle'].get(request),
-              init: (...arg) => {
-                try {
-                  return window['pimcore_studio_ui_bundle'].init(...arg)
-                } catch(e) {
-                  console.log('remote container already initialized')
-                }
-              }
-            })
-            return
-          }
-          script.src = studioUIBundleRemoteUrl
-          script.onload = () => {
-            const proxy = {
-              get: (request) => window['pimcore_studio_ui_bundle'].get(request),
-              init: (...arg) => {
-                try {
-                  return window['pimcore_studio_ui_bundle'].init(...arg)
-                } catch(e) {
-                  console.log('remote container already initialized')
-                }
-              }
-            }
-            resolve(proxy)
-          }
-          document.head.appendChild(script);
-        })
-        `,
+        '@pimcore/studio-ui-bundle': createDynamicRemote('pimcore_studio_ui_bundle'),
+        '@pimcore/data-hub': createDynamicRemote('pimcore_datahub_bundle'),
       },
       shared: {
         ...packages.dependencies,
