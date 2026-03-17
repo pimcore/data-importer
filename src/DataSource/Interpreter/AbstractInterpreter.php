@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
@@ -187,7 +188,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
         if ($this->doArchiveImportFile) {
             $this->applicationLogger->info($archiveLogMessage, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                'fileObject' => file_get_contents($path)
+                'fileObject' => new FileObject(file_get_contents($path))
             ]);
         }
 

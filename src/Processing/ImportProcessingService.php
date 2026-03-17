@@ -28,6 +28,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
@@ -174,7 +175,7 @@ class ImportProcessingService
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
             if ($queueItem) {
-                $context['fileObject'] = json_encode($queueItem['data']);
+                $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
             }
             $this->logError($configName, $e->getMessage(), $context);
         } finally {
