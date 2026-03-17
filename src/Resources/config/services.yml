@@ -192,10 +192,3 @@ services:
     Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler:
         tags:
             - { name: messenger.message_handler }
-
-    Pimcore\Bundle\DataImporterBundle\Routing\StudioRouteLoader:
-        arguments:
-            - '@kernel'
-        tags:
-            - { name: routing.loader }
-
