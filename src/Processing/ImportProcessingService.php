@@ -28,7 +28,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Log\FileObject;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
@@ -286,7 +286,7 @@ class ImportProcessingService
                 $message = "Element {$element->getId()} imported successfully.";
                 $this->logInfo($configName, $message, [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => new FileObject(json_encode($importDataRow)),
+                    'fileObject' => json_encode($importDataRow),
                     'relatedObject' => $element
                 ]);
             } else {
@@ -294,7 +294,7 @@ class ImportProcessingService
                 $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
                 $this->logInfo($configName, $message, [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => new FileObject(json_encode($importDataRow))
+                    'fileObject' => json_encode($importDataRow)
                 ]);
             }
         } catch (\Throwable $e) {
@@ -319,7 +319,7 @@ class ImportProcessingService
 
             $this->logError($configName, $message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                'fileObject' => new FileObject(json_encode($importDataRow)),
+                'fileObject' => json_encode($importDataRow),
                 'relatedObject' => $element,
             ]);
         }
