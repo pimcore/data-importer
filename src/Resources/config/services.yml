@@ -193,12 +193,6 @@ services:
         tags:
             - { name: messenger.message_handler }
 
-    Pimcore\Bundle\DataImporterBundle\Routing\StudioRouteLoader:
-        arguments:
-            - '@kernel'
-        tags:
-            - { name: routing.loader }
-
     pimcore.datahub.data_importer.expression_language_provider:
         class: Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage
         public: true
