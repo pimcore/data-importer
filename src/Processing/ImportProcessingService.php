@@ -12,6 +12,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
@@ -27,8 +29,6 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
