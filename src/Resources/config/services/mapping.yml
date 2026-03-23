@@ -25,6 +25,10 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Explode:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "explode" }
+    
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\SumNumbersArray:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "sumNumbersArray" }
 
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StaticText:
         tags:
