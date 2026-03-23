@@ -20,11 +20,6 @@ class Installer extends SettingsStoreAwareInstaller
 {
     const DATAHUB_ADAPTER_PERMISSION = 'plugin_datahub_adapter_dataImporterDataObject';
 
-    public function needsReloadAfterInstall(): bool
-    {
-        return true;
-    }
-
     /**
      * {@inheritdoc}
      *
