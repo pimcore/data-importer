@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
 use DateTime;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent;
@@ -23,7 +24,6 @@ use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\SchedulerFactory;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\Log\ApplicationLogger;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 

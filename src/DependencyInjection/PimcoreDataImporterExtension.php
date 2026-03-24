@@ -39,6 +39,7 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+        $loader->load('studio_backend.yaml');
 
         $definition = $container->getDefinition(DataImporterHandler::class);
         $definition->setArgument('$workerCountLifeTime', $config['messenger_queue_processing']['worker_count_lifetime']);
@@ -54,13 +55,16 @@ class PimcoreDataImporterExtension extends Extension implements PrependExtension
 
     public function prepend(ContainerBuilder $container): void
     {
-        if ($container->hasExtension('doctrine_migrations')) {
-            $loader = new YamlFileLoader(
-                $container,
-                new FileLocator(__DIR__ . '/../Resources/config')
-            );
+        $loader = new YamlFileLoader(
+            $container,
+            new FileLocator(__DIR__ . '/../Resources/config')
+        );
 
+        if ($container->hasExtension('doctrine_migrations')) {
             $loader->load('doctrine_migrations.yml');
         }
+
+        $loader->load('studio_ui.yaml');
+        $loader->load('pimcore/studio_backend.yaml');
     }
 }

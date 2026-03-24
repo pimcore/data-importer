@@ -12,11 +12,11 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Localization\LocaleServiceInterface;
-use Pimcore\Log\ApplicationLogger;
 
 class AsCountries extends AbstractOperator
 {
