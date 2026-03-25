@@ -33,9 +33,9 @@ final class ClassificationStoreKeyNameResponse implements AdditionalAttributesIn
     public function __construct(
         #[Property(description: 'The key ID (group-key format)', type: 'string', example: '1-5', nullable: true)]
         private readonly ?string $keyId = null,
-        #[Property(description: 'The group name', type: 'string', nullable: true)]
+        #[Property(description: 'The group name', type: 'string', example: 'Dimensions', nullable: true)]
         private readonly ?string $groupName = null,
-        #[Property(description: 'The key name', type: 'string', nullable: true)]
+        #[Property(description: 'The key name', type: 'string', example: 'Width', nullable: true)]
         private readonly ?string $keyName = null,
     ) {
     }

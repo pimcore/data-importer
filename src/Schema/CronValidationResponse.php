@@ -47,7 +47,7 @@ final class CronValidationResponse implements AdditionalAttributesInterface
     ) {
     }
 
-    public function isValid(): bool
+    public function getIsValid(): bool
     {
         return $this->isValid;
     }
