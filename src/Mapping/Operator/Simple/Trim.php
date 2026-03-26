@@ -48,31 +48,28 @@ class Trim extends AbstractOperator
             $inputData = [$inputData];
         }
 
-        if ($this->mode == self::MODE_BOTH) {
-            foreach ($inputData as &$data) {
-                $data = trim($data);
+        // Remove null values
+        $inputData = array_filter($inputData, static fn ($v) => $v !== null);
+
+        foreach ($inputData as &$data) {
+            if (!is_string($data)) {
+                continue;
             }
+
+            $data = match ($this->mode) {
+                self::MODE_BOTH  => trim($data),
+                self::MODE_LEFT  => ltrim($data),
+                self::MODE_RIGHT => rtrim($data),
+                default => $data,
+            };
         }
-        if ($this->mode == self::MODE_LEFT) {
-            foreach ($inputData as &$data) {
-                $data = ltrim($data);
-            }
-        }
-        if ($this->mode == self::MODE_RIGHT) {
-            foreach ($inputData as &$data) {
-                $data = rtrim($data);
-            }
-        }
+        unset($data);
 
         if ($returnScalar) {
-            if (!empty($inputData)) {
-                return reset($inputData);
-            }
-
-            return null;
-        } else {
-            return $inputData;
+            return $inputData ? reset($inputData) : null;
         }
+
+        return $inputData;
     }
 
     /**
