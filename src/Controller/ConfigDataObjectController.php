@@ -16,7 +16,6 @@ use Cron\CronExpression;
 use Exception;
 use InvalidArgumentException;
 use League\Flysystem\FilesystemOperator;
-use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
@@ -28,6 +27,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Controller\Traits\JsonHelperTrait;
 use Pimcore\Controller\UserAwareController;
@@ -59,7 +59,10 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @param PreviewService $previewService
      */
-    public function __construct(PreviewService $previewService)
+    public function __construct(
+        private readonly DataTypeServiceInterface $dataTypeService,
+        PreviewService $previewService
+    )
     {
         $this->previewService = $previewService;
     }
@@ -517,7 +520,7 @@ class ConfigDataObjectController extends UserAwareController
     #[Route('/load-class-classificationstore-keys', methods: ['GET'])]
     public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService)
     {
-        $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->get('sort')]);
+        $sortParams = $this->dataTypeService->extractSortingSettings($request->query->get('sort'));
 
         $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
             strip_tags($request->query->get('class_id')),
