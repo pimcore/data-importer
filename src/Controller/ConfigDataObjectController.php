@@ -62,8 +62,7 @@ class ConfigDataObjectController extends UserAwareController
     public function __construct(
         private readonly DataTypeServiceInterface $dataTypeService,
         PreviewService $previewService
-    )
-    {
+    ) {
         $this->previewService = $previewService;
     }
 
