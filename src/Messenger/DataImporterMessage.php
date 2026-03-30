@@ -12,10 +12,16 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Messenger;
 
-class DataImporterMessage
+/**
+ * @internal
+ */
+final readonly class DataImporterMessage
 {
-    public function __construct(protected string $executionType, protected array $ids, protected string $messageId)
-    {
+    public function __construct(
+        private string $executionType,
+        private array $ids,
+        private string $messageId,
+    ) {
     }
 
     public function getExecutionType(): string

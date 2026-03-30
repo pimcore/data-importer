@@ -18,14 +18,17 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
-class ExecutionService
+/**
+ * @internal
+ */
+final class ExecutionService
 {
-    const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_execution';
+    public const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_execution';
 
     /**
      * @return Connection
      */
-    protected function getDb()
+    private function getDb()
     {
         /** @var Connection $db */
         $db = Db::get();
@@ -33,7 +36,7 @@ class ExecutionService
         return $db;
     }
 
-    protected function createTableIfNotExisting()
+    private function createTableIfNotExisting()
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             configName varchar(80) NOT NULL,

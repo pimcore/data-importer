@@ -18,6 +18,9 @@ use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
+/**
+ * @internal
+ */
 abstract class AbstractLoad implements LoadStrategyInterface
 {
     /**

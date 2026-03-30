@@ -15,11 +15,14 @@ namespace Pimcore\Bundle\DataImporterBundle\EventListener;
 use Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 
-class DataImporterListener
+/**
+ * @internal
+ */
+final readonly class DataImporterListener
 {
     public function __construct(
-        protected DataImporterHandler $dataImporterHandler,
-        protected bool $messengerQueueActivated
+        private DataImporterHandler $dataImporterHandler,
+        private bool $messengerQueueActivated,
     ) {
     }
 

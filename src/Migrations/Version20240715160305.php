@@ -16,7 +16,10 @@ use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Migrations\BundleAwareMigration;
 
-class Version20240715160305 extends BundleAwareMigration
+/**
+ * @internal
+ */
+final class Version20240715160305 extends BundleAwareMigration
 {
     public function up(Schema $schema): void
     {

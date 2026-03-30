@@ -14,7 +14,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Model\Element\ElementInterface;
 
-class NotLoadStrategy implements LoadStrategyInterface
+/**
+ * @internal
+ */
+final class NotLoadStrategy implements LoadStrategyInterface
 {
     public function loadElement(array $inputData): ?ElementInterface
     {

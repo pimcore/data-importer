@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 
-class InputQuantityValue extends QuantityValue
+/**
+ * @internal
+ */
+final class InputQuantityValue extends QuantityValue
 {
     /**
      * @param mixed $inputData

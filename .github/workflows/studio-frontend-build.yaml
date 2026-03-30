@@ -1,0 +1,17 @@
+name: "Studio Frontend Build"
+ 
+on:
+  push:
+    paths:
+      - "assets/studio/**"
+  pull_request:
+    paths:
+      - "assets/studio/**"
+  workflow_dispatch:
+ 
+permissions:
+  contents: write
+ 
+jobs:
+  studio-frontend-build:
+    uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build.yaml@main
