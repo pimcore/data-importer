@@ -199,7 +199,13 @@ final class ImportProcessingService
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      */
-    private function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping, int $userOwner)
+    private function processElement(
+        string $configName,
+        array $importDataRow,
+        Resolver $resolver,
+        array $mapping,
+        int $userOwner,
+    )
     {
         $element = null;
         $currentMapping = null;

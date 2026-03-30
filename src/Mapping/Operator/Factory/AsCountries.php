@@ -23,8 +23,10 @@ use Pimcore\Localization\LocaleServiceInterface;
  */
 final class AsCountries extends AbstractOperator
 {
-    public function __construct(ApplicationLogger $applicationLogger, private readonly LocaleServiceInterface $localeService)
-    {
+    public function __construct(
+        ApplicationLogger $applicationLogger,
+        private readonly LocaleServiceInterface $localeService,
+    ) {
         parent::__construct($applicationLogger);
     }
 

@@ -196,12 +196,12 @@ final class DummyDataCommand extends AbstractCommand
 
     /**
      * @param array $data
-     * @param \SimpleXMLElement $xml_data
+     * @param \SimpleXMLElement $xmlData
      * @param string $firstLevelKey
      *
      * @return void
      */
-    private function arrayToXml($data, &$xml_data, $firstLevelKey = null)
+    private function arrayToXml($data, &$xmlData, $firstLevelKey = null)
     {
         foreach ($data as $key => $value) {
             $elementName = $key;
@@ -213,10 +213,10 @@ final class DummyDataCommand extends AbstractCommand
             }
 
             if (is_array($value)) {
-                $subnode = $xml_data->addChild($elementName);
+                $subnode = $xmlData->addChild($elementName);
                 $this->arrayToXml($value, $subnode);
             } else {
-                $xml_data->addChild($elementName, htmlspecialchars($value));
+                $xmlData->addChild($elementName, htmlspecialchars($value));
             }
         }
     }

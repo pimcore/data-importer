@@ -22,11 +22,11 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class LoaderConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const loader_tag = 'pimcore.datahub.data_importer.loader';
+    private const LOADER_TAG = 'pimcore.datahub.data_importer.loader';
 
     public function process(ContainerBuilder $container): void
     {
-        $taggedServices = $container->findTaggedServiceIds(self::loader_tag);
+        $taggedServices = $container->findTaggedServiceIds(self::LOADER_TAG);
         $loader = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {

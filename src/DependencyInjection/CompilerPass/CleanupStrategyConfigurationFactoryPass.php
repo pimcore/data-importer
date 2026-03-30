@@ -22,11 +22,11 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class CleanupStrategyConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const cleanup_tag = 'pimcore.datahub.data_importer.cleanup';
+    private const CLEANUP_TAG = 'pimcore.datahub.data_importer.cleanup';
 
     public function process(ContainerBuilder $container): void
     {
-        $taggedServices = $container->findTaggedServiceIds(self::cleanup_tag);
+        $taggedServices = $container->findTaggedServiceIds(self::CLEANUP_TAG);
         $cleanupStrategies = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {
