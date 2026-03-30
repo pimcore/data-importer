@@ -205,8 +205,7 @@ final class ImportProcessingService
         Resolver $resolver,
         array $mapping,
         int $userOwner,
-    )
-    {
+    ) {
         $element = null;
         $currentMapping = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));

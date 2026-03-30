@@ -174,8 +174,7 @@ final class TransformationDataTypeService
         array &$attributes,
         bool $localized = false,
         ?string $keyPrefix = null,
-    )
-    {
+    ) {
         if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
             $key = $fieldDefinition->getName();
             if ($keyPrefix) {
