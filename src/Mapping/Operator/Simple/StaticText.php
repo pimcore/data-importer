@@ -16,26 +16,20 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class StaticText extends AbstractOperator
+/**
+ * @internal
+ */
+final class StaticText extends AbstractOperator
 {
-    const MODE_APPEND = 'append';
+    private const MODE_APPEND = 'append';
 
-    const MODE_PREPEND = 'prepend';
+    private const MODE_PREPEND = 'prepend';
 
-    /**
-     * @var string
-     */
-    protected $mode;
+    private string $mode;
 
-    /**
-     * @var string
-     */
-    protected $text;
+    private string $text;
 
-    /**
-     * @var bool
-     */
-    protected $alwaysAdd;
+    private bool $alwaysAdd;
 
     public function setSettings(array $settings): void
     {

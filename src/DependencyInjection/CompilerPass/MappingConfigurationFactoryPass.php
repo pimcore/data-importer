@@ -17,11 +17,14 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-class MappingConfigurationFactoryPass implements CompilerPassInterface
+/**
+ * @internal
+ */
+final class MappingConfigurationFactoryPass implements CompilerPassInterface
 {
-    const operator_tag = 'pimcore.datahub.data_importer.operator';
+    private const operator_tag = 'pimcore.datahub.data_importer.operator';
 
-    const data_target_tag = 'pimcore.datahub.data_importer.data_target';
+    private const data_target_tag = 'pimcore.datahub.data_importer.data_target';
 
     public function process(ContainerBuilder $container): void
     {

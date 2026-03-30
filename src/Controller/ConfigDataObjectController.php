@@ -40,8 +40,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * @internal
+ */
 #[Route('/admin/pimcoredataimporter/dataobject/config')]
-class ConfigDataObjectController extends UserAwareController
+final class ConfigDataObjectController extends UserAwareController
 {
     use JsonHelperTrait;
 
@@ -49,21 +52,10 @@ class ConfigDataObjectController extends UserAwareController
 
     private const CONFIG_DOES_NOT_EXIST_MSG = 'Configuration %s does not exist.';
 
-    /**
-     * @var PreviewService
-     */
-    protected $previewService;
-
-    /**
-     * ConfigDataObjectController constructor.
-     *
-     * @param PreviewService $previewService
-     */
     public function __construct(
         private readonly DataTypeServiceInterface $dataTypeService,
-        PreviewService $previewService
+        private readonly PreviewService $previewService,
     ) {
-        $this->previewService = $previewService;
     }
 
     /**
@@ -118,7 +110,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @return array
      */
-    protected function loadAvailableColumnHeaders(
+    private function loadAvailableColumnHeaders(
         string $configName,
         array $config,
         InterpreterFactory $interpreterFactory
@@ -144,7 +136,7 @@ class ConfigDataObjectController extends UserAwareController
         return [];
     }
 
-    protected function isValidJson(array $array): bool
+    private function isValidJson(array $array): bool
     {
         json_encode($array);
 
@@ -706,7 +698,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
-    protected function getImportFilePath(string $configName): string
+    private function getImportFilePath(string $configName): string
     {
         $configuration = Configuration::getByName($configName);
         if (!$configuration) {

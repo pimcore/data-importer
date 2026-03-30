@@ -17,15 +17,18 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-class ResolverConfigurationFactoryPass implements CompilerPassInterface
+/**
+ * @internal
+ */
+final class ResolverConfigurationFactoryPass implements CompilerPassInterface
 {
-    const load_tag = 'pimcore.datahub.data_importer.resolver.load';
+    private const load_tag = 'pimcore.datahub.data_importer.resolver.load';
 
-    const location_tag = 'pimcore.datahub.data_importer.resolver.location';
+    private const location_tag = 'pimcore.datahub.data_importer.resolver.location';
 
-    const publish_tag = 'pimcore.datahub.data_importer.resolver.publish';
+    private const publish_tag = 'pimcore.datahub.data_importer.resolver.publish';
 
-    const factory_tag = 'pimcore.datahub.data_importer.resolver.factory';
+    private const factory_tag = 'pimcore.datahub.data_importer.resolver.factory';
 
     public function process(ContainerBuilder $container): void
     {

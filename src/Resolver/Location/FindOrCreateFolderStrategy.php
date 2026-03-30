@@ -18,39 +18,24 @@ use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 
-class FindOrCreateFolderStrategy implements LocationStrategyInterface
+/**
+ * @internal
+ */
+final class FindOrCreateFolderStrategy implements LocationStrategyInterface
 {
-    /**
-     * @var mixed
-     */
-    protected $dataSourceIndex;
+    private mixed $dataSourceIndex;
 
-    /**
-     * @var string
-     */
-    protected $findStrategy;
+    private string $findStrategy;
 
-    /**
-     * @var string
-     */
-    protected $fallbackPath;
+    private string $fallbackPath;
 
-    /**
-     * @var mixed
-     */
-    protected $attributeDataObjectClassId;
+    private mixed $attributeDataObjectClassId;
 
-    /**
-     * @var string
-     */
-    protected $attributeName;
+    private string $attributeName;
 
-    /**
-     * @var string
-     */
-    protected $attributeLanguage;
+    private string $attributeLanguage;
 
-    public function __construct(protected DataObjectLoader $dataObjectLoader)
+    public function __construct(private readonly DataObjectLoader $dataObjectLoader)
     {
     }
 
@@ -89,7 +74,7 @@ class FindOrCreateFolderStrategy implements LocationStrategyInterface
         return $element->setParent($newParent);
     }
 
-    protected function loadById()
+    private function loadById()
     {
     }
 }

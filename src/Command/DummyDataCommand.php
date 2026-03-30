@@ -20,7 +20,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
-class DummyDataCommand extends AbstractCommand
+/**
+ * @internal
+ */
+final class DummyDataCommand extends AbstractCommand
 {
     protected function configure(): void
     {
@@ -156,7 +159,7 @@ class DummyDataCommand extends AbstractCommand
         return 0;
     }
 
-    protected function writeCsv(string $filename, array $data)
+    private function writeCsv(string $filename, array $data)
     {
         $fp = fopen($filename, 'w');
 
@@ -177,7 +180,7 @@ class DummyDataCommand extends AbstractCommand
         fclose($fp);
     }
 
-    protected function writeXml(string $filename, array $data)
+    private function writeXml(string $filename, array $data)
     {
         array_shift($data);
 
@@ -198,7 +201,7 @@ class DummyDataCommand extends AbstractCommand
      *
      * @return void
      */
-    public function arrayToXml($data, &$xml_data, $firstLevelKey = null)
+    private function arrayToXml($data, &$xml_data, $firstLevelKey = null)
     {
         foreach ($data as $key => $value) {
             $elementName = $key;
@@ -218,7 +221,7 @@ class DummyDataCommand extends AbstractCommand
         }
     }
 
-    protected function writeJson(string $filename, array $data)
+    private function writeJson(string $filename, array $data)
     {
         array_shift($data);
         $json = json_encode($data);
