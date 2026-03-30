@@ -17,11 +17,14 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Model\Tool\TmpStore;
 use Symfony\Component\Messenger\MessageBusInterface;
 
-class DataImporterHandler
+/**
+ * @internal
+ */
+final class DataImporterHandler
 {
-    const IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX = 'DATA-IMPORTER::worker-count::';
+    private const IMPORTER_WORKER_COUNT_TMP_STORE_KEY_PREFIX = 'DATA-IMPORTER::worker-count::';
 
-    protected array $workerCounts = [
+    private array $workerCounts = [
         ImportProcessingService::EXECUTION_TYPE_PARALLEL => 3,
         ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL => 1,
     ];
@@ -35,12 +38,12 @@ class DataImporterHandler
      * @param int $workerCountParallel
      */
     public function __construct(
-        protected QueueService $queueService,
-        protected ImportProcessingService $importProcessingService,
-        protected MessageBusInterface $messageBus,
-        protected int $workerCountLifeTime,
-        protected int $workerItemCount,
-        protected $workerCountParallel
+        private readonly QueueService $queueService,
+        private readonly ImportProcessingService $importProcessingService,
+        private readonly MessageBusInterface $messageBus,
+        private readonly int $workerCountLifeTime,
+        private readonly int $workerItemCount,
+        private readonly int $workerCountParallel,
     ) {
         $this->workerCounts[ImportProcessingService::EXECUTION_TYPE_PARALLEL] = $this->workerCountParallel;
     }

@@ -29,11 +29,11 @@ use Pimcore\HttpKernel\BundleCollection\BundleCollection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
-class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface
+final class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements DependentBundleInterface
 {
     use PackageVersionTrait;
 
-    const LOGGER_COMPONENT_PREFIX = 'DATA-IMPORTER ';
+    public const LOGGER_COMPONENT_PREFIX = 'DATA-IMPORTER ';
 
     protected function getComposerPackageName(): string
     {
@@ -66,7 +66,7 @@ class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements Depende
         );
     }
 
-    public function getInstaller(): ?InstallerInterface
+    public function getInstaller(): InstallerInterface
     {
         return $this->container->get(Installer::class);
     }

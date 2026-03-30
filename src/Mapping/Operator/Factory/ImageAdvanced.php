@@ -18,7 +18,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 
-class ImageAdvanced extends AbstractOperator
+/**
+ * @internal
+ */
+final class ImageAdvanced extends AbstractOperator
 {
     /**
      * @param mixed $inputData

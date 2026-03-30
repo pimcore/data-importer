@@ -23,77 +23,37 @@ use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
 
+/**
+ * @internal
+ */
 abstract class AbstractInterpreter implements InterpreterInterface
 {
     use LoggerAwareTrait;
 
-    /**
-     * @var DeltaChecker
-     */
-    protected $deltaChecker;
+    protected string $configName;
 
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
+    protected bool $doDeltaCheck;
 
-    /**
-     * @var ApplicationLogger
-     */
-    protected $applicationLogger;
+    protected mixed $idDataIndex;
 
-    /**
-     * @var string
-     */
-    protected $configName;
+    protected string $executionType;
 
-    /**
-     * @var bool
-     */
-    protected $doDeltaCheck;
+    protected bool $doCleanup;
 
-    /**
-     * @var mixed
-     */
-    protected $idDataIndex;
+    protected bool $doArchiveImportFile;
 
-    /**
-     * @var string
-     */
-    protected $executionType;
-
-    /**
-     * @var bool
-     */
-    protected $doCleanup;
-
-    /**
-     * @var bool
-     */
-    protected $doArchiveImportFile;
-
-    /**
-     * @var Resolver
-     */
-    protected $resolver;
+    protected Resolver $resolver;
 
     /**
      * @var string[]
      */
-    protected $identifierCache;
+    protected array $identifierCache;
 
-    /**
-     * AbstractInterpreter constructor.
-     *
-     * @param DeltaChecker $deltaChecker
-     * @param QueueService $queueService
-     * @param ApplicationLogger $applicationLogger
-     */
-    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ApplicationLogger $applicationLogger)
-    {
-        $this->deltaChecker = $deltaChecker;
-        $this->queueService = $queueService;
-        $this->applicationLogger = $applicationLogger;
+    public function __construct(
+        protected readonly DeltaChecker $deltaChecker,
+        protected readonly QueueService $queueService,
+        protected readonly ApplicationLogger $applicationLogger,
+    ) {
     }
 
     public function getConfigName(): string
