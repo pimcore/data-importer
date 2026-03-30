@@ -66,7 +66,7 @@ final class PimcoreDataImporterBundle extends AbstractPimcoreBundle implements D
         );
     }
 
-    public function getInstaller(): ?InstallerInterface
+    public function getInstaller(): InstallerInterface
     {
         return $this->container->get(Installer::class);
     }

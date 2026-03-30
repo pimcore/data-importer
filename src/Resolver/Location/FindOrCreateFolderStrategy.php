@@ -25,15 +25,7 @@ final class FindOrCreateFolderStrategy implements LocationStrategyInterface
 {
     private mixed $dataSourceIndex;
 
-    private string $findStrategy;
-
     private string $fallbackPath;
-
-    private mixed $attributeDataObjectClassId;
-
-    private string $attributeName;
-
-    private string $attributeLanguage;
 
     public function __construct(private readonly DataObjectLoader $dataObjectLoader)
     {
@@ -72,9 +64,5 @@ final class FindOrCreateFolderStrategy implements LocationStrategyInterface
         }
 
         return $element->setParent($newParent);
-    }
-
-    private function loadById()
-    {
     }
 }

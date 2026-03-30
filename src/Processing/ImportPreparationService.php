@@ -32,10 +32,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 final class ImportPreparationService
 {
-    private const SCHEDULE_TYPE_CRON = 'cron';
-
-    private const SCHEDULE_TYPE_JOB = 'job';
-
     use LoggerAwareTrait;
 
     /**

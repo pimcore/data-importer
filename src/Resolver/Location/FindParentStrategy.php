@@ -143,10 +143,6 @@ final class FindParentStrategy implements LocationStrategyInterface
         return $element;
     }
 
-    private function loadById()
-    {
-    }
-
     /**
      * @throws InvalidInputException
      */

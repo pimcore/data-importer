@@ -21,9 +21,9 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
  */
 final class StaticText extends AbstractOperator
 {
-    private const MODE_APPEND = 'append';
+    public const MODE_APPEND = 'append';
 
-    private const MODE_PREPEND = 'prepend';
+    public const MODE_PREPEND = 'prepend';
 
     private string $mode;
 
