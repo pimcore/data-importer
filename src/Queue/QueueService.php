@@ -23,7 +23,7 @@ use Pimcore\Db;
  */
 final class QueueService
 {
-    private const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
+    public const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
 
     /**
      * @return Connection

@@ -24,7 +24,7 @@ use Symfony\Component\Config\Util\XmlUtils;
  */
 final class XmlFileInterpreter extends AbstractInterpreter
 {
-    private ?string $xpath;
+    private string $xpath;
 
     private ?string $schema;
 

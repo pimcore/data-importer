@@ -62,7 +62,7 @@ final class ConfigDataObjectController extends UserAwareController
      * @throws Exception
      */
     #[Route('/save')]
-    public function saveAction(Request $request): ?JsonResponse
+    public function saveAction(Request $request): JsonResponse
     {
         $this->checkPermission(self::CONFIG_NAME);
 

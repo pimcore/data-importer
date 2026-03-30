@@ -44,7 +44,7 @@ final class Installer extends SettingsStoreAwareInstaller
         parent::install();
     }
 
-    public function getLastMigrationVersionClassName(): ?string
+    public function getLastMigrationVersionClassName(): string
     {
         return Version20240715160305::class;
     }
