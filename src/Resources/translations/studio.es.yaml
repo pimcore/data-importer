@@ -1,316 +1,316 @@
-data-importer.adapter.dataImporterDataObject: 'Data Importer - Data Objects'
-data-hub.adapter.dataImporterDataObject: 'Data Importer - Data Objects'
-data-importer.tabs.general: 'General'
-data-importer.tabs.permissions: 'Permisos'
-data-importer.tabs.data-setup: 'Configuración de datos'
-data-importer.tabs.import-logs: 'Registros de importación'
-data-importer.tabs.execution: 'Ejecución'
+data-importer.adapter.dataImporterDataObject: Data Importer - Data Objects
+data-hub.adapter.dataImporterDataObject: Data Importer - Data Objects
+data-importer.tabs.general: General
+data-importer.tabs.permissions: Permisos
+data-importer.tabs.data-setup: Configuración de datos
+data-importer.tabs.import-logs: Registros de importación
+data-importer.tabs.execution: Ejecución
 
 # Data Setup Steps
-data-importer.data-setup.steps.data-source.title: 'Fuente de datos'
-data-importer.data-setup.steps.data-source.description: 'Configurar fuente de datos y formato de archivo'
-data-importer.data-setup.steps.preview-import.title: 'Vista previa de importación'
-data-importer.data-setup.steps.preview-import.description: 'Vista previa de los datos a importar'
-data-importer.data-setup.steps.resolver.title: 'Resolver'
-data-importer.data-setup.steps.resolver.description: 'Configurar reglas de resolución de datos'
-data-importer.data-setup.steps.mapping.title: 'Mapping'
-data-importer.data-setup.steps.mapping.description: 'Asignar campos de origen a campos de destino'
-data-importer.data-setup.steps.processing-settings.title: 'Configuración de procesamiento'
-data-importer.data-setup.steps.processing-settings.description: 'Configurar ajustes de procesamiento de importación'
+data-importer.data-setup.steps.data-source.title: Fuente de datos
+data-importer.data-setup.steps.data-source.description: Configurar fuente de datos y formato de archivo
+data-importer.data-setup.steps.preview-import.title: Vista previa de importación
+data-importer.data-setup.steps.preview-import.description: Vista previa de los datos a importar
+data-importer.data-setup.steps.resolver.title: Resolver
+data-importer.data-setup.steps.resolver.description: Configurar reglas de resolución de datos
+data-importer.data-setup.steps.mapping.title: Mapping
+data-importer.data-setup.steps.mapping.description: Asignar campos de origen a campos de destino
+data-importer.data-setup.steps.processing-settings.title: Configuración de procesamiento
+data-importer.data-setup.steps.processing-settings.description: Configurar ajustes de procesamiento de importación
 
 # Data Source
-data-importer.data-source.title: 'Fuente de datos'
-data-importer.data-source.type: 'Tipo'
-data-importer.data-source.type-label: 'Tipo de fuente de datos'
+data-importer.data-source.title: Fuente de datos
+data-importer.data-source.type: Tipo
+data-importer.data-source.type-label: Tipo de fuente de datos
 
 # Loaders
-data-importer.loader.asset: 'Asset'
-data-importer.loader.upload: 'Upload'
-data-importer.loader.http: 'HTTP'
-data-importer.loader.sftp: 'SFTP'
-data-importer.loader.push: 'Push'
-data-importer.loader.sql: 'SQL'
+data-importer.loader.asset: Asset
+data-importer.loader.upload: Upload
+data-importer.loader.http: HTTP
+data-importer.loader.sftp: SFTP
+data-importer.loader.push: Push
+data-importer.loader.sql: SQL
 
 # Asset Loader
-data-importer.loader.asset.asset-path: 'Ruta del Asset'
+data-importer.loader.asset.asset-path: Ruta del Asset
 
 # Upload Loader
-data-importer.loader.upload.status: 'Estado de Upload'
-data-importer.loader.upload.file-uploaded: 'Archivo subido correctamente'
-data-importer.loader.upload.no-file: 'Aún no se ha subido ningún archivo'
-data-importer.loader.upload.file-path: 'Ruta del archivo subido'
-data-importer.loader.upload.open-upload: 'Subir archivo'
-data-importer.loader.upload.modal-title: 'Subir archivo de importación'
+data-importer.loader.upload.status: Estado de Upload
+data-importer.loader.upload.file-uploaded: Archivo subido correctamente
+data-importer.loader.upload.no-file: Aún no se ha subido ningún archivo
+data-importer.loader.upload.file-path: Ruta del archivo subido
+data-importer.loader.upload.open-upload: Subir archivo
+data-importer.loader.upload.modal-title: Subir archivo de importación
 
 # HTTP Loader
-data-importer.loader.http.schema: 'Schema'
-data-importer.loader.http.url: 'URL'
+data-importer.loader.http.schema: Schema
+data-importer.loader.http.url: URL
 
 # SFTP Loader
-data-importer.loader.sftp.host: 'Host'
-data-importer.loader.sftp.port: 'Puerto'
-data-importer.loader.sftp.username: 'Nombre de usuario'
-data-importer.loader.sftp.password: 'Contraseña'
-data-importer.loader.sftp.remote-path: 'Ruta remota'
+data-importer.loader.sftp.host: Host
+data-importer.loader.sftp.port: Puerto
+data-importer.loader.sftp.username: Nombre de usuario
+data-importer.loader.sftp.password: Contraseña
+data-importer.loader.sftp.remote-path: Ruta remota
 
 # Push Loader
-data-importer.loader.push.api-key: 'API Key'
-data-importer.loader.push.api-key.generate: 'Generar API Key'
-data-importer.loader.push.api-key-required: 'Por favor, introduzca una API Key'
-data-importer.loader.push.api-key-min-length: 'La API Key debe tener al menos 16 caracteres'
-data-importer.loader.push.ignore-not-empty-queue: 'Ignorar cola no vacía'
-data-importer.loader.push.endpoint: 'Endpoint'
+data-importer.loader.push.api-key: API Key
+data-importer.loader.push.api-key.generate: Generar API Key
+data-importer.loader.push.api-key-required: Por favor, introduzca una API Key
+data-importer.loader.push.api-key-min-length: La API Key debe tener al menos 16 caracteres
+data-importer.loader.push.ignore-not-empty-queue: Ignorar cola no vacía
+data-importer.loader.push.endpoint: Endpoint
 
 # SQL Loader
-data-importer.loader.sql.connection: 'Conexión de base de datos'
-data-importer.loader.sql.select: 'SELECT'
-data-importer.loader.sql.from: 'FROM'
-data-importer.loader.sql.where: 'WHERE'
-data-importer.loader.sql.group-by: 'GROUP BY'
+data-importer.loader.sql.connection: Conexión de base de datos
+data-importer.loader.sql.select: SELECT
+data-importer.loader.sql.from: FROM
+data-importer.loader.sql.where: WHERE
+data-importer.loader.sql.group-by: GROUP BY
 
 # File Format
-data-importer.file-format.title: 'Formato de archivo'
-data-importer.file-format.type: 'Tipo'
+data-importer.file-format.title: Formato de archivo
+data-importer.file-format.type: Tipo
 
 # Interpreters
-data-importer.interpreter.csv: 'CSV'
-data-importer.interpreter.json: 'JSON'
-data-importer.interpreter.xml: 'XML'
-data-importer.interpreter.xlsx: 'XLSX'
-data-importer.interpreter.sql: 'SQL'
+data-importer.interpreter.csv: CSV
+data-importer.interpreter.json: JSON
+data-importer.interpreter.xml: XML
+data-importer.interpreter.xlsx: XLSX
+data-importer.interpreter.sql: SQL
 
 # CSV Interpreter
-data-importer.interpreter.csv.delimiter: 'Delimitador'
-data-importer.interpreter.csv.enclosure: 'Carácter de cierre'
-data-importer.interpreter.csv.escape: 'Carácter de escape'
+data-importer.interpreter.csv.delimiter: Delimitador
+data-importer.interpreter.csv.enclosure: Carácter de cierre
+data-importer.interpreter.csv.escape: Carácter de escape
 data-importer.interpreter.csv.required: '{{field}} es obligatorio'
 data-importer.interpreter.csv.single-char-only: '{{field}} debe estar vacío o ser un solo carácter'
-data-importer.interpreter.csv.skip-first-row: 'Omitir primera fila'
-data-importer.interpreter.csv.save-header-name: 'Guardar nombre de encabezado'
+data-importer.interpreter.csv.skip-first-row: Omitir primera fila
+data-importer.interpreter.csv.save-header-name: Guardar nombre de encabezado
 
 # JSON Interpreter
-data-importer.interpreter.json.path: 'Ruta'
+data-importer.interpreter.json.path: Ruta
 
 # XML Interpreter
-data-importer.interpreter.xml.xpath: 'XPath'
-data-importer.interpreter.xml.schema: 'Schema'
+data-importer.interpreter.xml.xpath: XPath
+data-importer.interpreter.xml.schema: Schema
 
 # XLSX Interpreter
-data-importer.interpreter.xlsx.sheet-name: 'Nombre de hoja'
-data-importer.interpreter.xlsx.skip-first-row: 'Omitir primera fila'
+data-importer.interpreter.xlsx.sheet-name: Nombre de hoja
+data-importer.interpreter.xlsx.skip-first-row: Omitir primera fila
 
 # SQL Interpreter
-data-importer.interpreter.sql.info: 'El intérprete SQL utiliza la configuración de consulta del cargador SQL.'
+data-importer.interpreter.sql.info: El intérprete SQL utiliza la configuración de consulta del cargador SQL.
 
 # Resolver
-data-importer.resolver.title: 'Resolver'
-data-importer.resolver.class: 'Clase de Data Object'
-data-importer.resolver.class-placeholder: 'Seleccionar clase'
-data-importer.resolver.element-loading: 'Carga de elementos'
-data-importer.resolver.loading-strategy: 'Estrategia de carga'
-data-importer.resolver.loading-strategy.tooltip: 'Define cómo se buscan los elementos existentes antes de la importación. Si no se encuentra ningún elemento, se aplican las reglas de creación.'
-data-importer.resolver.loading-strategy.notLoad: 'Sin carga'
-data-importer.resolver.loading-strategy.id: 'Id'
-data-importer.resolver.loading-strategy.path: 'Ruta'
-data-importer.resolver.loading-strategy.attribute: 'Atributo'
-data-importer.resolver.loading-strategy.attribute-name: 'Nombre de atributo'
-data-importer.resolver.loading-strategy.attribute-name-placeholder: 'Seleccionar atributo'
-data-importer.resolver.loading-strategy.data-source-index: 'Índice de fuente de datos'
-data-importer.resolver.loading-strategy.data-source-index-placeholder: 'Seleccionar columna'
-data-importer.resolver.loading-strategy.language: 'Idioma'
-data-importer.resolver.loading-strategy.language-placeholder: 'Seleccionar idioma'
-data-importer.resolver.loading-strategy.include-unpublished: 'Incluir objetos no publicados'
-data-importer.resolver.element-creation: 'Creación de elementos'
-data-importer.resolver.create-location-strategy: 'Estrategia de ubicación'
-data-importer.resolver.create-location-strategy.tooltip: 'Controla dónde se colocan los elementos recién creados cuando no se ha resuelto ningún elemento existente.'
-data-importer.resolver.location-strategy.staticPath: 'Ruta estática'
-data-importer.resolver.location-strategy.findOrCreateFolder: 'Buscar o crear carpeta'
-data-importer.resolver.location-strategy.findParent: 'Buscar elemento padre'
-data-importer.resolver.location-strategy.doNotCreate: 'No crear'
-data-importer.resolver.location-strategy.noChange: 'Sin cambios'
-data-importer.resolver.location-strategy.path: 'Ruta'
-data-importer.resolver.location-strategy.path-placeholder: 'Introducir ruta'
-data-importer.resolver.location-strategy.data-source-index: 'Índice de fuente de datos'
-data-importer.resolver.location-strategy.data-source-index-placeholder: 'Seleccionar columna'
-data-importer.resolver.location-strategy.fallback-path: 'Ruta de respaldo'
-data-importer.resolver.location-strategy.fallback-path.tooltip: 'Se utiliza cuando no se puede resolver una ubicación de destino dinámica a partir de los datos de origen.'
-data-importer.resolver.location-strategy.fallback-path-placeholder: 'Introducir ruta de respaldo'
-data-importer.resolver.location-strategy.find-strategy: 'Estrategia de búsqueda'
-data-importer.resolver.location-strategy.find-strategy.id: 'Por ID'
-data-importer.resolver.location-strategy.find-strategy.path: 'Por ruta'
-data-importer.resolver.location-strategy.find-strategy.attribute: 'Por atributo'
-data-importer.resolver.location-strategy.attribute-class: 'Clase'
-data-importer.resolver.location-strategy.attribute-name: 'Nombre de atributo'
-data-importer.resolver.location-strategy.attribute-language: 'Idioma'
-data-importer.resolver.location-strategy.as-variant: 'Como variante'
-data-importer.resolver.element-location-update: 'Actualización de ubicación del elemento'
-data-importer.resolver.location-update-strategy: 'Estrategia de ubicación'
-data-importer.resolver.location-update-strategy.tooltip: 'Controla si se cambia la ubicación de los elementos ya resueltos durante la importación y de qué manera.'
-data-importer.resolver.element-publishing: 'Publicación de elementos'
-data-importer.resolver.publishing-strategy: 'Estrategia de publicación'
-data-importer.resolver.publishing-strategy.tooltip: 'Define el comportamiento de publicación o despublicación de los elementos importados.'
-data-importer.resolver.publishing-strategy.noChangeUnpublishNew: 'Sin cambios / Nuevos no publicados'
-data-importer.resolver.publishing-strategy.noChangePublishNew: 'Sin cambios / Nuevos publicados'
-data-importer.resolver.publishing-strategy.alwaysPublish: 'Publicar siempre'
-data-importer.resolver.publishing-strategy.attributeBased: 'Basado en atributo'
-data-importer.resolver.publishing-strategy.data-source-index: 'Índice de fuente de datos'
-data-importer.resolver.publishing-strategy.data-source-index-placeholder: 'Seleccionar columna'
+data-importer.resolver.title: Resolver
+data-importer.resolver.class: Clase de Data Object
+data-importer.resolver.class-placeholder: Seleccionar clase
+data-importer.resolver.element-loading: Carga de elementos
+data-importer.resolver.loading-strategy: Estrategia de carga
+data-importer.resolver.loading-strategy.tooltip: Define cómo se buscan los elementos existentes antes de la importación. Si no se encuentra ningún elemento, se aplican las reglas de creación.
+data-importer.resolver.loading-strategy.notLoad: Sin carga
+data-importer.resolver.loading-strategy.id: Id
+data-importer.resolver.loading-strategy.path: Ruta
+data-importer.resolver.loading-strategy.attribute: Atributo
+data-importer.resolver.loading-strategy.attribute-name: Nombre de atributo
+data-importer.resolver.loading-strategy.attribute-name-placeholder: Seleccionar atributo
+data-importer.resolver.loading-strategy.data-source-index: Índice de fuente de datos
+data-importer.resolver.loading-strategy.data-source-index-placeholder: Seleccionar columna
+data-importer.resolver.loading-strategy.language: Idioma
+data-importer.resolver.loading-strategy.language-placeholder: Seleccionar idioma
+data-importer.resolver.loading-strategy.include-unpublished: Incluir objetos no publicados
+data-importer.resolver.element-creation: Creación de elementos
+data-importer.resolver.create-location-strategy: Estrategia de ubicación
+data-importer.resolver.create-location-strategy.tooltip: Controla dónde se colocan los elementos recién creados cuando no se ha resuelto ningún elemento existente.
+data-importer.resolver.location-strategy.staticPath: Ruta estática
+data-importer.resolver.location-strategy.findOrCreateFolder: Buscar o crear carpeta
+data-importer.resolver.location-strategy.findParent: Buscar elemento padre
+data-importer.resolver.location-strategy.doNotCreate: No crear
+data-importer.resolver.location-strategy.noChange: Sin cambios
+data-importer.resolver.location-strategy.path: Ruta
+data-importer.resolver.location-strategy.path-placeholder: Introducir ruta
+data-importer.resolver.location-strategy.data-source-index: Índice de fuente de datos
+data-importer.resolver.location-strategy.data-source-index-placeholder: Seleccionar columna
+data-importer.resolver.location-strategy.fallback-path: Ruta de respaldo
+data-importer.resolver.location-strategy.fallback-path.tooltip: Se utiliza cuando no se puede resolver una ubicación de destino dinámica a partir de los datos de origen.
+data-importer.resolver.location-strategy.fallback-path-placeholder: Introducir ruta de respaldo
+data-importer.resolver.location-strategy.find-strategy: Estrategia de búsqueda
+data-importer.resolver.location-strategy.find-strategy.id: Por ID
+data-importer.resolver.location-strategy.find-strategy.path: Por ruta
+data-importer.resolver.location-strategy.find-strategy.attribute: Por atributo
+data-importer.resolver.location-strategy.attribute-class: Clase
+data-importer.resolver.location-strategy.attribute-name: Nombre de atributo
+data-importer.resolver.location-strategy.attribute-language: Idioma
+data-importer.resolver.location-strategy.as-variant: Como variante
+data-importer.resolver.element-location-update: Actualización de ubicación del elemento
+data-importer.resolver.location-update-strategy: Estrategia de ubicación
+data-importer.resolver.location-update-strategy.tooltip: Controla si se cambia la ubicación de los elementos ya resueltos durante la importación y de qué manera.
+data-importer.resolver.element-publishing: Publicación de elementos
+data-importer.resolver.publishing-strategy: Estrategia de publicación
+data-importer.resolver.publishing-strategy.tooltip: Define el comportamiento de publicación o despublicación de los elementos importados.
+data-importer.resolver.publishing-strategy.noChangeUnpublishNew: Sin cambios / Nuevos no publicados
+data-importer.resolver.publishing-strategy.noChangePublishNew: Sin cambios / Nuevos publicados
+data-importer.resolver.publishing-strategy.alwaysPublish: Publicar siempre
+data-importer.resolver.publishing-strategy.attributeBased: Basado en atributo
+data-importer.resolver.publishing-strategy.data-source-index: Índice de fuente de datos
+data-importer.resolver.publishing-strategy.data-source-index-placeholder: Seleccionar columna
 
 # Processing Settings
-data-importer.processing.title: 'Configuración de procesamiento'
-data-importer.processing.execution.title: 'Ejecución'
-data-importer.processing.id-delta.title: 'ID, Delta Check y limpieza'
-data-importer.processing.execution-type: 'Tipo de ejecución'
-data-importer.processing.execution-type.tooltip: 'Secuencial procesa un elemento tras otro. Paralelo procesa múltiples elementos de forma concurrente.'
-data-importer.processing.execution-type.sequential: 'Secuencial'
-data-importer.processing.execution-type.parallel: 'Paralelo'
-data-importer.processing.archive-import-file: 'Archivar archivo de importación'
-data-importer.processing.disable-versioning: 'Desactivar versionado'
-data-importer.processing.id-data-index: 'Índice de datos del campo ID'
-data-importer.processing.id-data-index.tooltip: 'Columna utilizada como identificador estable para Delta Check y limpieza. Estas opciones solo están disponibles cuando se ha establecido un índice de datos de ID.'
-data-importer.processing.id-data-index-placeholder: 'Seleccionar columna'
-data-importer.processing.delta-check: 'Delta Check'
-data-importer.processing.cleanup.title: 'Limpieza'
-data-importer.processing.cleanup.do-cleanup: 'Limpiar elementos no importados'
-data-importer.processing.cleanup.strategy: 'Estrategia de limpieza'
-data-importer.processing.cleanup.strategy.tooltip: 'Determina qué sucede con los elementos existentes que no están presentes en la importación actual.'
-data-importer.processing.cleanup.strategy.delete: 'Eliminar'
-data-importer.processing.cleanup.strategy.unpublish: 'Despublicar'
-data-importer.processing.logging.title: 'Configuración de registro (Application Logger)'
-data-importer.processing.logging.info.title: 'Info'
-data-importer.processing.logging.info.disable-logs: 'Desactivar registros de información'
-data-importer.processing.logging.info.disable-file-objects: 'Desactivar objetos de archivo de información'
-data-importer.processing.logging.error.title: 'Error'
-data-importer.processing.logging.error.disable-logs: 'Desactivar registros de errores'
-data-importer.processing.logging.error.disable-file-objects: 'Desactivar objetos de archivo de errores'
+data-importer.processing.title: Configuración de procesamiento
+data-importer.processing.execution.title: Ejecución
+data-importer.processing.id-delta.title: ID, Delta Check y limpieza
+data-importer.processing.execution-type: Tipo de ejecución
+data-importer.processing.execution-type.tooltip: Secuencial procesa un elemento tras otro. Paralelo procesa múltiples elementos de forma concurrente.
+data-importer.processing.execution-type.sequential: Secuencial
+data-importer.processing.execution-type.parallel: Paralelo
+data-importer.processing.archive-import-file: Archivar archivo de importación
+data-importer.processing.disable-versioning: Desactivar versionado
+data-importer.processing.id-data-index: Índice de datos del campo ID
+data-importer.processing.id-data-index.tooltip: Columna utilizada como identificador estable para Delta Check y limpieza. Estas opciones solo están disponibles cuando se ha establecido un índice de datos de ID.
+data-importer.processing.id-data-index-placeholder: Seleccionar columna
+data-importer.processing.delta-check: Delta Check
+data-importer.processing.cleanup.title: Limpieza
+data-importer.processing.cleanup.do-cleanup: Limpiar elementos no importados
+data-importer.processing.cleanup.strategy: Estrategia de limpieza
+data-importer.processing.cleanup.strategy.tooltip: Determina qué sucede con los elementos existentes que no están presentes en la importación actual.
+data-importer.processing.cleanup.strategy.delete: Eliminar
+data-importer.processing.cleanup.strategy.unpublish: Despublicar
+data-importer.processing.logging.title: Configuración de registro (Application Logger)
+data-importer.processing.logging.info.title: Info
+data-importer.processing.logging.info.disable-logs: Desactivar registros de información
+data-importer.processing.logging.info.disable-file-objects: Desactivar objetos de archivo de información
+data-importer.processing.logging.error.title: Error
+data-importer.processing.logging.error.disable-logs: Desactivar registros de errores
+data-importer.processing.logging.error.disable-file-objects: Desactivar objetos de archivo de errores
 
 # Preview Import
-data-importer.preview-import.title: 'Vista previa de importación'
-data-importer.preview-import.choose-preview-data: 'Elegir datos de vista previa'
-data-importer.preview-import.upload-file: 'Subir archivo'
-data-importer.preview-import.copy-from-source: 'Copiar de la fuente de datos'
-data-importer.preview-import.search-placeholder: 'Buscar por nombre, origen, destino'
-data-importer.preview-import.column.label: 'Etiqueta'
-data-importer.preview-import.column.data: 'Datos'
-data-importer.preview-import.prev: 'Registro anterior'
-data-importer.preview-import.next: 'Registro siguiente'
+data-importer.preview-import.title: Vista previa de importación
+data-importer.preview-import.choose-preview-data: Elegir datos de vista previa
+data-importer.preview-import.upload-file: Subir archivo
+data-importer.preview-import.copy-from-source: Copiar de la fuente de datos
+data-importer.preview-import.search-placeholder: Buscar por nombre, origen, destino
+data-importer.preview-import.column.label: Etiqueta
+data-importer.preview-import.column.data: Datos
+data-importer.preview-import.prev: Registro anterior
+data-importer.preview-import.next: Registro siguiente
 
 # Mapping
-data-importer.mapping.title: 'Configuración de Mapping'
-data-importer.mapping.title-short: 'Mappings'
-data-importer.mapping.add: 'Nuevo'
-data-importer.mapping.new-modal.title: 'Nuevo Mapping'
-data-importer.mapping.new-modal.source-label: 'Columna de origen'
-data-importer.mapping.new-modal.source-required: 'Por favor, seleccione una columna de origen'
-data-importer.mapping.collapse-all: 'Contraer todo'
-data-importer.mapping.expand-all: 'Expandir todo'
-data-importer.mapping.auto-fill: 'Autocompletar'
-data-importer.mapping.empty-state: 'Comience a crear un Mapping directamente desde la columna de orígenes, o haga clic en Nuevo para crear uno manualmente.'
+data-importer.mapping.title: Configuración de Mapping
+data-importer.mapping.title-short: Mappings
+data-importer.mapping.add: Nuevo
+data-importer.mapping.new-modal.title: Nuevo Mapping
+data-importer.mapping.new-modal.source-label: Columna de origen
+data-importer.mapping.new-modal.source-required: Por favor, seleccione una columna de origen
+data-importer.mapping.collapse-all: Contraer todo
+data-importer.mapping.expand-all: Expandir todo
+data-importer.mapping.auto-fill: Autocompletar
+data-importer.mapping.empty-state: Comience a crear un Mapping directamente desde la columna de orígenes, o haga clic en Nuevo para crear uno manualmente.
 data-importer.mapping.filter-empty: 'Aún no hay Mappings para "{{source}}".'
-data-importer.mapping.sources.title: 'Orígenes con vista previa'
-data-importer.mapping.sources.reset-view: 'Restablecer vista'
-data-importer.mapping.sources.empty: 'No hay datos de vista previa disponibles. Por favor, configure una fuente de datos y ejecute una vista previa de importación primero.'
-data-importer.mapping.item.new-label: 'Nuevo Mapping'
-data-importer.mapping.item.label: 'Etiqueta'
-data-importer.mapping.item.advanced: 'Avanzado'
-data-importer.mapping.item.delete: 'Eliminar Mapping'
-data-importer.mapping.item.source: 'Origen'
-data-importer.mapping.item.source-placeholder: 'Seleccionar columnas de origen'
-data-importer.mapping.item.destination: 'Destino'
-data-importer.mapping.item.destination-placeholder: 'Seleccionar campo'
-data-importer.mapping.item.requires-advanced-setup: 'Requiere configuración avanzada'
-data-importer.mapping.item.data-source-index: 'Índice de fuente de datos'
-data-importer.mapping.item.data-source-index-placeholder: 'Seleccionar columnas de origen'
-data-importer.mapping.item.transformation-pipeline.title: 'Pipeline de transformación'
-data-importer.mapping.item.transformation-pipeline.empty: 'No se ha configurado ninguna Pipeline de transformación'
-data-importer.mapping.item.transformation-result.title: 'Resultado de transformación'
-data-importer.mapping.item.transformation-result.type: 'Tipo de resultado'
-data-importer.mapping.item.data-target.title: 'Destino de datos'
-data-importer.mapping.item.data-target.type: 'Tipo de destino'
-data-importer.mapping.item.data-target.type-placeholder: 'Seleccionar tipo de destino'
-data-importer.mapping.item.data-target.type.direct: 'Directo'
-data-importer.mapping.item.data-target.type.classificationstore: 'Classification Store'
-data-importer.mapping.item.data-target.type.classificationstoreBatch: 'Classification Store Batch'
-data-importer.mapping.item.data-target.type.manyToManyRelation: 'Many-to-Many Relation'
-data-importer.mapping.item.data-target.field-name: 'Nombre de campo'
-data-importer.mapping.item.data-target.field-name-placeholder: 'Seleccionar campo'
-data-importer.mapping.item.data-target.language: 'Idioma'
-data-importer.mapping.item.data-target.language-placeholder: 'Seleccionar idioma'
-data-importer.mapping.item.data-target.write-if-target-is-not-empty: 'Escribir si el destino no está vacío'
-data-importer.mapping.item.data-target.write-if-source-is-empty: 'Escribir si el origen está vacío'
+data-importer.mapping.sources.title: Orígenes con vista previa
+data-importer.mapping.sources.reset-view: Restablecer vista
+data-importer.mapping.sources.empty: No hay datos de vista previa disponibles. Por favor, configure una fuente de datos y ejecute una vista previa de importación primero.
+data-importer.mapping.item.new-label: Nuevo Mapping
+data-importer.mapping.item.label: Etiqueta
+data-importer.mapping.item.advanced: Avanzado
+data-importer.mapping.item.delete: Eliminar Mapping
+data-importer.mapping.item.source: Origen
+data-importer.mapping.item.source-placeholder: Seleccionar columnas de origen
+data-importer.mapping.item.destination: Destino
+data-importer.mapping.item.destination-placeholder: Seleccionar campo
+data-importer.mapping.item.requires-advanced-setup: Requiere configuración avanzada
+data-importer.mapping.item.data-source-index: Índice de fuente de datos
+data-importer.mapping.item.data-source-index-placeholder: Seleccionar columnas de origen
+data-importer.mapping.item.transformation-pipeline.title: Pipeline de transformación
+data-importer.mapping.item.transformation-pipeline.empty: No se ha configurado ninguna Pipeline de transformación
+data-importer.mapping.item.transformation-result.title: Resultado de transformación
+data-importer.mapping.item.transformation-result.type: Tipo de resultado
+data-importer.mapping.item.data-target.title: Destino de datos
+data-importer.mapping.item.data-target.type: Tipo de destino
+data-importer.mapping.item.data-target.type-placeholder: Seleccionar tipo de destino
+data-importer.mapping.item.data-target.type.direct: Directo
+data-importer.mapping.item.data-target.type.classificationstore: Classification Store
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store Batch
+data-importer.mapping.item.data-target.type.manyToManyRelation: Many-to-Many Relation
+data-importer.mapping.item.data-target.field-name: Nombre de campo
+data-importer.mapping.item.data-target.field-name-placeholder: Seleccionar campo
+data-importer.mapping.item.data-target.language: Idioma
+data-importer.mapping.item.data-target.language-placeholder: Seleccionar idioma
+data-importer.mapping.item.data-target.write-if-target-is-not-empty: Escribir si el destino no está vacío
+data-importer.mapping.item.data-target.write-if-source-is-empty: Escribir si el origen está vacío
 
 # Advanced Mapping Modal
-data-importer.mapping.advanced-modal.title: 'Edición de Mapping y transformaciones'
-data-importer.mapping.advanced-modal.save: 'Guardar'
-data-importer.mapping.advanced-modal.step-source: 'Origen'
-data-importer.mapping.advanced-modal.step-transformations: 'Transformaciones'
-data-importer.mapping.advanced-modal.step-target: 'Destino de datos'
-data-importer.mapping.advanced-modal.no-transformers: 'No se han configurado transformadores. Añada uno a continuación.'
-data-importer.mapping.advanced-modal.add-transformation: '+ Añadir transformación'
-data-importer.mapping.advanced-modal.result-type: 'Tipo de resultado'
-data-importer.mapping.advanced-modal.write-if-target-not-empty: 'Escribir si el destino no está vacío'
-data-importer.mapping.advanced-modal.write-if-source-empty: 'Escribir si el origen está vacío'
-data-importer.mapping.advanced-modal.transformer.move-up: 'Mover arriba'
-data-importer.mapping.advanced-modal.transformer.move-down: 'Mover abajo'
-data-importer.mapping.advanced-modal.transformer.remove: 'Eliminar'
-data-importer.mapping.advanced-modal.transformer.edit-source: 'Editar atributos de origen'
-data-importer.mapping.advanced-modal.transformer.group.data-manipulation: 'Manipulación de datos'
-data-importer.mapping.advanced-modal.transformer.group.data-types: 'Tipos de datos'
-data-importer.mapping.advanced-modal.transformer.group.load-import: 'Cargar / Importar'
-data-importer.mapping.advanced-modal.next-step: 'Siguiente paso'
-data-importer.mapping.advanced-modal.previous-step: 'Paso anterior'
-data-importer.mapping.advanced-modal.recalculate-result-type: 'Recalcular tipo de resultado de transformación'
-data-importer.mapping.advanced-modal.step-source.label: 'Atributo(s) de origen'
-data-importer.mapping.advanced-modal.step-source.description: 'Seleccione de la lista o añada un nuevo origen'
-data-importer.mapping.advanced-modal.step-source.import-preview: 'Vista previa de importación'
-data-importer.mapping.advanced-modal.step-source.search-placeholder: 'Buscar'
-data-importer.mapping.advanced-modal.step-source.column-name: 'Nombre'
-data-importer.mapping.advanced-modal.step-source.column-data: 'Datos'
-data-importer.mapping.advanced-modal.loading: 'Cargando…'
-data-importer.mapping.advanced-modal.no-data: 'Sin datos'
-data-importer.mapping.advanced-modal.no-preview: 'Vista previa no disponible'
-data-importer.mapping.advanced-modal.step-target.type: 'Tipo'
-data-importer.mapping.advanced-modal.step-target.field-name: 'Nombre de campo'
-data-importer.mapping.advanced-modal.step-target.overwrite: 'Sobrescribir'
-data-importer.mapping.advanced-modal.step-target.preview-result: 'Vista previa del resultado'
-data-importer.mapping.advanced-modal.step-target.previous-step: 'Paso anterior'
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: 'Confirmar Mapping'
-data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: 'Escribir en este campo aunque el campo de destino ya contenga un valor'
-data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: 'Escribir en este campo aunque los datos de origen estén vacíos'
-data-importer.mapping.advanced-modal.step-target.overwrite-mode: 'Modo de sobrescritura'
-data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: 'Reemplazar'
-data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: 'Fusionar'
-data-importer.mapping.advanced-modal.step-target.classification-store-key: 'Classification Store Key'
-data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: 'Ninguna clave seleccionada'
+data-importer.mapping.advanced-modal.title: Edición de Mapping y transformaciones
+data-importer.mapping.advanced-modal.save: Guardar
+data-importer.mapping.advanced-modal.step-source: Origen
+data-importer.mapping.advanced-modal.step-transformations: Transformaciones
+data-importer.mapping.advanced-modal.step-target: Destino de datos
+data-importer.mapping.advanced-modal.no-transformers: No se han configurado transformadores. Añada uno a continuación.
+data-importer.mapping.advanced-modal.add-transformation: + Añadir transformación
+data-importer.mapping.advanced-modal.result-type: Tipo de resultado
+data-importer.mapping.advanced-modal.write-if-target-not-empty: Escribir si el destino no está vacío
+data-importer.mapping.advanced-modal.write-if-source-empty: Escribir si el origen está vacío
+data-importer.mapping.advanced-modal.transformer.move-up: Mover arriba
+data-importer.mapping.advanced-modal.transformer.move-down: Mover abajo
+data-importer.mapping.advanced-modal.transformer.remove: Eliminar
+data-importer.mapping.advanced-modal.transformer.edit-source: Editar atributos de origen
+data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Manipulación de datos
+data-importer.mapping.advanced-modal.transformer.group.data-types: Tipos de datos
+data-importer.mapping.advanced-modal.transformer.group.load-import: Cargar / Importar
+data-importer.mapping.advanced-modal.next-step: Siguiente paso
+data-importer.mapping.advanced-modal.previous-step: Paso anterior
+data-importer.mapping.advanced-modal.recalculate-result-type: Recalcular tipo de resultado de transformación
+data-importer.mapping.advanced-modal.step-source.label: Atributo(s) de origen
+data-importer.mapping.advanced-modal.step-source.description: Seleccione de la lista o añada un nuevo origen
+data-importer.mapping.advanced-modal.step-source.import-preview: Vista previa de importación
+data-importer.mapping.advanced-modal.step-source.search-placeholder: Buscar
+data-importer.mapping.advanced-modal.step-source.column-name: Nombre
+data-importer.mapping.advanced-modal.step-source.column-data: Datos
+data-importer.mapping.advanced-modal.loading: Cargando…
+data-importer.mapping.advanced-modal.no-data: Sin datos
+data-importer.mapping.advanced-modal.no-preview: Vista previa no disponible
+data-importer.mapping.advanced-modal.step-target.type: Tipo
+data-importer.mapping.advanced-modal.step-target.field-name: Nombre de campo
+data-importer.mapping.advanced-modal.step-target.overwrite: Sobrescribir
+data-importer.mapping.advanced-modal.step-target.preview-result: Vista previa del resultado
+data-importer.mapping.advanced-modal.step-target.previous-step: Paso anterior
+data-importer.mapping.advanced-modal.step-target.confirm-mapping: Confirmar Mapping
+data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Escribir en este campo aunque el campo de destino ya contenga un valor
+data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Escribir en este campo aunque los datos de origen estén vacíos
+data-importer.mapping.advanced-modal.step-target.overwrite-mode: Modo de sobrescritura
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Reemplazar
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Fusionar
+data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
+data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ninguna clave seleccionada
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} en grupo {{group}}'
-data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: 'Seleccionar Classification Store Key'
-data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: 'Busque y seleccione una clave para este campo de Classification Store'
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Seleccionar Classification Store Key
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Busque y seleccione una clave para este campo de Classification Store
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch requiere el tipo de resultado de transformación: array, quantityValueArray, inputQuantityValueArray o dateArray.'
 data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: 'Many-to-Many Relation requiere el tipo de resultado de transformación: advancedDataObject, dataObjectArray, assetArray o advancedAssetArray.'
 
-error.error_environment: 'El archivo de vista previa no es válido para el intérprete configurado. Por favor, vuelva a subir o copiar los datos de vista previa.'
+error.error_environment: El archivo de vista previa no es válido para el intérprete configurado. Por favor, vuelva a subir o copiar los datos de vista previa.
 
 # Execution Tab
-data-importer.execution.settings.title: 'Configuración de ejecución'
-data-importer.execution.schedule-type: 'Tipo de programación'
-data-importer.execution.schedule-type.recurring: 'Recurrente / Cron'
-data-importer.execution.schedule-type.job: 'Tarea única'
-data-importer.execution.cron-definition: 'Definición de Cron'
-data-importer.execution.cron-generator: 'Generador de Cron'
-data-importer.execution.scheduled-at: 'Programado para'
-data-importer.execution.manual-execution: 'Ejecución manual'
-data-importer.execution.start-import: 'Iniciar importación'
-data-importer.execution.start-import.success: 'Importación iniciada correctamente'
-data-importer.execution.start-import.error: 'No se pudo iniciar la importación'
-data-importer.execution.start-import.tooltip-dirty: 'Guarde sus cambios antes de iniciar la importación'
-data-importer.execution.start-import.tooltip-push: 'El cargador Push no admite ejecución manual'
-data-importer.execution.cancel.success: 'Importación cancelada'
-data-importer.execution.cancel.error: 'No se pudo cancelar la importación'
-data-importer.execution.status.title: 'Estado de ejecución'
-data-importer.execution.status.not-running: 'No está en ejecución'
-data-importer.execution.status.finished: 'Todos los elementos procesados. No hay importación en curso.'
-data-importer.execution.status.current-progress: 'Progreso actual'
+data-importer.execution.settings.title: Configuración de ejecución
+data-importer.execution.schedule-type: Tipo de programación
+data-importer.execution.schedule-type.recurring: Recurrente / Cron
+data-importer.execution.schedule-type.job: Tarea única
+data-importer.execution.cron-definition: Definición de Cron
+data-importer.execution.cron-generator: Generador de Cron
+data-importer.execution.scheduled-at: Programado para
+data-importer.execution.manual-execution: Ejecución manual
+data-importer.execution.start-import: Iniciar importación
+data-importer.execution.start-import.success: Importación iniciada correctamente
+data-importer.execution.start-import.error: No se pudo iniciar la importación
+data-importer.execution.start-import.tooltip-dirty: Guarde sus cambios antes de iniciar la importación
+data-importer.execution.start-import.tooltip-push: El cargador Push no admite ejecución manual
+data-importer.execution.cancel.success: Importación cancelada
+data-importer.execution.cancel.error: No se pudo cancelar la importación
+data-importer.execution.status.title: Estado de ejecución
+data-importer.execution.status.not-running: No está en ejecución
+data-importer.execution.status.finished: Todos los elementos procesados. No hay importación en curso.
+data-importer.execution.status.current-progress: Progreso actual
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} elementos procesados...'
-data-importer.execution.status.cancel: 'Cancelar ejecución y limpiar cola'
-data-importer.execution.cron-validating: 'Validando expresión Cron...'
+data-importer.execution.status.cancel: Cancelar ejecución y limpiar cola
+data-importer.execution.cron-validating: Validando expresión Cron...
 data-importer.validation.required: '{{field}} es obligatorio'
