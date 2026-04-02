@@ -16,7 +16,7 @@ import { container } from '@pimcore/studio-ui-bundle'
 import { Dropdown, Flex, IconTextButton } from '@pimcore/studio-ui-bundle/components'
 import { type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { v4 as uuid } from 'uuid'
-import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem, type TransformationPipelineItem } from '../../../../../types'
+import { type TransformationPipelineItem } from '../../../../../types'
 import { type DynamicTypeTransformerRegistry } from '../../../../../dynamic-types/transformer'
 import { bundleServiceIds } from '../../../../../../../config/service-ids'
 import { useStyles } from './step-transformations.styles'
@@ -32,16 +32,9 @@ const enrichWithId = (item: TransformationPipelineItem): PipelineItemWithId => (
 const stripId = ({ _id: _discardedId, ...rest }: PipelineItemWithId): TransformationPipelineItem => rest
 
 export interface StepTransformationsProps {
-  configName: string
   pipeline: TransformationPipelineItem[]
   dataSourceIndex: string[]
   columnHeaderOptions: Array<{ value: string, label: string }>
-  previewRefreshToken: number
-  forceRefreshToken: number
-  /** Live snapshot of the full mapping item — forwarded to PreviewResultPanel */
-  currentMappingItem: MappingConfigItem
-  /** Saved loaderConfig + interpreterConfig + resolverConfig — needed so the backend can interpret the preview file */
-  baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
   onPipelineChange: (next: TransformationPipelineItem[]) => void
   onDataSourceIndexChange: (v: string[]) => void
   onPrev: () => void
@@ -49,14 +42,9 @@ export interface StepTransformationsProps {
 }
 
 export const StepTransformations = ({
-  configName,
   pipeline,
   dataSourceIndex,
   columnHeaderOptions,
-  previewRefreshToken,
-  forceRefreshToken,
-  currentMappingItem,
-  baseConfig,
   onPipelineChange,
   onDataSourceIndexChange,
   onPrev,
@@ -219,13 +207,9 @@ export const StepTransformations = ({
       </Flex>
 
       <StepTransformationsRightColumn
-        baseConfig={ baseConfig }
         columnHeaderOptions={ columnHeaderOptions }
-        configName={ configName }
-        currentMappingItem={ currentMappingItem }
         dataSourceIndex={ dataSourceIndex }
         editingSource={ editingSource }
-        forceRefreshToken={ forceRefreshToken }
         getSourceLabel={ getSourceLabel }
         onBlurSource={ () => { setEditingSource(false) } }
         onChangeSource={ (v) => {
@@ -235,7 +219,6 @@ export const StepTransformations = ({
         onNext={ onNext }
         onPrev={ onPrev }
         onToggleEditing={ () => { setEditingSource(v => !v) } }
-        previewRefreshToken={ previewRefreshToken }
       />
 
     </Flex>

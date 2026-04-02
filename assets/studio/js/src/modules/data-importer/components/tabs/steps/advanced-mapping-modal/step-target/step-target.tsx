@@ -11,7 +11,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Text } from '@pimcore/studio-ui-bundle/components'
-import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig } from '../../../../../types'
+import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey } from '../../../../../types'
+import { useResultPreviewContext } from '../result-preview/result-preview-context'
 import {
   useBundleDataImporterClassificationstoreLoadAttributesQuery,
   useBundleDataImporterClassificationstoreLoadKeyNameQuery
@@ -27,13 +28,6 @@ export interface StepTargetProps {
   dataTarget?: MappingConfigItem['dataTarget']
   languageOptions: Array<{ value: string, label: string }>
   classId?: string
-  configName: string
-  previewRefreshToken: number
-  forceRefreshToken: number
-  /** Live snapshot of the full mapping item — forwarded to PreviewPanel */
-  currentMappingItem?: MappingConfigItem
-  /** Saved loaderConfig + interpreterConfig + resolverConfig — needed for the preview backend call */
-  baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
   onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void
   onPrev: () => void
   onConfirm: () => void
@@ -45,17 +39,13 @@ export const StepTarget = ({
   dataTarget,
   languageOptions,
   classId,
-  configName,
-  previewRefreshToken,
-  forceRefreshToken,
-  currentMappingItem,
-  baseConfig,
   onDataTargetChange,
   onPrev,
   onConfirm
 }: StepTargetProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const { isFetchingAttributes, calculateTypeError } = useResultPreviewContext()
   const [keyModalOpen, setKeyModalOpen] = useState(false)
 
   const prevTransformationResultTypeRef = useRef<string | undefined>(transformationResultType)
@@ -70,7 +60,7 @@ export const StepTarget = ({
     []
   )
   const validManyToManyTypes = useMemo(
-    () => new Set(['advancedDataObject', 'dataObjectArray', 'assetArray', 'advancedAssetArray']),
+    () => new Set(['advancedDataObjectArray', 'dataObjectArray', 'assetArray', 'advancedAssetArray']),
     []
   )
 
@@ -106,7 +96,7 @@ export const StepTarget = ({
     ? classificationStoreAttributes
     : defaultAttributes
 
-  const attributeOptions = attributes.map(a => ({ value: a.key, label: a.title }))
+  const attributeOptions = calculateTypeError !== undefined ? [] : attributes.map(a => ({ value: a.key, label: a.title }))
   const isLocalized = attributes.find(a => a.key === dataTarget?.settings?.fieldName)?.localized ?? false
 
   const writeIfNotEmpty = dataTarget?.settings?.writeIfTargetIsNotEmpty ?? false
@@ -183,6 +173,19 @@ export const StepTarget = ({
     }
   }, [transformationResultType, isClassificationStore, isClassificationStoreBatch])
 
+  // Reset fieldName when it no longer exists in the loaded attributes or when type calculation failed
+  useEffect(() => {
+    if (isFetchingAttributes) return
+    const currentFieldName = dataTarget?.settings?.fieldName
+    if (currentFieldName === undefined) return
+    if (!attributeOptions.some(a => a.value === currentFieldName)) {
+      onDataTargetChange({
+        ...dataTarget,
+        settings: { ...dataTarget?.settings, fieldName: undefined, language: undefined }
+      })
+    }
+  }, [attributeOptions, isFetchingAttributes])
+
   return (
     <Flex
       className={ styles.twoColumnLayout }
@@ -212,7 +215,7 @@ export const StepTarget = ({
           hasTypeError={ hasTypeError }
           isClassificationStore={ isClassificationStore }
           isClassificationStoreBatch={ isClassificationStoreBatch }
-          isFetchingClassificationStoreAttributes={ isFetchingClassificationStoreAttributes }
+          isFetchingClassificationStoreAttributes={ isFetchingClassificationStoreAttributes || isFetchingAttributes }
           isLocalized={ isLocalized }
           keyLabel={ keyLabel }
           languageOptions={ languageOptions }
@@ -225,13 +228,8 @@ export const StepTarget = ({
       </Flex>
 
       <StepTargetPreviewActions
-        baseConfig={ baseConfig }
-        configName={ configName }
-        currentMappingItem={ currentMappingItem }
-        forceRefreshToken={ forceRefreshToken }
         onConfirm={ onConfirm }
         onPrev={ onPrev }
-        previewRefreshToken={ previewRefreshToken }
       />
 
       { isClassificationStore && classId !== undefined && dataTarget?.settings?.fieldName !== undefined && transformationResultType !== undefined && (

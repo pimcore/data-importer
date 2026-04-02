@@ -11,26 +11,15 @@
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex } from '@pimcore/studio-ui-bundle/components'
-import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
-import { PreviewPanel } from '../preview-panel/preview-panel'
+import { ResultPreview } from '../result-preview/result-preview'
 import { useStyles } from './step-target.styles'
 
 export interface StepTargetPreviewActionsProps {
-  configName: string
-  previewRefreshToken: number
-  forceRefreshToken: number
-  currentMappingItem?: MappingConfigItem
-  baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
   onPrev: () => void
   onConfirm: () => void
 }
 
 export const StepTargetPreviewActions = ({
-  configName,
-  previewRefreshToken,
-  forceRefreshToken,
-  currentMappingItem,
-  baseConfig,
   onPrev,
   onConfirm
 }: StepTargetPreviewActionsProps): React.JSX.Element => {
@@ -43,16 +32,7 @@ export const StepTargetPreviewActions = ({
       justify="space-between"
       vertical
     >
-      <div className={ styles.previewWrapper }>
-        <PreviewPanel
-          baseConfig={ baseConfig }
-          configName={ configName }
-          currentMappingItem={ currentMappingItem }
-          forceRefreshToken={ forceRefreshToken }
-          mode="result"
-          refreshToken={ previewRefreshToken }
-        />
-      </div>
+      <ResultPreview />
 
       <Flex
         gap="extra-small"
