@@ -73,9 +73,9 @@ class LoadDataObject extends AbstractOperator
     public function setSettings(array $settings): void
     {
         $this->loadStrategy = $settings['loadStrategy'] ?? self::LOAD_STRATEGY_ID;
-        $this->attributeLanguage = $settings['attributeLanguage'];
-        $this->attributeName = $settings['attributeName'];
-        $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
+        $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
+        $this->attributeName = $settings['attributeName'] ?? '';
+        $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'] ?? '';
         $this->partialMatch = $settings['partialMatch'] ?? false;
         $this->loadUnpublished = $settings['loadUnpublished'] ?? false;
     }

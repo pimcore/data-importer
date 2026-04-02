@@ -70,16 +70,6 @@ export const useStyles = createStyles(({ css, token }) => {
       }
     `,
 
-    typeError: css`
-      color: ${token.colorErrorText};
-      font-size: 12px;
-      line-height: 18px;
-      background: ${token.colorErrorBg};
-      border: 1px solid ${token.colorErrorBorder};
-      border-radius: ${token.borderRadius}px;
-      padding: ${token.paddingXXS}px ${token.paddingXS}px;
-    `,
-
     classificationStoreKeyInput: css`
       flex: 1;
     `,
@@ -87,11 +77,6 @@ export const useStyles = createStyles(({ css, token }) => {
     rightColumn: css`
       flex: 0 0 calc(50% - 4px);
       min-width: 0;
-    `,
-
-    previewWrapper: css`
-      flex: 1;
-      overflow: hidden;
     `
   }
 })
