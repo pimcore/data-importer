@@ -259,8 +259,7 @@ function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProp
   const dataSourceIndexEqual =
     prevSrc === nextSrc ||
     (prevSrc !== undefined &&
-      nextSrc !== undefined &&
-      prevSrc.length === nextSrc.length &&
+      prevSrc.length === nextSrc?.length &&
       prevSrc.every((v, i) => v === nextSrc[i]))
 
   return (
