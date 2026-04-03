@@ -9,7 +9,7 @@ Every import execution consists of two major parts
 Import preparation loads import source from configured data source, interprets the file based on the file format settings
 and splits import source into single data rows. These data rows are added to a queue to be processed during import processing. 
 
-Preparation starts when 'import is starte', that means ...  
+Preparation starts when an import is started, that means ...  
 - when clicking manual execution in `Execution` tab of import configuration UI. 
 - based on cron definition for import when `datahub:data-importer:execute-cron` command is executed. Every command execution calls
  preparation of all import configuration, that are or were due since the last command execution.  
@@ -20,7 +20,7 @@ For starting imports see also [Execution Configuration](./03_Configuration/07_Ex
 
 Steps to be executed while preparation are: 
 - Loading data from data source.
-- Interpret source data, spilt into data rows and create queue items.
+- Interpret source data, split into data rows and create queue items.
 - If activated: check if existing elements in Pimcore need to be cleaned up and create corresponding cleanup queue items. 
 
 Preparation is executed only when the queue for corresponding import configuration is empty to prevent race conditions 
@@ -34,7 +34,7 @@ There are two types of processing - sequential and parallel - which are configur
 Sequential imports process the queue items one by one in the order they were added. This might be necessary when data elements
 depend on each other, e.g. when building up hierarchies etc. 
 
-Parallel imports process the queue items in a parallelized way. This speed things up, but queue items will not be processed
+Parallel imports process the queue items in a parallelized way. This speeds things up, but queue items will not be processed
 in their exact order. 
 
 For executing processing of sequential and parallel queue items, two commands 
