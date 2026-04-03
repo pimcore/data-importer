@@ -1,5 +1,5 @@
-data-importer.adapter.dataImporterDataObject: Data Importer - Data Objects
-data-hub.adapter.dataImporterDataObject: Data Importer - Data Objects
+data-importer.adapter.dataImporterDataObject: Data Objects Importer
+data-hub.adapter.dataImporterDataObject: Data Objects Importer
 data-importer.tabs.general: General
 data-importer.tabs.permissions: Permissions
 data-importer.tabs.data-setup: Data Setup

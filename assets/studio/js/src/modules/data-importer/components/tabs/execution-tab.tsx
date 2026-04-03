@@ -178,7 +178,11 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
             label={ t('data-importer.execution.scheduled-at') }
             name={ ['executionConfig', 'scheduledAt'] }
           >
-            <DatePicker showTime />
+            <DatePicker
+              outputFormat="DD-MM-YYYY HH:mm"
+              outputType="dateString"
+              showTime={ { format: 'HH:mm' } }
+            />
           </Form.Item>
         </Form.Conditional>
       </DataImporterPanel>

@@ -19,7 +19,7 @@ export class DynamicTypeDataImporterDataObject extends DynamicTypeDataHubAdapter
   readonly id = 'dataImporterDataObject'
 
   getIcon (): ElementIcon {
-    return { type: 'name', value: 'data-objects-importer' }
+    return { type: 'name', value: 'data-objects-importer', colorToken: 'colorCodingPurple3' }
   }
 
   renderDetailView (props: DataHubAdapterDetailViewProps): React.JSX.Element {

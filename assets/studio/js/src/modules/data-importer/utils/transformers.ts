@@ -293,8 +293,6 @@ function stripSchemaPrefix (url: string): string {
   return url.replace(/^\s*[a-z][a-z0-9+.-]*:\/\//i, '')
 }
 
-// PHP's json_encode produces [] for empty associative arrays.
-// The form expects objects or undefined, never arrays, for config sections.
 function normalizeConfigObject<T> (value: T | undefined): T | undefined {
   return Array.isArray(value) ? undefined : value
 }
@@ -308,6 +306,15 @@ function normalizeResolverConfig (resolver: BackendConfiguration['resolverConfig
     createLocationStrategy: normalizeConfigObject(normalized.createLocationStrategy),
     locationUpdateStrategy: normalizeConfigObject(normalized.locationUpdateStrategy),
     publishingStrategy: normalizeConfigObject(normalized.publishingStrategy)
+  }
+}
+
+function normalizeExecutionConfig (config: BackendConfiguration['executionConfig']): ExecutionConfig | undefined {
+  const normalized = normalizeConfigObject(config)
+  if (normalized === undefined) return undefined
+  return {
+    ...normalized,
+    scheduledAt: (typeof normalized.scheduledAt === 'string' && normalized.scheduledAt !== '') ? normalized.scheduledAt : undefined
   }
 }
 
@@ -329,7 +336,7 @@ export function transformBackendToForm (
     resolverConfig: normalizeResolverConfig(backendConfig.resolverConfig),
     mappingConfig,
     processingConfig: normalizeConfigObject(backendConfig.processingConfig),
-    executionConfig: normalizeConfigObject(backendConfig.executionConfig),
+    executionConfig: normalizeExecutionConfig(backendConfig.executionConfig),
     permissions: transformPermissionsFromBackend(backendConfig.permissions)
   }
 }
