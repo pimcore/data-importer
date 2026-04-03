@@ -109,7 +109,7 @@ export const StepTransformationsRightColumn = ({
                       { i > 0 && <span className={ styles.sourceSeparator }>{ ' | ' }</span> }
                       <span>{ getSourceLabel(v) }</span>
                     </React.Fragment>
-                  ))
+                    ))
                 }
               </Flex>
               ) }

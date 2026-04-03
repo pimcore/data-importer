@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-/* eslint-disable max-lines */
+ 
 
 import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
@@ -83,7 +83,7 @@ export const StepTransformations = ({
     setItems(prev => {
       return pipeline.map((item, i) => {
         const existing = prev[i]
-        if (existing !== undefined && existing.type === item.type) {
+        if (existing?.type === item.type) {
           return { ...item, _id: existing._id }
         }
         return enrichWithId(item)
