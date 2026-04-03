@@ -100,18 +100,15 @@ export interface ClassAttribute {
   localized?: boolean
 }
 
-/**
- * Normalizes a `transformationResultType` value into the key used in the
- * `attributesMap` Record.  Empty string, `'default'`, and `undefined` all
- * map to `'__default__'`; every other value is returned as-is.
- */
+export const DEFAULT_ATTR_MAP_KEY = '__default__'
+
 export function resolveAttrMapKey (transformationResultType: string | undefined): string {
   return (
     transformationResultType === undefined ||
     transformationResultType === '' ||
     transformationResultType === 'default'
   )
-    ? '__default__'
+    ? DEFAULT_ATTR_MAP_KEY
     : transformationResultType
 }
 

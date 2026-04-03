@@ -13,6 +13,7 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, Input, Select } from '@pimcore/studio-ui-bundle/components'
 import { type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './step-target.styles'
+import { ErrorBox } from '../error-box/error-box'
 import { StepTargetWriteSettings } from './step-target-write-settings'
 
 export interface StepTargetFieldsProps {
@@ -104,9 +105,7 @@ export const StepTargetFields = ({
       </div>
 
       { hasTypeError && (
-        <div className={ styles.typeError }>
-          { typeErrorMessage }
-        </div>
+        <ErrorBox>{ typeErrorMessage }</ErrorBox>
       ) }
 
       { !hasTypeError && (
