@@ -293,6 +293,14 @@ function stripSchemaPrefix (url: string): string {
   return url.replace(/^\s*[a-z][a-z0-9+.-]*:\/\//i, '')
 }
 
+function normalizeExecutionConfig (config: BackendConfiguration['executionConfig']): ExecutionConfig | undefined {
+  if (config === undefined) return undefined
+  return {
+    ...config,
+    scheduledAt: (typeof config.scheduledAt === 'string' && config.scheduledAt !== '') ? config.scheduledAt : undefined
+  }
+}
+
 export function transformBackendToForm (
   backendConfig: BackendConfiguration,
   configName: string
@@ -311,7 +319,7 @@ export function transformBackendToForm (
     resolverConfig: backendConfig.resolverConfig,
     mappingConfig,
     processingConfig: backendConfig.processingConfig,
-    executionConfig: backendConfig.executionConfig,
+    executionConfig: normalizeExecutionConfig(backendConfig.executionConfig),
     permissions: transformPermissionsFromBackend(backendConfig.permissions)
   }
 }
