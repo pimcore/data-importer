@@ -89,7 +89,7 @@ final class ResolverFactory
     private function buildElementFactory(string $type, ?string $subType = null): FactoryInterface
     {
         if (empty($type) || !array_key_exists($type, $this->factoryBlueprints)) {
-            throw new InvalidConfigurationException('Unknown publishing strategy type `' . $type . '`');
+            throw new InvalidConfigurationException('Unknown element factory type `' . $type . '`');
         }
 
         $factory = clone $this->factoryBlueprints[$type];
@@ -107,7 +107,7 @@ final class ResolverFactory
         $resolver->setCreateLocationStrategy($this->buildLocationStrategy($configuration['createLocationStrategy'] ?? []));
         $resolver->setLocationUpdateStrategy($this->buildLocationStrategy($configuration['locationUpdateStrategy'] ?? []));
         $resolver->setPublishingStrategy($this->buildPublishingStrategy($configuration['publishingStrategy']));
-        $resolver->setElementFactory($this->buildElementFactory($configuration['elementType'] ?? '', $resolver->getDataObjectClassId()));
+        $resolver->setElementFactory($this->buildElementFactory($configuration['elementType'] ?? 'dataObject', $resolver->getDataObjectClassId()));
 
         return $resolver;
     }

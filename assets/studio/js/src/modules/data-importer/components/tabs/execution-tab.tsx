@@ -8,30 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import {
-  Button,
   DatePicker,
   Form,
-  Progress,
-  Select,
-  Text,
-  useMessage
+  Select
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
-import {
-  useBundleDataImporterConfigStartImportMutation,
-  useBundleDataImporterConfigCancelExecutionMutation,
-  useBundleDataImporterConfigCheckImportProgressQuery
-} from '../../data-importer-api-slice.gen'
 import type { DataImporterFormValues } from '../../types'
 import { DataImporterPanel } from './steps/data-importer-panel/data-importer-panel'
-import { useStyles } from './execution-tab.styles'
 import { CronDefinitionSection } from './execution-tab/cron-definition-section/cron-definition-section'
-import { ManualExecutionButton } from './execution-tab/manual-execution-button/manual-execution-button'
-
-const POLL_INTERVAL_MS = 5000
+import { ExecutionStatus } from './execution-tab/execution-status/execution-status'
 
 export interface ExecutionTabProps {
   configName: string
@@ -46,88 +33,6 @@ const isOneTimeJob = (values: DataImporterFormValues): boolean =>
 
 export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.JSX.Element => {
   const { t } = useTranslation()
-  const messageApi = useMessage()
-  const { styles } = useStyles()
-
-  const [startImport, { isLoading: isStarting }] = useBundleDataImporterConfigStartImportMutation()
-  const [cancelExecution, { isLoading: isCancelling }] = useBundleDataImporterConfigCancelExecutionMutation()
-
-  const { data: progressData, refetch: refetchProgress } = useBundleDataImporterConfigCheckImportProgressQuery(
-    { name: configName },
-    { pollingInterval: POLL_INTERVAL_MS }
-  )
-
-  const [optimisticRunning, setOptimisticRunning] = useState(false)
-  const [optimisticProgress, setOptimisticProgress] = useState<{ processedItems: number, totalItems: number, progress: number } | null>(null)
-  const [optimisticCancelled, setOptimisticCancelled] = useState(false)
-  const [hasCompleted, setHasCompleted] = useState(false)
-
-  // Once a real "running" response arrives, clear start-optimistic flags
-  useEffect(() => {
-    if (progressData?.isRunning === true) {
-      setOptimisticRunning(false)
-      setOptimisticProgress(null)
-      setHasCompleted(false)
-    }
-  }, [progressData?.isRunning])
-
-  // Once polling confirms not running, clear cancel-optimistic flag; mark completed if items were processed
-  useEffect(() => {
-    if (progressData?.isRunning === false) {
-      setOptimisticCancelled(false)
-      if ((progressData.processedItems ?? 0) > 0) {
-        setHasCompleted(true)
-      }
-    }
-  }, [progressData?.isRunning])
-
-  const isRunning = !optimisticCancelled && (optimisticRunning || (progressData?.isRunning ?? false))
-  const progress = optimisticProgress?.progress ?? progressData?.progress ?? 0
-  const processedItems = optimisticProgress?.processedItems ?? progressData?.processedItems ?? 0
-  const totalItems = optimisticProgress?.totalItems ?? progressData?.totalItems ?? 0
-
-  const handleStartImport = async (): Promise<void> => {
-    const result = await startImport({ name: configName })
-
-    if ('error' in result) {
-      if (result.error !== undefined) {
-        trackError(new ApiError(result.error))
-      }
-      void messageApi.error(t('data-importer.execution.start-import.error'))
-      return
-    }
-
-    if (result.data.success) {
-      void messageApi.success(t('data-importer.execution.start-import.success'))
-      // Immediately show progress bar at 0, resetting any previous run's values
-      setOptimisticProgress({ processedItems: 0, totalItems: progressData?.totalItems ?? 0, progress: 0 })
-      setOptimisticRunning(true)
-      setHasCompleted(false)
-    } else {
-      void messageApi.error(t('data-importer.execution.start-import.error'))
-    }
-    void refetchProgress()
-  }
-
-  const handleCancelExecution = async (): Promise<void> => {
-    const result = await cancelExecution({ name: configName })
-
-    if ('error' in result) {
-      if (result.error !== undefined) {
-        trackError(new ApiError(result.error))
-      }
-      void messageApi.error(t('data-importer.execution.cancel.error'))
-      return
-    }
-
-    void messageApi.success(t('data-importer.execution.cancel.success'))
-    // Immediately hide the progress bar before polling confirms
-    setOptimisticCancelled(true)
-    setOptimisticRunning(false)
-    setOptimisticProgress(null)
-    setHasCompleted(false)
-    void refetchProgress()
-  }
 
   const scheduleTypeOptions = [
     { value: 'recurring', label: t('data-importer.execution.schedule-type.recurring') },
@@ -136,15 +41,11 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
 
   return (
     <>
-      { /* ── Manual Execution ── */ }
-      <DataImporterPanel title={ t('data-importer.execution.manual-execution') }>
-        <ManualExecutionButton
-          isDirty={ isDirty }
-          isStarting={ isStarting }
-          label={ t('data-importer.execution.start-import') }
-          onStart={ () => { void handleStartImport() } }
-        />
-      </DataImporterPanel>
+      { /* ── Manual Execution + Execution Status (isolated to avoid poll-driven re-renders) ── */ }
+      <ExecutionStatus
+        configName={ configName }
+        isDirty={ isDirty }
+      />
 
       { /* ── Scheduled Execution ── */ }
       <DataImporterPanel title={ t('data-importer.execution.settings.title') }>
@@ -179,51 +80,12 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
             name={ ['executionConfig', 'scheduledAt'] }
           >
             <DatePicker
-              outputFormat="DD-MM-YYYY HH:mm"
+              outputFormat="YYYY-MM-DD HH:mm"
               outputType="dateString"
               showTime={ { format: 'HH:mm' } }
             />
           </Form.Item>
         </Form.Conditional>
-      </DataImporterPanel>
-
-      { /* ── Execution Status ── */ }
-      <DataImporterPanel
-        noWidthLimit
-        title={ t('data-importer.execution.status.title') }
-      >
-        { isRunning
-          ? (
-            <>
-              <p className={ styles.progressLabel }>
-                { t('data-importer.execution.status.current-progress') }
-              </p>
-              <div className={ styles.progressWrapper }>
-                <Progress
-                  format={ () => t('data-importer.execution.status.processing', { processedItems, totalItems }) }
-                  percent={ Math.round(progress * 100) }
-                  percentPosition={ { align: 'start', type: 'inner' } }
-                  size={ [-1, 32] }
-                  status="active"
-                  strokeColor={ styles.colorFill }
-                  trailColor={ 'rgba(0, 0, 0, 0.06)' }
-                />
-              </div>
-              <Button
-                loading={ isCancelling }
-                onClick={ () => { void handleCancelExecution() } }
-              >
-                { t('data-importer.execution.status.cancel') }
-              </Button>
-            </>
-            )
-          : (
-            <Text>
-              { t(hasCompleted
-                ? 'data-importer.execution.status.finished'
-                : 'data-importer.execution.status.not-running') }
-            </Text>
-            ) }
       </DataImporterPanel>
     </>
   )
