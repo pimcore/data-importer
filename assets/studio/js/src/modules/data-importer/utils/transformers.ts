@@ -10,8 +10,35 @@
 
 /* eslint-disable max-lines */
 
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { type DataImporterFormValues, type LoaderConfig, type InterpreterConfig, type ResolverConfig, type ProcessingConfig, type ExecutionConfig, type Permission, type MappingConfigItem } from '../types'
 import { ensureMappingId } from '../components/tabs/steps/mapping-step/utils/mapping-identity'
+
+dayjs.extend(customParseFormat)
+
+/**
+ * The PHP backend (SchedulerFactory.php) expects scheduledAt in "d-m-Y H:i"
+ * format, i.e. "DD-MM-YYYY HH:mm" in dayjs terms.
+ *
+ * The studio-ui-bundle's DatePicker component calls toDayJs(value) WITHOUT
+ * passing the outputFormat, so it cannot parse "DD-MM-YYYY HH:mm" strings.
+ * To work around this we store the form value as an ISO-8601 string (which
+ * dayjs parses natively) and convert to/from the backend format here.
+ */
+const BACKEND_DATE_FORMAT = 'DD-MM-YYYY HH:mm'
+
+function scheduledAtToForm (backendValue: string | undefined): string | undefined {
+  if (backendValue === undefined || backendValue === '') return undefined
+  const parsed = dayjs(backendValue, BACKEND_DATE_FORMAT, true)
+  return parsed.isValid() ? parsed.toISOString() : backendValue
+}
+
+function scheduledAtToBackend (formValue: string | undefined): string | undefined {
+  if (formValue === undefined || formValue === '') return undefined
+  const parsed = dayjs(formValue)
+  return parsed.isValid() ? parsed.format(BACKEND_DATE_FORMAT) : formValue
+}
 
 export interface BackendPermission {
   id?: number
@@ -98,7 +125,12 @@ export function transformFormToBackend (
     resolverConfig: formValues.resolverConfig ?? existingConfig.resolverConfig,
     mappingConfig: formValues.mappingConfig ?? existingConfig.mappingConfig,
     processingConfig: formValues.processingConfig ?? existingConfig.processingConfig,
-    executionConfig: formValues.executionConfig ?? existingConfig.executionConfig,
+    executionConfig: formValues.executionConfig !== undefined
+      ? {
+          ...formValues.executionConfig,
+          scheduledAt: scheduledAtToBackend(formValues.executionConfig.scheduledAt)
+        }
+      : existingConfig.executionConfig,
     permissions: transformPermissionsToBackend(formValues.permissions)
   }
 }
@@ -314,7 +346,9 @@ function normalizeExecutionConfig (config: BackendConfiguration['executionConfig
   if (normalized === undefined) return undefined
   return {
     ...normalized,
-    scheduledAt: (typeof normalized.scheduledAt === 'string' && normalized.scheduledAt !== '') ? normalized.scheduledAt : undefined
+    scheduledAt: scheduledAtToForm(
+      (typeof normalized.scheduledAt === 'string' && normalized.scheduledAt !== '') ? normalized.scheduledAt : undefined
+    )
   }
 }
 
