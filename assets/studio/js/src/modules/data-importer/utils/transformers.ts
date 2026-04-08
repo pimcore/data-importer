@@ -23,15 +23,17 @@ dayjs.extend(customParseFormat)
  *
  * The studio-ui-bundle's DatePicker component calls toDayJs(value) WITHOUT
  * passing the outputFormat, so it cannot parse "DD-MM-YYYY HH:mm" strings.
- * To work around this we store the form value as an ISO-8601 string (which
- * dayjs parses natively) and convert to/from the backend format here.
+ * We use "YYYY-MM-DD HH:mm" as the form format instead — dayjs parses it
+ * natively without a format hint, and it also serves as the display format
+ * (via outputFormat on the DatePicker), which hides seconds from the user.
  */
 const BACKEND_DATE_FORMAT = 'DD-MM-YYYY HH:mm'
+const FORM_DATE_FORMAT = 'YYYY-MM-DD HH:mm'
 
 function scheduledAtToForm (backendValue: string | undefined): string | undefined {
   if (backendValue === undefined || backendValue === '') return undefined
   const parsed = dayjs(backendValue, BACKEND_DATE_FORMAT, true)
-  return parsed.isValid() ? parsed.toISOString() : backendValue
+  return parsed.isValid() ? parsed.format(FORM_DATE_FORMAT) : backendValue
 }
 
 function scheduledAtToBackend (formValue: string | undefined): string | undefined {

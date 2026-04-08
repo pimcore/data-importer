@@ -80,6 +80,7 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
             name={ ['executionConfig', 'scheduledAt'] }
           >
             <DatePicker
+              outputFormat="YYYY-MM-DD HH:mm"
               outputType="dateString"
               showTime={ { format: 'HH:mm' } }
             />
