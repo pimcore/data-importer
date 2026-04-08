@@ -11,19 +11,13 @@
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
-import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
-import { PreviewPanel } from '../preview-panel/preview-panel'
+import { ResultPreview } from '../result-preview/result-preview'
 import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-transformations.styles'
 
 export interface StepTransformationsRightColumnProps {
-  configName: string
   dataSourceIndex: string[]
   columnHeaderOptions: Array<{ value: string, label: string }>
-  previewRefreshToken: number
-  forceRefreshToken: number
-  currentMappingItem: MappingConfigItem
-  baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
   editingSource: boolean
   onToggleEditing: () => void
   onBlurSource: () => void
@@ -34,13 +28,8 @@ export interface StepTransformationsRightColumnProps {
 }
 
 export const StepTransformationsRightColumn = ({
-  configName,
   dataSourceIndex,
   columnHeaderOptions,
-  previewRefreshToken,
-  forceRefreshToken,
-  currentMappingItem,
-  baseConfig,
   editingSource,
   onToggleEditing,
   onBlurSource,
@@ -115,16 +104,7 @@ export const StepTransformationsRightColumn = ({
               ) }
         </Flex>
 
-        <div className={ styles.previewWrapper }>
-          <PreviewPanel
-            baseConfig={ baseConfig }
-            configName={ configName }
-            currentMappingItem={ currentMappingItem }
-            forceRefreshToken={ forceRefreshToken }
-            mode="result"
-            refreshToken={ previewRefreshToken }
-          />
-        </div>
+        <ResultPreview />
       </Flex>
 
       <Flex

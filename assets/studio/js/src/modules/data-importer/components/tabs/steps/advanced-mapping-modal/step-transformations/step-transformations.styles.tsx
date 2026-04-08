@@ -94,11 +94,6 @@ export const useStyles = createStyles(({ css, token }) => {
     sourceSeparator: css`
       color: ${token.colorTextSecondary};
       margin: 0 4px;
-    `,
-
-    previewWrapper: css`
-      flex: 1;
-      overflow: hidden;
     `
   }
 })

@@ -293,6 +293,31 @@ function stripSchemaPrefix (url: string): string {
   return url.replace(/^\s*[a-z][a-z0-9+.-]*:\/\//i, '')
 }
 
+function normalizeConfigObject<T> (value: T | undefined): T | undefined {
+  return Array.isArray(value) ? undefined : value
+}
+
+function normalizeResolverConfig (resolver: BackendConfiguration['resolverConfig']): BackendConfiguration['resolverConfig'] {
+  const normalized = normalizeConfigObject(resolver)
+  if (normalized === undefined) return undefined
+  return {
+    ...normalized,
+    loadingStrategy: normalizeConfigObject(normalized.loadingStrategy),
+    createLocationStrategy: normalizeConfigObject(normalized.createLocationStrategy),
+    locationUpdateStrategy: normalizeConfigObject(normalized.locationUpdateStrategy),
+    publishingStrategy: normalizeConfigObject(normalized.publishingStrategy)
+  }
+}
+
+function normalizeExecutionConfig (config: BackendConfiguration['executionConfig']): ExecutionConfig | undefined {
+  const normalized = normalizeConfigObject(config)
+  if (normalized === undefined) return undefined
+  return {
+    ...normalized,
+    scheduledAt: (typeof normalized.scheduledAt === 'string' && normalized.scheduledAt !== '') ? normalized.scheduledAt : undefined
+  }
+}
+
 export function transformBackendToForm (
   backendConfig: BackendConfiguration,
   configName: string
@@ -306,12 +331,12 @@ export function transformBackendToForm (
     name: configName,
     description: backendConfig.general?.description ?? '',
     group: backendConfig.general?.group ?? '',
-    loaderConfig: backendConfig.loaderConfig,
-    interpreterConfig: backendConfig.interpreterConfig,
-    resolverConfig: backendConfig.resolverConfig,
+    loaderConfig: normalizeConfigObject(backendConfig.loaderConfig),
+    interpreterConfig: normalizeConfigObject(backendConfig.interpreterConfig),
+    resolverConfig: normalizeResolverConfig(backendConfig.resolverConfig),
     mappingConfig,
-    processingConfig: backendConfig.processingConfig,
-    executionConfig: backendConfig.executionConfig,
+    processingConfig: normalizeConfigObject(backendConfig.processingConfig),
+    executionConfig: normalizeExecutionConfig(backendConfig.executionConfig),
     permissions: transformPermissionsFromBackend(backendConfig.permissions)
   }
 }

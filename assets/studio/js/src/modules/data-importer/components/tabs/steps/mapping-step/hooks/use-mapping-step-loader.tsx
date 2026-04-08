@@ -17,7 +17,7 @@ import { api, useBundleDataImporterConfigGetQuery } from '../../../../../data-im
 import { useBundleDataImporterConfigLoadColumnHeadersQuery, useBundleDataImporterConfigLoadPreviewQuery } from '../../../../../data-importer-api-slice.gen'
 import { transformFormToBackend, type BackendConfiguration } from '../../../../../utils/transformers'
 import { normalizeDataRow } from '../../../../../utils/normalize-data-row'
-import { type DataImporterFormValues, type MappingConfigItem, type ClassAttribute, resolveAttrMapKey } from '../../../../../types'
+import { type DataImporterFormValues, type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
 import { type SourceRow } from '../sources-panel/sources-panel'
 import { parseClassAttribute, type ColumnHeaderEntry, type UseMappingStepLoaderResult } from './use-mapping-step-loader.types'
 
@@ -252,7 +252,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
           console.debug('[DI][Loader] class attributes load start', {
             cycleId,
             effectiveClassId,
-            types: typesArray.map((t) => t ?? '__default__')
+            types: typesArray.map((t) => t ?? DEFAULT_ATTR_MAP_KEY)
           })
         }
         const attrPromises = typesArray.map(async (trt) =>
@@ -273,7 +273,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
           const newEntries: Record<string, ClassAttribute[]> = {}
           attrResults.forEach((result, i) => {
             const trt = typesArray[i]
-            const mapKey = (trt === undefined || trt === '' || trt === 'default') ? '__default__' : trt
+            const mapKey = (trt === undefined || trt === '' || trt === 'default') ? DEFAULT_ATTR_MAP_KEY : trt
             const attrs = (result.data?.attributes ?? []).map(parseClassAttribute)
             newEntries[mapKey] = attrs
           })
@@ -381,7 +381,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
     const missingArray = Array.from(missingTypes)
     const promises = missingArray.map(async (mapKey) => {
-      const trt = mapKey === '__default__' ? undefined : mapKey
+      const trt = mapKey === DEFAULT_ATTR_MAP_KEY ? undefined : mapKey
       return await dispatch(
         api.endpoints.bundleDataImporterDataTypeLoadClassAttributes.initiate({
           classId: effectiveClassId,

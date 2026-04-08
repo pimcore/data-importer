@@ -1,0 +1,316 @@
+data-importer.adapter.dataImporterDataObject: Data Objects Importer
+data-hub.adapter.dataImporterDataObject: Data Objects Importer
+data-importer.tabs.general: Generelt
+data-importer.tabs.permissions: Tillatelser
+data-importer.tabs.data-setup: Dataoppsett
+data-importer.tabs.import-logs: Importlogger
+data-importer.tabs.execution: Kjøring
+
+# Data Setup Steps
+data-importer.data-setup.steps.data-source.title: Datakilde
+data-importer.data-setup.steps.data-source.description: Konfigurer datakilde og filformat
+data-importer.data-setup.steps.preview-import.title: Importforhåndsvisning
+data-importer.data-setup.steps.preview-import.description: Forhåndsvis dataene som skal importeres
+data-importer.data-setup.steps.resolver.title: Resolver
+data-importer.data-setup.steps.resolver.description: Konfigurer regler for dataoppløsning
+data-importer.data-setup.steps.mapping.title: Mapping
+data-importer.data-setup.steps.mapping.description: Koble kildefelt til målfelt
+data-importer.data-setup.steps.processing-settings.title: Behandlingsinnstillinger
+data-importer.data-setup.steps.processing-settings.description: Konfigurer innstillinger for importbehandling
+
+# Data Source
+data-importer.data-source.title: Datakilde
+data-importer.data-source.type: Type
+data-importer.data-source.type-label: Datakildetype
+
+# Loaders
+data-importer.loader.asset: Asset
+data-importer.loader.upload: Upload
+data-importer.loader.http: HTTP
+data-importer.loader.sftp: SFTP
+data-importer.loader.push: Push
+data-importer.loader.sql: SQL
+
+# Asset Loader
+data-importer.loader.asset.asset-path: Asset-sti
+
+# Upload Loader
+data-importer.loader.upload.status: Upload-status
+data-importer.loader.upload.file-uploaded: Filen ble lastet opp
+data-importer.loader.upload.no-file: Ingen fil lastet opp ennå
+data-importer.loader.upload.file-path: Sti til opplastet fil
+data-importer.loader.upload.open-upload: Last opp fil
+data-importer.loader.upload.modal-title: Last opp importfil
+
+# HTTP Loader
+data-importer.loader.http.schema: Schema
+data-importer.loader.http.url: URL
+
+# SFTP Loader
+data-importer.loader.sftp.host: Host
+data-importer.loader.sftp.port: Port
+data-importer.loader.sftp.username: Brukernavn
+data-importer.loader.sftp.password: Passord
+data-importer.loader.sftp.remote-path: Ekstern sti
+
+# Push Loader
+data-importer.loader.push.api-key: API Key
+data-importer.loader.push.api-key.generate: Generer API Key
+data-importer.loader.push.api-key-required: Vennligst oppgi en API Key
+data-importer.loader.push.api-key-min-length: API Key må være minst 16 tegn lang
+data-importer.loader.push.ignore-not-empty-queue: Ignorer ikke-tom kø
+data-importer.loader.push.endpoint: Endpoint
+
+# SQL Loader
+data-importer.loader.sql.connection: Databasetilkobling
+data-importer.loader.sql.select: SELECT
+data-importer.loader.sql.from: FROM
+data-importer.loader.sql.where: WHERE
+data-importer.loader.sql.group-by: GROUP BY
+
+# File Format
+data-importer.file-format.title: Filformat
+data-importer.file-format.type: Type
+
+# Interpreters
+data-importer.interpreter.csv: CSV
+data-importer.interpreter.json: JSON
+data-importer.interpreter.xml: XML
+data-importer.interpreter.xlsx: XLSX
+data-importer.interpreter.sql: SQL
+
+# CSV Interpreter
+data-importer.interpreter.csv.delimiter: Skilletegn
+data-importer.interpreter.csv.enclosure: Tekstbegrensning
+data-importer.interpreter.csv.escape: Escape-tegn
+data-importer.interpreter.csv.required: '{{field}} er påkrevd'
+data-importer.interpreter.csv.single-char-only: '{{field}} må være tomt eller ett enkelt tegn'
+data-importer.interpreter.csv.skip-first-row: Hopp over første rad
+data-importer.interpreter.csv.save-header-name: Lagre overskriftsnavn
+
+# JSON Interpreter
+data-importer.interpreter.json.path: Sti
+
+# XML Interpreter
+data-importer.interpreter.xml.xpath: XPath
+data-importer.interpreter.xml.schema: Schema
+
+# XLSX Interpreter
+data-importer.interpreter.xlsx.sheet-name: Arknavn
+data-importer.interpreter.xlsx.skip-first-row: Hopp over første rad
+
+# SQL Interpreter
+data-importer.interpreter.sql.info: SQL-tolken bruker spørringskonfigurasjonen fra SQL-lasteren.
+
+# Resolver
+data-importer.resolver.title: Resolver
+data-importer.resolver.class: Data-Object-klasse
+data-importer.resolver.class-placeholder: Velg klasse
+data-importer.resolver.element-loading: Elementlasting
+data-importer.resolver.loading-strategy: Lastestrategi
+data-importer.resolver.loading-strategy.tooltip: Definerer hvordan eksisterende elementer matches før import. Hvis ingen elementer finnes, brukes opprettelsesreglene.
+data-importer.resolver.loading-strategy.notLoad: Ingen lasting
+data-importer.resolver.loading-strategy.id: ID
+data-importer.resolver.loading-strategy.path: Sti
+data-importer.resolver.loading-strategy.attribute: Attributt
+data-importer.resolver.loading-strategy.attribute-name: Attributtnavn
+data-importer.resolver.loading-strategy.attribute-name-placeholder: Velg attributt
+data-importer.resolver.loading-strategy.data-source-index: Datakildeindeks
+data-importer.resolver.loading-strategy.data-source-index-placeholder: Velg kolonne
+data-importer.resolver.loading-strategy.language: Språk
+data-importer.resolver.loading-strategy.language-placeholder: Velg språk
+data-importer.resolver.loading-strategy.include-unpublished: Inkluder upubliserte objekter
+data-importer.resolver.element-creation: Elementopprettelse
+data-importer.resolver.create-location-strategy: Plasseringsstrategi
+data-importer.resolver.create-location-strategy.tooltip: Styrer hvor nyopprettede elementer plasseres når ingen eksisterende elementer ble funnet.
+data-importer.resolver.location-strategy.staticPath: Statisk sti
+data-importer.resolver.location-strategy.findOrCreateFolder: Finn eller opprett mappe
+data-importer.resolver.location-strategy.findParent: Finn overordnet element
+data-importer.resolver.location-strategy.doNotCreate: Ikke opprett
+data-importer.resolver.location-strategy.noChange: Ingen endring
+data-importer.resolver.location-strategy.path: Sti
+data-importer.resolver.location-strategy.path-placeholder: Skriv inn sti
+data-importer.resolver.location-strategy.data-source-index: Datakildeindeks
+data-importer.resolver.location-strategy.data-source-index-placeholder: Velg kolonne
+data-importer.resolver.location-strategy.fallback-path: Reservesti
+data-importer.resolver.location-strategy.fallback-path.tooltip: Brukes når en dynamisk målplassering ikke kan utledes fra kildedataene.
+data-importer.resolver.location-strategy.fallback-path-placeholder: Skriv inn reservesti
+data-importer.resolver.location-strategy.find-strategy: Søkestrategi
+data-importer.resolver.location-strategy.find-strategy.id: Etter ID
+data-importer.resolver.location-strategy.find-strategy.path: Etter sti
+data-importer.resolver.location-strategy.find-strategy.attribute: Etter attributt
+data-importer.resolver.location-strategy.attribute-class: Klasse
+data-importer.resolver.location-strategy.attribute-name: Attributtnavn
+data-importer.resolver.location-strategy.attribute-language: Språk
+data-importer.resolver.location-strategy.as-variant: Som variant
+data-importer.resolver.element-location-update: Oppdatering av elementplassering
+data-importer.resolver.location-update-strategy: Plasseringsstrategi
+data-importer.resolver.location-update-strategy.tooltip: Styrer om og hvordan plasseringen til allerede funne elementer endres under import.
+data-importer.resolver.element-publishing: Elementpublisering
+data-importer.resolver.publishing-strategy: Publiseringsstrategi
+data-importer.resolver.publishing-strategy.tooltip: Definerer publiserings- eller avpubliseringsatferd for importerte elementer.
+data-importer.resolver.publishing-strategy.noChangeUnpublishNew: Ingen endring / Avpubliser nye
+data-importer.resolver.publishing-strategy.noChangePublishNew: Ingen endring / Publiser nye
+data-importer.resolver.publishing-strategy.alwaysPublish: Alltid publiser
+data-importer.resolver.publishing-strategy.attributeBased: Attributtbasert
+data-importer.resolver.publishing-strategy.data-source-index: Datakildeindeks
+data-importer.resolver.publishing-strategy.data-source-index-placeholder: Velg kolonne
+
+# Processing Settings
+data-importer.processing.title: Behandlingsinnstillinger
+data-importer.processing.execution.title: Kjøring
+data-importer.processing.id-delta.title: ID, Delta Check og opprydding
+data-importer.processing.execution-type: Kjøringstype
+data-importer.processing.execution-type.tooltip: Sekvensiell behandler ett element om gangen. Parallell behandler flere elementer samtidig.
+data-importer.processing.execution-type.sequential: Sekvensiell
+data-importer.processing.execution-type.parallel: Parallell
+data-importer.processing.archive-import-file: Arkiver importfil
+data-importer.processing.disable-versioning: Deaktiver versjonering
+data-importer.processing.id-data-index: Dataindeks for ID-felt
+data-importer.processing.id-data-index.tooltip: Kolonne brukt som stabil identifikator for Delta Check og opprydding. Disse alternativene er kun tilgjengelige når en ID-dataindeks er satt.
+data-importer.processing.id-data-index-placeholder: Velg kolonne
+data-importer.processing.delta-check: Delta Check
+data-importer.processing.cleanup.title: Opprydding
+data-importer.processing.cleanup.do-cleanup: Rydd opp elementer som ikke ble importert
+data-importer.processing.cleanup.strategy: Oppryddingsstrategi
+data-importer.processing.cleanup.strategy.tooltip: Bestemmer hva som skjer med eksisterende elementer som ikke finnes i gjeldende import.
+data-importer.processing.cleanup.strategy.delete: Slett
+data-importer.processing.cleanup.strategy.unpublish: Avpubliser
+data-importer.processing.logging.title: Logginnstillinger (Application Logger)
+data-importer.processing.logging.info.title: Info
+data-importer.processing.logging.info.disable-logs: Deaktiver info-logger
+data-importer.processing.logging.info.disable-file-objects: Deaktiver info-filobjekter
+data-importer.processing.logging.error.title: Feil
+data-importer.processing.logging.error.disable-logs: Deaktiver feillogger
+data-importer.processing.logging.error.disable-file-objects: Deaktiver feil-filobjekter
+
+# Preview Import
+data-importer.preview-import.title: Importforhåndsvisning
+data-importer.preview-import.choose-preview-data: Velg forhåndsvisningsdata
+data-importer.preview-import.upload-file: Last opp fil
+data-importer.preview-import.copy-from-source: Kopier fra datakilde
+data-importer.preview-import.search-placeholder: Søk etter navn, kilde, mål
+data-importer.preview-import.column.label: Etikett
+data-importer.preview-import.column.data: Data
+data-importer.preview-import.prev: Forrige post
+data-importer.preview-import.next: Neste post
+
+# Mapping
+data-importer.mapping.title: Mapping-konfigurasjon
+data-importer.mapping.title-short: Mappings
+data-importer.mapping.add: Ny
+data-importer.mapping.new-modal.title: Ny Mapping
+data-importer.mapping.new-modal.source-label: Kildekolonne
+data-importer.mapping.new-modal.source-required: Vennligst velg en kildekolonne
+data-importer.mapping.collapse-all: Skjul alle
+data-importer.mapping.expand-all: Vis alle
+data-importer.mapping.auto-fill: Autoutfyll
+data-importer.mapping.empty-state: Opprett en mapping direkte fra kildekolonnen, eller klikk Ny for å opprette en manuelt.
+data-importer.mapping.filter-empty: 'Ingen mappinger for «{{source}}» ennå.'
+data-importer.mapping.sources.title: Kilder med forhåndsvisning
+data-importer.mapping.sources.reset-view: Tilbakestill visning
+data-importer.mapping.sources.empty: Ingen forhåndsvisningsdata tilgjengelig. Konfigurer en datakilde og kjør en importforhåndsvisning først.
+data-importer.mapping.item.new-label: Ny Mapping
+data-importer.mapping.item.label: Etikett
+data-importer.mapping.item.advanced: Avansert
+data-importer.mapping.item.delete: Slett mapping
+data-importer.mapping.item.source: Kilde
+data-importer.mapping.item.source-placeholder: Velg kildekolonner
+data-importer.mapping.item.destination: Mål
+data-importer.mapping.item.destination-placeholder: Velg felt
+data-importer.mapping.item.requires-advanced-setup: Krever avansert oppsett
+data-importer.mapping.item.data-source-index: Datakildeindeks
+data-importer.mapping.item.data-source-index-placeholder: Velg kildekolonner
+data-importer.mapping.item.transformation-pipeline.title: Transformasjonspipeline
+data-importer.mapping.item.transformation-pipeline.empty: Ingen transformasjonspipeline konfigurert
+data-importer.mapping.item.transformation-result.title: Transformasjonsresultat
+data-importer.mapping.item.transformation-result.type: Resultattype
+data-importer.mapping.item.data-target.title: Datamål
+data-importer.mapping.item.data-target.type: Måltype
+data-importer.mapping.item.data-target.type-placeholder: Velg måltype
+data-importer.mapping.item.data-target.type.direct: Direkte
+data-importer.mapping.item.data-target.type.classificationstore: Classification Store
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store Batch
+data-importer.mapping.item.data-target.type.manyToManyRelation: Many-to-Many Relation
+data-importer.mapping.item.data-target.field-name: Feltnavn
+data-importer.mapping.item.data-target.field-name-placeholder: Velg felt
+data-importer.mapping.item.data-target.language: Språk
+data-importer.mapping.item.data-target.language-placeholder: Velg språk
+data-importer.mapping.item.data-target.write-if-target-is-not-empty: Skriv hvis mål ikke er tomt
+data-importer.mapping.item.data-target.write-if-source-is-empty: Skriv hvis kilde er tom
+
+# Advanced Mapping Modal
+data-importer.mapping.advanced-modal.title: Rediger mapping og transformasjoner
+data-importer.mapping.advanced-modal.save: Lagre
+data-importer.mapping.advanced-modal.step-source: Kilde
+data-importer.mapping.advanced-modal.step-transformations: Transformasjoner
+data-importer.mapping.advanced-modal.step-target: Datamål
+data-importer.mapping.advanced-modal.no-transformers: Ingen transformatorer konfigurert. Legg til en nedenfor.
+data-importer.mapping.advanced-modal.add-transformation: + Legg til transformasjon
+data-importer.mapping.advanced-modal.result-type: Resultattype
+data-importer.mapping.advanced-modal.write-if-target-not-empty: Skriv hvis mål ikke er tomt
+data-importer.mapping.advanced-modal.write-if-source-empty: Skriv hvis kilde er tom
+data-importer.mapping.advanced-modal.transformer.move-up: Flytt opp
+data-importer.mapping.advanced-modal.transformer.move-down: Flytt ned
+data-importer.mapping.advanced-modal.transformer.remove: Fjern
+data-importer.mapping.advanced-modal.transformer.edit-source: Rediger kildeattributter
+data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Datamanipulering
+data-importer.mapping.advanced-modal.transformer.group.data-types: Datatyper
+data-importer.mapping.advanced-modal.transformer.group.load-import: Last / Importer
+data-importer.mapping.advanced-modal.next-step: Neste steg
+data-importer.mapping.advanced-modal.previous-step: Forrige steg
+data-importer.mapping.advanced-modal.recalculate-result-type: Beregn transformasjonsresultattype på nytt
+data-importer.mapping.advanced-modal.step-source.label: Kildeattributt(er)
+data-importer.mapping.advanced-modal.step-source.description: Velg fra listen eller legg til en ny kilde
+data-importer.mapping.advanced-modal.step-source.import-preview: Importforhåndsvisning
+data-importer.mapping.advanced-modal.step-source.search-placeholder: Søk
+data-importer.mapping.advanced-modal.step-source.column-name: Navn
+data-importer.mapping.advanced-modal.step-source.column-data: Data
+data-importer.mapping.advanced-modal.loading: Laster…
+data-importer.mapping.advanced-modal.no-data: Ingen data
+data-importer.mapping.advanced-modal.no-preview: Ingen forhåndsvisning tilgjengelig
+data-importer.mapping.advanced-modal.step-target.type: Type
+data-importer.mapping.advanced-modal.step-target.field-name: Feltnavn
+data-importer.mapping.advanced-modal.step-target.overwrite: Overskriv
+data-importer.mapping.advanced-modal.step-target.preview-result: Forhåndsvisningsresultat
+data-importer.mapping.advanced-modal.step-target.previous-step: Forrige steg
+data-importer.mapping.advanced-modal.step-target.confirm-mapping: Bekreft mapping
+data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Skriv til dette feltet selv om målfeltet allerede inneholder en verdi
+data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Skriv til dette feltet selv om kildedataene er tomme
+data-importer.mapping.advanced-modal.step-target.overwrite-mode: Overskrivningsmodus
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Erstatt
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Slå sammen
+data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
+data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nøkkel valgt
+data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i gruppe {{group}}'
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Velg Classification Store Key
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Søk og velg en nøkkel for dette Classification Store-feltet
+data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch krever transformasjonsresultattype: array, quantityValueArray, inputQuantityValueArray eller dateArray.'
+data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: 'Many-to-Many Relation krever transformasjonsresultattype: advancedDataObject, dataObjectArray, assetArray eller advancedAssetArray.'
+
+error.error_environment: Forhåndsvisningsfilen er ikke gyldig for den konfigurerte tolken. Vennligst last opp eller kopier forhåndsvisningsdataene på nytt.
+
+# Execution Tab
+data-importer.execution.settings.title: Kjøringsinnstillinger
+data-importer.execution.schedule-type: Tidsplantype
+data-importer.execution.schedule-type.recurring: Gjentakende / Cron
+data-importer.execution.schedule-type.job: Engangsjobb
+data-importer.execution.cron-definition: Cron-definisjon
+data-importer.execution.cron-generator: Cron-generator
+data-importer.execution.scheduled-at: Planlagt til
+data-importer.execution.manual-execution: Manuell kjøring
+data-importer.execution.start-import: Start import
+data-importer.execution.start-import.success: Importen ble startet
+data-importer.execution.start-import.error: Kunne ikke starte importen
+data-importer.execution.start-import.tooltip-dirty: Lagre endringene dine før du starter importen
+data-importer.execution.start-import.tooltip-push: Push-laster støtter ikke manuell kjøring
+data-importer.execution.cancel.success: Importen ble avbrutt
+data-importer.execution.cancel.error: Kunne ikke avbryte importen
+data-importer.execution.status.title: Kjøringsstatus
+data-importer.execution.status.not-running: Kjører ikke
+data-importer.execution.status.finished: Alle elementer behandlet. Ingen import kjører.
+data-importer.execution.status.current-progress: Gjeldende fremdrift
+data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} elementer behandlet...'
+data-importer.execution.status.cancel: Avbryt kjøring og tøm kø
+data-importer.execution.cron-validating: Validerer Cron-uttrykk...
+data-importer.validation.required: '{{field}} er påkrevd'

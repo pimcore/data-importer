@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, ConfigToolbar, useDetailView } from '@pimcore/data-hub'
 import { useBundleDataImporterConfigGetQuery, useBundleDataImporterConfigSaveMutation } from '../data-importer-api-slice-enhanced'
@@ -44,7 +44,11 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
   }, [updateError])
 
   const loading = isLoading || isFetching
-  const backendConfig = (configData?.configuration ?? {}) as BackendConfiguration
+
+  const backendConfig = useMemo(
+    () => (configData?.configuration ?? {}) as BackendConfiguration,
+    [configData?.configuration]
+  )
   const isWriteable = configData?.userPermissions?.update ?? true
 
   const handleSaveToApi = async (updatedConfig: BackendConfiguration, modificationDate: number): Promise<{ modificationDate?: number }> => {
