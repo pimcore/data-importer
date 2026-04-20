@@ -314,3 +314,4 @@ data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} 
 data-importer.execution.status.cancel: Avbryt kjøring og tøm kø
 data-importer.execution.cron-validating: Validerer Cron-uttrykk...
 data-importer.validation.required: '{{field}} er påkrevd'
+user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportør

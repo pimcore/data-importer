@@ -314,3 +314,4 @@ data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} 
 data-importer.execution.status.cancel: Cancelar ejecución y limpiar cola
 data-importer.execution.cron-validating: Validando expresión Cron...
 data-importer.validation.required: '{{field}} es obligatorio'
+user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Importador de objetos de datos
