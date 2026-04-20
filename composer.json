@@ -1,63 +1,62 @@
 {
-  "name": "pimcore/data-importer",
-  "license": "proprietary",
-  "type": "pimcore-bundle",
-  "description": "Adds a comprehensive import functionality to Pimcore Datahub",
-  "config": {
-    "sort-packages": true,
-    "preferred-install": {
-      "pimcore/pimcore": "source",
-      "*": "dist"
-    }
-  },
-  "prefer-stable": true,
-  "minimum-stability": "dev",
-  "require": {
-    "php": "~8.3.0 || ~8.4.0",
-    "ext-fileinfo": "*",
-    "ext-json": "*",
-    "doctrine/dbal": "^4.0",
-    "dragonmantank/cron-expression": "^3.1",
-    "league/flysystem-sftp-v3": "^3.0",
-    "mtdowling/jmespath.php": "^2.8",
-    "nesbot/carbon": "^2.72 || ^3.8.4",
-    "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
-    "pimcore/admin-ui-classic-bundle": "^2.0",
-    "pimcore/data-hub": "^2.4",
-    "pimcore/pimcore": "^12.3",
-    "pimcore/studio-backend-bundle": "^2025.4",
-    "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
-  },
-  "require-dev": {
-    "codeception/codeception": "^4.1.12 || ^5.0.3",
-    "codeception/module-asserts": "^2",
-    "codeception/module-symfony": "^1.6.0 || ^3.1.0",
-    "codeception/phpunit-wrapper": "^9",
-    "phpstan/phpstan": "1.12.5",
-    "phpstan/phpstan-symfony": "^1.3.5",
-    "phpunit/phpunit": "^9.3"
-  },
-  "autoload": {
-    "psr-4": {
-      "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Pimcore\\Bundle\\DataImporterBundle\\Tests\\": "tests"
+    "name": "pimcore/data-importer",
+    "license": "proprietary",
+    "type": "pimcore-bundle",
+    "description": "Adds a comprehensive import functionality to Pimcore Datahub",
+    "config": {
+        "sort-packages": true,
+        "preferred-install": {
+            "pimcore/pimcore": "source",
+            "*": "dist"
+        }
     },
-    "files": [
-      "kernel/Kernel.php"
-    ]
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-2.x": "2.3.x-dev"
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "require": {
+        "php": "~8.3.0 || ~8.4.0",
+        "ext-fileinfo": "*",
+        "ext-json": "*",
+        "doctrine/dbal": "^4.0",
+        "dragonmantank/cron-expression": "^3.1",
+        "league/flysystem-sftp-v3": "^3.0",
+        "mtdowling/jmespath.php": "^2.8",
+        "nesbot/carbon": "^2.72 || ^3.8.4",
+        "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
+        "pimcore/admin-ui-classic-bundle": "^2.0",
+        "pimcore/data-hub": "^2.4",
+        "pimcore/pimcore": "^12.3",
+        "pimcore/studio-backend-bundle": "^2025.4",
+        "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
     },
-    "pimcore": {
-      "bundles": [
-        "Pimcore\\Bundle\\DataImporterBundle\\PimcoreDataImporterBundle"
-      ]
+    "require-dev": {
+        "codeception/codeception": "^5.3.5",
+        "codeception/module-asserts": "^2",
+        "codeception/module-symfony": "^1.6.0 || ^3.1.0",
+        "phpstan/phpstan": "1.12.5",
+        "phpstan/phpstan-symfony": "^1.3.5",
+        "phpunit/phpunit": "^12.5.23 || ^13.1.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pimcore\\Bundle\\DataImporterBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pimcore\\Bundle\\DataImporterBundle\\Tests\\": "tests"
+        },
+        "files": [
+            "kernel/Kernel.php"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.3.x-dev"
+        },
+        "pimcore": {
+            "bundles": [
+                "Pimcore\\Bundle\\DataImporterBundle\\PimcoreDataImporterBundle"
+            ]
+        }
     }
-  }
 }
