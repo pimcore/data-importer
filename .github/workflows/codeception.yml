@@ -26,6 +26,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.pull_request.base.ref || github.ref }}
 
             - name: Checkout reusable workflow repo
               uses: actions/checkout@v4
