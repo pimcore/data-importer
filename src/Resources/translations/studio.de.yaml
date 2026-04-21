@@ -314,3 +314,4 @@ data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} 
 data-importer.execution.status.cancel: Ausführung abbrechen & Warteschlange bereinigen
 data-importer.execution.cron-validating: Cron-Ausdruck wird validiert...
 data-importer.validation.required: '{{field}} ist erforderlich'
+user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Datenobjekt-Importer
