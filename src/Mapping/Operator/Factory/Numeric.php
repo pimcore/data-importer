@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class Numeric extends AbstractOperator
+/**
+ * @internal
+ */
+final class Numeric extends AbstractOperator
 {
     private bool $returnNullIfEmpty = false;
 

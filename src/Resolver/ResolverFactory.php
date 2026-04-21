@@ -18,33 +18,11 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\PublishStrategyInterface;
 
-class ResolverFactory
+/**
+ * @internal
+ */
+final class ResolverFactory
 {
-    /**
-     * @var Resolver
-     */
-    protected $resolverBlueprint;
-
-    /**
-     * @var LoadStrategyInterface[]
-     */
-    protected $loadingStrategyBlueprints;
-
-    /**
-     * @var LocationStrategyInterface[]
-     */
-    protected $locationStrategyBlueprints;
-
-    /**
-     * @var PublishStrategyInterface[]
-     */
-    protected $publishingStrategyBlueprints;
-
-    /**
-     * @var FactoryInterface[]
-     */
-    protected $factoryBlueprints;
-
     /**
      * ResolverFactory constructor.
      *
@@ -54,13 +32,13 @@ class ResolverFactory
      * @param PublishStrategyInterface[] $publishingStrategyBlueprints
      * @param FactoryInterface[] $factoryBlueprints
      */
-    public function __construct(Resolver $resolverBlueprint, array $loadingStrategyBlueprints, array $locationStrategyBlueprints, array $publishingStrategyBlueprints, array $factoryBlueprints)
-    {
-        $this->resolverBlueprint = $resolverBlueprint;
-        $this->loadingStrategyBlueprints = $loadingStrategyBlueprints;
-        $this->locationStrategyBlueprints = $locationStrategyBlueprints;
-        $this->publishingStrategyBlueprints = $publishingStrategyBlueprints;
-        $this->factoryBlueprints = $factoryBlueprints;
+    public function __construct(
+        private readonly Resolver $resolverBlueprint,
+        private readonly array $loadingStrategyBlueprints,
+        private readonly array $locationStrategyBlueprints,
+        private readonly array $publishingStrategyBlueprints,
+        private readonly array $factoryBlueprints,
+    ) {
     }
 
     /**
@@ -71,7 +49,7 @@ class ResolverFactory
      *
      * @throws InvalidConfigurationException
      */
-    protected function buildLoadingStrategy(array $config, $classId): LoadStrategyInterface
+    private function buildLoadingStrategy(array $config, $classId): LoadStrategyInterface
     {
         if (empty($config['type']) || !array_key_exists($config['type'], $this->loadingStrategyBlueprints)) {
             throw new InvalidConfigurationException('Unknown loading strategy type `' . ($config['type'] ?? '') . '`');
@@ -84,7 +62,7 @@ class ResolverFactory
         return $loadingStrategy;
     }
 
-    protected function buildLocationStrategy(array $config): LocationStrategyInterface
+    private function buildLocationStrategy(array $config): LocationStrategyInterface
     {
         if (empty($config['type']) || !array_key_exists($config['type'], $this->locationStrategyBlueprints)) {
             throw new InvalidConfigurationException('Unknown location strategy type `' . ($config['type'] ?? '') . '`');
@@ -96,7 +74,7 @@ class ResolverFactory
         return $locationStrategy;
     }
 
-    protected function buildPublishingStrategy(array $config): PublishStrategyInterface
+    private function buildPublishingStrategy(array $config): PublishStrategyInterface
     {
         if (empty($config['type']) || !array_key_exists($config['type'], $this->publishingStrategyBlueprints)) {
             throw new InvalidConfigurationException('Unknown publishing strategy type `' . ($config['type'] ?? '') . '`');
@@ -108,7 +86,7 @@ class ResolverFactory
         return $publishStrategy;
     }
 
-    protected function buildElementFactory(string $type, ?string $subType = null): FactoryInterface
+    private function buildElementFactory(string $type, ?string $subType = null): FactoryInterface
     {
         if (empty($type) || !array_key_exists($type, $this->factoryBlueprints)) {
             throw new InvalidConfigurationException('Unknown element factory type `' . $type . '`');

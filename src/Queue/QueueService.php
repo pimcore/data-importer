@@ -18,14 +18,17 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
-class QueueService
+/**
+ * @internal
+ */
+final class QueueService
 {
-    const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
+    public const QUEUE_TABLE_NAME = 'bundle_data_hub_data_importer_queue';
 
     /**
      * @return Connection
      */
-    protected function getDb()
+    private function getDb()
     {
         /** @var Connection $db */
         $db = Db::get();
@@ -33,7 +36,7 @@ class QueueService
         return $db;
     }
 
-    protected function getCurrentQueueTableOperationTime(): int
+    private function getCurrentQueueTableOperationTime(): int
     {
         $carbonNow = Carbon::now();
 
@@ -80,7 +83,7 @@ class QueueService
      *
      * @throws Exception
      */
-    protected function createQueueTableIfNotExisting(?\Closure $callable = null)
+    private function createQueueTableIfNotExisting(?\Closure $callable = null)
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             id bigint AUTO_INCREMENT,

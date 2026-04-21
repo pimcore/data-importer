@@ -13,29 +13,29 @@
   "prefer-stable": true,
   "minimum-stability": "dev",
   "require": {
-    "php": "~8.3.0 || ~8.4.0",
+    "php": "~8.4.0 || ~8.5.0",
     "ext-fileinfo": "*",
     "ext-json": "*",
-    "doctrine/dbal": "^4.0",
+    "doctrine/dbal": "^4.4",
     "dragonmantank/cron-expression": "^3.1",
     "league/flysystem-sftp-v3": "^3.0",
     "mtdowling/jmespath.php": "^2.8",
     "nesbot/carbon": "^2.72 || ^3.8.4",
-    "phpoffice/phpspreadsheet": "^2.2 || ^3.3",
-    "pimcore/admin-ui-classic-bundle": "^2.0",
-    "pimcore/data-hub": "^2.4",
-    "pimcore/pimcore": "^12.3",
-    "pimcore/studio-backend-bundle": "^2025.4",
+    "phpoffice/phpspreadsheet": "^4.3 || ^5.1",
+    "pimcore/data-hub": "^2026.1",
+    "pimcore/pimcore": "^2026.1",
+    "pimcore/studio-backend-bundle": "^2026.1",
+    "pimcore/studio-ui-bundle": "^2026.1",
     "webmozarts/console-parallelization": "^1.2.0 || ^2.0.0"
   },
   "require-dev": {
-    "codeception/codeception": "^4.1.12 || ^5.0.3",
-    "codeception/module-asserts": "^2",
-    "codeception/module-symfony": "^1.6.0 || ^3.1.0",
-    "codeception/phpunit-wrapper": "^9",
-    "phpstan/phpstan": "1.12.5",
-    "phpstan/phpstan-symfony": "^1.3.5",
-    "phpunit/phpunit": "^9.3"
+    "phpstan/phpstan": "2.1.40",
+    "phpstan/phpstan-symfony": "^2.0",
+    "phpunit/phpunit": "^10.5",
+    "codeception/codeception": "^5.1.2",
+    "codeception/module-asserts": "^3.0",
+    "codeception/module-symfony": "^3.8",
+    "codeception/phpunit-wrapper": "^10"
   },
   "autoload": {
     "psr-4": {
@@ -52,7 +52,7 @@
   },
   "extra": {
     "branch-alias": {
-      "dev-2.x": "2.3.x-dev"
+      "dev-2026.x": "2026.1.x-dev"
     },
     "pimcore": {
       "bundles": [

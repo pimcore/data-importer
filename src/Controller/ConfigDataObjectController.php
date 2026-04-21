@@ -16,7 +16,6 @@ use Cron\CronExpression;
 use Exception;
 use InvalidArgumentException;
 use League\Flysystem\FilesystemOperator;
-use Pimcore\Bundle\AdminBundle\Helper\QueryParams;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
@@ -28,6 +27,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Controller\Traits\JsonHelperTrait;
 use Pimcore\Controller\UserAwareController;
@@ -40,8 +40,11 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * @internal
+ */
 #[Route('/admin/pimcoredataimporter/dataobject/config')]
-class ConfigDataObjectController extends UserAwareController
+final class ConfigDataObjectController extends UserAwareController
 {
     use JsonHelperTrait;
 
@@ -49,26 +52,17 @@ class ConfigDataObjectController extends UserAwareController
 
     private const CONFIG_DOES_NOT_EXIST_MSG = 'Configuration %s does not exist.';
 
-    /**
-     * @var PreviewService
-     */
-    protected $previewService;
-
-    /**
-     * ConfigDataObjectController constructor.
-     *
-     * @param PreviewService $previewService
-     */
-    public function __construct(PreviewService $previewService)
-    {
-        $this->previewService = $previewService;
+    public function __construct(
+        private readonly DataTypeServiceInterface $dataTypeService,
+        private readonly PreviewService $previewService,
+    ) {
     }
 
     /**
      * @throws Exception
      */
     #[Route('/save')]
-    public function saveAction(Request $request): ?JsonResponse
+    public function saveAction(Request $request): JsonResponse
     {
         $this->checkPermission(self::CONFIG_NAME);
 
@@ -116,7 +110,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @return array
      */
-    protected function loadAvailableColumnHeaders(
+    private function loadAvailableColumnHeaders(
         string $configName,
         array $config,
         InterpreterFactory $interpreterFactory
@@ -142,7 +136,7 @@ class ConfigDataObjectController extends UserAwareController
         return [];
     }
 
-    protected function isValidJson(array $array): bool
+    private function isValidJson(array $array): bool
     {
         json_encode($array);
 
@@ -517,7 +511,7 @@ class ConfigDataObjectController extends UserAwareController
     #[Route('/load-class-classificationstore-keys', methods: ['GET'])]
     public function loadDataObjectClassificationStoreKeysAction(Request $request, ClassificationStoreDataTypeService $classificationStoreDataTypeService)
     {
-        $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->get('sort')]);
+        $sortParams = $this->dataTypeService->extractSortingSettings($request->query->get('sort'));
 
         $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
             strip_tags($request->query->get('class_id')),
@@ -704,7 +698,7 @@ class ConfigDataObjectController extends UserAwareController
      *
      * @throws Exception
      */
-    protected function getImportFilePath(string $configName): string
+    private function getImportFilePath(string $configName): string
     {
         $configuration = Configuration::getByName($configName);
         if (!$configuration) {

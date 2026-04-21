@@ -12,6 +12,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
-class InvalidConfigurationException extends \Exception
+final class InvalidConfigurationException extends \Exception
 {
 }

@@ -1,7 +1,6 @@
 # Resolver Settings
 
-Resolver settings are responsible to define to which Pimcore data imported data should
-be imported to and consists of following parts: 
+Resolver settings define where imported data should be stored in Pimcore and consist of the following parts:
 
 <div class="image-as-lightbox"></div>
 

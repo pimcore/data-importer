@@ -18,6 +18,9 @@ use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Migrations\BundleAwareMigration;
 
+/**
+ * @internal
+ */
 final class Version20251003105903 extends BundleAwareMigration
 {
     public function getDescription(): string

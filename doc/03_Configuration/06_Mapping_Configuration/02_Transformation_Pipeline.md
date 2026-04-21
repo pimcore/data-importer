@@ -17,7 +17,7 @@ as it defines available options there.
 
 ### Operators
 Operators transform the input data to a desired output format. Every operator 
-expects certain input formats and delivers certain an output format. 
+expects certain input formats and delivers a certain output format. 
 
 There are two groups of operators 
 - Standard Operators: Do some real processing and transformation with the input data.
@@ -32,7 +32,7 @@ Their name is usually prefixed with `As`.
 - **As Gallery**: Packs a single asset, or an asset array to a gallery. 
 - **As Image Advanced**: Packs a single asset to an image advanced. 
 - **As Input Quantity Value**: Converts an array to a quantity value object for 
-  input quanitity value, expects first item in array to be value, second item in array to be unit id. 
+  input quantity value, expects first item in array to be value, second item in array to be unit id.
 - **As Input Quantity Value Array**: Same like `As Input Quantity Value`, but for arrays of values. Expects an array
   with sub-arrays where first item to be value and second item to be unit id each and results in an array of quantity value objects.
 - **As Numeric**: Converts data to a numeric with type casting.
@@ -45,7 +45,7 @@ Their name is usually prefixed with `As`.
     |         | --EMPTY--  |
     | 0       | 0          |
 - **As Quantity Value**: Converts an array to a quantity value object for 
-    quanitity value, expects first item in array to be value, second item in array to be unit id.
+    quantity value, expects first item in array to be value, second item in array to be unit id.
 - **As Quantity Value Array**: Same like `As Quantity Value`, but for arrays of values. Expects an array
   with sub-arrays where first item to be value and second item to be unit id each and results in an array of quantity value objects.
 - **As Geopoint**: Expects an array, where the first item reflects the value for the latitude attribute
@@ -55,7 +55,7 @@ and the second item reflects the value for the longitude attribute.
 - **As Geopolyline**: Same as `As Geopolygon`.
 - **As Color**: Converts an array(R,G,B,A) or a hex-string to a color object.
 - **As Countries**: Converts an array of countries into an array of country codes
-- **Combine**: Combines an array to a string with using configuerd `glue`. 
+- **Combine**: Combines an array to a string with using configured `glue`. 
 - **Explode**: Explodes string to array using configured `delimiter`. If input is an array, explode is done on every array item recursively. 
   Depending if `Do not flatten sub arrays` is set, the operator results in one flat array with all items, or in an array with sub arrays. 
 - **Flatten Array**: Converts one array with potential sub arrays into one flat array with all items and sub items in one level. 
@@ -73,5 +73,5 @@ and the second item reflects the value for the longitude attribute.
 - **ObjectField**: Extracts the value for a specified field from a DataObject. This is similar to `ObjectFieldGetter` or `AnyGetter`.
 
 #### What Operators are NOT supposed to do:
-- **Complex statistical calculations**: you possibly get an idea like that you can explode string to array and then calculate some average value, but it is wrong place to do it. Please keep the import peformance light.
+- **Complex statistical calculations**: you possibly get an idea like that you can explode string to array and then calculate some average value, but it is wrong place to do it. Please keep the import performance light.
 - **Assign data to data object fields**: One import is updating fields of one Data Object. If you need to update another one then please create one more import.
