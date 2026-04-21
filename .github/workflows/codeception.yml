@@ -40,7 +40,7 @@ jobs:
               id: parse-php-versions
               run: |
                   if [ -f composer.json ]; then
-                    php_versions=$(jq -r '.require.php' composer.json | grep -oP '\d+\.\d+' | tr '\n' ',' | sed 's/,$//')
+                    php_versions=$(jq -r ".require.php" composer.json | grep -oP "\d+\.\d+" | tr "\n" "," | sed "s/,$//")
                     if [ -z "$php_versions" ]; then
                       echo "No PHP versions found in composer.json"
                       echo "Setting default PHP value"
@@ -61,18 +61,18 @@ jobs:
 
                   MATRIX_JSON=$(cat reusable-workflows/codeception-tests-configuration/matrix-config.json)
 
-                  IFS=',' read -ra VERSIONS_ARRAY <<< "$php_versions"
+                  IFS="," read -ra VERSIONS_ARRAY <<< "$php_versions"
 
-                  FILTERED_MATRIX_JSON=$(echo $MATRIX_JSON | jq --arg php_versions "$php_versions" '
+                  FILTERED_MATRIX_JSON=$(echo "$MATRIX_JSON" | jq --arg php_versions "$php_versions" "
                   {
                     matrix: [
                       .configs[] |
-                      select(.php_version == $php_versions) |
+                      select(.php_version == \$php_versions) |
                       .matrix[]
                     ]
-                  }')
+                  }")
 
-                  ENCODED_MATRIX_JSON=$(echo $FILTERED_MATRIX_JSON | jq -c .)
+                  ENCODED_MATRIX_JSON=$(echo "$FILTERED_MATRIX_JSON" | jq -c .)
 
                   echo "matrix=${ENCODED_MATRIX_JSON}" >> $GITHUB_OUTPUT
 
