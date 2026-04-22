@@ -1,6 +1,6 @@
 # Configuration
 
-This section gives you details about all the configuration options of an import. Also, have a look 
+This section gives your details about all the configuration options of an import. Also, have a look 
 at [Import Execution Details](../04_Import_Execution_Details.md) to understand how imports are 
 actually executed based on the import configuration. 
 

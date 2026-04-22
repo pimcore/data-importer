@@ -20,9 +20,6 @@ use Pimcore\Model\Asset;
 use Pimcore\Model\Element\DuplicateFullPathException;
 use Pimcore\Model\Element\Service;
 
-/**
- * @internal
- */
 class ImportAsset extends AbstractOperator
 {
     /**

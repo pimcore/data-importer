@@ -15,10 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing\Scheduler;
 use DateTime;
 use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\Exception\InvalidScheduleException;
 
-/**
- * @internal
- */
-final class SchedulerFactory
+class SchedulerFactory
 {
     /**
      * @throws InvalidScheduleException

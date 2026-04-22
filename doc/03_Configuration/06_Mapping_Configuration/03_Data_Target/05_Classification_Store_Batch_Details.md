@@ -10,7 +10,7 @@ to be assigned as array values.
 
 This format has to be prepared by the transformation pipeline in advance. 
 
-The simplest way to achieve that is using a JSON data source like
+The simpliest way to archive that is using a JSON data source like 
 
 ```json 
 [
@@ -38,7 +38,7 @@ and then just use the `As Array` operator to import the data.
 
 
 As an alternative, it is also possible to encode the data into one data field (e.g. for CSVs) and use more operators
-of the transformation pipeline to achieve the required format.
+of the transformation pipiline to archive the required format.
 
 An example data could be `1-6#value 1||2-4#value 2`. The corresponding transformation pipeline would then be something
 like the following
@@ -56,7 +56,7 @@ to be added to the transformation pipeline, as the values need to be transformed
 This is possible, with one restriction: One transformation pipeline can result in one complex value type only. It is not 
 possible to mix values in one mapping with one transformation pipeline.
 
-When importing different complex data types to a classification store, they need to be split by type. An import file
+When importing different complex data types to a classification store, they need to be splitted by type. An import file
 could look as follows: 
 
 

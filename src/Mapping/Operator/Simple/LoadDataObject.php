@@ -21,30 +21,45 @@ use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Symfony\Contracts\Service\Attribute\Required;
 
-/**
- * @internal
- */
-final class LoadDataObject extends AbstractOperator
+class LoadDataObject extends AbstractOperator
 {
-    private const LOAD_STRATEGY_ID = 'id';
+    const LOAD_STRATEGY_ID = 'id';
 
-    private const LOAD_STRATEGY_PATH = 'path';
+    const LOAD_STRATEGY_PATH = 'path';
 
-    private const LOAD_STRATEGY_ATTRIBUTE = 'attribute';
+    const LOAD_STRATEGY_ATTRIBUTE = 'attribute';
 
-    private string $loadStrategy;
+    /**
+     * @var string
+     */
+    protected $loadStrategy;
 
-    private string $attributeLanguage;
+    /**
+     * @var string
+     */
+    protected $attributeLanguage;
 
-    private string $attributeName;
+    /**
+     * @var string
+     */
+    protected $attributeName;
 
-    private string $attributeDataObjectClassId;
+    /**
+     * @var string
+     */
+    protected $attributeDataObjectClassId;
 
-    private bool $partialMatch;
+    /**
+     * @var bool
+     */
+    protected $partialMatch;
 
-    private bool $loadUnpublished;
+    /**
+     * @var bool
+     */
+    protected $loadUnpublished;
 
-    private DataObjectLoader $dataObjectLoader;
+    protected DataObjectLoader $dataObjectLoader;
 
     /**
      * @param DataObjectLoader $dataObjectLoader

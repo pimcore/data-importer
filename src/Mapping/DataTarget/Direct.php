@@ -18,9 +18,6 @@ use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
 class Direct implements DataTargetInterface
 {
     /**

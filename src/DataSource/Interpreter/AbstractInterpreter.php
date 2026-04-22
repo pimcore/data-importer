@@ -12,48 +12,88 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Log\ApplicationLogger;
+use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
 
-/**
- * @internal
- */
 abstract class AbstractInterpreter implements InterpreterInterface
 {
     use LoggerAwareTrait;
 
-    protected string $configName;
+    /**
+     * @var DeltaChecker
+     */
+    protected $deltaChecker;
 
-    protected bool $doDeltaCheck;
+    /**
+     * @var QueueService
+     */
+    protected $queueService;
 
-    protected mixed $idDataIndex;
+    /**
+     * @var ApplicationLogger
+     */
+    protected $applicationLogger;
 
-    protected string $executionType;
+    /**
+     * @var string
+     */
+    protected $configName;
 
-    protected bool $doCleanup;
+    /**
+     * @var bool
+     */
+    protected $doDeltaCheck;
 
-    protected bool $doArchiveImportFile;
+    /**
+     * @var mixed
+     */
+    protected $idDataIndex;
 
-    protected Resolver $resolver;
+    /**
+     * @var string
+     */
+    protected $executionType;
+
+    /**
+     * @var bool
+     */
+    protected $doCleanup;
+
+    /**
+     * @var bool
+     */
+    protected $doArchiveImportFile;
+
+    /**
+     * @var Resolver
+     */
+    protected $resolver;
 
     /**
      * @var string[]
      */
-    protected array $identifierCache;
+    protected $identifierCache;
 
-    public function __construct(
-        protected readonly DeltaChecker $deltaChecker,
-        protected readonly QueueService $queueService,
-        protected readonly ApplicationLogger $applicationLogger,
-    ) {
+    /**
+     * AbstractInterpreter constructor.
+     *
+     * @param DeltaChecker $deltaChecker
+     * @param QueueService $queueService
+     * @param ApplicationLogger $applicationLogger
+     */
+    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ApplicationLogger $applicationLogger)
+    {
+        $this->deltaChecker = $deltaChecker;
+        $this->queueService = $queueService;
+        $this->applicationLogger = $applicationLogger;
     }
 
     public function getConfigName(): string

@@ -12,6 +12,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
-final class InvalidInputException extends \Exception
+class InvalidInputException extends \Exception
 {
 }

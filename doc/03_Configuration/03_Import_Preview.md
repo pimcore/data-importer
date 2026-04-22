@@ -1,6 +1,6 @@
 # Import Preview
 
-The import configuration allows you to show a preview of the data which helps
+The import configuration allows to show a preview of the data which helps
 to setup the [mapping configuration](06_Mapping_Configuration/README.md) and
 validate the expected results. 
 

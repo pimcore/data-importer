@@ -12,21 +12,16 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
-use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Localization\LocaleServiceInterface;
+use Pimcore\Log\ApplicationLogger;
 
-/**
- * @internal
- */
-final class AsCountries extends AbstractOperator
+class AsCountries extends AbstractOperator
 {
-    public function __construct(
-        ApplicationLogger $applicationLogger,
-        private readonly LocaleServiceInterface $localeService,
-    ) {
+    public function __construct(ApplicationLogger $applicationLogger, private LocaleServiceInterface $localeService)
+    {
         parent::__construct($applicationLogger);
     }
 

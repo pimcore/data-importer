@@ -14,10 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Cleanup;
 
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class DeleteStrategy implements CleanupStrategyInterface
+class DeleteStrategy implements CleanupStrategyInterface
 {
     public function doCleanup(ElementInterface $element): void
     {

@@ -16,14 +16,17 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class ClassificationstoreBatch implements DataTargetInterface
+class ClassificationstoreBatch implements DataTargetInterface
 {
-    private string $fieldName;
+    /**
+     * @var string
+     */
+    protected $fieldName;
 
-    private string $language;
+    /**
+     * @var string
+     */
+    protected $language;
 
     public function setSettings(array $settings): void
     {

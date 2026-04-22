@@ -14,10 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class NoChangePublishNewStrategy implements PublishStrategyInterface
+class NoChangePublishNewStrategy implements PublishStrategyInterface
 {
     public function setSettings(array $settings): void
     {

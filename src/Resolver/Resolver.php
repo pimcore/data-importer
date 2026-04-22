@@ -20,22 +20,37 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\PublishStrategyInterface;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class Resolver
+class Resolver
 {
-    private string $dataObjectClassId;
+    /**
+     * @var string
+     */
+    protected $dataObjectClassId;
 
-    private LoadStrategyInterface $loadingStrategy;
+    /**
+     * @var LoadStrategyInterface
+     */
+    protected $loadingStrategy;
 
-    private LocationStrategyInterface $locationUpdateStrategy;
+    /**
+     * @var LocationStrategyInterface
+     */
+    protected $locationUpdateStrategy;
 
-    private LocationStrategyInterface $createLocationStrategy;
+    /**
+     * @var LocationStrategyInterface
+     */
+    protected $createLocationStrategy;
 
-    private PublishStrategyInterface $publishingStrategy;
+    /**
+     * @var PublishStrategyInterface
+     */
+    protected $publishingStrategy;
 
-    private FactoryInterface $elementFactory;
+    /**
+     * @var FactoryInterface
+     */
+    protected $elementFactory;
 
     /**
      * @return string

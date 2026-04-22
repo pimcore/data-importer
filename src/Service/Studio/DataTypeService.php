@@ -192,7 +192,7 @@ final readonly class DataTypeService implements DataTypeServiceInterface
      * Extract sorting settings from a JSON-encoded sort parameter.
      * Replicates the behavior of Pimcore\Bundle\AdminBundle\Helper\QueryParams::extractSortingSettings.
      */
-    public function extractSortingSettings(?string $sort): array
+    private function extractSortingSettings(?string $sort): array
     {
         if ($sort === null) {
             return [];

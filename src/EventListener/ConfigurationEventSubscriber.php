@@ -23,18 +23,34 @@ use Pimcore\Logger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
-/**
- * @internal
- */
-final class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
+class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlias
 {
-    public function __construct(
-        private readonly DeltaChecker $deltaChecker,
-        private readonly QueueService $queueService,
-        private readonly ExecutionService $executionService,
-        private readonly FilesystemOperator $pimcoreDataImporterUploadStorage,
-        private readonly FilesystemOperator $pimcoreDataImporterPreviewStorage,
-    ) {
+    /**
+     * @var DeltaChecker
+     */
+    protected $deltaChecker;
+
+    /**
+     * @var QueueService
+     */
+    protected $queueService;
+
+    /**
+     * @var ExecutionService
+     */
+    protected $executionService;
+
+    protected FilesystemOperator $pimcoreDataImporterUploadStorage;
+
+    protected FilesystemOperator $pimcoreDataImporterPreviewStorage;
+
+    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ExecutionService $executionService, FilesystemOperator $pimcoreDataImporterUploadStorage, FilesystemOperator $pimcoreDataImporterPreviewStorage)
+    {
+        $this->deltaChecker = $deltaChecker;
+        $this->queueService = $queueService;
+        $this->executionService = $executionService;
+        $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;
+        $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
     }
 
     /**
