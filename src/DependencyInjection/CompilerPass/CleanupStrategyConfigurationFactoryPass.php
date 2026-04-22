@@ -17,16 +17,13 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-/**
- * @internal
- */
-final class CleanupStrategyConfigurationFactoryPass implements CompilerPassInterface
+class CleanupStrategyConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const CLEANUP_TAG = 'pimcore.datahub.data_importer.cleanup';
+    const cleanup_tag = 'pimcore.datahub.data_importer.cleanup';
 
     public function process(ContainerBuilder $container): void
     {
-        $taggedServices = $container->findTaggedServiceIds(self::CLEANUP_TAG);
+        $taggedServices = $container->findTaggedServiceIds(self::cleanup_tag);
         $cleanupStrategies = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {

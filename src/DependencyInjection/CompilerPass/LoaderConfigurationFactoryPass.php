@@ -17,16 +17,13 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-/**
- * @internal
- */
-final class LoaderConfigurationFactoryPass implements CompilerPassInterface
+class LoaderConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const LOADER_TAG = 'pimcore.datahub.data_importer.loader';
+    const loader_tag = 'pimcore.datahub.data_importer.loader';
 
     public function process(ContainerBuilder $container): void
     {
-        $taggedServices = $container->findTaggedServiceIds(self::LOADER_TAG);
+        $taggedServices = $container->findTaggedServiceIds(self::loader_tag);
         $loader = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {

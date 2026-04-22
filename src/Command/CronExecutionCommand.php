@@ -19,15 +19,17 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @internal
- */
-final class CronExecutionCommand extends AbstractCommand
+class CronExecutionCommand extends AbstractCommand
 {
-    public function __construct(
-        private readonly ImportPreparationService $importPreparationService,
-    ) {
+    /**
+     * @var ImportPreparationService
+     */
+    protected $importPreparationService;
+
+    public function __construct(ImportPreparationService $importPreparationService)
+    {
         parent::__construct();
+        $this->importPreparationService = $importPreparationService;
     }
 
     protected function configure(): void

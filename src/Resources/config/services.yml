@@ -12,6 +12,15 @@ services:
         # if you need to do this, you can override this setting on individual services
         public: false
 
+    # controllers are imported separately to make sure they're public
+    # and have a tag that allows actions to type-hint services
+    Pimcore\Bundle\DataImporterBundle\Controller\:
+        resource: '../../Controller'
+        exclude:
+            - '../../Controller/Studio'
+        public: true
+        tags: ['controller.service_arguments']
+
     Pimcore\Bundle\DataImporterBundle\Command\:
         resource: '../../Command'
         tags: ['console.command']
@@ -192,3 +201,10 @@ services:
     Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler:
         tags:
             - { name: messenger.message_handler }
+
+    Pimcore\Bundle\DataImporterBundle\Routing\StudioRouteLoader:
+        arguments:
+            - '@kernel'
+        tags:
+            - { name: routing.loader }
+

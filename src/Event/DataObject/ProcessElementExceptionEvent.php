@@ -16,15 +16,15 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Model\Element\ElementInterface;
 use Throwable;
 
-final class ProcessElementExceptionEvent extends AbstractDataObjectImportEvent
+class ProcessElementExceptionEvent extends AbstractDataObjectImportEvent
 {
     public function __construct(
         string $configName,
         array $rawData,
         ElementInterface $dataObject,
-        private readonly ?string $message,
-        private readonly Throwable $exception,
-        private readonly ?MappingConfiguration $mappingConfiguration,
+        private ?string $message,
+        private Throwable $exception,
+        private ?MappingConfiguration $mappingConfiguration
     ) {
         parent::__construct($configName, $rawData, $dataObject);
     }

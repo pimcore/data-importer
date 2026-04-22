@@ -23,18 +23,28 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
 
-/**
- * @internal
- */
-final class SequentialProcessQueueCommand extends AbstractCommand
+class SequentialProcessQueueCommand extends AbstractCommand
 {
-    private ?LockInterface $lock = null;
+    /**
+     * @var ImportProcessingService
+     */
+    protected $importProcessingService;
 
-    public function __construct(
-        private readonly ImportProcessingService $importProcessingService,
-        private readonly QueueService $queueService,
-    ) {
+    /**
+     * @var QueueService
+     */
+    protected $queueService;
+
+    /**
+     * @var LockInterface|null
+     */
+    private $lock;
+
+    public function __construct(ImportProcessingService $importProcessingService, QueueService $queueService)
+    {
         parent::__construct();
+        $this->importProcessingService = $importProcessingService;
+        $this->queueService = $queueService;
     }
 
     public function configure(): void

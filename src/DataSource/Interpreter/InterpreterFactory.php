@@ -16,17 +16,21 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 
-/**
- * @internal
- */
-final class InterpreterFactory
+class InterpreterFactory
 {
     /**
+     * @var InterpreterInterface[]
+     */
+    protected $interpreterBluePrints;
+
+    /**
+     * LoaderFactory constructor.
+     *
      * @param InterpreterInterface[] $interpreterBluePrints
      */
-    public function __construct(
-        private readonly array $interpreterBluePrints,
-    ) {
+    public function __construct(array $interpreterBluePrints)
+    {
+        $this->interpreterBluePrints = $interpreterBluePrints;
     }
 
     /**

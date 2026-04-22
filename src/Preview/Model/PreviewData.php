@@ -12,22 +12,41 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Preview\Model;
 
-/**
- * @internal
- */
-final class PreviewData
+class PreviewData
 {
-    private readonly array $mappedColumns;
+    /**
+     * @var array
+     */
+    protected $labels;
+
+    /**
+     * @var array
+     */
+    protected $previewData;
+
+    /**
+     * @var int
+     */
+    protected $recordNumber;
+
+    /**
+     * @var array
+     */
+    protected $mappedColumns;
 
     /**
      * PreviewData constructor.
+     *
+     * @param array $labels
+     * @param array $previewData
+     * @param int $recordNumber
+     * @param array $mappedColumns
      */
-    public function __construct(
-        private readonly array $labels,
-        private readonly array $previewData,
-        private readonly int $recordNumber,
-        array $mappedColumns = [],
-    ) {
+    public function __construct(array $labels, array $previewData, int $recordNumber, array $mappedColumns = [])
+    {
+        $this->labels = $labels;
+        $this->previewData = $previewData;
+        $this->recordNumber = $recordNumber;
         $this->mappedColumns = array_flip($mappedColumns);
     }
 

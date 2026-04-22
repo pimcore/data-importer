@@ -15,16 +15,22 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class AttributeStrategy extends AbstractLoad
+class AttributeStrategy extends AbstractLoad
 {
-    private string $attributeName;
+    /**
+     * @var string
+     */
+    protected $attributeName;
 
-    private string $attributeLanguage;
+    /**
+     * @var string
+     */
+    protected $attributeLanguage;
 
-    private bool $includeUnpublished;
+    /**
+     * @var bool
+     */
+    protected $includeUnpublished;
 
     /**
      * @param array $settings

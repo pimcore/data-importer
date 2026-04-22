@@ -16,16 +16,18 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 
-/**
- * @internal
- */
-final class DeltaChecker
+class DeltaChecker
 {
-    private const CACHE_TABLE_NAME = 'bundle_data_hub_data_importer_delta_cache';
+    /**
+     * @var Connection
+     */
+    protected $db;
 
-    public function __construct(
-        private readonly Connection $db,
-    ) {
+    const CACHE_TABLE_NAME = 'bundle_data_hub_data_importer_delta_cache';
+
+    public function __construct(Connection $connection)
+    {
+        $this->db = $connection;
     }
 
     /**
@@ -35,7 +37,7 @@ final class DeltaChecker
      *
      * @throws Exception
      */
-    private function createTableIfNotExisting(?\Closure $callable = null)
+    protected function createTableIfNotExisting(?\Closure $callable = null)
     {
         $this->db->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             configName varchar(80) NOT NULL,
@@ -51,7 +53,7 @@ final class DeltaChecker
         return null;
     }
 
-    private function getCurrentHash(string $configName, string $id): string
+    protected function getCurrentHash(string $configName, string $id): string
     {
         try {
             return $this->db->fetchOne(
@@ -65,7 +67,7 @@ final class DeltaChecker
         }
     }
 
-    private function updateHash(string $configName, string $id, string $hash)
+    protected function updateHash(string $configName, string $id, string $hash)
     {
         try {
             $this->db->executeQuery(

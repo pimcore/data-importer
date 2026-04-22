@@ -18,15 +18,21 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Factory;
 
-/**
- * @internal
- */
-final class DataObjectFactory implements FactoryInterface
+class DataObjectFactory implements FactoryInterface
 {
-    private string $subType;
+    /**
+     * @var string
+     */
+    protected $subType;
 
-    public function __construct(private readonly Factory $modelFactory)
+    /**
+     * @var Factory
+     */
+    protected $modelFactory;
+
+    public function __construct(Factory $modelFactory)
     {
+        $this->modelFactory = $modelFactory;
     }
 
     public function setSubType(string $subType): void

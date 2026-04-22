@@ -56,14 +56,14 @@ Internally the adapter uses [`phpspreadsheet`](https://phpspreadsheet.readthedoc
 ### XML
 The source data is interpreted as XML.
 
-The adapter expects a list of data elements at the configured xpath and reads all first level elements 
+The adapter expects a list of data elements at the configued xpath and reads all first level elements 
 of the data elements as separate fields. If one element contains sub elements (like `technical_attributes`) in the example 
-below, the sub elements are interpreted as array in one field (and needs to be considered in the transformation pipeline).
+below, this the sub elements are interpreted as array in one field (and needs to be considered in the transformation pipeline).
 
 
 ##### Configuration Options: 
 - **XPath**: XPath to the elements to be imported. For the sample below it would be `/root/item`. 
-- **Schema**: XSD Schema the import data should be validated against. If not defined, no validation takes place.
+- **Schema**: XSD Schema the import data should be validated against. If not defined, to validation takes place.
 
 **Sample File**: 
 ```xml

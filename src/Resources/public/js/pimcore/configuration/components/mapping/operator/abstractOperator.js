@@ -1,0 +1,131 @@
+/**
+* This source file is available under the terms of the
+* Pimcore Open Core License (POCL)
+* Full copyright and license information is available in
+* LICENSE.md which is distributed with this source code.
+*
+*  @copyright  Copyright (c) Pimcore GmbH (http://www.pimcore.com)
+*  @license    Pimcore Open Core License (POCL)
+*/
+
+pimcore.registerNS("pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator");
+pimcore.plugin.pimcoreDataImporterBundle.configuration.components.mapping.abstractOperator = Class.create({
+
+    type: 'abstract',
+    menuGroup: '',
+    menuGroups: {
+        dataTypes: {
+            text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_data_types'),
+            icon: "pimcore_icon_reload"
+        },
+        loadImport: {
+            text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_load_import'),
+            icon: "pimcore_icon_import"
+        },
+        dataManipulation: {
+            text: t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_data_manipulation'),
+            icon: "pimcore_icon_log_admin"
+        },
+    },
+
+    data: {},
+    container: null,
+    transformationResultTypeChangeCallback: null,
+    transformationResultPreviewChangeCallback: null,
+
+    initialize: function(data, container, transformationResultTypeChangeCallback, transformationResultPreviewChangeCallback) {
+        this.data = data;
+        this.container = container;
+        this.transformationResultTypeChangeCallback = transformationResultTypeChangeCallback;
+        this.transformationResultPreviewChangeCallback = transformationResultPreviewChangeCallback;
+    },
+
+    getTopBar: function (name, index, parent) {
+        return [{
+            xtype: "tbtext",
+            text: "<b>" + name + "</b>"
+        }, "-", {
+            iconCls: 'pimcore_icon_up',
+            handler: function (blockId, parent) {
+
+                const container = parent;
+                const blockElement = Ext.getCmp(blockId);
+
+                container.moveBefore(blockElement, blockElement.previousSibling());
+
+                this.executeTransformationResultCallbacks();
+            }.bind(this, index, parent)
+        }, {
+            iconCls: 'pimcore_icon_down',
+            handler: function (blockId, parent) {
+
+                const container = parent;
+                const blockElement = Ext.getCmp(blockId);
+
+                container.moveAfter(blockElement, blockElement.nextSibling());
+
+                this.executeTransformationResultCallbacks();
+            }.bind(this, index, parent)
+        }, '->', {
+            iconCls: 'pimcore_icon_delete',
+            handler: function (index, parent) {
+                parent.remove(Ext.getCmp(index));
+
+                this.executeTransformationResultCallbacks();
+            }.bind(this, index, parent)
+        }];
+    },
+
+    buildTransformationPipelineItem: function() {
+        var myId = Ext.id();
+        if(!this.form) {
+            this.form = Ext.create('DataHub.DataImporter.StructuredValueForm', {
+                operatorImplementation: this,
+                id: myId,
+                style: "margin-top: 10px",
+                border: true,
+                bodyStyle: "padding: 10px;",
+                tbar: this.getTopBar(t('plugin_pimcore_datahub_data_importer_configpanel_transformation_pipeline_' + this.type), myId, this.container),
+                items: this.getFormItems()
+            });
+        }
+
+        return this.form;
+    },
+
+    getFormItems: function() {
+        return []
+    },
+
+    getValues: function() {
+        let values = this.form.getValues();
+        values.type = this.type;
+        return values;
+    },
+
+    getMenuGroup: function() {
+        return null;
+    },
+
+    getIconClass: function() {
+        return "pimcore_icon_add";
+    },
+
+    executeTransformationResultCallbacks: function() {
+        if(this.transformationResultPreviewChangeCallback) {
+            this.transformationResultPreviewChangeCallback();
+        }
+        if(this.transformationResultTypeChangeCallback) {
+            this.transformationResultTypeChangeCallback();
+        }
+    },
+
+    inputChangePreviewUpdate: function() {
+        if(this.inputChangePreviewTimeout) {
+            clearTimeout(this.inputChangePreviewTimeout);
+        }
+        this.inputChangePreviewTimeout = setTimeout(function() {
+            this.transformationResultPreviewChangeCallback();
+        }.bind(this), 1000);
+    }
+});

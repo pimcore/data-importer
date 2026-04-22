@@ -14,13 +14,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
 use Pimcore\Model\DataObject;
 
-/**
- * @internal
- */
-final class ClassificationStoreDataTypeService
+class ClassificationStoreDataTypeService
 {
-    public function __construct(private readonly TransformationDataTypeService $transformationDataTypeService)
+    /**
+     * @var TransformationDataTypeService
+     */
+    protected $transformationDataTypeService;
+
+    public function __construct(TransformationDataTypeService $transformationDataTypeService)
     {
+        $this->transformationDataTypeService = $transformationDataTypeService;
     }
 
     public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, ?string $searchString = null, ?string $filterString = null): DataObject\Classificationstore\KeyGroupRelation\Listing

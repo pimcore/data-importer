@@ -17,9 +17,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 
-/**
- * @internal
- */
 class QuantityValue extends AbstractOperator
 {
     /**
