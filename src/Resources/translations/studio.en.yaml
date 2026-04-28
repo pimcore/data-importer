@@ -242,6 +242,7 @@ data-importer.mapping.item.data-target.write-if-source-is-empty: Write If Source
 # Advanced Mapping Modal
 data-importer.mapping.advanced-modal.title: Mapping edit & transformations
 data-importer.mapping.advanced-modal.save: Save
+data-importer.mapping.advanced-modal.refresh-all-previews: Refresh all previews
 data-importer.mapping.advanced-modal.step-source: Source
 data-importer.mapping.advanced-modal.step-transformations: Transformations
 data-importer.mapping.advanced-modal.step-target: Data Target

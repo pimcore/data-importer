@@ -242,6 +242,7 @@ data-importer.mapping.item.data-target.write-if-source-is-empty: Skriv om källa
 # Advanced Mapping Modal
 data-importer.mapping.advanced-modal.title: Redigera mapping & transformationer
 data-importer.mapping.advanced-modal.save: Spara
+data-importer.mapping.advanced-modal.refresh-all-previews: Uppdatera alla förhandsvisningar
 data-importer.mapping.advanced-modal.step-source: Källa
 data-importer.mapping.advanced-modal.step-transformations: Transformationer
 data-importer.mapping.advanced-modal.step-target: Datamål

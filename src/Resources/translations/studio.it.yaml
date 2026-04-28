@@ -242,6 +242,7 @@ data-importer.mapping.item.data-target.write-if-source-is-empty: 'Scrivi se l''o
 # Advanced Mapping Modal
 data-importer.mapping.advanced-modal.title: Modifica Mapping e trasformazioni
 data-importer.mapping.advanced-modal.save: Salva
+data-importer.mapping.advanced-modal.refresh-all-previews: Aggiorna tutte le anteprime
 data-importer.mapping.advanced-modal.step-source: Origine
 data-importer.mapping.advanced-modal.step-transformations: Trasformazioni
 data-importer.mapping.advanced-modal.step-target: Destinazione dati
