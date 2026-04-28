@@ -242,6 +242,7 @@ data-importer.mapping.item.data-target.write-if-source-is-empty: Skriv hvis kild
 # Advanced Mapping Modal
 data-importer.mapping.advanced-modal.title: Rediger mapping og transformasjoner
 data-importer.mapping.advanced-modal.save: Lagre
+data-importer.mapping.advanced-modal.refresh-all-previews: Oppdater alle forhåndsvisninger
 data-importer.mapping.advanced-modal.step-source: Kilde
 data-importer.mapping.advanced-modal.step-transformations: Transformasjoner
 data-importer.mapping.advanced-modal.step-target: Datamål
