@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { Input, Form, Switch } from '@pimcore/studio-ui-bundle/components'
+import { Input, Form, ManyToOneRelationPath, Switch } from '@pimcore/studio-ui-bundle/components'
 import { TransformerSettingsLayout } from '../transformer-settings-layout'
 
 interface ImportAssetTransformerConfig {
@@ -35,9 +35,12 @@ export const ImportAssetTransformerForm = ({ settings, onChange }: ImportAssetTr
             className={ styles.formItem }
             label={ <span className={ styles.label }>Parent folder</span> }
           >
-            <Input
-              onChange={ (e) => { update('parentFolder', e.target.value) } }
-              placeholder="/"
+            <ManyToOneRelationPath
+              allowPathTextInput
+              allowToClearRelation
+              allowedAssetTypes={ ['folder'] }
+              assetsAllowed
+              onChange={ (val) => { update('parentFolder', val ?? '/') } }
               value={ settings.parentFolder ?? '/' }
             />
           </Form.Item>
@@ -53,7 +56,7 @@ export const ImportAssetTransformerForm = ({ settings, onChange }: ImportAssetTr
 
           <Form.Item className={ styles.formItemSwitch }>
             <Switch
-              checked={ settings.overwriteExisting !== false }
+              checked={ settings.overwriteExisting === true }
               labelRight="Overwrite existing"
               onChange={ (v) => { update('overwriteExisting', v) } }
               size="small"
