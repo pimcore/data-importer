@@ -35,6 +35,7 @@ use Pimcore\Helper\ParameterBagHelper;
 use Pimcore\Logger;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
+use Pimcore\Model\Translation;
 use Pimcore\Translation\Translator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -330,11 +331,11 @@ final class ConfigDataObjectController extends UserAwareController
                     }
                     $dataPreviewData = $preview;
                 } else {
-                    $errorMessage = $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_preview_error_invalid_file', [], 'admin');
+                    $errorMessage = $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_preview_error_invalid_file', [], Translation::DOMAIN_BACKEND);
                 }
             } catch (Exception $e) {
                 Logger::error($e);
-                $errorMessage = $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_preview_error_prefix', [], 'admin') . ': ' . $e->getMessage();
+                $errorMessage = $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_preview_error_prefix', [], Translation::DOMAIN_BACKEND) . ': ' . $e->getMessage();
             }
         }
 
@@ -727,10 +728,10 @@ final class ConfigDataObjectController extends UserAwareController
             $importFile = $this->getImportFilePath($request->query->get('config_name'));
 
             if ($pimcoreDataImporterUploadStorage->fileExists($importFile)) {
-                return new JsonResponse(['success' => true, 'filePath' => $importFile, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists', [], 'admin')]);
+                return new JsonResponse(['success' => true, 'filePath' => $importFile, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists', [], Translation::DOMAIN_BACKEND)]);
             }
 
-            return new JsonResponse(['success' => false, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists', [], 'admin')]);
+            return new JsonResponse(['success' => false, 'message' => $translator->trans('plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists', [], Translation::DOMAIN_BACKEND)]);
         } catch (Exception $e) {
             Logger::error($e);
 

@@ -29,6 +29,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ImportProgressResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ImportStartResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\ConfigurationPermissionTrait;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Model\Translation;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -164,7 +165,7 @@ final readonly class ImportService implements ImportServiceInterface
                 $this->translator->trans(
                     'plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists',
                     [],
-                    'admin'
+                    Translation::DOMAIN_BACKEND
                 ),
                 $importFile
             );
@@ -182,7 +183,7 @@ final readonly class ImportService implements ImportServiceInterface
             $this->translator->trans(
                 'plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists',
                 [],
-                'admin'
+                Translation::DOMAIN_BACKEND
             )
         );
 

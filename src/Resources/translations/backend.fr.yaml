@@ -1,0 +1,4 @@
+plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists: File for import already uploaded.
+plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists: File for import not uploaded yet.
+plugin_pimcore_datahub_data_importer_configpanel_preview_error_invalid_file: Uploaded no valid preview file.
+plugin_pimcore_datahub_data_importer_configpanel_preview_error_prefix: "Prévisualiser l'erreur"

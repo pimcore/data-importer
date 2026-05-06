@@ -1,0 +1,4 @@
+plugin_pimcore_datahub_data_importer_configpanel_type_upload_exists: "Die Datei für den Import wurde bereits hochgeladen."
+plugin_pimcore_datahub_data_importer_configpanel_type_upload_not_exists: "Die Datei für den Import wurde noch nicht hochgeladen."
+plugin_pimcore_datahub_data_importer_configpanel_preview_error_invalid_file: "Keine gültige Vorschaudatei hochgeladen."
+plugin_pimcore_datahub_data_importer_configpanel_preview_error_prefix: Vorschau Fehler
