@@ -28,8 +28,9 @@ import {
   useFilter,
   useBundleApplicationLoggerGetCollectionQuery
 } from '@pimcore/studio-ui-bundle/modules/application-logger'
+import { useElementVisible } from '@pimcore/studio-ui-bundle/utils'
 import { isNil } from 'lodash'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { FilterSidebar } from './filter-sidebar/filter-sidebar'
 import { useRefreshInterval } from './hooks/use-refresh-interval/use-refresh-interval'
 import { SidebarProvider } from './sidebar-provider/sidebar-provider'
@@ -103,83 +104,101 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
     setFilterLoading(isFetching)
   }, [isFetching])
 
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const isVisible = useElementVisible(wrapperRef, true)
+  const skipInitialVisibilityRef = useRef(true)
+
+  useEffect(() => {
+    if (!isVisible) return
+    if (skipInitialVisibilityRef.current) {
+      skipInitialVisibilityRef.current = false
+      return
+    }
+    refreshData()
+  }, [isVisible, refreshData])
+
   return (
     <SidebarProvider>
-      <ContentLayout
-        className='h-full'
-        renderSidebar={ <Sidebar entries={ sidebarEntries } /> }
-        renderToolbar={
-          <Toolbar
-            justify='space-between'
-            theme='secondary'
-          >
-            <Flex
-              align="center"
-              gap={ 8 }
-            >
-              {!isNil(refreshInterval) && (
-                <span>{t('application-logger.refresh-interval')}</span>
-              )}
-              <CreatableSelect
-                allowClear
-                inputType='number'
-                minWidth={ 200 }
-                numberInputProps={ {
-                  min: 1
-                } }
-                onChange={ setRefreshInterval }
-                onCreateOption={ (value) => {
-                  return {
-                    value,
-                    label: t('application-logger.refresh-interval.seconds', { seconds: value })
-                  }
-                } }
-                options={ [
-                  { value: '3', label: t('application-logger.refresh-interval.seconds', { seconds: 3 }) },
-                  { value: '5', label: t('application-logger.refresh-interval.seconds', { seconds: 5 }) },
-                  { value: '10', label: t('application-logger.refresh-interval.seconds', { seconds: 10 }) },
-                  { value: '30', label: t('application-logger.refresh-interval.seconds', { seconds: 30 }) },
-                  { value: '60', label: t('application-logger.refresh-interval.seconds', { seconds: 60 }) }
-                ] }
-                placeholder={ t('application-logger.refresh-interval.select') }
-                validate={ (value) => !Number.isNaN(Number.parseInt(value)) && Number.parseInt(value) > 0 }
-                value={ refreshInterval }
-              />
-            </Flex>
-
-            <Flex>
-              <IconButton
-                disabled={ isFetching }
-                icon={ { value: 'refresh' } }
-                onClick={ refreshData }
-              />
-              {total > 0 && (
-                <>
-                  <Divider
-                    size="small"
-                    type="vertical"
-                  />
-                  <Pagination
-                    current={ currentPage }
-                    defaultPageSize={ pageSize }
-                    onChange={ onPagerChange }
-                    showSizeChanger
-                    showTotal={ (total) => t('pagination.show-total', { total }) }
-                    total={ total }
-                  />
-                </>
-              )}
-            </Flex>
-          </Toolbar>
-        }
+      <div
+        ref={ wrapperRef }
+        style={ { height: '100%' } }
       >
-        <Content
-          loading={ isFetching }
-          padded
+        <ContentLayout
+          className='h-full'
+          renderSidebar={ <Sidebar entries={ sidebarEntries } /> }
+          renderToolbar={
+            <Toolbar
+              justify='space-between'
+              theme='secondary'
+            >
+              <Flex
+                align="center"
+                gap={ 8 }
+              >
+                {!isNil(refreshInterval) && (
+                  <span>{t('application-logger.refresh-interval')}</span>
+                )}
+                <CreatableSelect
+                  allowClear
+                  inputType='number'
+                  minWidth={ 200 }
+                  numberInputProps={ {
+                    min: 1
+                  } }
+                  onChange={ setRefreshInterval }
+                  onCreateOption={ (value) => {
+                    return {
+                      value,
+                      label: t('application-logger.refresh-interval.seconds', { seconds: value })
+                    }
+                  } }
+                  options={ [
+                    { value: '3', label: t('application-logger.refresh-interval.seconds', { seconds: 3 }) },
+                    { value: '5', label: t('application-logger.refresh-interval.seconds', { seconds: 5 }) },
+                    { value: '10', label: t('application-logger.refresh-interval.seconds', { seconds: 10 }) },
+                    { value: '30', label: t('application-logger.refresh-interval.seconds', { seconds: 30 }) },
+                    { value: '60', label: t('application-logger.refresh-interval.seconds', { seconds: 60 }) }
+                  ] }
+                  placeholder={ t('application-logger.refresh-interval.select') }
+                  validate={ (value) => !Number.isNaN(Number.parseInt(value)) && Number.parseInt(value) > 0 }
+                  value={ refreshInterval }
+                />
+              </Flex>
+
+              <Flex>
+                <IconButton
+                  disabled={ isFetching }
+                  icon={ { value: 'refresh' } }
+                  onClick={ refreshData }
+                />
+                {total > 0 && (
+                  <>
+                    <Divider
+                      size="small"
+                      type="vertical"
+                    />
+                    <Pagination
+                      current={ currentPage }
+                      defaultPageSize={ pageSize }
+                      onChange={ onPagerChange }
+                      showSizeChanger
+                      showTotal={ (total) => t('pagination.show-total', { total }) }
+                      total={ total }
+                    />
+                  </>
+                )}
+              </Flex>
+            </Toolbar>
+          }
         >
-          <ApplicationLoggerTable items={ data?.items ?? [] } />
-        </Content>
-      </ContentLayout>
+          <Content
+            loading={ isFetching }
+            padded
+          >
+            <ApplicationLoggerTable items={ data?.items ?? [] } />
+          </Content>
+        </ContentLayout>
+      </div>
     </SidebarProvider>
   )
 }
