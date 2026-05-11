@@ -258,8 +258,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Redigera källattr
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Datamanipulering
 data-importer.mapping.advanced-modal.transformer.group.data-types: Datatyper
 data-importer.mapping.advanced-modal.transformer.group.load-import: Ladda / Importera
-data-importer.mapping.advanced-modal.next-step: Nästa steg
-data-importer.mapping.advanced-modal.previous-step: Föregående steg
 data-importer.mapping.advanced-modal.recalculate-result-type: Beräkna om transformationsresultattyp
 data-importer.mapping.advanced-modal.step-source.label: Källattribut
 data-importer.mapping.advanced-modal.step-source.description: Välj från listan eller lägg till en ny källa
@@ -274,8 +272,6 @@ data-importer.mapping.advanced-modal.step-target.type: Typ
 data-importer.mapping.advanced-modal.step-target.field-name: Fältnamn
 data-importer.mapping.advanced-modal.step-target.overwrite: Skriv över
 data-importer.mapping.advanced-modal.step-target.preview-result: Förhandsvisningsresultat
-data-importer.mapping.advanced-modal.step-target.previous-step: Föregående steg
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Bekräfta mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Skriv till detta fält även om målfältet redan innehåller ett värde
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Skriv till detta fält även om källdata är tom
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Överskrivningsläge
