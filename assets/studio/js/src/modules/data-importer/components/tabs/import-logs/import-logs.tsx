@@ -78,7 +78,8 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
       filters: {
         page: currentPage,
         pageSize,
-        columnFilters: mergedFilters
+        columnFilters: mergedFilters,
+        sortFilter: { key: 'id', direction: 'DESC' }
       }
     }
   })
