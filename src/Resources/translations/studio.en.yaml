@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Skip First Row
 data-importer.interpreter.csv.save-header-name: Save Header Name
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Path
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath

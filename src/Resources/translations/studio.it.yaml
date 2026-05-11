@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Salta la prima riga
 data-importer.interpreter.csv.save-header-name: Salva nome intestazione
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Percorso
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
