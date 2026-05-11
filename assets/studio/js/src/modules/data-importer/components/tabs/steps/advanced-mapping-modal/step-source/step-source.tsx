@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Select, Text, Flex } from '@pimcore/studio-ui-bundle/components'
+import { Select, Text, Flex } from '@pimcore/studio-ui-bundle/components'
 import { PreviewPanel } from '../preview-panel/preview-panel'
 import { useStyles } from './step-source.styles'
 
@@ -20,7 +20,6 @@ export interface StepSourceProps {
   forceRefreshToken: number
   columnHeaderOptions: Array<{ value: string, label: string }>
   onDataSourceIndexChange: (v: string[]) => void
-  onNext: () => void
 }
 
 export const StepSource = ({
@@ -28,71 +27,56 @@ export const StepSource = ({
   dataSourceIndex,
   forceRefreshToken,
   columnHeaderOptions,
-  onDataSourceIndexChange,
-  onNext
+  onDataSourceIndexChange
 }: StepSourceProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
 
   return (
-    <>
+    <Flex
+      className={ styles.twoColumnLayout }
+      gap="extra-small"
+    >
       <Flex
-        className={ styles.twoColumnLayout }
-        gap="extra-small"
+        className={ styles.leftColumn }
+        gap={ 6 }
+        vertical
       >
-        <Flex
-          className={ styles.leftColumn }
-          gap={ 6 }
-          vertical
+        <Text
+          className={ styles.labelSmall }
+          strong
         >
-          <Text
-            className={ styles.labelSmall }
-            strong
-          >
-            { t('data-importer.mapping.advanced-modal.step-source.label') }
-          </Text>
-          <Text
-            className={ styles.labelSmall }
-            type="secondary"
-          >
-            { t('data-importer.mapping.advanced-modal.step-source.description') }
-          </Text>
-          <Select
-            className={ styles.selectFull }
-            mode="multiple"
-            onChange={ onDataSourceIndexChange }
-            options={ columnHeaderOptions }
-            placeholder={ t('data-importer.mapping.item.source-placeholder') }
-            showSearch
-            value={ dataSourceIndex }
-          />
-        </Flex>
-
-        {/* RIGHT: Import Preview — always mounted to preserve fetched data */}
-        <Flex
-          className={ styles.rightColumn }
-          vertical
+          { t('data-importer.mapping.advanced-modal.step-source.label') }
+        </Text>
+        <Text
+          className={ styles.labelSmall }
+          type="secondary"
         >
-          <PreviewPanel
-            configName={ configName }
-            forceRefreshToken={ forceRefreshToken }
-            mode="import"
-            selectedDataSourceIndex={ dataSourceIndex }
-          />
-        </Flex>
+          { t('data-importer.mapping.advanced-modal.step-source.description') }
+        </Text>
+        <Select
+          className={ styles.selectFull }
+          mode="multiple"
+          onChange={ onDataSourceIndexChange }
+          options={ columnHeaderOptions }
+          placeholder={ t('data-importer.mapping.item.source-placeholder') }
+          showSearch
+          value={ dataSourceIndex }
+        />
       </Flex>
 
+      {/* RIGHT: Import Preview — always mounted to preserve fetched data */}
       <Flex
-        className={ styles.footer }
-        justify="flex-end"
+        className={ styles.rightColumn }
+        vertical
       >
-        <Button
-          onClick={ onNext }
-          type="default"
-        >
-          { t('data-importer.mapping.advanced-modal.next-step') }
-        </Button>
+        <PreviewPanel
+          configName={ configName }
+          forceRefreshToken={ forceRefreshToken }
+          mode="import"
+          selectedDataSourceIndex={ dataSourceIndex }
+        />
       </Flex>
-    </>
+    </Flex>
   )
 }

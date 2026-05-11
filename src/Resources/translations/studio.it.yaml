@@ -258,8 +258,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Modifica attributi
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Manipolazione dati
 data-importer.mapping.advanced-modal.transformer.group.data-types: Tipi di dati
 data-importer.mapping.advanced-modal.transformer.group.load-import: Caricamento / Importazione
-data-importer.mapping.advanced-modal.next-step: Passaggio successivo
-data-importer.mapping.advanced-modal.previous-step: Passaggio precedente
 data-importer.mapping.advanced-modal.recalculate-result-type: Ricalcola il tipo di risultato della trasformazione
 data-importer.mapping.advanced-modal.step-source.label: Attributo/i di origine
 data-importer.mapping.advanced-modal.step-source.description: 'Scegliere dall''elenco o aggiungere una nuova origine'
@@ -274,8 +272,6 @@ data-importer.mapping.advanced-modal.step-target.type: Tipo
 data-importer.mapping.advanced-modal.step-target.field-name: Nome campo
 data-importer.mapping.advanced-modal.step-target.overwrite: Sovrascrittura
 data-importer.mapping.advanced-modal.step-target.preview-result: Risultato anteprima
-data-importer.mapping.advanced-modal.step-target.previous-step: Passaggio precedente
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Conferma Mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Scrivi in questo campo anche se il campo di destinazione contiene già un valore
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Scrivi in questo campo anche se i dati di origine sono vuoti
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Modalità di sovrascrittura
