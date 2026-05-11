@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Hoppa över första raden
 data-importer.interpreter.csv.save-header-name: Spara rubriknamn
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Sökväg
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
