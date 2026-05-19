@@ -234,7 +234,6 @@ export const AdvancedMappingModal = ({
                 dataSourceIndex={ localItem.dataSourceIndex ?? [] }
                 forceRefreshToken={ forceRefreshToken }
                 onDataSourceIndexChange={ updateDataSourceIndex }
-                onNext={ () => { openSection('transformations') } }
               />
             </Panel>
           </div>
@@ -256,9 +255,7 @@ export const AdvancedMappingModal = ({
                 columnHeaderOptions={ columnHeaderOptions }
                 dataSourceIndex={ localItem.dataSourceIndex ?? [] }
                 onDataSourceIndexChange={ updateDataSourceIndex }
-                onNext={ () => { openSection('target') } }
                 onPipelineChange={ updatePipeline }
-                onPrev={ () => { openSection('source') } }
                 pipeline={ pipeline }
               />
             </Panel>
@@ -282,9 +279,7 @@ export const AdvancedMappingModal = ({
                 classId={ classId }
                 dataTarget={ localItem.dataTarget }
                 languageOptions={ languageOptions }
-                onConfirm={ handleSave }
                 onDataTargetChange={ (dataTarget) => { setLocalItem(prev => ({ ...prev, dataTarget })) } }
-                onPrev={ () => { openSection('transformations') } }
                 transformationResultType={ localItem.transformationResultType }
               />
             </Panel>

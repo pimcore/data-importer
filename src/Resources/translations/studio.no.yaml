@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Hopp over første rad
 data-importer.interpreter.csv.save-header-name: Lagre overskriftsnavn
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Sti
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
@@ -258,8 +258,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Rediger kildeattri
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Datamanipulering
 data-importer.mapping.advanced-modal.transformer.group.data-types: Datatyper
 data-importer.mapping.advanced-modal.transformer.group.load-import: Last / Importer
-data-importer.mapping.advanced-modal.next-step: Neste steg
-data-importer.mapping.advanced-modal.previous-step: Forrige steg
 data-importer.mapping.advanced-modal.recalculate-result-type: Beregn transformasjonsresultattype på nytt
 data-importer.mapping.advanced-modal.step-source.label: Kildeattributt(er)
 data-importer.mapping.advanced-modal.step-source.description: Velg fra listen eller legg til en ny kilde
@@ -274,8 +272,6 @@ data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Feltnavn
 data-importer.mapping.advanced-modal.step-target.overwrite: Overskriv
 data-importer.mapping.advanced-modal.step-target.preview-result: Forhåndsvisningsresultat
-data-importer.mapping.advanced-modal.step-target.previous-step: Forrige steg
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Bekreft mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Skriv til dette feltet selv om målfeltet allerede inneholder en verdi
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Skriv til dette feltet selv om kildedataene er tomme
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Overskrivningsmodus
