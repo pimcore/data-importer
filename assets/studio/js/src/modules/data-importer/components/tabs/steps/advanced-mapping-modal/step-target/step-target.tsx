@@ -29,8 +29,6 @@ export interface StepTargetProps {
   languageOptions: Array<{ value: string, label: string }>
   classId?: string
   onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void
-  onPrev: () => void
-  onConfirm: () => void
 }
 
 export const StepTarget = ({
@@ -39,9 +37,7 @@ export const StepTarget = ({
   dataTarget,
   languageOptions,
   classId,
-  onDataTargetChange,
-  onPrev,
-  onConfirm
+  onDataTargetChange
 }: StepTargetProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -227,10 +223,7 @@ export const StepTarget = ({
         />
       </Flex>
 
-      <StepTargetPreviewActions
-        onConfirm={ onConfirm }
-        onPrev={ onPrev }
-      />
+      <StepTargetPreviewActions />
 
       { isClassificationStore && classId !== undefined && dataTarget?.settings?.fieldName !== undefined && transformationResultType !== undefined && (
         <ClassificationStoreKeyModal

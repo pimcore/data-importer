@@ -9,48 +9,19 @@
  */
 
 import React from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Flex } from '@pimcore/studio-ui-bundle/components'
+import { Flex } from '@pimcore/studio-ui-bundle/components'
 import { ResultPreview } from '../result-preview/result-preview'
 import { useStyles } from './step-target.styles'
 
-export interface StepTargetPreviewActionsProps {
-  onPrev: () => void
-  onConfirm: () => void
-}
-
-export const StepTargetPreviewActions = ({
-  onPrev,
-  onConfirm
-}: StepTargetPreviewActionsProps): React.JSX.Element => {
-  const { t } = useTranslation()
+export const StepTargetPreviewActions = (): React.JSX.Element => {
   const { styles } = useStyles()
 
   return (
     <Flex
       className={ styles.rightColumn }
-      justify="space-between"
       vertical
     >
       <ResultPreview />
-
-      <Flex
-        gap="extra-small"
-        justify="flex-end"
-      >
-        <Button
-          onClick={ onPrev }
-          type="default"
-        >
-          { t('data-importer.mapping.advanced-modal.step-target.previous-step') }
-        </Button>
-        <Button
-          onClick={ onConfirm }
-          type="primary"
-        >
-          { t('data-importer.mapping.advanced-modal.step-target.confirm-mapping') }
-        </Button>
-      </Flex>
     </Flex>
   )
 }

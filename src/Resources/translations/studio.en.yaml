@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Skip First Row
 data-importer.interpreter.csv.save-header-name: Save Header Name
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Path
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
@@ -258,8 +258,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Edit source attrib
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Data manipulation
 data-importer.mapping.advanced-modal.transformer.group.data-types: Data types
 data-importer.mapping.advanced-modal.transformer.group.load-import: Load / Import
-data-importer.mapping.advanced-modal.next-step: Next step
-data-importer.mapping.advanced-modal.previous-step: Previous step
 data-importer.mapping.advanced-modal.recalculate-result-type: Recalculate transformation result type
 data-importer.mapping.advanced-modal.step-source.label: Source Attribute(s)
 data-importer.mapping.advanced-modal.step-source.description: Choose from the list or add a new source
@@ -274,8 +272,6 @@ data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Field name
 data-importer.mapping.advanced-modal.step-target.overwrite: Overwrite
 data-importer.mapping.advanced-modal.step-target.preview-result: Preview Result
-data-importer.mapping.advanced-modal.step-target.previous-step: Previous step
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Confirm mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Write to this field even if the target field already contains a value
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Write to this field even if the source data is empty
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Overwrite Mode

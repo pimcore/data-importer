@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
+import { IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
 import { ResultPreview } from '../result-preview/result-preview'
 import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-transformations.styles'
@@ -23,8 +23,6 @@ export interface StepTransformationsRightColumnProps {
   onBlurSource: () => void
   onChangeSource: (v: string[]) => void
   getSourceLabel: (value: string) => string
-  onPrev: () => void
-  onNext: () => void
 }
 
 export const StepTransformationsRightColumn = ({
@@ -34,9 +32,7 @@ export const StepTransformationsRightColumn = ({
   onToggleEditing,
   onBlurSource,
   onChangeSource,
-  getSourceLabel,
-  onPrev,
-  onNext
+  getSourceLabel
 }: StepTransformationsRightColumnProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -46,84 +42,60 @@ export const StepTransformationsRightColumn = ({
     <Flex
       className={ styles.rightColumn }
       gap="extra-small"
-      justify="space-between"
       vertical
     >
       <Flex
-        gap="extra-small"
+        gap="mini"
         vertical
       >
         <Flex
+          align="center"
+          className={ styles.sourceSectionHeader }
           gap="mini"
-          vertical
         >
-          <Flex
-            align="center"
-            className={ styles.sourceSectionHeader }
-            gap="mini"
-          >
-            <span className={ styles.sourceSectionTitle }>
-              { t('data-importer.mapping.advanced-modal.step-source.label') }
-            </span>
-            <IconButton
-              icon={ { value: 'edit-pen' } }
-              onClick={ onToggleEditing }
-              size="small"
-              tooltip={ { title: t('data-importer.mapping.advanced-modal.transformer.edit-source') } }
-              type="text"
-            />
-          </Flex>
-
-          { editingSource
-            ? (
-              <Select
-                className={ shared.selectFull }
-                mode="multiple"
-                onBlur={ onBlurSource }
-                onChange={ (v) => { onChangeSource(Array.isArray(v) ? (v as string[]) : []) } }
-                options={ columnHeaderOptions }
-                showSearch
-                value={ dataSourceIndex }
-              />
-              )
-            : (
-              <Flex
-                className={ styles.sourceValues }
-                wrap="wrap"
-              >
-                { dataSourceIndex.length === 0
-                  ? <span className={ styles.emptyState }>{ '—' }</span>
-                  : dataSourceIndex.map((v, i) => (
-                    <React.Fragment key={ v }>
-                      { i > 0 && <span className={ styles.sourceSeparator }>{ ' | ' }</span> }
-                      <span>{ getSourceLabel(v) }</span>
-                    </React.Fragment>
-                    ))
-                }
-              </Flex>
-              ) }
+          <span className={ styles.sourceSectionTitle }>
+            { t('data-importer.mapping.advanced-modal.step-source.label') }
+          </span>
+          <IconButton
+            icon={ { value: 'edit-pen' } }
+            onClick={ onToggleEditing }
+            size="small"
+            tooltip={ { title: t('data-importer.mapping.advanced-modal.transformer.edit-source') } }
+            type="text"
+          />
         </Flex>
 
-        <ResultPreview />
+        { editingSource
+          ? (
+            <Select
+              className={ shared.selectFull }
+              mode="multiple"
+              onBlur={ onBlurSource }
+              onChange={ (v) => { onChangeSource(Array.isArray(v) ? (v as string[]) : []) } }
+              options={ columnHeaderOptions }
+              showSearch
+              value={ dataSourceIndex }
+            />
+            )
+          : (
+            <Flex
+              className={ styles.sourceValues }
+              wrap="wrap"
+            >
+              { dataSourceIndex.length === 0
+                ? <span className={ styles.emptyState }>{ '—' }</span>
+                : dataSourceIndex.map((v, i) => (
+                  <React.Fragment key={ v }>
+                    { i > 0 && <span className={ styles.sourceSeparator }>{ ' | ' }</span> }
+                    <span>{ getSourceLabel(v) }</span>
+                  </React.Fragment>
+                  ))
+              }
+            </Flex>
+            ) }
       </Flex>
 
-      <Flex
-        gap="extra-small"
-        justify="flex-end"
-      >
-        <Button
-          onClick={ onPrev }
-          type="default"
-        >
-          { t('data-importer.mapping.advanced-modal.previous-step') }
-        </Button>
-        <Button
-          onClick={ onNext }
-          type="default"
-        >
-          { t('data-importer.mapping.advanced-modal.next-step') }
-        </Button>
-      </Flex>
+      <ResultPreview />
     </Flex>
   )
 }
