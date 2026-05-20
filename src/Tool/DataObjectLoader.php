@@ -61,7 +61,7 @@ class DataObjectLoader
     public function loadByAttribute(string $className,
         string $attributeName,
         string $identifier,
-        ?string $attributeLanguage = null,
+        string $attributeLanguage = '',
         bool $includeUnpublished = false,
         int $limit = 0,
         string $operator = '='): ?ElementInterface

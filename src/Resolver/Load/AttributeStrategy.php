@@ -23,7 +23,7 @@ class AttributeStrategy extends AbstractLoad
     protected $attributeName;
 
     /**
-     * @var ?string
+     * @var string
      */
     protected $attributeLanguage;
 
@@ -46,7 +46,7 @@ class AttributeStrategy extends AbstractLoad
         }
 
         $this->attributeName = $settings['attributeName'];
-        $this->attributeLanguage = $settings['language'] ?? null;
+        $this->attributeLanguage = $settings['language'] ?? '';
         $this->includeUnpublished = $settings['includeUnpublished'] ?? false;
     }
 
