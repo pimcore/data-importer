@@ -23,7 +23,7 @@ class AttributeStrategy extends AbstractLoad
     protected $attributeName;
 
     /**
-     * @var string
+     * @var ?string
      */
     protected $attributeLanguage;
 
