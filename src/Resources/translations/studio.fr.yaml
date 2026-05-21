@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Veuillez sélectionner une colo
 data-importer.mapping.collapse-all: Tout réduire
 data-importer.mapping.expand-all: Tout développer
 data-importer.mapping.auto-fill: Remplissage automatique
+data-importer.mapping.autofill-suggestions.title: Suggestions de remplissage automatique Copilot
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Source
+data-importer.mapping.autofill-suggestions.destination: Destination (Cible de données)
+data-importer.mapping.autofill-suggestions.result: Résultat de prévisualisation
+data-importer.mapping.autofill-suggestions.selected: '{{count}} sélectionné(s)'
+data-importer.mapping.autofill-suggestions.reject-all: Tout rejeter
+data-importer.mapping.autofill-suggestions.apply: Appliquer le remplissage automatique sélectionné
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Aucune suggestion trouvée pour les colonnes non mappées.
+data-importer.mapping.autofill-suggestions.no-source-columns: Aucune colonne source disponible. Veuillez d'abord effectuer un aperçu de l'importation.
 data-importer.mapping.empty-state: Commencez à créer un Mapping directement depuis la colonne Sources, ou cliquez sur Nouveau pour en créer un manuellement.
 data-importer.mapping.filter-empty: 'Aucun Mapping pour « {{source}} » pour le moment.'
 data-importer.mapping.sources.title: Sources avec aperçu
