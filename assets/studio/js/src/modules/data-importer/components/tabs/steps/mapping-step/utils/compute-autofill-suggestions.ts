@@ -156,22 +156,20 @@ function matchScore (sourceLabel: string, attr: ClassAttribute): number {
   return Math.round(best * 100)
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+// ─── Private helpers ──────────────────────────────────────────────────────────
 
-export function computeAutofillSuggestions (
-  columnHeaderOptions: Array<{ value: string, label: string }>,
-  attributesMap: Record<string, ClassAttribute[]>,
-  existingMappings: MappingConfigItem[],
-  sourceRows: SourceRow[]
-): MappingSuggestion[] {
-  const usedIndices = new Set<string>()
+function buildUsedIndices (existingMappings: MappingConfigItem[]): Set<string> {
+  const used = new Set<string>()
   existingMappings.forEach((item) => {
-    ;(item.dataSourceIndex ?? []).forEach((idx) => usedIndices.add(idx))
+    ;(item.dataSourceIndex ?? []).forEach((idx) => used.add(idx))
   })
+  return used
+}
 
-  // Flatten attributes across all transformation-type buckets, deduplicating by
-  // attribute key. DEFAULT_ATTR_MAP_KEY is processed first so its entries win
-  // when the same field appears in multiple buckets.
+// Flatten attributes across all transformation-type buckets, deduplicating by
+// attribute key. DEFAULT_ATTR_MAP_KEY is processed first so its entries win
+// when the same field appears in multiple buckets.
+function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): ClassAttribute[] {
   const attrsByKey = new Map<string, ClassAttribute>()
   const keyOrder = [
     DEFAULT_ATTR_MAP_KEY,
@@ -184,65 +182,81 @@ export function computeAutofillSuggestions (
       }
     }
   }
-  const attrs = Array.from(attrsByKey.values())
+  return Array.from(attrsByKey.values())
+}
 
+interface BestMatch {
+  attr: ClassAttribute
+  score: number
+  language: string | null
+}
+
+// Track full-name match and locale-aware base-name match separately to
+// avoid order-dependent language clearing when a later full match ties.
+function findBestMatch (label: string, attrs: ClassAttribute[]): BestMatch | null {
+  const detectedLocale = detectLocaleSuffix(label)
+  let bestFullScore = -1
+  let bestFullAttr: ClassAttribute | null = null
+  let bestBaseScore = -1
+  let bestBaseAttr: ClassAttribute | null = null
+  let bestBaseLanguage: string | null = null
+
+  for (const attr of attrs) {
+    const score = matchScore(label, attr)
+    if (score > bestFullScore) {
+      bestFullScore = score
+      bestFullAttr = attr
+    }
+    if (attr.localized === true && detectedLocale !== null) {
+      const baseScore = matchScore(detectedLocale.base, attr)
+      if (baseScore > bestBaseScore) {
+        bestBaseScore = baseScore
+        bestBaseAttr = attr
+        bestBaseLanguage = detectedLocale.locale
+      }
+    }
+  }
+
+  // Prefer the base match when it scores at least as well as the full match
+  // so that a localized field with language wins over a bare full-name match.
+  const useBase = bestBaseScore >= bestFullScore && bestBaseAttr !== null
+  const attr = useBase ? bestBaseAttr! : bestFullAttr
+  const score = useBase ? bestBaseScore : bestFullScore
+  const language = useBase ? bestBaseLanguage : null
+
+  if (attr === null || score < MIN_SCORE) return null
+  return { attr, score, language }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+export function computeAutofillSuggestions (
+  columnHeaderOptions: Array<{ value: string, label: string }>,
+  attributesMap: Record<string, ClassAttribute[]>,
+  existingMappings: MappingConfigItem[],
+  sourceRows: SourceRow[]
+): MappingSuggestion[] {
+  const usedIndices = buildUsedIndices(existingMappings)
+  const attrs = flattenAttributes(attributesMap)
   const suggestions: MappingSuggestion[] = []
 
   for (const col of columnHeaderOptions) {
     if (usedIndices.has(col.value)) continue
 
-    // Pre-compute locale suffix detection once per column (shared across attrs).
-    const detectedLocale = detectLocaleSuffix(col.label)
+    const best = findBestMatch(col.label, attrs)
+    if (best === null) continue
 
-    // Track full-name match and locale-aware base-name match separately to
-    // avoid order-dependent language clearing when a later full match ties.
-    let bestFullScore = -1
-    let bestFullAttr: ClassAttribute | null = null
-
-    let bestBaseScore = -1
-    let bestBaseAttr: ClassAttribute | null = null
-    let bestBaseLanguage: string | null = null
-
-    for (const attr of attrs) {
-      // Full source label match — works for any attribute type.
-      const score = matchScore(col.label, attr)
-      if (score > bestFullScore) {
-        bestFullScore = score
-        bestFullAttr = attr
-      }
-
-      // Base name match — only tried for localized attributes and when a locale
-      // suffix was detected. Handles description_de → description (lang: de).
-      if (attr.localized === true && detectedLocale !== null) {
-        const baseScore = matchScore(detectedLocale.base, attr)
-        if (baseScore > bestBaseScore) {
-          bestBaseScore = baseScore
-          bestBaseAttr = attr
-          bestBaseLanguage = detectedLocale.locale
-        }
-      }
-    }
-
-    // Prefer the base match when it scores at least as well as the full match
-    // so that a localized field with language wins over a bare full-name match.
-    const useBase = bestBaseScore >= bestFullScore && bestBaseAttr !== null
-    const bestScore = useBase ? bestBaseScore : bestFullScore
-    const bestAttr = useBase ? bestBaseAttr : bestFullAttr
-    const bestLanguage = useBase ? bestBaseLanguage : null
-
-    if (bestAttr !== null && bestScore >= MIN_SCORE) {
-      const previewRow = sourceRows.find((r) => r.dataIndex === col.value)
-      suggestions.push({
-        id: uuid(),
-        sourceIndex: col.value,
-        sourceLabel: col.label,
-        targetFieldName: bestAttr.key,
-        targetFieldLabel: bestAttr.title,
-        score: bestScore,
-        language: bestLanguage,
-        previewResult: previewRow?.value ?? null
-      })
-    }
+    const previewRow = sourceRows.find((r) => r.dataIndex === col.value)
+    suggestions.push({
+      id: uuid(),
+      sourceIndex: col.value,
+      sourceLabel: col.label,
+      targetFieldName: best.attr.key,
+      targetFieldLabel: best.attr.title,
+      score: best.score,
+      language: best.language,
+      previewResult: previewRow?.value ?? null
+    })
   }
 
   return suggestions.sort((a, b) => b.score - a.score)
