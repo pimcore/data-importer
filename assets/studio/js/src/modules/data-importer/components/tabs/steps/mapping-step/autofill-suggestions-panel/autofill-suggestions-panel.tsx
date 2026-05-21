@@ -115,50 +115,50 @@ export const AutofillSuggestionsPanel = ({
       </Flex>
 
       { suggestions.map((suggestion) => (
+        <Flex
+          align="center"
+          className={ styles.tableRow }
+          gap="small"
+          key={ suggestion.id }
+          onClick={ () => { onToggle(suggestion.id) } }
+        >
+          <div className={ styles.checkboxCell }>
+            <Checkbox
+              checked={ selectedIds.has(suggestion.id) }
+              onChange={ () => { onToggle(suggestion.id) } }
+              onClick={ (e) => { e.stopPropagation() } }
+            />
+          </div>
+          <div className={ styles.scoreCell }>
             <Flex
               align="center"
-              className={ styles.tableRow }
-              gap="small"
-              key={ suggestion.id }
-              onClick={ () => { onToggle(suggestion.id) } }
+              gap={ 6 }
             >
-              <div className={ styles.checkboxCell }>
-                <Checkbox
-                  checked={ selectedIds.has(suggestion.id) }
-                  onChange={ () => { onToggle(suggestion.id) } }
-                  onClick={ (e) => { e.stopPropagation() } }
-                />
-              </div>
-              <div className={ styles.scoreCell }>
-                <Flex
-                  align="center"
-                  gap={ 6 }
-                >
-                  <span className={ styles.scoreText }>{ `${suggestion.score}%` }</span>
-                  <span className={ scoreDotClass(suggestion.score, styles) } />
-                </Flex>
-              </div>
-              <div className={ styles.sourceCell }>
-                <span className={ styles.cellText }>{ `${suggestion.sourceLabel} [${suggestion.sourceIndex}]` }</span>
-              </div>
-              <div className={ styles.arrowCell }>
-                <MappingArrowIcon fill={ theme.colorTextTertiary } />
-              </div>
-              <div className={ styles.destinationCell }>
-                <span className={ styles.cellText }>
-                  { `Direct, ${suggestion.targetFieldLabel}` }
-                </span>
-                { suggestion.language !== null && (
-                  <Tag className={ styles.localeTag }>
-                    { suggestion.language }
-                  </Tag>
-                ) }
-              </div>
-              <div className={ styles.resultCell }>
-                { previewRow[suggestion.sourceIndex] ?? '' }
-              </div>
+              <span className={ styles.scoreText }>{ `${suggestion.score}%` }</span>
+              <span className={ scoreDotClass(suggestion.score, styles) } />
             </Flex>
-          )) }
+          </div>
+          <div className={ styles.sourceCell }>
+            <span className={ styles.cellText }>{ `${suggestion.sourceLabel} [${suggestion.sourceIndex}]` }</span>
+          </div>
+          <div className={ styles.arrowCell }>
+            <MappingArrowIcon fill={ theme.colorTextTertiary } />
+          </div>
+          <div className={ styles.destinationCell }>
+            <span className={ styles.cellText }>
+              { `Direct, ${suggestion.targetFieldLabel}` }
+            </span>
+            { suggestion.language !== null && (
+            <Tag className={ styles.localeTag }>
+              { suggestion.language }
+            </Tag>
+            ) }
+          </div>
+          <div className={ styles.resultCell }>
+            { previewRow[suggestion.sourceIndex] ?? '' }
+          </div>
+        </Flex>
+      )) }
     </Flex>
   )
 }
