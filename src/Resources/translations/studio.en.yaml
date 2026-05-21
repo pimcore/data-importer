@@ -205,6 +205,16 @@ data-importer.mapping.new-modal.source-required: Please select a source column
 data-importer.mapping.collapse-all: Collapse all
 data-importer.mapping.expand-all: Expand all
 data-importer.mapping.auto-fill: Autofill
+data-importer.mapping.autofill-suggestions.title: Copilot autofill suggestions
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Source
+data-importer.mapping.autofill-suggestions.destination: Destination (Data Target)
+data-importer.mapping.autofill-suggestions.result: Preview Result
+data-importer.mapping.autofill-suggestions.selected: '{{count}} selected'
+data-importer.mapping.autofill-suggestions.reject-all: Reject all
+data-importer.mapping.autofill-suggestions.apply: Apply selected autofill
+data-importer.mapping.autofill-suggestions.empty: No suggestions found for unmapped columns.
+data-importer.mapping.autofill-suggestions.no-source-columns: No source columns available. Please run a preview import first.
 data-importer.mapping.empty-state: Start creating a mapping directly from the Sources column, or click New to create one manually.
 data-importer.mapping.filter-empty: 'No mappings for "{{source}}" yet.'
 data-importer.mapping.sources.title: Sources with preview
