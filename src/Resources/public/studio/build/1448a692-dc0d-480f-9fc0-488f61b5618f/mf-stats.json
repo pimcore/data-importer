@@ -22,7 +22,7 @@
     "globalName": "pimcore_dataimporter_bundle",
     "pluginVersion": "2.3.1",
     "prefetchInterface": false,
-    "publicPath": "/bundles/pimcoredataimporter/studio/build/e852ef3c-86c3-410c-9f0b-fdcb46d4e153/"
+    "publicPath": "/bundles/pimcoredataimporter/studio/build/1448a692-dc0d-480f-9fc0-488f61b5618f/"
   },
   "shared": [
     {
@@ -38,7 +38,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/272.5aa86da5.js"
+            "static/js/async/vendors-node_modules_tanstack_react-table_build_lib_index_mjs.js"
           ]
         },
         "css": {
@@ -46,9 +46,7 @@
           "sync": []
         }
       },
-      "usedIn": [
-        "."
-      ],
+      "usedIn": [],
       "usedExports": [],
       "fallback": ""
     },
@@ -65,7 +63,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/745.56a11b0d.js"
+            "static/js/async/vendors-node_modules_antd-style_es_index_js.js"
           ]
         },
         "css": {
@@ -73,9 +71,7 @@
           "sync": []
         }
       },
-      "usedIn": [
-        "."
-      ],
+      "usedIn": [],
       "usedExports": [],
       "fallback": ""
     },
@@ -92,7 +88,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/67.8469aaea.js"
+            "static/js/async/node_modules_classnames_index_js.js"
           ]
         },
         "css": {
@@ -100,9 +96,7 @@
           "sync": []
         }
       },
-      "usedIn": [
-        "."
-      ],
+      "usedIn": [],
       "usedExports": [],
       "fallback": ""
     },
@@ -119,7 +113,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/668.1ae87f0f.js"
+            "static/js/async/vendors-node_modules_lodash_lodash_js.js"
           ]
         },
         "css": {
@@ -127,9 +121,7 @@
           "sync": []
         }
       },
-      "usedIn": [
-        "."
-      ],
+      "usedIn": [],
       "usedExports": [],
       "fallback": ""
     },
@@ -145,8 +137,8 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/109.4563ef16.js",
-            "static/js/remoteEntry.js"
+            "static/js/remoteEntry.js",
+            "static/js/vendors-node_modules_react-dom_index_js-node_modules_react_index_js-node_modules_rspack_plugi-1cd392.js"
           ]
         },
         "css": {
@@ -170,8 +162,8 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/109.4563ef16.js",
-            "static/js/remoteEntry.js"
+            "static/js/remoteEntry.js",
+            "static/js/vendors-node_modules_react-dom_index_js-node_modules_react_index_js-node_modules_rspack_plugi-1cd392.js"
           ]
         },
         "css": {
@@ -179,9 +171,7 @@
           "sync": []
         }
       },
-      "usedIn": [
-        "."
-      ],
+      "usedIn": [],
       "usedExports": [],
       "fallback": ""
     },
@@ -198,7 +188,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/658.b1390ae9.js"
+            "static/js/async/vendors-node_modules_uuid_dist_esm-browser_index_js.js"
           ]
         },
         "css": {
@@ -206,9 +196,7 @@
           "sync": []
         }
       },
-      "usedIn": [
-        "."
-      ],
+      "usedIn": [],
       "usedExports": [],
       "fallback": ""
     }
@@ -220,7 +208,8 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": ".",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/step-transformations.tsx",
+        "js/src/modules/data-importer/index.tsx"
       ],
       "version": "*"
     },
@@ -230,7 +219,9 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.pluginRemotes['pimcore_datahub_bundle']\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_datahub_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_datahub_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_datahub_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_datahub_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_datahub_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_datahub_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_datahub_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": ".",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/data-importer-detail-view.tsx",
+        "js/src/modules/data-importer/dynamic-types/dynamic-type-data-importer-data-object.tsx",
+        "js/src/modules/data-importer/index.tsx"
       ],
       "version": "*"
     },
@@ -240,7 +231,71 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "app",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/data-importer-detail-view.tsx",
+        "js/src/modules/data-importer/components/tabs/data-setup-tab.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/cron-definition-section/cron-definition-section.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/execution-status/execution-status.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/manual-execution-button/manual-execution-button.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/filter-sidebar/filter-sidebar.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/import-logs.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/advanced-mapping-modal.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/preview-panel/preview-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-source/step-source.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/classification-store-key-modal/classification-store-key-modal.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target-fields.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target-preview-actions.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/step-transformations-right-column.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/step-transformations.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/transformers-dnd-list.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/data-source-step/data-source-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/csv-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/json-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/sql-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/xlsx-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/xml-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/asset-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/http-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/push-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/sftp-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/sql-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/upload-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/autofill-suggestions-panel/autofill-suggestions-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item-content.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/empty-drop-zone.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/filtered-empty-state.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/mappings-panel-content.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/source-picker-content/source-picker-content.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/sources-panel/sources-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/preview-import-step/preview-import-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/processing-settings-step/processing-settings-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/creation-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/loading-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/location-update-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/publishing-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/resolver-step.tsx",
+        "js/src/modules/data-importer/dynamic-types/dynamic-type-data-importer-data-object.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/combine/dynamic-type-transformer-combine.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/conditional-conversion/dynamic-type-transformer-conditional-conversion.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/date/dynamic-type-transformer-date.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/dynamic-type-transformer-abstract.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/dynamic-type-transformer-no-settings.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/dynamic-type-transformer-registry.ts",
+        "js/src/modules/data-importer/dynamic-types/transformer/explode/dynamic-type-transformer-explode.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/import-asset/dynamic-type-transformer-import-asset.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/load-asset/dynamic-type-transformer-load-asset.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/load-data-object/dynamic-type-transformer-load-data-object.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/numeric/dynamic-type-transformer-numeric.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/object-field/dynamic-type-transformer-object-field.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/quantity-value/dynamic-type-transformer-quantity-value.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/static-text/dynamic-type-transformer-static-text.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/string-replace/dynamic-type-transformer-string-replace.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/trim/dynamic-type-transformer-trim.tsx"
       ],
       "version": "*"
     },
@@ -250,7 +305,13 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "modules/app",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/data-importer-detail-view.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/execution-status/execution-status.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/advanced-mapping-modal.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/preview-import-step/preview-import-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/resolver-step.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/load-data-object/load-data-object-transformer-form.tsx"
       ],
       "version": "*"
     },
@@ -260,7 +321,76 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "components",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/data-setup-tab.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/cron-definition-section/cron-definition-section.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/execution-status/execution-status.tsx",
+        "js/src/modules/data-importer/components/tabs/execution-tab/manual-execution-button/manual-execution-button.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/filter-sidebar/filter-sidebar.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/import-logs.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/sidebar-provider/sidebar-provider.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/advanced-mapping-modal.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/preview-panel/preview-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/result-preview/result-preview.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-source/step-source.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/classification-store-key-modal/classification-store-key-modal.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target-fields.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target-preview-actions.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/step-transformations-right-column.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/step-transformations.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/transformer-card/transformer-card.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/data-importer-panel/data-importer-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/data-source-step/data-source-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/csv-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/json-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/sql-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/xlsx-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/interpreters/xml-interpreter-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/asset-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/http-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/push-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/sftp-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/sql-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/upload-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/autofill-suggestions-panel/autofill-suggestions-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/dnd-class-div/dnd-class-div.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/arrow-column/arrow-column.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-drop-zone.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item-content.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item-with-filter.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/empty-drop-zone.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/filtered-empty-state.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/mappings-panel-content.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/mappings-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/source-picker-content/source-picker-content.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/sources-panel/sources-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/preview-import-step/preview-import-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/processing-settings-step/processing-settings-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/creation-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/loading-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/location-update-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/publishing-panel.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/resolver-step.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/combine/combine-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/conditional-conversion/conditional-conversion-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/date/date-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/dynamic-type-transformer-no-settings.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/explode/explode-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/import-asset/import-asset-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/load-asset/load-asset-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/load-data-object/load-data-object-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/numeric/numeric-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/object-field/object-field-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/quantity-value/quantity-value-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/static-text/static-text-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/string-replace/string-replace-transformer-form.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/transformer-settings-layout.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/trim/trim-transformer-form.tsx"
       ],
       "version": "*"
     },
@@ -270,7 +400,9 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "modules/application-logger",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/import-logs-tab.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/filter-sidebar/filter-sidebar.tsx",
+        "js/src/modules/data-importer/components/tabs/import-logs/import-logs.tsx"
       ],
       "version": "*"
     },
@@ -280,7 +412,8 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "api/class-definition",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/resolver-step.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/load-data-object/load-data-object-transformer-form.tsx"
       ],
       "version": "*"
     },
@@ -290,7 +423,10 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "api",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/import-logs/import-logs.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/loaders/upload-loader-settings.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/preview-import-step/preview-import-step.tsx",
+        "js/src/modules/data-importer/data-importer-api-slice.gen.ts"
       ],
       "version": "*"
     },
@@ -300,7 +436,9 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "utils",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/utils/compute-autofill-suggestions.ts",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/utils/mapping-factory.ts",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/utils/mapping-identity.ts"
       ],
       "version": "*"
     },
@@ -310,7 +448,11 @@
       "federationContainerName": "promise new Promise((resolve) => {\n    const emptyContainer = {\n      get: () => Promise.resolve(() => ({})),\n      init: () => {}\n    }\n\n    const remoteUrl = window.StudioUIBundleRemoteUrl\n\n    if (!remoteUrl) {\n      throw new Error('Required remote \"pimcore_studio_ui_bundle\" is not available');\n      return\n    }\n\n    // Check if the container is already available\n    if (window['pimcore_studio_ui_bundle']) {\n      resolve({\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      })\n      return\n    }\n\n    const script = document.createElement('script')\n    script.src = remoteUrl\n    script.onload = () => {\n      const proxy = {\n        get: (request) => window['pimcore_studio_ui_bundle'].get(request),\n        init: (...arg) => {\n          try {\n            return window['pimcore_studio_ui_bundle'].init(...arg)\n          } catch(e) {\n            console.log('remote container already initialized')\n          }\n        }\n      }\n      resolve(proxy)\n    }\n    script.onerror = () => {\n      throw new Error('Failed to load required remote \"pimcore_studio_ui_bundle\" from ' + remoteUrl);\n    }\n    document.head.appendChild(script);\n  })\n  ",
       "moduleName": "modules/element",
       "usedIn": [
-        "js/src/plugins.ts + 147 modules"
+        "js/src/modules/data-importer/components/tabs/steps/data-source-step/data-source-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/field-width-limiter/field-width-limiter.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/mapping-step/mapping-step.tsx",
+        "js/src/modules/data-importer/components/tabs/steps/resolver-step/resolver-step.tsx",
+        "js/src/modules/data-importer/dynamic-types/transformer/transformer-settings-layout.tsx"
       ],
       "version": "*"
     }
@@ -320,21 +462,14 @@
       "path": ".",
       "id": "pimcore_dataimporter_bundle:.",
       "name": ".",
-      "requires": [
-        "react",
-        "lodash",
-        "classnames",
-        "antd-style",
-        "@tanstack/react-table",
-        "uuid"
-      ],
+      "requires": [],
       "file": "js/src/plugins.ts",
       "assets": {
         "js": {
           "sync": [
-            "static/js/async/359.ef7a6289.js",
-            "static/js/async/132.c328628b.js",
-            "static/js/async/__federation_expose_default_export.d957b108.js"
+            "static/js/async/vendors-node_modules_ant-design_icons_es_icons_LoadingOutlined_js-node_modules_antd_es_theme_-dd65f3.js",
+            "static/js/async/vendors-node_modules_dnd-kit_modifiers_dist_modifiers_esm_js-node_modules_dnd-kit_sortable_di-9d5f10.js",
+            "static/js/async/__federation_expose_default_export.js"
           ],
           "async": []
         },

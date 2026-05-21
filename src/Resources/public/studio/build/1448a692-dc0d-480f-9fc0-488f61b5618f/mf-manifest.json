@@ -22,7 +22,7 @@
     "globalName": "pimcore_dataimporter_bundle",
     "pluginVersion": "2.3.1",
     "prefetchInterface": false,
-    "publicPath": "/bundles/pimcoredataimporter/studio/build/e852ef3c-86c3-410c-9f0b-fdcb46d4e153/"
+    "publicPath": "/bundles/pimcoredataimporter/studio/build/1448a692-dc0d-480f-9fc0-488f61b5618f/"
   },
   "shared": [
     {
@@ -35,7 +35,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/272.5aa86da5.js"
+            "static/js/async/vendors-node_modules_tanstack_react-table_build_lib_index_mjs.js"
           ]
         },
         "css": {
@@ -55,7 +55,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/745.56a11b0d.js"
+            "static/js/async/vendors-node_modules_antd-style_es_index_js.js"
           ]
         },
         "css": {
@@ -75,7 +75,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/67.8469aaea.js"
+            "static/js/async/node_modules_classnames_index_js.js"
           ]
         },
         "css": {
@@ -95,7 +95,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/668.1ae87f0f.js"
+            "static/js/async/vendors-node_modules_lodash_lodash_js.js"
           ]
         },
         "css": {
@@ -115,8 +115,8 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/109.4563ef16.js",
-            "static/js/remoteEntry.js"
+            "static/js/remoteEntry.js",
+            "static/js/vendors-node_modules_react-dom_index_js-node_modules_react_index_js-node_modules_rspack_plugi-1cd392.js"
           ]
         },
         "css": {
@@ -136,8 +136,8 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/109.4563ef16.js",
-            "static/js/remoteEntry.js"
+            "static/js/remoteEntry.js",
+            "static/js/vendors-node_modules_react-dom_index_js-node_modules_react_index_js-node_modules_rspack_plugi-1cd392.js"
           ]
         },
         "css": {
@@ -157,7 +157,7 @@
         "js": {
           "async": [],
           "sync": [
-            "static/js/async/658.b1390ae9.js"
+            "static/js/async/vendors-node_modules_uuid_dist_esm-browser_index_js.js"
           ]
         },
         "css": {
@@ -237,9 +237,9 @@
       "assets": {
         "js": {
           "sync": [
-            "static/js/async/359.ef7a6289.js",
-            "static/js/async/132.c328628b.js",
-            "static/js/async/__federation_expose_default_export.d957b108.js"
+            "static/js/async/vendors-node_modules_ant-design_icons_es_icons_LoadingOutlined_js-node_modules_antd_es_theme_-dd65f3.js",
+            "static/js/async/vendors-node_modules_dnd-kit_modifiers_dist_modifiers_esm_js-node_modules_dnd-kit_sortable_di-9d5f10.js",
+            "static/js/async/__federation_expose_default_export.js"
           ],
           "async": []
         },
