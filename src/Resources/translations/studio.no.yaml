@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Vennligst velg en kildekolonne
 data-importer.mapping.collapse-all: Skjul alle
 data-importer.mapping.expand-all: Vis alle
 data-importer.mapping.auto-fill: Autoutfyll
+data-importer.mapping.autofill-suggestions.title: Copilot autoutfyll-forslag
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Kilde
+data-importer.mapping.autofill-suggestions.destination: Destinasjon (Datamål)
+data-importer.mapping.autofill-suggestions.result: Forhåndsvisningsresultat
+data-importer.mapping.autofill-suggestions.selected: '{{count}} valgt'
+data-importer.mapping.autofill-suggestions.reject-all: Avvis alle
+data-importer.mapping.autofill-suggestions.apply: Bruk valgt autoutfyll
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Ingen forslag funnet for ikke-tilordnede kolonner.
+data-importer.mapping.autofill-suggestions.no-source-columns: Ingen kildekolonner tilgjengelig. Kjør en forhåndsvisning av importen først.
 data-importer.mapping.empty-state: Opprett en mapping direkte fra kildekolonnen, eller klikk Ny for å opprette en manuelt.
 data-importer.mapping.filter-empty: 'Ingen mappinger for «{{source}}» ennå.'
 data-importer.mapping.sources.title: Kilder med forhåndsvisning

@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Välj en källkolumn
 data-importer.mapping.collapse-all: Fäll ihop alla
 data-importer.mapping.expand-all: Expandera alla
 data-importer.mapping.auto-fill: Autofyll
+data-importer.mapping.autofill-suggestions.title: Copilot autofyll-förslag
+data-importer.mapping.autofill-suggestions.score: Poäng
+data-importer.mapping.autofill-suggestions.source: Källa
+data-importer.mapping.autofill-suggestions.destination: Destination (Datamål)
+data-importer.mapping.autofill-suggestions.result: Förhandsvisningsresultat
+data-importer.mapping.autofill-suggestions.selected: '{{count}} vald(a)'
+data-importer.mapping.autofill-suggestions.reject-all: Avvisa alla
+data-importer.mapping.autofill-suggestions.apply: Tillämpa valt autofyll
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Inga förslag hittades för omappade kolumner.
+data-importer.mapping.autofill-suggestions.no-source-columns: Inga källkolumner tillgängliga. Kör en förhandsvisning av importen först.
 data-importer.mapping.empty-state: Skapa en mapping direkt från kolumnen Källor, eller klicka på Ny för att skapa en manuellt.
 data-importer.mapping.filter-empty: 'Inga mappings för "{{source}}" ännu.'
 data-importer.mapping.sources.title: Källor med förhandsvisning

@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Bitte wählen Sie eine Quellspa
 data-importer.mapping.collapse-all: Alle einklappen
 data-importer.mapping.expand-all: Alle ausklappen
 data-importer.mapping.auto-fill: Automatisch ausfüllen
+data-importer.mapping.autofill-suggestions.title: Copilot-Autofill-Vorschläge
+data-importer.mapping.autofill-suggestions.score: Übereinstimmung
+data-importer.mapping.autofill-suggestions.source: Quelle
+data-importer.mapping.autofill-suggestions.destination: Ziel (Datenziel)
+data-importer.mapping.autofill-suggestions.result: Vorschau-Ergebnis
+data-importer.mapping.autofill-suggestions.selected: '{{count}} ausgewählt'
+data-importer.mapping.autofill-suggestions.reject-all: Alle ablehnen
+data-importer.mapping.autofill-suggestions.apply: Ausgewähltes Autofill übernehmen
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Keine Vorschläge für nicht zugeordnete Spalten gefunden.
+data-importer.mapping.autofill-suggestions.no-source-columns: Keine Quellspalten verfügbar. Bitte führen Sie zuerst eine Import-Vorschau durch.
 data-importer.mapping.empty-state: Erstellen Sie ein Mapping direkt aus der Quellspalte oder klicken Sie auf Neu, um eines manuell zu erstellen.
 data-importer.mapping.filter-empty: 'Noch keine Mappings für „{{source}}".'
 data-importer.mapping.sources.title: Quellen mit Vorschau

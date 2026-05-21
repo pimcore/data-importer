@@ -26,16 +26,6 @@ export interface MappingSuggestion {
 
 const MIN_SCORE = 40
 
-// ─── Locale suffix detection ───────────────────────────────────────────────────
-
-// Detects locale suffixes from source column names. Handles these formats:
-//   description_de       → { base: 'description',  locale: 'de'    }
-//   description_de_DE    → { base: 'description',  locale: 'de_DE' }
-//   description_en-US    → { base: 'description',  locale: 'en_US' }
-//   first_name_fr        → { base: 'first_name',   locale: 'fr'    }
-//   price-pt_BR          → { base: 'price',        locale: 'pt_BR' }
-//   title.it             → { base: 'title',        locale: 'it'    }
-// Normalizes to lowercase lang + optional uppercase region joined by underscore.
 function detectLocaleSuffix (s: string, validLanguages: Set<string>): { base: string, locale: string } | null {
   const match = /^(.*?)[_.-]([a-z]{2})(?:[_-]([A-Za-z]{2,4}))?$/.exec(s)
   if (match === null) return null
@@ -48,8 +38,6 @@ function detectLocaleSuffix (s: string, validLanguages: Set<string>): { base: st
   return { base, locale }
 }
 
-// ─── String utilities ─────────────────────────────────────────────────────────
-
 function normalize (s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '')
 }
@@ -60,8 +48,6 @@ function tokenize (s: string): string[] {
     .map((t) => t.toLowerCase())
     .filter((t) => t.length > 0)
 }
-
-// ─── Similarity metrics ───────────────────────────────────────────────────────
 
 function bigramJaccard (a: string, b: string): number {
   if (a.length === 0 && b.length === 0) return 1
@@ -123,8 +109,6 @@ function matchScore (sourceLabel: string, attr: ClassAttribute): number {
   return Math.round(best * 100)
 }
 
-// ─── Private helpers ──────────────────────────────────────────────────────────
-
 function buildUsedIndices (existingMappings: MappingConfigItem[]): Set<string> {
   const used = new Set<string>()
   existingMappings.forEach((item) => {
@@ -133,9 +117,6 @@ function buildUsedIndices (existingMappings: MappingConfigItem[]): Set<string> {
   return used
 }
 
-// Flatten attributes across all transformation-type buckets, deduplicating by
-// attribute key. DEFAULT_ATTR_MAP_KEY is processed first so its entries win
-// when the same field appears in multiple buckets.
 function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): ClassAttribute[] {
   const attrsByKey = new Map<string, ClassAttribute>()
   const keyOrder = [
@@ -194,8 +175,6 @@ function findBestMatch (label: string, attrs: ClassAttribute[], validLanguages: 
   if (attr === null || score < MIN_SCORE) return null
   return { attr, score, language }
 }
-
-// ─── Public API ───────────────────────────────────────────────────────────────
 
 export function computeAutofillSuggestions (
   columnHeaderOptions: Array<{ value: string, label: string }>,

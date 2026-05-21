@@ -23,7 +23,6 @@ export interface AutofillSuggestionsPanelProps {
   selectedIds: Set<string>
   onToggle: (id: string) => void
   previewRow: Record<string, string | null>
-  previewRowIndex: number
   hasPrevRow: boolean
   isLoadingPreviewRow: boolean
   onPrevRow: () => void

@@ -544,7 +544,6 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
             onPrevRow={ handlePrevPreviewRow }
             onToggle={ handleToggleSuggestion }
             previewRow={ currentPreviewRow }
-            previewRowIndex={ autofillRecordIndex }
             selectedIds={ selectedSuggestionIds }
             suggestions={ suggestions }
           />
