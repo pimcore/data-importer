@@ -89,10 +89,8 @@ function normalize (s: string): string {
 
 function tokenize (s: string): string[] {
   return s
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-    .toLowerCase()
-    .split(/[\s_.-]+/)
+    .split(/(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|[\s_.-]+/)
+    .map((t) => t.toLowerCase())
     .filter((t) => t.length > 0)
 }
 
