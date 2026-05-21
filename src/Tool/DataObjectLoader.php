@@ -133,7 +133,7 @@ class DataObjectLoader
         string $attributeName,
         string $className,
         string $identifier,
-        ?string $attributeLanguage,
+        string $attributeLanguage,
         int $limit,
         array $objectTypes
     ): ?ElementInterface {
