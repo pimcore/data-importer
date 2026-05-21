@@ -12,38 +12,13 @@ import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ css, token }) => {
   return {
-    panel: css`
-      border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadiusLG}px;
-      background: ${token.colorBgContainer};
-      margin-bottom: ${token.paddingSM}px;
-      overflow: hidden;
-      flex-shrink: 0;
-    `,
-
-    header: css`
-      padding: ${token.paddingXS}px ${token.paddingMD}px;
-      background: ${token.colorFillTertiary};
-      border-bottom: 1px solid ${token.colorBorderSecondary};
-      cursor: pointer;
-      user-select: none;
-    `,
-
-    title: css`
-      font-weight: 600;
-      color: ${token.colorPrimary};
-      font-size: ${token.fontSize}px;
-    `,
-
     tableHeaderRow: css`
       padding: ${token.paddingXXS}px ${token.paddingMD}px;
       border-bottom: 1px solid ${token.colorBorderSecondary};
     `,
 
     tableHeaderCell: css`
-      font-size: ${token.fontSize}px;
       color: ${token.colorTextSecondary};
-      font-weight: 600;
       white-space: nowrap;
     `,
 
@@ -57,37 +32,16 @@ export const useStyles = createStyles(({ css, token }) => {
       }
     `,
 
-    checkboxCell: css`
-      width: 24px;
-      flex-shrink: 0;
-    `,
-
-    scoreCell: css`
-      width: 56px;
-      flex-shrink: 0;
-    `,
-
     sourceCell: css`
       flex: 1.5;
       min-width: 0;
       overflow: hidden;
     `,
 
-    arrowCell: css`
-      width: 36px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
-
     destinationCell: css`
       flex: 2.5;
       min-width: 0;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      gap: ${token.paddingXXS}px;
     `,
 
     localeTag: css`
@@ -96,35 +50,21 @@ export const useStyles = createStyles(({ css, token }) => {
       background-color: ${token.colorPrimaryBg} !important;
       color: ${token.colorPrimary} !important;
       border-color: ${token.colorPrimaryBorder} !important;
-      font-weight: 600;
     `,
 
     resultCell: css`
       flex: 2;
       min-width: 0;
       color: ${token.colorTextDescription};
-      font-size: ${token.fontSize}px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     `,
 
     cellText: css`
-      font-size: ${token.fontSize}px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-    `,
-
-    footer: css`
-      padding: ${token.paddingXS}px ${token.paddingMD}px;
-      border-top: 2px solid ${token.colorPrimary};
-      background: ${token.colorFillAlter};
-    `,
-
-    selectedCount: css`
-      font-size: ${token.fontSizeSM}px;
-      color: ${token.colorTextSecondary};
     `,
 
     emptyState: css`
@@ -132,9 +72,6 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     scoreText: css`
-      font-size: ${token.fontSize}px;
-      font-weight: 600;
-      color: ${token.colorText};
       white-space: nowrap;
     `,
 

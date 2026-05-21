@@ -41,7 +41,6 @@ export const AutofillSuggestionsPanel = ({
   selectedIds,
   onToggle,
   previewRow,
-  previewRowIndex,
   hasPrevRow,
   isLoadingPreviewRow,
   onPrevRow,
@@ -66,8 +65,8 @@ export const AutofillSuggestionsPanel = ({
         className={ styles.tableHeaderRow }
         gap="small"
       >
-        <div className={ styles.checkboxCell } />
-        <div className={ styles.scoreCell }>
+        <div style={ { width: 24, flexShrink: 0 } } />
+        <div style={ { width: 56, flexShrink: 0 } }>
           <span className={ styles.tableHeaderCell }>
             { t('data-importer.mapping.autofill-suggestions.score') }
           </span>
@@ -77,12 +76,16 @@ export const AutofillSuggestionsPanel = ({
             { t('data-importer.mapping.autofill-suggestions.source') }
           </span>
         </div>
-        <div className={ styles.arrowCell } />
-        <div className={ styles.destinationCell }>
+        <div style={ { width: 36, flexShrink: 0 } } />
+        <Flex
+          align="center"
+          className={ styles.destinationCell }
+          gap={ theme.paddingXXS }
+        >
           <span className={ styles.tableHeaderCell }>
             { t('data-importer.mapping.autofill-suggestions.destination') }
           </span>
-        </div>
+        </Flex>
         <div className={ styles.resultCell }>
           <Flex
             align="center"
@@ -122,14 +125,14 @@ export const AutofillSuggestionsPanel = ({
           key={ suggestion.id }
           onClick={ () => { onToggle(suggestion.id) } }
         >
-          <div className={ styles.checkboxCell }>
+          <div style={ { width: 24, flexShrink: 0 } }>
             <Checkbox
               checked={ selectedIds.has(suggestion.id) }
               onChange={ () => { onToggle(suggestion.id) } }
               onClick={ (e) => { e.stopPropagation() } }
             />
           </div>
-          <div className={ styles.scoreCell }>
+          <div style={ { width: 56, flexShrink: 0 } }>
             <Flex
               align="center"
               gap={ 6 }
@@ -141,19 +144,27 @@ export const AutofillSuggestionsPanel = ({
           <div className={ styles.sourceCell }>
             <span className={ styles.cellText }>{ `${suggestion.sourceLabel} [${suggestion.sourceIndex}]` }</span>
           </div>
-          <div className={ styles.arrowCell }>
+          <Flex
+            align="center"
+            justify="center"
+            style={ { width: 36, flexShrink: 0 } }
+          >
             <MappingArrowIcon fill={ theme.colorTextTertiary } />
-          </div>
-          <div className={ styles.destinationCell }>
+          </Flex>
+          <Flex
+            align="center"
+            className={ styles.destinationCell }
+            gap={ theme.paddingXXS }
+          >
             <span className={ styles.cellText }>
               { `Direct, ${suggestion.targetFieldLabel}` }
             </span>
             { suggestion.language !== null && (
-            <Tag className={ styles.localeTag }>
-              { suggestion.language }
-            </Tag>
+              <Tag className={ styles.localeTag }>
+                { suggestion.language }
+              </Tag>
             ) }
-          </div>
+          </Flex>
           <div className={ styles.resultCell }>
             { previewRow[suggestion.sourceIndex] ?? '' }
           </div>
