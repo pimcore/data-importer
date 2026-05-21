@@ -307,7 +307,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     const rows = autofillPreviewData.length > 0
       ? autofillPreviewData.map(normalizeDataRow)
       : sourceRows
-    return Object.fromEntries(rows.map((r) => [r.dataIndex, r.value]))
+    return rows.reduce<Record<string, string | null>>((acc, r) => { acc[r.dataIndex] = r.value; return acc }, {})
   }, [autofillPreviewData, sourceRows])
 
   const handleOpenAutofillSuggestions = useCallback((): void => {
@@ -425,7 +425,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
 
     const allSel = suggestions !== null && suggestions.length > 0 &&
       suggestions.every((s) => selectedSuggestionIds.has(s.id))
-    const someSel = suggestions !== null && suggestions.some((s) => selectedSuggestionIds.has(s.id))
+    const someSel = suggestions?.some((s) => selectedSuggestionIds.has(s.id)) === true
 
     return (
       <Flex style={ { width: '100%' } }>
