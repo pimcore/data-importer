@@ -23,6 +23,7 @@ import {
   useMessage
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { useSettings } from '@pimcore/studio-ui-bundle/modules/app'
 import { useTheme } from 'antd-style'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
 import { type MappingConfigItem } from '../../../../types'
@@ -53,6 +54,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
   const { styles } = useStyles()
   const { t } = useTranslation()
   const theme = useTheme()
+  const { validLanguages } = useSettings()
   const modal = useFormModal()
   const message = useMessage()
   const form = Form.useFormInstance()
@@ -321,12 +323,13 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
       columnHeaderOptions,
       attributesMap,
       currentItems,
-      sourceRows
+      sourceRows,
+      (validLanguages as string[] | undefined) ?? []
     )
     setSuggestions(computed)
     setSelectedSuggestionIds(new Set(computed.map((s) => s.id)))
     loadAutofillPreviewRecord(0)
-  }, [getMappingConfig, columnHeaderOptions, attributesMap, sourceRows, message, t, loadAutofillPreviewRecord])
+  }, [getMappingConfig, columnHeaderOptions, attributesMap, sourceRows, validLanguages, message, t, loadAutofillPreviewRecord])
 
   const handlePrevPreviewRow = useCallback((): void => {
     const prev = Math.max(0, autofillRecordIndex - 1)
