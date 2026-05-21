@@ -96,7 +96,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
   const getMappingConfig = useCallback(
     (): MappingConfigItem[] =>
-      ((form.getFieldsValue() as DataImporterFormValues).mappingConfig ?? []),
+      ((form.getFieldValue('mappingConfig') as MappingConfigItem[] | undefined) ?? []),
     [form]
   )
 
