@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { Checkbox, Flex, IconButton, NoContent, Tag } from '@pimcore/studio-ui-bundle/components'
+import { Checkbox, Flex, IconButton, NoContent, Spin, Tag } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useTheme } from 'antd-style'
 import { type MappingSuggestion } from '../utils/compute-autofill-suggestions'
@@ -79,7 +79,7 @@ export const AutofillSuggestionsPanel = ({
         <Flex
           align="center"
           className={ styles.destinationCell }
-          gap={ theme.paddingXXS }
+          gap={ theme.paddingSM }
         >
           <span className={ styles.tableHeaderCell }>
             { t('data-importer.mapping.autofill-suggestions.destination') }
@@ -153,7 +153,7 @@ export const AutofillSuggestionsPanel = ({
           <Flex
             align="center"
             className={ styles.destinationCell }
-            gap={ theme.paddingXXS }
+            gap={ theme.paddingSM }
           >
             <span className={ styles.cellText }>
               { `Direct, ${suggestion.targetFieldLabel}` }
@@ -165,7 +165,15 @@ export const AutofillSuggestionsPanel = ({
             ) }
           </Flex>
           <div className={ styles.resultCell }>
-            { previewRow[suggestion.sourceIndex] ?? '' }
+            { isLoadingPreviewRow
+              ? (
+                <Spin
+                  size="small"
+                  type="classic"
+                />
+                )
+              : (previewRow[suggestion.sourceIndex] ?? '')
+            }
           </div>
         </Flex>
       )) }
