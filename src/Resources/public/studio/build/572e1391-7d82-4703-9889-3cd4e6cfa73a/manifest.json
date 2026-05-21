@@ -1,0 +1,61 @@
+{
+  "allFiles": [
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/main.93eff637.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/remoteEntry.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/272.57a85350.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/67.5c1703b3.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/668.92531b7e.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/658.520c3151.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/__federation_expose_default_export.a99593e7.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/645.b3c45f89.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/359.62880c70.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/132.e1cc3cb5.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/109.b2c646d3.js",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/mf-stats.json",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/mf-manifest.json",
+    "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/main.html"
+  ],
+  "entries": {
+    "main": {
+      "html": [
+        "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/main.html"
+      ],
+      "initial": {
+        "js": [
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/109.b2c646d3.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/main.93eff637.js"
+        ]
+      },
+      "async": {
+        "js": [
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/359.62880c70.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/645.b3c45f89.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/658.520c3151.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/668.92531b7e.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/67.5c1703b3.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/272.57a85350.js"
+        ]
+      }
+    },
+    "pimcore_dataimporter_bundle": {
+      "initial": {
+        "js": [
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/remoteEntry.js"
+        ]
+      },
+      "async": {
+        "js": [
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/132.e1cc3cb5.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/359.62880c70.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/645.b3c45f89.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/__federation_expose_default_export.a99593e7.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/658.520c3151.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/668.92531b7e.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/67.5c1703b3.js",
+          "/bundles/pimcoredataimporter/studio/build/572e1391-7d82-4703-9889-3cd4e6cfa73a/static/js/async/272.57a85350.js"
+        ]
+      }
+    }
+  },
+  "integrity": {}
+}

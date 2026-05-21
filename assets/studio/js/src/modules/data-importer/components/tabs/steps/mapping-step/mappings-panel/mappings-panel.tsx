@@ -24,7 +24,7 @@ export interface MappingsPanelProps {
   onCollapseAll: (visibleKeys: number[]) => void
   onNewKey: (key: number) => void
   onToggleKey: (key: number, allFieldKeys: number[]) => void
-  onAutoFill: (fields: Array<{ name: number }>, add: (value?: MappingConfigItem, insertIndex?: number) => void) => void
+  onOpenAutofillSuggestions: () => void
   onAddItem: (add: (value?: MappingConfigItem, insertIndex?: number) => void, count: number) => void
   onRemoveItem: (remove: (index: number) => void, index: number) => void
   onAddMappingForFilter: (add: (value?: MappingConfigItem, insertIndex?: number) => void) => void
@@ -40,7 +40,7 @@ export const MappingsPanel = ({
   onCollapseAll,
   onNewKey,
   onToggleKey,
-  onAutoFill,
+  onOpenAutofillSuggestions,
   onAddItem,
   onRemoveItem,
   onAddMappingForFilter,
@@ -127,11 +127,11 @@ export const MappingsPanel = ({
               hasItems={ hasItems }
               onAddItem={ onAddItem }
               onAddMappingForFilter={ onAddMappingForFilter }
-              onAutoFill={ onAutoFill }
               onCollapseAll={ onCollapseAll }
               onDropped={ handleDropped }
               onInsertItem={ onInsertItem }
               onNewKey={ onNewKey }
+              onOpenAutofillSuggestions={ onOpenAutofillSuggestions }
               onRemoveItem={ onRemoveItem }
               onToggleKey={ onToggleKey }
               remove={ stableRemove }

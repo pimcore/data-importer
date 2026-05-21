@@ -7,3 +7,5 @@
  *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
  *  @license    Pimcore Open Core License (POCL)
  */
+
+export * from './autofill-suggestions-panel'
