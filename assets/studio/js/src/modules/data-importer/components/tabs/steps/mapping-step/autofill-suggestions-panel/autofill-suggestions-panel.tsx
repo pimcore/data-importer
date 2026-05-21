@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { Checkbox, Flex, IconButton, Spin, Tag } from '@pimcore/studio-ui-bundle/components'
+import { Checkbox, Flex, IconButton, NoContent, Tag } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useTheme } from 'antd-style'
 import { type MappingSuggestion } from '../utils/compute-autofill-suggestions'
@@ -51,6 +51,14 @@ export const AutofillSuggestionsPanel = ({
   const { styles } = useStyles()
   const theme = useTheme()
 
+  if (suggestions.length === 0) {
+    return (
+      <div className={ styles.emptyState }>
+        <NoContent text={ t('data-importer.mapping.autofill-suggestions.empty') } />
+      </div>
+    )
+  }
+
   return (
     <Flex vertical>
       <Flex
@@ -87,36 +95,26 @@ export const AutofillSuggestionsPanel = ({
               align="center"
               gap={ 4 }
             >
-              { isLoadingPreviewRow && <Spin
-                size="small"
-                type="classic"
-              /> }
               <IconButton
                 disabled={ !hasPrevRow || isLoadingPreviewRow }
                 icon={ { value: 'chevron-left' } }
                 onClick={ onPrevRow }
                 size="small"
-                type="default"
+                type="text"
               />
               <IconButton
                 disabled={ isLoadingPreviewRow }
                 icon={ { value: 'chevron-right' } }
                 onClick={ onNextRow }
                 size="small"
-                type="default"
+                type="text"
               />
             </Flex>
           </Flex>
         </div>
       </Flex>
 
-      { suggestions.length === 0
-        ? (
-          <div className={ styles.emptyState }>
-            { t('data-importer.mapping.autofill-suggestions.empty') }
-          </div>
-        )
-        : suggestions.map((suggestion) => (
+      { suggestions.map((suggestion) => (
             <Flex
               align="center"
               className={ styles.tableRow }

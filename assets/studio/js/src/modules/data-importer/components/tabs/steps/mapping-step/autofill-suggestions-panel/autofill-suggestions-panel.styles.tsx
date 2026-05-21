@@ -49,12 +49,7 @@ export const useStyles = createStyles(({ css, token }) => {
 
     tableRow: css`
       padding: ${token.paddingXXS}px ${token.paddingMD}px;
-      border-bottom: 1px solid ${token.colorFillSecondary};
       min-height: 36px;
-
-      &:last-child {
-        border-bottom: none;
-      }
 
       &:hover {
         background: ${token.colorFillAlter};
@@ -123,7 +118,7 @@ export const useStyles = createStyles(({ css, token }) => {
 
     footer: css`
       padding: ${token.paddingXS}px ${token.paddingMD}px;
-      border-top: 1px solid ${token.colorBorderSecondary};
+      border-top: 2px solid ${token.colorPrimary};
       background: ${token.colorFillAlter};
     `,
 
@@ -133,10 +128,7 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     emptyState: css`
-      padding: ${token.paddingMD}px;
-      color: ${token.colorTextSecondary};
-      text-align: center;
-      font-size: ${token.fontSizeSM}px;
+      padding: ${token.paddingXL}px ${token.paddingMD}px;
     `,
 
     scoreText: css`

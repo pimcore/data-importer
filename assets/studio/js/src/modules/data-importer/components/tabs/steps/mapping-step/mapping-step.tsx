@@ -11,7 +11,6 @@
 /* eslint-disable max-lines */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import { useTheme } from 'antd-style'
 import {
   Button,
   Checkbox,
@@ -19,10 +18,12 @@ import {
   Flex,
   Form,
   Modal,
+  Spin,
   useFormModal,
   useMessage
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { useTheme } from 'antd-style'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
 import { type MappingConfigItem } from '../../../../types'
 import { normalizeDataRow } from '../../../../utils/normalize-data-row'
@@ -348,21 +349,18 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     })
   }, [])
 
-  const handleSelectAllSuggestions = useCallback((): void => {
-    setSuggestions((prev) => {
-      if (prev === null) return prev
-      setSelectedSuggestionIds((currentSelected) => {
-        const allSelected = prev.every((s) => currentSelected.has(s.id))
-        return allSelected ? new Set() : new Set(prev.map((s) => s.id))
-      })
-      return prev
-    })
-  }, [])
-
   const handleCloseSuggestionsModal = useCallback((): void => {
     setSuggestions(null)
     setSelectedSuggestionIds(new Set())
   }, [])
+
+  const handleSelectAllSuggestions = useCallback((): void => {
+    if (suggestions === null) return
+    setSelectedSuggestionIds((currentSelected) => {
+      const allSelected = suggestions.every((s) => currentSelected.has(s.id))
+      return allSelected ? new Set() : new Set(suggestions.map((s) => s.id))
+    })
+  }, [suggestions])
 
   const handleApplySuggestions = useCallback((): void => {
     if (suggestions === null) return
@@ -413,45 +411,68 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
   }, [form])
 
   const modalFooter = useMemo(() => {
+    if (suggestions !== null && suggestions.length === 0) {
+      return [
+        <Button
+          key="ok"
+          onClick={ handleCloseSuggestionsModal }
+          type="primary"
+        >
+          { t('data-importer.mapping.autofill-suggestions.ok') }
+        </Button>
+      ]
+    }
+
     const allSel = suggestions !== null && suggestions.length > 0 &&
       suggestions.every((s) => selectedSuggestionIds.has(s.id))
     const someSel = suggestions !== null && suggestions.some((s) => selectedSuggestionIds.has(s.id))
 
-    return [
-      <Flex
-        align="center"
-        gap="small"
-        key="left"
-        style={ { flex: 1 } }
-      >
-        <Checkbox
-          checked={ allSel }
-          indeterminate={ someSel && !allSel }
-          onChange={ handleSelectAllSuggestions }
-        />
-        <span>
-          { t('data-importer.mapping.autofill-suggestions.selected', {
-            count: selectedSuggestionIds.size
-          }) }
-        </span>
-      </Flex>,
-      <Button
-        key="reject"
-        onClick={ handleCloseSuggestionsModal }
-        type="default"
-      >
-        { t('data-importer.mapping.autofill-suggestions.reject-all') }
-      </Button>,
-      <Button
-        disabled={ selectedSuggestionIds.size === 0 }
-        key="apply"
-        onClick={ handleApplySuggestions }
-        type="primary"
-      >
-        { t('data-importer.mapping.autofill-suggestions.apply') }
-      </Button>
-    ]
-  }, [t, suggestions, selectedSuggestionIds, handleSelectAllSuggestions, handleCloseSuggestionsModal, handleApplySuggestions])
+    return (
+      <Flex style={ { width: '100%' } }>
+        <Flex
+          align="center"
+          gap="small"
+          style={ { flex: 1 } }
+        >
+          <Checkbox
+            checked={ allSel }
+            indeterminate={ someSel && !allSel }
+            onChange={ handleSelectAllSuggestions }
+          />
+          <span>
+            { t('data-importer.mapping.autofill-suggestions.selected', {
+              count: selectedSuggestionIds.size
+            }) }
+          </span>
+        </Flex>
+        { isAutofillPreviewFetching && (
+          <Spin
+            size="small"
+            style={ { marginInlineEnd: 8 } }
+            type="classic"
+          />
+        ) }
+        <Flex
+          align="center"
+          gap="small"
+        >
+          <Button
+            onClick={ handleCloseSuggestionsModal }
+            type="default"
+          >
+            { t('data-importer.mapping.autofill-suggestions.reject-all') }
+          </Button>
+          <Button
+            disabled={ selectedSuggestionIds.size === 0 }
+            onClick={ handleApplySuggestions }
+            type="primary"
+          >
+            { t('data-importer.mapping.autofill-suggestions.apply') }
+          </Button>
+        </Flex>
+      </Flex>
+    )
+  }, [t, suggestions, selectedSuggestionIds, isAutofillPreviewFetching, handleSelectAllSuggestions, handleCloseSuggestionsModal, handleApplySuggestions])
 
   return (
     <Content loading={ !initialLoadDone }>
@@ -508,7 +529,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
         footer={ modalFooter }
         onCancel={ handleCloseSuggestionsModal }
         open={ suggestions !== null }
-        styles={ { body: { padding: 0, maxHeight: '60vh', overflowY: 'auto' }, footer: { paddingInlineStart: theme.paddingMD } } }
+        styles={ { body: { padding: 0, paddingBlock: 0, paddingInline: 0, maxHeight: '60vh', overflowY: 'auto' }, footer: { padding: '12px 16px', borderTop: suggestions !== null && suggestions.length > 0 ? `1px solid ${theme.colorPrimaryBorder}` : 'none' } } }
         title={ t('data-importer.mapping.autofill-suggestions.title') }
         width={ 1100 }
       >
