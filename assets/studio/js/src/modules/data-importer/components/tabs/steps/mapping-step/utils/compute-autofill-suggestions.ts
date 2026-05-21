@@ -70,7 +70,7 @@ const ISO_639_1_CODES = new Set([
 //   title.it             → { base: 'title',        locale: 'it'    }
 // Normalizes to lowercase lang + optional uppercase region joined by underscore.
 function detectLocaleSuffix (s: string): { base: string, locale: string } | null {
-  const match = /^(.*?)[_\-\.]([a-z]{2})(?:[_\-]([A-Za-z]{2,4}))?$/.exec(s)
+  const match = /^(.*?)[_.-]([a-z]{2})(?:[_-]([A-Za-z]{2,4}))?$/.exec(s)
   if (match === null) return null
   const base = match[1]
   const lang = match[2]
@@ -92,7 +92,7 @@ function tokenize (s: string): string[] {
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .toLowerCase()
-    .split(/[\s_\-\.]+/)
+    .split(/[\s_.-]+/)
     .filter((t) => t.length > 0)
 }
 
