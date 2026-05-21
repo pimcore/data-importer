@@ -26,39 +26,6 @@ export interface MappingSuggestion {
 
 const MIN_SCORE = 40
 
-// ─── ISO 639-1 language codes ─────────────────────────────────────────────────
-
-// All 184 standard ISO 639-1 two-letter language codes.
-const ISO_639_1_CODES = new Set([
-  'ab', 'aa', 'af', 'ak', 'sq', 'am', 'ar', 'an', 'hy', 'as', 'av', 'ae', 'ay', 'az',
-  'bm', 'ba', 'eu', 'be', 'bn', 'bh', 'bi', 'bs', 'br', 'bg', 'my',
-  'ca', 'ch', 'ce', 'ny', 'zh', 'cv', 'kw', 'co', 'cr', 'hr', 'cs',
-  'da', 'dv', 'nl', 'dz',
-  'en', 'eo', 'et', 'ee',
-  'fo', 'fj', 'fi', 'fr', 'ff',
-  'gl', 'ka', 'de', 'el', 'gn', 'gu',
-  'ht', 'ha', 'he', 'hz', 'hi', 'ho', 'hu',
-  'ia', 'id', 'ie', 'ga', 'ig', 'ik', 'io', 'is', 'it', 'iu',
-  'ja', 'jv',
-  'kl', 'kn', 'kr', 'ks', 'kk', 'km', 'ki', 'rw', 'ky', 'kv', 'kg', 'ko', 'ku', 'kj',
-  'la', 'lb', 'lg', 'li', 'ln', 'lo', 'lt', 'lu', 'lv', 'gv',
-  'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mh', 'mn',
-  'na', 'nv', 'nd', 'ne', 'ng', 'nb', 'nn', 'no', 'ii', 'nr',
-  'oc', 'oj', 'cu', 'om', 'or', 'os',
-  'pa', 'pi', 'fa', 'pl', 'ps', 'pt',
-  'qu',
-  'rm', 'rn', 'ro', 'ru',
-  'sa', 'sc', 'sd', 'se', 'sm', 'sg', 'sr', 'gd', 'sn', 'si', 'sk', 'sl', 'so', 'st',
-  'es', 'su', 'sw', 'ss', 'sv',
-  'ta', 'te', 'tg', 'th', 'ti', 'bo', 'tk', 'tl', 'tn', 'to', 'tr', 'ts', 'tt', 'tw', 'ty',
-  'ug', 'uk', 'ur', 'uz',
-  've', 'vi', 'vo',
-  'wa', 'cy', 'wo', 'fy',
-  'xh',
-  'yi', 'yo',
-  'za', 'zu'
-])
-
 // ─── Locale suffix detection ───────────────────────────────────────────────────
 
 // Detects locale suffixes from source column names. Handles these formats:
@@ -69,14 +36,14 @@ const ISO_639_1_CODES = new Set([
 //   price-pt_BR          → { base: 'price',        locale: 'pt_BR' }
 //   title.it             → { base: 'title',        locale: 'it'    }
 // Normalizes to lowercase lang + optional uppercase region joined by underscore.
-function detectLocaleSuffix (s: string): { base: string, locale: string } | null {
+function detectLocaleSuffix (s: string, validLanguages: Set<string>): { base: string, locale: string } | null {
   const match = /^(.*?)[_.-]([a-z]{2})(?:[_-]([A-Za-z]{2,4}))?$/.exec(s)
   if (match === null) return null
   const base = match[1]
   const lang = match[2]
   const region = match[3]
   if (base.length === 0) return null
-  if (!ISO_639_1_CODES.has(lang)) return null
+  if (!validLanguages.has(lang)) return null
   const locale = region !== undefined ? `${lang}_${region.toUpperCase()}` : lang
   return { base, locale }
 }
@@ -193,8 +160,8 @@ interface BestMatch {
 
 // Track full-name match and locale-aware base-name match separately to
 // avoid order-dependent language clearing when a later full match ties.
-function findBestMatch (label: string, attrs: ClassAttribute[]): BestMatch | null {
-  const detectedLocale = detectLocaleSuffix(label)
+function findBestMatch (label: string, attrs: ClassAttribute[], validLanguages: Set<string>): BestMatch | null {
+  const detectedLocale = detectLocaleSuffix(label, validLanguages)
   let bestFullScore = -1
   let bestFullAttr: ClassAttribute | null = null
   let bestBaseScore = -1
@@ -234,16 +201,18 @@ export function computeAutofillSuggestions (
   columnHeaderOptions: Array<{ value: string, label: string }>,
   attributesMap: Record<string, ClassAttribute[]>,
   existingMappings: MappingConfigItem[],
-  sourceRows: SourceRow[]
+  sourceRows: SourceRow[],
+  validLanguages: string[]
 ): MappingSuggestion[] {
   const usedIndices = buildUsedIndices(existingMappings)
   const attrs = flattenAttributes(attributesMap)
+  const validLanguagesSet = new Set(validLanguages.map((l) => l.toLowerCase()))
   const suggestions: MappingSuggestion[] = []
 
   for (const col of columnHeaderOptions) {
     if (usedIndices.has(col.value)) continue
 
-    const best = findBestMatch(col.label, attrs)
+    const best = findBestMatch(col.label, attrs, validLanguagesSet)
     if (best === null) continue
 
     const previewRow = sourceRows.find((r) => r.dataIndex === col.value)
