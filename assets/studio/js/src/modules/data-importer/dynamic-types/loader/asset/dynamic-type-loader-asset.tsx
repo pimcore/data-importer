@@ -15,10 +15,10 @@ import { AssetLoaderSettings } from './asset-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderAsset extends DynamicTypeLoaderAbstract {
-    readonly id = 'asset'
-    readonly label = 'Asset'
+  readonly id = 'asset'
+  readonly label = 'Asset'
 
-    renderSettings (_configName: string): React.JSX.Element | null {
-        return <AssetLoaderSettings />
-    }
+  renderSettings (_configName: string): React.JSX.Element | null {
+    return <AssetLoaderSettings />
+  }
 }

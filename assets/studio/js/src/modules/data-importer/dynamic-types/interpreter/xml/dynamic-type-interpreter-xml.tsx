@@ -10,14 +10,14 @@
 
 import React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeInterpreterAbstract } from "../dynamic-type-interpreter-abstract";
-import { XmlInterpreterSettings } from "./xml-interpreter-settings";
+import { DynamicTypeInterpreterAbstract } from '../dynamic-type-interpreter-abstract'
+import { XmlInterpreterSettings } from './xml-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterXml extends DynamicTypeInterpreterAbstract {
-    readonly id = 'xml'
-    readonly label = 'XML'
-    renderSettings(): React.JSX.Element | null {
-        return <XmlInterpreterSettings />
-    }
+  readonly id = 'xml'
+  readonly label = 'XML'
+  renderSettings (): React.JSX.Element | null {
+    return <XmlInterpreterSettings />
+  }
 }

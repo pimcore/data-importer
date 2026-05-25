@@ -15,10 +15,10 @@ import { SqlLoaderSettings } from './sql-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderSql extends DynamicTypeLoaderAbstract {
-    readonly id = 'sql'
-    readonly label = 'SQL'
+  readonly id = 'sql'
+  readonly label = 'SQL'
 
-    renderSettings (_configName: string): React.JSX.Element | null {
-        return <SqlLoaderSettings />
-    }
+  renderSettings (_configName: string): React.JSX.Element | null {
+    return <SqlLoaderSettings />
+  }
 }

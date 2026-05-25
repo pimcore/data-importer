@@ -15,10 +15,10 @@ import { UploadLoaderSettings } from './upload-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderUpload extends DynamicTypeLoaderAbstract {
-    readonly id = 'upload'
-    readonly label = 'Upload'
+  readonly id = 'upload'
+  readonly label = 'Upload'
 
-    renderSettings (configName: string): React.JSX.Element | null {
-        return <UploadLoaderSettings configName={ configName } />
-    }
+  renderSettings (configName: string): React.JSX.Element | null {
+    return <UploadLoaderSettings configName={ configName } />
+  }
 }

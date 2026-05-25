@@ -10,14 +10,14 @@
 
 import React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeInterpreterAbstract } from "../dynamic-type-interpreter-abstract";
-import { XlsxInterpreterSettings } from "./xlsx-interpreter-settings";
+import { DynamicTypeInterpreterAbstract } from '../dynamic-type-interpreter-abstract'
+import { XlsxInterpreterSettings } from './xlsx-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterXlsx extends DynamicTypeInterpreterAbstract {
-    readonly id = 'xlsx'
-    readonly label = 'XLSX'
-    renderSettings(): React.JSX.Element | null {
-        return <XlsxInterpreterSettings />
-    }
+  readonly id = 'xlsx'
+  readonly label = 'XLSX'
+  renderSettings (): React.JSX.Element | null {
+    return <XlsxInterpreterSettings />
+  }
 }

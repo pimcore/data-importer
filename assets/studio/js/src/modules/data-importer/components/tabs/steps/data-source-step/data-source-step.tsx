@@ -16,10 +16,10 @@ import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { filterByLabel } from '../select-utils'
 import type { DataImporterFormValues } from '../../../../types'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
-import { container } from "@pimcore/studio-ui-bundle";
+import { container } from '@pimcore/studio-ui-bundle'
 import { bundleServiceIds } from '../../../../../../config/service-ids'
-import { DynamicTypeLoaderRegistry } from "../../../../dynamic-types/loader/dynamic-type-loader-registry";
-import { DynamicTypeInterpreterRegistry } from "../../../../dynamic-types/interpreter/dynamic-type-interpreter-registry";
+import { type DynamicTypeLoaderRegistry } from '../../../../dynamic-types/loader/dynamic-type-loader-registry'
+import { type DynamicTypeInterpreterRegistry } from '../../../../dynamic-types/interpreter/dynamic-type-interpreter-registry'
 
 export interface DataSourceStepProps {
   configName: string
@@ -67,8 +67,8 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
 
         { loaderRegistry.getAllTypes().map((loaderType) => (
           <Form.Conditional
-            key={ loaderType.id }
             condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === loaderType.id }
+            key={ loaderType.id }
           >
             <DataImporterPanel
               theme="fieldset"
@@ -95,8 +95,8 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
 
         { interpreterRegistry.getAllTypes().map((interpreterType) => (
           <Form.Conditional
-            key={ interpreterType.id }
             condition={ (values) => (values as unknown as DataImporterFormValues).interpreterConfig?.type === interpreterType.id }
+            key={ interpreterType.id }
           >
             <DataImporterPanel
               border

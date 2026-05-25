@@ -10,14 +10,14 @@
 
 import React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeInterpreterAbstract } from "../dynamic-type-interpreter-abstract";
-import { SqlInterpreterSettings } from "./sql-interpreter-settings";
+import { DynamicTypeInterpreterAbstract } from '../dynamic-type-interpreter-abstract'
+import { SqlInterpreterSettings } from './sql-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterSql extends DynamicTypeInterpreterAbstract {
-    readonly id = 'sql'
-    readonly label = 'SQL'
-    renderSettings(): React.JSX.Element | null {
-        return <SqlInterpreterSettings />
-    }
+  readonly id = 'sql'
+  readonly label = 'SQL'
+  renderSettings (): React.JSX.Element | null {
+    return <SqlInterpreterSettings />
+  }
 }

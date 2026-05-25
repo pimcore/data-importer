@@ -13,12 +13,12 @@ import { injectable } from '@pimcore/studio-ui-bundle/app'
 
 @injectable()
 export abstract class DynamicTypeLoaderAbstract {
-    /** Unique identifier, e.g. 'asset', 'upload', 'http' */
-    abstract readonly id: string
+  /** Unique identifier, e.g. 'asset', 'upload', 'http' */
+  abstract readonly id: string
 
-    /** Human-readable label shown in the UI */
-    abstract readonly label: string
+  /** Human-readable label shown in the UI */
+  abstract readonly label: string
 
-    /** Render the settings fields for this loader type */
-    abstract renderSettings(configName: string): React.JSX.Element | null
+  /** Render the settings fields for this loader type */
+  abstract renderSettings (configName: string): React.JSX.Element | null
 }

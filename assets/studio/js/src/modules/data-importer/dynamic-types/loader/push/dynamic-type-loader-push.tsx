@@ -15,10 +15,10 @@ import { PushLoaderSettings } from './push-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderPush extends DynamicTypeLoaderAbstract {
-    readonly id = 'push'
-    readonly label = 'Push'
+  readonly id = 'push'
+  readonly label = 'Push'
 
-    renderSettings (_configName: string): React.JSX.Element | null {
-        return <PushLoaderSettings />
-    }
+  renderSettings (_configName: string): React.JSX.Element | null {
+    return <PushLoaderSettings />
+  }
 }
