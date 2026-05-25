@@ -11,8 +11,8 @@
 import React from 'react'
 import { Form, FormKit, Select, TextArea } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { useBundleDataImporterConnectionListQuery } from '../../../../data-importer-api-slice-enhanced'
-import { filterByLabel } from '../select-utils'
+import { useBundleDataImporterConnectionListQuery } from '../../../data-importer-api-slice-enhanced'
+import { filterByLabel } from '../../../components/tabs/steps/select-utils'
 
 export const SqlLoaderSettings = (): React.JSX.Element => {
   const { t } = useTranslation()

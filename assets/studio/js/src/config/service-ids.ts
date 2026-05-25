@@ -18,12 +18,23 @@ export const bundleServiceIds = {
   // Interpreter registry
   'DataImporter/DynamicTypes/Interpreter/Registry': 'DataImporter/DynamicTypes/Interpreter/Registry',
 
-  // Transformer types
+  // Interpreter types
   'DataImporter/DynamicTypes/Interpreter/Csv': 'DataImporter/DynamicTypes/Interpreter/Csv',
   'DataImporter/DynamicTypes/Interpreter/Json': 'DataImporter/DynamicTypes/Interpreter/Json',
   'DataImporter/DynamicTypes/Interpreter/Sql': 'DataImporter/DynamicTypes/Interpreter/Sql',
   'DataImporter/DynamicTypes/Interpreter/Xlsx': 'DataImporter/DynamicTypes/Interpreter/Xlsx',
   'DataImporter/DynamicTypes/Interpreter/Xml': 'DataImporter/DynamicTypes/Interpreter/Xml',
+
+  // Loader registry
+  'DataImporter/DynamicTypes/Loader/Registry': 'DataImporter/DynamicTypes/Loader/Registry',
+
+  // Loader types
+  'DataImporter/DynamicTypes/Loader/Asset': 'DataImporter/DynamicTypes/Loader/Asset',
+  'DataImporter/DynamicTypes/Loader/Upload': 'DataImporter/DynamicTypes/Loader/Upload',
+  'DataImporter/DynamicTypes/Loader/Http': 'DataImporter/DynamicTypes/Loader/Http',
+  'DataImporter/DynamicTypes/Loader/Sftp': 'DataImporter/DynamicTypes/Loader/Sftp',
+  'DataImporter/DynamicTypes/Loader/Push': 'DataImporter/DynamicTypes/Loader/Push',
+  'DataImporter/DynamicTypes/Loader/Sql': 'DataImporter/DynamicTypes/Loader/Sql',
 
   // Transformer registry
   'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',

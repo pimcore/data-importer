@@ -12,7 +12,7 @@ import React, { useEffect, useState } from 'react'
 import { Alert, Button, Form, Input, Space, ImportModal, Spin } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { getPrefix } from '@pimcore/studio-ui-bundle/api'
-import { useBundleDataImporterConfigHasImportFileUploadedQuery } from '../../../../data-importer-api-slice-enhanced'
+import { useBundleDataImporterConfigHasImportFileUploadedQuery } from '../../../data-importer-api-slice-enhanced'
 
 export interface UploadLoaderSettingsProps {
   configName: string
