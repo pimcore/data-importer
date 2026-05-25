@@ -15,10 +15,10 @@ import { HttpLoaderSettings } from './http-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderHttp extends DynamicTypeLoaderAbstract {
-    readonly id = 'http'
-    readonly label = 'HTTP'
+  readonly id = 'http'
+  readonly label = 'HTTP'
 
-    renderSettings (_configName: string): React.JSX.Element | null {
-        return <HttpLoaderSettings />
-    }
+  renderSettings (_configName: string): React.JSX.Element | null {
+    return <HttpLoaderSettings />
+  }
 }

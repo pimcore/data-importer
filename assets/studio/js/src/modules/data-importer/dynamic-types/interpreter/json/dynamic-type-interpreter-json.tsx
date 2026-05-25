@@ -10,14 +10,14 @@
 
 import React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeInterpreterAbstract } from "../dynamic-type-interpreter-abstract";
-import { JsonInterpreterSettings } from "./json-interpreter-settings";
+import { DynamicTypeInterpreterAbstract } from '../dynamic-type-interpreter-abstract'
+import { JsonInterpreterSettings } from './json-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterJson extends DynamicTypeInterpreterAbstract {
-    readonly id = 'json'
-    readonly label = 'JSON'
-    renderSettings(): React.JSX.Element | null {
-        return <JsonInterpreterSettings />
-    }
+  readonly id = 'json'
+  readonly label = 'JSON'
+  renderSettings (): React.JSX.Element | null {
+    return <JsonInterpreterSettings />
+  }
 }

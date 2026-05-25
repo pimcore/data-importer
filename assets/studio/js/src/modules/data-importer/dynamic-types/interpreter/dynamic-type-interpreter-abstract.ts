@@ -13,12 +13,12 @@ import { injectable } from '@pimcore/studio-ui-bundle/app'
 
 @injectable()
 export abstract class DynamicTypeInterpreterAbstract {
-    /** Unique identifier, e.g. 'asset', 'csv', 'xlsx' */
-    abstract readonly id: string
+  /** Unique identifier, e.g. 'asset', 'csv', 'xlsx' */
+  abstract readonly id: string
 
-    /** Human-readable label shown in the UI */
-    abstract readonly label: string
+  /** Human-readable label shown in the UI */
+  abstract readonly label: string
 
-    /** Render the settings fields for this interpreter type */
-    abstract renderSettings(): React.JSX.Element | null
+  /** Render the settings fields for this interpreter type */
+  abstract renderSettings (): React.JSX.Element | null
 }

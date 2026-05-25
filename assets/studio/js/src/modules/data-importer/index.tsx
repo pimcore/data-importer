@@ -43,19 +43,19 @@ import {
   DynamicTypeTransformerLoadDataObject,
   DynamicTypeTransformerImportAsset
 } from './dynamic-types/transformer'
-import { DynamicTypeInterpreterRegistry } from "./dynamic-types/interpreter/dynamic-type-interpreter-registry";
-import { DynamicTypeInterpreterCsv } from "./dynamic-types/interpreter/csv/dynamic-type-interpreter-csv";
-import { DynamicTypeInterpreterJson } from "./dynamic-types/interpreter/json/dynamic-type-interpreter-json";
-import { DynamicTypeInterpreterSql } from "./dynamic-types/interpreter/sql/dynamic-type-interpreter-sql";
-import { DynamicTypeInterpreterXml } from "./dynamic-types/interpreter/xml/dynamic-type-interpreter-xml";
-import { DynamicTypeInterpreterXlsx } from "./dynamic-types/interpreter/xlsx/dynamic-type-interpreter-xlsx";
-import { DynamicTypeLoaderRegistry } from "./dynamic-types/loader/dynamic-type-loader-registry";
-import { DynamicTypeLoaderAsset } from "./dynamic-types/loader/asset/dynamic-type-loader-asset";
-import { DynamicTypeLoaderUpload } from "./dynamic-types/loader/upload/dynamic-type-loader-upload";
-import { DynamicTypeLoaderHttp } from "./dynamic-types/loader/http/dynamic-type-loader-http";
-import { DynamicTypeLoaderSftp } from "./dynamic-types/loader/sftp/dynamic-type-loader-sftp";
-import { DynamicTypeLoaderPush } from "./dynamic-types/loader/push/dynamic-type-loader-push";
-import { DynamicTypeLoaderSql } from "./dynamic-types/loader/sql/dynamic-type-loader-sql";
+import { DynamicTypeInterpreterRegistry } from './dynamic-types/interpreter/dynamic-type-interpreter-registry'
+import { DynamicTypeInterpreterCsv } from './dynamic-types/interpreter/csv/dynamic-type-interpreter-csv'
+import { DynamicTypeInterpreterJson } from './dynamic-types/interpreter/json/dynamic-type-interpreter-json'
+import { DynamicTypeInterpreterSql } from './dynamic-types/interpreter/sql/dynamic-type-interpreter-sql'
+import { DynamicTypeInterpreterXml } from './dynamic-types/interpreter/xml/dynamic-type-interpreter-xml'
+import { DynamicTypeInterpreterXlsx } from './dynamic-types/interpreter/xlsx/dynamic-type-interpreter-xlsx'
+import { DynamicTypeLoaderRegistry } from './dynamic-types/loader/dynamic-type-loader-registry'
+import { DynamicTypeLoaderAsset } from './dynamic-types/loader/asset/dynamic-type-loader-asset'
+import { DynamicTypeLoaderUpload } from './dynamic-types/loader/upload/dynamic-type-loader-upload'
+import { DynamicTypeLoaderHttp } from './dynamic-types/loader/http/dynamic-type-loader-http'
+import { DynamicTypeLoaderSftp } from './dynamic-types/loader/sftp/dynamic-type-loader-sftp'
+import { DynamicTypeLoaderPush } from './dynamic-types/loader/push/dynamic-type-loader-push'
+import { DynamicTypeLoaderSql } from './dynamic-types/loader/sql/dynamic-type-loader-sql'
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
