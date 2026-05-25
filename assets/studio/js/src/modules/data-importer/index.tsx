@@ -43,12 +43,28 @@ import {
   DynamicTypeTransformerLoadDataObject,
   DynamicTypeTransformerImportAsset
 } from './dynamic-types/transformer'
+import { DynamicTypeInterpreterRegistry } from "./dynamic-types/interpreter/dynamic-type-interpreter-registry";
+import { DynamicTypeInterpreterCsv } from "./dynamic-types/interpreter/csv/dynamic-type-interpreter-csv";
+import { DynamicTypeInterpreterJson } from "./dynamic-types/interpreter/json/dynamic-type-interpreter-json";
+import { DynamicTypeInterpreterSql } from "./dynamic-types/interpreter/sql/dynamic-type-interpreter-sql";
+import { DynamicTypeInterpreterXml } from "./dynamic-types/interpreter/xml/dynamic-type-interpreter-xml";
+import { DynamicTypeInterpreterXlsx } from "./dynamic-types/interpreter/xlsx/dynamic-type-interpreter-xlsx";
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
     // ── Data Hub adapter ────────────────────────────────────────────────────
     const adapterRegistry = container.get<DynamicTypeDataHubAdapterRegistry>(dataHubServiceIds['DataHub/DynamicTypes/Adapter/Registry'])
     adapterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Adapter/DataImporterDataObject']))
+
+    // ── Interpreter registry ────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry']).to(DynamicTypeInterpreterRegistry).inSingletonScope()
+
+    // Bind types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']).to(DynamicTypeInterpreterCsv).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']).to(DynamicTypeInterpreterJson).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']).to(DynamicTypeInterpreterSql).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']).to(DynamicTypeInterpreterXlsx).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']).to(DynamicTypeInterpreterXml).inSingletonScope()
 
     // ── Transformer registry ────────────────────────────────────────────────
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Registry']).to(DynamicTypeTransformerRegistry).inSingletonScope()

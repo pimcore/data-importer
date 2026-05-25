@@ -15,6 +15,16 @@
 export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Adapter/DataImporterDataObject': 'DataImporter/DynamicTypes/Adapter/DataImporterDataObject',
 
+  // Interpreter registry
+  'DataImporter/DynamicTypes/Interpreter/Registry': 'DataImporter/DynamicTypes/Interpreter/Registry',
+
+  // Transformer types
+  'DataImporter/DynamicTypes/Interpreter/Csv': 'DataImporter/DynamicTypes/Interpreter/Csv',
+  'DataImporter/DynamicTypes/Interpreter/Json': 'DataImporter/DynamicTypes/Interpreter/Json',
+  'DataImporter/DynamicTypes/Interpreter/Sql': 'DataImporter/DynamicTypes/Interpreter/Sql',
+  'DataImporter/DynamicTypes/Interpreter/Xlsx': 'DataImporter/DynamicTypes/Interpreter/Xlsx',
+  'DataImporter/DynamicTypes/Interpreter/Xml': 'DataImporter/DynamicTypes/Interpreter/Xml',
+
   // Transformer registry
   'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
 
