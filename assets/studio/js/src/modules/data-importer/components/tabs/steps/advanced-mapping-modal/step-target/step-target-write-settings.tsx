@@ -8,94 +8,107 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Select, Switch } from '@pimcore/studio-ui-bundle/components'
-import { type MappingConfigItem } from '../../../../../types'
-import { useStyles } from './step-target.styles'
+import React from "react";
+import { useTranslation } from "@pimcore/studio-ui-bundle/app";
+import { Select, Switch } from "@pimcore/studio-ui-bundle/components";
+import { DataTargetConfig, type MappingConfigItem } from "../../../../../types";
+import { useStyles } from "./step-target.styles";
 
 export interface StepTargetWriteSettingsProps {
-  showWriteSettings: boolean
-  hasTypeError: boolean
-  showOverwriteMode: boolean
-  dataTarget: MappingConfigItem['dataTarget']
-  onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void
+    settings: DataTargetConfig["settings"];
+    onChange(settings: DataTargetConfig["settings"]): void;
+    showOverwriteMode?: boolean;
 }
 
 export const StepTargetWriteSettings = ({
-  showWriteSettings,
-  hasTypeError,
-  showOverwriteMode,
-  dataTarget,
-  onDataTargetChange
+    showOverwriteMode = false,
+    settings,
+    onChange,
 }: StepTargetWriteSettingsProps): React.JSX.Element | null => {
-  const { t } = useTranslation()
-  const { styles } = useStyles()
+    const { t } = useTranslation();
+    const { styles } = useStyles();
 
-  if (!showWriteSettings || hasTypeError) {
-    return null
-  }
+    return (
+        <>
+            <div className={styles.overwriteLabel}>
+                {t(
+                    "data-importer.mapping.advanced-modal.step-target.overwrite",
+                )}
+            </div>
 
-  return (
-    <>
-      <div className={ styles.overwriteLabel }>
-        { t('data-importer.mapping.advanced-modal.step-target.overwrite') }
-      </div>
-
-      <Switch
-        checked={ dataTarget?.settings?.writeIfTargetIsNotEmpty ?? true }
-        labelRight={ <span className={ styles.switchLabel }>{ t('data-importer.mapping.advanced-modal.write-if-target-not-empty') }</span> }
-        onChange={ (checked) => {
-          onDataTargetChange({
-            ...dataTarget,
-            settings: {
-              ...dataTarget?.settings,
-              writeIfTargetIsNotEmpty: checked,
-              writeIfSourceIsEmpty: !!checked
-            }
-          })
-        } }
-        size="small"
-        tooltip={ t('data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip') }
-      />
-
-      { showOverwriteMode && (
-        <div>
-          <div className={ styles.fieldLabel }>
-            { t('data-importer.mapping.advanced-modal.step-target.overwrite-mode') }
-          </div>
-          <div className={ styles.selectSkeletonWrapper }>
-            <Select
-              className={ styles.selectFull }
-              onChange={ (v: string) => {
-                onDataTargetChange({
-                  ...dataTarget,
-                  settings: { ...dataTarget?.settings, overwriteMode: v }
-                })
-              } }
-              options={ [
-                { value: 'replace', label: t('data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace') },
-                { value: 'merge', label: t('data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge') }
-              ] }
-              value={ dataTarget?.settings?.overwriteMode }
+            <Switch
+                checked={settings?.writeIfTargetIsNotEmpty ?? true}
+                labelRight={
+                    <span className={styles.switchLabel}>
+                        {t(
+                            "data-importer.mapping.advanced-modal.write-if-target-not-empty",
+                        )}
+                    </span>
+                }
+                onChange={(checked) => {
+                    onChange({
+                        ...settings,
+                        writeIfTargetIsNotEmpty: checked,
+                        writeIfSourceIsEmpty: checked,
+                    });
+                }}
+                size="small"
+                tooltip={t(
+                    "data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip",
+                )}
             />
-          </div>
-        </div>
-      ) }
 
-      <Switch
-        checked={ dataTarget?.settings?.writeIfSourceIsEmpty ?? true }
-        disabled={ !(dataTarget?.settings?.writeIfTargetIsNotEmpty ?? true) }
-        labelRight={ <span className={ styles.switchLabel }>{ t('data-importer.mapping.advanced-modal.write-if-source-empty') }</span> }
-        onChange={ (checked) => {
-          onDataTargetChange({
-            ...dataTarget,
-            settings: { ...dataTarget?.settings, writeIfSourceIsEmpty: checked }
-          })
-        } }
-        size="small"
-        tooltip={ t('data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip') }
-      />
-    </>
-  )
-}
+            {showOverwriteMode && (
+                <div>
+                    <div className={styles.fieldLabel}>
+                        {t(
+                            "data-importer.mapping.advanced-modal.step-target.overwrite-mode",
+                        )}
+                    </div>
+                    <div className={styles.selectSkeletonWrapper}>
+                        <Select
+                            className={styles.selectFull}
+                            onChange={(value) => {
+                                onChange({ ...settings, overwriteMode: value });
+                            }}
+                            options={[
+                                {
+                                    value: "replace",
+                                    label: t(
+                                        "data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace",
+                                    ),
+                                },
+                                {
+                                    value: "merge",
+                                    label: t(
+                                        "data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge",
+                                    ),
+                                },
+                            ]}
+                            value={settings?.overwriteMode}
+                        />
+                    </div>
+                </div>
+            )}
+
+            <Switch
+                checked={settings?.writeIfSourceIsEmpty ?? true}
+                disabled={!(settings?.writeIfTargetIsNotEmpty ?? true)}
+                labelRight={
+                    <span className={styles.switchLabel}>
+                        {t(
+                            "data-importer.mapping.advanced-modal.write-if-source-empty",
+                        )}
+                    </span>
+                }
+                onChange={(checked) => {
+                    onChange({ ...settings, writeIfSourceIsEmpty: checked });
+                }}
+                size="small"
+                tooltip={t(
+                    "data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip",
+                )}
+            />
+        </>
+    );
+};

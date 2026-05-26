@@ -43,6 +43,17 @@ import {
   DynamicTypeTransformerLoadDataObject,
   DynamicTypeTransformerImportAsset
 } from './dynamic-types/transformer'
+import {DynamicTypeDataTargetRegistry} from "./dynamic-types/data-target/dynamic-type-data-target-registry";
+import {DynamicTypeDataTargetDirect} from "./dynamic-types/data-target/direct/dynamic-type-data-target-direct";
+import {
+    DynamicTypeDataTargetClassificationstore
+} from "./dynamic-types/data-target/classificationstore/dynamic-type-data-target-classificationstore";
+import {
+    DynamicTypeDataTargetClassificationstoreBatch
+} from "./dynamic-types/data-target/classificationstore/dynamic-type-data-target-classificationstore-batch";
+import {
+    DynamicTypeDataTargetManyToManyRelation
+} from "./dynamic-types/data-target/many-to-many-relation/dynamic-type-data-target-many-to-many-relation";
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
@@ -124,5 +135,22 @@ export const DataImporterModule: AbstractModule = {
     for (const serviceId of allTransformerServiceIds) {
       transformerRegistry.registerDynamicType(container.get(serviceId))
     }
+
+    // ── Data Target registry ────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Registry']).to(DynamicTypeDataTargetRegistry).inSingletonScope()
+
+    // Data Target types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Direct']).to(DynamicTypeDataTargetDirect).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Classificationstore']).to(DynamicTypeDataTargetClassificationstore).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch']).to(DynamicTypeDataTargetClassificationstoreBatch).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ManyToManyRelation']).to(DynamicTypeDataTargetManyToManyRelation).inSingletonScope()
+
+    // Register all types into the registry
+    const targetRegistry = container.get<DynamicTypeDataTargetRegistry>(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Registry'])
+
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Direct']))
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Classificationstore']))
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch']))
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ManyToManyRelation']))
   }
 }
