@@ -18,7 +18,7 @@ import { ClassificationStoreKeyModal } from "../../../components/tabs/steps/adva
 export interface StepTargetClassificationstoreKeySearchProps {
     classId: string;
     fieldName: string;
-    transformationResultType: string;
+    transformationResultType?: string;
     keyId?: string;
     onChange(keyId: string): void;
 }
@@ -81,7 +81,7 @@ export function StepTargetClassificationstoreKeySearch({
                     setKeyModalOpen(false);
                 }}
                 open={keyModalOpen}
-                transformationResultType={transformationResultType}
+                transformationResultType={transformationResultType ?? ''}
             />
             <div>
                 <div className={styles.fieldLabel}>

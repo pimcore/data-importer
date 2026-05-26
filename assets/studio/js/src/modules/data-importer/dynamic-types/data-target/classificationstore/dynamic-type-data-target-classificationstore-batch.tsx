@@ -14,18 +14,25 @@ import {
     DynamicTypeDataTargetRenderProps,
 } from "../common/dynamic-type-data-target-abstract";
 import { DataTargetClassificationstoreBatchSettings } from "./data-target-classificationstore-batch-settings";
+import { TFunction } from "i18next";
 
 export class DynamicTypeDataTargetClassificationstoreBatch extends DynamicTypeDataTargetAbstract {
     id = "classificationstoreBatch";
     label = "Classification Store Batch";
 
-    supportsType(type: string): boolean {
+    supportsType(type?: string): boolean {
         return [
             "array",
             "quantityValueArray",
             "inputQuantityValueArray",
             "dateArray",
-        ].includes(type);
+        ].includes(type ?? "");
+    }
+
+    getTypeErrorMessage(t: TFunction): string | undefined {
+        return t(
+            "data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch",
+        );
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {
