@@ -14,18 +14,25 @@ import {
     DynamicTypeDataTargetRenderProps,
 } from "../common/dynamic-type-data-target-abstract";
 import { DataTargetManyToManyRelationSettings } from "./data-target-many-to-many-relation-settings";
+import { TFunction } from "i18next";
 
 export class DynamicTypeDataTargetManyToManyRelation extends DynamicTypeDataTargetAbstract {
     id = "manyToManyRelation";
     label = "Many to Many Relation";
 
-    supportsType(type: string): boolean {
+    supportsType(type?: string): boolean {
         return [
             "advancedDataObjectArray",
             "dataObjectArray",
             "assetArray",
             "advancedAssetArray",
-        ].includes(type);
+        ].includes(type ?? "");
+    }
+
+    getTypeErrorMessage(t: TFunction): string | undefined {
+        return t(
+            "data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation",
+        );
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {

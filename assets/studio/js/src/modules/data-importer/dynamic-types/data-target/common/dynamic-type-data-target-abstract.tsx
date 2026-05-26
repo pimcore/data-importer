@@ -10,13 +10,14 @@
 
 import React from "react";
 import { injectable } from "@pimcore/studio-ui-bundle/app";
-import { ClassAttribute, DataTargetConfig } from "../../../types";
+import { DataTargetConfig } from "../../../types";
+import { TFunction } from "i18next";
 
 export interface DynamicTypeDataTargetRenderProps {
-    classId: string;
+    classId?: string;
     classFieldOptions: Array<{ value: string; label: string }>;
     isLocalized: boolean;
-    transformationResultType: string;
+    transformationResultType?: string;
     settings: DataTargetConfig["settings"];
     onChange(settings: DataTargetConfig["settings"]): void;
 }
@@ -30,7 +31,11 @@ export abstract class DynamicTypeDataTargetAbstract {
     abstract readonly label: string;
 
     /** Specifies whether given type is supported by data target */
-    abstract supportsType(type: string): boolean;
+    abstract supportsType(type?: string): boolean;
+
+    getTypeErrorMessage(t: TFunction): string | undefined {
+        return undefined;
+    }
 
     /** Render the settings form for this data target type. */
     abstract renderSettings(

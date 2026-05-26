@@ -14,12 +14,13 @@ import {
     DynamicTypeDataTargetRenderProps,
 } from "../common/dynamic-type-data-target-abstract";
 import { DataTargetClassificationstoreSettings } from "./data-target-classificationstore-settings";
+import { TFunction } from "i18next";
 
 export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTargetAbstract {
     id = "classificationstore";
     label = "Classification Store";
 
-    supportsType(type: string): boolean {
+    supportsType(type?: string): boolean {
         return true;
     }
 

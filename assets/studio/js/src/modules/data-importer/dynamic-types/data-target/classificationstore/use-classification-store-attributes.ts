@@ -13,7 +13,7 @@ import type { ClassAttribute } from "../../../types";
 import { useMemo } from "react";
 
 export function useClassificationStoreAttributes(
-    classId: string,
+    classId?: string,
     fieldName?: string,
 ) {
     const { data, isFetching } =

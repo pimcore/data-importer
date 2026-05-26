@@ -14,12 +14,12 @@ import {
     DynamicTypeDataTargetRenderProps,
 } from "../common/dynamic-type-data-target-abstract";
 import { DataTargetDirectSettings } from "./data-target-direct-settings";
+import { TFunction } from "i18next";
 
 export class DynamicTypeDataTargetDirect extends DynamicTypeDataTargetAbstract {
     id = "direct";
     label = "Direct";
-
-    supportsType(type: string): boolean {
+    supportsType(type?: string): boolean {
         return true;
     }
 

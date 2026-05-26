@@ -40,7 +40,7 @@ export function DataTargetClassificationstoreSettings({
 
             {settings?.fieldName && (
                 <StepTargetClassificationstoreKeySearch
-                    classId={classId}
+                    classId={classId ?? ""}
                     fieldName={settings?.fieldName}
                     transformationResultType={transformationResultType}
                     onChange={(keyId) => onChange({ ...settings, keyId })}
