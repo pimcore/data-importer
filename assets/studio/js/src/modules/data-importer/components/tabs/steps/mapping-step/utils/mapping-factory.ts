@@ -16,8 +16,11 @@ export type MappingCreateMode = 'manual' | 'autofill'
 export function createMappingItem (
   dataIndex: string,
   label: string,
-  mode: MappingCreateMode = 'manual'
+  mode: MappingCreateMode = 'manual',
+  targetFieldName?: string,
+  language?: string
 ): MappingConfigItem {
+  const resolvedFieldName = targetFieldName ?? dataIndex
   return {
     mappingId: uuid(),
     label,
@@ -26,7 +29,8 @@ export function createMappingItem (
     dataTarget: {
       type: 'direct',
       settings: {
-        ...(mode === 'autofill' && { fieldName: dataIndex }),
+        ...(mode === 'autofill' && { fieldName: resolvedFieldName }),
+        ...(language !== undefined && language !== '' && { language }),
         writeIfTargetIsNotEmpty: true,
         writeIfSourceIsEmpty: true
       }

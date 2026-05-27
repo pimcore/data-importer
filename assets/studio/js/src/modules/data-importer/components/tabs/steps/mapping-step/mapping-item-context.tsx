@@ -10,19 +10,22 @@
 
 import { createContext, useContext } from 'react'
 import { type ClassAttribute } from '../../../../types'
+import { type SourceRow } from './sources-panel/sources-panel'
 
 export interface MappingItemContextValue {
   configName: string
   classId: string | undefined
   columnHeaderOptions: Array<{ value: string, label: string }>
   attributesMap: Record<string, ClassAttribute[]>
+  sourceRows: SourceRow[]
 }
 
 const MappingItemContext = createContext<MappingItemContextValue>({
   configName: '',
   classId: undefined,
   columnHeaderOptions: [],
-  attributesMap: {}
+  attributesMap: {},
+  sourceRows: []
 })
 
 export const MappingItemContextProvider = MappingItemContext.Provider
