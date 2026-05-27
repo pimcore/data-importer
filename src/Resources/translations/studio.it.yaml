@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Selezionare una colonna di orig
 data-importer.mapping.collapse-all: Comprimi tutti
 data-importer.mapping.expand-all: Espandi tutti
 data-importer.mapping.auto-fill: Compilazione automatica
+data-importer.mapping.autofill-suggestions.title: Suggerimenti di completamento automatico Copilot
+data-importer.mapping.autofill-suggestions.score: Punteggio
+data-importer.mapping.autofill-suggestions.source: Sorgente
+data-importer.mapping.autofill-suggestions.destination: Destinazione (Destinazione dati)
+data-importer.mapping.autofill-suggestions.result: Risultato di anteprima
+data-importer.mapping.autofill-suggestions.selected: '{{count}} selezionato/i'
+data-importer.mapping.autofill-suggestions.reject-all: Rifiuta tutto
+data-importer.mapping.autofill-suggestions.apply: Applica completamento automatico selezionato
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Nessun suggerimento trovato per le colonne non mappate.
+data-importer.mapping.autofill-suggestions.no-source-columns: Nessuna colonna sorgente disponibile. Eseguire prima un'importazione di anteprima.
 data-importer.mapping.empty-state: Inizia a creare un Mapping direttamente dalla colonna Origini, oppure fai clic su Nuovo per crearne uno manualmente.
 data-importer.mapping.filter-empty: 'Nessun Mapping per "{{source}}" ancora.'
 data-importer.mapping.sources.title: Origini con anteprima

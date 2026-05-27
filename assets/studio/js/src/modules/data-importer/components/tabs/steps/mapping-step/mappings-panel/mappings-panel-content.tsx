@@ -34,7 +34,7 @@ export interface MappingsPanelContentProps {
   onCollapseAll: (visibleKeys: number[]) => void
   onNewKey: (key: number) => void
   onToggleKey: (key: number, allFieldKeys: number[]) => void
-  onAutoFill: (fields: Array<{ name: number }>, add: (value?: MappingConfigItem, insertIndex?: number) => void) => void
+  onOpenAutofillSuggestions: () => void
   onAddItem: (add: (value?: MappingConfigItem, insertIndex?: number) => void, count: number) => void
   onRemoveItem: (remove: (index: number) => void, index: number) => void
   onAddMappingForFilter: (add: (value?: MappingConfigItem, insertIndex?: number) => void) => void
@@ -56,7 +56,7 @@ export const MappingsPanelContent = React.memo(({
   onCollapseAll,
   onNewKey,
   onToggleKey,
-  onAutoFill,
+  onOpenAutofillSuggestions,
   onAddItem,
   onRemoveItem,
   onAddMappingForFilter,
@@ -205,7 +205,7 @@ export const MappingsPanelContent = React.memo(({
 
           <IconTextButton
             icon={ { value: 'autofill' } }
-            onClick={ () => { onAutoFill(fields, add) } }
+            onClick={ onOpenAutofillSuggestions }
             type="default"
           >
             { t('data-importer.mapping.auto-fill') }
