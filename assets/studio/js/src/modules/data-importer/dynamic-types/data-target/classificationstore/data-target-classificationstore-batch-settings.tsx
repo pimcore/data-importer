@@ -10,7 +10,6 @@
 
 import React from 'react';
 import { DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract';
-import { StepTargetWriteSettings } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings';
 import { StepTargetAttributeSelect } from '../common/step-target-attribute-select';
 import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select';
 import { useClassificationStoreSettings } from './use-classification-store-settings';
@@ -34,8 +33,6 @@ export function DataTargetClassificationstoreBatchSettings(props: DynamicTypeDat
                     onChange={(language) => onChange({ ...settings, language })}
                 />
             )}
-
-            <StepTargetWriteSettings settings={settings} onChange={onChange} />
         </>
     );
 }
