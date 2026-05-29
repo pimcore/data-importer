@@ -21,8 +21,8 @@ export function useClassAttributes({
 }: StepTargetProps) {
     const { isFetchingAttributes, calculateTypeError } = useResultPreviewContext();
     const attributes = useMemo(
-        () => attributesMap[resolveAttrMapKey(transformationResultType)] ?? [attributesMap, transformationResultType],
-        []
+        () => attributesMap[resolveAttrMapKey(transformationResultType)] ?? [],
+        [attributesMap, transformationResultType]
     );
     const classFieldOptions = useMemo(
         () => (calculateTypeError ? [] : attributes.map((a) => ({ value: a.key, label: a.title }))),

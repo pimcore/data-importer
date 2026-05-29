@@ -18,8 +18,8 @@ import { TFunction } from 'i18next';
 import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetManyToManyRelation extends DynamicTypeDataTargetAbstract {
-    id = 'manyToManyRelation';
-    label = 'Many to Many Relation';
+    readonly id = 'manyToManyRelation';
+    readonly label = 'Many to Many Relation';
 
     supportsType(type?: string): boolean {
         return ['advancedDataObjectArray', 'dataObjectArray', 'assetArray', 'advancedAssetArray'].includes(type ?? '');
