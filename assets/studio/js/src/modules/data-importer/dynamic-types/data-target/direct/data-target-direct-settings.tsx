@@ -8,11 +8,11 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from "react";
-import { DynamicTypeDataTargetRenderProps } from "../common/dynamic-type-data-target-abstract";
-import { StepTargetWriteSettings } from "../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings";
-import { StepTargetAttributeSelect } from "../common/step-target-attribute-select";
-import { StepTargetAttributeLanguageSelect } from "../common/step-target-attribute-language-select";
+import React from 'react';
+import { DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract';
+import { StepTargetWriteSettings } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings';
+import { StepTargetAttributeSelect } from '../common/step-target-attribute-select';
+import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select';
 
 export function DataTargetDirectSettings({
     isLocalized,
@@ -25,9 +25,7 @@ export function DataTargetDirectSettings({
             <StepTargetAttributeSelect
                 options={classFieldOptions}
                 value={settings?.fieldName}
-                onChange={(value) =>
-                    onChange({ ...settings, fieldName: value })
-                }
+                onChange={(value) => onChange({ ...settings, fieldName: value })}
             />
 
             {isLocalized && (

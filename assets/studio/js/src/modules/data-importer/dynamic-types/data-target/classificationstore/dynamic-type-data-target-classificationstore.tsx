@@ -8,31 +8,30 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from "react";
+import React from 'react';
 import {
     DynamicTypeDataTargetAbstract,
     DynamicTypeDataTargetRenderProps,
-} from "../common/dynamic-type-data-target-abstract";
-import { DataTargetClassificationstoreSettings } from "./data-target-classificationstore-settings";
-import { TFunction } from "i18next";
-import {DataTargetConfig} from "../../../types";
+} from '../common/dynamic-type-data-target-abstract';
+import { DataTargetClassificationstoreSettings } from './data-target-classificationstore-settings';
+import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTargetAbstract {
-    id = "classificationstore";
-    label = "Classification Store";
+    id = 'classificationstore';
+    label = 'Classification Store';
 
     supportsType(type?: string): boolean {
         return true;
     }
 
-    getDefaultSettings(currentSettings: DataTargetConfig["settings"]): DataTargetConfig["settings"] {
+    getDefaultSettings(currentSettings: DataTargetConfig['settings']): DataTargetConfig['settings'] {
         return {
             ...currentSettings,
             overwriteMode: undefined,
             keyId: currentSettings?.keyId,
             fieldName: undefined,
             language: undefined,
-        }
+        };
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {
