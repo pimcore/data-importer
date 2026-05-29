@@ -15,12 +15,26 @@ import {
 } from "../common/dynamic-type-data-target-abstract";
 import { DataTargetDirectSettings } from "./data-target-direct-settings";
 import { TFunction } from "i18next";
+import {DataTargetConfig} from "../../../types";
 
 export class DynamicTypeDataTargetDirect extends DynamicTypeDataTargetAbstract {
     id = "direct";
     label = "Direct";
+
     supportsType(type?: string): boolean {
         return true;
+    }
+
+    getDefaultSettings(currentSettings: DataTargetConfig["settings"]): DataTargetConfig["settings"] {
+        return {
+            ...currentSettings,
+            overwriteMode: undefined,
+            keyId: undefined,
+            fieldName: currentSettings?.fieldName,
+            language: currentSettings?.language,
+            writeIfTargetIsNotEmpty: currentSettings?.writeIfTargetIsNotEmpty ?? true,
+            writeIfSourceIsEmpty: currentSettings?.writeIfSourceIsEmpty ?? true
+        }
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {

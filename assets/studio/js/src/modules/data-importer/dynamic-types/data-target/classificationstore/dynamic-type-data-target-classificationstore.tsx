@@ -15,6 +15,7 @@ import {
 } from "../common/dynamic-type-data-target-abstract";
 import { DataTargetClassificationstoreSettings } from "./data-target-classificationstore-settings";
 import { TFunction } from "i18next";
+import {DataTargetConfig} from "../../../types";
 
 export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTargetAbstract {
     id = "classificationstore";
@@ -22,6 +23,16 @@ export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTar
 
     supportsType(type?: string): boolean {
         return true;
+    }
+
+    getDefaultSettings(currentSettings: DataTargetConfig["settings"]): DataTargetConfig["settings"] {
+        return {
+            ...currentSettings,
+            overwriteMode: undefined,
+            keyId: currentSettings?.keyId,
+            fieldName: undefined,
+            language: undefined,
+        }
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {

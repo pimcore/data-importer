@@ -8,31 +8,37 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from "react";
+import React from 'react';
 import {
     DynamicTypeDataTargetAbstract,
     DynamicTypeDataTargetRenderProps,
-} from "../common/dynamic-type-data-target-abstract";
-import { DataTargetManyToManyRelationSettings } from "./data-target-many-to-many-relation-settings";
-import { TFunction } from "i18next";
+} from '../common/dynamic-type-data-target-abstract';
+import { DataTargetManyToManyRelationSettings } from './data-target-many-to-many-relation-settings';
+import { TFunction } from 'i18next';
+import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetManyToManyRelation extends DynamicTypeDataTargetAbstract {
-    id = "manyToManyRelation";
-    label = "Many to Many Relation";
+    id = 'manyToManyRelation';
+    label = 'Many to Many Relation';
 
     supportsType(type?: string): boolean {
-        return [
-            "advancedDataObjectArray",
-            "dataObjectArray",
-            "assetArray",
-            "advancedAssetArray",
-        ].includes(type ?? "");
+        return ['advancedDataObjectArray', 'dataObjectArray', 'assetArray', 'advancedAssetArray'].includes(type ?? '');
     }
 
     getTypeErrorMessage(t: TFunction): string | undefined {
-        return t(
-            "data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation",
-        );
+        return t('data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation');
+    }
+
+    getDefaultSettings(currentSettings: DataTargetConfig['settings']): DataTargetConfig['settings'] {
+        return {
+            ...currentSettings,
+            overwriteMode: currentSettings?.overwriteMode,
+            keyId: undefined,
+            fieldName: currentSettings?.fieldName,
+            language: currentSettings?.language,
+            writeIfTargetIsNotEmpty: currentSettings?.writeIfTargetIsNotEmpty ?? true,
+            writeIfSourceIsEmpty: currentSettings?.writeIfSourceIsEmpty ?? true,
+        };
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {

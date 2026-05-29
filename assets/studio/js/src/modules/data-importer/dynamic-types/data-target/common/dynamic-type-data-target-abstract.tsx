@@ -33,11 +33,17 @@ export abstract class DynamicTypeDataTargetAbstract {
     /** Specifies whether given type is supported by data target */
     abstract supportsType(type?: string): boolean;
 
+    /** Translated message displayed when target is used on an unsupported type */
     getTypeErrorMessage(t: TFunction): string | undefined {
         return undefined;
     }
 
-    /** Render the settings form for this data target type. */
+    /** Default settings to apply when selecting target */
+    getDefaultSettings(currentSettings: DataTargetConfig["settings"]): DataTargetConfig["settings"] {
+        return currentSettings;
+    }
+
+    /** Render the settings form for this data target type */
     abstract renderSettings(
         props: DynamicTypeDataTargetRenderProps,
     ): React.ReactNode;
