@@ -8,26 +8,22 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useRef, useState } from "react";
-import { useTranslation } from "@pimcore/studio-ui-bundle/app";
-import { Flex, Text } from "@pimcore/studio-ui-bundle/components";
-import {
-    type ClassAttribute,
-    type MappingConfigItem,
-    resolveAttrMapKey,
-} from "../../../../../types";
-import { useResultPreviewContext } from "../result-preview/result-preview-context";
-import { useStyles } from "./step-target.styles";
-import { ClassificationStoreKeyModal } from "./classification-store-key-modal/classification-store-key-modal";
-import { StepTargetPreviewActions } from "./step-target-preview-actions";
-import { StepTargetFields } from "./step-target-fields";
+import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '@pimcore/studio-ui-bundle/app';
+import { Flex, Text } from '@pimcore/studio-ui-bundle/components';
+import { type ClassAttribute, type MappingConfigItem, resolveAttrMapKey } from '../../../../../types';
+import { useResultPreviewContext } from '../result-preview/result-preview-context';
+import { useStyles } from './step-target.styles';
+import { ClassificationStoreKeyModal } from './classification-store-key-modal/classification-store-key-modal';
+import { StepTargetPreviewActions } from './step-target-preview-actions';
+import { StepTargetFields } from './step-target-fields';
 
 export interface StepTargetProps {
     attributesMap: Record<string, ClassAttribute[]>;
     transformationResultType?: string;
-    dataTarget?: MappingConfigItem["dataTarget"];
+    dataTarget?: MappingConfigItem['dataTarget'];
     classId?: string;
-    onDataTargetChange: (dataTarget: MappingConfigItem["dataTarget"]) => void;
+    onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void;
 }
 
 export const StepTarget = ({
@@ -39,33 +35,21 @@ export const StepTarget = ({
 }: StepTargetProps): React.JSX.Element => {
     const { t } = useTranslation();
     const { styles } = useStyles();
-    const { isFetchingAttributes, calculateTypeError } =
-        useResultPreviewContext();
+    const { isFetchingAttributes, calculateTypeError } = useResultPreviewContext();
     const [keyModalOpen, setKeyModalOpen] = useState(false);
 
-    const prevTransformationResultTypeRef = useRef<string | undefined>(
-        transformationResultType,
-    );
-
-    const isDirect = dataTarget?.type === "direct";
-    const isClassificationStore = dataTarget?.type === "classificationstore";
-    const isClassificationStoreBatch =
-        dataTarget?.type === "classificationstoreBatch";
-    const isManyToMany = dataTarget?.type === "manyToManyRelation";
+    const isDirect = dataTarget?.type === 'direct';
+    const isClassificationStore = dataTarget?.type === 'classificationstore';
+    const isManyToMany = dataTarget?.type === 'manyToManyRelation';
 
     const attrMapKey = resolveAttrMapKey(transformationResultType);
     const defaultAttributes: ClassAttribute[] = attributesMap[attrMapKey] ?? [];
 
     const attributeOptions =
-        calculateTypeError !== undefined
-            ? []
-            : defaultAttributes.map((a) => ({ value: a.key, label: a.title }));
-    const isLocalized =
-        defaultAttributes.find((a) => a.key === dataTarget?.settings?.fieldName)
-            ?.localized ?? false;
+        calculateTypeError !== undefined ? [] : defaultAttributes.map((a) => ({ value: a.key, label: a.title }));
+    const isLocalized = defaultAttributes.find((a) => a.key === dataTarget?.settings?.fieldName)?.localized ?? false;
 
-    const writeIfNotEmpty =
-        dataTarget?.settings?.writeIfTargetIsNotEmpty ?? false;
+    const writeIfNotEmpty = dataTarget?.settings?.writeIfTargetIsNotEmpty ?? false;
     const showWriteSettings = isDirect || isManyToMany;
 
     // When writeIfTargetIsNotEmpty is turned off, clear overwriteMode
@@ -74,8 +58,7 @@ export const StepTarget = ({
 
         if (
             !writeIfNotEmpty &&
-            (dataTarget?.settings?.overwriteMode !== undefined ||
-                dataTarget?.settings?.writeIfSourceIsEmpty === true)
+            (dataTarget?.settings?.overwriteMode !== undefined || dataTarget?.settings?.writeIfSourceIsEmpty === true)
         ) {
             onDataTargetChange({
                 ...dataTarget,
@@ -87,32 +70,6 @@ export const StepTarget = ({
             });
         }
     }, [writeIfNotEmpty, showWriteSettings]);
-
-    // Match ExtJS behavior: changing transformation result type invalidates previously selected classification store key.
-    useEffect(() => {
-        if (
-            prevTransformationResultTypeRef.current === transformationResultType
-        )
-            return;
-        prevTransformationResultTypeRef.current = transformationResultType;
-
-        if (
-            (isClassificationStore || isClassificationStoreBatch) &&
-            dataTarget?.settings?.keyId !== undefined
-        ) {
-            onDataTargetChange({
-                ...dataTarget,
-                settings: {
-                    ...dataTarget.settings,
-                    keyId: undefined,
-                },
-            });
-        }
-    }, [
-        transformationResultType,
-        isClassificationStore,
-        isClassificationStoreBatch,
-    ]);
 
     // Reset fieldName when it no longer exists in the loaded attributes or when type calculation failed
     useEffect(() => {
@@ -136,7 +93,7 @@ export const StepTarget = ({
             <Flex className={styles.leftColumn} vertical>
                 <Flex align="center" className={styles.leftHeader}>
                     <Text className={styles.leftHeaderTitle} strong>
-                        {t("data-importer.mapping.advanced-modal.step-target")}
+                        {t('data-importer.mapping.advanced-modal.step-target')}
                     </Text>
                 </Flex>
 
