@@ -8,15 +8,14 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { Flex, Text } from '@pimcore/studio-ui-bundle/components';
-import { type ClassAttribute, type MappingConfigItem, resolveAttrMapKey } from '../../../../../types';
-import { useResultPreviewContext } from '../result-preview/result-preview-context';
+import { type ClassAttribute, type MappingConfigItem } from '../../../../../types';
 import { useStyles } from './step-target.styles';
-import { ClassificationStoreKeyModal } from './classification-store-key-modal/classification-store-key-modal';
 import { StepTargetPreviewActions } from './step-target-preview-actions';
 import { StepTargetFields } from './step-target-fields';
+import { useClassAttributes } from './useClassAttributes';
 
 export interface StepTargetProps {
     attributesMap: Record<string, ClassAttribute[]>;
@@ -26,36 +25,11 @@ export interface StepTargetProps {
     onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void;
 }
 
-export const StepTarget = ({
-    attributesMap,
-    transformationResultType,
-    dataTarget,
-    classId,
-    onDataTargetChange,
-}: StepTargetProps): React.JSX.Element => {
+export const StepTarget = (props: StepTargetProps): React.JSX.Element => {
+    const { classId, transformationResultType, dataTarget, onDataTargetChange } = props;
     const { t } = useTranslation();
     const { styles } = useStyles();
-    const { isFetchingAttributes, calculateTypeError } = useResultPreviewContext();
-    const attributes = attributesMap[resolveAttrMapKey(transformationResultType)] ?? [];
-    const attributeOptions = calculateTypeError ? [] : attributes.map((a) => ({ value: a.key, label: a.title }));
-    const isLocalized = attributes.find((a) => a.key === dataTarget?.settings?.fieldName)?.localized ?? false;
-
-    // Reset fieldName when it no longer exists in the loaded attributes or when type calculation failed
-    useEffect(() => {
-        if (isFetchingAttributes) return;
-        const currentFieldName = dataTarget?.settings?.fieldName;
-        if (currentFieldName === undefined) return;
-        if (!attributeOptions.some((a) => a.value === currentFieldName)) {
-            onDataTargetChange({
-                ...dataTarget,
-                settings: {
-                    ...dataTarget?.settings,
-                    fieldName: undefined,
-                    language: undefined,
-                },
-            });
-        }
-    }, [attributeOptions, isFetchingAttributes]);
+    const { classFieldOptions, isLocalized } = useClassAttributes(props);
 
     return (
         <Flex className={styles.twoColumnLayout} gap="extra-small">
@@ -69,7 +43,7 @@ export const StepTarget = ({
                 <StepTargetFields
                     classId={classId}
                     transformationResultType={transformationResultType}
-                    classFieldOptions={attributeOptions}
+                    classFieldOptions={classFieldOptions}
                     isLocalized={isLocalized}
                     dataTarget={dataTarget}
                     onDataTargetChange={onDataTargetChange}
