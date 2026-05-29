@@ -15,6 +15,15 @@ schema for Object brick fields is `<OBJECT_BRICK_FIELD>.<OBJECT_BRICK_TYPE>.<ATT
 
 > The availability of target fields depends on the settings and the result type of the transformation pipeline. 
 
+In addition to class attributes, the following system fields can be written directly:
+
+- **SYSTEM Key**: Sets the `key` (name) of the element.
+- **SYSTEM Path**: Sets the parent folder of the element. The folder structure is created automatically if it does
+  not exist yet. This is equivalent to configuring the location through the [Resolver Settings](../../04_Resolver_Settings.md),
+  but lets you compose the path from the import data using the transformation pipeline. When used, set the
+  *Element Creation* / *Element Location Update* strategy to `No Change` so the resolver does not override the
+  path computed by the mapping.
+
 ### Classification Store
 Assign data to specific keys in a classification store. 
 
