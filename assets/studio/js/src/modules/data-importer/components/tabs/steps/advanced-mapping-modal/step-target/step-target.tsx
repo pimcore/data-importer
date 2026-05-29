@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { Flex, Text } from '@pimcore/studio-ui-bundle/components';
 import { type ClassAttribute, type MappingConfigItem, resolveAttrMapKey } from '../../../../../types';
@@ -36,40 +36,9 @@ export const StepTarget = ({
     const { t } = useTranslation();
     const { styles } = useStyles();
     const { isFetchingAttributes, calculateTypeError } = useResultPreviewContext();
-    const [keyModalOpen, setKeyModalOpen] = useState(false);
-
-    const isDirect = dataTarget?.type === 'direct';
-    const isClassificationStore = dataTarget?.type === 'classificationstore';
-    const isManyToMany = dataTarget?.type === 'manyToManyRelation';
-
-    const attrMapKey = resolveAttrMapKey(transformationResultType);
-    const defaultAttributes: ClassAttribute[] = attributesMap[attrMapKey] ?? [];
-
-    const attributeOptions =
-        calculateTypeError !== undefined ? [] : defaultAttributes.map((a) => ({ value: a.key, label: a.title }));
-    const isLocalized = defaultAttributes.find((a) => a.key === dataTarget?.settings?.fieldName)?.localized ?? false;
-
-    const writeIfNotEmpty = dataTarget?.settings?.writeIfTargetIsNotEmpty ?? false;
-    const showWriteSettings = isDirect || isManyToMany;
-
-    // When writeIfTargetIsNotEmpty is turned off, clear overwriteMode
-    useEffect(() => {
-        if (!showWriteSettings) return;
-
-        if (
-            !writeIfNotEmpty &&
-            (dataTarget?.settings?.overwriteMode !== undefined || dataTarget?.settings?.writeIfSourceIsEmpty === true)
-        ) {
-            onDataTargetChange({
-                ...dataTarget,
-                settings: {
-                    ...dataTarget.settings,
-                    overwriteMode: undefined,
-                    writeIfSourceIsEmpty: false,
-                },
-            });
-        }
-    }, [writeIfNotEmpty, showWriteSettings]);
+    const attributes = attributesMap[resolveAttrMapKey(transformationResultType)] ?? [];
+    const attributeOptions = calculateTypeError ? [] : attributes.map((a) => ({ value: a.key, label: a.title }));
+    const isLocalized = attributes.find((a) => a.key === dataTarget?.settings?.fieldName)?.localized ?? false;
 
     // Reset fieldName when it no longer exists in the loaded attributes or when type calculation failed
     useEffect(() => {
@@ -108,31 +77,6 @@ export const StepTarget = ({
             </Flex>
 
             <StepTargetPreviewActions />
-
-            {isClassificationStore &&
-                classId !== undefined &&
-                dataTarget?.settings?.fieldName !== undefined &&
-                transformationResultType !== undefined && (
-                    <ClassificationStoreKeyModal
-                        classId={classId}
-                        fieldName={dataTarget.settings.fieldName}
-                        onClose={() => {
-                            setKeyModalOpen(false);
-                        }}
-                        onSelect={(selectedKeyId) => {
-                            onDataTargetChange({
-                                ...dataTarget,
-                                settings: {
-                                    ...dataTarget?.settings,
-                                    keyId: selectedKeyId,
-                                },
-                            });
-                            setKeyModalOpen(false);
-                        }}
-                        open={keyModalOpen}
-                        transformationResultType={transformationResultType}
-                    />
-                )}
         </Flex>
     );
 };
