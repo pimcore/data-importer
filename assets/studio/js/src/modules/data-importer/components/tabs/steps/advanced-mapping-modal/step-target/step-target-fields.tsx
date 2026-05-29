@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { Flex, Select } from '@pimcore/studio-ui-bundle/components';
 import { type MappingConfigItem } from '../../../../../types';
@@ -49,19 +49,16 @@ export const StepTargetFields = ({
         () => targetRegistry.getDynamicType(dataTarget?.type ?? ''),
         [targetRegistry, dataTarget?.type]
     );
-
-    const onTargetChange = useCallback(
-        (type: string) => {
-            const settings = selectedTarget?.getDefaultSettings(dataTarget?.settings) ?? dataTarget?.settings ?? {};
-            onDataTargetChange({ ...dataTarget, type, settings });
-        },
-        [selectedTarget, onDataTargetChange, dataTarget]
-    );
-
     const targetOptions = useMemo(
         () => targetRegistry.getAllTypes().map(({ id, label }) => ({ value: id, label })),
         [targetRegistry]
     );
+
+    function onTargetChange(type: string) {
+        const nextTarget = targetRegistry.getDynamicType(type ?? '');
+        const settings = nextTarget?.getDefaultSettings?.(dataTarget?.settings) ?? dataTarget?.settings ?? {};
+        onDataTargetChange({ ...dataTarget, type, settings });
+    }
 
     return (
         <Flex className={styles.fieldsContainer} gap={6} vertical>
