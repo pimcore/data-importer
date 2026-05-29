@@ -18,8 +18,8 @@ import { TFunction } from 'i18next';
 import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetClassificationstoreBatch extends DynamicTypeDataTargetAbstract {
-    id = 'classificationstoreBatch';
-    label = 'Classification Store Batch';
+    readonly id = 'classificationstoreBatch';
+    readonly label = 'Classification Store Batch';
 
     supportsType(type?: string): boolean {
         return ['array', 'quantityValueArray', 'inputQuantityValueArray', 'dateArray'].includes(type ?? '');

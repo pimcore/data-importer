@@ -17,8 +17,8 @@ import { DataTargetClassificationstoreSettings } from './data-target-classificat
 import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTargetAbstract {
-    id = 'classificationstore';
-    label = 'Classification Store';
+    readonly id = 'classificationstore';
+    readonly label = 'Classification Store';
 
     supportsType(type?: string): boolean {
         return true;

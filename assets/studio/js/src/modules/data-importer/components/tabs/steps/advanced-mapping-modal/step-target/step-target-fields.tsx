@@ -74,17 +74,21 @@ export const StepTargetFields = ({
                 </div>
             </div>
 
-            {selectedTarget?.supportsType(transformationResultType) ? (
-                selectedTarget.renderSettings({
-                    classId,
-                    transformationResultType,
-                    settings: dataTarget?.settings,
-                    onChange: (settings) => onDataTargetChange({ ...dataTarget, settings }),
-                    isLocalized,
-                    classFieldOptions,
-                })
+            {selectedTarget ? (
+                selectedTarget?.supportsType(transformationResultType) ? (
+                    selectedTarget.renderSettings({
+                        classId,
+                        transformationResultType,
+                        settings: dataTarget?.settings,
+                        onChange: (settings) => onDataTargetChange({ ...dataTarget, settings }),
+                        isLocalized,
+                        classFieldOptions,
+                    })
+                ) : (
+                    <ErrorBox>{selectedTarget?.getTypeErrorMessage(t)}</ErrorBox>
+                )
             ) : (
-                <ErrorBox>{selectedTarget?.getTypeErrorMessage(t)}</ErrorBox>
+                <></>
             )}
         </Flex>
     );
