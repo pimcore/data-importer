@@ -8,23 +8,23 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo } from "react";
-import { useTranslation } from "@pimcore/studio-ui-bundle/app";
-import { Flex, Select } from "@pimcore/studio-ui-bundle/components";
-import { type MappingConfigItem } from "../../../../../types";
-import { useStyles } from "./step-target.styles";
-import { ErrorBox } from "../error-box/error-box";
-import { container } from "@pimcore/studio-ui-bundle";
-import { bundleServiceIds } from "../../../../../../../config/service-ids";
-import { DynamicTypeDataTargetRegistry } from "../../../../../dynamic-types/data-target/dynamic-type-data-target-registry";
+import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from '@pimcore/studio-ui-bundle/app';
+import { Flex, Select } from '@pimcore/studio-ui-bundle/components';
+import { type MappingConfigItem } from '../../../../../types';
+import { useStyles } from './step-target.styles';
+import { ErrorBox } from '../error-box/error-box';
+import { container } from '@pimcore/studio-ui-bundle';
+import { bundleServiceIds } from '../../../../../../../config/service-ids';
+import { DynamicTypeDataTargetRegistry } from '../../../../../dynamic-types/data-target/dynamic-type-data-target-registry';
 
 export interface StepTargetFieldsProps {
-    dataTarget?: MappingConfigItem["dataTarget"];
+    dataTarget?: MappingConfigItem['dataTarget'];
     transformationResultType?: string;
     classId?: string;
     classFieldOptions: Array<{ value: string; label: string }>;
     isLocalized: boolean;
-    onDataTargetChange: (dataTarget: MappingConfigItem["dataTarget"]) => void;
+    onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void;
 }
 
 export const StepTargetFields = ({
@@ -41,78 +41,36 @@ export const StepTargetFields = ({
     const targetRegistry = useMemo(
         () =>
             container.get<DynamicTypeDataTargetRegistry>(
-                bundleServiceIds[
-                    "DataImporter/DynamicTypes/DataTarget/Registry"
-                ],
+                bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Registry']
             ),
-        [],
+        []
     );
     const selectedTarget = useMemo(
-        () => targetRegistry.getDynamicType(dataTarget?.type ?? ""),
-        [targetRegistry, dataTarget?.type],
+        () => targetRegistry.getDynamicType(dataTarget?.type ?? ''),
+        [targetRegistry, dataTarget?.type]
     );
+
+    const onTargetChange = useCallback(
+        (type: string) => {
+            const settings = selectedTarget?.getDefaultSettings(dataTarget?.settings) ?? dataTarget?.settings ?? {};
+            onDataTargetChange({ ...dataTarget, type, settings });
+        },
+        [selectedTarget, onDataTargetChange, dataTarget]
+    );
+
     const targetOptions = useMemo(
-        () =>
-            targetRegistry
-                .getAllTypes()
-                .map(({ id, label }) => ({ value: id, label })),
-        [targetRegistry],
+        () => targetRegistry.getAllTypes().map(({ id, label }) => ({ value: id, label })),
+        [targetRegistry]
     );
 
     return (
         <Flex className={styles.fieldsContainer} gap={6} vertical>
             <div>
-                <div className={styles.fieldLabel}>
-                    {t("data-importer.mapping.advanced-modal.step-target.type")}
-                </div>
+                <div className={styles.fieldLabel}>{t('data-importer.mapping.advanced-modal.step-target.type')}</div>
                 <div className={styles.selectSkeletonWrapper}>
                     <Select
                         className={styles.selectFull}
-                        onChange={(v: string) => {
-                            const previousType = dataTarget?.type;
-                            const isSwitchingToClassificationStore =
-                                (v === "classificationstore" ||
-                                    v === "classificationstoreBatch") &&
-                                (previousType === "direct" ||
-                                    previousType === "manyToManyRelation");
-
-                            const nextSettings = {
-                                ...dataTarget?.settings,
-                                overwriteMode:
-                                    v === "manyToManyRelation"
-                                        ? dataTarget?.settings?.overwriteMode
-                                        : undefined,
-                                keyId:
-                                    v === "classificationstore" ||
-                                    v === "classificationstoreBatch"
-                                        ? dataTarget?.settings?.keyId
-                                        : undefined,
-                                fieldName: isSwitchingToClassificationStore
-                                    ? undefined
-                                    : dataTarget?.settings?.fieldName,
-                                language: isSwitchingToClassificationStore
-                                    ? undefined
-                                    : dataTarget?.settings?.language,
-                                writeIfTargetIsNotEmpty:
-                                    v === "direct" || v === "manyToManyRelation"
-                                        ? (dataTarget?.settings
-                                              ?.writeIfTargetIsNotEmpty ?? true)
-                                        : dataTarget?.settings
-                                              ?.writeIfTargetIsNotEmpty,
-                                writeIfSourceIsEmpty:
-                                    v === "direct" || v === "manyToManyRelation"
-                                        ? (dataTarget?.settings
-                                              ?.writeIfSourceIsEmpty ?? true)
-                                        : dataTarget?.settings
-                                              ?.writeIfSourceIsEmpty,
-                            };
-
-                            onDataTargetChange({
-                                ...dataTarget,
-                                type: v,
-                                settings: nextSettings,
-                            });
-                        }}
+                        onChange={onTargetChange}
                         options={targetOptions}
                         value={dataTarget?.type}
                     />
@@ -124,8 +82,7 @@ export const StepTargetFields = ({
                     classId,
                     transformationResultType,
                     settings: dataTarget?.settings,
-                    onChange: (settings) =>
-                        onDataTargetChange({ ...dataTarget, settings }),
+                    onChange: (settings) => onDataTargetChange({ ...dataTarget, settings }),
                     isLocalized,
                     classFieldOptions,
                 })
