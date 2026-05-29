@@ -8,8 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { useMemo } from "react";
-import { useSettings } from "@pimcore/studio-ui-bundle/modules/app";
+import { useMemo } from 'react';
+import { useSettings } from '@pimcore/studio-ui-bundle/modules/app';
 
 export function useLanguageOptions() {
     const { validLanguages } = useSettings();
@@ -19,6 +19,6 @@ export function useLanguageOptions() {
                 value: locale,
                 label: locale,
             })),
-        [validLanguages],
+        [validLanguages]
     );
 }

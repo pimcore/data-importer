@@ -8,18 +8,18 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from "react";
-import { injectable } from "@pimcore/studio-ui-bundle/app";
-import { DataTargetConfig } from "../../../types";
-import { TFunction } from "i18next";
+import React from 'react';
+import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DataTargetConfig } from '../../../types';
+import { TFunction } from 'i18next';
 
 export interface DynamicTypeDataTargetRenderProps {
     classId?: string;
     classFieldOptions: Array<{ value: string; label: string }>;
     isLocalized: boolean;
     transformationResultType?: string;
-    settings: DataTargetConfig["settings"];
-    onChange(settings: DataTargetConfig["settings"]): void;
+    settings: DataTargetConfig['settings'];
+    onChange(settings: DataTargetConfig['settings']): void;
 }
 
 @injectable()
@@ -39,12 +39,10 @@ export abstract class DynamicTypeDataTargetAbstract {
     }
 
     /** Default settings to apply when selecting target */
-    getDefaultSettings(currentSettings: DataTargetConfig["settings"]): DataTargetConfig["settings"] {
+    getDefaultSettings(currentSettings: DataTargetConfig['settings']): DataTargetConfig['settings'] {
         return currentSettings;
     }
 
     /** Render the settings form for this data target type */
-    abstract renderSettings(
-        props: DynamicTypeDataTargetRenderProps,
-    ): React.ReactNode;
+    abstract renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode;
 }

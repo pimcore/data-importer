@@ -8,40 +8,27 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { Select } from "@pimcore/studio-ui-bundle/components";
-import React from "react";
-import { useTranslation } from "@pimcore/studio-ui-bundle/app";
-import { useStyles } from "../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target.styles";
-import { useLanguageOptions } from "./use-language-options";
+import { Select } from '@pimcore/studio-ui-bundle/components';
+import React from 'react';
+import { useTranslation } from '@pimcore/studio-ui-bundle/app';
+import { useStyles } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target.styles';
+import { useLanguageOptions } from './use-language-options';
 
 export interface StepTargetAttributeLanguageSelectProps {
     value?: string;
     onChange(value: string): void;
 }
 
-export function StepTargetAttributeLanguageSelect({
-    value,
-    onChange,
-}: StepTargetAttributeLanguageSelectProps) {
+export function StepTargetAttributeLanguageSelect({ value, onChange }: StepTargetAttributeLanguageSelectProps) {
     const { t } = useTranslation();
     const { styles } = useStyles();
     const options = useLanguageOptions();
 
     return (
         <div>
-            <div className={styles.fieldLabel}>
-                {t(
-                    "data-importer.mapping.item.data-target.language-placeholder",
-                )}
-            </div>
+            <div className={styles.fieldLabel}>{t('data-importer.mapping.item.data-target.language-placeholder')}</div>
             <div className={styles.selectSkeletonWrapper}>
-                <Select
-                    className={styles.selectFull}
-                    onChange={onChange}
-                    options={options}
-                    showSearch
-                    value={value}
-                />
+                <Select className={styles.selectFull} onChange={onChange} options={options} showSearch value={value} />
             </div>
         </div>
     );

@@ -8,24 +8,23 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from "react";
+import React from 'react';
 import {
     DynamicTypeDataTargetAbstract,
     DynamicTypeDataTargetRenderProps,
-} from "../common/dynamic-type-data-target-abstract";
-import { DataTargetDirectSettings } from "./data-target-direct-settings";
-import { TFunction } from "i18next";
-import {DataTargetConfig} from "../../../types";
+} from '../common/dynamic-type-data-target-abstract';
+import { DataTargetDirectSettings } from './data-target-direct-settings';
+import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetDirect extends DynamicTypeDataTargetAbstract {
-    id = "direct";
-    label = "Direct";
+    id = 'direct';
+    label = 'Direct';
 
     supportsType(type?: string): boolean {
         return true;
     }
 
-    getDefaultSettings(currentSettings: DataTargetConfig["settings"]): DataTargetConfig["settings"] {
+    getDefaultSettings(currentSettings: DataTargetConfig['settings']): DataTargetConfig['settings'] {
         return {
             ...currentSettings,
             overwriteMode: undefined,
@@ -33,8 +32,8 @@ export class DynamicTypeDataTargetDirect extends DynamicTypeDataTargetAbstract {
             fieldName: currentSettings?.fieldName,
             language: currentSettings?.language,
             writeIfTargetIsNotEmpty: currentSettings?.writeIfTargetIsNotEmpty ?? true,
-            writeIfSourceIsEmpty: currentSettings?.writeIfSourceIsEmpty ?? true
-        }
+            writeIfSourceIsEmpty: currentSettings?.writeIfSourceIsEmpty ?? true,
+        };
     }
 
     renderSettings(props: DynamicTypeDataTargetRenderProps): React.ReactNode {

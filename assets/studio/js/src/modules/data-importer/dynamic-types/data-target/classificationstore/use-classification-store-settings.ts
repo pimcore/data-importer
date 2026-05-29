@@ -45,8 +45,8 @@ export function useClassificationStoreSettings({
     const isLocalized = useMemo(() => attributes.find((a) => a.key === settings?.fieldName)?.localized ?? false, []);
     const options = useMemo(() => attributes.map((a) => ({ value: a.key, label: a.title })), [attributes]);
 
-    const prevResultType = useRef(transformationResultType);
     // Match ExtJS behavior: changing transformation result type invalidates previously selected classification store key.
+    const prevResultType = useRef(transformationResultType);
     useEffect(() => {
         if (prevResultType.current === transformationResultType) {
             return;

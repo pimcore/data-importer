@@ -8,8 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { injectable } from "@pimcore/studio-ui-bundle/app";
-import { DynamicTypeDataTargetAbstract } from "./common/dynamic-type-data-target-abstract";
+import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DynamicTypeDataTargetAbstract } from './common/dynamic-type-data-target-abstract';
 
 @injectable()
 export class DynamicTypeDataTargetRegistry {

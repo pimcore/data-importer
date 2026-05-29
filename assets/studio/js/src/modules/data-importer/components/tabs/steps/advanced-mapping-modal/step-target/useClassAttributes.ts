@@ -7,6 +7,7 @@
  *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
  *  @license    Pimcore Open Core License (POCL)
  */
+
 import { useEffect, useMemo } from 'react';
 import { useResultPreviewContext } from '../result-preview/result-preview-context';
 import { resolveAttrMapKey } from '../../../../../types';
