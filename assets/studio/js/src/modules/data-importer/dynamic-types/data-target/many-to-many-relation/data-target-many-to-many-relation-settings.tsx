@@ -38,7 +38,7 @@ export function DataTargetManyToManyRelationSettings({
             <StepTargetWriteSettings
                 settings={settings}
                 onChange={onChange}
-                showOverwriteMode={settings?.writeIfTargetIsNotEmpty}
+                showOverwriteMode={settings?.writeIfTargetIsNotEmpty ?? true}
             />
         </>
     );
