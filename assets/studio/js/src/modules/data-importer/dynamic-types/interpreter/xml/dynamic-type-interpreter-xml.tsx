@@ -15,9 +15,9 @@ import { XmlInterpreterSettings } from './xml-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterXml extends DynamicTypeInterpreterAbstract {
-    readonly id = 'xml';
-    readonly label = 'data-importer.interpreter.xml';
-    renderSettings(): React.JSX.Element | null {
-        return <XmlInterpreterSettings />;
-    }
+  readonly id = 'xml'
+  readonly label = 'data-importer.interpreter.xml'
+  renderSettings (): React.JSX.Element | null {
+    return <XmlInterpreterSettings />
+  }
 }

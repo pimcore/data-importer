@@ -15,9 +15,9 @@ import { SqlInterpreterSettings } from './sql-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterSql extends DynamicTypeInterpreterAbstract {
-    readonly id = 'sql';
-    readonly label = 'data-importer.interpreter.sql';
-    renderSettings(): React.JSX.Element | null {
-        return <SqlInterpreterSettings />;
-    }
+  readonly id = 'sql'
+  readonly label = 'data-importer.interpreter.sql'
+  renderSettings (): React.JSX.Element | null {
+    return <SqlInterpreterSettings />
+  }
 }

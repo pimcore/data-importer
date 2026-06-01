@@ -8,17 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract';
-import { UploadLoaderSettings } from './upload-loader-settings';
+import React from 'react'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract'
+import { UploadLoaderSettings } from './upload-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderUpload extends DynamicTypeLoaderAbstract {
-    readonly id = 'upload';
-    readonly label = 'data-importer.loader.upload';
+  readonly id = 'upload'
+  readonly label = 'data-importer.loader.upload'
 
-    renderSettings(configName: string): React.JSX.Element | null {
-        return <UploadLoaderSettings configName={configName} />;
-    }
+  renderSettings (configName: string): React.JSX.Element | null {
+    return <UploadLoaderSettings configName={ configName } />
+  }
 }

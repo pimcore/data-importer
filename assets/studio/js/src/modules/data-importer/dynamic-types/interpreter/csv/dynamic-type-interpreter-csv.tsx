@@ -8,16 +8,16 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { DynamicTypeInterpreterAbstract } from '../dynamic-type-interpreter-abstract';
-import { CsvInterpreterSettings } from './csv-interpreter-settings';
+import React from 'react'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeInterpreterAbstract } from '../dynamic-type-interpreter-abstract'
+import { CsvInterpreterSettings } from './csv-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterCsv extends DynamicTypeInterpreterAbstract {
-    readonly id = 'csv';
-    readonly label = 'data-importer.interpreter.csv';
-    renderSettings(): React.JSX.Element | null {
-        return <CsvInterpreterSettings />;
-    }
+  readonly id = 'csv'
+  readonly label = 'data-importer.interpreter.csv'
+  renderSettings (): React.JSX.Element | null {
+    return <CsvInterpreterSettings />
+  }
 }

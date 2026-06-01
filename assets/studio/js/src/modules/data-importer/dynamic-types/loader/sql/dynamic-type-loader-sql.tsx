@@ -8,17 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract';
-import { SqlLoaderSettings } from './sql-loader-settings';
+import React from 'react'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract'
+import { SqlLoaderSettings } from './sql-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderSql extends DynamicTypeLoaderAbstract {
-    readonly id = 'sql';
-    readonly label = 'data-importer.loader.sql';
+  readonly id = 'sql'
+  readonly label = 'data-importer.loader.sql'
 
-    renderSettings(_configName: string): React.JSX.Element | null {
-        return <SqlLoaderSettings />;
-    }
+  renderSettings (_configName: string): React.JSX.Element | null {
+    return <SqlLoaderSettings />
+  }
 }
