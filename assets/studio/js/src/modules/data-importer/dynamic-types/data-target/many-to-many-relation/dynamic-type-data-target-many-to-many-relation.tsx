@@ -19,8 +19,8 @@ import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetManyToManyRelation extends DynamicTypeDataTargetAbstract {
     readonly id = 'manyToManyRelation';
-    readonly label = 'Many to Many Relation';
-
+    readonly label = 'data-importer.mapping.item.data-target.type.manyToManyRelation';
+    x;
     supportsType(type?: string): boolean {
         return ['advancedDataObjectArray', 'dataObjectArray', 'assetArray', 'advancedAssetArray'].includes(type ?? '');
     }

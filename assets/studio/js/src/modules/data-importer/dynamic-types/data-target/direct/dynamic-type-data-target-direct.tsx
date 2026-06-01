@@ -18,7 +18,7 @@ import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetDirect extends DynamicTypeDataTargetAbstract {
     readonly id = 'direct';
-    readonly label = 'Direct';
+    readonly label = 'data-importer.mapping.item.data-target.type.direct';
 
     supportsType(type?: string): boolean {
         return true;
