@@ -19,7 +19,7 @@ import { DataTargetConfig } from '../../../types';
 
 export class DynamicTypeDataTargetClassificationstoreBatch extends DynamicTypeDataTargetAbstract {
     readonly id = 'classificationstoreBatch';
-    readonly label = 'Classification Store Batch';
+    readonly label = 'data-importer.mapping.item.data-target.type.classificationstoreBatch';
 
     supportsType(type?: string): boolean {
         return ['array', 'quantityValueArray', 'inputQuantityValueArray', 'dateArray'].includes(type ?? '');

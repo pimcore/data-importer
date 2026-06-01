@@ -50,7 +50,7 @@ export const StepTargetFields = ({
         [targetRegistry, dataTarget?.type]
     );
     const targetOptions = useMemo(
-        () => targetRegistry.getAllTypes().map(({ id, label }) => ({ value: id, label })),
+        () => targetRegistry.getAllTypes().map(({ id, label }) => ({ value: id, label: t(label) })),
         [targetRegistry]
     );
 
