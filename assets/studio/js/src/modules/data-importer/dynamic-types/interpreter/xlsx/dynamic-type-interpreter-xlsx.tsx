@@ -15,9 +15,9 @@ import { XlsxInterpreterSettings } from './xlsx-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterXlsx extends DynamicTypeInterpreterAbstract {
-  readonly id = 'xlsx'
-  readonly label = 'XLSX'
-  renderSettings (): React.JSX.Element | null {
-    return <XlsxInterpreterSettings />
-  }
+    readonly id = 'xlsx';
+    readonly label = 'data-importer.interpreter.xlsx';
+    renderSettings(): React.JSX.Element | null {
+        return <XlsxInterpreterSettings />;
+    }
 }
