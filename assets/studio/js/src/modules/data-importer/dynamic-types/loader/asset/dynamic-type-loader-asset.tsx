@@ -8,17 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract'
-import { AssetLoaderSettings } from './asset-loader-settings'
+import React from 'react';
+import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract';
+import { AssetLoaderSettings } from './asset-loader-settings';
 
 @injectable()
 export class DynamicTypeLoaderAsset extends DynamicTypeLoaderAbstract {
-  readonly id = 'asset'
-  readonly label = 'Asset'
+    readonly id = 'asset';
+    readonly label = 'data-importer.loader.asset';
 
-  renderSettings (_configName: string): React.JSX.Element | null {
-    return <AssetLoaderSettings />
-  }
+    renderSettings(_configName: string): React.JSX.Element | null {
+        return <AssetLoaderSettings />;
+    }
 }

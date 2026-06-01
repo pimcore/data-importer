@@ -8,17 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract'
-import { HttpLoaderSettings } from './http-loader-settings'
+import React from 'react';
+import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract';
+import { HttpLoaderSettings } from './http-loader-settings';
 
 @injectable()
 export class DynamicTypeLoaderHttp extends DynamicTypeLoaderAbstract {
-  readonly id = 'http'
-  readonly label = 'HTTP'
+    readonly id = 'http';
+    readonly label = 'data-importer.loader.http';
 
-  renderSettings (_configName: string): React.JSX.Element | null {
-    return <HttpLoaderSettings />
-  }
+    renderSettings(_configName: string): React.JSX.Element | null {
+        return <HttpLoaderSettings />;
+    }
 }
