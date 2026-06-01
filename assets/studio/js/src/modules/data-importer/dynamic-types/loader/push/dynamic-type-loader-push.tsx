@@ -8,17 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract';
-import { PushLoaderSettings } from './push-loader-settings';
+import React from 'react'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract'
+import { PushLoaderSettings } from './push-loader-settings'
 
 @injectable()
 export class DynamicTypeLoaderPush extends DynamicTypeLoaderAbstract {
-    readonly id = 'push';
-    readonly label = 'data-importer.loader.push';
+  readonly id = 'push'
+  readonly label = 'data-importer.loader.push'
 
-    renderSettings(_configName: string): React.JSX.Element | null {
-        return <PushLoaderSettings />;
-    }
+  renderSettings (_configName: string): React.JSX.Element | null {
+    return <PushLoaderSettings />
+  }
 }
