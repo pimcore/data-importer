@@ -8,17 +8,17 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract'
-import { SftpLoaderSettings } from './sftp-loader-settings'
+import React from 'react';
+import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DynamicTypeLoaderAbstract } from '../dynamic-type-loader-abstract';
+import { SftpLoaderSettings } from './sftp-loader-settings';
 
 @injectable()
 export class DynamicTypeLoaderSftp extends DynamicTypeLoaderAbstract {
-  readonly id = 'sftp'
-  readonly label = 'SFTP'
+    readonly id = 'sftp';
+    readonly label = 'data-importer.loader.sftp';
 
-  renderSettings (_configName: string): React.JSX.Element | null {
-    return <SftpLoaderSettings />
-  }
+    renderSettings(_configName: string): React.JSX.Element | null {
+        return <SftpLoaderSettings />;
+    }
 }
