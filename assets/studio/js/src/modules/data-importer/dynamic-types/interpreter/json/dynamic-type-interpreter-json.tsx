@@ -15,9 +15,9 @@ import { JsonInterpreterSettings } from './json-interpreter-settings'
 
 @injectable()
 export class DynamicTypeInterpreterJson extends DynamicTypeInterpreterAbstract {
-  readonly id = 'json'
-  readonly label = 'JSON'
-  renderSettings (): React.JSX.Element | null {
-    return <JsonInterpreterSettings />
-  }
+    readonly id = 'json';
+    readonly label = 'data-importer.interpreter.json';
+    renderSettings(): React.JSX.Element | null {
+        return <JsonInterpreterSettings />;
+    }
 }
