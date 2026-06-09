@@ -70,5 +70,14 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Transformer/AsGeopolygon': 'DataImporter/DynamicTypes/Transformer/AsGeopolygon',
   'DataImporter/DynamicTypes/Transformer/AsGeopolyline': 'DataImporter/DynamicTypes/Transformer/AsGeopolyline',
   'DataImporter/DynamicTypes/Transformer/LoadDataObject': 'DataImporter/DynamicTypes/Transformer/LoadDataObject',
-  'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset'
+  'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset',
+
+  // Data Target registry
+  'DataImporter/DynamicTypes/DataTarget/Registry': 'DataImporter/DynamicTypes/DataTarget/Registry',
+
+  // Data Target types
+  'DataImporter/DynamicTypes/DataTarget/Direct': 'DataImporter/DynamicTypes/DataTarget/Direct',
+  'DataImporter/DynamicTypes/DataTarget/Classificationstore': 'DataImporter/DynamicTypes/DataTarget/Classificationstore',
+  'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch': 'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch',
+  'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation': 'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation'
 } as const
