@@ -290,6 +290,7 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Replace
 data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Merge
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: No key selected
+data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip: 'Add a transformer in the Transformations step before selecting a key.'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} in group {{group}}'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Select Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Search and select a key for this classification store field
