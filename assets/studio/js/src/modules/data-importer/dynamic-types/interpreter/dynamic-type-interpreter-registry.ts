@@ -10,7 +10,7 @@
 
 import { injectable } from '@pimcore/studio-ui-bundle/app'
 import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element'
-import { DynamicTypeInterpreterAbstract } from './dynamic-type-interpreter-abstract'
+import { type DynamicTypeInterpreterAbstract } from './dynamic-type-interpreter-abstract'
 
 @injectable()
 export class DynamicTypeInterpreterRegistry extends DynamicTypeRegistryAbstract<DynamicTypeInterpreterAbstract> {}
