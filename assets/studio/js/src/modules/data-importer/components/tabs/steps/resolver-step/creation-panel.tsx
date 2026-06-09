@@ -12,7 +12,7 @@ import React from 'react'
 import { Form, Input, ManyToOneRelationPath, Select, Switch } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
-import { filterByLabel } from '../select-utils'
+import { filterByLabel } from '../../../../utils/select-utils'
 
 export interface CreationPanelProps {
   createLocationType: string | undefined

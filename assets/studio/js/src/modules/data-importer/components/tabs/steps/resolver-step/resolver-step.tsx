@@ -17,7 +17,7 @@ import { useClassDefinitionCollectionQuery } from '@pimcore/studio-ui-bundle/api
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../data-importer-api-slice.gen'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { StepHeading } from '../step-heading/step-heading'
-import { filterByLabel } from '../select-utils'
+import { filterByLabel } from '../../../../utils/select-utils'
 import type { ClassAttribute } from '../../../../types'
 import { LoadingPanel } from './loading-panel'
 import { CreationPanel } from './creation-panel'

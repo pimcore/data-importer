@@ -43,12 +43,63 @@ import {
   DynamicTypeTransformerLoadDataObject,
   DynamicTypeTransformerImportAsset
 } from './dynamic-types/transformer'
+import { DynamicTypeInterpreterRegistry } from './dynamic-types/interpreter/dynamic-type-interpreter-registry'
+import { DynamicTypeInterpreterCsv } from './dynamic-types/interpreter/csv/dynamic-type-interpreter-csv'
+import { DynamicTypeInterpreterJson } from './dynamic-types/interpreter/json/dynamic-type-interpreter-json'
+import { DynamicTypeInterpreterSql } from './dynamic-types/interpreter/sql/dynamic-type-interpreter-sql'
+import { DynamicTypeInterpreterXml } from './dynamic-types/interpreter/xml/dynamic-type-interpreter-xml'
+import { DynamicTypeInterpreterXlsx } from './dynamic-types/interpreter/xlsx/dynamic-type-interpreter-xlsx'
+import { DynamicTypeLoaderRegistry } from './dynamic-types/loader/dynamic-type-loader-registry'
+import { DynamicTypeLoaderAsset } from './dynamic-types/loader/asset/dynamic-type-loader-asset'
+import { DynamicTypeLoaderUpload } from './dynamic-types/loader/upload/dynamic-type-loader-upload'
+import { DynamicTypeLoaderHttp } from './dynamic-types/loader/http/dynamic-type-loader-http'
+import { DynamicTypeLoaderSftp } from './dynamic-types/loader/sftp/dynamic-type-loader-sftp'
+import { DynamicTypeLoaderPush } from './dynamic-types/loader/push/dynamic-type-loader-push'
+import { DynamicTypeLoaderSql } from './dynamic-types/loader/sql/dynamic-type-loader-sql'
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
     // ── Data Hub adapter ────────────────────────────────────────────────────
     const adapterRegistry = container.get<DynamicTypeDataHubAdapterRegistry>(dataHubServiceIds['DataHub/DynamicTypes/Adapter/Registry'])
     adapterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Adapter/DataImporterDataObject']))
+
+    // ── Interpreter registry ────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry']).to(DynamicTypeInterpreterRegistry).inSingletonScope()
+
+    // Bind types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']).to(DynamicTypeInterpreterCsv).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']).to(DynamicTypeInterpreterJson).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']).to(DynamicTypeInterpreterXml).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']).to(DynamicTypeInterpreterXlsx).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']).to(DynamicTypeInterpreterSql).inSingletonScope()
+
+    // Register types to registry — order here determines the dropdown/panel order in the UI
+    const interpreterRegistry = container.get<DynamicTypeInterpreterRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry'])
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']))
+
+    // ── Loader registry ─────────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry']).to(DynamicTypeLoaderRegistry).inSingletonScope()
+
+    // Bind types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Asset']).to(DynamicTypeLoaderAsset).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Upload']).to(DynamicTypeLoaderUpload).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Http']).to(DynamicTypeLoaderHttp).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sftp']).to(DynamicTypeLoaderSftp).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Push']).to(DynamicTypeLoaderPush).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sql']).to(DynamicTypeLoaderSql).inSingletonScope()
+
+    // Register types to registry
+    const loaderRegistry = container.get<DynamicTypeLoaderRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry'])
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Asset']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Upload']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Http']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sftp']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Push']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sql']))
 
     // ── Transformer registry ────────────────────────────────────────────────
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Registry']).to(DynamicTypeTransformerRegistry).inSingletonScope()

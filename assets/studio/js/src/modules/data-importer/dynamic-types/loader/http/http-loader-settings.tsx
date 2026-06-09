@@ -11,7 +11,7 @@
 import React from 'react'
 import { Form, FormKit, Input, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { filterByLabel } from '../select-utils'
+import { filterByLabel } from '../../../utils/select-utils'
 
 export const HttpLoaderSettings = (): React.JSX.Element => {
   const { t } = useTranslation()
