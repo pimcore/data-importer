@@ -1,0 +1,37 @@
+{
+  "entrypoints": {
+    "main": {
+      "js": [
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/359.62880c70.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/645.b3c45f89.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/658.520c3151.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/668.92531b7e.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/67.5c1703b3.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/272.57a85350.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/109.b2c646d3.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/main.43c32e1a.js"
+      ],
+      "css": []
+    },
+    "pimcore_dataimporter_bundle": {
+      "js": [
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/132.e1cc3cb5.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/359.62880c70.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/645.b3c45f89.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/__federation_expose_default_export.eb9bb5c3.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/658.520c3151.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/668.92531b7e.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/67.5c1703b3.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/async/272.57a85350.js",
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/static/js/remoteEntry.js"
+      ],
+      "css": []
+    },
+    "exposeRemote": {
+      "js": [
+        "/bundles/pimcoredataimporter/studio/build/233fcd70-7fb1-4393-beaf-cbb5517642ec/exposeRemote.js"
+      ],
+      "css": []
+    }
+  }
+}
