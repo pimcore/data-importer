@@ -8,49 +8,61 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { useTranslation } from '@pimcore/studio-ui-bundle/app';
-import { Flex, Text } from '@pimcore/studio-ui-bundle/components';
-import { type ClassAttribute, type MappingConfigItem } from '../../../../../types';
-import { useStyles } from './step-target.styles';
-import { StepTargetPreviewActions } from './step-target-preview-actions';
-import { StepTargetFields } from './step-target-fields';
-import { useClassAttributes } from './useClassAttributes';
+import React from 'react'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { Flex, Text } from '@pimcore/studio-ui-bundle/components'
+import { type ClassAttribute, type MappingConfigItem } from '../../../../../types'
+import { useStyles } from './step-target.styles'
+import { StepTargetPreviewActions } from './step-target-preview-actions'
+import { StepTargetFields } from './step-target-fields'
+import { useClassAttributes } from './useClassAttributes'
 
 export interface StepTargetProps {
-    attributesMap: Record<string, ClassAttribute[]>;
-    transformationResultType?: string;
-    dataTarget?: MappingConfigItem['dataTarget'];
-    classId?: string;
-    onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void;
+  attributesMap: Record<string, ClassAttribute[]>
+  transformationResultType?: string
+  dataTarget?: MappingConfigItem['dataTarget']
+  classId?: string
+  onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void
 }
 
 export const StepTarget = (props: StepTargetProps): React.JSX.Element => {
-    const { classId, transformationResultType, dataTarget, onDataTargetChange } = props;
-    const { t } = useTranslation();
-    const { styles } = useStyles();
-    const { classFieldOptions, isLocalized } = useClassAttributes(props);
+  const { classId, transformationResultType, dataTarget, onDataTargetChange } = props
+  const { t } = useTranslation()
+  const { styles } = useStyles()
+  const { classFieldOptions, isLocalized } = useClassAttributes(props)
 
-    return (
-        <Flex className={styles.twoColumnLayout} gap="extra-small">
-            <Flex className={styles.leftColumn} vertical>
-                <Flex align="center" className={styles.leftHeader}>
-                    <Text className={styles.leftHeaderTitle} strong>
-                        {t('data-importer.mapping.advanced-modal.step-target')}
-                    </Text>
-                </Flex>
-
-                <StepTargetFields
-                    classId={classId}
-                    transformationResultType={transformationResultType}
-                    classFieldOptions={classFieldOptions}
-                    isLocalized={isLocalized}
-                    dataTarget={dataTarget}
-                    onDataTargetChange={onDataTargetChange}
-                />
-            </Flex>
-
-            <StepTargetPreviewActions />
+  return (
+    <Flex
+      className={ styles.twoColumnLayout }
+      gap="extra-small"
+    >
+      <Flex
+        className={ styles.leftColumn }
+        vertical
+      >
+        <Flex
+          align="center"
+          className={ styles.leftHeader }
+        >
+          <Text
+            className={ styles.leftHeaderTitle }
+            strong
+          >
+            {t('data-importer.mapping.advanced-modal.step-target')}
+          </Text>
         </Flex>
-    );
-};
+
+        <StepTargetFields
+          classFieldOptions={ classFieldOptions }
+          classId={ classId }
+          dataTarget={ dataTarget }
+          isLocalized={ isLocalized }
+          onDataTargetChange={ onDataTargetChange }
+          transformationResultType={ transformationResultType }
+        />
+      </Flex>
+
+      <StepTargetPreviewActions />
+    </Flex>
+  )
+}

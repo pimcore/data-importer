@@ -8,22 +8,9 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { DynamicTypeDataTargetAbstract } from './common/dynamic-type-data-target-abstract';
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element'
+import { type DynamicTypeDataTargetAbstract } from './common/dynamic-type-data-target-abstract'
 
 @injectable()
-export class DynamicTypeDataTargetRegistry {
-    private readonly types = new Map<string, DynamicTypeDataTargetAbstract>();
-
-    registerDynamicType(type: DynamicTypeDataTargetAbstract): void {
-        this.types.set(type.id, type);
-    }
-
-    getDynamicType(id: string): DynamicTypeDataTargetAbstract | undefined {
-        return this.types.get(id);
-    }
-
-    getAllTypes(): DynamicTypeDataTargetAbstract[] {
-        return Array.from(this.types.values());
-    }
-}
+export class DynamicTypeDataTargetRegistry extends DynamicTypeRegistryAbstract<DynamicTypeDataTargetAbstract> {}

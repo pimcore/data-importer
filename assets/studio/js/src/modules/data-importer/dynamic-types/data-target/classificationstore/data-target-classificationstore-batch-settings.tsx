@@ -8,31 +8,31 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract';
-import { StepTargetAttributeSelect } from '../common/step-target-attribute-select';
-import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select';
-import { useClassificationStoreSettings } from './use-classification-store-settings';
+import React from 'react'
+import { type DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract'
+import { StepTargetAttributeSelect } from '../common/step-target-attribute-select'
+import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select'
+import { useClassificationStoreSettings } from './use-classification-store-settings'
 
-export function DataTargetClassificationstoreBatchSettings(props: DynamicTypeDataTargetRenderProps) {
-    const { settings, onChange } = props;
-    const { options, isLocalized, isFetching } = useClassificationStoreSettings(props);
+export function DataTargetClassificationstoreBatchSettings (props: DynamicTypeDataTargetRenderProps): React.JSX.Element {
+  const { settings, onChange } = props
+  const { options, isLocalized, isFetching } = useClassificationStoreSettings(props)
 
-    return (
-        <>
-            <StepTargetAttributeSelect
-                options={options}
-                isLoading={isFetching}
-                value={settings?.fieldName}
-                onChange={(value) => onChange({ ...settings, fieldName: value })}
-            />
+  return (
+    <>
+      <StepTargetAttributeSelect
+        isLoading={ isFetching }
+        onChange={ (value) => { onChange({ ...settings, fieldName: value }) } }
+        options={ options }
+        value={ settings?.fieldName }
+      />
 
-            {isLocalized && (
-                <StepTargetAttributeLanguageSelect
-                    value={settings?.language}
-                    onChange={(language) => onChange({ ...settings, language })}
-                />
-            )}
-        </>
-    );
+      {isLocalized && (
+        <StepTargetAttributeLanguageSelect
+          onChange={ (language) => { onChange({ ...settings, language }) } }
+          value={ settings?.language }
+        />
+      )}
+    </>
+  )
 }

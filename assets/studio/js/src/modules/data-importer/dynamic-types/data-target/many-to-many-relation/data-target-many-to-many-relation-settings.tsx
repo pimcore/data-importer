@@ -8,38 +8,38 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract';
-import { StepTargetWriteSettings } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings';
-import { StepTargetAttributeSelect } from '../common/step-target-attribute-select';
-import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select';
+import React from 'react'
+import { type DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract'
+import { StepTargetWriteSettings } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target-write-settings'
+import { StepTargetAttributeSelect } from '../common/step-target-attribute-select'
+import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select'
 
-export function DataTargetManyToManyRelationSettings({
-    isLocalized,
-    settings,
-    onChange,
-    classFieldOptions,
-}: DynamicTypeDataTargetRenderProps) {
-    return (
-        <>
-            <StepTargetAttributeSelect
-                options={classFieldOptions}
-                value={settings?.fieldName}
-                onChange={(value) => onChange({ ...settings, fieldName: value })}
-            />
+export function DataTargetManyToManyRelationSettings ({
+  isLocalized,
+  settings,
+  onChange,
+  classFieldOptions
+}: DynamicTypeDataTargetRenderProps): React.JSX.Element {
+  return (
+    <>
+      <StepTargetAttributeSelect
+        onChange={ (value) => { onChange({ ...settings, fieldName: value }) } }
+        options={ classFieldOptions }
+        value={ settings?.fieldName }
+      />
 
-            {isLocalized && (
-                <StepTargetAttributeLanguageSelect
-                    value={settings?.language}
-                    onChange={(language) => onChange({ ...settings, language })}
-                />
-            )}
+      {isLocalized && (
+        <StepTargetAttributeLanguageSelect
+          onChange={ (language) => { onChange({ ...settings, language }) } }
+          value={ settings?.language }
+        />
+      )}
 
-            <StepTargetWriteSettings
-                settings={settings}
-                onChange={onChange}
-                showOverwriteMode={settings?.writeIfTargetIsNotEmpty ?? true}
-            />
-        </>
-    );
+      <StepTargetWriteSettings
+        onChange={ onChange }
+        settings={ settings }
+        showOverwriteMode={ settings?.writeIfTargetIsNotEmpty ?? true }
+      />
+    </>
+  )
 }
