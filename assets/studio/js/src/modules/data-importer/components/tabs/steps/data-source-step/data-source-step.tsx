@@ -13,7 +13,7 @@ import { Form, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { StepHeading } from '../step-heading/step-heading'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
-import { filterByLabel } from '../select-utils'
+import { filterByLabel } from '../../../../utils/select-utils'
 import type { DataImporterFormValues } from '../../../../types'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
 import { container } from '@pimcore/studio-ui-bundle'
@@ -41,14 +41,17 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
     []
   )
 
+  const loaderDynamicTypes = useMemo(() => loaderRegistry.getDynamicTypes(), [loaderRegistry])
+  const interpreterDynamicTypes = useMemo(() => interpreterRegistry.getDynamicTypes(), [interpreterRegistry])
+
   const loaderTypes = useMemo(
-    () => loaderRegistry.getAllTypes().map(({ id, label }) => ({ value: id, label: t(label) })),
-    [loaderRegistry, t]
+    () => loaderDynamicTypes.map(({ id, label }) => ({ value: id, label: t(label) })),
+    [loaderDynamicTypes, t]
   )
 
   const interpreterTypes = useMemo(
-    () => interpreterRegistry.getAllTypes().map(({ id, label }) => ({ value: id, label: t(label) })),
-    [interpreterRegistry, t]
+    () => interpreterDynamicTypes.map(({ id, label }) => ({ value: id, label: t(label) })),
+    [interpreterDynamicTypes, t]
   )
 
   return (
@@ -68,7 +71,7 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
           />
         </Form.Item>
 
-        {loaderRegistry.getAllTypes().map((loaderType) => (
+        {loaderDynamicTypes.map((loaderType) => (
           <Form.Conditional
             condition={ (values) =>
               (values as unknown as DataImporterFormValues).loaderConfig?.type === loaderType.id
@@ -98,7 +101,7 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
           />
         </Form.Item>
 
-        {interpreterRegistry.getAllTypes().map((interpreterType) => (
+        {interpreterDynamicTypes.map((interpreterType) => (
           <Form.Conditional
             condition={ (values) =>
               (values as unknown as DataImporterFormValues).interpreterConfig?.type === interpreterType.id

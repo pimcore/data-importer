@@ -10,9 +10,10 @@
 
 import type React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeAbstract } from '@pimcore/studio-ui-bundle/modules/element'
 
 @injectable()
-export abstract class DynamicTypeInterpreterAbstract {
+export abstract class DynamicTypeInterpreterAbstract extends DynamicTypeAbstract {
   /** Unique identifier, e.g. 'asset', 'csv', 'xlsx' */
   abstract readonly id: string
 

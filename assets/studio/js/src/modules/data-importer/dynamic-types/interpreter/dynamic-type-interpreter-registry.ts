@@ -9,21 +9,8 @@
  */
 
 import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element'
 import { DynamicTypeInterpreterAbstract } from './dynamic-type-interpreter-abstract'
 
 @injectable()
-export class DynamicTypeInterpreterRegistry {
-  private readonly types = new Map<string, DynamicTypeInterpreterAbstract>()
-
-  registerDynamicType (type: DynamicTypeInterpreterAbstract): void {
-    this.types.set(type.id, type)
-  }
-
-  getDynamicType (id: string): DynamicTypeInterpreterAbstract | undefined {
-    return this.types.get(id)
-  }
-
-  getAllTypes (): DynamicTypeInterpreterAbstract[] {
-    return Array.from(this.types.values())
-  }
-}
+export class DynamicTypeInterpreterRegistry extends DynamicTypeRegistryAbstract<DynamicTypeInterpreterAbstract> {}

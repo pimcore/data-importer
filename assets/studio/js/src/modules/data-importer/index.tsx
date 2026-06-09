@@ -69,17 +69,17 @@ export const DataImporterModule: AbstractModule = {
     // Bind types
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']).to(DynamicTypeInterpreterCsv).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']).to(DynamicTypeInterpreterJson).inSingletonScope()
-    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']).to(DynamicTypeInterpreterSql).inSingletonScope()
-    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']).to(DynamicTypeInterpreterXlsx).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']).to(DynamicTypeInterpreterXml).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']).to(DynamicTypeInterpreterXlsx).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']).to(DynamicTypeInterpreterSql).inSingletonScope()
 
-    // Register types to registry
+    // Register types to registry — order here determines the dropdown/panel order in the UI
     const interpreterRegistry = container.get<DynamicTypeInterpreterRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry'])
     interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']))
     interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']))
-    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']))
-    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']))
     interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']))
 
     // ── Loader registry ─────────────────────────────────────────────────────
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry']).to(DynamicTypeLoaderRegistry).inSingletonScope()
