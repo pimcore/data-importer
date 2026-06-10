@@ -337,9 +337,10 @@ if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                 'relatedObject' => $element,
             ];
-            if (!($this->loggingConfigCache[$configName]['disableErrorFileObjects'] ?? false)) {
-                $errorContext['fileObject'] = new FileObject(json_encode($importDataRow));
-            }
+if (!($this->loggingConfigCache[$configName]['disableErrorLogs'] ?? false)
+    && !($this->loggingConfigCache[$configName]['disableErrorFileObjects'] ?? false)) {
+    $errorContext['fileObject'] = new FileObject(json_encode($importDataRow));
+}
             $this->logError($configName, $message, $errorContext);
         }
     }
