@@ -174,9 +174,13 @@ class ImportProcessingService
         } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
-            if ($queueItem && !($this->loggingConfigCache[$configName ?? '']['disableErrorFileObjects'] ?? false)) {
-                $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
-            }
+if (
+    $queueItem
+    && !($this->loggingConfigCache[$configName ?? '']['disableErrorLogs'] ?? false)
+    && !($this->loggingConfigCache[$configName ?? '']['disableErrorFileObjects'] ?? false)
+) {
+    $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
+}
             $this->logError($configName, $e->getMessage(), $context);
         } finally {
             $this->queueService->markQueueEntryAsProcessed($id);
