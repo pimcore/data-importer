@@ -174,7 +174,11 @@ class ImportProcessingService
         } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
-            if ($queueItem) {
+            if (
+                $queueItem
+                && !($this->loggingConfigCache[$configName ?? '']['disableErrorLogs'] ?? false)
+                && !($this->loggingConfigCache[$configName ?? '']['disableErrorFileObjects'] ?? false)
+            ) {
                 $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
             }
             $this->logError($configName, $e->getMessage(), $context);
@@ -284,18 +288,28 @@ class ImportProcessingService
                 }
 
                 $message = "Element {$element->getId()} imported successfully.";
-                $this->logInfo($configName, $message, [
+                $successContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => new FileObject(json_encode($importDataRow)),
                     'relatedObject' => $element
-                ]);
+                ];
+
+                if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+                    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+                    $successContext['fileObject'] = new FileObject(json_encode($importDataRow));
+                }
+
+                $this->logInfo($configName, $message, $successContext);
             } else {
                 $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
                 $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
-                $this->logInfo($configName, $message, [
+                $noMatchContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => new FileObject(json_encode($importDataRow))
-                ]);
+                ];
+                if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+                    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+                    $noMatchContext['fileObject'] = new FileObject(json_encode($importDataRow));
+                }
+                $this->logInfo($configName, $message, $noMatchContext);
             }
         } catch (\Throwable $e) {
             $message = "Error processing element: {$importDataRowString}";
@@ -321,11 +335,17 @@ class ImportProcessingService
                 $message .= "\nProcessElementExceptionEvent skipped as the element was not found.";
             }
 
-            $this->logError($configName, $message, [
+            $errorContext = [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                'fileObject' => new FileObject(json_encode($importDataRow)),
                 'relatedObject' => $element,
-            ]);
+            ];
+
+            if (!($this->loggingConfigCache[$configName]['disableErrorLogs'] ?? false)
+                && !($this->loggingConfigCache[$configName]['disableErrorFileObjects'] ?? false)) {
+                $errorContext['fileObject'] = new FileObject(json_encode($importDataRow));
+            }
+
+            $this->logError($configName, $message, $errorContext);
         }
     }
 
