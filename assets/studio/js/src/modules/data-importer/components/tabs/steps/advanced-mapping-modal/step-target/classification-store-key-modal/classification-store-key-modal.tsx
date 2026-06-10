@@ -8,8 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import {
   Button,
   Flex,
@@ -19,8 +19,9 @@ import {
   SearchInput,
   Text
 } from '@pimcore/studio-ui-bundle/components'
-import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
+import { createColumnHelper, type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useBundleDataImporterClassificationstoreLoadKeysQuery } from '../../../../../../data-importer-api-slice.gen'
+import { api } from '../../../../../../data-importer-api-slice-enhanced'
 import { useStyles } from './classification-store-key-modal.styles'
 
 interface ClassificationStoreKeyRow {
@@ -53,11 +54,21 @@ export const ClassificationStoreKeyModal = ({
 }: ClassificationStoreKeyModalProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const dispatch = useAppDispatch()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
+
+  // Start fresh every time the modal is opened (clear search, paging and selection).
+  useEffect(() => {
+    if (open) {
+      setSearchTerm('')
+      setPage(1)
+      setSelectedRowId(null)
+    }
+  }, [open])
 
   const start = (page - 1) * pageSize
 
@@ -93,7 +104,7 @@ export const ClassificationStoreKeyModal = ({
     [t]
   )
 
-  const selectedRows = selectedRowId === null ? undefined : { [selectedRowId]: true }
+  const selectedRows: RowSelectionState = selectedRowId === null ? {} : { [selectedRowId]: true }
 
   return (
     <Modal
@@ -124,15 +135,23 @@ export const ClassificationStoreKeyModal = ({
       </Flex>
 
       <Grid
+        autoWidth
         columns={ columns }
         data={ rows }
+        enableMultipleRowSelection={ false }
+        enableRowSelection
         isLoading={ isFetching }
         onSelectedRowsChange={ (selection) => {
-          const firstKey = Object.keys(selection)[0]
-          setSelectedRowId(firstKey ?? null)
+          // The Grid forwards tanstack's raw updater here (selection is controlled),
+          // so resolve it against the current state before reading the selected id.
+          const updater = selection as unknown as
+            RowSelectionState | ((old: RowSelectionState) => RowSelectionState)
+          const next = typeof updater === 'function' ? updater(selectedRows) : updater
+          const selectedId = Object.keys(next).find((key) => next[key])
+          setSelectedRowId(selectedId ?? null)
         } }
         selectedRows={ selectedRows }
-        setRowId={ (row) => row.id ?? '' }
+        setRowId={ (row, index) => row.id ?? String(index) }
       />
 
       <Flex
@@ -168,6 +187,22 @@ export const ClassificationStoreKeyModal = ({
           disabled={ selectedRowId === null }
           onClick={ () => {
             if (selectedRowId !== null) {
+              // Pre-seed the key-name cache from the row we already have, so the
+              // selected key's label shows immediately instead of after a refetch.
+              const selectedRow = rows.find((row) => row.id === selectedRowId)
+              if (selectedRow !== undefined) {
+                void dispatch(
+                  api.util.upsertQueryData(
+                    'bundleDataImporterClassificationstoreLoadKeyName',
+                    { keyId: selectedRowId },
+                    {
+                      keyId: selectedRowId,
+                      groupName: selectedRow.groupName,
+                      keyName: selectedRow.keyName
+                    }
+                  )
+                )
+              }
               onSelect(selectedRowId)
             }
           } }
