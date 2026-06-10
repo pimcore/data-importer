@@ -8,25 +8,18 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { Select, Form } from '@pimcore/studio-ui-bundle/components'
+import React, { useMemo } from 'react'
+import { Form, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { StepHeading } from '../step-heading/step-heading'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
-import { filterByLabel } from '../select-utils'
-import { AssetLoaderSettings } from '../loaders/asset-loader-settings'
-import { UploadLoaderSettings } from '../loaders/upload-loader-settings'
-import { HttpLoaderSettings } from '../loaders/http-loader-settings'
-import { SftpLoaderSettings } from '../loaders/sftp-loader-settings'
-import { PushLoaderSettings } from '../loaders/push-loader-settings'
-import { SqlLoaderSettings } from '../loaders/sql-loader-settings'
-import { CsvInterpreterSettings } from '../interpreters/csv-interpreter-settings'
-import { JsonInterpreterSettings } from '../interpreters/json-interpreter-settings'
-import { XmlInterpreterSettings } from '../interpreters/xml-interpreter-settings'
-import { XlsxInterpreterSettings } from '../interpreters/xlsx-interpreter-settings'
-import { SqlInterpreterSettings } from '../interpreters/sql-interpreter-settings'
+import { filterByLabel } from '../../../../utils/select-utils'
 import type { DataImporterFormValues } from '../../../../types'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
+import { container } from '@pimcore/studio-ui-bundle'
+import { bundleServiceIds } from '../../../../../../config/service-ids'
+import { type DynamicTypeLoaderRegistry } from '../../../../dynamic-types/loader/dynamic-type-loader-registry'
+import { type DynamicTypeInterpreterRegistry } from '../../../../dynamic-types/interpreter/dynamic-type-interpreter-registry'
 
 export interface DataSourceStepProps {
   configName: string
@@ -35,26 +28,35 @@ export interface DataSourceStepProps {
 export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.Element => {
   const { t } = useTranslation()
 
-  const loaderTypes = [
-    { value: 'asset', label: t('data-importer.loader.asset') },
-    { value: 'upload', label: t('data-importer.loader.upload') },
-    { value: 'http', label: t('data-importer.loader.http') },
-    { value: 'sftp', label: t('data-importer.loader.sftp') },
-    { value: 'push', label: t('data-importer.loader.push') },
-    { value: 'sql', label: t('data-importer.loader.sql') }
-  ]
+  const loaderRegistry = useMemo(
+    () => container.get<DynamicTypeLoaderRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry']),
+    []
+  )
 
-  const interpreterTypes = [
-    { value: 'csv', label: t('data-importer.interpreter.csv') },
-    { value: 'json', label: t('data-importer.interpreter.json') },
-    { value: 'xml', label: t('data-importer.interpreter.xml') },
-    { value: 'xlsx', label: t('data-importer.interpreter.xlsx') },
-    { value: 'sql', label: t('data-importer.interpreter.sql') }
-  ]
+  const interpreterRegistry = useMemo(
+    () =>
+      container.get<DynamicTypeInterpreterRegistry>(
+        bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry']
+      ),
+    []
+  )
+
+  const loaderDynamicTypes = useMemo(() => loaderRegistry.getDynamicTypes(), [loaderRegistry])
+  const interpreterDynamicTypes = useMemo(() => interpreterRegistry.getDynamicTypes(), [interpreterRegistry])
+
+  const loaderTypes = useMemo(
+    () => loaderDynamicTypes.map(({ id, label }) => ({ value: id, label: t(label) })),
+    [loaderDynamicTypes, t]
+  )
+
+  const interpreterTypes = useMemo(
+    () => interpreterDynamicTypes.map(({ id, label }) => ({ value: id, label: t(label) })),
+    [interpreterDynamicTypes, t]
+  )
 
   return (
     <FieldWidthProvider fieldWidthValues={ { medium: 900 } }>
-      <StepHeading>{ t('data-importer.data-source.title') }</StepHeading>
+      <StepHeading>{t('data-importer.data-source.title')}</StepHeading>
 
       <DataImporterPanel>
         <Form.Item
@@ -69,59 +71,21 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
           />
         </Form.Item>
 
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === 'asset' }>
-          <DataImporterPanel
-            theme="fieldset"
-            title={ t('data-importer.loader.asset') }
+        {loaderDynamicTypes.map((loaderType) => (
+          <Form.Conditional
+            condition={ (values) =>
+              (values as unknown as DataImporterFormValues).loaderConfig?.type === loaderType.id
+                        }
+            key={ loaderType.id }
           >
-            <AssetLoaderSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === 'upload' }>
-          <DataImporterPanel
-            theme="fieldset"
-            title={ t('data-importer.loader.upload') }
-          >
-            <UploadLoaderSettings configName={ configName } />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === 'http' }>
-          <DataImporterPanel
-            theme="fieldset"
-            title={ t('data-importer.loader.http') }
-          >
-            <HttpLoaderSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === 'sftp' }>
-          <DataImporterPanel
-            theme="fieldset"
-            title={ t('data-importer.loader.sftp') }
-          >
-            <SftpLoaderSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === 'push' }>
-          <DataImporterPanel
-            theme="fieldset"
-            title={ t('data-importer.loader.push') }
-          >
-            <PushLoaderSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).loaderConfig?.type === 'sql' }>
-          <DataImporterPanel
-            theme="fieldset"
-            title={ t('data-importer.loader.sql') }
-          >
-            <SqlLoaderSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
+            <DataImporterPanel
+              theme="fieldset"
+              title={ t(loaderType.label) }
+            >
+              {loaderType.renderSettings(configName)}
+            </DataImporterPanel>
+          </Form.Conditional>
+        ))}
       </DataImporterPanel>
 
       <DataImporterPanel title={ t('data-importer.file-format.title') }>
@@ -137,55 +101,22 @@ export const DataSourceStep = ({ configName }: DataSourceStepProps): React.JSX.E
           />
         </Form.Item>
 
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).interpreterConfig?.type === 'csv' }>
-          <DataImporterPanel
-            border
-            theme="fieldset"
-            title={ t('data-importer.interpreter.csv') }
+        {interpreterDynamicTypes.map((interpreterType) => (
+          <Form.Conditional
+            condition={ (values) =>
+              (values as unknown as DataImporterFormValues).interpreterConfig?.type === interpreterType.id
+                        }
+            key={ interpreterType.id }
           >
-            <CsvInterpreterSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).interpreterConfig?.type === 'json' }>
-          <DataImporterPanel
-            border
-            theme="fieldset"
-            title={ t('data-importer.interpreter.json') }
-          >
-            <JsonInterpreterSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).interpreterConfig?.type === 'xml' }>
-          <DataImporterPanel
-            border
-            theme="fieldset"
-            title={ t('data-importer.interpreter.xml') }
-          >
-            <XmlInterpreterSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).interpreterConfig?.type === 'xlsx' }>
-          <DataImporterPanel
-            border
-            theme="fieldset"
-            title={ t('data-importer.interpreter.xlsx') }
-          >
-            <XlsxInterpreterSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
-
-        <Form.Conditional condition={ (values) => (values as unknown as DataImporterFormValues).interpreterConfig?.type === 'sql' }>
-          <DataImporterPanel
-            border
-            theme="fieldset"
-            title={ t('data-importer.interpreter.sql') }
-          >
-            <SqlInterpreterSettings />
-          </DataImporterPanel>
-        </Form.Conditional>
+            <DataImporterPanel
+              border
+              theme="fieldset"
+              title={ t(interpreterType.label) }
+            >
+              {interpreterType.renderSettings()}
+            </DataImporterPanel>
+          </Form.Conditional>
+        ))}
       </DataImporterPanel>
     </FieldWidthProvider>
   )

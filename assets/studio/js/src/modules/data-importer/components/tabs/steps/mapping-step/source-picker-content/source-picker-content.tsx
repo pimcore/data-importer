@@ -11,7 +11,7 @@
 import React, { useState } from 'react'
 import { Form, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { filterByLabel } from '../../select-utils'
+import { filterByLabel } from '../../../../../utils/select-utils'
 
 export interface SourcePickerContentProps {
   options: Array<{ value: string, label: string }>

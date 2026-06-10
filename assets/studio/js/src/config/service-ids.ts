@@ -15,6 +15,27 @@
 export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Adapter/DataImporterDataObject': 'DataImporter/DynamicTypes/Adapter/DataImporterDataObject',
 
+  // Interpreter registry
+  'DataImporter/DynamicTypes/Interpreter/Registry': 'DataImporter/DynamicTypes/Interpreter/Registry',
+
+  // Interpreter types
+  'DataImporter/DynamicTypes/Interpreter/Csv': 'DataImporter/DynamicTypes/Interpreter/Csv',
+  'DataImporter/DynamicTypes/Interpreter/Json': 'DataImporter/DynamicTypes/Interpreter/Json',
+  'DataImporter/DynamicTypes/Interpreter/Sql': 'DataImporter/DynamicTypes/Interpreter/Sql',
+  'DataImporter/DynamicTypes/Interpreter/Xlsx': 'DataImporter/DynamicTypes/Interpreter/Xlsx',
+  'DataImporter/DynamicTypes/Interpreter/Xml': 'DataImporter/DynamicTypes/Interpreter/Xml',
+
+  // Loader registry
+  'DataImporter/DynamicTypes/Loader/Registry': 'DataImporter/DynamicTypes/Loader/Registry',
+
+  // Loader types
+  'DataImporter/DynamicTypes/Loader/Asset': 'DataImporter/DynamicTypes/Loader/Asset',
+  'DataImporter/DynamicTypes/Loader/Upload': 'DataImporter/DynamicTypes/Loader/Upload',
+  'DataImporter/DynamicTypes/Loader/Http': 'DataImporter/DynamicTypes/Loader/Http',
+  'DataImporter/DynamicTypes/Loader/Sftp': 'DataImporter/DynamicTypes/Loader/Sftp',
+  'DataImporter/DynamicTypes/Loader/Push': 'DataImporter/DynamicTypes/Loader/Push',
+  'DataImporter/DynamicTypes/Loader/Sql': 'DataImporter/DynamicTypes/Loader/Sql',
+
   // Transformer registry
   'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
 
@@ -49,5 +70,14 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Transformer/AsGeopolygon': 'DataImporter/DynamicTypes/Transformer/AsGeopolygon',
   'DataImporter/DynamicTypes/Transformer/AsGeopolyline': 'DataImporter/DynamicTypes/Transformer/AsGeopolyline',
   'DataImporter/DynamicTypes/Transformer/LoadDataObject': 'DataImporter/DynamicTypes/Transformer/LoadDataObject',
-  'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset'
+  'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset',
+
+  // Data Target registry
+  'DataImporter/DynamicTypes/DataTarget/Registry': 'DataImporter/DynamicTypes/DataTarget/Registry',
+
+  // Data Target types
+  'DataImporter/DynamicTypes/DataTarget/Direct': 'DataImporter/DynamicTypes/DataTarget/Direct',
+  'DataImporter/DynamicTypes/DataTarget/Classificationstore': 'DataImporter/DynamicTypes/DataTarget/Classificationstore',
+  'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch': 'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch',
+  'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation': 'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation'
 } as const
