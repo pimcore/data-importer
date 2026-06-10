@@ -303,9 +303,10 @@ if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
                 $noMatchContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                 ];
-                if (!($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
-                    $noMatchContext['fileObject'] = new FileObject(json_encode($importDataRow));
-                }
+if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+    $noMatchContext['fileObject'] = new FileObject(json_encode($importDataRow));
+}
                 $this->logInfo($configName, $message, $noMatchContext);
             }
         } catch (\Throwable $e) {
