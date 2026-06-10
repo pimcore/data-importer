@@ -292,9 +292,10 @@ if (
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'relatedObject' => $element
                 ];
-                if (!($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
-                    $successContext['fileObject'] = new FileObject(json_encode($importDataRow));
-                }
+if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+    $successContext['fileObject'] = new FileObject(json_encode($importDataRow));
+}
                 $this->logInfo($configName, $message, $successContext);
             } else {
                 $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
