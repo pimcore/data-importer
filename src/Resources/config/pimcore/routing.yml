@@ -1,3 +1,7 @@
+_data_hub_data_importer_data_object_push:
+    resource: "@PimcoreDataImporterBundle/Controller/PushImportController.php"
+    type:     attribute
+
 pimcore_data_importer_studio:
     resource: "@PimcoreDataImporterBundle/Controller/Studio"
     type: attribute
