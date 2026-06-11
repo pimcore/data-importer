@@ -10,11 +10,12 @@
 
 import type React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeAbstract } from '@pimcore/studio-ui-bundle/modules/element'
 
 export type TransformerGroup = 'dataManipulation' | 'dataTypes' | 'loadImport'
 
 @injectable()
-export abstract class DynamicTypeTransformerAbstract {
+export abstract class DynamicTypeTransformerAbstract extends DynamicTypeAbstract {
   /** Unique identifier, e.g. 'trim', 'combine', 'staticText' */
   abstract readonly id: string
 

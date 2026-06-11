@@ -9,21 +9,15 @@
  */
 
 import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element'
 import { type DynamicTypeTransformerAbstract } from './dynamic-type-transformer-abstract'
 
 @injectable()
-export class DynamicTypeTransformerRegistry {
-  private readonly types = new Map<string, DynamicTypeTransformerAbstract>()
-
-  registerDynamicType (type: DynamicTypeTransformerAbstract): void {
-    this.types.set(type.id, type)
-  }
-
-  getDynamicType (id: string): DynamicTypeTransformerAbstract | undefined {
-    return this.types.get(id)
-  }
-
+export class DynamicTypeTransformerRegistry extends DynamicTypeRegistryAbstract<DynamicTypeTransformerAbstract> {
+  /**
+   * @deprecated Use {@link getDynamicTypes} instead. Kept as an alias for backwards compatibility.
+   */
   getAllTypes (): DynamicTypeTransformerAbstract[] {
-    return Array.from(this.types.values())
+    return this.getDynamicTypes()
   }
 }

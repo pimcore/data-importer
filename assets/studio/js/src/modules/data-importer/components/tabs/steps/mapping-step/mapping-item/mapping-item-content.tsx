@@ -12,7 +12,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Form, IconButton, IconTextButton, Input, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type ClassAttribute } from '../../../../../types'
-import { filterByLabel } from '../../select-utils'
+import { filterByLabel } from '../../../../../utils/select-utils'
 import { useStyles } from '../mapping-step.styles'
 import { ArrowColumn } from './arrow-column/arrow-column'
 

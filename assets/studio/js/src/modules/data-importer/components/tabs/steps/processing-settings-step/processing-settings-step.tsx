@@ -14,7 +14,7 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useBundleDataImporterConfigGetQuery } from '../../../../data-importer-api-slice-enhanced'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { StepHeading } from '../step-heading/step-heading'
-import { filterByLabel } from '../select-utils'
+import { filterByLabel } from '../../../../utils/select-utils'
 import type { DataImporterFormValues } from '../../../../types'
 import { useStyles } from './processing-settings-step.styles'
 

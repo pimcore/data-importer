@@ -37,8 +37,6 @@ export interface StepTransformationsProps {
   columnHeaderOptions: Array<{ value: string, label: string }>
   onPipelineChange: (next: TransformationPipelineItem[]) => void
   onDataSourceIndexChange: (v: string[]) => void
-  onPrev: () => void
-  onNext: () => void
 }
 
 export const StepTransformations = ({
@@ -46,9 +44,7 @@ export const StepTransformations = ({
   dataSourceIndex,
   columnHeaderOptions,
   onPipelineChange,
-  onDataSourceIndexChange,
-  onPrev,
-  onNext
+  onDataSourceIndexChange
 }: StepTransformationsProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -109,7 +105,7 @@ export const StepTransformations = ({
   )
 
   const transformerDropdownItems = useMemo((): Array<{ key: string, label: string, children: Array<{ key: string, label: string }> }> => {
-    const allTypes = transformerRegistry.getAllTypes()
+    const allTypes = transformerRegistry.getDynamicTypes()
     const byGroup = (group: string): Array<{ key: string, label: string }> => allTypes
       .filter(t => t.group === group)
       .map(t => ({ key: t.id, label: t.label }))
@@ -216,8 +212,6 @@ export const StepTransformations = ({
           onDataSourceIndexChange(v)
           setEditingSource(false)
         } }
-        onNext={ onNext }
-        onPrev={ onPrev }
         onToggleEditing={ () => { setEditingSource(v => !v) } }
       />
 

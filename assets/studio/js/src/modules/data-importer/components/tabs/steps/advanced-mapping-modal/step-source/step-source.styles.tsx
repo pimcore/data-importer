@@ -43,10 +43,6 @@ export const useStyles = createStyles(({ css, token }) => {
     rightColumn: css`
       flex: 1 1 0;
       min-width: 0;
-    `,
-
-    footer: css`
-      padding-top: ${token.paddingXS}px;
     `
   }
 })

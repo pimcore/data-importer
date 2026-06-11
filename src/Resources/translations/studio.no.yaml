@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Hopp over første rad
 data-importer.interpreter.csv.save-header-name: Lagre overskriftsnavn
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Sti
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Vennligst velg en kildekolonne
 data-importer.mapping.collapse-all: Skjul alle
 data-importer.mapping.expand-all: Vis alle
 data-importer.mapping.auto-fill: Autoutfyll
+data-importer.mapping.autofill-suggestions.title: Copilot autoutfyll-forslag
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Kilde
+data-importer.mapping.autofill-suggestions.destination: Destinasjon (Datamål)
+data-importer.mapping.autofill-suggestions.result: Forhåndsvisningsresultat
+data-importer.mapping.autofill-suggestions.selected: '{{count}} valgt'
+data-importer.mapping.autofill-suggestions.reject-all: Avvis alle
+data-importer.mapping.autofill-suggestions.apply: Bruk valgt autoutfyll
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Ingen forslag funnet for ikke-tilordnede kolonner.
+data-importer.mapping.autofill-suggestions.no-source-columns: Ingen kildekolonner tilgjengelig. Kjør en forhåndsvisning av importen først.
 data-importer.mapping.empty-state: Opprett en mapping direkte fra kildekolonnen, eller klikk Ny for å opprette en manuelt.
 data-importer.mapping.filter-empty: 'Ingen mappinger for «{{source}}» ennå.'
 data-importer.mapping.sources.title: Kilder med forhåndsvisning
@@ -258,8 +269,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Rediger kildeattri
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Datamanipulering
 data-importer.mapping.advanced-modal.transformer.group.data-types: Datatyper
 data-importer.mapping.advanced-modal.transformer.group.load-import: Last / Importer
-data-importer.mapping.advanced-modal.next-step: Neste steg
-data-importer.mapping.advanced-modal.previous-step: Forrige steg
 data-importer.mapping.advanced-modal.recalculate-result-type: Beregn transformasjonsresultattype på nytt
 data-importer.mapping.advanced-modal.step-source.label: Kildeattributt(er)
 data-importer.mapping.advanced-modal.step-source.description: Velg fra listen eller legg til en ny kilde
@@ -274,8 +283,6 @@ data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Feltnavn
 data-importer.mapping.advanced-modal.step-target.overwrite: Overskriv
 data-importer.mapping.advanced-modal.step-target.preview-result: Forhåndsvisningsresultat
-data-importer.mapping.advanced-modal.step-target.previous-step: Forrige steg
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Bekreft mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Skriv til dette feltet selv om målfeltet allerede inneholder en verdi
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Skriv til dette feltet selv om kildedataene er tomme
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Overskrivningsmodus
@@ -283,6 +290,7 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Erstatt
 data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Slå sammen
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nøkkel valgt
+data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip: 'Legg til en transformator i Transformasjoner-trinnet før du velger en nøkkel.'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i gruppe {{group}}'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Velg Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Søk og velg en nøkkel for dette Classification Store-feltet

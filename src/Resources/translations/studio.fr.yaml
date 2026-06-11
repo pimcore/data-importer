@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Ignorer la première ligne
 data-importer.interpreter.csv.save-header-name: 'Enregistrer le nom d''en-tête'
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Chemin
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Veuillez sélectionner une colo
 data-importer.mapping.collapse-all: Tout réduire
 data-importer.mapping.expand-all: Tout développer
 data-importer.mapping.auto-fill: Remplissage automatique
+data-importer.mapping.autofill-suggestions.title: Suggestions de remplissage automatique Copilot
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Source
+data-importer.mapping.autofill-suggestions.destination: Destination (Cible de données)
+data-importer.mapping.autofill-suggestions.result: Résultat de prévisualisation
+data-importer.mapping.autofill-suggestions.selected: '{{count}} sélectionné(s)'
+data-importer.mapping.autofill-suggestions.reject-all: Tout rejeter
+data-importer.mapping.autofill-suggestions.apply: Appliquer le remplissage automatique sélectionné
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Aucune suggestion trouvée pour les colonnes non mappées.
+data-importer.mapping.autofill-suggestions.no-source-columns: Aucune colonne source disponible. Veuillez d'abord effectuer un aperçu de l'importation.
 data-importer.mapping.empty-state: Commencez à créer un Mapping directement depuis la colonne Sources, ou cliquez sur Nouveau pour en créer un manuellement.
 data-importer.mapping.filter-empty: 'Aucun Mapping pour « {{source}} » pour le moment.'
 data-importer.mapping.sources.title: Sources avec aperçu
@@ -258,8 +269,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Modifier les attri
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Manipulation des données
 data-importer.mapping.advanced-modal.transformer.group.data-types: Types de données
 data-importer.mapping.advanced-modal.transformer.group.load-import: Chargement / Import
-data-importer.mapping.advanced-modal.next-step: Étape suivante
-data-importer.mapping.advanced-modal.previous-step: Étape précédente
 data-importer.mapping.advanced-modal.recalculate-result-type: Recalculer le type de résultat de la transformation
 data-importer.mapping.advanced-modal.step-source.label: Attribut(s) source
 data-importer.mapping.advanced-modal.step-source.description: Choisir dans la liste ou ajouter une nouvelle source
@@ -274,8 +283,6 @@ data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Nom du champ
 data-importer.mapping.advanced-modal.step-target.overwrite: Écraser
 data-importer.mapping.advanced-modal.step-target.preview-result: Aperçu du résultat
-data-importer.mapping.advanced-modal.step-target.previous-step: Étape précédente
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Confirmer le Mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Écrire dans ce champ même si le champ cible contient déjà une valeur
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Écrire dans ce champ même si les données source sont vides
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: 'Mode d''écrasement'
@@ -283,6 +290,7 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Remplac
 data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Fusionner
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Clé Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Aucune clé sélectionnée
+data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip: 'Ajoutez un transformateur à l''étape « Transformations » avant de sélectionner une clé.'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} dans le groupe {{group}}'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Sélectionner une clé Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Rechercher et sélectionner une clé pour ce champ Classification Store

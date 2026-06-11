@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Skip First Row
 data-importer.interpreter.csv.save-header-name: Save Header Name
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Path
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Please select a source column
 data-importer.mapping.collapse-all: Collapse all
 data-importer.mapping.expand-all: Expand all
 data-importer.mapping.auto-fill: Autofill
+data-importer.mapping.autofill-suggestions.title: Copilot autofill suggestions
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Source
+data-importer.mapping.autofill-suggestions.destination: Destination (Data Target)
+data-importer.mapping.autofill-suggestions.result: Preview Result
+data-importer.mapping.autofill-suggestions.selected: '{{count}} selected'
+data-importer.mapping.autofill-suggestions.reject-all: Reject all
+data-importer.mapping.autofill-suggestions.apply: Apply selected autofill
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: No suggestions found for unmapped columns.
+data-importer.mapping.autofill-suggestions.no-source-columns: No source columns available. Please run a preview import first.
 data-importer.mapping.empty-state: Start creating a mapping directly from the Sources column, or click New to create one manually.
 data-importer.mapping.filter-empty: 'No mappings for "{{source}}" yet.'
 data-importer.mapping.sources.title: Sources with preview
@@ -258,8 +269,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Edit source attrib
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Data manipulation
 data-importer.mapping.advanced-modal.transformer.group.data-types: Data types
 data-importer.mapping.advanced-modal.transformer.group.load-import: Load / Import
-data-importer.mapping.advanced-modal.next-step: Next step
-data-importer.mapping.advanced-modal.previous-step: Previous step
 data-importer.mapping.advanced-modal.recalculate-result-type: Recalculate transformation result type
 data-importer.mapping.advanced-modal.step-source.label: Source Attribute(s)
 data-importer.mapping.advanced-modal.step-source.description: Choose from the list or add a new source
@@ -274,8 +283,6 @@ data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Field name
 data-importer.mapping.advanced-modal.step-target.overwrite: Overwrite
 data-importer.mapping.advanced-modal.step-target.preview-result: Preview Result
-data-importer.mapping.advanced-modal.step-target.previous-step: Previous step
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Confirm mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Write to this field even if the target field already contains a value
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Write to this field even if the source data is empty
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Overwrite Mode
@@ -283,6 +290,7 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Replace
 data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Merge
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: No key selected
+data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip: 'Add a transformer in the Transformations step before selecting a key.'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} in group {{group}}'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Select Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Search and select a key for this classification store field

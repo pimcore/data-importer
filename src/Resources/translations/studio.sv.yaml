@@ -89,7 +89,7 @@ data-importer.interpreter.csv.skip-first-row: Hoppa över första raden
 data-importer.interpreter.csv.save-header-name: Spara rubriknamn
 
 # JSON Interpreter
-data-importer.interpreter.json.path: Sökväg
+data-importer.interpreter.json.path: JMESPath
 
 # XML Interpreter
 data-importer.interpreter.xml.xpath: XPath
@@ -205,6 +205,17 @@ data-importer.mapping.new-modal.source-required: Välj en källkolumn
 data-importer.mapping.collapse-all: Fäll ihop alla
 data-importer.mapping.expand-all: Expandera alla
 data-importer.mapping.auto-fill: Autofyll
+data-importer.mapping.autofill-suggestions.title: Copilot autofyll-förslag
+data-importer.mapping.autofill-suggestions.score: Poäng
+data-importer.mapping.autofill-suggestions.source: Källa
+data-importer.mapping.autofill-suggestions.destination: Destination (Datamål)
+data-importer.mapping.autofill-suggestions.result: Förhandsvisningsresultat
+data-importer.mapping.autofill-suggestions.selected: '{{count}} vald(a)'
+data-importer.mapping.autofill-suggestions.reject-all: Avvisa alla
+data-importer.mapping.autofill-suggestions.apply: Tillämpa valt autofyll
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Inga förslag hittades för omappade kolumner.
+data-importer.mapping.autofill-suggestions.no-source-columns: Inga källkolumner tillgängliga. Kör en förhandsvisning av importen först.
 data-importer.mapping.empty-state: Skapa en mapping direkt från kolumnen Källor, eller klicka på Ny för att skapa en manuellt.
 data-importer.mapping.filter-empty: 'Inga mappings för "{{source}}" ännu.'
 data-importer.mapping.sources.title: Källor med förhandsvisning
@@ -258,8 +269,6 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Redigera källattr
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Datamanipulering
 data-importer.mapping.advanced-modal.transformer.group.data-types: Datatyper
 data-importer.mapping.advanced-modal.transformer.group.load-import: Ladda / Importera
-data-importer.mapping.advanced-modal.next-step: Nästa steg
-data-importer.mapping.advanced-modal.previous-step: Föregående steg
 data-importer.mapping.advanced-modal.recalculate-result-type: Beräkna om transformationsresultattyp
 data-importer.mapping.advanced-modal.step-source.label: Källattribut
 data-importer.mapping.advanced-modal.step-source.description: Välj från listan eller lägg till en ny källa
@@ -274,8 +283,6 @@ data-importer.mapping.advanced-modal.step-target.type: Typ
 data-importer.mapping.advanced-modal.step-target.field-name: Fältnamn
 data-importer.mapping.advanced-modal.step-target.overwrite: Skriv över
 data-importer.mapping.advanced-modal.step-target.preview-result: Förhandsvisningsresultat
-data-importer.mapping.advanced-modal.step-target.previous-step: Föregående steg
-data-importer.mapping.advanced-modal.step-target.confirm-mapping: Bekräfta mapping
 data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Skriv till detta fält även om målfältet redan innehåller ett värde
 data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Skriv till detta fält även om källdata är tom
 data-importer.mapping.advanced-modal.step-target.overwrite-mode: Överskrivningsläge
@@ -283,6 +290,7 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Ersätt
 data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Sammanfoga
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nyckel vald
+data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip: 'Lägg till en transformerare i steget Transformationer innan du väljer en nyckel.'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i grupp {{group}}'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Välj Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Sök och välj en nyckel för detta Classification Store-fält
