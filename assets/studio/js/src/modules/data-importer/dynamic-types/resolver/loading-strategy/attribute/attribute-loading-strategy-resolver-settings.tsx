@@ -9,7 +9,7 @@ import { parseClassAttribute } from '../../../../components/tabs/steps/mapping-s
 
 export function AttributeLoadingStrategyResolverSettings({
     columnHeaderOptions,
-    languageOptions,
+    languageOptions = [],
 }: DynamicTypeResolverRenderProps) {
     const { t } = useTranslation();
 

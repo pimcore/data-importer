@@ -96,9 +96,6 @@ export const ResolverStep = ({
         'settings',
         'attributeDataObjectClassId',
     ]) as string | undefined;
-    const publishingStrategyType = Form.useWatch(['resolverConfig', 'publishingStrategy', 'type']) as
-        | string
-        | undefined;
     const createFindParentAttrName = Form.useWatch([
         'resolverConfig',
         'createLocationStrategy',
@@ -163,13 +160,6 @@ export const ResolverStep = ({
         { value: 'staticPath', label: t('data-importer.resolver.location-strategy.staticPath') },
         { value: 'findOrCreateFolder', label: t('data-importer.resolver.location-strategy.findOrCreateFolder') },
         { value: 'findParent', label: t('data-importer.resolver.location-strategy.findParent') },
-    ];
-
-    const publishingStrategyOptions = [
-        { value: 'noChangeUnpublishNew', label: t('data-importer.resolver.publishing-strategy.noChangeUnpublishNew') },
-        { value: 'noChangePublishNew', label: t('data-importer.resolver.publishing-strategy.noChangePublishNew') },
-        { value: 'alwaysPublish', label: t('data-importer.resolver.publishing-strategy.alwaysPublish') },
-        { value: 'attributeBased', label: t('data-importer.resolver.publishing-strategy.attributeBased') },
     ];
 
     const findStrategyOptions = [
@@ -237,11 +227,7 @@ export const ResolverStep = ({
                     updateLocationType={updateLocationType}
                 />
 
-                <PublishingPanel
-                    columnHeaderOptions={columnHeaderOptions}
-                    publishingStrategyOptions={publishingStrategyOptions}
-                    publishingStrategyType={publishingStrategyType}
-                />
+                <PublishingPanel registry={registry} columnHeaderOptions={columnHeaderOptions} />
             </>
         </FieldWidthProvider>
     );
