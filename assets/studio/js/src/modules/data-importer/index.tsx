@@ -63,6 +63,7 @@ import { DynamicTypeDataTargetClassificationstoreBatch } from './dynamic-types/d
 import { DynamicTypeDataTargetManyToManyRelation } from './dynamic-types/data-target/many-to-many-relation/dynamic-type-data-target-many-to-many-relation';
 import { DynamicTypeResolverRegistry } from './dynamic-types/resolver/dynamic-type-resolver-registry';
 import { DynamicTypeResolverNotLoad } from './dynamic-types/resolver/loading-strategy/not-load/dynamic-type-resolver-not-load';
+import { DynamicTypeResolverId } from './dynamic-types/resolver/loading-strategy/id/dynamic-type-resolver-id';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -178,7 +179,11 @@ export const DataImporterModule: AbstractModule = {
             .inSingletonScope();
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Id'])
-            .to(DynamicTypeResolverNotLoad)
+            .to(DynamicTypeResolverId)
+            .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Path'])
+            .to(DynamicTypeResolverId)
             .inSingletonScope();
 
         // Register types to registry
@@ -190,6 +195,9 @@ export const DataImporterModule: AbstractModule = {
         );
         resolverRegistry.registerDynamicType(
             container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Id'])
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Path'])
         );
 
         // ── Transformer registry ────────────────────────────────────────────────

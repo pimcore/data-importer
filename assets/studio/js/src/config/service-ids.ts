@@ -43,6 +43,7 @@ export const bundleServiceIds = {
     // Resolver types
     'DataImporter/DynamicTypes/Resolver/Loading/NotLoad': 'DataImporter/DynamicTypes/Resolver/Loading/NotLoad',
     'DataImporter/DynamicTypes/Resolver/Loading/Id': 'DataImporter/DynamicTypes/Resolver/Loading/Id',
+    'DataImporter/DynamicTypes/Resolver/Loading/Path': 'DataImporter/DynamicTypes/Resolver/Loading/Path',
 
     // Transformer registry
     'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
