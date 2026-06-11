@@ -2,9 +2,9 @@ import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-
 import { injectable } from '@pimcore/studio-ui-bundle/app';
 
 @injectable()
-export class DynamicTypeResolverNoChangeUnpublishNew extends DynamicTypeResolverAbstract {
-    readonly id: 'noChangeUnpublishNew';
-    readonly label: 'data-importer.resolver.publishing-strategy.noChangeUnpublishNew';
+export class DynamicTypeResolverNoChangePublishNew extends DynamicTypeResolverAbstract {
+    readonly id: 'noChangePublishNew';
+    readonly label: 'data-importer.resolver.publishing-strategy.noChangePublishNew';
     readonly group: 'publishing';
     renderSettings() {
         return null;

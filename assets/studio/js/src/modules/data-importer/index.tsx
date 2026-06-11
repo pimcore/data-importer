@@ -67,6 +67,7 @@ import { DynamicTypeResolverId } from './dynamic-types/resolver/loading-strategy
 import { DynamicTypeResolverPath } from './dynamic-types/resolver/loading-strategy/path/dynamic-type-resolver-path';
 import { DynamicTypeResolverAttribute } from './dynamic-types/resolver/loading-strategy/attribute/dynamic-type-resolver-attribute';
 import { DynamicTypeResolverNoChangeUnpublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-unpublish-new/dynamic-type-resolver-no-change-unpublish-new';
+import { DynamicTypeResolverNoChangePublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-publish-new/dynamic-type-resolver-no-change-publish-new';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -196,6 +197,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'])
             .to(DynamicTypeResolverNoChangeUnpublishNew)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'])
+            .to(DynamicTypeResolverNoChangePublishNew)
+            .inSingletonScope();
 
         // Register types to registry
         const resolverRegistry = container.get<DynamicTypeResolverRegistry>(
@@ -217,6 +222,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew'
                 ]
             )
         );
