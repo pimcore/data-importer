@@ -1,10 +1,19 @@
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
 import { Form, Input, Select, Switch } from '@pimcore/studio-ui-bundle/components';
 import { DataImporterPanel } from '../../../../components/tabs/steps/data-importer-panel/data-importer-panel';
 import React, { useMemo } from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { filterByLabel } from '../../../../utils/select-utils';
 import { DynamicTypeResolverRenderProps } from '../../common/dynamic-type-resolver-abstract';
-import { useClassDefinitionCollectionQuery } from '@pimcore/studio-ui-bundle/api/class-definition';
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../data-importer-api-slice.gen';
 import { parseClassAttribute } from '../../../../components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.types';
 
