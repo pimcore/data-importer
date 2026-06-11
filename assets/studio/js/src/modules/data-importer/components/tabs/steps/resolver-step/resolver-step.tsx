@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Select, Form } from '@pimcore/studio-ui-bundle/components';
+import { Form, Select } from '@pimcore/studio-ui-bundle/components';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { useSettings } from '@pimcore/studio-ui-bundle/modules/app';
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element';
@@ -65,30 +65,14 @@ export const ResolverStep = ({
     }));
 
     // Watch values needed for conditional sub-panels
-
-    const createLocationType = Form.useWatch(['resolverConfig', 'createLocationStrategy', 'type']) as
-        | string
-        | undefined;
     const updateLocationType = Form.useWatch(['resolverConfig', 'locationUpdateStrategy', 'type']) as
         | string
         | undefined;
-    const createFindStrategy = Form.useWatch([
-        'resolverConfig',
-        'createLocationStrategy',
-        'settings',
-        'findStrategy',
-    ]) as string | undefined;
     const updateFindStrategy = Form.useWatch([
         'resolverConfig',
         'locationUpdateStrategy',
         'settings',
         'findStrategy',
-    ]) as string | undefined;
-    const createFindParentClassId = Form.useWatch([
-        'resolverConfig',
-        'createLocationStrategy',
-        'settings',
-        'attributeDataObjectClassId',
     ]) as string | undefined;
     const updateFindParentClassId = Form.useWatch([
         'resolverConfig',
@@ -96,39 +80,12 @@ export const ResolverStep = ({
         'settings',
         'attributeDataObjectClassId',
     ]) as string | undefined;
-    const createFindParentAttrName = Form.useWatch([
-        'resolverConfig',
-        'createLocationStrategy',
-        'settings',
-        'attributeName',
-    ]) as string | undefined;
     const updateFindParentAttrName = Form.useWatch([
         'resolverConfig',
         'locationUpdateStrategy',
         'settings',
         'attributeName',
     ]) as string | undefined;
-
-    // Fetch attributes for loading strategy (attribute type) — keyed by resolver class
-
-    // Fetch attributes for findParent (create location strategy) — keyed by its own classId
-    const { data: createFindParentAttrData, isLoading: isLoadingCreateFindParentAttrs } =
-        useBundleDataImporterDataTypeLoadClassAttributesQuery(
-            { classId: createFindParentClassId ?? '', systemRead: true },
-            {
-                skip:
-                    createFindParentClassId === undefined ||
-                    createFindParentClassId === '' ||
-                    createFindStrategy !== 'attribute',
-            }
-        );
-    const createFindParentAttributes = useMemo(
-        () => (createFindParentAttrData?.attributes ?? []).map(parseClassAttribute),
-        [createFindParentAttrData]
-    );
-    const createFindParentAttrOptions = createFindParentAttributes.map((a) => ({ value: a.key, label: a.title }));
-    const createFindParentAttrIsLocalized =
-        createFindParentAttributes.find((a) => a.key === createFindParentAttrName)?.localized ?? false;
 
     // Fetch attributes for findParent (update location strategy) — keyed by its own classId
     const { data: updateFindParentAttrData } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
@@ -147,13 +104,6 @@ export const ResolverStep = ({
     const updateFindParentAttrOptions = updateFindParentAttributes.map((a) => ({ value: a.key, label: a.title }));
     const updateFindParentAttrIsLocalized =
         updateFindParentAttributes.find((a) => a.key === updateFindParentAttrName)?.localized ?? false;
-
-    const createLocationStrategyOptions = [
-        { value: 'staticPath', label: t('data-importer.resolver.location-strategy.staticPath') },
-        { value: 'findOrCreateFolder', label: t('data-importer.resolver.location-strategy.findOrCreateFolder') },
-        { value: 'findParent', label: t('data-importer.resolver.location-strategy.findParent') },
-        { value: 'doNotCreate', label: t('data-importer.resolver.location-strategy.doNotCreate') },
-    ];
 
     const locationUpdateStrategyOptions = [
         { value: 'noChange', label: t('data-importer.resolver.location-strategy.noChange') },
@@ -202,16 +152,8 @@ export const ResolverStep = ({
                 />
 
                 <CreationPanel
-                    classOptions={classOptions}
+                    registry={registry}
                     columnHeaderOptions={columnHeaderOptions}
-                    createFindParentAttrIsLocalized={createFindParentAttrIsLocalized}
-                    createFindParentAttrOptions={createFindParentAttrOptions}
-                    createFindStrategy={createFindStrategy}
-                    createLocationStrategyOptions={createLocationStrategyOptions}
-                    createLocationType={createLocationType}
-                    findStrategyOptions={findStrategyOptions}
-                    isLoadingClasses={isLoadingClasses}
-                    isLoadingCreateFindParentAttrs={isLoadingCreateFindParentAttrs}
                     languageOptions={languageOptions}
                 />
 

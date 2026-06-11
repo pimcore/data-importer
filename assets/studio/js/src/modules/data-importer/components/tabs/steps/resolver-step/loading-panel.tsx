@@ -25,11 +25,8 @@ export interface LoadingPanelProps {
 export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.JSX.Element => {
     const { t } = useTranslation();
 
-    const loadingResolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry]);
-    const options = useMemo(
-        () => loadingResolvers.map(({ value, label }) => ({ value, label: t(label) })),
-        [loadingResolvers, t]
-    );
+    const resolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry]);
+    const options = useMemo(() => resolvers.map(({ value, label }) => ({ value, label: t(label) })), [resolvers, t]);
 
     return (
         <DataImporterPanel title={t('data-importer.resolver.element-loading')}>
@@ -41,7 +38,7 @@ export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.J
                 <Select filterOption={filterByLabel} options={options} showSearch />
             </Form.Item>
 
-            {loadingResolvers.map((resolver) => (
+            {resolvers.map((resolver) => (
                 <Form.Conditional
                     condition={(values) =>
                         (values as unknown as DataImporterFormValues).resolverConfig?.loadingStrategy === resolver.id

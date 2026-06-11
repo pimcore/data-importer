@@ -40,7 +40,7 @@ export const PublishingPanel = ({ registry, ...props }: PublishingPanelProps): R
             {resolvers.map((resolver) => (
                 <Form.Conditional
                     condition={(values) =>
-                        (values as unknown as DataImporterFormValues).resolverConfig?.loadingStrategy === resolver.id
+                        (values as unknown as DataImporterFormValues).resolverConfig?.publishingStrategy === resolver.id
                     }
                     key={resolver.id}
                 >
