@@ -46,7 +46,7 @@ export const bundleServiceIds = {
     'DataImporter/DynamicTypes/Resolver/Loading/Path': 'DataImporter/DynamicTypes/Resolver/Loading/Path',
     'DataImporter/DynamicTypes/Resolver/Loading/Attribute': 'DataImporter/DynamicTypes/Resolver/Loading/Attribute',
 
-    // Resolver location types
+    // Resolver create location types
     'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath':
         'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath',
     'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder':
@@ -55,6 +55,10 @@ export const bundleServiceIds = {
         'DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent',
     'DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate':
         'DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate',
+
+    // Resolver create location types
+    'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange':
+        'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange',
 
     // Resolver publishing types
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':

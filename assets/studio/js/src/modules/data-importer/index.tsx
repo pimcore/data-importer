@@ -74,6 +74,7 @@ import { DynamicTypeResolverStaticPathLocationCreation } from './dynamic-types/r
 import { DynamicTypeResolverFindOrCreateFolderLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-creation';
 import { DynamicTypeResolverFindParentLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-creation';
 import { DynamicTypeResolverDoNotCreateLocation } from './dynamic-types/resolver/create-location-strategy/do-not-create/dynamic-type-resolver-do-not-create-location';
+import { DynamicTypeResolverNoChangeLocationUpdate } from './dynamic-types/resolver/update-location-strategy/no-change/dynamic-type-resolver-no-change-location-update';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -200,7 +201,7 @@ export const DataImporterModule: AbstractModule = {
             .to(DynamicTypeResolverAttribute)
             .inSingletonScope();
 
-        // Bind location types
+        // Bind create location types
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'])
             .to(DynamicTypeResolverStaticPathLocationCreation)
@@ -216,6 +217,12 @@ export const DataImporterModule: AbstractModule = {
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'])
             .to(DynamicTypeResolverDoNotCreateLocation)
+            .inSingletonScope();
+
+        // Bind update location types
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/NoChange'])
+            .to(DynamicTypeResolverNoChangeLocationUpdate)
             .inSingletonScope();
 
         // Bind publishing types
@@ -253,7 +260,7 @@ export const DataImporterModule: AbstractModule = {
             container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute'])
         );
 
-        // Register location types to registry
+        // Register create location types to registry
         resolverRegistry.registerDynamicType(
             container.get(
                 bundleServiceIds[
@@ -279,6 +286,15 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'
+                ]
+            )
+        );
+
+        // Register update location types to registry
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/DoNotCreate'
                 ]
             )
         );
