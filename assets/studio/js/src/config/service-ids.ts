@@ -59,6 +59,8 @@ export const bundleServiceIds = {
     // Resolver create location types
     'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange':
         'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange',
+    'DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath':
+        'DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath',
 
     // Resolver publishing types
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':

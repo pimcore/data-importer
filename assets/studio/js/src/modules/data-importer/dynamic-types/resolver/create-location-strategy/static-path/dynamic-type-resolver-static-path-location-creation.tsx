@@ -1,7 +1,7 @@
 import React from 'react';
 import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract';
 import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { StaticPathLocationStrategyResolverSettings } from './static-path-location-strategy-resolver-settings';
+import { StaticPathCreateLocationStrategyResolverSettings } from './static-path-create-location-strategy-resolver-settings';
 
 @injectable()
 export class DynamicTypeResolverStaticPathLocationCreation extends DynamicTypeResolverAbstract {
@@ -10,6 +10,6 @@ export class DynamicTypeResolverStaticPathLocationCreation extends DynamicTypeRe
     readonly label: 'data-importer.resolver.location-strategy.staticPath';
     readonly group: 'createLocation';
     renderSettings() {
-        return <StaticPathLocationStrategyResolverSettings />;
+        return <StaticPathCreateLocationStrategyResolverSettings />;
     }
 }

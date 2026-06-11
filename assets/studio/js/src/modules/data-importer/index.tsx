@@ -75,6 +75,7 @@ import { DynamicTypeResolverFindOrCreateFolderLocationCreation } from './dynamic
 import { DynamicTypeResolverFindParentLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-creation';
 import { DynamicTypeResolverDoNotCreateLocation } from './dynamic-types/resolver/create-location-strategy/do-not-create/dynamic-type-resolver-do-not-create-location';
 import { DynamicTypeResolverNoChangeLocationUpdate } from './dynamic-types/resolver/update-location-strategy/no-change/dynamic-type-resolver-no-change-location-update';
+import { DynamicTypeResolverStaticPathLocationUpdate } from './dynamic-types/resolver/update-location-strategy/static-path/dynamic-type-resolver-static-path-location-update';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -224,6 +225,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/NoChange'])
             .to(DynamicTypeResolverNoChangeLocationUpdate)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'])
+            .to(DynamicTypeResolverStaticPathLocationUpdate)
+            .inSingletonScope();
 
         // Bind publishing types
         container
@@ -295,6 +300,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/DoNotCreate'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'
                 ]
             )
         );

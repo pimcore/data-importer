@@ -3,7 +3,7 @@ import { DataImporterPanel } from '../../../../components/tabs/steps/data-import
 import React from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 
-export function StaticPathLocationStrategyResolverSettings() {
+export function StaticPathCreateLocationStrategyResolverSettings() {
     const { t } = useTranslation();
 
     return (
