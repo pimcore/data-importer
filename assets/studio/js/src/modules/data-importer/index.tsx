@@ -68,6 +68,7 @@ import { DynamicTypeResolverPath } from './dynamic-types/resolver/loading-strate
 import { DynamicTypeResolverAttribute } from './dynamic-types/resolver/loading-strategy/attribute/dynamic-type-resolver-attribute';
 import { DynamicTypeResolverNoChangeUnpublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-unpublish-new/dynamic-type-resolver-no-change-unpublish-new';
 import { DynamicTypeResolverNoChangePublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-publish-new/dynamic-type-resolver-no-change-publish-new';
+import { DynamicTypeResolverAlwaysPublish } from './dynamic-types/resolver/publishing-strategy/always-publish/dynamic-type-resolver-always-publish';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -198,8 +199,12 @@ export const DataImporterModule: AbstractModule = {
             .to(DynamicTypeResolverNoChangeUnpublishNew)
             .inSingletonScope();
         container
-            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'])
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew'])
             .to(DynamicTypeResolverNoChangePublishNew)
+            .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish'])
+            .to(DynamicTypeResolverAlwaysPublish)
             .inSingletonScope();
 
         // Register types to registry
@@ -229,6 +234,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish'
                 ]
             )
         );

@@ -49,6 +49,8 @@ export const bundleServiceIds = {
         'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew',
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew':
         'DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew',
+    'DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish':
+        'DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish',
 
     // Transformer registry
     'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
