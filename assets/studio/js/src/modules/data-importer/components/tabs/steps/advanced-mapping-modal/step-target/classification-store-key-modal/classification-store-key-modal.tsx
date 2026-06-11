@@ -162,7 +162,7 @@ export const ClassificationStoreKeyModal = ({
           onClick={ onClose }
           type="default"
         >
-          { t('common.cancel') }
+          { t('cancel') }
         </Button>
         <Button
           disabled={ selectedRowId === null }

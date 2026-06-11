@@ -16,6 +16,8 @@ services:
         resource: '../../Command'
         tags: ['console.command']
 
+    Pimcore\Bundle\DataImporterBundle\Controller\PushImportController:
+        tags: ["controller.service_arguments"]
 
     Pimcore\Bundle\DataImporterBundle\Queue\QueueService: ~
     Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
