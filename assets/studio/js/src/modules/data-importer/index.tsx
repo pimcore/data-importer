@@ -73,6 +73,7 @@ import { DynamicTypeResolverAttributeBasedPublishing } from './dynamic-types/res
 import { DynamicTypeResolverStaticPathLocationCreation } from './dynamic-types/resolver/create-location-strategy/static-path/dynamic-type-resolver-static-path-location-creation';
 import { DynamicTypeResolverFindOrCreateFolderLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-creation';
 import { DynamicTypeResolverFindParentLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-creation';
+import { DynamicTypeResolverDoNotCreateLocation } from './dynamic-types/resolver/create-location-strategy/do-not-create/dynamic-type-resolver-do-not-create-location';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -212,6 +213,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'])
             .to(DynamicTypeResolverFindParentLocationCreation)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'])
+            .to(DynamicTypeResolverDoNotCreateLocation)
+            .inSingletonScope();
 
         // Bind publishing types
         container
@@ -267,6 +272,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'
                 ]
             )
         );
