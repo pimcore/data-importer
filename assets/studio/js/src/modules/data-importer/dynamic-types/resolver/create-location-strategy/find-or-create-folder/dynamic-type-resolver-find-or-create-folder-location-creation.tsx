@@ -10,7 +10,7 @@ import { FindOrCreateFolderLocationCreationSettings } from './find-or-create-fol
 export class DynamicTypeResolverFindOrCreateFolderLocationCreation extends DynamicTypeResolverAbstract {
     readonly id: 'creation.findOrCreateFolderLocationCreation';
     readonly value: 'findOrCreateFolderLocationCreation';
-    readonly label: 'data-importer.resolver.location-strategy.staticPath';
+    readonly label: 'data-importer.resolver.location-strategy.findOrCreateFolder';
     readonly group: 'createLocation';
     renderSettings(props: DynamicTypeResolverRenderProps) {
         return <FindOrCreateFolderLocationCreationSettings {...props} />;

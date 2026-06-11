@@ -51,6 +51,8 @@ export const bundleServiceIds = {
         'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath',
     'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder':
         'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder',
+    'DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent':
+        'DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent',
 
     // Resolver publishing types
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':

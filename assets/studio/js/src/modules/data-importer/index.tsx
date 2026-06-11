@@ -70,6 +70,9 @@ import { DynamicTypeResolverNoChangeUnpublishNew } from './dynamic-types/resolve
 import { DynamicTypeResolverNoChangePublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-publish-new/dynamic-type-resolver-no-change-publish-new';
 import { DynamicTypeResolverAlwaysPublish } from './dynamic-types/resolver/publishing-strategy/always-publish/dynamic-type-resolver-always-publish';
 import { DynamicTypeResolverAttributeBasedPublishing } from './dynamic-types/resolver/publishing-strategy/attribute-based/dynamic-type-resolver-attribute-based-publishing';
+import { DynamicTypeResolverStaticPathLocationCreation } from './dynamic-types/resolver/create-location-strategy/static-path/dynamic-type-resolver-static-path-location-creation';
+import { DynamicTypeResolverFindOrCreateFolderLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-creation';
+import { DynamicTypeResolverFindParentLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-creation';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -199,11 +202,15 @@ export const DataImporterModule: AbstractModule = {
         // Bind location types
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'])
-            .to(DynamicTypeResolverAttribute)
+            .to(DynamicTypeResolverStaticPathLocationCreation)
             .inSingletonScope();
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'])
-            .to(DynamicTypeResolverAttribute)
+            .to(DynamicTypeResolverFindOrCreateFolderLocationCreation)
+            .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'])
+            .to(DynamicTypeResolverFindParentLocationCreation)
             .inSingletonScope();
 
         // Bind publishing types
@@ -253,6 +260,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'
                 ]
             )
         );
