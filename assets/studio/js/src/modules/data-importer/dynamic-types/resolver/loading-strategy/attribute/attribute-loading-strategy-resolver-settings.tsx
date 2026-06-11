@@ -1,18 +1,35 @@
 import { Form, Select, Switch } from '@pimcore/studio-ui-bundle/components';
 import { filterByLabel } from '../../../../utils/select-utils';
 import { DataImporterPanel } from '../../../../components/tabs/steps/data-importer-panel/data-importer-panel';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { DynamicTypeResolverRenderProps } from '../../common/dynamic-type-resolver-abstract';
+import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../data-importer-api-slice.gen';
+import { parseClassAttribute } from '../../../../components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.types';
 
 export function AttributeLoadingStrategyResolverSettings({
     columnHeaderOptions,
-    isLoadingLoadingAttrs,
-    loadingAttributeOptions,
-    loadingAttrIsLocalized,
     languageOptions,
 }: DynamicTypeResolverRenderProps) {
     const { t } = useTranslation();
+
+    const dataObjectClassId = Form.useWatch(['resolverConfig', 'dataObjectClassId']) as string | undefined;
+    const loadingAttributeName = Form.useWatch(['resolverConfig', 'loadingStrategy', 'settings', 'attributeName']) as
+        | string
+        | undefined;
+
+    const { data, isLoading } = useBundleDataImporterDataTypeLoadClassAttributesQuery({
+        classId: dataObjectClassId ?? '',
+    });
+    const loadingAttributes = useMemo(() => (data?.attributes ?? []).map(parseClassAttribute), [data]);
+    const loadingAttributeOptions = useMemo(
+        () => loadingAttributes.map((a) => ({ value: a.key, label: a.title })),
+        [loadingAttributes]
+    );
+    const loadingAttrIsLocalized = useMemo(
+        () => loadingAttributes.find((a) => a.key === loadingAttributeName)?.localized ?? false,
+        [loadingAttributes, loadingAttributeName]
+    );
 
     return (
         <>
@@ -34,7 +51,7 @@ export function AttributeLoadingStrategyResolverSettings({
                 >
                     <Select
                         filterOption={filterByLabel}
-                        loadingSkeleton={isLoadingLoadingAttrs}
+                        loadingSkeleton={isLoading}
                         options={loadingAttributeOptions}
                         placeholder={t('data-importer.resolver.loading-strategy.attribute-name-placeholder')}
                         showSearch

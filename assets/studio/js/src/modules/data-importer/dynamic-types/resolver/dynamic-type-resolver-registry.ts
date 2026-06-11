@@ -10,7 +10,11 @@
 
 import { injectable } from '@pimcore/studio-ui-bundle/app';
 import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element';
-import { type DynamicTypeResolverAbstract } from './common/dynamic-type-resolver-abstract';
+import { type DynamicTypeResolverAbstract, ResolverGroup } from './common/dynamic-type-resolver-abstract';
 
 @injectable()
-export class DynamicTypeResolverRegistry extends DynamicTypeRegistryAbstract<DynamicTypeResolverAbstract> {}
+export class DynamicTypeResolverRegistry extends DynamicTypeRegistryAbstract<DynamicTypeResolverAbstract> {
+    getDynamicTypesForGroup(group: ResolverGroup): DynamicTypeResolverAbstract[] {
+        return this.getDynamicTypes().filter((t) => t.group === group);
+    }
+}
