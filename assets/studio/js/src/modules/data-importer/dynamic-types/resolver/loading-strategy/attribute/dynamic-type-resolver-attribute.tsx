@@ -9,7 +9,7 @@ export class DynamicTypeResolverAttribute extends DynamicTypeResolverAbstract {
     readonly id: 'attribute';
     readonly label: 'data-importer.resolver.loading-strategy.attribute';
     readonly group: 'loading';
-    renderSettings(props: DynamicTypeResolverRenderProps): React.JSX.Element | null {
+    renderSettings(props: DynamicTypeResolverRenderProps) {
         return <AttributeLoadingStrategyResolverSettings {...props} />;
     }
 }

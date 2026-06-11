@@ -45,6 +45,8 @@ export const bundleServiceIds = {
     'DataImporter/DynamicTypes/Resolver/Loading/Id': 'DataImporter/DynamicTypes/Resolver/Loading/Id',
     'DataImporter/DynamicTypes/Resolver/Loading/Path': 'DataImporter/DynamicTypes/Resolver/Loading/Path',
     'DataImporter/DynamicTypes/Resolver/Loading/Attribute': 'DataImporter/DynamicTypes/Resolver/Loading/Attribute',
+    'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':
+        'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew',
 
     // Transformer registry
     'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',

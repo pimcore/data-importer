@@ -64,6 +64,9 @@ import { DynamicTypeDataTargetManyToManyRelation } from './dynamic-types/data-ta
 import { DynamicTypeResolverRegistry } from './dynamic-types/resolver/dynamic-type-resolver-registry';
 import { DynamicTypeResolverNotLoad } from './dynamic-types/resolver/loading-strategy/not-load/dynamic-type-resolver-not-load';
 import { DynamicTypeResolverId } from './dynamic-types/resolver/loading-strategy/id/dynamic-type-resolver-id';
+import { DynamicTypeResolverPath } from './dynamic-types/resolver/loading-strategy/path/dynamic-type-resolver-path';
+import { DynamicTypeResolverAttribute } from './dynamic-types/resolver/loading-strategy/attribute/dynamic-type-resolver-attribute';
+import { DynamicTypeResolverNoChangeUnpublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-unpublish-new/dynamic-type-resolver-no-change-unpublish-new';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -183,11 +186,15 @@ export const DataImporterModule: AbstractModule = {
             .inSingletonScope();
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Path'])
-            .to(DynamicTypeResolverId)
+            .to(DynamicTypeResolverPath)
             .inSingletonScope();
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute'])
-            .to(DynamicTypeResolverId)
+            .to(DynamicTypeResolverAttribute)
+            .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'])
+            .to(DynamicTypeResolverNoChangeUnpublishNew)
             .inSingletonScope();
 
         // Register types to registry
@@ -205,6 +212,13 @@ export const DataImporterModule: AbstractModule = {
         );
         resolverRegistry.registerDynamicType(
             container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute'])
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'
+                ]
+            )
         );
 
         // ── Transformer registry ────────────────────────────────────────────────

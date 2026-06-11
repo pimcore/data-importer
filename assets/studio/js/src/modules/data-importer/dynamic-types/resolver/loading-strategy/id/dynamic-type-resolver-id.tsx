@@ -9,7 +9,7 @@ export class DynamicTypeResolverId extends DynamicTypeResolverAbstract {
     readonly id: 'id';
     readonly label: 'data-importer.resolver.loading-strategy.id';
     readonly group: 'loading';
-    renderSettings(props: DynamicTypeResolverRenderProps): React.JSX.Element | null {
+    renderSettings(props: DynamicTypeResolverRenderProps) {
         return <IdLoadingStrategyResolverSettings {...props} />;
     }
 }

@@ -9,7 +9,7 @@ export class DynamicTypeResolverPath extends DynamicTypeResolverAbstract {
     readonly id: 'path';
     readonly label: 'data-importer.resolver.loading-strategy.path';
     readonly group: 'loading';
-    renderSettings(props: DynamicTypeResolverRenderProps): React.JSX.Element | null {
+    renderSettings(props: DynamicTypeResolverRenderProps) {
         return <PathLoadingStrategyResolverSettings {...props} />;
     }
 }
