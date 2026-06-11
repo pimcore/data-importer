@@ -25,7 +25,7 @@ export const PublishingPanel = ({ registry, ...props }: PublishingPanelProps): R
     const { t } = useTranslation();
 
     const resolvers = useMemo(() => registry.getDynamicTypesForGroup('publishing'), [registry]);
-    const options = useMemo(() => resolvers.map(({ id, label }) => ({ value: id, label })), [resolvers]);
+    const options = useMemo(() => resolvers.map(({ value, label }) => ({ value, label })), [resolvers]);
 
     return (
         <DataImporterPanel title={t('data-importer.resolver.element-publishing')}>

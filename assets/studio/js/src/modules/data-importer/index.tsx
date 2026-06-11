@@ -201,6 +201,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'])
             .to(DynamicTypeResolverAttribute)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'])
+            .to(DynamicTypeResolverAttribute)
+            .inSingletonScope();
 
         // Bind publishing types
         container
@@ -242,6 +246,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'
                 ]
             )
         );

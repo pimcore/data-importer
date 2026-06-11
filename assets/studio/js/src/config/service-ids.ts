@@ -40,13 +40,19 @@ export const bundleServiceIds = {
     // Resolver registry
     'DataImporter/DynamicTypes/Resolver/Registry': 'DataImporter/DynamicTypes/Resolver/Registry',
 
-    // Resolver types
+    // Resolver loading types
     'DataImporter/DynamicTypes/Resolver/Loading/NotLoad': 'DataImporter/DynamicTypes/Resolver/Loading/NotLoad',
     'DataImporter/DynamicTypes/Resolver/Loading/Id': 'DataImporter/DynamicTypes/Resolver/Loading/Id',
     'DataImporter/DynamicTypes/Resolver/Loading/Path': 'DataImporter/DynamicTypes/Resolver/Loading/Path',
     'DataImporter/DynamicTypes/Resolver/Loading/Attribute': 'DataImporter/DynamicTypes/Resolver/Loading/Attribute',
+
+    // Resolver location types
     'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath':
         'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath',
+    'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder':
+        'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder',
+
+    // Resolver publishing types
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':
         'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew',
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew':

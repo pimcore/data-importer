@@ -26,7 +26,7 @@ export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.J
     const { t } = useTranslation();
 
     const loadingResolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry]);
-    const options = useMemo(() => loadingResolvers.map(({ id, label }) => ({ value: id, label })), [loadingResolvers]);
+    const options = useMemo(() => loadingResolvers.map(({ value, label }) => ({ value, label })), [loadingResolvers]);
 
     return (
         <DataImporterPanel title={t('data-importer.resolver.element-loading')}>
