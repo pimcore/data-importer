@@ -45,6 +45,8 @@ export const bundleServiceIds = {
     'DataImporter/DynamicTypes/Resolver/Loading/Id': 'DataImporter/DynamicTypes/Resolver/Loading/Id',
     'DataImporter/DynamicTypes/Resolver/Loading/Path': 'DataImporter/DynamicTypes/Resolver/Loading/Path',
     'DataImporter/DynamicTypes/Resolver/Loading/Attribute': 'DataImporter/DynamicTypes/Resolver/Loading/Attribute',
+    'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath':
+        'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath',
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':
         'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew',
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew':

@@ -5,7 +5,9 @@ import React from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { DynamicTypeResolverRenderProps } from '../../common/dynamic-type-resolver-abstract';
 
-export function PathLoadingStrategyResolverSettings({ columnHeaderOptions }: DynamicTypeResolverRenderProps) {
+export function AttributeBasedPublishingStrategyResolverSettings({
+    columnHeaderOptions,
+}: DynamicTypeResolverRenderProps) {
     const { t } = useTranslation();
 
     return (

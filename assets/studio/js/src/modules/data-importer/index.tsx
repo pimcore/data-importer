@@ -178,7 +178,7 @@ export const DataImporterModule: AbstractModule = {
             .to(DynamicTypeResolverRegistry)
             .inSingletonScope();
 
-        // Bind types
+        // Bind loading types
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/NotLoad'])
             .to(DynamicTypeResolverNotLoad)
@@ -195,6 +195,14 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute'])
             .to(DynamicTypeResolverAttribute)
             .inSingletonScope();
+
+        // Bind location types
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'])
+            .to(DynamicTypeResolverAttribute)
+            .inSingletonScope();
+
+        // Bind publishing types
         container
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'])
             .to(DynamicTypeResolverNoChangeUnpublishNew)
@@ -212,7 +220,7 @@ export const DataImporterModule: AbstractModule = {
             .to(DynamicTypeResolverAttributeBasedPublishing)
             .inSingletonScope();
 
-        // Register types to registry
+        // Register loading types to registry
         const resolverRegistry = container.get<DynamicTypeResolverRegistry>(
             bundleServiceIds['DataImporter/DynamicTypes/Resolver/Registry']
         );
@@ -228,6 +236,17 @@ export const DataImporterModule: AbstractModule = {
         resolverRegistry.registerDynamicType(
             container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute'])
         );
+
+        // Register location types to registry
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'
+                ]
+            )
+        );
+
+        // Register publishing types to registry
         resolverRegistry.registerDynamicType(
             container.get(
                 bundleServiceIds[
