@@ -4,15 +4,15 @@ import {
     DynamicTypeResolverRenderProps,
 } from '../../common/dynamic-type-resolver-abstract';
 import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { FindOrCreateFolderLocationCreationSettings } from './find-or-create-folder-location-creation-settings';
+import { FindOrCreateFolderLocationUpdateSettings } from './find-or-create-folder-location-update-settings';
 
 @injectable()
-export class DynamicTypeResolverFindOrCreateFolderLocationCreation extends DynamicTypeResolverAbstract {
+export class DynamicTypeResolverFindOrCreateFolderLocationUpdate extends DynamicTypeResolverAbstract {
     readonly id: 'creation.findOrCreateFolder';
     readonly value: 'findOrCreateFolder';
     readonly label: 'data-importer.resolver.location-strategy.findOrCreateFolder';
-    readonly group: 'createLocation';
+    readonly group: 'updateLocation';
     renderSettings(props: DynamicTypeResolverRenderProps) {
-        return <FindOrCreateFolderLocationCreationSettings {...props} />;
+        return <FindOrCreateFolderLocationUpdateSettings {...props} />;
     }
 }

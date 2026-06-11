@@ -76,6 +76,7 @@ import { DynamicTypeResolverFindParentLocationCreation } from './dynamic-types/r
 import { DynamicTypeResolverDoNotCreateLocation } from './dynamic-types/resolver/create-location-strategy/do-not-create/dynamic-type-resolver-do-not-create-location';
 import { DynamicTypeResolverNoChangeLocationUpdate } from './dynamic-types/resolver/update-location-strategy/no-change/dynamic-type-resolver-no-change-location-update';
 import { DynamicTypeResolverStaticPathLocationUpdate } from './dynamic-types/resolver/update-location-strategy/static-path/dynamic-type-resolver-static-path-location-update';
+import { DynamicTypeResolverFindOrCreateFolderLocationUpdate } from './dynamic-types/resolver/update-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-update';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -229,6 +230,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'])
             .to(DynamicTypeResolverStaticPathLocationUpdate)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder'])
+            .to(DynamicTypeResolverFindOrCreateFolderLocationUpdate)
+            .inSingletonScope();
 
         // Bind publishing types
         container
@@ -307,6 +312,13 @@ export const DataImporterModule: AbstractModule = {
             container.get(
                 bundleServiceIds[
                     'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'
+                ]
+            )
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(
+                bundleServiceIds[
+                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder'
                 ]
             )
         );
