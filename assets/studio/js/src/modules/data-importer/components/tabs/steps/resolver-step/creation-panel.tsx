@@ -20,6 +20,8 @@ export interface CreationPanelProps {
     registry: DynamicTypeResolverRegistry;
     columnHeaderOptions: Array<{ value: string; label: string }>;
     languageOptions: Array<{ value: string; label: string }>;
+    classOptions?: Array<{ value: string; label: string }>;
+    isLoadingClasses?: boolean;
 }
 
 export const CreationPanel = ({ registry, ...props }: CreationPanelProps): React.JSX.Element => {

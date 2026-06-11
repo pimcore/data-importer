@@ -14,11 +14,9 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { useSettings } from '@pimcore/studio-ui-bundle/modules/app';
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element';
 import { useClassDefinitionCollectionQuery } from '@pimcore/studio-ui-bundle/api/class-definition';
-import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../data-importer-api-slice.gen';
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel';
 import { StepHeading } from '../step-heading/step-heading';
 import { filterByLabel } from '../../../../utils/select-utils';
-import type { ClassAttribute } from '../../../../types';
 import { LoadingPanel } from './loading-panel';
 import { CreationPanel } from './creation-panel';
 import { LocationUpdatePanel } from './location-update-panel';
@@ -31,15 +29,6 @@ export interface ResolverStepProps {
     configName: string;
     columnHeaderOptions: Array<{ value: string; label: string }>;
     isActive: boolean;
-}
-
-function parseClassAttribute(raw: object): ClassAttribute {
-    const obj = raw as Record<string, any>;
-    return {
-        key: obj.key ?? obj.name ?? '',
-        title: obj.title ?? obj.name ?? obj.key ?? '',
-        localized: Boolean(obj.localized ?? false),
-    };
 }
 
 export const ResolverStep = ({
@@ -63,60 +52,6 @@ export const ResolverStep = ({
         value: cls.id,
         label: cls.name,
     }));
-
-    // Watch values needed for conditional sub-panels
-    const updateLocationType = Form.useWatch(['resolverConfig', 'locationUpdateStrategy', 'type']) as
-        | string
-        | undefined;
-    const updateFindStrategy = Form.useWatch([
-        'resolverConfig',
-        'locationUpdateStrategy',
-        'settings',
-        'findStrategy',
-    ]) as string | undefined;
-    const updateFindParentClassId = Form.useWatch([
-        'resolverConfig',
-        'locationUpdateStrategy',
-        'settings',
-        'attributeDataObjectClassId',
-    ]) as string | undefined;
-    const updateFindParentAttrName = Form.useWatch([
-        'resolverConfig',
-        'locationUpdateStrategy',
-        'settings',
-        'attributeName',
-    ]) as string | undefined;
-
-    // Fetch attributes for findParent (update location strategy) — keyed by its own classId
-    const { data: updateFindParentAttrData } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
-        { classId: updateFindParentClassId ?? '', systemRead: true },
-        {
-            skip:
-                updateFindParentClassId === undefined ||
-                updateFindParentClassId === '' ||
-                updateFindStrategy !== 'attribute',
-        }
-    );
-    const updateFindParentAttributes = useMemo(
-        () => (updateFindParentAttrData?.attributes ?? []).map(parseClassAttribute),
-        [updateFindParentAttrData]
-    );
-    const updateFindParentAttrOptions = updateFindParentAttributes.map((a) => ({ value: a.key, label: a.title }));
-    const updateFindParentAttrIsLocalized =
-        updateFindParentAttributes.find((a) => a.key === updateFindParentAttrName)?.localized ?? false;
-
-    const locationUpdateStrategyOptions = [
-        { value: 'noChange', label: t('data-importer.resolver.location-strategy.noChange') },
-        { value: 'staticPath', label: t('data-importer.resolver.location-strategy.staticPath') },
-        { value: 'findOrCreateFolder', label: t('data-importer.resolver.location-strategy.findOrCreateFolder') },
-        { value: 'findParent', label: t('data-importer.resolver.location-strategy.findParent') },
-    ];
-
-    const findStrategyOptions = [
-        { value: 'id', label: t('data-importer.resolver.location-strategy.find-strategy.id') },
-        { value: 'path', label: t('data-importer.resolver.location-strategy.find-strategy.path') },
-        { value: 'attribute', label: t('data-importer.resolver.location-strategy.find-strategy.attribute') },
-    ];
 
     const registry = useMemo(
         () =>
@@ -155,18 +90,16 @@ export const ResolverStep = ({
                     registry={registry}
                     columnHeaderOptions={columnHeaderOptions}
                     languageOptions={languageOptions}
+                    classOptions={classOptions}
+                    isLoadingClasses={isLoadingClasses}
                 />
 
                 <LocationUpdatePanel
-                    classOptions={classOptions}
+                    registry={registry}
                     columnHeaderOptions={columnHeaderOptions}
-                    findStrategyOptions={findStrategyOptions}
                     languageOptions={languageOptions}
-                    locationUpdateStrategyOptions={locationUpdateStrategyOptions}
-                    updateFindParentAttrIsLocalized={updateFindParentAttrIsLocalized}
-                    updateFindParentAttrOptions={updateFindParentAttrOptions}
-                    updateFindStrategy={updateFindStrategy}
-                    updateLocationType={updateLocationType}
+                    classOptions={classOptions}
+                    isLoadingClasses={isLoadingClasses}
                 />
 
                 <PublishingPanel registry={registry} columnHeaderOptions={columnHeaderOptions} />

@@ -4,35 +4,53 @@ import React, { useMemo } from 'react';
 import { useTranslation } from '@pimcore/studio-ui-bundle/app';
 import { filterByLabel } from '../../../../utils/select-utils';
 import { DynamicTypeResolverRenderProps } from '../../common/dynamic-type-resolver-abstract';
+import { useClassDefinitionCollectionQuery } from '@pimcore/studio-ui-bundle/api/class-definition';
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../data-importer-api-slice.gen';
 import { parseClassAttribute } from '../../../../components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.types';
 
-export function FindParentLocationCreationSettings({
+export function FindParentLocationUpdateSettings({
     columnHeaderOptions,
     classOptions,
-    isLoadingClasses,
     languageOptions = [],
 }: DynamicTypeResolverRenderProps) {
     const { t } = useTranslation();
 
-    const createFindStrategy = Form.useWatch([
+    const updateFindStrategy = Form.useWatch([
         'resolverConfig',
-        'createLocationStrategy',
+        'locationUpdateStrategy',
         'settings',
         'findStrategy',
     ]) as string | undefined;
-    const createFindParentClassId = Form.useWatch([
+    const updateFindParentClassId = Form.useWatch([
         'resolverConfig',
-        'createLocationStrategy',
+        'locationUpdateStrategy',
         'settings',
         'attributeDataObjectClassId',
     ]) as string | undefined;
-    const createFindParentAttrName = Form.useWatch([
+    const updateFindParentAttrName = Form.useWatch([
         'resolverConfig',
-        'createLocationStrategy',
+        'locationUpdateStrategy',
         'settings',
         'attributeName',
     ]) as string | undefined;
+
+    // Fetch attributes for findParent (update location strategy) — keyed by its own classId
+    const { data: updateFindParentAttrData } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
+        { classId: updateFindParentClassId ?? '', systemRead: true },
+        {
+            skip:
+                updateFindParentClassId === undefined ||
+                updateFindParentClassId === '' ||
+                updateFindStrategy !== 'attribute',
+        }
+    );
+    const updateFindParentAttributes = useMemo(
+        () => (updateFindParentAttrData?.attributes ?? []).map(parseClassAttribute),
+        [updateFindParentAttrData]
+    );
+    const updateFindParentAttrOptions = updateFindParentAttributes.map((a) => ({ value: a.key, label: a.title }));
+    const updateFindParentAttrIsLocalized =
+        updateFindParentAttributes.find((a) => a.key === updateFindParentAttrName)?.localized ?? false;
 
     const findStrategyOptions = [
         { value: 'id', label: t('data-importer.resolver.location-strategy.find-strategy.id') },
@@ -40,66 +58,38 @@ export function FindParentLocationCreationSettings({
         { value: 'attribute', label: t('data-importer.resolver.location-strategy.find-strategy.attribute') },
     ];
 
-    const { data: createFindParentAttrData, isLoading: isLoadingCreateFindParentAttrs } =
-        useBundleDataImporterDataTypeLoadClassAttributesQuery(
-            { classId: createFindParentClassId ?? '', systemRead: true },
-            {
-                skip:
-                    createFindParentClassId === undefined ||
-                    createFindParentClassId === '' ||
-                    createFindStrategy !== 'attribute',
-            }
-        );
-    const createFindParentAttributes = useMemo(
-        () => (createFindParentAttrData?.attributes ?? []).map(parseClassAttribute),
-        [createFindParentAttrData]
-    );
-    const createFindParentAttrOptions = createFindParentAttributes.map((a) => ({ value: a.key, label: a.title }));
-    const createFindParentAttrIsLocalized =
-        createFindParentAttributes.find((a) => a.key === createFindParentAttrName)?.localized ?? false;
-
     return (
         <>
             <DataImporterPanel theme="fieldset" title={t('data-importer.resolver.location-strategy.findParent')}>
                 <Form.Item
                     label={t('data-importer.resolver.location-strategy.find-strategy')}
-                    name={['resolverConfig', 'createLocationStrategy', 'settings', 'findStrategy']}
+                    name={['resolverConfig', 'locationUpdateStrategy', 'settings', 'findStrategy']}
                 >
                     <Select filterOption={filterByLabel} options={findStrategyOptions} showSearch />
                 </Form.Item>
-                {createFindStrategy === 'attribute' && (
+                {updateFindStrategy === 'attribute' && (
                     <>
                         <Form.Item
                             label={t('data-importer.resolver.location-strategy.attribute-class')}
                             name={[
                                 'resolverConfig',
-                                'createLocationStrategy',
+                                'locationUpdateStrategy',
                                 'settings',
                                 'attributeDataObjectClassId',
                             ]}
                         >
-                            <Select
-                                filterOption={filterByLabel}
-                                loadingSkeleton={isLoadingClasses}
-                                options={classOptions}
-                                showSearch
-                            />
+                            <Select filterOption={filterByLabel} options={classOptions} showSearch />
                         </Form.Item>
                         <Form.Item
                             label={t('data-importer.resolver.location-strategy.attribute-name')}
-                            name={['resolverConfig', 'createLocationStrategy', 'settings', 'attributeName']}
+                            name={['resolverConfig', 'locationUpdateStrategy', 'settings', 'attributeName']}
                         >
-                            <Select
-                                filterOption={filterByLabel}
-                                loadingSkeleton={isLoadingCreateFindParentAttrs}
-                                options={createFindParentAttrOptions}
-                                showSearch
-                            />
+                            <Select filterOption={filterByLabel} options={updateFindParentAttrOptions} showSearch />
                         </Form.Item>
-                        {createFindParentAttrIsLocalized && (
+                        {updateFindParentAttrIsLocalized && (
                             <Form.Item
                                 label={t('data-importer.resolver.location-strategy.attribute-language')}
-                                name={['resolverConfig', 'createLocationStrategy', 'settings', 'attributeLanguage']}
+                                name={['resolverConfig', 'locationUpdateStrategy', 'settings', 'attributeLanguage']}
                             >
                                 <Select filterOption={filterByLabel} options={languageOptions} showSearch />
                             </Form.Item>
@@ -108,7 +98,7 @@ export function FindParentLocationCreationSettings({
                 )}
                 <Form.Item
                     label={t('data-importer.resolver.location-strategy.data-source-index')}
-                    name={['resolverConfig', 'createLocationStrategy', 'settings', 'dataSourceIndex']}
+                    name={['resolverConfig', 'locationUpdateStrategy', 'settings', 'dataSourceIndex']}
                 >
                     <Select
                         filterOption={filterByLabel}
@@ -119,13 +109,13 @@ export function FindParentLocationCreationSettings({
                 </Form.Item>
                 <Form.Item
                     label={t('data-importer.resolver.location-strategy.fallback-path')}
-                    name={['resolverConfig', 'createLocationStrategy', 'settings', 'fallbackPath']}
+                    name={['resolverConfig', 'locationUpdateStrategy', 'settings', 'fallbackPath']}
                     tooltip={t('data-importer.resolver.location-strategy.fallback-path.tooltip')}
                 >
                     <Input placeholder={t('data-importer.resolver.location-strategy.fallback-path-placeholder')} />
                 </Form.Item>
                 <Form.Item
-                    name={['resolverConfig', 'createLocationStrategy', 'settings', 'asVariant']}
+                    name={['resolverConfig', 'locationUpdateStrategy', 'settings', 'asVariant']}
                     valuePropName="checked"
                 >
                     <Switch labelRight={t('data-importer.resolver.location-strategy.as-variant')} size="small" />

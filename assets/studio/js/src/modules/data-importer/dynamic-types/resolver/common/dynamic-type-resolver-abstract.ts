@@ -15,6 +15,8 @@ import { DynamicTypeAbstract } from '@pimcore/studio-ui-bundle/modules/element';
 export interface DynamicTypeResolverRenderProps {
     columnHeaderOptions: Array<{ value: string; label: string }>;
     languageOptions?: Array<{ value: string; label: string }>;
+    classOptions?: Array<{ value: string; label: string }>;
+    isLoadingClasses?: boolean;
 }
 
 export type ResolverGroup = 'loading' | 'createLocation' | 'updateLocation' | 'publishing';
