@@ -13,71 +13,86 @@
  * Centralized location for all dependency injection service identifiers
  */
 export const bundleServiceIds = {
-  'DataImporter/DynamicTypes/Adapter/DataImporterDataObject': 'DataImporter/DynamicTypes/Adapter/DataImporterDataObject',
+    'DataImporter/DynamicTypes/Adapter/DataImporterDataObject':
+        'DataImporter/DynamicTypes/Adapter/DataImporterDataObject',
 
-  // Interpreter registry
-  'DataImporter/DynamicTypes/Interpreter/Registry': 'DataImporter/DynamicTypes/Interpreter/Registry',
+    // Interpreter registry
+    'DataImporter/DynamicTypes/Interpreter/Registry': 'DataImporter/DynamicTypes/Interpreter/Registry',
 
-  // Interpreter types
-  'DataImporter/DynamicTypes/Interpreter/Csv': 'DataImporter/DynamicTypes/Interpreter/Csv',
-  'DataImporter/DynamicTypes/Interpreter/Json': 'DataImporter/DynamicTypes/Interpreter/Json',
-  'DataImporter/DynamicTypes/Interpreter/Sql': 'DataImporter/DynamicTypes/Interpreter/Sql',
-  'DataImporter/DynamicTypes/Interpreter/Xlsx': 'DataImporter/DynamicTypes/Interpreter/Xlsx',
-  'DataImporter/DynamicTypes/Interpreter/Xml': 'DataImporter/DynamicTypes/Interpreter/Xml',
+    // Interpreter types
+    'DataImporter/DynamicTypes/Interpreter/Csv': 'DataImporter/DynamicTypes/Interpreter/Csv',
+    'DataImporter/DynamicTypes/Interpreter/Json': 'DataImporter/DynamicTypes/Interpreter/Json',
+    'DataImporter/DynamicTypes/Interpreter/Sql': 'DataImporter/DynamicTypes/Interpreter/Sql',
+    'DataImporter/DynamicTypes/Interpreter/Xlsx': 'DataImporter/DynamicTypes/Interpreter/Xlsx',
+    'DataImporter/DynamicTypes/Interpreter/Xml': 'DataImporter/DynamicTypes/Interpreter/Xml',
 
-  // Loader registry
-  'DataImporter/DynamicTypes/Loader/Registry': 'DataImporter/DynamicTypes/Loader/Registry',
+    // Loader registry
+    'DataImporter/DynamicTypes/Loader/Registry': 'DataImporter/DynamicTypes/Loader/Registry',
 
-  // Loader types
-  'DataImporter/DynamicTypes/Loader/Asset': 'DataImporter/DynamicTypes/Loader/Asset',
-  'DataImporter/DynamicTypes/Loader/Upload': 'DataImporter/DynamicTypes/Loader/Upload',
-  'DataImporter/DynamicTypes/Loader/Http': 'DataImporter/DynamicTypes/Loader/Http',
-  'DataImporter/DynamicTypes/Loader/Sftp': 'DataImporter/DynamicTypes/Loader/Sftp',
-  'DataImporter/DynamicTypes/Loader/Push': 'DataImporter/DynamicTypes/Loader/Push',
-  'DataImporter/DynamicTypes/Loader/Sql': 'DataImporter/DynamicTypes/Loader/Sql',
+    // Loader types
+    'DataImporter/DynamicTypes/Loader/Asset': 'DataImporter/DynamicTypes/Loader/Asset',
+    'DataImporter/DynamicTypes/Loader/Upload': 'DataImporter/DynamicTypes/Loader/Upload',
+    'DataImporter/DynamicTypes/Loader/Http': 'DataImporter/DynamicTypes/Loader/Http',
+    'DataImporter/DynamicTypes/Loader/Sftp': 'DataImporter/DynamicTypes/Loader/Sftp',
+    'DataImporter/DynamicTypes/Loader/Push': 'DataImporter/DynamicTypes/Loader/Push',
+    'DataImporter/DynamicTypes/Loader/Sql': 'DataImporter/DynamicTypes/Loader/Sql',
 
-  // Transformer registry
-  'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
+    // Resolver registry
+    'DataImporter/DynamicTypes/Resolver/Registry': 'DataImporter/DynamicTypes/Resolver/Registry',
 
-  // Transformer types — with settings
-  'DataImporter/DynamicTypes/Transformer/Trim': 'DataImporter/DynamicTypes/Transformer/Trim',
-  'DataImporter/DynamicTypes/Transformer/Combine': 'DataImporter/DynamicTypes/Transformer/Combine',
-  'DataImporter/DynamicTypes/Transformer/StaticText': 'DataImporter/DynamicTypes/Transformer/StaticText',
-  'DataImporter/DynamicTypes/Transformer/StringReplace': 'DataImporter/DynamicTypes/Transformer/StringReplace',
-  'DataImporter/DynamicTypes/Transformer/Date': 'DataImporter/DynamicTypes/Transformer/Date',
-  'DataImporter/DynamicTypes/Transformer/Numeric': 'DataImporter/DynamicTypes/Transformer/Numeric',
-  'DataImporter/DynamicTypes/Transformer/Explode': 'DataImporter/DynamicTypes/Transformer/Explode',
-  'DataImporter/DynamicTypes/Transformer/ConditionalConversion': 'DataImporter/DynamicTypes/Transformer/ConditionalConversion',
-  'DataImporter/DynamicTypes/Transformer/ObjectField': 'DataImporter/DynamicTypes/Transformer/ObjectField',
-  'DataImporter/DynamicTypes/Transformer/LoadAsset': 'DataImporter/DynamicTypes/Transformer/LoadAsset',
+    // Resolver types
+    'DataImporter/DynamicTypes/Resolver/Loading/NotLoad': 'DataImporter/DynamicTypes/Resolver/Loading/NotLoad',
 
-  // Transformer types — no settings
-  'DataImporter/DynamicTypes/Transformer/FlattenArray': 'DataImporter/DynamicTypes/Transformer/FlattenArray',
-  'DataImporter/DynamicTypes/Transformer/ReduceArrayKeyValuePairs': 'DataImporter/DynamicTypes/Transformer/ReduceArrayKeyValuePairs',
-  'DataImporter/DynamicTypes/Transformer/HtmlDecode': 'DataImporter/DynamicTypes/Transformer/HtmlDecode',
-  'DataImporter/DynamicTypes/Transformer/Boolean': 'DataImporter/DynamicTypes/Transformer/Boolean',
-  'DataImporter/DynamicTypes/Transformer/AsArray': 'DataImporter/DynamicTypes/Transformer/AsArray',
-  'DataImporter/DynamicTypes/Transformer/AsColor': 'DataImporter/DynamicTypes/Transformer/AsColor',
-  'DataImporter/DynamicTypes/Transformer/AsCountries': 'DataImporter/DynamicTypes/Transformer/AsCountries',
-  'DataImporter/DynamicTypes/Transformer/Gallery': 'DataImporter/DynamicTypes/Transformer/Gallery',
-  'DataImporter/DynamicTypes/Transformer/ImageAdvanced': 'DataImporter/DynamicTypes/Transformer/ImageAdvanced',
-  'DataImporter/DynamicTypes/Transformer/QuantityValue': 'DataImporter/DynamicTypes/Transformer/QuantityValue',
-  'DataImporter/DynamicTypes/Transformer/QuantityValueArray': 'DataImporter/DynamicTypes/Transformer/QuantityValueArray',
-  'DataImporter/DynamicTypes/Transformer/InputQuantityValue': 'DataImporter/DynamicTypes/Transformer/InputQuantityValue',
-  'DataImporter/DynamicTypes/Transformer/InputQuantityValueArray': 'DataImporter/DynamicTypes/Transformer/InputQuantityValueArray',
-  'DataImporter/DynamicTypes/Transformer/AsGeobounds': 'DataImporter/DynamicTypes/Transformer/AsGeobounds',
-  'DataImporter/DynamicTypes/Transformer/AsGeopoint': 'DataImporter/DynamicTypes/Transformer/AsGeopoint',
-  'DataImporter/DynamicTypes/Transformer/AsGeopolygon': 'DataImporter/DynamicTypes/Transformer/AsGeopolygon',
-  'DataImporter/DynamicTypes/Transformer/AsGeopolyline': 'DataImporter/DynamicTypes/Transformer/AsGeopolyline',
-  'DataImporter/DynamicTypes/Transformer/LoadDataObject': 'DataImporter/DynamicTypes/Transformer/LoadDataObject',
-  'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset',
+    // Transformer registry
+    'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
 
-  // Data Target registry
-  'DataImporter/DynamicTypes/DataTarget/Registry': 'DataImporter/DynamicTypes/DataTarget/Registry',
+    // Transformer types — with settings
+    'DataImporter/DynamicTypes/Transformer/Trim': 'DataImporter/DynamicTypes/Transformer/Trim',
+    'DataImporter/DynamicTypes/Transformer/Combine': 'DataImporter/DynamicTypes/Transformer/Combine',
+    'DataImporter/DynamicTypes/Transformer/StaticText': 'DataImporter/DynamicTypes/Transformer/StaticText',
+    'DataImporter/DynamicTypes/Transformer/StringReplace': 'DataImporter/DynamicTypes/Transformer/StringReplace',
+    'DataImporter/DynamicTypes/Transformer/Date': 'DataImporter/DynamicTypes/Transformer/Date',
+    'DataImporter/DynamicTypes/Transformer/Numeric': 'DataImporter/DynamicTypes/Transformer/Numeric',
+    'DataImporter/DynamicTypes/Transformer/Explode': 'DataImporter/DynamicTypes/Transformer/Explode',
+    'DataImporter/DynamicTypes/Transformer/ConditionalConversion':
+        'DataImporter/DynamicTypes/Transformer/ConditionalConversion',
+    'DataImporter/DynamicTypes/Transformer/ObjectField': 'DataImporter/DynamicTypes/Transformer/ObjectField',
+    'DataImporter/DynamicTypes/Transformer/LoadAsset': 'DataImporter/DynamicTypes/Transformer/LoadAsset',
 
-  // Data Target types
-  'DataImporter/DynamicTypes/DataTarget/Direct': 'DataImporter/DynamicTypes/DataTarget/Direct',
-  'DataImporter/DynamicTypes/DataTarget/Classificationstore': 'DataImporter/DynamicTypes/DataTarget/Classificationstore',
-  'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch': 'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch',
-  'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation': 'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation'
-} as const
+    // Transformer types — no settings
+    'DataImporter/DynamicTypes/Transformer/FlattenArray': 'DataImporter/DynamicTypes/Transformer/FlattenArray',
+    'DataImporter/DynamicTypes/Transformer/ReduceArrayKeyValuePairs':
+        'DataImporter/DynamicTypes/Transformer/ReduceArrayKeyValuePairs',
+    'DataImporter/DynamicTypes/Transformer/HtmlDecode': 'DataImporter/DynamicTypes/Transformer/HtmlDecode',
+    'DataImporter/DynamicTypes/Transformer/Boolean': 'DataImporter/DynamicTypes/Transformer/Boolean',
+    'DataImporter/DynamicTypes/Transformer/AsArray': 'DataImporter/DynamicTypes/Transformer/AsArray',
+    'DataImporter/DynamicTypes/Transformer/AsColor': 'DataImporter/DynamicTypes/Transformer/AsColor',
+    'DataImporter/DynamicTypes/Transformer/AsCountries': 'DataImporter/DynamicTypes/Transformer/AsCountries',
+    'DataImporter/DynamicTypes/Transformer/Gallery': 'DataImporter/DynamicTypes/Transformer/Gallery',
+    'DataImporter/DynamicTypes/Transformer/ImageAdvanced': 'DataImporter/DynamicTypes/Transformer/ImageAdvanced',
+    'DataImporter/DynamicTypes/Transformer/QuantityValue': 'DataImporter/DynamicTypes/Transformer/QuantityValue',
+    'DataImporter/DynamicTypes/Transformer/QuantityValueArray':
+        'DataImporter/DynamicTypes/Transformer/QuantityValueArray',
+    'DataImporter/DynamicTypes/Transformer/InputQuantityValue':
+        'DataImporter/DynamicTypes/Transformer/InputQuantityValue',
+    'DataImporter/DynamicTypes/Transformer/InputQuantityValueArray':
+        'DataImporter/DynamicTypes/Transformer/InputQuantityValueArray',
+    'DataImporter/DynamicTypes/Transformer/AsGeobounds': 'DataImporter/DynamicTypes/Transformer/AsGeobounds',
+    'DataImporter/DynamicTypes/Transformer/AsGeopoint': 'DataImporter/DynamicTypes/Transformer/AsGeopoint',
+    'DataImporter/DynamicTypes/Transformer/AsGeopolygon': 'DataImporter/DynamicTypes/Transformer/AsGeopolygon',
+    'DataImporter/DynamicTypes/Transformer/AsGeopolyline': 'DataImporter/DynamicTypes/Transformer/AsGeopolyline',
+    'DataImporter/DynamicTypes/Transformer/LoadDataObject': 'DataImporter/DynamicTypes/Transformer/LoadDataObject',
+    'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset',
+
+    // Data Target registry
+    'DataImporter/DynamicTypes/DataTarget/Registry': 'DataImporter/DynamicTypes/DataTarget/Registry',
+
+    // Data Target types
+    'DataImporter/DynamicTypes/DataTarget/Direct': 'DataImporter/DynamicTypes/DataTarget/Direct',
+    'DataImporter/DynamicTypes/DataTarget/Classificationstore':
+        'DataImporter/DynamicTypes/DataTarget/Classificationstore',
+    'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch':
+        'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch',
+    'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation':
+        'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation',
+} as const;
