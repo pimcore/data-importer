@@ -176,6 +176,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/NotLoad'])
             .to(DynamicTypeResolverNotLoad)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Id'])
+            .to(DynamicTypeResolverNotLoad)
+            .inSingletonScope();
 
         // Register types to registry
         const resolverRegistry = container.get<DynamicTypeResolverRegistry>(
@@ -183,6 +187,9 @@ export const DataImporterModule: AbstractModule = {
         );
         resolverRegistry.registerDynamicType(
             container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/NotLoad'])
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Id'])
         );
 
         // ── Transformer registry ────────────────────────────────────────────────

@@ -12,6 +12,14 @@ import type React from 'react';
 import { injectable } from '@pimcore/studio-ui-bundle/app';
 import { DynamicTypeAbstract } from '@pimcore/studio-ui-bundle/modules/element';
 
+export interface DynamicTypeResolverRenderProps {
+    columnHeaderOptions: Array<{ value: string; label: string }>;
+    isLoadingLoadingAttrs: boolean;
+    loadingAttributeOptions: Array<{ value: string; label: string }>;
+    loadingAttrIsLocalized: boolean;
+    languageOptions: Array<{ value: string; label: string }>;
+}
+
 export type ResolverGroup = 'loading' | 'location' | 'publishing';
 
 @injectable()
@@ -19,5 +27,5 @@ export abstract class DynamicTypeResolverAbstract extends DynamicTypeAbstract {
     abstract readonly id: string;
     abstract readonly label: string;
     abstract readonly group: ResolverGroup;
-    abstract renderSettings(): React.JSX.Element | null;
+    abstract renderSettings(props: DynamicTypeResolverRenderProps): React.JSX.Element | null;
 }

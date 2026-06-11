@@ -10,7 +10,7 @@
 
 import { injectable } from '@pimcore/studio-ui-bundle/app';
 import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element';
-import { type DynamicTypeResolverAbstract } from './dynamic-type-resolver-abstract';
+import { type DynamicTypeResolverAbstract } from './common/dynamic-type-resolver-abstract';
 
 @injectable()
 export class DynamicTypeResolverRegistry extends DynamicTypeRegistryAbstract<DynamicTypeResolverAbstract> {}

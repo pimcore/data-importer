@@ -1,4 +1,4 @@
-import { DynamicTypeResolverAbstract } from '../../dynamic-type-resolver-abstract';
+import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract';
 import React from 'react';
 
 export class DynamicTypeResolverNotLoad extends DynamicTypeResolverAbstract {
