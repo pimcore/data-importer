@@ -77,6 +77,7 @@ import { DynamicTypeResolverDoNotCreateLocation } from './dynamic-types/resolver
 import { DynamicTypeResolverNoChangeLocationUpdate } from './dynamic-types/resolver/update-location-strategy/no-change/dynamic-type-resolver-no-change-location-update';
 import { DynamicTypeResolverStaticPathLocationUpdate } from './dynamic-types/resolver/update-location-strategy/static-path/dynamic-type-resolver-static-path-location-update';
 import { DynamicTypeResolverFindOrCreateFolderLocationUpdate } from './dynamic-types/resolver/update-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-update';
+import { DynamicTypeResolverFindParentLocationUpdate } from './dynamic-types/resolver/update-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-update';
 
 export const DataImporterModule: AbstractModule = {
     onInit: (): void => {
@@ -234,6 +235,10 @@ export const DataImporterModule: AbstractModule = {
             .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder'])
             .to(DynamicTypeResolverFindOrCreateFolderLocationUpdate)
             .inSingletonScope();
+        container
+            .bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindParent'])
+            .to(DynamicTypeResolverFindParentLocationUpdate)
+            .inSingletonScope();
 
         // Bind publishing types
         container
@@ -272,85 +277,44 @@ export const DataImporterModule: AbstractModule = {
 
         // Register create location types to registry
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'])
         );
 
         // Register update location types to registry
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/DoNotCreate'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/NoChange'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder'])
+        );
+        resolverRegistry.registerDynamicType(
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindParent'])
         );
 
         // Register publishing types to registry
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish'])
         );
         resolverRegistry.registerDynamicType(
-            container.get(
-                bundleServiceIds[
-                    'DataImporter/DynamicTypes/Resolver/DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased'
-                ]
-            )
+            container.get(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased'])
         );
 
         // ── Transformer registry ────────────────────────────────────────────────

@@ -56,7 +56,7 @@ export const bundleServiceIds = {
     'DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate':
         'DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate',
 
-    // Resolver create location types
+    // Resolver update location types
     'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange':
         'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange',
     'DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath':
@@ -73,6 +73,8 @@ export const bundleServiceIds = {
         'DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish',
     'DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased':
         'DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased',
+    'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent':
+        'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent',
 
     // Transformer registry
     'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',

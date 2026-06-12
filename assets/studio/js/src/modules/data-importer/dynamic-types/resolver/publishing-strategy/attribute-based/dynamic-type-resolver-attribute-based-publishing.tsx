@@ -18,10 +18,10 @@ import { AttributeBasedPublishingStrategyResolverSettings } from './attribute-ba
 
 @injectable()
 export class DynamicTypeResolverAttributeBasedPublishing extends DynamicTypeResolverAbstract {
-    readonly id: 'attributeBased';
-    readonly value: 'attributeBased';
-    readonly label: 'data-importer.resolver.publishing-strategy.attributeBased';
-    readonly group: 'publishing';
+    readonly id = 'attributeBased';
+    readonly value = 'attributeBased';
+    readonly label = 'data-importer.resolver.publishing-strategy.attributeBased';
+    readonly group = 'publishing';
     renderSettings(props: DynamicTypeResolverRenderProps) {
         return <AttributeBasedPublishingStrategyResolverSettings {...props} />;
     }

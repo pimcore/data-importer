@@ -18,10 +18,10 @@ import { FindParentLocationCreationSettings } from './find-parent-location-creat
 
 @injectable()
 export class DynamicTypeResolverFindParentLocationCreation extends DynamicTypeResolverAbstract {
-    readonly id: 'creation.findParent';
-    readonly value: 'findParent';
-    readonly label: 'data-importer.resolver.location-strategy.findParent';
-    readonly group: 'createLocation';
+    readonly id = 'creation.findParent';
+    readonly value = 'findParent';
+    readonly label = 'data-importer.resolver.location-strategy.findParent';
+    readonly group = 'createLocation';
     renderSettings(props: DynamicTypeResolverRenderProps) {
         return <FindParentLocationCreationSettings {...props} />;
     }

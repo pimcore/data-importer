@@ -18,10 +18,10 @@ import { injectable } from '@pimcore/studio-ui-bundle/app';
 
 @injectable()
 export class DynamicTypeResolverPath extends DynamicTypeResolverAbstract {
-    readonly id: 'path';
-    readonly value: 'path';
-    readonly label: 'data-importer.resolver.loading-strategy.path';
-    readonly group: 'loading';
+    readonly id = 'path';
+    readonly value = 'path';
+    readonly label = 'data-importer.resolver.loading-strategy.path';
+    readonly group = 'loading';
     renderSettings(props: DynamicTypeResolverRenderProps) {
         return <PathLoadingStrategyResolverSettings {...props} />;
     }
