@@ -8,16 +8,16 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
 
 @injectable()
 export class DynamicTypeResolverNoChangeUnpublishNew extends DynamicTypeResolverAbstract {
-    readonly id = 'publishing.noChangeUnpublishNew';
-    readonly type = 'noChangeUnpublishNew';
-    readonly label = 'data-importer.resolver.publishing-strategy.noChangeUnpublishNew';
-    readonly group = 'publishing';
-    renderSettings() {
-        return null;
-    }
+  readonly id = 'publishing.noChangeUnpublishNew'
+  readonly type = 'noChangeUnpublishNew'
+  readonly label = 'data-importer.resolver.publishing-strategy.noChangeUnpublishNew'
+  readonly group = 'publishing'
+  renderSettings (): null {
+    return null
+  }
 }

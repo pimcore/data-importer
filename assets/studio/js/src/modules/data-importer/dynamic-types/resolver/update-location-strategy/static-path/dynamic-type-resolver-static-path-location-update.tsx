@@ -8,18 +8,18 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
-import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { StaticPathUpdateLocationStrategyResolverSettings } from './static-path-update-location-strategy-resolver-settings';
+import React from 'react'
+import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { StaticPathUpdateLocationStrategyResolverSettings } from './static-path-update-location-strategy-resolver-settings'
 
 @injectable()
 export class DynamicTypeResolverStaticPathLocationUpdate extends DynamicTypeResolverAbstract {
-    readonly id = 'updateLocation.staticPath';
-    readonly type = 'staticPath';
-    readonly label = 'data-importer.resolver.location-strategy.staticPath';
-    readonly group = 'updateLocation';
-    renderSettings() {
-        return <StaticPathUpdateLocationStrategyResolverSettings />;
-    }
+  readonly id = 'updateLocation.staticPath'
+  readonly type = 'staticPath'
+  readonly label = 'data-importer.resolver.location-strategy.staticPath'
+  readonly group = 'updateLocation'
+  renderSettings (): React.JSX.Element {
+    return <StaticPathUpdateLocationStrategyResolverSettings />
+  }
 }

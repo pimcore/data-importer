@@ -8,49 +8,51 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo } from 'react';
-import { Form, Select } from '@pimcore/studio-ui-bundle/components';
-import { useTranslation } from '@pimcore/studio-ui-bundle/app';
-import { DataImporterPanel } from '../data-importer-panel/data-importer-panel';
-import { filterByLabel } from '../../../../utils/select-utils';
-import { DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry';
-import type { DataImporterFormValues } from '../../../../types';
+import React, { useMemo } from 'react'
+import { Form, Select } from '@pimcore/studio-ui-bundle/components'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
+import { filterByLabel } from '../../../../utils/select-utils'
+import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry'
+import type { DataImporterFormValues } from '../../../../types'
 
 export interface PublishingPanelProps {
-    registry: DynamicTypeResolverRegistry;
-    columnHeaderOptions: Array<{ value: string; label: string }>;
+  registry: DynamicTypeResolverRegistry
+  columnHeaderOptions: Array<{ value: string, label: string }>
 }
 
 export const PublishingPanel = ({ registry, ...props }: PublishingPanelProps): React.JSX.Element => {
-    const { t } = useTranslation();
+  const { t } = useTranslation()
 
-    const resolvers = useMemo(() => registry.getDynamicTypesForGroup('publishing'), [registry]);
-    const options = useMemo(
-        () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
-        [resolvers, t]
-    );
+  const resolvers = useMemo(() => registry.getDynamicTypesForGroup('publishing'), [registry])
+  const options = useMemo(
+    () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+    [resolvers, t]
+  )
 
-    return (
-        <DataImporterPanel title={t('data-importer.resolver.element-publishing')}>
-            <Form.Item
-                label={t('data-importer.resolver.publishing-strategy')}
-                name={['resolverConfig', 'publishingStrategy', 'type']}
-                tooltip={t('data-importer.resolver.publishing-strategy.tooltip')}
-            >
-                <Select filterOption={filterByLabel} options={options} showSearch />
-            </Form.Item>
+  return (
+    <DataImporterPanel title={ t('data-importer.resolver.element-publishing') }>
+      <Form.Item
+        label={ t('data-importer.resolver.publishing-strategy') }
+        name={ ['resolverConfig', 'publishingStrategy', 'type'] }
+        tooltip={ t('data-importer.resolver.publishing-strategy.tooltip') }
+      >
+        <Select
+          filterOption={ filterByLabel }
+          options={ options }
+          showSearch
+        />
+      </Form.Item>
 
-            {resolvers.map((resolver) => (
-                <Form.Conditional
-                    condition={(values) =>
-                        (values as unknown as DataImporterFormValues).resolverConfig?.publishingStrategy?.type ===
-                        resolver.type
-                    }
-                    key={resolver.id}
-                >
-                    {resolver.renderSettings(props)}
-                </Form.Conditional>
-            ))}
-        </DataImporterPanel>
-    );
-};
+      {resolvers.map((resolver) => (
+        <Form.Conditional
+          condition={ (values) =>
+            (values as unknown as DataImporterFormValues).resolverConfig?.publishingStrategy?.type === resolver.type }
+          key={ resolver.id }
+        >
+          {resolver.renderSettings(props)}
+        </Form.Conditional>
+      ))}
+    </DataImporterPanel>
+  )
+}

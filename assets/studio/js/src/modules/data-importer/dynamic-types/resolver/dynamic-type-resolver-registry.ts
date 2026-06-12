@@ -8,13 +8,13 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element';
-import { type DynamicTypeResolverAbstract, ResolverGroup } from './common/dynamic-type-resolver-abstract';
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { DynamicTypeRegistryAbstract } from '@pimcore/studio-ui-bundle/modules/element'
+import { type DynamicTypeResolverAbstract, type ResolverGroup } from './common/dynamic-type-resolver-abstract'
 
 @injectable()
 export class DynamicTypeResolverRegistry extends DynamicTypeRegistryAbstract<DynamicTypeResolverAbstract> {
-    getDynamicTypesForGroup(group: ResolverGroup): DynamicTypeResolverAbstract[] {
-        return this.getDynamicTypes().filter((t) => t.group === group);
-    }
+  getDynamicTypesForGroup (group: ResolverGroup): DynamicTypeResolverAbstract[] {
+    return this.getDynamicTypes().filter((t) => t.group === group)
+  }
 }

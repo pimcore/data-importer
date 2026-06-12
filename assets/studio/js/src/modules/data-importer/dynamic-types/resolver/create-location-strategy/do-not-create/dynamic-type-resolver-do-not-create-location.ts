@@ -8,16 +8,16 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
+import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-abstract'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
 
 @injectable()
 export class DynamicTypeResolverDoNotCreateLocation extends DynamicTypeResolverAbstract {
-    readonly id = 'createLocation.doNotCreate';
-    readonly type = 'doNotCreate';
-    readonly label = 'data-importer.resolver.location-strategy.doNotCreate';
-    readonly group = 'createLocation';
-    renderSettings() {
-        return null;
-    }
+  readonly id = 'createLocation.doNotCreate'
+  readonly type = 'doNotCreate'
+  readonly label = 'data-importer.resolver.location-strategy.doNotCreate'
+  readonly group = 'createLocation'
+  renderSettings (): null {
+    return null
+  }
 }

@@ -8,21 +8,21 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
+import React from 'react'
 import {
-    DynamicTypeResolverAbstract,
-    DynamicTypeResolverRenderProps,
-} from '../../common/dynamic-type-resolver-abstract';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
-import { FindParentLocationCreationSettings } from './find-parent-location-creation-settings';
+  DynamicTypeResolverAbstract,
+  type DynamicTypeResolverRenderProps
+} from '../../common/dynamic-type-resolver-abstract'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { FindParentLocationCreationSettings } from './find-parent-location-creation-settings'
 
 @injectable()
 export class DynamicTypeResolverFindParentLocationCreation extends DynamicTypeResolverAbstract {
-    readonly id = 'createLocation.findParent';
-    readonly type = 'findParent';
-    readonly label = 'data-importer.resolver.location-strategy.findParent';
-    readonly group = 'createLocation';
-    renderSettings(props: DynamicTypeResolverRenderProps) {
-        return <FindParentLocationCreationSettings {...props} />;
-    }
+  readonly id = 'createLocation.findParent'
+  readonly type = 'findParent'
+  readonly label = 'data-importer.resolver.location-strategy.findParent'
+  readonly group = 'createLocation'
+  renderSettings (props: DynamicTypeResolverRenderProps): React.JSX.Element {
+    return <FindParentLocationCreationSettings { ...props } />
+  }
 }

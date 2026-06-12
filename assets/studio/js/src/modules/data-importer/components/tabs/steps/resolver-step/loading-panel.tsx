@@ -8,50 +8,52 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo } from 'react';
-import { Form, Select } from '@pimcore/studio-ui-bundle/components';
-import { useTranslation } from '@pimcore/studio-ui-bundle/app';
-import { DataImporterPanel } from '../data-importer-panel/data-importer-panel';
-import { filterByLabel } from '../../../../utils/select-utils';
-import { DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry';
-import type { DataImporterFormValues } from '../../../../types';
+import React, { useMemo } from 'react'
+import { Form, Select } from '@pimcore/studio-ui-bundle/components'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
+import { filterByLabel } from '../../../../utils/select-utils'
+import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry'
+import type { DataImporterFormValues } from '../../../../types'
 
 export interface LoadingPanelProps {
-    registry: DynamicTypeResolverRegistry;
-    columnHeaderOptions: Array<{ value: string; label: string }>;
-    languageOptions: Array<{ value: string; label: string }>;
+  registry: DynamicTypeResolverRegistry
+  columnHeaderOptions: Array<{ value: string, label: string }>
+  languageOptions: Array<{ value: string, label: string }>
 }
 
 export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.JSX.Element => {
-    const { t } = useTranslation();
+  const { t } = useTranslation()
 
-    const resolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry]);
-    const options = useMemo(
-        () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
-        [resolvers, t]
-    );
+  const resolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry])
+  const options = useMemo(
+    () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+    [resolvers, t]
+  )
 
-    return (
-        <DataImporterPanel title={t('data-importer.resolver.element-loading')}>
-            <Form.Item
-                label={t('data-importer.resolver.loading-strategy')}
-                name={['resolverConfig', 'loadingStrategy', 'type']}
-                tooltip={t('data-importer.resolver.loading-strategy.tooltip')}
-            >
-                <Select filterOption={filterByLabel} options={options} showSearch />
-            </Form.Item>
+  return (
+    <DataImporterPanel title={ t('data-importer.resolver.element-loading') }>
+      <Form.Item
+        label={ t('data-importer.resolver.loading-strategy') }
+        name={ ['resolverConfig', 'loadingStrategy', 'type'] }
+        tooltip={ t('data-importer.resolver.loading-strategy.tooltip') }
+      >
+        <Select
+          filterOption={ filterByLabel }
+          options={ options }
+          showSearch
+        />
+      </Form.Item>
 
-            {resolvers.map((resolver) => (
-                <Form.Conditional
-                    condition={(values) =>
-                        (values as unknown as DataImporterFormValues).resolverConfig?.loadingStrategy?.type ===
-                        resolver.type
-                    }
-                    key={resolver.id}
-                >
-                    {resolver.renderSettings(props)}
-                </Form.Conditional>
-            ))}
-        </DataImporterPanel>
-    );
-};
+      {resolvers.map((resolver) => (
+        <Form.Conditional
+          condition={ (values) =>
+            (values as unknown as DataImporterFormValues).resolverConfig?.loadingStrategy?.type === resolver.type }
+          key={ resolver.id }
+        >
+          {resolver.renderSettings(props)}
+        </Form.Conditional>
+      ))}
+    </DataImporterPanel>
+  )
+}

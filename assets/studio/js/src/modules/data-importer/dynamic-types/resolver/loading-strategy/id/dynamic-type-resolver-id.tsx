@@ -8,21 +8,21 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react';
+import React from 'react'
 import {
-    DynamicTypeResolverAbstract,
-    DynamicTypeResolverRenderProps,
-} from '../../common/dynamic-type-resolver-abstract';
-import { IdLoadingStrategyResolverSettings } from './id-loading-strategy-resolver-settings';
-import { injectable } from '@pimcore/studio-ui-bundle/app';
+  DynamicTypeResolverAbstract,
+  type DynamicTypeResolverRenderProps
+} from '../../common/dynamic-type-resolver-abstract'
+import { IdLoadingStrategyResolverSettings } from './id-loading-strategy-resolver-settings'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
 
 @injectable()
 export class DynamicTypeResolverId extends DynamicTypeResolverAbstract {
-    readonly id = 'loading.id';
-    readonly type = 'id';
-    readonly label = 'data-importer.resolver.loading-strategy.id';
-    readonly group = 'loading';
-    renderSettings(props: DynamicTypeResolverRenderProps) {
-        return <IdLoadingStrategyResolverSettings {...props} />;
-    }
+  readonly id = 'loading.id'
+  readonly type = 'id'
+  readonly label = 'data-importer.resolver.loading-strategy.id'
+  readonly group = 'loading'
+  renderSettings (props: DynamicTypeResolverRenderProps): React.JSX.Element {
+    return <IdLoadingStrategyResolverSettings { ...props } />
+  }
 }
