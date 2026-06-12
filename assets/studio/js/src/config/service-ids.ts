@@ -63,6 +63,8 @@ export const bundleServiceIds = {
         'DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath',
     'DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder':
         'DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder',
+    'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent':
+        'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent',
 
     // Resolver publishing types
     'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew':
@@ -73,8 +75,6 @@ export const bundleServiceIds = {
         'DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish',
     'DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased':
         'DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased',
-    'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent':
-        'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent',
 
     // Transformer registry
     'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
