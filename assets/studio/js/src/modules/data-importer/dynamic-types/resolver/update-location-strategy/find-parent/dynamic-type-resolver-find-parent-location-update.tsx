@@ -19,7 +19,7 @@ import { FindParentLocationUpdateSettings } from './find-parent-location-update-
 @injectable()
 export class DynamicTypeResolverFindParentLocationUpdate extends DynamicTypeResolverAbstract {
     readonly id = 'update.findParent';
-    readonly value = 'findParent';
+    readonly type = 'findParent';
     readonly label = 'data-importer.resolver.location-strategy.findParent';
     readonly group = 'updateLocation';
     renderSettings(props: DynamicTypeResolverRenderProps) {

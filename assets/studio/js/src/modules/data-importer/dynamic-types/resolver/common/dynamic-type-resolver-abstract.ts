@@ -24,7 +24,7 @@ export type ResolverGroup = 'loading' | 'createLocation' | 'updateLocation' | 'p
 @injectable()
 export abstract class DynamicTypeResolverAbstract extends DynamicTypeAbstract {
     abstract readonly id: string;
-    abstract readonly value: string;
+    abstract readonly type: string;
     abstract readonly label: string;
     abstract readonly group: ResolverGroup;
     abstract renderSettings(props: DynamicTypeResolverRenderProps): React.JSX.Element | null;

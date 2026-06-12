@@ -28,7 +28,10 @@ export const CreationPanel = ({ registry, ...props }: CreationPanelProps): React
     const { t } = useTranslation();
 
     const resolvers = useMemo(() => registry.getDynamicTypesForGroup('createLocation'), [registry]);
-    const options = useMemo(() => resolvers.map(({ value, label }) => ({ value, label: t(label) })), [resolvers, t]);
+    const options = useMemo(
+        () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+        [resolvers, t]
+    );
 
     return (
         <DataImporterPanel title={t('data-importer.resolver.element-creation')}>
@@ -43,14 +46,12 @@ export const CreationPanel = ({ registry, ...props }: CreationPanelProps): React
             {resolvers.map((resolver) => (
                 <Form.Conditional
                     condition={(values) =>
-                        (values as unknown as DataImporterFormValues).resolverConfig?.createLocationStrategy ===
-                        resolver.id
+                        (values as unknown as DataImporterFormValues).resolverConfig?.createLocationStrategy?.type ===
+                        resolver.type
                     }
                     key={resolver.id}
                 >
-                    <DataImporterPanel theme="fieldset" title={t(resolver.label)}>
-                        {resolver.renderSettings(props)}
-                    </DataImporterPanel>
+                    {resolver.renderSettings(props)}
                 </Form.Conditional>
             ))}
         </DataImporterPanel>

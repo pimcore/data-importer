@@ -27,8 +27,11 @@ export interface LocationUpdatePanelProps {
 export const LocationUpdatePanel = ({ registry, ...props }: LocationUpdatePanelProps): React.JSX.Element => {
     const { t } = useTranslation();
 
-    const resolvers = useMemo(() => registry.getDynamicTypesForGroup('createLocation'), [registry]);
-    const options = useMemo(() => resolvers.map(({ value, label }) => ({ value, label: t(label) })), [resolvers, t]);
+    const resolvers = useMemo(() => registry.getDynamicTypesForGroup('updateLocation'), [registry]);
+    const options = useMemo(
+        () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+        [resolvers, t]
+    );
 
     return (
         <DataImporterPanel title={t('data-importer.resolver.element-location-update')}>
@@ -43,14 +46,12 @@ export const LocationUpdatePanel = ({ registry, ...props }: LocationUpdatePanelP
             {resolvers.map((resolver) => (
                 <Form.Conditional
                     condition={(values) =>
-                        (values as unknown as DataImporterFormValues).resolverConfig?.locationUpdateStrategy ===
-                        resolver.id
+                        (values as unknown as DataImporterFormValues).resolverConfig?.locationUpdateStrategy?.type ===
+                        resolver.type
                     }
                     key={resolver.id}
                 >
-                    <DataImporterPanel theme="fieldset" title={t(resolver.label)}>
-                        {resolver.renderSettings(props)}
-                    </DataImporterPanel>
+                    {resolver.renderSettings(props)}
                 </Form.Conditional>
             ))}
         </DataImporterPanel>

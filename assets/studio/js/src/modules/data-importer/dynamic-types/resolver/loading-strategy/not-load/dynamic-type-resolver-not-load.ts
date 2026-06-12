@@ -14,7 +14,7 @@ import { DynamicTypeResolverAbstract } from '../../common/dynamic-type-resolver-
 @injectable()
 export class DynamicTypeResolverNotLoad extends DynamicTypeResolverAbstract {
     readonly id = 'notLoad';
-    readonly value = 'notLoad';
+    readonly type = 'notLoad';
     readonly label = 'data-importer.resolver.loading-strategy.notLoad';
     readonly group = 'loading';
     renderSettings() {

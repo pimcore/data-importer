@@ -19,7 +19,7 @@ import { FindOrCreateFolderLocationUpdateSettings } from './find-or-create-folde
 @injectable()
 export class DynamicTypeResolverFindOrCreateFolderLocationUpdate extends DynamicTypeResolverAbstract {
     readonly id = 'update.findOrCreateFolder';
-    readonly value = 'findOrCreateFolder';
+    readonly type = 'findOrCreateFolder';
     readonly label = 'data-importer.resolver.location-strategy.findOrCreateFolder';
     readonly group = 'updateLocation';
     renderSettings(props: DynamicTypeResolverRenderProps) {

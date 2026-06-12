@@ -25,7 +25,10 @@ export const PublishingPanel = ({ registry, ...props }: PublishingPanelProps): R
     const { t } = useTranslation();
 
     const resolvers = useMemo(() => registry.getDynamicTypesForGroup('publishing'), [registry]);
-    const options = useMemo(() => resolvers.map(({ value, label }) => ({ value, label: t(label) })), [resolvers, t]);
+    const options = useMemo(
+        () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+        [resolvers, t]
+    );
 
     return (
         <DataImporterPanel title={t('data-importer.resolver.element-publishing')}>
@@ -40,13 +43,12 @@ export const PublishingPanel = ({ registry, ...props }: PublishingPanelProps): R
             {resolvers.map((resolver) => (
                 <Form.Conditional
                     condition={(values) =>
-                        (values as unknown as DataImporterFormValues).resolverConfig?.publishingStrategy === resolver.id
+                        (values as unknown as DataImporterFormValues).resolverConfig?.publishingStrategy?.type ===
+                        resolver.type
                     }
                     key={resolver.id}
                 >
-                    <DataImporterPanel theme="fieldset" title={t(resolver.label)}>
-                        {resolver.renderSettings(props)}
-                    </DataImporterPanel>
+                    {resolver.renderSettings(props)}
                 </Form.Conditional>
             ))}
         </DataImporterPanel>
