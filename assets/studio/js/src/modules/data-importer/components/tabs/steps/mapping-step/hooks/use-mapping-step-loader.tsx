@@ -25,6 +25,20 @@ function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
 }
 
+// the transformation result types the autofill suggestion pool covers besides the
+// default request (which the backend resolves to the DEFAULT and NUMERIC types)
+export const SUGGESTION_TRANSFORMATION_RESULT_TYPES: string[] = [
+  'array',
+  'boolean',
+  'date',
+  'quantityValue',
+  'asset',
+  'assetArray',
+  'gallery',
+  'dataObject',
+  'dataObjectArray'
+]
+
 export function useMappingStepLoader (configName: string, isActive: boolean): UseMappingStepLoaderResult {
   const form = Form.useFormInstance()
   const dispatch = useAppDispatch()
@@ -244,6 +258,10 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
         const uniqueTypes = new Set<string | undefined>()
         if (effectiveClassId !== undefined && effectiveClassId !== '') {
           uniqueTypes.add(undefined)
+          // the default request only returns DEFAULT+NUMERIC typed attributes — without
+          // the other result types the autofill suggestions would miss e.g. select,
+          // relation or asset fields on configs that have no mapping rows yet (#622)
+          SUGGESTION_TRANSFORMATION_RESULT_TYPES.forEach((trt) => uniqueTypes.add(trt))
           items.forEach((item) => { uniqueTypes.add(item.transformationResultType) })
         }
 

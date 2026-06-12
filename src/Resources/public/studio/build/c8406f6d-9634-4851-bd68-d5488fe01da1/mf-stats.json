@@ -22,7 +22,7 @@
     "globalName": "pimcore_dataimporter_bundle",
     "pluginVersion": "0.14.3",
     "prefetchInterface": false,
-    "publicPath": "/bundles/pimcoredataimporter/studio/build/fd1587db-ae6b-47a3-935c-8de56d3cc9fc/"
+    "publicPath": "/bundles/pimcoredataimporter/studio/build/c8406f6d-9634-4851-bd68-d5488fe01da1/"
   },
   "shared": [
     {
@@ -320,7 +320,7 @@
           "sync": [
             "static/js/async/359.3ba5f4b6.js",
             "static/js/async/132.94c226f3.js",
-            "static/js/async/__federation_expose_default_export.23228b76.js"
+            "static/js/async/__federation_expose_default_export.b792e175.js"
           ],
           "async": []
         },
