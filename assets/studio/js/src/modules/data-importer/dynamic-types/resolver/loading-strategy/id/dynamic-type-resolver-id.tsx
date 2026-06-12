@@ -18,7 +18,7 @@ import { injectable } from '@pimcore/studio-ui-bundle/app';
 
 @injectable()
 export class DynamicTypeResolverId extends DynamicTypeResolverAbstract {
-    readonly id = 'id';
+    readonly id = 'loading.id';
     readonly type = 'id';
     readonly label = 'data-importer.resolver.loading-strategy.id';
     readonly group = 'loading';

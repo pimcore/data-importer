@@ -13,7 +13,7 @@ import { injectable } from '@pimcore/studio-ui-bundle/app';
 
 @injectable()
 export class DynamicTypeResolverNoChangePublishNew extends DynamicTypeResolverAbstract {
-    readonly id = 'noChangePublishNew';
+    readonly id = 'publishing.noChangePublishNew';
     readonly type = 'noChangePublishNew';
     readonly label = 'data-importer.resolver.publishing-strategy.noChangePublishNew';
     readonly group = 'publishing';

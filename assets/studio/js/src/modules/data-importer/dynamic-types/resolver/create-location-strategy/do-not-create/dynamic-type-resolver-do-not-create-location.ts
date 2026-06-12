@@ -13,7 +13,7 @@ import { injectable } from '@pimcore/studio-ui-bundle/app';
 
 @injectable()
 export class DynamicTypeResolverDoNotCreateLocation extends DynamicTypeResolverAbstract {
-    readonly id = 'creation.doNotCreate';
+    readonly id = 'createLocation.doNotCreate';
     readonly type = 'doNotCreate';
     readonly label = 'data-importer.resolver.location-strategy.doNotCreate';
     readonly group = 'createLocation';

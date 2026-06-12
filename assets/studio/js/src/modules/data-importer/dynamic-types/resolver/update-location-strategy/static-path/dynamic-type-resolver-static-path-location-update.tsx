@@ -15,7 +15,7 @@ import { StaticPathUpdateLocationStrategyResolverSettings } from './static-path-
 
 @injectable()
 export class DynamicTypeResolverStaticPathLocationUpdate extends DynamicTypeResolverAbstract {
-    readonly id = 'update.staticPath';
+    readonly id = 'updateLocation.staticPath';
     readonly type = 'staticPath';
     readonly label = 'data-importer.resolver.location-strategy.staticPath';
     readonly group = 'updateLocation';
