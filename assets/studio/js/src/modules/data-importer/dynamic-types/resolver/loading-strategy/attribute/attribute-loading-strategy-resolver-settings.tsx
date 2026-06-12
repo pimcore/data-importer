@@ -28,9 +28,10 @@ export function AttributeLoadingStrategyResolverSettings({
         | string
         | undefined;
 
-    const { data, isLoading } = useBundleDataImporterDataTypeLoadClassAttributesQuery({
-        classId: dataObjectClassId ?? '',
-    });
+    const { data, isLoading } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
+        { classId: dataObjectClassId ?? '' },
+        { skip: dataObjectClassId === undefined || dataObjectClassId === '' }
+    );
     const loadingAttributes = useMemo(() => (data?.attributes ?? []).map(parseClassAttribute), [data]);
     const loadingAttributeOptions = useMemo(
         () => loadingAttributes.map((a) => ({ value: a.key, label: a.title })),
