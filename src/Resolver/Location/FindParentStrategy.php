@@ -95,7 +95,7 @@ class FindParentStrategy implements LocationStrategyInterface
             }
 
             $this->attributeName = $settings['attributeName'];
-            $this->attributeLanguage = $settings['attributeLanguage'] ?? null;
+            $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
         }
     }
 
