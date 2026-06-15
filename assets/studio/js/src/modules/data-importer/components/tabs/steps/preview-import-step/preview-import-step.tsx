@@ -26,6 +26,8 @@ import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
 export interface PreviewImportStepProps {
   configName: string
   isActive: boolean
+  /** Called when the preview data changes (copy from source / upload). */
+  onPreviewDataChange?: () => void
 }
 
 interface PreviewRow {
@@ -42,7 +44,7 @@ const isNotFoundError = (error: unknown): boolean => {
 
 const columnHelper = createColumnHelper<PreviewRow>()
 
-export const PreviewImportStep = ({ configName, isActive }: PreviewImportStepProps): React.JSX.Element => {
+export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }: PreviewImportStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const form = Form.useFormInstance()
 
@@ -111,6 +113,7 @@ export const PreviewImportStep = ({ configName, isActive }: PreviewImportStepPro
     }
 
     fetchPreview(0, { forceRefetch: true })
+    onPreviewDataChange?.()
   }
 
   const dropdownItems = [
@@ -230,6 +233,7 @@ export const PreviewImportStep = ({ configName, isActive }: PreviewImportStepPro
         onUploadSuccess={ () => {
           setUploadModalOpen(false)
           fetchPreview(0, { forceRefetch: true })
+          onPreviewDataChange?.()
         } }
         open={ uploadModalOpen }
         title={ t('data-importer.preview-import.upload-file') }
