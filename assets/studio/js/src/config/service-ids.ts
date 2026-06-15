@@ -36,6 +36,33 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Loader/Push': 'DataImporter/DynamicTypes/Loader/Push',
   'DataImporter/DynamicTypes/Loader/Sql': 'DataImporter/DynamicTypes/Loader/Sql',
 
+  // Resolver registry
+  'DataImporter/DynamicTypes/Resolver/Registry': 'DataImporter/DynamicTypes/Resolver/Registry',
+
+  // Resolver loading types
+  'DataImporter/DynamicTypes/Resolver/Loading/NotLoad': 'DataImporter/DynamicTypes/Resolver/Loading/NotLoad',
+  'DataImporter/DynamicTypes/Resolver/Loading/Id': 'DataImporter/DynamicTypes/Resolver/Loading/Id',
+  'DataImporter/DynamicTypes/Resolver/Loading/Path': 'DataImporter/DynamicTypes/Resolver/Loading/Path',
+  'DataImporter/DynamicTypes/Resolver/Loading/Attribute': 'DataImporter/DynamicTypes/Resolver/Loading/Attribute',
+
+  // Resolver create location types
+  'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath': 'DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath',
+  'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder': 'DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder',
+  'DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent': 'DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent',
+  'DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate': 'DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate',
+
+  // Resolver update location types
+  'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange': 'DataImporter/DynamicTypes/Resolver/Location/Update/NoChange',
+  'DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath': 'DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath',
+  'DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder': 'DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder',
+  'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent': 'DataImporter/DynamicTypes/Resolver/Location/Update/FindParent',
+
+  // Resolver publishing types
+  'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew': 'DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew',
+  'DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew': 'DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew',
+  'DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish': 'DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish',
+  'DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased': 'DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased',
+
   // Transformer registry
   'DataImporter/DynamicTypes/Transformer/Registry': 'DataImporter/DynamicTypes/Transformer/Registry',
 

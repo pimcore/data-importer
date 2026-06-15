@@ -8,32 +8,28 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
-import { Form, Select, Switch } from '@pimcore/studio-ui-bundle/components'
+import React, { useMemo } from 'react'
+import { Form, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { filterByLabel } from '../../../../utils/select-utils'
+import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry'
+import type { DataImporterFormValues } from '../../../../types'
 
 export interface LoadingPanelProps {
-  loadingStrategyType: string | undefined
-  loadingStrategyOptions: Array<{ value: string, label: string }>
+  registry: DynamicTypeResolverRegistry
   columnHeaderOptions: Array<{ value: string, label: string }>
-  isLoadingLoadingAttrs: boolean
-  loadingAttributeOptions: Array<{ value: string, label: string }>
-  loadingAttrIsLocalized: boolean
   languageOptions: Array<{ value: string, label: string }>
 }
 
-export const LoadingPanel = ({
-  loadingStrategyType,
-  loadingStrategyOptions,
-  columnHeaderOptions,
-  isLoadingLoadingAttrs,
-  loadingAttributeOptions,
-  loadingAttrIsLocalized,
-  languageOptions
-}: LoadingPanelProps): React.JSX.Element => {
+export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
+
+  const resolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry])
+  const options = useMemo(
+    () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+    [resolvers, t]
+  )
 
   return (
     <DataImporterPanel title={ t('data-importer.resolver.element-loading') }>
@@ -44,101 +40,20 @@ export const LoadingPanel = ({
       >
         <Select
           filterOption={ filterByLabel }
-          options={ loadingStrategyOptions }
+          options={ options }
           showSearch
         />
       </Form.Item>
 
-      { loadingStrategyType === 'id' && (
-        <DataImporterPanel
-          theme="fieldset"
-          title={ t('data-importer.resolver.loading-strategy.id') }
+      {resolvers.map((resolver) => (
+        <Form.Conditional
+          condition={ (values) =>
+            (values as unknown as DataImporterFormValues).resolverConfig?.loadingStrategy?.type === resolver.type }
+          key={ resolver.id }
         >
-          <Form.Item
-            label={ t('data-importer.resolver.loading-strategy.data-source-index') }
-            name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ columnHeaderOptions }
-              placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
-              showSearch
-            />
-          </Form.Item>
-        </DataImporterPanel>
-      ) }
-
-      { loadingStrategyType === 'path' && (
-        <DataImporterPanel
-          theme="fieldset"
-          title={ t('data-importer.resolver.loading-strategy.path') }
-        >
-          <Form.Item
-            label={ t('data-importer.resolver.loading-strategy.data-source-index') }
-            name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ columnHeaderOptions }
-              placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
-              showSearch
-            />
-          </Form.Item>
-        </DataImporterPanel>
-      ) }
-
-      { loadingStrategyType === 'attribute' && (
-        <DataImporterPanel
-          theme="fieldset"
-          title={ t('data-importer.resolver.loading-strategy.attribute') }
-        >
-          <Form.Item
-            label={ t('data-importer.resolver.loading-strategy.data-source-index') }
-            name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ columnHeaderOptions }
-              placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
-              showSearch
-            />
-          </Form.Item>
-          <Form.Item
-            label={ t('data-importer.resolver.loading-strategy.attribute-name') }
-            name={ ['resolverConfig', 'loadingStrategy', 'settings', 'attributeName'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              loadingSkeleton={ isLoadingLoadingAttrs }
-              options={ loadingAttributeOptions }
-              placeholder={ t('data-importer.resolver.loading-strategy.attribute-name-placeholder') }
-              showSearch
-            />
-          </Form.Item>
-          { loadingAttrIsLocalized && (
-            <Form.Item
-              label={ t('data-importer.resolver.loading-strategy.language') }
-              name={ ['resolverConfig', 'loadingStrategy', 'settings', 'language'] }
-            >
-              <Select
-                filterOption={ filterByLabel }
-                options={ languageOptions }
-                placeholder={ t('data-importer.resolver.loading-strategy.language-placeholder') }
-                showSearch
-              />
-            </Form.Item>
-          ) }
-          <Form.Item
-            name={ ['resolverConfig', 'loadingStrategy', 'settings', 'includeUnpublished'] }
-            valuePropName="checked"
-          >
-            <Switch
-              labelRight={ t('data-importer.resolver.loading-strategy.include-unpublished') }
-              size="small"
-            />
-          </Form.Item>
-        </DataImporterPanel>
-      ) }
+          {resolver.renderSettings(props)}
+        </Form.Conditional>
+      ))}
     </DataImporterPanel>
   )
 }

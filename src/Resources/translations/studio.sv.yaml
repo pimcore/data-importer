@@ -290,7 +290,6 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Ersätt
 data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Sammanfoga
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nyckel vald
-data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip: 'Lägg till en transformerare i steget Transformationer innan du väljer en nyckel.'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i grupp {{group}}'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Välj Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Sök och välj en nyckel för detta Classification Store-fält

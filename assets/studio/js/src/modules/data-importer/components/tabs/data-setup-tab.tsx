@@ -18,7 +18,7 @@ import { ResolverStep } from './steps/resolver-step'
 import { MappingStep } from './steps/mapping-step'
 import { ProcessingSettingsStep } from './steps/processing-settings-step'
 import { useStyles } from './data-setup-tab.styles'
-import { useBundleDataImporterConfigGetQuery } from '../../data-importer-api-slice-enhanced'
+import { useColumnHeaderOptions } from '../../hooks/use-column-header-options'
 import { Box } from '@pimcore/studio-ui-bundle/components'
 
 export interface DataSetupTabProps {
@@ -29,17 +29,17 @@ export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Eleme
   const { t } = useTranslation()
   const { styles } = useStyles()
   const [currentStep, setCurrentStep] = useState(0)
+  // Bumped on preview-data change so dependent steps refresh their column lists.
+  const [previewVersion, setPreviewVersion] = useState(0)
 
-  const { data: configData } = useBundleDataImporterConfigGetQuery({ name: configName })
-  const columnHeaderOptions = useMemo(
-    () => (configData?.columnHeaders ?? []).map((header) => {
-      // API returns objects {id, dataIndex, label}; type says string[] — handle both
-      const h = header as unknown as { dataIndex?: string, label?: string } | string
-      const value = typeof h === 'string' ? h : (h.dataIndex ?? '')
-      const label = typeof h === 'string' ? h : (h.label ?? h.dataIndex ?? '')
-      return { value, label }
-    }),
-    [configData?.columnHeaders]
+  const RESOLVER_STEP_INDEX = 2
+  const PROCESSING_STEP_INDEX = 4
+
+  // Shared column options for the resolver and processing steps; loaded while either is active.
+  const columnHeaderOptions = useColumnHeaderOptions(
+    configName,
+    currentStep === RESOLVER_STEP_INDEX || currentStep === PROCESSING_STEP_INDEX,
+    previewVersion
   )
 
   const steps: StepItem[] = useMemo(() => [
@@ -83,6 +83,7 @@ export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Eleme
         <PreviewImportStep
           configName={ configName }
           isActive={ currentStep === 1 }
+          onPreviewDataChange={ () => { setPreviewVersion((v) => v + 1) } }
         />
       </div>
 
@@ -95,7 +96,7 @@ export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Eleme
       </div>
 
       <div className={ cn(styles.stepContent, currentStep !== 4 && styles.stepContentHidden) }>
-        <ProcessingSettingsStep configName={ configName } />
+        <ProcessingSettingsStep columnHeaderOptions={ columnHeaderOptions } />
       </div>
     </Flex>
   )
