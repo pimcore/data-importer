@@ -19,23 +19,21 @@ export function IdLoadingStrategyResolverSettings ({ columnHeaderOptions }: Dyna
   const { t } = useTranslation()
 
   return (
-    <>
-      <DataImporterPanel
-        theme="fieldset"
-        title={ t('data-importer.resolver.loading-strategy.id') }
+    <DataImporterPanel
+      theme="fieldset"
+      title={ t('data-importer.resolver.loading-strategy.id') }
+    >
+      <Form.Item
+        label={ t('data-importer.resolver.loading-strategy.data-source-index') }
+        name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
       >
-        <Form.Item
-          label={ t('data-importer.resolver.loading-strategy.data-source-index') }
-          name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ columnHeaderOptions }
-            placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
-            showSearch
-          />
-        </Form.Item>
-      </DataImporterPanel>
-    </>
+        <Select
+          filterOption={ filterByLabel }
+          options={ columnHeaderOptions }
+          placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
+          showSearch
+        />
+      </Form.Item>
+    </DataImporterPanel>
   )
 }

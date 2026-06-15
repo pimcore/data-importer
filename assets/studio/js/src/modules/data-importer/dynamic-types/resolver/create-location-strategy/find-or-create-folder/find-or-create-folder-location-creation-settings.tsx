@@ -19,30 +19,28 @@ export function FindOrCreateFolderLocationCreationSettings ({ columnHeaderOption
   const { t } = useTranslation()
 
   return (
-    <>
-      <DataImporterPanel
-        theme="fieldset"
-        title={ t('data-importer.resolver.location-strategy.findOrCreateFolder') }
+    <DataImporterPanel
+      theme="fieldset"
+      title={ t('data-importer.resolver.location-strategy.findOrCreateFolder') }
+    >
+      <Form.Item
+        label={ t('data-importer.resolver.location-strategy.data-source-index') }
+        name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'dataSourceIndex'] }
       >
-        <Form.Item
-          label={ t('data-importer.resolver.location-strategy.data-source-index') }
-          name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'dataSourceIndex'] }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ columnHeaderOptions }
-            placeholder={ t('data-importer.resolver.location-strategy.data-source-index-placeholder') }
-            showSearch
-          />
-        </Form.Item>
-        <Form.Item
-          label={ t('data-importer.resolver.location-strategy.fallback-path') }
-          name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'fallbackPath'] }
-          tooltip={ t('data-importer.resolver.location-strategy.fallback-path.tooltip') }
-        >
-          <Input placeholder={ t('data-importer.resolver.location-strategy.fallback-path-placeholder') } />
-        </Form.Item>
-      </DataImporterPanel>
-    </>
+        <Select
+          filterOption={ filterByLabel }
+          options={ columnHeaderOptions }
+          placeholder={ t('data-importer.resolver.location-strategy.data-source-index-placeholder') }
+          showSearch
+        />
+      </Form.Item>
+      <Form.Item
+        label={ t('data-importer.resolver.location-strategy.fallback-path') }
+        name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'fallbackPath'] }
+        tooltip={ t('data-importer.resolver.location-strategy.fallback-path.tooltip') }
+      >
+        <Input placeholder={ t('data-importer.resolver.location-strategy.fallback-path-placeholder') } />
+      </Form.Item>
+    </DataImporterPanel>
   )
 }

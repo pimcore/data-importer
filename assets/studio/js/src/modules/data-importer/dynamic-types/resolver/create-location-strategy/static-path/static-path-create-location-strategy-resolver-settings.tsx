@@ -17,31 +17,29 @@ export function StaticPathCreateLocationStrategyResolverSettings (): React.JSX.E
   const { t } = useTranslation()
 
   return (
-    <>
-      <DataImporterPanel
-        theme="fieldset"
-        title={ t('data-importer.resolver.location-strategy.staticPath') }
+    <DataImporterPanel
+      theme="fieldset"
+      title={ t('data-importer.resolver.location-strategy.staticPath') }
+    >
+      <Form.Item
+        label={ t('data-importer.resolver.location-strategy.path') }
+        name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'path'] }
+        required
+        rules={ [
+          {
+            required: true,
+            message: t('data-importer.validation.required', {
+              field: t('data-importer.resolver.location-strategy.path')
+            })
+          }
+        ] }
       >
-        <Form.Item
-          label={ t('data-importer.resolver.location-strategy.path') }
-          name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'path'] }
-          required
-          rules={ [
-            {
-              required: true,
-              message: t('data-importer.validation.required', {
-                field: t('data-importer.resolver.location-strategy.path')
-              })
-            }
-          ] }
-        >
-          <ManyToOneRelationPath
-            allowPathTextInput
-            allowedDataObjectTypes={ ['folder'] }
-            dataObjectsAllowed
-          />
-        </Form.Item>
-      </DataImporterPanel>
-    </>
+        <ManyToOneRelationPath
+          allowPathTextInput
+          allowedDataObjectTypes={ ['folder'] }
+          dataObjectsAllowed
+        />
+      </Form.Item>
+    </DataImporterPanel>
   )
 }

@@ -19,23 +19,21 @@ export function PathLoadingStrategyResolverSettings ({ columnHeaderOptions }: Dy
   const { t } = useTranslation()
 
   return (
-    <>
-      <DataImporterPanel
-        theme="fieldset"
-        title={ t('data-importer.resolver.loading-strategy.path') }
+    <DataImporterPanel
+      theme="fieldset"
+      title={ t('data-importer.resolver.loading-strategy.path') }
+    >
+      <Form.Item
+        label={ t('data-importer.resolver.loading-strategy.data-source-index') }
+        name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
       >
-        <Form.Item
-          label={ t('data-importer.resolver.loading-strategy.data-source-index') }
-          name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ columnHeaderOptions }
-            placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
-            showSearch
-          />
-        </Form.Item>
-      </DataImporterPanel>
-    </>
+        <Select
+          filterOption={ filterByLabel }
+          options={ columnHeaderOptions }
+          placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
+          showSearch
+        />
+      </Form.Item>
+    </DataImporterPanel>
   )
 }

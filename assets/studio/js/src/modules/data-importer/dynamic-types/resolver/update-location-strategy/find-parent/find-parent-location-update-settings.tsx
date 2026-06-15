@@ -68,90 +68,88 @@ export function FindParentLocationUpdateSettings ({
   ]
 
   return (
-    <>
-      <DataImporterPanel
-        theme="fieldset"
-        title={ t('data-importer.resolver.location-strategy.findParent') }
+    <DataImporterPanel
+      theme="fieldset"
+      title={ t('data-importer.resolver.location-strategy.findParent') }
+    >
+      <Form.Item
+        label={ t('data-importer.resolver.location-strategy.find-strategy') }
+        name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'findStrategy'] }
       >
+        <Select
+          filterOption={ filterByLabel }
+          options={ findStrategyOptions }
+          showSearch
+        />
+      </Form.Item>
+      {updateFindStrategy === 'attribute' && (
+      <>
         <Form.Item
-          label={ t('data-importer.resolver.location-strategy.find-strategy') }
-          name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'findStrategy'] }
+          label={ t('data-importer.resolver.location-strategy.attribute-class') }
+          name={ [
+            'resolverConfig',
+            'locationUpdateStrategy',
+            'settings',
+            'attributeDataObjectClassId'
+          ] }
         >
           <Select
             filterOption={ filterByLabel }
-            options={ findStrategyOptions }
+            options={ classOptions }
             showSearch
           />
         </Form.Item>
-        {updateFindStrategy === 'attribute' && (
-        <>
-          <Form.Item
-            label={ t('data-importer.resolver.location-strategy.attribute-class') }
-            name={ [
-              'resolverConfig',
-              'locationUpdateStrategy',
-              'settings',
-              'attributeDataObjectClassId'
-            ] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ classOptions }
-              showSearch
-            />
-          </Form.Item>
-          <Form.Item
-            label={ t('data-importer.resolver.location-strategy.attribute-name') }
-            name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'attributeName'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ updateFindParentAttrOptions }
-              showSearch
-            />
-          </Form.Item>
-          {updateFindParentAttrIsLocalized && (
-          <Form.Item
-            label={ t('data-importer.resolver.location-strategy.attribute-language') }
-            name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'attributeLanguage'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ languageOptions }
-              showSearch
-            />
-          </Form.Item>
-          )}
-        </>
+        <Form.Item
+          label={ t('data-importer.resolver.location-strategy.attribute-name') }
+          name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'attributeName'] }
+        >
+          <Select
+            filterOption={ filterByLabel }
+            options={ updateFindParentAttrOptions }
+            showSearch
+          />
+        </Form.Item>
+        {updateFindParentAttrIsLocalized && (
+        <Form.Item
+          label={ t('data-importer.resolver.location-strategy.attribute-language') }
+          name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'attributeLanguage'] }
+        >
+          <Select
+            filterOption={ filterByLabel }
+            options={ languageOptions }
+            showSearch
+          />
+        </Form.Item>
         )}
-        <Form.Item
-          label={ t('data-importer.resolver.location-strategy.data-source-index') }
-          name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'dataSourceIndex'] }
-        >
-          <Select
-            filterOption={ filterByLabel }
-            options={ columnHeaderOptions }
-            placeholder={ t('data-importer.resolver.location-strategy.data-source-index-placeholder') }
-            showSearch
-          />
-        </Form.Item>
-        <Form.Item
-          label={ t('data-importer.resolver.location-strategy.fallback-path') }
-          name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'fallbackPath'] }
-          tooltip={ t('data-importer.resolver.location-strategy.fallback-path.tooltip') }
-        >
-          <Input placeholder={ t('data-importer.resolver.location-strategy.fallback-path-placeholder') } />
-        </Form.Item>
-        <Form.Item
-          name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'asVariant'] }
-          valuePropName="checked"
-        >
-          <Switch
-            labelRight={ t('data-importer.resolver.location-strategy.as-variant') }
-            size="small"
-          />
-        </Form.Item>
-      </DataImporterPanel>
-    </>
+      </>
+      )}
+      <Form.Item
+        label={ t('data-importer.resolver.location-strategy.data-source-index') }
+        name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'dataSourceIndex'] }
+      >
+        <Select
+          filterOption={ filterByLabel }
+          options={ columnHeaderOptions }
+          placeholder={ t('data-importer.resolver.location-strategy.data-source-index-placeholder') }
+          showSearch
+        />
+      </Form.Item>
+      <Form.Item
+        label={ t('data-importer.resolver.location-strategy.fallback-path') }
+        name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'fallbackPath'] }
+        tooltip={ t('data-importer.resolver.location-strategy.fallback-path.tooltip') }
+      >
+        <Input placeholder={ t('data-importer.resolver.location-strategy.fallback-path-placeholder') } />
+      </Form.Item>
+      <Form.Item
+        name={ ['resolverConfig', 'locationUpdateStrategy', 'settings', 'asVariant'] }
+        valuePropName="checked"
+      >
+        <Switch
+          labelRight={ t('data-importer.resolver.location-strategy.as-variant') }
+          size="small"
+        />
+      </Form.Item>
+    </DataImporterPanel>
   )
 }
