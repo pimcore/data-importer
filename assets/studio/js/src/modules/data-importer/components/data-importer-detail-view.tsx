@@ -30,8 +30,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
   )
   const [updateConfig, { isLoading: isSaving }] = useBundleDataImporterConfigSaveMutation()
 
-  // Error tracking. Save errors are surfaced centrally by useDetailView (via .unwrap()); only the
-  // fetch error needs to be reported here.
+  // Save errors are surfaced centrally by useDetailView; only the fetch error is reported here.
   useEffect(() => {
     if (!isNil(fetchError)) {
       trackConfigError(fetchError)
@@ -46,8 +45,6 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
   )
   const userPermissions = (configData?.userPermissions ?? {}) as { update?: boolean, delete?: boolean }
   const generalConfig = (backendConfig?.general ?? {}) as { writeable?: boolean }
-  // Editable only with the update permission AND a writeable config; deletable only with the delete
-  // permission AND a writeable config (independent of update).
   const isWriteable = userPermissions.update === true && generalConfig.writeable !== false
   const canDelete = userPermissions.delete === true && generalConfig.writeable !== false
   const saveDisabledTooltipKey = generalConfig.writeable !== false && userPermissions.update !== true ? 'data-hub.config.no-update-permission' : 'config_not_writeable'
