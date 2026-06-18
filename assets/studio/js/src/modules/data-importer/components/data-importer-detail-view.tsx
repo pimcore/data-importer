@@ -10,9 +10,9 @@
 
 import React, { useEffect, useMemo } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, ConfigToolbar, useDetailView } from '@pimcore/data-hub'
+import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, ConfigToolbar, useDetailView, trackConfigError } from '@pimcore/data-hub'
 import { useBundleDataImporterConfigGetQuery, useBundleDataImporterConfigSaveMutation } from '../data-importer-api-slice-enhanced'
-import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
+import { ApiError } from '@pimcore/studio-ui-bundle/modules/app'
 import { isNil } from 'lodash'
 import { type DataImporterFormValues } from '../types'
 import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
@@ -28,20 +28,15 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     { name: configName },
     { refetchOnMountOrArgChange: true }
   )
-  const [updateConfig, { error: updateError, isLoading: isSaving }] = useBundleDataImporterConfigSaveMutation()
+  const [updateConfig, { isLoading: isSaving }] = useBundleDataImporterConfigSaveMutation()
 
-  // Error tracking
+  // Error tracking. Save errors are surfaced centrally by useDetailView (via .unwrap()); only the
+  // fetch error needs to be reported here.
   useEffect(() => {
     if (!isNil(fetchError)) {
-      trackError(new ApiError(fetchError))
+      trackConfigError(fetchError)
     }
   }, [fetchError])
-
-  useEffect(() => {
-    if (!isNil(updateError)) {
-      trackError(new ApiError(updateError))
-    }
-  }, [updateError])
 
   const loading = isLoading || isFetching
 
@@ -49,7 +44,12 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     () => (configData?.configuration ?? {}) as BackendConfiguration,
     [configData?.configuration]
   )
-  const isWriteable = configData?.userPermissions?.update ?? true
+  const userPermissions = (configData?.userPermissions ?? {}) as { update?: boolean, delete?: boolean }
+  const generalConfig = (backendConfig?.general ?? {}) as { writeable?: boolean }
+  // Editable only with the update permission AND a writeable config; deletable only with the delete
+  // permission AND a writeable config (independent of update).
+  const isWriteable = userPermissions.update === true && generalConfig.writeable !== false
+  const canDelete = userPermissions.delete === true && generalConfig.writeable !== false
 
   const handleSaveToApi = async (updatedConfig: BackendConfiguration, modificationDate: number): Promise<{ modificationDate?: number }> => {
     const response = await updateConfig({
@@ -74,6 +74,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     modificationDate: configData?.modificationDate,
     isLoading: loading,
     requestId,
+    isWriteable,
     transformToForm: transformBackendToForm,
     transformToBackend: transformFormToBackend,
     onSave: handleSaveToApi,
@@ -117,6 +118,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
 
   const toolbar = (
     <ConfigToolbar
+      canDelete={ canDelete }
       configName={ configName }
       isDirty={ isDirty }
       isLoading={ loading }
