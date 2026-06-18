@@ -16,14 +16,11 @@ use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Maintenance\TaskInterface;
 
-/**
- * @internal
- */
-final readonly class RestartQueueWorkersTask implements TaskInterface
+class RestartQueueWorkersTask implements TaskInterface
 {
     public function __construct(
-        private DataImporterHandler $dataImporterHandler,
-        private bool $messengerQueueActivated,
+        protected DataImporterHandler $dataImporterHandler,
+        protected bool $messengerQueueActivated
     ) {
     }
 

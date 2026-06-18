@@ -14,6 +14,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\Exception;
 
 use Exception;
 
-final class InvalidScheduleException extends Exception
+class InvalidScheduleException extends Exception
 {
 }

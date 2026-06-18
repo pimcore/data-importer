@@ -26,10 +26,8 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  * This is the class that loads and manages your bundle configuration.
  *
  * @link http://symfony.com/doc/current/cookbook/bundles/extension.html
- *
- * @internal
  */
-final class PimcoreDataImporterExtension extends Extension implements PrependExtensionInterface
+class PimcoreDataImporterExtension extends Extension implements PrependExtensionInterface
 {
     /**
      * {@inheritdoc}
@@ -41,7 +39,11 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-        $loader->load('studio_backend.yaml');
+
+        $bundles = $container->getParameter('kernel.bundles');
+        if (isset($bundles['PimcoreStudioBackendBundle'])) {
+            $loader->load('studio_backend.yaml');
+        }
 
         $definition = $container->getDefinition(DataImporterHandler::class);
         $definition->setArgument('$workerCountLifeTime', $config['messenger_queue_processing']['worker_count_lifetime']);
@@ -65,8 +67,11 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         if ($container->hasExtension('doctrine_migrations')) {
             $loader->load('doctrine_migrations.yml');
         }
-
-        $loader->load('studio_ui.yaml');
-        $loader->load('pimcore/studio_backend.yaml');
+        if ($container->hasExtension('pimcore_studio_ui')) {
+            $loader->load('studio_ui.yaml');
+        }
+        if ($container->hasExtension('pimcore_studio_backend')) {
+            $loader->load('pimcore/studio_backend.yaml');
+        }
     }
 }

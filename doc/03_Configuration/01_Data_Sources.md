@@ -29,7 +29,7 @@ Loads data from a (remote) sftp location.
 Loads data from a (remote) http location.
 
 ##### Configuration Options: 
-- **Schema**: one of `http://` or `https://` which is prepended to the URL.
+- **Schema**: one of `http://` or `https://` which is prepened to the URL.
 - **Url**: Url to file without schema definition (which is added based on schema configuration due 
 to security reasons).
 

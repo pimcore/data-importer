@@ -23,10 +23,7 @@ use Pimcore;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Symfony\Component;
 
-/**
- * @internal
- */
-final class SqlLoader implements DataLoaderInterface
+class SqlLoader implements DataLoaderInterface
 {
     private string $connection;
 
@@ -42,7 +39,7 @@ final class SqlLoader implements DataLoaderInterface
 
     private Connection $databaseConnection;
 
-    public function __construct(private readonly Component\Filesystem\Filesystem $filesystem)
+    public function __construct(private Component\Filesystem\Filesystem $filesystem)
     {
     }
 

@@ -12,49 +12,88 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
-use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Log\ApplicationLogger;
+use Pimcore\Log\FileObject;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
 
-/**
- * @internal
- */
 abstract class AbstractInterpreter implements InterpreterInterface
 {
     use LoggerAwareTrait;
 
-    protected string $configName;
+    /**
+     * @var DeltaChecker
+     */
+    protected $deltaChecker;
 
-    protected bool $doDeltaCheck;
+    /**
+     * @var QueueService
+     */
+    protected $queueService;
 
-    protected mixed $idDataIndex;
+    /**
+     * @var ApplicationLogger
+     */
+    protected $applicationLogger;
 
-    protected string $executionType;
+    /**
+     * @var string
+     */
+    protected $configName;
 
-    protected bool $doCleanup;
+    /**
+     * @var bool
+     */
+    protected $doDeltaCheck;
 
-    protected bool $doArchiveImportFile;
+    /**
+     * @var mixed
+     */
+    protected $idDataIndex;
 
-    protected Resolver $resolver;
+    /**
+     * @var string
+     */
+    protected $executionType;
+
+    /**
+     * @var bool
+     */
+    protected $doCleanup;
+
+    /**
+     * @var bool
+     */
+    protected $doArchiveImportFile;
+
+    /**
+     * @var Resolver
+     */
+    protected $resolver;
 
     /**
      * @var string[]
      */
-    protected array $identifierCache;
+    protected $identifierCache;
 
-    public function __construct(
-        protected readonly DeltaChecker $deltaChecker,
-        protected readonly QueueService $queueService,
-        protected readonly ApplicationLogger $applicationLogger,
-    ) {
+    /**
+     * AbstractInterpreter constructor.
+     *
+     * @param DeltaChecker $deltaChecker
+     * @param QueueService $queueService
+     * @param ApplicationLogger $applicationLogger
+     */
+    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ApplicationLogger $applicationLogger)
+    {
+        $this->deltaChecker = $deltaChecker;
+        $this->queueService = $queueService;
+        $this->applicationLogger = $applicationLogger;
     }
 
     public function getConfigName(): string
@@ -162,8 +201,6 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function processImportRow(array $data)
     {
-        $this->assertValidRowEncoding($data);
-
         $createQueueItem = true;
 
         $this->addToIdentifierCache($data);
@@ -178,63 +215,14 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
         //create queue item
         if ($createQueueItem) {
-            $encodedData = json_encode($data);
-            if ($encodedData === false) {
-                // Backstop for data that mb_check_encoding() cannot reach (e.g. invalid bytes nested
-                // deeper than the top-level columns). Fail loud instead of queueing an empty payload.
-                throw new InvalidInputException(sprintf(
-                    'Encoding error in `%s`: %s. Please make sure the source file is UTF-8 encoded.',
-                    $this->configName,
-                    json_last_error_msg()
-                ));
-            }
-
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to processing queue.', ($data[$this->idDataIndex] ?? null), $this->configName));
-            $this->queueService->addItemToQueue(
-                $this->configName,
-                $this->executionType,
-                ImportProcessingService::JOB_TYPE_PROCESS,
-                $encodedData,
-                $userOwner
-            );
+            $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_PROCESS, json_encode($data), $userOwner);
         } else {
             $message = sprintf("Import data of item `%s` of `%s` didn't change, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName);
             $this->logger->debug($message);
             $this->applicationLogger->debug($message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
             ]);
-        }
-    }
-
-    /**
-     * Detects character encoding problems (e.g. non-UTF-8 bytes) in a data row and fails loud
-     * instead of silently dropping the row. This is detection only - no conversion is attempted,
-     * as the importer cannot reliably guess the source encoding.
-     *
-     * @throws InvalidInputException
-     */
-    protected function assertValidRowEncoding(array $data): void
-    {
-        $invalidColumns = [];
-        $position = 0;
-        foreach ($data as $key => $value) {
-            if (is_string($value) && !mb_check_encoding($value, 'UTF-8')) {
-                // Only keep the column label if it is itself safe to log (the header row may be
-                // broken too); otherwise fall back to the numeric column position. Never put the
-                // raw invalid bytes into the message: the application logger persists it into a
-                // utf8mb4 column and would fail on malformed UTF-8.
-                $invalidColumns[] = (is_string($key) && mb_check_encoding($key, 'UTF-8')) ? $key : ('#' . $position);
-            }
-            ++$position;
-        }
-
-        if ($invalidColumns !== []) {
-            throw new InvalidInputException(sprintf(
-                'Encoding error in `%s`: invalid UTF-8 characters in column(s) %s. '
-                . 'Please make sure the source file is UTF-8 encoded.',
-                $this->configName,
-                implode(', ', $invalidColumns)
-            ));
         }
     }
 

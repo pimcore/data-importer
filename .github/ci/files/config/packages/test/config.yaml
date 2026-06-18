@@ -23,6 +23,7 @@ doctrine:
                 user: ~
                 password: ~
                 mapping_types:
+                    enum: string
                     bit: boolean
 
 pimcore:

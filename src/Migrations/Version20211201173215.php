@@ -27,14 +27,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Migrations;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Migrations\BundleAwareMigration;
 
-/**
- * @internal
- */
 final class Version20211201173215 extends BundleAwareMigration
 {
-    private const ORIGINAL_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
+    protected const ORIGINAL_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
 
-    private const TARGET_NAME = 'bundle_data_hub_data_importer_last_execution';
+    protected const TARGET_NAME = 'bundle_data_hub_data_importer_last_execution';
 
     protected function getBundleName(): string
     {

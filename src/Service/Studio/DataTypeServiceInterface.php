@@ -51,9 +51,4 @@ interface DataTypeServiceInterface
     public function loadClassificationStoreKeyName(string $keyId): ClassificationStoreKeyNameResponse;
 
     public function loadUnitData(): UnitDataResponse;
-
-    /**
-     * @return array<string, string|int|float|bool|null>
-     */
-    public function extractSortingSettings(?string $sort): array;
 }

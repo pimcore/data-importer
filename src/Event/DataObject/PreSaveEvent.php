@@ -15,6 +15,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Event\DataObject;
 /**
  * Fired just before an imported data object will be saved
  */
-final class PreSaveEvent extends AbstractDataObjectImportEvent
+class PreSaveEvent extends AbstractDataObjectImportEvent
 {
 }

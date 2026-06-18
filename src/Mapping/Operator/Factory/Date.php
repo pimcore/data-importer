@@ -16,12 +16,12 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-/**
- * @internal
- */
-final class Date extends AbstractOperator
+class Date extends AbstractOperator
 {
-    private string $format;
+    /**
+     * @var string
+     */
+    protected $format;
 
     public function setSettings(array $settings): void
     {

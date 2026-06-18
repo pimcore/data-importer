@@ -20,10 +20,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
-/**
- * @internal
- */
-final class DummyDataCommand extends AbstractCommand
+class DummyDataCommand extends AbstractCommand
 {
     protected function configure(): void
     {
@@ -159,7 +156,7 @@ final class DummyDataCommand extends AbstractCommand
         return 0;
     }
 
-    private function writeCsv(string $filename, array $data)
+    protected function writeCsv(string $filename, array $data)
     {
         $fp = fopen($filename, 'w');
 
@@ -180,7 +177,7 @@ final class DummyDataCommand extends AbstractCommand
         fclose($fp);
     }
 
-    private function writeXml(string $filename, array $data)
+    protected function writeXml(string $filename, array $data)
     {
         array_shift($data);
 
@@ -196,12 +193,12 @@ final class DummyDataCommand extends AbstractCommand
 
     /**
      * @param array $data
-     * @param \SimpleXMLElement $xmlData
+     * @param \SimpleXMLElement $xml_data
      * @param string $firstLevelKey
      *
      * @return void
      */
-    private function arrayToXml($data, &$xmlData, $firstLevelKey = null)
+    public function arrayToXml($data, &$xml_data, $firstLevelKey = null)
     {
         foreach ($data as $key => $value) {
             $elementName = $key;
@@ -213,15 +210,15 @@ final class DummyDataCommand extends AbstractCommand
             }
 
             if (is_array($value)) {
-                $subnode = $xmlData->addChild($elementName);
+                $subnode = $xml_data->addChild($elementName);
                 $this->arrayToXml($value, $subnode);
             } else {
-                $xmlData->addChild($elementName, htmlspecialchars($value));
+                $xml_data->addChild($elementName, htmlspecialchars($value));
             }
         }
     }
 
-    private function writeJson(string $filename, array $data)
+    protected function writeJson(string $filename, array $data)
     {
         array_shift($data);
         $json = json_encode($data);

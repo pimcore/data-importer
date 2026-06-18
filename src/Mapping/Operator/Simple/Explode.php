@@ -16,14 +16,17 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-/**
- * @internal
- */
-final class Explode extends AbstractOperator
+class Explode extends AbstractOperator
 {
-    private string $delimiter;
+    /**
+     * @var string
+     */
+    protected $delimiter;
 
-    private bool $keepSubArrays;
+    /**
+     * @var bool
+     */
+    protected $keepSubArrays;
 
     public function setSettings(array $settings): void
     {

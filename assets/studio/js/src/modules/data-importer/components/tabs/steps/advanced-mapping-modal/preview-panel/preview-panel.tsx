@@ -208,9 +208,9 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     const filteredRows = searchText.trim() === ''
       ? rows
       : rows.filter((r) =>
-          r.label.toLowerCase().includes(searchText.toLowerCase()) ||
+        r.label.toLowerCase().includes(searchText.toLowerCase()) ||
         r.value.toLowerCase().includes(searchText.toLowerCase())
-        )
+      )
 
     return (
       <Flex

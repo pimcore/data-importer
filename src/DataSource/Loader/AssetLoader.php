@@ -15,14 +15,17 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Asset;
 
-/**
- * @internal
- */
-final class AssetLoader implements DataLoaderInterface
+class AssetLoader implements DataLoaderInterface
 {
-    private string $assetPath;
+    /**
+     * @var string
+     */
+    protected $assetPath;
 
-    private ?string $temporaryFile = null;
+    /**
+     * @var string
+     */
+    protected $temporaryFile = null;
 
     public function loadData(): string
     {

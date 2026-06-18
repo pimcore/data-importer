@@ -21,25 +21,40 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Logger;
 use Symfony\Component;
 
-/**
- * @internal
- */
-final class SftpLoader implements DataLoaderInterface
+class SftpLoader implements DataLoaderInterface
 {
-    private string $importFilePath;
+    /**
+     * @var string
+     */
+    protected $importFilePath;
 
-    private string $remotePath;
+    /**
+     * @var string
+     */
+    protected $remotePath;
 
-    private string $host;
+    /**
+     * @var string
+     */
+    protected $host;
 
-    private string $port;
+    /**
+     * @var string
+     */
+    protected $port;
 
-    private string $username;
+    /**
+     * @var string
+     */
+    protected $username;
 
-    private string $password;
+    /**
+     * @var string
+     */
+    protected $password;
 
     public function __construct(
-        private readonly Component\Filesystem\Filesystem $filesystem,
+        protected Component\Filesystem\Filesystem $filesystem
     ) {
     }
 

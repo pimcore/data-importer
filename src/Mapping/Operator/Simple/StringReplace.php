@@ -16,14 +16,11 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-/**
- * @internal
- */
-final class StringReplace extends AbstractOperator
+class StringReplace extends AbstractOperator
 {
-    private string $search;
+    protected string $search;
 
-    private string $replace;
+    protected string $replace;
 
     public function setSettings(array $settings): void
     {

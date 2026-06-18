@@ -21,32 +21,47 @@ use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class FindParentStrategy implements LocationStrategyInterface
+class FindParentStrategy implements LocationStrategyInterface
 {
-    private const FIND_BY_ID = 'id';
+    const FIND_BY_ID = 'id';
 
-    private const FIND_BY_PATH = 'path';
+    const FIND_BY_PATH = 'path';
 
-    private const FIND_BY_ATTRIBUTE = 'attribute';
+    const FIND_BY_ATTRIBUTE = 'attribute';
 
-    private mixed $dataSourceIndex;
+    /**
+     * @var mixed
+     */
+    protected $dataSourceIndex;
 
-    private string $findStrategy;
+    /**
+     * @var string
+     */
+    protected $findStrategy;
 
-    private string $fallbackPath;
+    /**
+     * @var string
+     */
+    protected $fallbackPath;
 
-    private mixed $attributeDataObjectClassId;
+    /**
+     * @var mixed
+     */
+    protected $attributeDataObjectClassId;
 
-    private string $attributeName;
+    /**
+     * @var string
+     */
+    protected $attributeName;
 
-    private string $attributeLanguage;
+    /**
+     * @var string
+     */
+    protected $attributeLanguage;
 
-    private bool $saveAsVariant = false;
+    protected bool $saveAsVariant = false;
 
-    public function __construct(private readonly DataObjectLoader $dataObjectLoader)
+    public function __construct(protected DataObjectLoader $dataObjectLoader)
     {
     }
 
@@ -141,6 +156,10 @@ final class FindParentStrategy implements LocationStrategyInterface
         }
 
         return $element;
+    }
+
+    protected function loadById()
+    {
     }
 
     /**

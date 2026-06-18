@@ -17,9 +17,6 @@ use Pimcore\Console\Traits\Parallelization;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-/**
- * @internal
- */
 abstract class ParallelizationAbstractCommand extends AbstractCommand
 {
     use Parallelization

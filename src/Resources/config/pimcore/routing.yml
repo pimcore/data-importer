@@ -1,12 +1,20 @@
+_data_hub_data_importer_data_object_admin:
+    resource: "@PimcoreDataImporterBundle/Controller/ConfigDataObjectController.php"
+    type:     attribute
+    options:
+        expose: true
+
+_data_hub_data_importer_connections:
+    resource: "@PimcoreDataImporterBundle/Controller/ConnectionController.php"
+    type:     attribute
+    options:
+        expose: true
+
 _data_hub_data_importer_data_object_push:
     resource: "@PimcoreDataImporterBundle/Controller/PushImportController.php"
     type:     attribute
 
 pimcore_data_importer_studio:
-    resource: "@PimcoreDataImporterBundle/Controller/Studio"
-    type: attribute
-    prefix: '%pimcore_studio_backend.url_prefix%/bundle/data-importer'
-    options:
-        expose: true
-
+    resource: .
+    type: pimcore_data_importer_studio
 

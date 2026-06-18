@@ -3,7 +3,7 @@
 ## Import Progress
 
 The execution tab of the import configuration shows current status and progress information of an import. It shows, 
-if there are queue items currently processed, the progress of the current processing, and it also allows you to cancel the 
+if there are queue items currently processed, the progress of the current processing, and it also allows to cancel the 
 current import run (and remove all queue items).
 
 <div class="image-as-lightbox"></div>

@@ -17,10 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Migrations\BundleAwareMigration;
 use Pimcore\Model\Tool\SettingsStore;
 
-/**
- * @internal
- */
-final class Version20210305134111 extends BundleAwareMigration
+class Version20210305134111 extends BundleAwareMigration
 {
     protected function getBundleName(): string
     {

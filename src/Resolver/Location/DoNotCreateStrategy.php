@@ -14,10 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class DoNotCreateStrategy implements LocationStrategyInterface
+class DoNotCreateStrategy implements LocationStrategyInterface
 {
     public function updateParent(ElementInterface $element, array $inputData): ElementInterface
     {

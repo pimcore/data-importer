@@ -19,20 +19,29 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Symfony\Component\Config\Util\Exception\XmlParsingException;
 use Symfony\Component\Config\Util\XmlUtils;
 
-/**
- * @internal
- */
-final class XmlFileInterpreter extends AbstractInterpreter
+class XmlFileInterpreter extends AbstractInterpreter
 {
-    private string $xpath;
+    /**
+     * @var string|null
+     */
+    protected $xpath;
 
-    private ?string $schema;
+    /**
+     * @var string|null
+     */
+    protected $schema;
 
-    private ?\DOMDocument $cachedContent = null;
+    /**
+     * @var \DOMDocument|null
+     */
+    protected $cachedContent = null;
 
-    private ?string $cachedFilePath = null;
+    /**
+     * @var string|null
+     */
+    protected $cachedFilePath = null;
 
-    private function loadDataRaw(string $path)
+    protected function loadDataRaw(string $path)
     {
         $schema = $this->schema;
 
@@ -52,7 +61,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
      *
      * @throws InvalidInputException
      */
-    private function loadData(string $path)
+    protected function loadData(string $path)
     {
         if ($this->cachedFilePath !== $path || !empty($this->cachedContent)) {
             $dom = $this->loadDataRaw($path);

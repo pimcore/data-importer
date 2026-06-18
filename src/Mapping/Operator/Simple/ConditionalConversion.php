@@ -16,14 +16,17 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-/**
- * @internal
- */
-final class ConditionalConversion extends AbstractOperator
+class ConditionalConversion extends AbstractOperator
 {
-    private string $original;
+    /**
+     * @var string
+     */
+    protected $original;
 
-    private string $converted;
+    /**
+     * @var string
+     */
+    protected $converted;
 
     public function setSettings(array $settings): void
     {

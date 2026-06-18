@@ -16,18 +16,15 @@ use Pimcore\Db;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class DataObjectLoader
+class DataObjectLoader
 {
-    private const CLASS_FIELD_NAME = 'classFieldName';
+    const CLASS_FIELD_NAME = 'classFieldName';
 
-    private const BRICK_NAME = 'brickName';
+    const BRICK_NAME = 'brickName';
 
-    private const BRICK_ATTRIBUTE_NAME = 'brickFieldName';
+    const BRICK_ATTRIBUTE_NAME = 'brickFieldName';
 
-    private const BRICK_ATTRIBUTE_SEPARATOR = '.';
+    const BRICK_ATTRIBUTE_SEPARATOR = '.';
 
     private function isObjectBrickAttribute(string $attributeName): bool
     {

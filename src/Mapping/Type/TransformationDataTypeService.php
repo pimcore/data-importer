@@ -15,62 +15,59 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 
-/**
- * @internal
- */
-final class TransformationDataTypeService
+class TransformationDataTypeService
 {
-    public const DEFAULT_TYPE = 'default';
+    const DEFAULT_TYPE = 'default';
 
-    public const DEFAULT_ARRAY = 'array';
+    const DEFAULT_ARRAY = 'array';
 
-    public const NUMERIC = 'numeric';
+    const NUMERIC = 'numeric';
 
-    public const BOOLEAN = 'boolean';
+    const BOOLEAN = 'boolean';
 
-    public const QUANTITY_VALUE = 'quantityValue';
+    const QUANTITY_VALUE = 'quantityValue';
 
-    public const QUANTITY_VALUE_ARRAY = 'quantityValueArray';
+    const QUANTITY_VALUE_ARRAY = 'quantityValueArray';
 
-    public const INPUT_QUANTITY_VALUE = 'inputQuantityValue';
+    const INPUT_QUANTITY_VALUE = 'inputQuantityValue';
 
-    public const INPUT_QUANTITY_VALUE_ARRAY = 'inputQuantityValueArray';
+    const INPUT_QUANTITY_VALUE_ARRAY = 'inputQuantityValueArray';
 
-    public const DATE = 'date';
+    const DATE = 'date';
 
-    public const DATE_ARRAY = 'dateArray';
+    const DATE_ARRAY = 'dateArray';
 
-    public const ASSET = 'asset';
+    const ASSET = 'asset';
 
-    public const ASSET_ARRAY = 'assetArray';
+    const ASSET_ARRAY = 'assetArray';
 
-    public const GALLERY = 'gallery';
+    const GALLERY = 'gallery';
 
-    public const IMAGE_ADVANCED = 'imageAdvanced';
+    const IMAGE_ADVANCED = 'imageAdvanced';
 
-    public const DATA_OBJECT = 'dataObject';
+    const DATA_OBJECT = 'dataObject';
 
-    public const DATA_OBJECT_ARRAY = 'dataObjectArray';
+    const DATA_OBJECT_ARRAY = 'dataObjectArray';
 
-    public const ADVANCED_DATA_OBJECT_ARRAY = 'advancedDataObjectArray';
+    const ADVANCED_DATA_OBJECT_ARRAY = 'advancedDataObjectArray';
 
-    public const ADVANCED_ASSET_ARRAY = 'advancedAssetArray';
+    const ADVANCED_ASSET_ARRAY = 'advancedAssetArray';
 
-    public const GEOPOINT_VALUE = 'geoPoint';
+    const GEOPOINT_VALUE = 'geoPoint';
 
-    public const GEOBOUNDS_VALUE = 'geoBounds';
+    const GEOBOUNDS_VALUE = 'geoBounds';
 
-    public const GEOPOLYGON_VALUE = 'geoPolygon';
+    const GEOPOLYGON_VALUE = 'geoPolygon';
 
-    public const GEOPOLYLINE_VALUE = 'geoPolyline';
+    const GEOPOLYLINE_VALUE = 'geoPolyline';
 
-    public const RGBA_COLOR = 'rgbaColor';
+    const RGBA_COLOR = 'rgbaColor';
 
-    public const COUNTRY_ARRAY = 'countryArray';
+    const COUNTRY_ARRAY = 'countryArray';
 
-    public const CALCULATED = 'calculated';
+    const CALCULATED = 'calculated';
 
-    private array $transformationDataTypesMapping = [
+    protected $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
             'input',
             'textarea',
@@ -168,13 +165,8 @@ final class TransformationDataTypeService
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
     }
 
-    private function addTypesToAttributesArray(
-        ClassDefinition\Data $fieldDefinition,
-        string $targetType,
-        array &$attributes,
-        bool $localized = false,
-        ?string $keyPrefix = null,
-    ) {
+    protected function addTypesToAttributesArray(ClassDefinition\Data $fieldDefinition, string $targetType, array &$attributes, bool $localized = false, ?string $keyPrefix = null)
+    {
         if (in_array($fieldDefinition->getFieldtype(), ($this->transformationDataTypesMapping[$targetType] ?? []))) {
             $key = $fieldDefinition->getName();
             if ($keyPrefix) {
