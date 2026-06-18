@@ -12,6 +12,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
@@ -27,102 +29,62 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
-use Pimcore\Log\ApplicationLogger;
-use Pimcore\Log\FileObject;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-class ImportProcessingService
+/**
+ * @internal
+ */
+final class ImportProcessingService
 {
     use LoggerAwareTrait;
 
-    const JOB_TYPE_PROCESS = 'process';
+    public const JOB_TYPE_PROCESS = 'process';
 
-    const JOB_TYPE_CLEANUP = 'cleanup';
+    public const JOB_TYPE_CLEANUP = 'cleanup';
 
-    const EXECUTION_TYPE_SEQUENTIAL = 'sequential';
+    public const EXECUTION_TYPE_SEQUENTIAL = 'sequential';
 
-    const EXECUTION_TYPE_PARALLEL = 'parallel';
+    public const EXECUTION_TYPE_PARALLEL = 'parallel';
 
-    const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
+    public const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
 
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
-
-    /**
-     * @var ConfigurationPreparationService
-     */
-    protected $configLoader;
-
-    /**
-     * @var MappingConfigurationFactory
-     */
-    protected $mappingConfigurationFactory;
-
-    /**
-     * @var ResolverFactory
-     */
-    protected $resolverFactory;
-
-    /**
-     * @var CleanupStrategyFactory
-     */
-    protected $cleanupStrategyFactory;
-
-    /**
-     * @var ApplicationLogger
-     */
-    protected $applicationLogger;
+    private ConfigurationPreparationService $configLoader;
 
     /**
      * @var Resolver[]
      */
-    protected $resolverCache = [];
+    private array $resolverCache = [];
 
     /**
      * @var MappingConfiguration[][]
      */
-    protected $mappingConfigurationCache = [];
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    protected $eventDispatcher;
+    private array $mappingConfigurationCache = [];
 
     /**
      * @var array
      */
-    protected $loggingConfigCache = [];
+    private array $loggingConfigCache = [];
 
     /**
      * @var array<string, bool>
      */
-    protected $versioningConfigCache = [];
+    private array $versioningConfigCache = [];
 
     /**
      * ImportProcessingService constructor.
-     *
-     * @param QueueService $queueService
-     * @param MappingConfigurationFactory $mappingConfigurationFactory
-     * @param ResolverFactory $resolverFactory
-     * @param CleanupStrategyFactory $cleanupStrategyFactory
-     * @param ApplicationLogger $applicationLogger
-     * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(QueueService $queueService, MappingConfigurationFactory $mappingConfigurationFactory, ResolverFactory $resolverFactory, CleanupStrategyFactory $cleanupStrategyFactory, ApplicationLogger $applicationLogger, EventDispatcherInterface $eventDispatcher)
-    {
-        $this->queueService = $queueService;
-        $this->mappingConfigurationFactory = $mappingConfigurationFactory;
-        $this->resolverFactory = $resolverFactory;
-        $this->cleanupStrategyFactory = $cleanupStrategyFactory;
-        $this->applicationLogger = $applicationLogger;
-        $this->eventDispatcher = $eventDispatcher;
-
+    public function __construct(
+        private readonly QueueService $queueService,
+        private readonly MappingConfigurationFactory $mappingConfigurationFactory,
+        private readonly ResolverFactory $resolverFactory,
+        private readonly CleanupStrategyFactory $cleanupStrategyFactory,
+        private readonly ApplicationLogger $applicationLogger,
+        private readonly EventDispatcherInterface $eventDispatcher,
+    ) {
         $this->configLoader = new ConfigurationPreparationService();
     }
 
@@ -241,8 +203,13 @@ class ImportProcessingService
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      */
-    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping, int $userOwner)
-    {
+    private function processElement(
+        string $configName,
+        array $importDataRow,
+        Resolver $resolver,
+        array $mapping,
+        int $userOwner,
+    ) {
         $element = null;
         $currentMapping = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
@@ -394,7 +361,7 @@ class ImportProcessingService
         $currentMapping = null; // Success - clear current mapping
     }
 
-    protected function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
+    private function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
     {
         if ($cleanupConfig['doCleanup'] ?? false) {
             $element = null;

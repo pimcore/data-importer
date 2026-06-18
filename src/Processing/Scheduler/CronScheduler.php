@@ -15,18 +15,17 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing\Scheduler;
 use Cron\CronExpression;
 use DateTime;
 
-class CronScheduler implements SchedulerInterface
+/**
+ * @internal
+ */
+final class CronScheduler implements SchedulerInterface
 {
-    const NAME = 'cron';
+    public const NAME = 'cron';
 
-    private string $cronDefinition;
-
-    private DateTime $modifiedAt;
-
-    public function __construct(string $cronDefinition, DateTime $modifiedAt)
-    {
-        $this->cronDefinition = $cronDefinition;
-        $this->modifiedAt = $modifiedAt;
+    public function __construct(
+        private readonly string $cronDefinition,
+        private readonly DateTime $modifiedAt,
+    ) {
     }
 
     public function isExecutable(?DateTime $executedAt): bool

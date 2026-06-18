@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class FlattenArray extends AbstractOperator
+/**
+ * @internal
+ */
+final class FlattenArray extends AbstractOperator
 {
     public function setSettings(array $settings): void
     {

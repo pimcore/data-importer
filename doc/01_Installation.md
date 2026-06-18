@@ -61,7 +61,7 @@ The imports are executed asynchronously in the background. The processing can be
 basis or by utilizing symfony messenger. Either of the two needs to be configured. 
 
 #### Command Based
-For command based importing, following commands need to be executed on regular base. The actual interval depends
+For command based importing, following commands need to be executed on a regular basis. The actual interval depends
 on use cases and system environment. 
 
 ```bash
@@ -94,8 +94,8 @@ workers processing this transport when activating the messenger based queue proc
 
 
 ### Cron Execution
-Import configuration can be setup to be executed on regular base by defining a cron definition. To make sure, the cron 
-definitions are checked on regular base, following command needs to be executed on regular base. The actual interval depends 
+Import configuration can be set up to be executed on a regular basis by defining a cron definition. To make sure the cron
+definitions are checked on a regular basis, the following command needs to be executed on a regular basis. The actual interval depends 
 on use cases and system environment; the shorter, the more accurate the import execution will take place. 
 ```bash 
 # Check cron configurations and execute necessary import definitions

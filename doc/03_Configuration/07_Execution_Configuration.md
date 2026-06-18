@@ -15,7 +15,7 @@ Clicking on the `Manual Execution Start` button in the configuration editor manu
 
 ### Cron-based Execution
 Besides the `Manual Execution Start` button there is also the possibility to configure a cron definition 
-based on which the import starts on a regular base, e.g. every 10 Minutes, once a day, etc. 
+based on which the import starts on a regular basis, e.g. every 10 minutes, once a day, etc.
 
 ![Cron Definition](../img/execution_cron.png)
 
@@ -25,7 +25,7 @@ cron definitions.
 > Make sure `datahub:data-importer:execute-cron` command is setup properly during installation. 
 
 ### Command-based Execution
-It is also possible to imports with executing the `datahub:data-importer:prepare-import` command on the commandline. 
+It is also possible to start imports by executing the `datahub:data-importer:prepare-import` command on the commandline. 
 
 
 

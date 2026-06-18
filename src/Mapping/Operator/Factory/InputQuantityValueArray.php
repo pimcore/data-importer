@@ -15,7 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class InputQuantityValueArray extends QuantityValueArray
+/**
+ * @internal
+ */
+final class InputQuantityValueArray extends QuantityValueArray
 {
     /**
      * @param mixed $inputData

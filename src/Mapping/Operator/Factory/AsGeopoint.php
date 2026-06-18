@@ -17,7 +17,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
-class AsGeopoint extends AbstractOperator
+/**
+ * @internal
+ */
+final class AsGeopoint extends AbstractOperator
 {
     /**
      * @param mixed $inputData
