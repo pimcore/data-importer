@@ -66,9 +66,6 @@ export interface BackendConfiguration {
   permissions?: {
     role?: BackendPermission[]
     user?: BackendPermission[]
-    // legacy keys, still read for backwards compatibility
-    roles?: BackendPermission[]
-    users?: BackendPermission[]
   }
   [key: string]: any
 }
@@ -94,9 +91,6 @@ export function transformPermissionFromBackend (backendPermission: BackendPermis
 }
 
 export function transformPermissionsToBackend (permissions: DataImporterFormValues['permissions'] | undefined): BackendConfiguration['permissions'] {
-  // Persist under the singular user/role keys that Configuration::isAllowed() reads. Using the
-  // plural users/roles keys made the per-config permission grid invisible to isAllowed(), so the
-  // restrictions were silently ignored (everything fell back to the global adapter permission).
   return {
     role: (permissions?.roles ?? []).map(transformPermissionToBackend),
     user: (permissions?.users ?? []).map(transformPermissionToBackend)
@@ -104,11 +98,9 @@ export function transformPermissionsToBackend (permissions: DataImporterFormValu
 }
 
 export function transformPermissionsFromBackend (backendPermissions: BackendConfiguration['permissions']): DataImporterFormValues['permissions'] {
-  // Read the singular keys, falling back to the legacy plural keys so configs saved before the fix
-  // still display their permissions (and migrate to the correct keys on the next save).
   return {
-    roles: (backendPermissions?.role ?? backendPermissions?.roles ?? []).map(transformPermissionFromBackend),
-    users: (backendPermissions?.user ?? backendPermissions?.users ?? []).map(transformPermissionFromBackend)
+    roles: (backendPermissions?.role ?? []).map(transformPermissionFromBackend),
+    users: (backendPermissions?.user ?? []).map(transformPermissionFromBackend)
   }
 }
 
