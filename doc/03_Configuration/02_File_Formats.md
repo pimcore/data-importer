@@ -28,10 +28,10 @@ is interpreted as array in one field (and needs to be considered in the transfor
         "title_de": "Voluptas et est voluptas.",
         "title_en": "Animi ipsam rem et sed vel voluptas.",
         ...
-		"technical_attributes": {
-			"1-6": "value 1",
-			"2-4": "value 2"
-		}
+        "technical_attributes": {
+            "1-6": "value 1",
+            "2-4": "value 2"
+        }
     },
     {
         "title_de": "Et alias nesciunt ea mollitia nihil mollitia corporis.",
@@ -41,6 +41,62 @@ is interpreted as array in one field (and needs to be considered in the transfor
 ```
 
 Internally the adapter uses [`json_decode($content, true)`](https://www.php.net/manual/en/function.json-decode.php) function of php. 
+
+##### Configuration Options:
+- **JMESPath**: Optional. A [JMESPath](https://jmespath.org) expression used to select the array of 
+  records from the JSON document before processing. If left empty, the root of the document is used 
+  directly (which must itself be an array of objects).
+
+#### Using JMESPath to Select Records
+
+By default the adapter expects the root of the JSON document to be an array of objects. For JSON 
+structures where the record list is nested inside a wrapper object, a JMESPath expression can be 
+configured to extract it first.
+
+**Example: records nested under a key**
+
+Given a file like:
+```json
+{
+    "meta": { "total": 2, "page": 1 },
+    "items": [
+        { "sku": "A-001", "title_de": "Produkt Eins", "price": 9.99 },
+        { "sku": "A-002", "title_de": "Produkt Zwei", "price": 19.99 }
+    ]
+}
+```
+
+Setting **JMESPath** to `items` causes the adapter to pass the `items` array to the import pipeline, 
+rather than attempting to iterate the root object.
+
+**Example: records in a deeply nested structure**
+
+Given:
+```json
+{
+    "catalog": {
+        "products": {
+            "product": [
+                { "sku": "A-001", "title_de": "Produkt Eins", "price": 9.99 },
+                { "sku": "A-002", "title_de": "Produkt Zwei", "price": 19.99 }
+            ]
+        }
+    }
+}
+```
+
+The expression `catalog.products.product` selects the nested array.
+
+**Example: filtering records with JMESPath**
+
+JMESPath also supports filtering. To import only products that have a price greater than 10:
+
+```
+items[?price > `10`]
+```
+
+For a full reference of supported expressions see [jmespath.org](https://jmespath.org) and the 
+[`mtdowling/jmespath.php`](https://github.com/jmespath/jmespath.php) library documentation.
 
 
 ### XLSX (Excel)
