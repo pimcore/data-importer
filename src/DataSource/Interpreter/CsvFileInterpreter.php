@@ -156,6 +156,10 @@ class CsvFileInterpreter extends AbstractInterpreter
             fclose($handle);
         }
 
+        // Fail loud with a clear message instead of returning data that cannot be JSON-encoded
+        // for the preview response (which otherwise surfaces as a generic "invalid data" error).
+        $this->assertValidRowEncoding($previewData);
+
         $previewDataColumns = array_keys($previewData);
         if (empty($columns)) {
             $columns = $previewDataColumns;
