@@ -16,12 +16,12 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-/**
- * @internal
- */
-final class Combine extends AbstractOperator
+class Combine extends AbstractOperator
 {
-    private string $glue;
+    /**
+     * @var string
+     */
+    protected $glue;
 
     public function setSettings(array $settings): void
     {

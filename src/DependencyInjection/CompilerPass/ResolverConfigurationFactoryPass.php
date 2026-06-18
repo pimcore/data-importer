@@ -17,22 +17,19 @@ use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 
-/**
- * @internal
- */
-final class ResolverConfigurationFactoryPass implements CompilerPassInterface
+class ResolverConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const LOAD_TAG = 'pimcore.datahub.data_importer.resolver.load';
+    const load_tag = 'pimcore.datahub.data_importer.resolver.load';
 
-    private const LOCATION_TAG = 'pimcore.datahub.data_importer.resolver.location';
+    const location_tag = 'pimcore.datahub.data_importer.resolver.location';
 
-    private const PUBLISH_TAG = 'pimcore.datahub.data_importer.resolver.publish';
+    const publish_tag = 'pimcore.datahub.data_importer.resolver.publish';
 
-    private const FACTORY_TAG = 'pimcore.datahub.data_importer.resolver.factory';
+    const factory_tag = 'pimcore.datahub.data_importer.resolver.factory';
 
     public function process(ContainerBuilder $container): void
     {
-        $taggedServices = $container->findTaggedServiceIds(self::LOAD_TAG);
+        $taggedServices = $container->findTaggedServiceIds(self::load_tag);
         $loadStrategies = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {
@@ -42,7 +39,7 @@ final class ResolverConfigurationFactoryPass implements CompilerPassInterface
             }
         }
 
-        $taggedServices = $container->findTaggedServiceIds(self::LOCATION_TAG);
+        $taggedServices = $container->findTaggedServiceIds(self::location_tag);
         $locationStrategies = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {
@@ -52,7 +49,7 @@ final class ResolverConfigurationFactoryPass implements CompilerPassInterface
             }
         }
 
-        $taggedServices = $container->findTaggedServiceIds(self::PUBLISH_TAG);
+        $taggedServices = $container->findTaggedServiceIds(self::publish_tag);
         $publishStrategies = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {
@@ -62,7 +59,7 @@ final class ResolverConfigurationFactoryPass implements CompilerPassInterface
             }
         }
 
-        $taggedServices = $container->findTaggedServiceIds(self::FACTORY_TAG);
+        $taggedServices = $container->findTaggedServiceIds(self::factory_tag);
         $factories = [];
         if (sizeof($taggedServices)) {
             foreach ($taggedServices as $id => $tags) {

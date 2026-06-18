@@ -41,4 +41,4 @@ Create a JavaScript class which meets following requirements:
   (e.g. `pimcore.plugin.pimcoreDataImporterBundle.configuration.components.loader.*` for data sources).
 - Extend the `pimcore.plugin.pimcoreDataImporterBundle.configuration.components.abstractOptionType` class.
 - Define a `type` attribute that matches the `type` of the service definition, e.g. `type: 'http'`
-- Implement a function `buildSettingsForm` that creates and returns a form with all necessary setting fields for the extension.
+- Implement a function `buildSettingsForm` that creates and returns a form with all necessary setting field for the exension.

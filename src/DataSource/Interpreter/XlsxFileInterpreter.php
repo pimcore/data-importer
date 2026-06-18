@@ -15,14 +15,17 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
-/**
- * @internal
- */
-final class XlsxFileInterpreter extends AbstractInterpreter
+class XlsxFileInterpreter extends AbstractInterpreter
 {
-    private bool $skipFirstRow;
+    /**
+     * @var bool
+     */
+    protected $skipFirstRow;
 
-    private string $sheetName;
+    /**
+     * @var string
+     */
+    protected $sheetName;
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {

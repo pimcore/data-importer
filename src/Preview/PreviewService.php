@@ -17,16 +17,15 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 use Pimcore\Model\User;
 
-/**
- * @internal
- */
-final class PreviewService
+class PreviewService
 {
     use TemporaryFileHelperTrait;
 
-    public function __construct(
-        private readonly FilesystemOperator $pimcoreDataImporterPreviewStorage,
-    ) {
+    protected FilesystemOperator $pimcoreDataImporterPreviewStorage;
+
+    public function __construct(FilesystemOperator $pimcoreDataImporterPreviewStorage)
+    {
+        $this->pimcoreDataImporterPreviewStorage = $pimcoreDataImporterPreviewStorage;
     }
 
     public function writePreviewFile(string $configName, string $sourcePath, User $user)
@@ -43,7 +42,7 @@ final class PreviewService
      *
      * @throws \Exception
      */
-    private function getPreviewFilePath(string $configName, User $user): string
+    protected function getPreviewFilePath(string $configName, User $user): string
     {
         $configuration = Configuration::getByName($configName);
         if (!$configuration) {

@@ -16,16 +16,16 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Asset;
 
-/**
- * @internal
- */
-final class LoadAsset extends ImportAsset
+class LoadAsset extends ImportAsset
 {
-    private const LOAD_STRATEGY_ID = 'id';
+    const LOAD_STRATEGY_ID = 'id';
 
-    private const LOAD_STRATEGY_PATH = 'path';
+    const LOAD_STRATEGY_PATH = 'path';
 
-    private string $loadStrategy;
+    /**
+     * @var string
+     */
+    protected $loadStrategy;
 
     public function setSettings(array $settings): void
     {

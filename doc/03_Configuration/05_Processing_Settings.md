@@ -26,8 +26,8 @@ With active delta check, the importer checks if imported data has changed since 
 data only if updates are available. This might speed-up import because only updated data object will be
 processed and saved. 
 
-The delta check is based on hashes and compares the import data only. It does not consider any other
-changes of the data object itself, that might occur in the meantime between two imports.
+The delta check is based on hashes and compares the import data only. It does not consider any other 
+changes of the data object if self, that might occur in the meantime between two imports.
 
 Be aware that calculating and saving hashes for delta checking needs additional resources. So use this option
 wisely.   

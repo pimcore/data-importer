@@ -16,18 +16,18 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-/**
- * @internal
- */
-final class Trim extends AbstractOperator
+class Trim extends AbstractOperator
 {
-    private const MODE_BOTH = 'both';
+    const MODE_BOTH = 'both';
 
-    private const MODE_LEFT = 'left';
+    const MODE_LEFT = 'left';
 
-    private const MODE_RIGHT = 'right';
+    const MODE_RIGHT = 'right';
 
-    private string $mode;
+    /**
+     * @var string
+     */
+    protected $mode;
 
     public function setSettings(array $settings): void
     {

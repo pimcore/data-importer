@@ -16,22 +16,31 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Version;
 use Symfony\Component\Mime\MimeTypes;
 
-/**
- * @internal
- */
-final class CsvFileInterpreter extends AbstractInterpreter
+class CsvFileInterpreter extends AbstractInterpreter
 {
     private const UTF8_BOM = "\xEF\xBB\xBF";
 
-    private bool $skipFirstRow;
+    /**
+     * @var bool
+     */
+    protected $skipFirstRow;
 
-    private bool $saveHeaderName;
+    protected bool $saveHeaderName;
 
-    private string $delimiter;
+    /**
+     * @var string
+     */
+    protected $delimiter;
 
-    private string $enclosure;
+    /**
+     * @var string
+     */
+    protected $enclosure;
 
-    private string $escape;
+    /**
+     * @var string
+     */
+    protected $escape;
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
@@ -146,10 +155,6 @@ final class CsvFileInterpreter extends AbstractInterpreter
 
             fclose($handle);
         }
-
-        // Fail loud with a clear message instead of returning data that cannot be JSON-encoded
-        // for the preview response (which otherwise surfaces as a generic "invalid data" error).
-        $this->assertValidRowEncoding($previewData);
 
         $previewDataColumns = array_keys($previewData);
         if (empty($columns)) {

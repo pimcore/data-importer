@@ -15,18 +15,27 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class Classificationstore implements DataTargetInterface
+class Classificationstore implements DataTargetInterface
 {
-    private string $fieldName;
+    /**
+     * @var string
+     */
+    protected $fieldName;
 
-    private string $language;
+    /**
+     * @var string
+     */
+    protected $language;
 
-    private int $keyId;
+    /**
+     * @var int
+     */
+    protected $keyId;
 
-    private int $groupId;
+    /**
+     * @var int
+     */
+    protected $groupId;
 
     public function setSettings(array $settings): void
     {

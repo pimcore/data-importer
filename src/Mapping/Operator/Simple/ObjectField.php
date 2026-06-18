@@ -18,10 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Element\ElementInterface;
 
-/**
- * @internal
- */
-final class ObjectField extends AbstractOperator
+class ObjectField extends AbstractOperator
 {
     private string $attribute;
 
