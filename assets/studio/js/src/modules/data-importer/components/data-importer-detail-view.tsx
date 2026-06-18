@@ -50,6 +50,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
   // permission AND a writeable config (independent of update).
   const isWriteable = userPermissions.update === true && generalConfig.writeable !== false
   const canDelete = userPermissions.delete === true && generalConfig.writeable !== false
+  const saveDisabledTooltipKey = generalConfig.writeable !== false && userPermissions.update !== true ? 'data-hub.config.no-update-permission' : 'config_not_writeable'
 
   const handleSaveToApi = async (updatedConfig: BackendConfiguration, modificationDate: number): Promise<{ modificationDate?: number }> => {
     const response = await updateConfig({
@@ -127,6 +128,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
       onDelete={ onDelete }
       onRefresh={ refetch }
       onSave={ handleSave }
+      saveDisabledTooltipKey={ saveDisabledTooltipKey }
     />
   )
 
