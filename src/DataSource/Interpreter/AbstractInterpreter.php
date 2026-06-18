@@ -190,7 +190,13 @@ abstract class AbstractInterpreter implements InterpreterInterface
             }
 
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to processing queue.', ($data[$this->idDataIndex] ?? null), $this->configName));
-            $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_PROCESS, $encodedData, $userOwner);
+            $this->queueService->addItemToQueue(
+                $this->configName,
+                $this->executionType,
+                ImportProcessingService::JOB_TYPE_PROCESS,
+                $encodedData,
+                $userOwner
+            );
         } else {
             $message = sprintf("Import data of item `%s` of `%s` didn't change, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName);
             $this->logger->debug($message);
@@ -224,7 +230,8 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
         if ($invalidColumns !== []) {
             throw new InvalidInputException(sprintf(
-                'Encoding error in `%s`: invalid UTF-8 characters in column(s) %s. Please make sure the source file is UTF-8 encoded.',
+                'Encoding error in `%s`: invalid UTF-8 characters in column(s) %s. '
+                . 'Please make sure the source file is UTF-8 encoded.',
                 $this->configName,
                 implode(', ', $invalidColumns)
             ));
