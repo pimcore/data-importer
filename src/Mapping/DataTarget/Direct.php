@@ -13,9 +13,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\Document;
 use Pimcore\Model\Element\ElementInterface;
 
 /**
@@ -79,6 +81,11 @@ class Direct implements DataTargetInterface
                 return;
             }
             $this->doAssignData($element, $this->fieldName, $data);
+        } elseif ($this->fieldName === 'path') {
+            if (!$this->checkAssignData($data, $element, 'getPath')) {
+                return;
+            }
+            $this->doAssignPath($element, $data);
         } elseif (count($setterParts) === 1) {
             //direct class attribute
             $getter = 'get' . ucfirst($this->fieldName);
@@ -126,6 +133,31 @@ class Direct implements DataTargetInterface
     }
 
     /**
+     * Sets the element's parent based on a path, creating the necessary folder
+     * structure if it does not exist yet.
+     *
+     * @throws InvalidConfigurationException
+     */
+    protected function doAssignPath(ElementInterface $element, mixed $data): void
+    {
+        $path = (string) $data;
+        if ($path === '') {
+            return;
+        }
+
+        $parent = match (true) {
+            $element instanceof DataObject => DataObject\Service::createFolderByPath($path),
+            $element instanceof Asset => Asset\Service::createFolderByPath($path),
+            $element instanceof Document => Document\Service::createFolderByPath($path),
+            default => throw new InvalidConfigurationException(
+                sprintf('Cannot set path for element of type "%s".', $element::class)
+            ),
+        };
+
+        $element->setParent($parent);
+    }
+
+    /**
      * @param mixed $newData
      * @param object $valueContainer
      * @param string $getter
@@ -152,7 +184,7 @@ class Direct implements DataTargetInterface
             $fieldName = $fieldNameParts[2];
         }
 
-        if ($this->fieldName === 'key' || $this->fieldName === 'type') {
+        if ($this->fieldName === 'key' || $this->fieldName === 'type' || $this->fieldName === 'path') {
             $currentDataIsEmpty = empty($currentData);
             $newDataIsEmpty = empty($newData);
         } else {
