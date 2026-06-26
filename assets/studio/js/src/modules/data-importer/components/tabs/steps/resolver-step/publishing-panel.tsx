@@ -8,20 +8,27 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Form, Select } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { filterByLabel } from '../../../../utils/select-utils'
+import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry'
+import type { DataImporterFormValues } from '../../../../types'
 
 export interface PublishingPanelProps {
-  publishingStrategyType: string | undefined
-  publishingStrategyOptions: Array<{ value: string, label: string }>
+  registry: DynamicTypeResolverRegistry
   columnHeaderOptions: Array<{ value: string, label: string }>
 }
 
-export const PublishingPanel = ({ publishingStrategyType, publishingStrategyOptions, columnHeaderOptions }: PublishingPanelProps): React.JSX.Element => {
+export const PublishingPanel = ({ registry, ...props }: PublishingPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
+
+  const resolvers = useMemo(() => registry.getDynamicTypesForGroup('publishing'), [registry])
+  const options = useMemo(
+    () => resolvers.map(({ type, label }) => ({ value: type, label: t(label) })),
+    [resolvers, t]
+  )
 
   return (
     <DataImporterPanel title={ t('data-importer.resolver.element-publishing') }>
@@ -32,29 +39,20 @@ export const PublishingPanel = ({ publishingStrategyType, publishingStrategyOpti
       >
         <Select
           filterOption={ filterByLabel }
-          options={ publishingStrategyOptions }
+          options={ options }
           showSearch
         />
       </Form.Item>
 
-      { publishingStrategyType === 'attributeBased' && (
-        <DataImporterPanel
-          theme="fieldset"
-          title={ t('data-importer.resolver.publishing-strategy.attributeBased') }
+      {resolvers.map((resolver) => (
+        <Form.Conditional
+          condition={ (values) =>
+            (values as unknown as DataImporterFormValues).resolverConfig?.publishingStrategy?.type === resolver.type }
+          key={ resolver.id }
         >
-          <Form.Item
-            label={ t('data-importer.resolver.publishing-strategy.data-source-index') }
-            name={ ['resolverConfig', 'publishingStrategy', 'settings', 'dataSourceIndex'] }
-          >
-            <Select
-              filterOption={ filterByLabel }
-              options={ columnHeaderOptions }
-              placeholder={ t('data-importer.resolver.publishing-strategy.data-source-index-placeholder') }
-              showSearch
-            />
-          </Form.Item>
-        </DataImporterPanel>
-      ) }
+          {resolver.renderSettings(props)}
+        </Form.Conditional>
+      ))}
     </DataImporterPanel>
   )
 }
