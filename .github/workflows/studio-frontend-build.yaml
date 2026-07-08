@@ -1,5 +1,5 @@
 name: "Studio Frontend Build"
- 
+
 on:
   push:
     paths:
@@ -8,10 +8,16 @@ on:
     paths:
       - "assets/studio/**"
   workflow_dispatch:
- 
+
+concurrency:
+  group: studio-frontend-build-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
- 
+
 jobs:
   studio-frontend-build:
     uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build.yaml@main
+    with:
+      build-output-path: './public/studio/'
