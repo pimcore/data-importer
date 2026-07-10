@@ -1,4 +1,9 @@
-# Update Notes
+---
+title: Upgrade Notes
+description: Breaking changes and migration steps per release.
+---
+
+# Upgrade Notes
 
 ## Upgrade to 2026.1.0
 
@@ -38,10 +43,10 @@
 ### Class Visibility & Finalization
 
 - Many classes have been marked `final` and/or `@internal`. Custom subclasses of these classes are no longer supported:
-  - `CronScheduler`, `JobScheduler`, `SchedulerFactory` — marked `final` and `@internal`
-  - `PreviewData` — marked `final` and `@internal`
-  - `PimcoreDataImporterBundle` — marked `final`
-  - Various exception classes (`InvalidScheduleException`, etc.) — marked `final`
+  - `CronScheduler`, `JobScheduler`, `SchedulerFactory`: marked `final` and `@internal`
+  - `PreviewData`: marked `final` and `@internal`
+  - `PimcoreDataImporterBundle`: marked `final`
+  - Various exception classes (`InvalidScheduleException`, etc.): marked `final`
 - Several `protected` methods on final classes have been changed to `private`. If you were overriding these methods in subclasses, you must refactor.
 - `ConfigDataObjectController::saveAction()` return type changed from `?JsonResponse` to `JsonResponse` (non-nullable).
 - `Installer::getLastMigrationVersionClassName()` return type changed from `?string` to `string` (non-nullable).

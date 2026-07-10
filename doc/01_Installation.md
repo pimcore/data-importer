@@ -1,25 +1,31 @@
+---
+title: Installation
+description: Install the Data Importer bundle and set up queue processing and scheduled imports.
+---
+
 # Installation
-## Required Bundles
-This bundle depends on Pimcore [Datahub bundle](https://github.com/pimcore/data-hub). This needs to be installed first.
 
-## Installation Process
-### For Pimcore >= 10.5
-To install Pimcore Data Importer for Pimcore 10.5 or higher, follow the three steps below:
+## Prerequisites
 
-1. Install the required dependencies:
+The bundle declares [Datahub](https://github.com/pimcore/data-hub), the Studio Backend bundle and the Studio UI bundle
+as Composer dependencies. Composer pulls them in automatically, and the bundle registers Datahub, the Application Logger
+bundle and the Flysystem bundle as dependent bundles. No manual bundle ordering is required.
+
+## Bundle Installation
+
+1. Install the package:
+
 ```bash
 composer require pimcore/data-importer
 ```
 
-2. Make sure the bundle is enabled in the `config/bundles.php` file. The following lines should be added:
+2. Enable the bundle in `config/bundles.php`:
 
 ```php
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 // ...
 
 return [
-    // ...
-    // make sure PimcoreDataHubBundle is added before to that list
     // ...
     PimcoreDataImporterBundle::class => ['all' => true],
     // ...
@@ -31,73 +37,68 @@ return [
 ```bash
 bin/console pimcore:bundle:install PimcoreDataImporterBundle
 ```
-### For Pimcore 11
 
-You need to follow the steps mentioned above and additionally run the following command:
+The installer creates the `plugin_datahub_adapter_dataImporterDataObject` user permission in the Datahub permission
+category. Grant it to every user or role that works with import configurations.
 
-```bash
-composer require pimcore/admin-ui-classic-bundle
-```
+## Queue Processing
 
-### For Older Versions
+Imports never run inside the request that starts them. An import first writes its rows into a queue, and a separate
+worker processes that queue. Set up one of the two processing modes below, otherwise imports stay queued and the
+execution status never progresses.
 
-To install the Data Importer bundle for older versions of Pimcore, please run the following commands instead:
+For the difference between sequential and parallel processing, see
+[Import Execution Details](04_Import_Execution_Details.md).
 
-```bash
-composer require pimcore/data-importer
-bin/console pimcore:bundle:enable PimcoreDataImporterBundle
-bin/console pimcore:bundle:install PimcoreDataImporterBundle
-```
+### Command-based Processing
 
-> Make sure the Datahub bundle's priority is higher than the Data Importer bundle's.
-> 
-> This can be specified as a parameter during bundle enablement or in the Pimcore extension manager.
- 
-
-## Bundle Configuration
-
-### Import Execution
-The imports are executed asynchronously in the background. The processing can be done via executing commands on a regular 
-basis or by utilizing symfony messenger. Either of the two needs to be configured. 
-
-#### Command Based
-For command based importing, following commands need to be executed on a regular basis. The actual interval depends
-on use cases and system environment. 
+Run both commands on a regular basis. The interval depends on the use case and the system environment.
 
 ```bash
-# Process import queue items that can be executed in parallel
+# Process queue items that can run in parallel
 */5 * * * * php /home/project/www/bin/console datahub:data-importer:process-queue-parallel --processes=5
-# Process import queue items that need to be executed sequentially 
-*/5 * * * * php /home/project/www/bin/console datahub:data-importer:process-queue-sequential 
+# Process queue items that must run one after another
+*/5 * * * * php /home/project/www/bin/console datahub:data-importer:process-queue-sequential
 ```
 
-See [Import Execution Details](04_Import_Execution_Details.md) for more information about sequential and parallel execution.
+### Symfony Messenger-based Processing
 
+Activate messenger processing in the Symfony configuration:
 
-#### Symfony Messenger Based
-For symfony messenger based importing, at least following configuration needs to be done in symfony configuration: 
-```yml 
+```yml
 pimcore_data_importer:
     messenger_queue_processing:
         activated: true
 ```
 
-If activated, the processing is kicked off automatically as soon as an import is prepared. 
+Queue processing then starts automatically as soon as an import is prepared. Messages are dispatched via the
+`pimcore_data_import` transport, so run a worker for that transport:
 
-In addition to that, following settings are available. They all have meaningful default values though: 
-- `worker_count_parallel`: Count of maximum parallel worker messages for parallel imports.
-- `worker_item_count`: Count of items imported per worker message.
-- `worker_count_lifetime`: Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared.
+```bash
+bin/console messenger:consume pimcore_data_import
+```
 
-Messages are dispatched via `pimcore_data_import` transport. So make sure, you have
-workers processing this transport when activating the messenger based queue processing.
+These optional settings tune the messenger processing:
 
+| Setting | Default | Description |
+|---|---|---|
+| `worker_count_parallel` | `3` | Maximum number of parallel worker messages for parallel imports. |
+| `worker_item_count` | `200` | Number of items imported per worker message. |
+| `worker_count_lifetime` | `1800` | Lifetime in seconds of the tmp store entry holding the current worker count. After it expires, the value is cleared. |
 
-### Cron Execution
-Import configuration can be set up to be executed on a regular basis by defining a cron definition. To make sure the cron
-definitions are checked on a regular basis, the following command needs to be executed on a regular basis. The actual interval depends 
-on use cases and system environment; the shorter, the more accurate the import execution will take place. 
-```bash 
-# Check cron configurations and execute necessary import definitions
+## Scheduled Imports
+
+An import configuration can run on a cron expression or at a fixed date and time. The
+`datahub:data-importer:execute-cron` command evaluates both schedule types, so run it regularly. The shorter the
+interval, the more accurately imports start at their scheduled time.
+
+```bash
+# Check schedules and start due imports
 * * * * * php /home/project/www/bin/console datahub:data-importer:execute-cron
 ```
+
+See [Execution Configuration](03_Configuration/07_Execution_Configuration.md) for the schedule types.
+
+## Next Steps
+
+Follow [Getting Started](02_Getting_Started.md) to build a first import configuration end to end.
