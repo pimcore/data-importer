@@ -24,11 +24,11 @@ The configuration opens with these tabs:
 
 | Tab | Purpose |
 |---|---|
-| General | Name and description of the configuration. |
-| Permissions | Which users and roles may read, update and delete this configuration. |
+| General | Activate the configuration, and set its name, description and group. |
 | Data Setup | The import definition itself, split into five steps. |
 | Execution | Schedule the import, start it manually, and watch its progress. |
 | Import Logs | Application logger entries belonging to this configuration. |
+| Permissions | Which users and roles may read, update and delete this configuration. |
 
 The **Data Setup** tab drives the rest of this walkthrough. Work through its five steps from left to right.
 

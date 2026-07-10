@@ -35,18 +35,6 @@ stored outside the asset tree, under `var/tmp/datahub/dataimporter/upload`.
 
 - **Upload File**: opens the upload dialog.
 
-## SFTP
-
-Loads data from a remote SFTP location.
-
-**Configuration options**
-
-- **Host**
-- **Port**
-- **Username**
-- **Password**
-- **Remote Path**: absolute path on the remote location.
-
 ## HTTP
 
 Loads data from a remote HTTP location.
@@ -58,6 +46,18 @@ Loads data from a remote HTTP location.
 
 The loader uses [PHP HTTP wrappers](https://www.php.net/manual/en/wrappers.http.php) internally, so credentials can be
 encoded into the URL as `user:password@example.com`.
+
+## SFTP
+
+Loads data from a remote SFTP location.
+
+**Configuration options**
+
+- **Host**
+- **Port**
+- **Username**
+- **Password**
+- **Remote Path**: absolute path on the remote location.
 
 ## Push
 

@@ -8,6 +8,10 @@ description: Tune how the import is processed, from execution type to delta chec
 Processing settings control how the queued records are processed. They are grouped into execution, identity-based
 options, and logging.
 
+<div class="image-as-lightbox"></div>
+
+![Processing Settings](../img/processing_settings.png)
+
 ## Execution
 
 ### Execution Type

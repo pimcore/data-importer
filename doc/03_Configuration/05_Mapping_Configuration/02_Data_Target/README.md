@@ -11,6 +11,10 @@ be assigned to a text field.
 
 Four data target types are available.
 
+<div class="image-as-lightbox"></div>
+
+![Data target types](../../../img/data_target_types.png)
+
 ## Direct
 
 Assigns the value to a field of the data object class, to a localized field, or to an object brick field.

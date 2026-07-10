@@ -14,7 +14,7 @@ For every other data source, configure a trigger in the **Execution** tab.
 
 ## Manual Execution
 
-**Start Import** in the **Execution Settings** panel starts the import immediately.
+**Start Import** in the **Manual Execution** panel starts the import immediately.
 
 ![Manual Execution Start](../img/execution_manual.png)
 
