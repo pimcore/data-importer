@@ -39,7 +39,24 @@ bin/console pimcore:bundle:install PimcoreDataImporterBundle
 ```
 
 The installer creates the `plugin_datahub_adapter_dataImporterDataObject` user permission in the Datahub permission
-category. Grant it to every user or role that works with import configurations.
+category. See [User Permissions](#user-permissions) below for what it controls and what else is required.
+
+## User Permissions
+
+Access to the configuration panel and to individual import configurations is checked on three levels:
+
+- **Gate permission** `plugin_datahub_config` ("Datahub Configuration"): required to open the configuration panel at
+  all. It is shared with Datahub, so any user administering Datahub configurations already has it. An `admin` user
+  also has access.
+- **Adapter permission** `plugin_datahub_adapter_dataImporterDataObject` ("Datahub Adapter - Data Object Importer"):
+  created by the installer in the Datahub permission category. It controls whether a user may use the Data Objects
+  Importer adapter.
+- **Per-configuration permissions** `read`, `update` and `delete`: granted per user and role in the **Permissions**
+  tab of an import configuration. A user holding the gate permission but lacking `read` on a specific configuration
+  cannot open it.
+
+Grant the gate and adapter permissions to every user or role that works with import configurations, then use the
+per-configuration permissions to fine-tune who can read, update or delete individual configurations.
 
 ## Queue Processing
 
@@ -48,7 +65,7 @@ worker processes that queue. Set up one of the two processing modes below, other
 execution status never progresses.
 
 For the difference between sequential and parallel processing, see
-[Import Execution Details](04_Import_Execution_Details.md).
+[Import Execution Details](../04_Import_Execution_Details.md).
 
 ### Command-based Processing
 
@@ -97,8 +114,8 @@ interval, the more accurately imports start at their scheduled time.
 * * * * * php /home/project/www/bin/console datahub:data-importer:execute-cron
 ```
 
-See [Execution Configuration](03_Configuration/07_Execution_Configuration.md) for the schedule types.
+See [Execution Configuration](../03_Configuration/07_Execution_Configuration.md) for the schedule types.
 
 ## Next Steps
 
-Follow [Getting Started](02_Getting_Started.md) to build a first import configuration end to end.
+Follow [Getting Started](../02_Getting_Started.md) to build a first import configuration end to end.

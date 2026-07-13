@@ -17,7 +17,7 @@ flowchart LR
 
 Preparation runs inside the process that triggered the import. Processing runs in a queue worker. This is why an import
 that is started successfully still imports nothing until a worker runs, and why queue processing has to be set up during
-[installation](01_Installation.md#queue-processing).
+[installation](01_Installation/README.md#queue-processing).
 
 ## 1. Preparation
 
@@ -75,3 +75,15 @@ For each cleanup queue item the worker:
 2. Unpublishes or deletes it, based on the cleanup strategy.
 
 For the strategies referenced above, see [Configuration](./03_Configuration/README.md).
+
+## Driving Imports from Outside Pimcore
+
+The panel calls a set of internal Studio endpoints, but building against them directly is not supported. Use these
+interfaces instead:
+
+| Goal | Interface |
+|---|---|
+| Send data into Pimcore from another system | The [`Push` data source](./03_Configuration/01_Data_Sources.md#push) endpoint, authenticated with an API key. |
+| Start an import from a deployment script or external scheduler | `bin/console datahub:data-importer:prepare-import <config_name>` |
+| Process the import queue | `bin/console datahub:data-importer:process-queue-parallel` and `datahub:data-importer:process-queue-sequential`, or a Symfony Messenger worker. |
+| React to imported elements | The [import events](./06_Extending/02_Events.md). |

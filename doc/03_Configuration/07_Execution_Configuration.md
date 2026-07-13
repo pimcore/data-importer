@@ -40,7 +40,7 @@ The job is skipped if the configuration was modified after the scheduled time, a
 :::warning
 
 Both schedule types depend on the `datahub:data-importer:execute-cron` command running regularly. Without it, no
-scheduled import ever starts. See [Installation](../01_Installation.md#scheduled-imports).
+scheduled import ever starts. See [Installation](../01_Installation/README.md#scheduled-imports).
 
 :::
 

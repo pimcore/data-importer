@@ -10,7 +10,7 @@ Each step links to the reference chapter that explains every available option.
 
 ## Prerequisites
 
-- The bundle is installed and a queue processing mode is set up, see [Installation](01_Installation.md).
+- The bundle is installed and a queue processing mode is set up, see [Installation](01_Installation/README.md).
 - Your user has the `plugin_datahub_config` permission and the
   `plugin_datahub_adapter_dataImporterDataObject` permission.
 - A data object class exists to import into. This example uses a class named `Product` with the fields `sku` and `name`.

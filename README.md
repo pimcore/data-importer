@@ -26,7 +26,7 @@ Pimcore data objects based on a configured mapping, without writing code.
 
 Start here:
 
-- [Installation](./doc/01_Installation.md): install the bundle and set up queue processing.
+- [Installation](./doc/01_Installation/README.md): install the bundle and set up queue processing.
 - [Getting Started](./doc/02_Getting_Started.md): build a first import end to end.
 
 Reference:
@@ -34,9 +34,9 @@ Reference:
 - [Configuration](./doc/03_Configuration/README.md): every option of an import configuration.
 - [Import Execution Details](./doc/04_Import_Execution_Details.md): what happens between the trigger and the data.
 - [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md): watch and audit an import.
-- [Extending](./doc/06_Extending/README.md): custom strategies, events and Studio integration.
+- [Extending](./doc/06_Extending/README.md): custom strategies and events.
 - [Troubleshooting / FAQ](./doc/08_Troubleshooting_FAQ.md): common problems.
-- [Upgrade Notes](./doc/09_Upgrade.md): breaking changes per release.
+- [Upgrade Notes](./doc/01_Installation/01_Upgrade.md): breaking changes per release.
 
 ## Other Datahub Adapters
 

@@ -11,7 +11,7 @@ description: Common problems when running imports, and how to resolve them.
 
 The import was prepared and the records are queued, but no worker processes them. Set up either command-based or
 Symfony Messenger-based queue processing, as described in
-[Installation](01_Installation.md#queue-processing).
+[Installation](01_Installation/README.md#queue-processing).
 
 Check that the worker covers the execution type the configuration uses. A configuration set to `Parallel` is not
 processed by `datahub:data-importer:process-queue-sequential`, and the other way around. See
@@ -27,7 +27,7 @@ Open the `lock_keys` table. The `key` column holds the SHA256 hash of the comman
 ## A scheduled import never starts
 
 Cron and one-time schedules are evaluated by `datahub:data-importer:execute-cron`. If that command is not run regularly,
-no scheduled import starts. See [Installation](01_Installation.md#scheduled-imports).
+no scheduled import starts. See [Installation](01_Installation/README.md#scheduled-imports).
 
 A one-time job is also skipped when the configuration was saved after the scheduled time, and it never runs a second
 time.
