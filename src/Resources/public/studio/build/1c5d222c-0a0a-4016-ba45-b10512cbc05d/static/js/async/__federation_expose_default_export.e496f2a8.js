@@ -1,0 +1,2 @@
+/*! For license information please see __federation_expose_default_export.e496f2a8.js.LICENSE.txt */
+"use strict";(self.webpackChunkpimcore_dataimporter_bundle=self.webpackChunkpimcore_dataimporter_bundle||[]).push([["525"],{727(e,t,o){o.r(t),o.d(t,{DataImporterPlugin:()=>l});let r={onInit:()=>{}};void 0!==(e=o.hmd(e)).hot&&e.hot.accept();let l={name:"data-importer-plugin",onInit:e=>{let{container:t}=e},onStartup:e=>{let{moduleSystem:t}=e;t.registerModule(r),console.log("Hello from data importer bundle.")}}}}]);

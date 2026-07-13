@@ -194,3 +194,9 @@ services:
     Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler:
         tags:
             - { name: messenger.message_handler }
+
+    pimcore.datahub.data_importer.expression_language_provider:
+        class: Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage
+        public: true
+        arguments:
+            - !tagged_iterator pimcore.datahub.data_importer.expression_language_provider

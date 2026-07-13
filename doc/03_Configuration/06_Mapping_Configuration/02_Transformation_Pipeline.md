@@ -68,6 +68,7 @@ and the second item reflects the value for the longitude attribute.
 - **Reduce Array KeyValue Pairs**: Reduces a flat array `['k1', 'v1', 'k2', 'v2']` 
    to key-value pair array `['k1' => 'v1', 'k2' => 'v2']`. 
 - **Trim**: Removes leading and/or tailing white spaces from string.
+- **Symfony Expression**: Evaluates a Symfony Expression Language expression against one or more source column values. Input values are available as attributes[0], attributes[1], etc., matching the order of source columns selected above in the pipeline. Returns the result of the expression. Custom functions can be registered via expression function providers — see Adding Expression Function Providers.
 - **Static Text**: Adds a static text to the value - either prepends or appends it.
 - **Conditional Conversion**: String values are converted to other string values (e.g. '0' to '1' or 'csv-value' to 'object-value'). Multiple conversions can be configured by separating the values with pipe symbol ('|') (e.g. '0|1|2' to 'some|other|values'). An asterisk can be used as a wildcard (e.g. '0|\*' to 'no value|default' where '0' will be converted to 'no value' and all other values to 'default').
 - **ObjectField**: Extracts the value for a specified field from a DataObject. This is similar to `ObjectFieldGetter` or `AnyGetter`.
