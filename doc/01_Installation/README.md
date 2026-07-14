@@ -9,7 +9,11 @@ description: Install the Data Importer bundle and set up queue processing and sc
 
 The bundle declares [Datahub](https://github.com/pimcore/data-hub), the Studio Backend bundle and the Studio UI bundle
 as Composer dependencies. Composer pulls them in automatically, and the bundle registers Datahub, the Application Logger
-bundle and the Flysystem bundle as dependent bundles. No manual bundle ordering is required.
+bundle and the Flysystem bundle as dependent bundles, so they are loaded without manual bundle ordering.
+
+Loading Datahub this way does not install it. Datahub's own installer creates the `plugin_datahub_config` permission
+and the Datahub permission category that Data Importer depends on, so Datahub must be installed on its own, see step 3
+below.
 
 ## Bundle Installation
 
@@ -32,7 +36,14 @@ return [
 ];
 ```
 
-3. Install the bundle:
+3. Install Datahub, if it is not installed yet. Enabling it as a dependent bundle only loads it, it does not create
+   the `plugin_datahub_config` permission and the Datahub permission category that Data Importer depends on:
+
+```bash
+bin/console pimcore:bundle:install PimcoreDataHubBundle
+```
+
+4. Install the bundle:
 
 ```bash
 bin/console pimcore:bundle:install PimcoreDataImporterBundle
