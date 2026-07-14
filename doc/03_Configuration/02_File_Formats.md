@@ -116,7 +116,7 @@ For the full expression reference see [jmespath.org](https://jmespath.org) and t
 
 - **Skip First Row**: skips the first row so it is not imported as data. In the import preview the values of that row
   label the columns. Fields stay addressable by their numeric position.
-- **Sheet Name**: name of the sheet to import.
+- **Sheet Name**: name of the sheet to import. Defaults to `Sheet1`.
 
 The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest).
 
