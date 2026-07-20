@@ -54,20 +54,32 @@ category. See [User Permissions](#user-permissions) below for what it controls a
 
 ## User Permissions
 
-Access to the configuration panel and to individual import configurations is checked on three levels:
+Access to the configuration panel and to individual import configurations is checked on two independent levels.
 
-- **Gate permission** `plugin_datahub_config` ("Datahub Configuration"): required to open the configuration panel at
-  all. It is shared with Datahub, so any user administering Datahub configurations already has it. An `admin` user
-  also has access.
-- **Adapter permission** `plugin_datahub_adapter_dataImporterDataObject` ("Datahub Adapter - Data Object Importer"):
-  created by the installer in the Datahub permission category. It controls whether a user may use the Data Objects
-  Importer adapter.
-- **Per-configuration permissions** `read`, `update` and `delete`: granted per user and role in the **Permissions**
-  tab of an import configuration. A user holding the gate permission but lacking `read` on a specific configuration
-  cannot open it.
+### Gate Permission
 
-Grant the gate and adapter permissions to every user or role that works with import configurations, then use the
-per-configuration permissions to fine-tune who can read, update or delete individual configurations.
+`plugin_datahub_config` ("Datahub Configuration") is required to reach any endpoint of the configuration panel. It is
+created by Datahub's installer and shared with Datahub, so a user administering Datahub configurations already has it.
+Without it every request of the panel is rejected.
+
+### Access to an Individual Configuration
+
+Each configuration is then checked separately for `read`, `update` and `delete`. The rules are evaluated in this order:
+
+1. A user with the `admin` flag, or with the `plugin_datahub_admin` ("Datahub Admin") permission, is granted
+   everything.
+2. If the configuration has **no** entries in its **Permissions** tab, the adapter permission
+   `plugin_datahub_adapter_dataImporterDataObject` ("Datahub Adapter - Data Object Importer") decides. The installer
+   creates this permission in the Datahub permission category.
+3. As soon as the **Permissions** tab holds at least one user or role entry, the adapter permission is ignored for that
+   configuration and only those entries apply. An entry matching the user's own name wins outright; otherwise the
+   user's roles are checked and any role granting the operation is enough.
+
+So the per-configuration grid replaces the adapter permission, it does not narrow it. Adding a single entry to a
+configuration locks out every other non-admin user, including users who hold the adapter permission.
+
+Grant the gate and adapter permissions to every user or role that works with import configurations. Use the
+**Permissions** tab only when a configuration needs its own, self-contained access list.
 
 ## Queue Processing
 
