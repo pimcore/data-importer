@@ -20,6 +20,9 @@ For every other data source, configure a trigger in the **Execution** tab.
 
 Save the configuration first. The button stays disabled while there are unsaved changes.
 
+Manual execution is the only trigger that ignores the **Active** flag on the **General** tab, so an inactive
+configuration can still be started by hand for testing.
+
 ## Scheduled Execution
 
 Set **Schedule Type** to run the import automatically.
@@ -53,7 +56,7 @@ bin/console datahub:data-importer:prepare-import <config_name> [<config_name> ..
 ```
 
 This ignores the configured schedule and prepares the import right away. Use it from deployment scripts and from
-external schedulers.
+external schedulers. Like the scheduled triggers, it skips configurations that are not active.
 
 ## What Happens Next
 
