@@ -51,7 +51,7 @@ At this point the import runs with your implementation, but nobody can select it
 
 ## 3. Add the Studio Settings Form
 
-The configuration panel is a Pimcore Studio UI plugin. Each extension point has a registry in the Studio dependency
+The configuration panel is a Pimcore Studio plugin. Each extension point has a registry in the Studio dependency
 injection container, and each selectable option is a *dynamic type* registered into it.
 
 Create a dynamic type that extends the abstract class of the extension point. Its `id` has to match the `type` of the
