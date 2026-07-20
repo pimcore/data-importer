@@ -7,7 +7,7 @@ description: Common problems when running imports, and how to resolve them.
 
 ## The execution status does not progress
 
-![Execution Status](./img/faq_execution_status.png)
+![Execution Status](./img/execution.png)
 
 The import was prepared and the records are queued, but no worker processes them. Set up either command-based or
 Symfony Messenger-based queue processing, as described in
