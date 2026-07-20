@@ -10,19 +10,25 @@ implementation as a tagged Symfony service, and add a matching settings form to 
 
 ## Extension Points
 
-| Extension point | Service tag | Interface |
-|---|---|---|
-| Data source | `pimcore.datahub.data_importer.loader` | `DataSource\Loader\DataLoaderInterface` |
-| File format | `pimcore.datahub.data_importer.interpreter` | `DataSource\Interpreter\InterpreterInterface` |
-| Transformation operator | `pimcore.datahub.data_importer.operator` | `Mapping\Operator\OperatorInterface` |
-| Data target | `pimcore.datahub.data_importer.data_target` | `Mapping\DataTarget\DataTargetInterface` |
-| Element loading strategy | `pimcore.datahub.data_importer.resolver.load` | `Resolver\Load\LoadStrategyInterface` |
-| Element location strategy | `pimcore.datahub.data_importer.resolver.location` | `Resolver\Location\LocationStrategyInterface` |
-| Element publishing strategy | `pimcore.datahub.data_importer.resolver.publish` | `Resolver\Publish\PublishStrategyInterface` |
-| Element factory | `pimcore.datahub.data_importer.resolver.factory` | `Resolver\Factory\FactoryInterface` |
-| Cleanup strategy | `pimcore.datahub.data_importer.cleanup` | `Cleanup\CleanupStrategyInterface` |
+| Extension point | Service tag | Interface | Selectable in Studio |
+|---|---|---|---|
+| Data source | `pimcore.datahub.data_importer.loader` | `DataSource\Loader\DataLoaderInterface` | Yes |
+| File format | `pimcore.datahub.data_importer.interpreter` | `DataSource\Interpreter\InterpreterInterface` | Yes |
+| Transformation operator | `pimcore.datahub.data_importer.operator` | `Mapping\Operator\OperatorInterface` | Yes |
+| Data target | `pimcore.datahub.data_importer.data_target` | `Mapping\DataTarget\DataTargetInterface` | Yes |
+| Element loading strategy | `pimcore.datahub.data_importer.resolver.load` | `Resolver\Load\LoadStrategyInterface` | Yes |
+| Element location strategy | `pimcore.datahub.data_importer.resolver.location` | `Resolver\Location\LocationStrategyInterface` | Yes |
+| Element publishing strategy | `pimcore.datahub.data_importer.resolver.publish` | `Resolver\Publish\PublishStrategyInterface` | Yes |
+| Element factory | `pimcore.datahub.data_importer.resolver.factory` | `Resolver\Factory\FactoryInterface` | No |
+| Cleanup strategy | `pimcore.datahub.data_importer.cleanup` | `Cleanup\CleanupStrategyInterface` | No |
 
 All interfaces live under the `Pimcore\Bundle\DataImporterBundle` namespace.
+
+The last two rows are backend-only. The **Cleanup Strategy** select in the processing settings offers the shipped
+`delete` and `unpublish` options from a hard-coded list, and the element factory is not exposed in the configuration
+panel at all. A custom implementation of either is loaded correctly at import time, but there is no Studio registry to
+register it into, so it cannot be picked in the panel. Reaching it requires writing the `type` into the stored
+configuration through another route, or replacing the corresponding Studio component in your own plugin.
 
 ## 1. Implement the PHP Class
 
@@ -51,8 +57,9 @@ At this point the import runs with your implementation, but nobody can select it
 
 ## 3. Add the Studio Settings Form
 
-The configuration panel is a Pimcore Studio plugin. Each extension point has a registry in the Studio dependency
-injection container, and each selectable option is a *dynamic type* registered into it.
+This step applies to the extension points marked selectable above. The configuration panel is a Pimcore Studio plugin.
+Those extension points have a registry in the Studio dependency injection container, and each selectable option is a
+*dynamic type* registered into it.
 
 Create a dynamic type that extends the abstract class of the extension point. Its `id` has to match the `type` of the
 service tag, `label` is a translation key, and `renderSettings()` returns the settings form:

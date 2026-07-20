@@ -21,8 +21,9 @@ that is started successfully still imports nothing until a worker runs, and why 
 
 ## 1. Preparation
 
-Preparation loads the source data, interprets it according to the file format, splits it into records, and writes one
-queue item per record.
+Preparation loads the source data, interprets it according to the file format, splits it into records, and writes a
+queue item per record. With [Delta Check](./03_Configuration/06_Processing_Settings.md#delta-check) enabled, records
+whose data is unchanged since the previous run are skipped and never reach the queue.
 
 It starts when:
 

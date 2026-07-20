@@ -44,8 +44,16 @@ Loads data from a remote HTTP location.
 - **Schema**: `http://` or `https://`, prepended to the URL.
 - **URL**: URL without the schema. The schema is kept separate for security reasons.
 
-The loader uses [PHP HTTP wrappers](https://www.php.net/manual/en/wrappers.http.php) internally, so credentials can be
-encoded into the URL as `user:password@example.com`.
+The loader uses [PHP HTTP wrappers](https://www.php.net/manual/en/wrappers.http.php) internally.
+
+:::warning
+
+Do not put credentials into the URL. `HttpLoader` includes the full URL in the exception message it throws when a fetch
+fails, so a `user:password@example.com` URL leaks the password into application logs and error reporting. For
+authenticated endpoints, either expose the file through a mechanism that does not carry the secret in the URL, or
+implement a [custom loader](../06_Extending/01_Custom_Strategies.md) that sends the credentials in a request header.
+
+:::
 
 ## SFTP
 

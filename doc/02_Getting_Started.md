@@ -81,7 +81,7 @@ A mapping entry connects one or more source columns to one data object field. Cr
 
 Both are direct one-to-one assignments, so no transformation is needed. When the source value does not fit the target
 field, open **Advanced** and add operators to the transformation pipeline, for example `Trim` to strip whitespace or
-`As Numeric` to cast a string to a number.
+`Numeric` to cast a string to a number.
 
 Reference: [Mapping Configuration](03_Configuration/05_Mapping_Configuration/README.md).
 

@@ -19,10 +19,21 @@ processed by `datahub:data-importer:process-queue-sequential`, and the other way
 
 ## "ERROR: The command is already running." when processing the queue
 
-A worker process terminated unexpectedly and left its lock behind.
+`datahub:data-importer:process-queue-sequential` takes a named lock for the duration of its run, so only one instance
+processes the sequential queue at a time. The message means the lock is held. That is the expected outcome while
+another invocation is legitimately still running, for example a long import overlapping with the next cron tick, and it
+is not by itself evidence of a problem.
 
-Open the `lock_keys` table. The `key` column holds the SHA256 hash of the command name, for example of
-`datahub:data-importer:process-queue-sequential`. Delete the row for the affected command and run it again.
+Confirm the lock is stale before touching it. Check the host for a running process
+(`ps aux | grep process-queue-sequential`) on every machine that runs the command, and check whether the import is still
+making progress in the **Execution** tab. Releasing a lock that a live worker holds lets a second processor run
+concurrently, which is exactly what the lock prevents.
+
+If no process is running, the lock is stale and expires on its own after the command's 24 hour TTL. To clear it sooner,
+delete it from the lock store configured for the installation (`framework.lock` in the Symfony configuration). With the
+default database store that is the `lock_keys` table, where the `key` column holds a hash of the command name. Other
+stores (Redis, filesystem, Zookeeper) keep the entry elsewhere, so check the configuration rather than assuming a
+table exists. Then run the command again.
 
 ## A scheduled import never starts
 

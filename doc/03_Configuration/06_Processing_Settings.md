@@ -47,11 +47,17 @@ between runs, so both stay disabled until this field is set.
 
 ### Delta Check
 
-Compares the incoming record against the last imported version and skips it when nothing changed. This speeds up imports
-because unchanged data objects are neither processed nor saved.
+Compares the incoming record against a stored hash of the record as it was last seen, and skips it when nothing changed.
+This speeds up imports because unchanged records are never queued, so the data object is neither processed nor saved.
 
-The comparison is based on hashes of the import data only. Changes made to the data object in Pimcore between two imports
-are not detected, so a modified object is not restored by the next import.
+Two properties of the checkpoint matter in practice:
+
+- The hash is written during preparation, at the moment the record is queued, not after the record was successfully
+  processed. If processing then fails, the hash already reflects the new data. A later run with identical source data
+  considers the record unchanged and skips it, so Delta Check does not retry failed records. Re-import them by changing
+  the source data, or by disabling Delta Check for one run.
+- The comparison covers the import data only. Changes made to the data object in Pimcore between two imports are not
+  detected, so a modified object is not restored by the next import.
 
 Computing and storing the hashes costs time and storage. Enable delta check when a large share of records is expected to
 be unchanged.

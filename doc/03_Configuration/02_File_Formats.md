@@ -61,8 +61,9 @@ The interpreter uses [`json_decode($content, true)`](https://www.php.net/manual/
 **Configuration options**
 
 - **JMESPath**: optional [JMESPath](https://jmespath.org) expression that selects the record array from the document
-  before processing. Leave it empty when the document root is already an array of objects. An invalid expression is
-  rejected when the configuration is saved.
+  before processing. Leave it empty when the document root is already an array of objects. The expression is not
+  validated when the configuration is saved. A syntax error surfaces the first time the interpreter runs, in the import
+  preview or during the import itself. Load the preview after changing the expression to check it.
 
 ### Selecting Records with JMESPath
 
