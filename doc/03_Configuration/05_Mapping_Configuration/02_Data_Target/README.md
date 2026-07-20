@@ -39,8 +39,8 @@ Assigns related elements to a relation field. Supported field types are `manyToM
 `manyToManyObjectRelation`, `advancedManyToManyRelation` and `advancedManyToManyObjectRelation`. Assigning to any other
 field type fails with a configuration error.
 
-The transformation pipeline has to produce a result type of `advancedDataObject`, `dataObjectArray`, `assetArray` or
-`advancedAssetArray`, typically by ending in a `Load DataObject` or `Load Asset` operator.
+The transformation pipeline has to produce a result type of `advancedDataObjectArray`, `dataObjectArray`, `assetArray`
+or `advancedAssetArray`, typically by ending in a `Load Data Object` or `Load Asset` operator.
 
 **Configuration options**
 

@@ -23,8 +23,8 @@ Two options are available in the **Preview Import** step:
 - **Copy from data source**: copy the file the configured data source points at. Not available for the `Push` data
   source, which has no file to copy.
 
-Preview files are stored per user and per import configuration under `var/tmp/datahub/dataimporter/preview`. Keep them
-small: the whole file is parsed on every change, and it occupies disk space.
+Preview files are stored per user and per import configuration under `var/tmp/datahub/dataimporter/preview`. Both
+options reject files larger than 10 MB. Keep the preview well below that: the whole file is parsed on every change.
 
 ## Effect on the Rest of the Configuration
 

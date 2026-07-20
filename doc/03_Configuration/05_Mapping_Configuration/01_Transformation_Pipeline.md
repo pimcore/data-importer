@@ -51,7 +51,7 @@ Operators that convert the value into a Pimcore data type so it can be assigned 
 |---|---|
 | **Boolean** | Casts to a boolean. |
 | **Numeric** | Casts to a float. **Return null if empty** returns null for non-numeric input that would cast to `0.0`, so `0` stays `0` while `abc` and an empty value become null. |
-| **Date** | Converts to a date. Requires a format definition. |
+| **Date** | Converts to a date. **Format** is a PHP date format and defaults to `Y-m-d`. |
 | **As Array** | Wraps the value in an array unless it is one already. |
 | **As Color** | Converts an `(R,G,B,A)` array or a hex string to a color object. |
 | **As Countries** | Converts an array of country display names into an array of country codes. |
