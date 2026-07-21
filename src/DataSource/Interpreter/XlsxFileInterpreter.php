@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 /**
@@ -56,52 +57,78 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $columns = [];
         $readRecordNumber = 0;
 
-        if ($this->fileValid($path)) {
-            $totalRows = $this->getTotalRows($path);
-            $headerRowNumber = $this->skipFirstRow ? 1 : 0;
-            $totalDataRows = max(0, $totalRows - $headerRowNumber);
+        $rows = $this->fileValid($path) ? $this->loadPreviewRows($path, $recordNumber) : null;
 
-            if ($totalDataRows > 0) {
-                $targetRowNumber = $headerRowNumber + 1 + $recordNumber;
-                if ($targetRowNumber > $totalRows) {
-                    $targetRowNumber = $totalRows;
-                    $readRecordNumber = $totalDataRows - 1;
-                } else {
-                    $readRecordNumber = $recordNumber;
-                }
+        if ($rows !== null) {
+            [$headerRow, $previewDataRow, $readRecordNumber] = $rows;
 
-                // Only load the header row and the requested data row instead of the
-                // whole workbook - large files would otherwise exhaust the memory limit.
-                $reader = IOFactory::createReaderForFile($path);
-                $reader->setReadDataOnly(true);
-                $reader->setLoadSheetsOnly($this->sheetName);
-                $reader->setReadFilter(new PreviewRowsReadFilter(array_filter([$headerRowNumber, $targetRowNumber])));
-                $spreadSheet = $reader->load($path);
+            $columns = $this->extractColumns($headerRow);
 
-                $spreadSheet->setActiveSheetIndexByName($this->sheetName);
-                $sheet = $spreadSheet->getActiveSheet();
-                $highestColumn = $sheet->getHighestColumn();
+            foreach ($previewDataRow as $index => $columnData) {
+                $previewData[$index] = $columnData;
+            }
 
-                if ($this->skipFirstRow) {
-                    $firstRow = $sheet->rangeToArray('A' . $headerRowNumber . ':' . $highestColumn . $headerRowNumber)[0];
-                    foreach ($firstRow as $index => $columnHeader) {
-                        $columns[$index] = trim((string)$columnHeader) . " [$index]";
-                    }
-                }
-
-                $previewDataRow = $sheet->rangeToArray('A' . $targetRowNumber . ':' . $highestColumn . $targetRowNumber)[0];
-
-                foreach ($previewDataRow as $index => $columnData) {
-                    $previewData[$index] = $columnData;
-                }
-
-                if (empty($columns)) {
-                    $columns = array_keys($previewData);
-                }
+            if (empty($columns)) {
+                $columns = array_keys($previewData);
             }
         }
 
         return new PreviewData($columns, $previewData, $readRecordNumber, $mappedColumns);
+    }
+
+    /**
+     * Reads the header row and the requested data row without loading the whole
+     * workbook - large files would otherwise exhaust the memory limit.
+     *
+     * @return array{0: ?array, 1: array, 2: int}|null
+     */
+    private function loadPreviewRows(string $path, int $recordNumber): ?array
+    {
+        $totalRows = $this->getTotalRows($path);
+        $headerRowNumber = $this->skipFirstRow ? 1 : 0;
+        $totalDataRows = max(0, $totalRows - $headerRowNumber);
+
+        if ($totalDataRows < 1) {
+            return null;
+        }
+
+        $targetRowNumber = $headerRowNumber + 1 + $recordNumber;
+        $readRecordNumber = $recordNumber;
+        if ($targetRowNumber > $totalRows) {
+            $targetRowNumber = $totalRows;
+            $readRecordNumber = $totalDataRows - 1;
+        }
+
+        $reader = IOFactory::createReaderForFile($path);
+        $reader->setReadDataOnly(true);
+        $reader->setLoadSheetsOnly($this->sheetName);
+        $reader->setReadFilter(new PreviewRowsReadFilter(array_filter([$headerRowNumber, $targetRowNumber])));
+        $spreadSheet = $reader->load($path);
+
+        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
+        $sheet = $spreadSheet->getActiveSheet();
+
+        $headerRow = $this->skipFirstRow ? $this->readRow($sheet, $headerRowNumber) : null;
+
+        return [$headerRow, $this->readRow($sheet, $targetRowNumber), $readRecordNumber];
+    }
+
+    private function readRow(Worksheet $sheet, int $rowNumber): array
+    {
+        $range = 'A' . $rowNumber . ':' . $sheet->getHighestColumn() . $rowNumber;
+
+        return $sheet->rangeToArray($range)[0];
+    }
+
+    private function extractColumns(?array $headerRow): array
+    {
+        $columns = [];
+
+        foreach ($headerRow ?? [] as $index => $columnHeader) {
+            $columns[$index] = trim((string)$columnHeader) . " [$index]";
+        }
+
+        return $columns;
     }
 
     private function getTotalRows(string $path): int
