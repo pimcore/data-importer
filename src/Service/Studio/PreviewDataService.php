@@ -41,7 +41,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
     use ConfigurationPermissionTrait;
     use CurrentUserResolverTrait;
 
-    private const int MAX_FILE_SIZE = 10485760; // 10MB
+    private const int MAX_FILE_SIZE = 52428800; // 50MB
 
     public function __construct(
         private PreviewHydratorInterface $previewHydrator,
