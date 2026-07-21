@@ -14,6 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 /**
@@ -84,7 +85,14 @@ final class XlsxFileInterpreter extends AbstractInterpreter
      */
     private function loadPreviewRows(string $path, int $recordNumber): ?array
     {
-        $totalRows = $this->getTotalRows($path);
+        $worksheetInfo = $this->getWorksheetInfo($path);
+
+        if ($worksheetInfo === null) {
+            throw new InvalidConfigurationException(sprintf('Sheet "%s" not found in file.', $this->sheetName));
+        }
+
+        $totalRows = $worksheetInfo['totalRows'];
+        $lastColumnLetter = $worksheetInfo['lastColumnLetter'];
         $headerRowNumber = $this->skipFirstRow ? 1 : 0;
         $totalDataRows = max(0, $totalRows - $headerRowNumber);
 
@@ -94,7 +102,8 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
         $targetRowNumber = $headerRowNumber + 1 + $recordNumber;
         $readRecordNumber = $recordNumber;
-        if ($targetRowNumber > $totalRows) {
+        if ($recordNumber < 0 || $targetRowNumber > $totalRows) {
+            // fall back to the last data row, mirroring the previous out-of-range behavior
             $targetRowNumber = $totalRows;
             $readRecordNumber = $totalDataRows - 1;
         }
@@ -108,14 +117,14 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $spreadSheet->setActiveSheetIndexByName($this->sheetName);
         $sheet = $spreadSheet->getActiveSheet();
 
-        $headerRow = $this->skipFirstRow ? $this->readRow($sheet, $headerRowNumber) : null;
+        $headerRow = $this->skipFirstRow ? $this->readRow($sheet, $headerRowNumber, $lastColumnLetter) : null;
 
-        return [$headerRow, $this->readRow($sheet, $targetRowNumber), $readRecordNumber];
+        return [$headerRow, $this->readRow($sheet, $targetRowNumber, $lastColumnLetter), $readRecordNumber];
     }
 
-    private function readRow(Worksheet $sheet, int $rowNumber): array
+    private function readRow(Worksheet $sheet, int $rowNumber, string $lastColumnLetter): array
     {
-        $range = 'A' . $rowNumber . ':' . $sheet->getHighestColumn() . $rowNumber;
+        $range = 'A' . $rowNumber . ':' . $lastColumnLetter . $rowNumber;
 
         return $sheet->rangeToArray($range)[0];
     }
@@ -131,17 +140,26 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         return $columns;
     }
 
-    private function getTotalRows(string $path): int
+    /**
+     * Reads the worksheet dimensions without loading any cells.
+     * Returns null when the configured sheet does not exist in the file.
+     *
+     * @return array{totalRows: int, lastColumnLetter: string}|null
+     */
+    private function getWorksheetInfo(string $path): ?array
     {
         $reader = IOFactory::createReaderForFile($path);
 
         foreach ($reader->listWorksheetInfo($path) as $worksheetInfo) {
             if (($worksheetInfo['worksheetName'] ?? null) === $this->sheetName) {
-                return (int)($worksheetInfo['totalRows'] ?? 0);
+                return [
+                    'totalRows' => (int)($worksheetInfo['totalRows'] ?? 0),
+                    'lastColumnLetter' => (string)($worksheetInfo['lastColumnLetter'] ?? 'A'),
+                ];
             }
         }
 
-        return 0;
+        return null;
     }
 
     public function setSettings(array $settings): void
