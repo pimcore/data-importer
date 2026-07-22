@@ -1,61 +1,76 @@
+---
+title: File Formats
+description: How the importer parses the source data into records and fields.
+---
+
 # File Formats
 
-The source data needs to be in an interpretable format for the importer. Following interpreters can 
-be configured: 
+The file format determines how the raw source data is split into records and fields. Set it in the **Data Source** step,
+next to the [data source](./01_Data_Sources.md).
 
-### CSV
-The source data is interpreted as CSV. 
+Each record becomes one queue item, and each field of that record can be addressed by a mapping entry through its
+**data source index**. Depending on the format, that index is either a numeric position or a field name.
 
-##### Configuration Options: 
-- **Skip First Row**: If activated, first row will be used as column names and not interpreted as data row. 
-- **Delimiter**
-- **Enclosure**
-- **Escape**
+## CSV
 
-Internally the adapter uses [`fgetcsv`](https://www.php.net/manual/en/function.fgetcsv.php) function of php. 
+**Configuration options**
 
-### JSON
-The source data is interpreted as JSON. 
+- **Skip First Row**: skips the first row so it is not imported as data. In the [import preview](./03_Import_Preview.md)
+  the values of that row label the columns.
+- **Save Header Name**: makes fields addressable by their header name instead of their numeric position. Requires
+  **Skip First Row**.
+- **Delimiter**: defaults to `,`.
+- **Enclosure**: defaults to `"`.
+- **Escape Character**: defaults to `\`.
 
-The adapter expects an array of json objects and reads all first level attributes as separate fields. 
-If one field contains sub objects (like `technical_attributes`) in the example below, this object 
-is interpreted as array in one field (and needs to be considered in the transformation pipeline). 
+The interpreter uses PHP's [`fgetcsv`](https://www.php.net/manual/en/function.fgetcsv.php).
 
-**Sample File**: 
-```json 
+:::tip
+
+Enable **Skip First Row** and **Save Header Name** together. Mappings then reference `sku` rather than `0`, which
+survives a reordering of the columns in the source file.
+
+:::
+
+## JSON
+
+The interpreter expects an array of JSON objects and reads every first-level attribute as a separate field. A field
+holding a sub-object, such as `technical_attributes` below, arrives as an array in one field and has to be handled in the
+[transformation pipeline](./05_Mapping_Configuration/01_Transformation_Pipeline.md).
+
+**Sample file**
+
+```json
 [
     {
         "title_de": "Voluptas et est voluptas.",
         "title_en": "Animi ipsam rem et sed vel voluptas.",
-        ...
-		"technical_attributes": {
-			"1-6": "value 1",
-			"2-4": "value 2"
-		}
+        "technical_attributes": {
+            "1-6": "value 1",
+            "2-4": "value 2"
+        }
     },
     {
-        "title_de": "Et alias nesciunt ea mollitia nihil mollitia corporis.",
-        ...
-    },
+        "title_de": "Et alias nesciunt ea mollitia nihil mollitia corporis."
+    }
 ]
 ```
 
-Internally the adapter uses [`json_decode($content, true)`](https://www.php.net/manual/en/function.json-decode.php) function of php. 
+The interpreter uses [`json_decode($content, true)`](https://www.php.net/manual/en/function.json-decode.php).
 
-##### Configuration Options:
-- **JMESPath**: Optional. A [JMESPath](https://jmespath.org) expression used to select the array of 
-  records from the JSON document before processing. If left empty, the root of the document is used 
-  directly (which must itself be an array of objects).
+**Configuration options**
 
-#### Using JMESPath to Select Records
+- **JMESPath**: optional [JMESPath](https://jmespath.org) expression that selects the record array from the document
+  before processing. Leave it empty when the document root is already an array of objects. The expression is not
+  validated when the configuration is saved. A syntax error surfaces the first time the interpreter runs, in the import
+  preview or during the import itself. Load the preview after changing the expression to check it.
 
-By default the adapter expects the root of the JSON document to be an array of objects. For JSON 
-structures where the record list is nested inside a wrapper object, a JMESPath expression can be 
-configured to extract it first.
+### Selecting Records with JMESPath
 
-**Example: records nested under a key**
+Use a JMESPath expression when the record list is nested inside a wrapper object.
 
-Given a file like:
+**Records nested under a key**
+
 ```json
 {
     "meta": { "total": 2, "page": 1 },
@@ -66,12 +81,10 @@ Given a file like:
 }
 ```
 
-Setting **JMESPath** to `items` causes the adapter to pass the `items` array to the import pipeline, 
-rather than attempting to iterate the root object.
+Set **JMESPath** to `items` to pass the `items` array to the import pipeline.
 
-**Example: records in a deeply nested structure**
+**Records in a deeply nested structure**
 
-Given:
 ```json
 {
     "catalog": {
@@ -87,48 +100,47 @@ Given:
 
 The expression `catalog.products.product` selects the nested array.
 
-**Example: filtering records with JMESPath**
+**Filtering records**
 
-JMESPath also supports filtering. To import only products that have a price greater than 10:
+JMESPath also filters. To import only products priced above 10:
 
 ```
 items[?price > `10`]
 ```
 
-For a full reference of supported expressions see [jmespath.org](https://jmespath.org) and the 
-[`mtdowling/jmespath.php`](https://github.com/jmespath/jmespath.php) library documentation.
+For the full expression reference see [jmespath.org](https://jmespath.org) and the
+[`mtdowling/jmespath.php`](https://github.com/jmespath/jmespath.php) library.
 
+## XLSX (Excel)
 
-### XLSX (Excel)
-The source data is interpreted as XLSX Excel file. 
+**Configuration options**
 
-##### Configuration Options: 
-- **Skip First Row**: If activated, first row will be used as column names and not interpreted as data row. 
-- **Sheet**: Name of data sheet to be imported.
- 
-Internally the adapter uses [`phpspreadsheet`](https://phpspreadsheet.readthedocs.io/en/latest) to read the data.
+- **Skip First Row**: skips the first row so it is not imported as data. In the import preview the values of that row
+  label the columns. Fields stay addressable by their numeric position.
+- **Sheet Name**: name of the sheet to import. Defaults to `Sheet1`.
 
+The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest).
 
-### XML
-The source data is interpreted as XML.
+## XML
 
-The adapter expects a list of data elements at the configured xpath and reads all first level elements 
-of the data elements as separate fields. If one element contains sub elements (like `technical_attributes`) in the example 
-below, the sub elements are interpreted as array in one field (and needs to be considered in the transformation pipeline).
+The interpreter expects a list of data elements at the configured XPath and reads every first-level child of a data
+element as a separate field. A child holding sub-elements, such as `technical_attributes` below, arrives as an array in
+one field and has to be handled in the
+[transformation pipeline](./05_Mapping_Configuration/01_Transformation_Pipeline.md).
 
+**Configuration options**
 
-##### Configuration Options: 
-- **XPath**: XPath to the elements to be imported. For the sample below it would be `/root/item`. 
-- **Schema**: XSD Schema the import data should be validated against. If not defined, no validation takes place.
+- **XPath**: XPath to the elements to import. For the sample below it is `/root/item`.
+- **Schema**: XSD schema to validate the import data against. Without it, no validation takes place.
 
-**Sample File**: 
+**Sample file**
+
 ```xml
 <?xml version="1.0"?>
 <root>
   <item>
     <title_de>Et voluptas culpa et incidunt laborum repellat.</title_de>
     <title_en>Aliquam et voluptas nemo at excepturi.</title_en>
-    ...
     <technical_attributes>
       <attribute>
         <key>1-6</key>
@@ -140,15 +152,20 @@ below, the sub elements are interpreted as array in one field (and needs to be c
       </attribute>
     </technical_attributes>
   </item>
-  <item>
-    ...
-  </item>
 </root>
 ```
 
-Internally the adapter uses [Symfony `XmlUtils`](https://github.com/symfony/config/blob/master/Util/XmlUtils.php) to read 
-and validate the data.
+The interpreter uses [Symfony `XmlUtils`](https://github.com/symfony/config/blob/master/Util/XmlUtils.php) to read and
+validate the data.
 
-### Custom File Formats
-You can import any file format using custom adapters.
+## SQL
 
+Reads the result of the query configured in the [SQL data source](./01_Data_Sources.md#sql). Each result row becomes a
+record, and each selected column becomes a field addressable by its column name. There is nothing else to configure.
+
+Select this format whenever the data source is **SQL**.
+
+## Custom File Formats
+
+Add a file format of your own with a custom interpreter. See
+[Custom Strategies](../06_Extending/01_Custom_Strategies.md).
