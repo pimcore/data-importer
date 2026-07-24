@@ -12,7 +12,11 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
@@ -124,9 +128,42 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
     private function readRow(Worksheet $sheet, int $rowNumber, string $lastColumnLetter): array
     {
-        $range = 'A' . $rowNumber . ':' . $lastColumnLetter . $rowNumber;
+        $lastColumnIndex = Coordinate::columnIndexFromString($lastColumnLetter);
+        $rowData = [];
 
-        return $sheet->rangeToArray($range)[0];
+        for ($column = 1; $column <= $lastColumnIndex; $column++) {
+            $rowData[] = $this->getPreviewCellValue($sheet->getCell([$column, $rowNumber]));
+        }
+
+        return $rowData;
+    }
+
+    /**
+     * Formula cells prefer the result cached in the file: only parts of the
+     * workbook are loaded for previews, so recalculating formulas with
+     * cross-row or cross-sheet references would silently produce wrong
+     * values ("#REF!", zeros).
+     */
+    private function getPreviewCellValue(Cell $cell): mixed
+    {
+        if ($cell->getDataType() === DataType::TYPE_FORMULA) {
+            $cachedValue = $cell->getOldCalculatedValue();
+            if ($cachedValue !== null) {
+                return $cachedValue;
+            }
+        }
+
+        try {
+            $value = $cell->getCalculatedValue();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if ($value instanceof RichText) {
+            return $value->getPlainText();
+        }
+
+        return $value;
     }
 
     private function extractColumns(?array $headerRow): array
