@@ -2,6 +2,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
+use Closure;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\FindOrCreateFolderStrategy;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\FindParentStrategy;
@@ -25,15 +26,13 @@ class LocationStrategyFallbackPathTest extends Unit
     public function testMissingFallbackPathIsAllowed(string $strategyClass): void
     {
         $strategy = new $strategyClass(new DataObjectLoader());
-        $fallbackPath = (new \ReflectionObject($strategy))->getProperty('fallbackPath');
-        $fallbackPath->setAccessible(true);
 
         $strategy->setSettings([
             'dataSourceIndex' => 1,
             'findStrategy' => 'path',
         ]);
 
-        self::assertNull($fallbackPath->getValue($strategy));
+        static::assertNull($this->readFallbackPath($strategy));
     }
 
     /**
@@ -42,8 +41,6 @@ class LocationStrategyFallbackPathTest extends Unit
     public function testFallbackPathIsAssigned(string $strategyClass): void
     {
         $strategy = new $strategyClass(new DataObjectLoader());
-        $fallbackPath = (new \ReflectionObject($strategy))->getProperty('fallbackPath');
-        $fallbackPath->setAccessible(true);
 
         $strategy->setSettings([
             'dataSourceIndex' => 1,
@@ -51,6 +48,13 @@ class LocationStrategyFallbackPathTest extends Unit
             'fallbackPath' => '/fallback',
         ]);
 
-        self::assertSame('/fallback', $fallbackPath->getValue($strategy));
+        static::assertSame('/fallback', $this->readFallbackPath($strategy));
+    }
+
+    private function readFallbackPath(object $strategy): ?string
+    {
+        return Closure::bind(function () {
+            return $this->fallbackPath;
+        }, $strategy, $strategy::class)();
     }
 }
