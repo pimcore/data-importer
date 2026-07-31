@@ -36,7 +36,7 @@ final class FindParentStrategy implements LocationStrategyInterface
 
     private string $findStrategy;
 
-    private string $fallbackPath;
+    private ?string $fallbackPath = null;
 
     private mixed $attributeDataObjectClassId;
 

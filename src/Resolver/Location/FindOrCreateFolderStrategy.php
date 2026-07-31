@@ -25,7 +25,7 @@ final class FindOrCreateFolderStrategy implements LocationStrategyInterface
 {
     private mixed $dataSourceIndex;
 
-    private string $fallbackPath;
+    private ?string $fallbackPath = null;
 
     public function __construct(private readonly DataObjectLoader $dataObjectLoader)
     {
