@@ -3,7 +3,9 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Doctrine\DBAL\Connection;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\IdStrategy;
+use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 
 class AbstractLoadTest extends Unit
 {
@@ -11,11 +13,8 @@ class AbstractLoadTest extends Unit
 
     private function createStrategy(mixed $dataSourceIndex): IdStrategy
     {
-        $strategy = (new \ReflectionClass(IdStrategy::class))->newInstanceWithoutConstructor();
-
-        $dataSourceIndexProperty = (new \ReflectionObject($strategy))->getProperty('dataSourceIndex');
-        $dataSourceIndexProperty->setAccessible(true);
-        $dataSourceIndexProperty->setValue($strategy, $dataSourceIndex);
+        $strategy = new IdStrategy($this->createMock(Connection::class), new DataObjectLoader());
+        $strategy->setSettings(['dataSourceIndex' => $dataSourceIndex]);
 
         return $strategy;
     }
@@ -24,14 +23,14 @@ class AbstractLoadTest extends Unit
     {
         $strategy = $this->createStrategy(0);
 
-        self::assertSame('abc', $strategy->extractIdentifierFromData([0 => 'abc']));
+        static::assertSame('abc', $strategy->extractIdentifierFromData([0 => 'abc']));
     }
 
     public function testReturnsNullWhenIdentifierColumnIsEmpty(): void
     {
         $strategy = $this->createStrategy(0);
 
-        self::assertNull($strategy->extractIdentifierFromData([0 => null]));
+        static::assertNull($strategy->extractIdentifierFromData([0 => null]));
     }
 
     public function testThrowsExceptionWhenIdentifierColumnIsMissing(): void
@@ -48,6 +47,6 @@ class AbstractLoadTest extends Unit
     {
         $strategy = $this->createStrategy(0);
 
-        self::assertNull($strategy->loadElement([0 => null]));
+        static::assertNull($strategy->loadElement([0 => null]));
     }
 }
