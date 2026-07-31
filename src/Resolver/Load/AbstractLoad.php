@@ -90,7 +90,12 @@ abstract class AbstractLoad implements LoadStrategyInterface
      */
     public function loadElement(array $inputData): ?ElementInterface
     {
-        return $this->loadElementByIdentifier($this->extractIdentifierFromData($inputData));
+        $identifier = $this->extractIdentifierFromData($inputData);
+        if ($identifier === null) {
+            return null;
+        }
+
+        return $this->loadElementByIdentifier($identifier);
     }
 
     /**

@@ -43,4 +43,11 @@ class AbstractLoadTest extends Unit
 
         $strategy->extractIdentifierFromData([]);
     }
+
+    public function testLoadElementReturnsNullForEmptyIdentifierInsteadOfTypeError(): void
+    {
+        $strategy = $this->createStrategy(0);
+
+        self::assertNull($strategy->loadElement([0 => null]));
+    }
 }
