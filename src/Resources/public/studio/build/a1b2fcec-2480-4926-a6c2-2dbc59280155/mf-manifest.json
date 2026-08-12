@@ -22,7 +22,7 @@
     "globalName": "pimcore_dataimporter_bundle",
     "pluginVersion": "2.3.1",
     "prefetchInterface": false,
-    "publicPath": "/bundles/pimcoredataimporter/studio/build/af561d32-81a2-45d0-a906-5de8e4986752/"
+    "publicPath": "/bundles/pimcoredataimporter/studio/build/a1b2fcec-2480-4926-a6c2-2dbc59280155/"
   },
   "shared": [
     {
