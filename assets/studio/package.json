@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@pimcore/data-hub": "^2.4.0-canary.20260618-134811-e4f31e6",
-    "@pimcore/studio-ui-bundle": "^1.0.0-canary.20260325-113631-293aa9b",
+    "@pimcore/studio-ui-bundle": "^2026.2.5",
     "@reduxjs/toolkit": "^2.3.0",
     "@tanstack/react-table": "^8.20.5",
     "antd-style": "3.7.x",
