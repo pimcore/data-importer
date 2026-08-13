@@ -25,10 +25,12 @@ import {
 import {
   api,
   ApplicationLoggerTable,
+  mapSortingToSortFilter,
   useFilter,
   useBundleApplicationLoggerGetCollectionQuery
 } from '@pimcore/studio-ui-bundle/modules/application-logger'
 import { useElementVisible } from '@pimcore/studio-ui-bundle/utils'
+import { type SortingState } from '@tanstack/react-table'
 import { isNil } from 'lodash'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { FilterSidebar } from './filter-sidebar/filter-sidebar'
@@ -60,6 +62,7 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
   const dispatch = useAppDispatch()
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [pageSize, setPageSize] = useState<number>(20)
+  const [sorting, setSorting] = useState<SortingState>([])
 
   const { columnFilters, setIsLoading: setFilterLoading } = useFilter()
 
@@ -79,7 +82,7 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
         page: currentPage,
         pageSize,
         columnFilters: mergedFilters,
-        sortFilter: { key: 'id', direction: 'DESC' }
+        sortFilter: mapSortingToSortFilter(sorting)
       }
     }
   })
@@ -89,6 +92,11 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
   const onPagerChange = (page: number, newPageSize: number): void => {
     setCurrentPage(page)
     setPageSize(newPageSize)
+  }
+
+  const onSortingChange = (updatedSorting: SortingState): void => {
+    setSorting(updatedSorting)
+    setCurrentPage(1)
   }
 
   const refreshData = useCallback((): void => {
@@ -192,11 +200,15 @@ export const ImportLogs = (props: ImportLogsProps): React.JSX.Element => {
             </Toolbar>
           }
         >
-          <Content
-            loading={ isFetching }
-            padded
-          >
-            <ApplicationLoggerTable items={ data?.items ?? [] } />
+          { /* No `loading` on Content: it unmounts its children, which would tear down the
+                column headers - and the sorting controls with them - on every refetch. */ }
+          <Content padded>
+            <ApplicationLoggerTable
+              isLoading={ isFetching }
+              items={ data?.items ?? [] }
+              onSortingChange={ onSortingChange }
+              sorting={ sorting }
+            />
           </Content>
         </ContentLayout>
       </div>
