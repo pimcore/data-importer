@@ -188,10 +188,10 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $reader = IOFactory::createReaderForFile($path);
 
         foreach ($reader->listWorksheetInfo($path) as $worksheetInfo) {
-            if (($worksheetInfo['worksheetName'] ?? null) === $this->sheetName) {
+            if ($worksheetInfo['worksheetName'] === $this->sheetName) {
                 return [
-                    'totalRows' => (int)($worksheetInfo['totalRows'] ?? 0),
-                    'lastColumnLetter' => (string)($worksheetInfo['lastColumnLetter'] ?? 'A'),
+                    'totalRows' => $worksheetInfo['totalRows'],
+                    'lastColumnLetter' => $worksheetInfo['lastColumnLetter'],
                 ];
             }
         }
