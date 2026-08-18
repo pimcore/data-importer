@@ -111,7 +111,46 @@ class PreviewEventApplierTest extends Unit
         $result = $applier->applyToPreviewData('test_config', [], $this->createPreviewData());
 
         $this->assertSame(2024, $result->getRawData()['year'], 'first fan-out row is displayed');
-        $this->assertSame('x', $result->getRawData()['extra'], 'columns unique to later rows are exposed');
+        $this->assertArrayNotHasKey(
+            'extra',
+            $result->getRawData(),
+            'the displayed row must be exactly the first queued row - no values merged from later rows'
+        );
+        $this->assertContains(
+            ['id' => 'extra', 'dataIndex' => 'extra', 'label' => 'extra'],
+            $result->getDataColumnHeaders(),
+            'columns unique to later fan-out rows are still mappable'
+        );
+    }
+
+    public function testColumnsRemovedByTheListenerDisappearFromTheHeaders(): void
+    {
+        $applier = $this->createApplier(function (PreQueueRowEvent $event): void {
+            $row = $event->getOriginalRow();
+            unset($row['name']);
+            $event->setRows([$row]);
+        });
+
+        $result = $applier->applyToPreviewData('test_config', [], $this->createPreviewData());
+
+        $this->assertSame(['sku' => 'A-1'], $result->getRawData());
+        $this->assertNotContains(
+            ['id' => 'name', 'dataIndex' => 'name', 'label' => 'name'],
+            $result->getDataColumnHeaders(),
+            'a column no queued row contains must not stay visible or mappable'
+        );
+    }
+
+    public function testEmptyPreviewRecordDispatchesNoEvent(): void
+    {
+        $applier = $this->createApplier(function (PreQueueRowEvent $event): void {
+            $this->fail('a real import emits no row event for an empty source, so preview must not either');
+        });
+
+        $previewData = new PreviewData([], [], -1);
+        $result = $applier->applyToPreviewData('test_config', [], $previewData);
+
+        $this->assertSame($previewData, $result);
     }
 
     public function testFileListenerCanReplaceThePreviewPath(): void

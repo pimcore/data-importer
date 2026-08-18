@@ -30,7 +30,10 @@ that failed, when the failure can be attributed to one.
 The two interpretation-stage events customize how the source file turns into import rows without writing a custom
 interpreter. Both expose the configuration name and the execution type, and both are also dispatched (with
 `isPreview()` returning `true`) when Pimcore Studio renders the source preview and the available mapping columns, so
-the configuration UI shows exactly the data an actual import would produce.
+the configuration UI shows exactly the data an actual import would produce. The preview dispatches `PreQueueRowEvent`
+only for the record being displayed - preceding records are not replayed. Listeners that carry state across rows (for
+example a group marker taken from an earlier row) should check `isPreview()` and fall back to stateless behavior, as
+the carried state is not available in preview mode.
 
 ### PreInterpretFileEvent
 
@@ -97,9 +100,11 @@ deleted or unpublished. A skipped row's element counts as "not seen". Skip rows 
 
 :::
 
-Custom interpreters get both events automatically as long as they extend `AbstractInterpreter` (or provide a
-`setEventDispatcher()` method) - the interpreter compiler pass wires the dispatcher into every tagged interpreter
-service.
+Custom interpreters that extend `AbstractInterpreter` get both events automatically: the interpreter compiler pass
+wires the event dispatcher into every tagged interpreter service that provides a `setEventDispatcher()` method, and
+the base class dispatches the events in `interpretFile()` and `processImportRow()`. An interpreter that implements
+`InterpreterInterface` directly still receives the dispatcher through that setter, but must dispatch
+`PreInterpretFileEvent` and `PreQueueRowEvent` itself from its own reading loop.
 
 ## Example
 

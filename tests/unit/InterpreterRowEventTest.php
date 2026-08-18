@@ -20,6 +20,9 @@ use Pimcore\Bundle\DataImporterBundle\Event\PreInterpretFileEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\PreQueueRowEvent;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Model\Element\ElementInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -62,8 +65,10 @@ class InterpreterRowEventTest extends Unit
         return new QueueService();
     }
 
-    private function createInterpreter(?EventDispatcherInterface $eventDispatcher): CsvFileInterpreter
-    {
+    private function createInterpreter(
+        ?EventDispatcherInterface $eventDispatcher,
+        bool $doCleanup = false
+    ): CsvFileInterpreter {
         $interpreter = new CsvFileInterpreter(
             new DeltaChecker(\Pimcore\Db::get()),
             $this->queueService(),
@@ -74,7 +79,10 @@ class InterpreterRowEventTest extends Unit
         $interpreter->setExecutionType(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
         $interpreter->setIdDataIndex('sku');
         $interpreter->setDoDeltaCheck(false);
-        $interpreter->setDoCleanup(false);
+        $interpreter->setDoCleanup($doCleanup);
+        if ($doCleanup) {
+            $interpreter->setResolver($this->createResolver());
+        }
         $interpreter->setDoArchiveImportFile(false);
         $interpreter->setSettings([
             'skipFirstRow' => true,
@@ -98,20 +106,71 @@ class InterpreterRowEventTest extends Unit
     }
 
     /**
+     * A resolver whose loading strategy pretends the elements A-1 and B-2 already exist,
+     * so cleanup behavior can be observed through the cleanup queue items alone.
+     */
+    private function createResolver(): Resolver
+    {
+        $resolver = new Resolver();
+        $resolver->setLoadingStrategy(new class () implements LoadStrategyInterface {
+            public function loadElement(array $inputData): ?ElementInterface
+            {
+                return null;
+            }
+
+            public function loadElementByIdentifier($identifier): ?ElementInterface
+            {
+                return null;
+            }
+
+            public function extractIdentifierFromData(array $inputData)
+            {
+                return $inputData['sku'] ?? null;
+            }
+
+            public function loadFullIdentifierList(): array
+            {
+                return ['A-1', 'B-2'];
+            }
+
+            public function setDataObjectClassId($dataObjectClassId): void
+            {
+            }
+
+            public function setSettings(array $settings): void
+            {
+            }
+        });
+
+        return $resolver;
+    }
+
+    /**
+     * @return array<int, array>
+     */
+    private function loadQueueEntries(string $jobType): array
+    {
+        $queueService = $this->queueService();
+        $entries = [];
+        foreach ($queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL) as $id) {
+            $entry = $queueService->getQueueEntryById($id);
+            if (($entry['configName'] ?? null) === $this->configName && ($entry['jobType'] ?? null) === $jobType) {
+                $entries[] = $entry;
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
      * @return array<int, array>
      */
     private function loadQueuedRows(): array
     {
-        $queueService = $this->queueService();
-        $rows = [];
-        foreach ($queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL) as $id) {
-            $entry = $queueService->getQueueEntryById($id);
-            if (($entry['configName'] ?? null) === $this->configName) {
-                $rows[] = json_decode($entry['data'], true);
-            }
-        }
-
-        return $rows;
+        return array_map(
+            static fn (array $entry): array => json_decode($entry['data'], true),
+            $this->loadQueueEntries(ImportProcessingService::JOB_TYPE_PROCESS)
+        );
     }
 
     private function drainQueue(): void
@@ -125,18 +184,45 @@ class InterpreterRowEventTest extends Unit
         }
     }
 
-    public function testCompilerPassWiresEventDispatcherIntoTaggedInterpreters(): void
+    public function testSkippedRowWithKeptIdentifierSurvivesCleanup(): void
     {
-        try {
-            $interpreter = $this->tester->grabService(CsvFileInterpreter::class);
-        } catch (\Throwable $e) {
-            // The service is private; retrieving it by id needs a test container
-            // (framework.test: true), which not every local project setup provides.
-            $this->markTestSkipped('Service container does not expose private services: ' . $e->getMessage());
-        }
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(PreQueueRowEvent::class, function (PreQueueRowEvent $event): void {
+            if ($event->getOriginalRow()['sku'] === 'B-2') {
+                $event->skipRow(keepInCleanupIdentifierCache: true);
+            }
+        });
 
-        $property = new \ReflectionProperty($interpreter, 'eventDispatcher');
-        $this->assertInstanceOf(EventDispatcherInterface::class, $property->getValue($interpreter));
+        $this->createInterpreter($dispatcher, doCleanup: true)->interpretFile($this->writeCsv(self::CSV));
+
+        $rows = $this->loadQueuedRows();
+        $this->assertCount(1, $rows);
+        $this->assertSame('A-1', $rows[0]['sku']);
+        $this->assertSame(
+            [],
+            $this->loadQueueEntries(ImportProcessingService::JOB_TYPE_CLEANUP),
+            'the skipped row kept its identifier, so its existing element must not be cleaned up'
+        );
+    }
+
+    public function testSkippedRowWithoutKeptIdentifierGetsCleanedUp(): void
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(PreQueueRowEvent::class, function (PreQueueRowEvent $event): void {
+            if ($event->getOriginalRow()['sku'] === 'B-2') {
+                $event->skipRow();
+            }
+        });
+
+        $this->createInterpreter($dispatcher, doCleanup: true)->interpretFile($this->writeCsv(self::CSV));
+
+        $cleanupEntries = $this->loadQueueEntries(ImportProcessingService::JOB_TYPE_CLEANUP);
+        $this->assertCount(1, $cleanupEntries);
+        $this->assertSame(
+            'B-2',
+            $cleanupEntries[0]['data'],
+            'a skipped row without a kept identifier counts as removed from the source'
+        );
     }
 
     public function testRowsAreQueuedUnchangedWithoutListeners(): void

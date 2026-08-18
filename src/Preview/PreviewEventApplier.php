@@ -53,8 +53,13 @@ final readonly class PreviewEventApplier
     /**
      * Lets PreQueueRowEvent listeners rewrite the preview record, mirroring what happens to
      * every row of an actual import. A skipped row stays visible unmodified (the preview is
-     * an inspection aid); a fan-out shows the first resulting row and exposes the columns of
-     * all resulting rows, so every column a listener adds is mappable.
+     * an inspection aid). A fan-out displays the first resulting row exactly as it would be
+     * queued and exposes the column set of all resulting rows as headers, so every column a
+     * listener adds is mappable; columns no resulting row contains are removed.
+     *
+     * Note: the event is dispatched for the displayed record only - preceding records are not
+     * replayed. Listeners that carry state across rows should use isPreview() to fall back to
+     * stateless behavior in preview mode.
      */
     public function applyToPreviewData(
         string $configName,
@@ -63,6 +68,11 @@ final readonly class PreviewEventApplier
         array $mappedColumns = []
     ): PreviewData {
         $originalRow = $previewData->getRawData();
+
+        // an empty preview record produces no row event during a real import either
+        if ($originalRow === []) {
+            return $previewData;
+        }
 
         $event = new PreQueueRowEvent(
             $configName,
@@ -73,7 +83,7 @@ final readonly class PreviewEventApplier
         $this->eventDispatcher->dispatch($event);
 
         $rows = $event->getRows();
-        if ($rows === [$originalRow]) {
+        if ($rows === [$originalRow] || $rows === []) {
             return $previewData;
         }
 
@@ -82,22 +92,28 @@ final readonly class PreviewEventApplier
             $labels[$columnHeader['dataIndex']] = $columnHeader['label'];
         }
 
-        $row = $rows[0] ?? $originalRow;
-        foreach ($rows as $additionalRow) {
-            foreach ($additionalRow as $index => $value) {
-                if (!array_key_exists($index, $row)) {
-                    $row[$index] = $value;
-                }
+        $resultColumns = [];
+        foreach ($rows as $resultRow) {
+            foreach (array_keys($resultRow) as $index) {
+                $resultColumns[$index] = true;
             }
         }
 
-        foreach (array_keys($row) as $index) {
+        // drop columns no resulting row contains, keeping the original header order
+        foreach (array_keys($labels) as $index) {
+            if (!isset($resultColumns[$index]) && !isset($resultColumns[(string) $index])) {
+                unset($labels[$index]);
+            }
+        }
+
+        foreach (array_keys($resultColumns) as $index) {
             if (!array_key_exists($index, $labels) && !array_key_exists((string) $index, $labels)) {
                 $labels[$index] = is_int($index) ? "[$index]" : (string) $index;
             }
         }
 
-        return new PreviewData($labels, $row, $previewData->getRecordNumber(), $mappedColumns);
+        // display the first resulting row exactly as it would be queued - no value merging
+        return new PreviewData($labels, $rows[0], $previewData->getRecordNumber(), $mappedColumns);
     }
 
     private function resolveExecutionType(array $processingConfig): string
