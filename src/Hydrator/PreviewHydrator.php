@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Hydrator;
 
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
@@ -33,7 +34,8 @@ final readonly class PreviewHydrator implements PreviewHydratorInterface
     public function __construct(
         private SecurityServiceInterface $securityService,
         private PreviewService $previewService,
-        private InterpreterFactory $interpreterFactory
+        private InterpreterFactory $interpreterFactory,
+        private PreviewEventApplier $previewEventApplier
     ) {
     }
 
@@ -66,7 +68,17 @@ final readonly class PreviewHydrator implements PreviewHydratorInterface
                 $config['interpreterConfig'],
                 $config['processingConfig']
             );
+            $previewFilePath = $this->previewEventApplier->applyToPath(
+                $name,
+                $config['processingConfig'],
+                $previewFilePath
+            );
             $dataPreview = $interpreter->previewData($previewFilePath);
+            $dataPreview = $this->previewEventApplier->applyToPreviewData(
+                $name,
+                $config['processingConfig'],
+                $dataPreview
+            );
             $columnHeaders = $dataPreview->getDataColumnHeaders();
 
             if (!$this->isValidJson($columnHeaders)) {

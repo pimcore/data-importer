@@ -15,6 +15,8 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
+use Pimcore\Bundle\DataImporterBundle\Event\PreInterpretFileEvent;
+use Pimcore\Bundle\DataImporterBundle\Event\PreQueueRowEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
@@ -23,6 +25,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @internal
@@ -44,6 +47,8 @@ abstract class AbstractInterpreter implements InterpreterInterface
     protected bool $doArchiveImportFile;
 
     protected Resolver $resolver;
+
+    protected ?EventDispatcherInterface $eventDispatcher = null;
 
     /**
      * @var string[]
@@ -128,10 +133,21 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->resolver = $resolver;
     }
 
+    public function setEventDispatcher(?EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
     public function interpretFile(string $path): bool
     {
         $success = false;
         $this->resetIdentifierCache();
+
+        if ($this->eventDispatcher !== null) {
+            $event = new PreInterpretFileEvent($this->configName, $this->executionType, $path);
+            $this->eventDispatcher->dispatch($event);
+            $path = $event->getPath();
+        }
 
         if ($this->fileValid($path)) {
             $archiveLogMessage = 'Interpreted source file and created queue items.';
@@ -161,6 +177,37 @@ abstract class AbstractInterpreter implements InterpreterInterface
     abstract protected function doInterpretFileAndCallProcessRow(string $path): void;
 
     protected function processImportRow(array $data)
+    {
+        foreach ($this->applyPreQueueRowEvent($data) as $row) {
+            $this->addRowToQueue($row);
+        }
+    }
+
+    /**
+     * Lets PreQueueRowEvent listeners modify, skip, or fan out the row the interpreter
+     * extracted. Without a dispatcher or listeners the row passes through unchanged.
+     *
+     * @return array<int, array> the rows to queue
+     */
+    private function applyPreQueueRowEvent(array $data): array
+    {
+        if ($this->eventDispatcher === null) {
+            return [$data];
+        }
+
+        $event = new PreQueueRowEvent($this->configName, $this->executionType, $data);
+        $this->eventDispatcher->dispatch($event);
+
+        if ($event->isRowSkipped() && $event->shouldKeepSkippedRowInIdentifierCache()) {
+            // Register the skipped row's identifier so an active cleanup strategy does not
+            // treat its existing element as removed from the source.
+            $this->addToIdentifierCache($event->getOriginalRow());
+        }
+
+        return $event->getRows();
+    }
+
+    private function addRowToQueue(array $data): void
     {
         $this->assertValidRowEncoding($data);
 

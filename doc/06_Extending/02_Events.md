@@ -12,6 +12,8 @@ Listening for events customizes import behaviour without replacing any component
 
 | Event | Fired |
 |---|---|
+| `PreInterpretFileEvent` | Before the interpreter starts reading the source file. |
+| `PreQueueRowEvent` | For every extracted row, before it is added to the processing queue. |
 | `DataObject\PreSaveEvent` | Before an imported data object is saved. |
 | `DataObject\PostSaveEvent` | After an imported data object is saved. |
 | `DataObject\ProcessElementExceptionEvent` | When processing a record throws an exception. |
@@ -22,6 +24,82 @@ data object. `ProcessElementExceptionEvent` adds the thrown exception, the error
 that failed, when the failure can be attributed to one.
 
 `PostPreparationEvent` exposes the configuration name, the execution type, and whether the source file was interpreted.
+
+## Interpretation-Stage Events
+
+The two interpretation-stage events customize how the source file turns into import rows without writing a custom
+interpreter. Both expose the configuration name and the execution type, and both are also dispatched (with
+`isPreview()` returning `true`) when Pimcore Studio renders the source preview and the available mapping columns, so
+the configuration UI shows exactly the data an actual import would produce.
+
+### PreInterpretFileEvent
+
+Dispatched before the interpreter validates and reads the source file. `setPath()` replaces the file that gets
+interpreted - use it to normalize a file (transcode it, strip a report preamble, rewrite delimiters) while keeping the
+standard interpreter. It also marks the start of an interpretation run, which stateful `PreQueueRowEvent` listeners can
+use as a reset signal.
+
+### PreQueueRowEvent
+
+Dispatched for every row the interpreter extracted, right before the row is added to the processing queue. The listener
+receives the row exactly as the interpreter produced it - before the delta check, the resolver's identifier extraction,
+and the mapping pipeline - so changed values (including the ID column) affect which element a row resolves to.
+
+| Method | Purpose |
+|---|---|
+| `getOriginalRow()` | The row as extracted, unaffected by other listeners. |
+| `getRows()` / `setRows(array $rows)` | The rows that will be queued. Set one row to modify it, an empty array to skip it, or multiple rows to fan the source row out into multiple elements. |
+| `skipRow(bool $keepInCleanupIdentifierCache = false)` | Skip the row. See the cleanup warning below. |
+
+```php
+namespace App\EventListener;
+
+use Pimcore\Bundle\DataImporterBundle\Event\PreQueueRowEvent;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener]
+final class ProductRowListener
+{
+    public function __invoke(PreQueueRowEvent $event): void
+    {
+        if ($event->getConfigName() !== 'my-product-import') {
+            return;
+        }
+
+        $row = $event->getOriginalRow();
+
+        // skip discontinued products, but keep their existing objects
+        if (($row['status'] ?? '') === 'discontinued') {
+            $event->skipRow(keepInCleanupIdentifierCache: true);
+
+            return;
+        }
+
+        // add a computed column that mapping, resolver and location strategies can use
+        $row['path'] = '/products/' . $row['category'] . '/' . $row['sku'];
+
+        // fan out: one source row per configured sales channel becomes one element each
+        $rows = [];
+        foreach (explode(',', $row['channels']) as $channel) {
+            $rows[] = ['channel' => $channel] + $row;
+        }
+
+        $event->setRows($rows);
+    }
+}
+```
+
+:::warning
+
+When the import uses an active cleanup strategy, every element whose identifier is not seen during interpretation is
+deleted or unpublished. A skipped row's element counts as "not seen". Skip rows with
+`skipRow(keepInCleanupIdentifierCache: true)` when their existing elements must survive the cleanup.
+
+:::
+
+Custom interpreters get both events automatically as long as they extend `AbstractInterpreter` (or provide a
+`setEventDispatcher()` method) - the interpreter compiler pass wires the dispatcher into every tagged interpreter
+service.
 
 ## Example
 

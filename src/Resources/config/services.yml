@@ -23,6 +23,8 @@ services:
     Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
+
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener:
         tags:
