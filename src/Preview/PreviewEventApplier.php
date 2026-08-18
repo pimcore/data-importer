@@ -87,6 +87,23 @@ final readonly class PreviewEventApplier
             return $previewData;
         }
 
+        // display the first resulting row exactly as it would be queued - no value merging
+        return new PreviewData(
+            $this->buildResultLabels($previewData, $rows),
+            $rows[0],
+            $previewData->getRecordNumber(),
+            $mappedColumns
+        );
+    }
+
+    /**
+     * Restricts the original column headers to the columns the resulting rows actually
+     * contain (keeping the original order) and adds labels for listener-added columns.
+     *
+     * @param array<int, array> $rows
+     */
+    private function buildResultLabels(PreviewData $previewData, array $rows): array
+    {
         $labels = [];
         foreach ($previewData->getDataColumnHeaders() as $columnHeader) {
             $labels[$columnHeader['dataIndex']] = $columnHeader['label'];
@@ -99,7 +116,6 @@ final readonly class PreviewEventApplier
             }
         }
 
-        // drop columns no resulting row contains, keeping the original header order
         foreach (array_keys($labels) as $index) {
             if (!isset($resultColumns[$index]) && !isset($resultColumns[(string) $index])) {
                 unset($labels[$index]);
@@ -107,13 +123,17 @@ final readonly class PreviewEventApplier
         }
 
         foreach (array_keys($resultColumns) as $index) {
-            if (!array_key_exists($index, $labels) && !array_key_exists((string) $index, $labels)) {
+            if (!$this->hasLabel($labels, $index)) {
                 $labels[$index] = is_int($index) ? "[$index]" : (string) $index;
             }
         }
 
-        // display the first resulting row exactly as it would be queued - no value merging
-        return new PreviewData($labels, $rows[0], $previewData->getRecordNumber(), $mappedColumns);
+        return $labels;
+    }
+
+    private function hasLabel(array $labels, int|string $index): bool
+    {
+        return array_key_exists($index, $labels) || array_key_exists((string) $index, $labels);
     }
 
     private function resolveExecutionType(array $processingConfig): string

@@ -135,10 +135,12 @@ class InterpreterRowEventTest extends Unit
 
             public function setDataObjectClassId($dataObjectClassId): void
             {
+                // the stub resolves identifiers from the row data alone
             }
 
             public function setSettings(array $settings): void
             {
+                // the stub needs no configuration
             }
         });
 

@@ -143,7 +143,7 @@ class PreviewEventApplierTest extends Unit
 
     public function testEmptyPreviewRecordDispatchesNoEvent(): void
     {
-        $applier = $this->createApplier(function (PreQueueRowEvent $event): void {
+        $applier = $this->createApplier(function (): void {
             $this->fail('a real import emits no row event for an empty source, so preview must not either');
         });
 
