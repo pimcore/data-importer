@@ -31,9 +31,13 @@ use Psr\Log\LoggerInterface;
 final readonly class GetConfigurationContextTool
 {
     private const SECTION_OPERATORS = 'operators';
+
     private const SECTION_TARGETS = 'targets';
+
     private const SECTION_CLASSES = 'classes';
+
     private const SECTION_FIELD_MATRIX = 'field_type_matrix';
+
     private const SECTION_SCHEMA = 'schema';
 
     private const VALID_SECTIONS = [
@@ -177,11 +181,9 @@ final readonly class GetConfigurationContextTool
             ->getMappingConfigSchema();
 
         if (isset(
-            $schema['items']['properties']
-                ['transformationPipeline']['availableOperators']
+            $schema['items']['properties']['transformationPipeline']['availableOperators']
         )) {
-            return $schema['items']['properties']
-                ['transformationPipeline']['availableOperators'];
+            return $schema['items']['properties']['transformationPipeline']['availableOperators'];
         }
 
         $this->logger->warning(
@@ -197,11 +199,9 @@ final readonly class GetConfigurationContextTool
             ->getMappingConfigSchema();
 
         if (isset(
-            $schema['items']['properties']
-                ['dataTarget']['availableTargets']
+            $schema['items']['properties']['dataTarget']['availableTargets']
         )) {
-            return $schema['items']['properties']
-                ['dataTarget']['availableTargets'];
+            return $schema['items']['properties']['dataTarget']['availableTargets'];
         }
 
         $this->logger->warning('No data targets found in schema');

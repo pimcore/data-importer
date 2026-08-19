@@ -111,7 +111,7 @@ final class Numeric extends AbstractOperator implements SchemaAwareInterface, Tr
         ];
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

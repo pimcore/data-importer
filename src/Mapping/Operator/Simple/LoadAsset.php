@@ -90,7 +90,7 @@ final class LoadAsset extends ImportAsset implements SchemaAwareInterface
         return 'Loads existing Pimcore assets by ID or path. Does not create new assets.';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

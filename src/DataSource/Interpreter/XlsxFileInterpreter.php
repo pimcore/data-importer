@@ -212,7 +212,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements SchemaAwa
         return 'Interpret Excel (.xlsx) file data';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

@@ -73,7 +73,7 @@ final class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwar
         return 'Interpret CSV file data';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

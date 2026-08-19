@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\Compiler;
 
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\ServiceLocatorTagPass;
@@ -32,45 +33,45 @@ class ConfigurationSchemaServicePass implements CompilerPassInterface
         $definition = $container->findDefinition(ConfigurationSchemaService::class);
 
         // Collect data loaders
-        $dataLoaders = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.loader');
+        $dataLoaders = $this->collectTaggedServices($container, ServiceTags::LOADER);
         $dataLoaderLocator = ServiceLocatorTagPass::register($container, $dataLoaders);
         $definition->setArgument('$dataLoaderLocator', $dataLoaderLocator);
 
         // Collect interpreters
-        $interpreters = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.interpreter');
+        $interpreters = $this->collectTaggedServices($container, ServiceTags::INTERPRETER);
         $interpreterLocator = ServiceLocatorTagPass::register($container, $interpreters);
         $definition->setArgument('$interpreterLocator', $interpreterLocator);
 
         // Collect load strategies
-        $loadStrategies = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.resolver.load');
+        $loadStrategies = $this->collectTaggedServices($container, ServiceTags::RESOLVER_LOAD);
         $loadStrategyLocator = ServiceLocatorTagPass::register($container, $loadStrategies);
         $definition->setArgument('$loadStrategyLocator', $loadStrategyLocator);
 
         // Collect location strategies
         $locationStrategies = $this->collectTaggedServices(
             $container,
-            'pimcore.datahub.data_importer.resolver.location'
+            ServiceTags::RESOLVER_LOCATION
         );
         $locationStrategyLocator = ServiceLocatorTagPass::register($container, $locationStrategies);
         $definition->setArgument('$locationStrategyLocator', $locationStrategyLocator);
 
         // Collect publish strategies
-        $publishStrategies = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.resolver.publish');
+        $publishStrategies = $this->collectTaggedServices($container, ServiceTags::RESOLVER_PUBLISH);
         $publishStrategyLocator = ServiceLocatorTagPass::register($container, $publishStrategies);
         $definition->setArgument('$publishStrategyLocator', $publishStrategyLocator);
 
         // Collect operators
-        $operators = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.operator');
+        $operators = $this->collectTaggedServices($container, ServiceTags::OPERATOR);
         $operatorLocator = ServiceLocatorTagPass::register($container, $operators);
         $definition->setArgument('$operatorLocator', $operatorLocator);
 
         // Collect data targets
-        $dataTargets = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.data_target');
+        $dataTargets = $this->collectTaggedServices($container, ServiceTags::DATA_TARGET);
         $dataTargetLocator = ServiceLocatorTagPass::register($container, $dataTargets);
         $definition->setArgument('$dataTargetLocator', $dataTargetLocator);
 
         // Collect cleanup strategies
-        $cleanupStrategies = $this->collectTaggedServices($container, 'pimcore.datahub.data_importer.cleanup');
+        $cleanupStrategies = $this->collectTaggedServices($container, ServiceTags::CLEANUP);
         $cleanupStrategyLocator = ServiceLocatorTagPass::register($container, $cleanupStrategies);
         $definition->setArgument('$cleanupStrategyLocator', $cleanupStrategyLocator);
     }

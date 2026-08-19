@@ -47,7 +47,7 @@ final class AttributeBasedStrategy implements PublishStrategyInterface, SchemaAw
         return 'Sets publish state based on a boolean value from input data';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

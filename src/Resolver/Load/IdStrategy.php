@@ -50,7 +50,7 @@ final class IdStrategy extends AbstractLoad implements SchemaAwareInterface
         return 'Loads data objects by their numeric ID';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         return $this->getBaseConfigTreeBuilder();
     }

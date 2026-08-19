@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
@@ -42,35 +43,35 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
         // Collect all tagged services using helper method to reduce duplication
         $dataLoaders = $this->collectServicesByType(
             $container,
-            LoaderConfigurationFactoryPass::loader_tag
+            ServiceTags::LOADER
         );
         $interpreters = $this->collectServicesByType(
             $container,
-            InterpreterConfigurationFactoryPass::interpreter_tag
+            ServiceTags::INTERPRETER
         );
         $loadStrategies = $this->collectServicesByType(
             $container,
-            ResolverConfigurationFactoryPass::load_tag
+            ServiceTags::RESOLVER_LOAD
         );
         $locationStrategies = $this->collectServicesByType(
             $container,
-            ResolverConfigurationFactoryPass::location_tag
+            ServiceTags::RESOLVER_LOCATION
         );
         $publishStrategies = $this->collectServicesByType(
             $container,
-            ResolverConfigurationFactoryPass::publish_tag
+            ServiceTags::RESOLVER_PUBLISH
         );
         $operators = $this->collectServicesByType(
             $container,
-            MappingConfigurationFactoryPass::operator_tag
+            ServiceTags::OPERATOR
         );
         $dataTargets = $this->collectServicesByType(
             $container,
-            MappingConfigurationFactoryPass::data_target_tag
+            ServiceTags::DATA_TARGET
         );
         $cleanupStrategies = $this->collectServicesByType(
             $container,
-            CleanupStrategyConfigurationFactoryPass::cleanup_tag
+            ServiceTags::CLEANUP
         );
 
         // Create ServiceLocators for each category

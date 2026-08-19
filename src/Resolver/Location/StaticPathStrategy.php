@@ -46,7 +46,7 @@ final class StaticPathStrategy implements LocationStrategyInterface, SchemaAware
         return 'Use a static path for all elements';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

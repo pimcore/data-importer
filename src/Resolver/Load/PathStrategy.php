@@ -50,7 +50,7 @@ final class PathStrategy extends AbstractLoad implements SchemaAwareInterface
         return 'Loads data objects by their full path (e.g., /products/shoes/nike-air)';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         return $this->getBaseConfigTreeBuilder();
     }

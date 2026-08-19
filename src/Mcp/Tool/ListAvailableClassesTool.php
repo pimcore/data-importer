@@ -86,5 +86,4 @@ final readonly class ListAvailableClassesTool
     {
         return $this->configurationSchemaService->getAvailableClasses();
     }
-
 }

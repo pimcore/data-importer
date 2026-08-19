@@ -132,5 +132,4 @@ final readonly class SaveDataImporterConfigTool
             );
         }
     }
-
 }

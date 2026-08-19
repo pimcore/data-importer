@@ -111,7 +111,7 @@ final class AttributeStrategy extends AbstractLoad implements SchemaAwareInterfa
         return 'Loads data objects by matching a specific attribute value';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = $this->getBaseConfigTreeBuilder();
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

@@ -105,7 +105,7 @@ final class StringReplace extends AbstractOperator implements SchemaAwareInterfa
         return $this->getAcceptedInputTypes();
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

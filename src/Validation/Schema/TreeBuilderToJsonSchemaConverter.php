@@ -84,10 +84,10 @@ class TreeBuilderToJsonSchemaConverter
             $schema = ['type' => 'boolean'];
         } elseif ($node instanceof IntegerNode) {
             $schema = ['type' => 'integer'];
-            if (method_exists($node, 'getMin') && $node->getMin() !== null) {
+            if ($node->getMin() !== null) {
                 $schema['minimum'] = $node->getMin();
             }
-            if (method_exists($node, 'getMax') && $node->getMax() !== null) {
+            if ($node->getMax() !== null) {
                 $schema['maximum'] = $node->getMax();
             }
         } elseif ($node instanceof FloatNode) {

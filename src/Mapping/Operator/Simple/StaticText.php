@@ -123,7 +123,7 @@ final class StaticText extends AbstractOperator implements SchemaAwareInterface,
         return $this->getAcceptedInputTypes();
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */

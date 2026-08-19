@@ -93,7 +93,7 @@ final class ClassificationstoreBatch implements DataTargetInterface, SchemaAware
         return 'Classification store batch mapping target for multiple keys at once';
     }
 
-    public function getConfigTreeBuilder(): ?TreeBuilder
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('settings');
         /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
