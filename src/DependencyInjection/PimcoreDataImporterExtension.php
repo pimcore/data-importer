@@ -76,6 +76,15 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
             $loader->load('doctrine_migrations.yml');
         }
 
+        // The Pimcore Agent Bundle reads agent skills from pimcore_agent.skills.paths.
+        // Contributing the path here, guarded on the extension being registered, keeps the
+        // integration optional: this bundle must not depend on the agent bundle.
+        if ($container->hasExtension('pimcore_agent')) {
+            $container->prependExtensionConfig('pimcore_agent', [
+                'skills' => ['paths' => [__DIR__ . '/../Resources/skills']],
+            ]);
+        }
+
         $loader->load('studio_ui.yaml');
         $loader->load('pimcore/studio_backend.yaml');
     }
