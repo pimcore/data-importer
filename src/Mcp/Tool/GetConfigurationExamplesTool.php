@@ -14,176 +14,155 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
+use function array_keys;
+use function basename;
+use function count;
+use function file_get_contents;
+use function glob;
+use function is_array;
+use function is_dir;
 use Mcp\Capability\Attribute\McpTool;
-use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ToolAnnotations;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Psr\Log\LoggerInterface;
+use function sort;
+use Symfony\Component\Yaml\Yaml;
+use Throwable;
 
 /**
- * MCP tool to retrieve configuration examples.
- *
- * Provides real-world configuration examples demonstrating common
- * import scenarios and best practices. Examples include CSV imports,
- * XML processing, JSON APIs, transformation patterns, and more.
- *
- * @internal
+ * Registered with the Pimcore Agent Bundle's MCP server when that bundle is installed, and
+ * usable as a handler in a custom Mcp\Server. See doc/08_MCP_Tools.md.
  */
 final readonly class GetConfigurationExamplesTool
 {
-    private const EXAMPLES_PATH = __DIR__ . '/../../../doc/examples';
+    use DataImporterToolHelper;
+
+    private const string TOOL_NAME = 'get_import_config_examples';
+
+    private const string EXAMPLES_PATH = __DIR__ . '/../../../doc/examples';
 
     public function __construct(
-        private LoggerInterface $logger
+        private SecurityServiceInterface $securityService,
+        private McpToolErrorHandlerInterface $errorHandler,
+        private LoggerInterface $logger,
     ) {
     }
 
     #[McpTool(
-        name: 'get_configuration_examples',
-        description: 'Get example configurations for common import scenarios (CSV, XML, JSON). '
-            . 'Each example includes full configuration data and a summary with loader type, '
-            . 'interpreter, target class, and operators used. Use as templates for new configs.'
+        name: self::TOOL_NAME,
+        title: 'Get Import Configuration Examples',
+        description: 'Start here. Complete, working Data Importer configurations (CSV, CSV with '
+            . 'relations, JSON), each with a summary of the loader, interpreter, target class and '
+            . 'operators it uses. Copy the closest one and adapt it: this is the cheapest way to '
+            . 'learn the required top level structure. The class ids and field names in the '
+            . 'examples are illustrative, so replace them using the classes and field_type_matrix '
+            . 'sections of get_import_config_context.',
+        // Reads the example files shipped with the bundle.
+        annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]
     public function execute(): CallToolResult
     {
+        $denied = $this->denyIfNotAllowed($this->securityService);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         try {
             $examples = $this->loadExamples();
-
-            if (empty($examples)) {
-                $this->logger->warning(
-                    'No configuration examples found',
-                    ['path' => self::EXAMPLES_PATH]
-                );
-
-                return new CallToolResult(
-                    [
-                        new TextContent(
-                            json_encode(
-                                [
-                                    'examples' => [],
-                                    'message' => 'No examples available'
-                                ],
-                                JSON_PRETTY_PRINT
-                            )
-                        )
-                    ],
-                    isError: false
-                );
-            }
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            ['examples' => $examples],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
-                isError: false
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Failed to get configuration examples',
-                ['exception' => $e]
-            );
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'error' => $e->getMessage(),
-                                'type' => get_class($e)
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
-                isError: true
-            );
+        } catch (Throwable $e) {
+            return $this->handledError($this->errorHandler, $e, self::TOOL_NAME);
         }
+
+        return $this->successResult(['examples' => $examples]);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function loadExamples(): array
     {
-        $examplesPath = self::EXAMPLES_PATH;
+        if (!is_dir(self::EXAMPLES_PATH)) {
+            $this->logger->warning('Data Importer example directory is missing', [
+                'path' => self::EXAMPLES_PATH,
+            ]);
 
-        if (!is_dir($examplesPath)) {
             return [];
         }
 
-        $examples = [];
-        $files = glob($examplesPath . '/*.yaml');
-
+        $files = glob(self::EXAMPLES_PATH . '/*.yaml');
         if ($files === false) {
             return [];
         }
 
         sort($files);
 
+        $examples = [];
         foreach ($files as $file) {
-            $content = file_get_contents($file);
-            if ($content === false) {
-                $this->logger->warning(
-                    'Failed to read example file',
-                    ['file' => $file]
-                );
-
-                continue;
-            }
-
-            try {
-                $config = \Symfony\Component\Yaml\Yaml::parse($content);
-            } catch (\Exception $e) {
-                $this->logger->warning(
-                    'Failed to parse example YAML',
-                    [
-                        'file' => $file,
-                        'error' => $e->getMessage()
-                    ]
-                );
-
+            $config = $this->parseExample($file);
+            if ($config === null) {
                 continue;
             }
 
             $examples[] = [
                 'name' => basename($file, '.yaml'),
-                'title' => $config['general']['name'] ?? 'Unknown',
-                'description' =>
-                    $config['general']['description'] ?? '',
+                'description' => $config['general']['description'] ?? '',
+                'summary' => $this->summarise($config),
                 'configuration' => $config,
-                'summary' => $this->generateSummary($config)
             ];
         }
 
         return $examples;
     }
 
-    private function generateSummary(array $config): array
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function parseExample(string $file): ?array
     {
-        $loaderType = $config['loaderConfig']['type'] ?? 'unknown';
-        $interpreterType = $config['interpreterConfig']['type'] ??
-            'unknown';
-        $mappingCount = count($config['mappingConfig'] ?? []);
-        $classId = $config['resolverConfig']['dataObjectClassId'] ??
-            'unknown';
+        $content = file_get_contents($file);
+        if ($content === false) {
+            $this->logger->warning('Failed to read Data Importer example', ['file' => $file]);
 
-        $operatorTypes = [];
+            return null;
+        }
+
+        try {
+            $config = Yaml::parse($content);
+        } catch (Throwable $e) {
+            $this->logger->warning('Failed to parse Data Importer example', [
+                'file' => $file,
+                'exception' => $e,
+            ]);
+
+            return null;
+        }
+
+        return is_array($config) ? $config : null;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     *
+     * @return array<string, mixed>
+     */
+    private function summarise(array $config): array
+    {
+        $operators = [];
         foreach (($config['mappingConfig'] ?? []) as $mapping) {
-            $pipeline = $mapping['transformationPipeline'] ?? [];
-            foreach ($pipeline as $op) {
-                $type = $op['type'] ?? 'unknown';
-                $operatorTypes[$type] = ($operatorTypes[$type] ?? 0) + 1;
+            foreach (($mapping['transformationPipeline'] ?? []) as $operator) {
+                $type = $operator['type'] ?? 'unknown';
+                $operators[$type] = ($operators[$type] ?? 0) + 1;
             }
         }
 
         return [
-            'loaderType' => $loaderType,
-            'interpreterType' => $interpreterType,
-            'targetClass' => $classId,
-            'mappingCount' => $mappingCount,
-            'usedOperators' => array_keys($operatorTypes),
-            'operatorCounts' => $operatorTypes
+            'loaderType' => $config['loaderConfig']['type'] ?? 'unknown',
+            'interpreterType' => $config['interpreterConfig']['type'] ?? 'unknown',
+            'targetClass' => $config['resolverConfig']['dataObjectClassId'] ?? 'unknown',
+            'mappingCount' => count($config['mappingConfig'] ?? []),
+            'usedOperators' => array_keys($operators),
         ];
     }
 }

@@ -13,22 +13,26 @@ services:
     # Split the way the Pimcore Agent Bundle splits its own domains, so an agent can be granted
     # inspection of the import schema without also being granted the ability to write configurations.
 
-    # --- Read (schema, classes, examples, validation, enrichment) ---
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListAvailableClassesTool:
+    # --- Read (discovery, schema, validation, enrichment) ---
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool:
         tags:
             - name: 'pimcore.mcp_tool'
               group: 'pimcore-data-importer-read'
-              description: 'Read-only access to Data Importer configuration schema, classes and examples'
+              description: 'Read-only access to Data Importer configurations, schema and examples'
 
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationContextTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
 
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool:
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListImportConfigsTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
 
-    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetConfigurationExamplesTool:
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetImportConfigTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
 
@@ -40,12 +44,12 @@ services:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
 
-    # --- Direct write (create / update a configuration, no approval step) ---
+    # --- Direct write (create / replace a configuration, no approval step) ---
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\CreateDataImporterConfigTool:
         tags:
             - name: 'pimcore.mcp_tool'
               group: 'pimcore-data-importer-direct-write'
-              description: 'Create and update Data Importer configurations (no approval required)'
+              description: 'Create and replace Data Importer configurations (no approval required)'
 
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\SaveDataImporterConfigTool:
         tags:

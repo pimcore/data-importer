@@ -16,88 +16,80 @@ namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
-use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
-use Psr\Log\LoggerInterface;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Throwable;
 
 /**
- * MCP tool to create a new Data Importer configuration.
- *
- * Delegates to the DataHub ConfigurationService::addConfiguration
- * (matching the AddController pattern) which handles permission checks,
- * writeable validation, and uniqueness. Use save_configuration to
- * populate the created entry with actual configuration data.
- *
- * @internal
+ * Registered with the Pimcore Agent Bundle's MCP server when that bundle is installed, and
+ * usable as a handler in a custom Mcp\Server. See doc/08_MCP_Tools.md.
  */
 final readonly class CreateDataImporterConfigTool
 {
-    private const CONFIG_TYPE = 'dataImporterDataObject';
+    use DataImporterToolHelper;
+
+    private const string TOOL_NAME = 'create_import_config';
 
     public function __construct(
         private ConfigurationServiceInterface $configurationService,
-        private LoggerInterface $logger
+        private SecurityServiceInterface $securityService,
+        private McpToolErrorHandlerInterface $errorHandler,
     ) {
     }
 
     #[McpTool(
-        name: 'create_configuration',
-        description: 'Create a new empty Data Importer configuration entry in DataHub. '
-            . 'Fails if name already exists. After creation, use save_configuration '
-            . 'to populate it with the actual configuration data.'
+        name: self::TOOL_NAME,
+        title: 'Create Import Configuration',
+        description: 'Create a new, empty Data Importer configuration. Fails if the name already '
+            . 'exists, so check with list_import_configs first. Then call save_import_config to '
+            . 'populate it. New configurations are inactive: set general.active to true in the '
+            . 'configuration you save, or the import never runs.',
+        annotations: new ToolAnnotations(
+            readOnlyHint: false,
+            destructiveHint: false,
+            idempotentHint: false,
+            openWorldHint: false
+        )
     )]
     public function execute(
         #[Schema(
             type: 'string',
-            description: 'Unique name for the configuration. '
-                . 'Must not already exist in DataHub. '
-                . 'Use lowercase with hyphens (e.g. "csv-car-import").'
+            description: 'Unique name for the configuration, lowercase with hyphens, '
+                . 'for example "csv-car-import".'
         )]
         string $name,
         #[Schema(
             type: 'string',
-            description: 'Configuration path in DataHub. '
-                . 'Leave empty for the default location.'
+            description: 'Folder path for the configuration. Omit for the root.'
         )]
-        string $path = ''
+        ?string $path = null,
     ): CallToolResult {
+        $denied = $this->denyIfNotAllowed($this->securityService);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         try {
             $this->configurationService->addConfiguration(
                 $name,
-                self::CONFIG_TYPE,
-                $path
+                ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
+                $path ?? ''
             );
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'success' => true,
-                                'name' => $name,
-                                'type' => self::CONFIG_TYPE,
-                                'message' => 'Data Importer configuration "'
-                                    . $name . '" created successfully.',
-                                'hint' => 'Use save_configuration to populate '
-                                    . 'it with the actual configuration data.'
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
-                isError: false
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Failed to create Data Importer configuration',
-                ['name' => $name, 'exception' => $e->getMessage()]
-            );
-
-            return new CallToolResult(
-                [new TextContent(json_encode(['error' => $e->getMessage()], JSON_PRETTY_PRINT))],
-                isError: true
-            );
+        } catch (ForbiddenException $e) {
+            return $this->errorResult($e->getMessage(), self::CODE_PERMISSION_DENIED);
+        } catch (Throwable $e) {
+            return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['name' => $name]);
         }
+
+        return $this->successResult([
+            'created' => true,
+            'name' => $name,
+            'next' => 'Call save_import_config to populate it, with general.active set to true.',
+        ]);
     }
 }

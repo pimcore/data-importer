@@ -14,175 +14,87 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
+use function array_map;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
-use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
-use Psr\Log\LoggerInterface;
+use Pimcore\Bundle\DataImporterBundle\Validation\ValidationError;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Throwable;
 
 /**
- * MCP tool to validate Data Importer configurations.
- *
- * @internal
+ * Registered with the Pimcore Agent Bundle's MCP server when that bundle is installed, and
+ * usable as a handler in a custom Mcp\Server. See doc/08_MCP_Tools.md.
  */
 final readonly class ValidateConfigurationTool
 {
     use ConfigurationParserTrait;
+    use DataImporterToolHelper;
+
+    private const string TOOL_NAME = 'validate_import_config';
 
     public function __construct(
         private ConfigurationValidationService $validationService,
-        private LoggerInterface $logger
+        private SecurityServiceInterface $securityService,
+        private McpToolErrorHandlerInterface $errorHandler,
     ) {
     }
 
     #[McpTool(
-        name: 'validate_configuration',
-        description: 'Validate a Data Importer configuration. Returns {valid: true} or '
-            . '{valid: false, errors: [{path, message}]}. Always validate before saving. '
-            . 'Accepts JSON or YAML (auto-detected). IMPORTANT: YAML settings must be nested '
-            . 'structures, not JSON strings embedded in YAML.'
+        name: self::TOOL_NAME,
+        title: 'Validate Import Configuration',
+        description: 'Validate a Data Importer configuration before saving it. Returns '
+            . '{valid: true} or {valid: false, errors: [{path, message}]}. Run enrich_import_config '
+            . 'first: without transformationResultType every field is checked as type "default", '
+            . 'which produces spurious incompatibility errors on numeric, date and relation targets. '
+            . 'Accepts JSON or YAML, auto-detected. In YAML, every settings block must be a nested '
+            . 'structure, never a JSON string.',
+        // Pure function over the supplied configuration: nothing is stored.
+        annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]
     public function execute(
         #[Schema(
             type: 'string',
-            description: 'The configuration as JSON or YAML string. '
-                . 'For YAML: use nested structures for all settings fields, '
-                . 'not JSON strings embedded in YAML.'
+            description: 'The configuration as a JSON or YAML string.'
         )]
         string $configuration,
         #[Schema(
             type: 'string',
-            description: 'Format of the configuration: "json" or "yaml". '
-                . 'Auto-detects if not specified.'
+            description: 'Format of the configuration. Omit to auto-detect.',
+            enum: ['json', 'yaml'],
         )]
-        string $format = ''
+        ?string $format = null,
     ): CallToolResult {
+        $denied = $this->denyIfNotAllowed($this->securityService);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         try {
-            // Parse configuration based on format
-            $configArray = $this->parseConfiguration($configuration, $format);
+            $result = $this->validationService->validateConfiguration(
+                $this->parseConfiguration($configuration, $format ?? '')
+            );
+        } catch (Throwable $e) {
+            return $this->handledError($this->errorHandler, $e, self::TOOL_NAME);
+        }
 
-            $result = $this->validationService
-                ->validateConfiguration($configArray);
+        if ($result->isValid()) {
+            return $this->successResult(['valid' => true]);
+        }
 
-            if ($result->isValid()) {
-                return new CallToolResult(
-                    [
-                        new TextContent(
-                            json_encode(
-                                [
-                                    'valid' => true,
-                                    'message' => 'Configuration is valid'
-                                ],
-                                JSON_PRETTY_PRINT
-                            )
-                        )
-                    ],
-                    isError: false
-                );
-            }
-
-            $errors = [];
-            foreach ($result->getErrors() as $error) {
-                $errors[] = [
+        return $this->successResult([
+            'valid' => false,
+            'errors' => array_map(
+                static fn (ValidationError $error): array => [
                     'path' => $error->getPath(),
-                    'message' => $error->getMessage()
-                ];
-            }
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            ['valid' => false, 'errors' => $errors],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
+                    'message' => $error->getMessage(),
                 ],
-                isError: false
-            );
-        } catch (\Throwable $e) {
-            // Log full details server-side for debugging
-            $this->logger->error(
-                'Unhandled error during tool execution',
-                [
-                    'name' => 'validate_configuration',
-                    'exception' => $e->getMessage(),
-                    'type' => get_class($e),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString()
-                ]
-            );
-
-            // Return sanitized error to client (no paths/traces)
-            $errorMessage = $this->sanitizeErrorMessage($e);
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'valid' => false,
-                                'error' => $errorMessage
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
-                isError: true
-            );
-        }
-    }
-
-    /**
-     * Sanitize error message for client response
-     *
-     * Removes sensitive information like file paths and internal
-     * implementation details while providing actionable feedback.
-     */
-    private function sanitizeErrorMessage(\Throwable $e): string
-    {
-        $message = $e->getMessage();
-
-        // Handle common validation errors with helpful messages
-        if (str_contains($message, 'must be of type array, string given')) {
-            return 'Invalid configuration format: settings fields must ' .
-                'be nested YAML structures, not JSON strings. ' .
-                'Example: "settings:\\n  assetPath: /path" instead of ' .
-                '"settings: \\"{\\\"assetPath\\\":\\\"/path\\\"}\\""';
-        }
-
-        if (str_contains($message, 'Settings must be a nested YAML')) {
-            return $message;
-        }
-
-        if (str_contains($message, 'Invalid JSON in settings field')) {
-            return $message;
-        }
-
-        // Remove file paths from error messages
-        $message = preg_replace(
-            '#(/[^\s:]+\.(php|yaml|yml))#',
-            '[file]',
-            $message
-        );
-
-        // Remove line numbers that reference code
-        $message = preg_replace(
-            '#(on line|at line|line)\s+\d+#i',
-            '',
-            $message
-        );
-
-        // Provide generic fallback for unexpected errors
-        if (empty(trim($message))) {
-            return 'Configuration validation failed. Please check your ' .
-                'configuration structure and ensure all required fields ' .
-                'are present with valid values.';
-        }
-
-        return $message;
+                $result->getErrors()
+            ),
+        ]);
     }
 }

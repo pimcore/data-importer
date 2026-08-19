@@ -14,197 +14,146 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
+use function is_array;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
-use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\Yaml\Yaml;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Exception\InvalidMcpToolArgumentException;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Throwable;
 
 /**
- * MCP tool to enrich Data Importer configurations with transformation
- * result types.
- *
- * This tool calculates and adds the transformationResultType field to all
- * mapping items in a configuration. This field is derived from the
- * transformation pipeline and cannot be guessed by LLMs. It's useful for:
- * - Understanding data flow through transformation pipelines
- * - Selecting appropriate dataTarget configurations
- * - Debugging transformation pipeline errors
- *
- * @internal
+ * Registered with the Pimcore Agent Bundle's MCP server when that bundle is installed, and
+ * usable as a handler in a custom Mcp\Server. See doc/08_MCP_Tools.md.
  */
 final readonly class EnrichConfigurationTool
 {
     use ConfigurationParserTrait;
+    use DataImporterToolHelper;
 
-    private const MSG_MISSING_MAPPING = 'Configuration must have mappingConfig';
+    private const string TOOL_NAME = 'enrich_import_config';
 
     public function __construct(
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private ImportProcessingService $importProcessingService,
-        private LoggerInterface $logger
+        private SecurityServiceInterface $securityService,
+        private McpToolErrorHandlerInterface $errorHandler,
     ) {
     }
 
     #[McpTool(
-        name: 'enrich_configuration',
-        description: 'Calculate and add transformationResultType to mapping items. This type is '
-            . 'derived from the transformation pipeline and cannot be determined without this tool. '
-            . 'Accepts full config or single mapping item (JSON/YAML). Returns enriched data in '
-            . 'same format. Call after building config, before validation.'
+        name: self::TOOL_NAME,
+        title: 'Enrich Import Configuration',
+        description: 'Compute the transformationResultType of every mapping item. The type is '
+            . 'derived from the transformation pipeline and cannot be guessed. Run this before '
+            . 'validate_import_config: validation without it assumes "default" for every field and '
+            . 'rejects numeric, date and relation targets. Returns only the computed types as '
+            . '[{index, label, transformationResultType}]; set each one on the matching mapping '
+            . 'item of the configuration you already hold, then validate.',
+        // Computes over the supplied configuration; nothing is stored.
+        annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]
     public function execute(
         #[Schema(
             type: 'string',
-            description: 'Full Data Importer configuration or single '
-                . 'mapping item as JSON or YAML string. For full config, '
-                . 'must include general.name and mappingConfig array. '
-                . 'For single item, must include label, dataSourceIndex, '
-                . 'transformationPipeline, and dataTarget. For YAML: use '
-                . 'nested structures for all settings fields.'
+            description: 'A full Data Importer configuration, or a single mapping item, as JSON '
+                . 'or YAML. A single item is recognised by having label, dataSourceIndex and '
+                . 'dataTarget without general or mappingConfig.'
         )]
         string $configuration,
         #[Schema(
             type: 'string',
-            description: 'Format: "json" or "yaml". Auto-detects if not specified.'
+            description: 'Format of the configuration. Omit to auto-detect.',
+            enum: ['json', 'yaml'],
         )]
-        string $format = ''
+        ?string $format = null,
     ): CallToolResult {
+        $denied = $this->denyIfNotAllowed($this->securityService);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         try {
-            $detectedFormat = $this->detectInputFormat($configuration, $format);
-            $configArray = $this->parseConfiguration($configuration, $format);
-            $isSingleItem = $this->isSingleMappingItem($configArray);
+            $configArray = $this->parseConfiguration($configuration, $format ?? '');
 
-            if ($isSingleItem) {
-                $enrichedItem = $this->enrichSingleMappingItem(
-                    $configArray,
-                    'temp'
-                );
-
-                return $this->createSuccessResult(
-                    $enrichedItem,
-                    $detectedFormat
-                );
-            }
-
-            $enrichedConfig = $this->enrichFullConfiguration(
-                $configArray
-            );
-
-            return $this->createSuccessResult(
-                $enrichedConfig,
-                $detectedFormat
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Error enriching configuration: ' . $e->getMessage(),
-                ['exception' => $e]
-            );
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'error' => 'Failed to enrich configuration',
-                                'message' => $e->getMessage()
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
-                isError: true
-            );
-        }
-    }
-
-    private function detectInputFormat(string $configuration, string $format): string
-    {
-        if ($format !== '') {
-            return strtolower($format);
+            $types = $this->isSingleMappingItem($configArray)
+                ? [$this->describeItem(0, $configArray, 'temp')]
+                : $this->describeFullConfiguration($configArray);
+        } catch (Throwable $e) {
+            return $this->handledError($this->errorHandler, $e, self::TOOL_NAME);
         }
 
-        $trimmed = ltrim($configuration);
-
-        return str_starts_with($trimmed, '{') || str_starts_with($trimmed, '[')
-            ? 'json'
-            : 'yaml';
+        return $this->successResult(['types' => $types]);
     }
 
+    /**
+     * @param array<string, mixed> $config
+     */
     private function isSingleMappingItem(array $config): bool
     {
-        return isset($config['label']) &&
-            isset($config['dataSourceIndex']) &&
-            isset($config['dataTarget']) &&
-            !isset($config['general']) &&
-            !isset($config['mappingConfig']);
+        return isset($config['label'], $config['dataSourceIndex'], $config['dataTarget'])
+            && !isset($config['general'])
+            && !isset($config['mappingConfig']);
     }
 
-    private function enrichSingleMappingItem(
-        array $mappingItem,
-        string $configName
-    ): array {
-        $mappingConfiguration = $this->mappingConfigurationFactory
-            ->loadMappingConfigurationItem($configName, $mappingItem, false);
-
-        $resultType = $this->importProcessingService
-            ->evaluateTransformationResultDataType($mappingConfiguration);
-
-        $mappingItem['transformationResultType'] = $resultType;
-
-        return $mappingItem;
-    }
-
-    private function enrichFullConfiguration(
-        array $config
-    ): array {
-        if (!isset($config['mappingConfig']) ||
-            !is_array($config['mappingConfig'])
-        ) {
-            throw new \InvalidArgumentException(self::MSG_MISSING_MAPPING);
+    /**
+     * @param array<string, mixed> $config
+     *
+     * @return list<array{index: int|string, label: string, transformationResultType: string}>
+     *
+     * @throws InvalidMcpToolArgumentException
+     */
+    private function describeFullConfiguration(array $config): array
+    {
+        $mappingConfig = $config['mappingConfig'] ?? null;
+        if (!is_array($mappingConfig)) {
+            throw new InvalidMcpToolArgumentException(
+                'Configuration must have a mappingConfig array.'
+            );
         }
+
+        // Both shapes occur: mappingConfig as a plain list of items, and the nested
+        // mappingConfig.mappingItems the Studio form writes.
+        $items = is_array($mappingConfig['mappingItems'] ?? null)
+            ? $mappingConfig['mappingItems']
+            : $mappingConfig;
 
         $name = $config['general']['name'] ?? 'temp';
 
-        // Handle both old format (mappingConfig as array of items)
-        // and new format (mappingConfig.mappingItems)
-        if (isset($config['mappingConfig']['mappingItems'])) {
-            foreach ($config['mappingConfig']['mappingItems'] as $index => $mappingItem) {
-                $config['mappingConfig']['mappingItems'][$index] = $this->enrichSingleMappingItem(
-                    $mappingItem,
-                    $name
+        $types = [];
+        foreach ($items as $index => $item) {
+            if (!is_array($item)) {
+                throw new InvalidMcpToolArgumentException(
+                    sprintf('mappingConfig[%s] must be an object.', $index)
                 );
             }
-        } else {
-            // Old format: mappingConfig is direct array of items
-            foreach ($config['mappingConfig'] as $index => $mappingItem) {
-                $config['mappingConfig'][$index] = $this->enrichSingleMappingItem(
-                    $mappingItem,
-                    $name
-                );
-            }
+
+            $types[] = $this->describeItem($index, $item, (string) $name);
         }
 
-        return $config;
+        return $types;
     }
 
-    private function createSuccessResult(
-        array $data,
-        string $format
-    ): CallToolResult {
-        if ($format === 'yaml') {
-            $content = Yaml::dump($data, 10, 2);
-        } else {
-            $content = json_encode($data, JSON_PRETTY_PRINT);
-        }
+    /**
+     * @param array<string, mixed> $mappingItem
+     *
+     * @return array{index: int|string, label: string, transformationResultType: string}
+     */
+    private function describeItem(int|string $index, array $mappingItem, string $configName): array
+    {
+        $mappingConfiguration = $this->mappingConfigurationFactory
+            ->loadMappingConfigurationItem($configName, $mappingItem, false);
 
-        return new CallToolResult(
-            [new TextContent($content)],
-            isError: false
-        );
+        return [
+            'index' => $index,
+            'label' => (string) ($mappingItem['label'] ?? ''),
+            'transformationResultType' => $this->importProcessingService
+                ->evaluateTransformationResultDataType($mappingConfiguration),
+        ];
     }
 }

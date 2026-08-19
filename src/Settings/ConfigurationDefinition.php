@@ -495,6 +495,12 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->info('Array of source field names to map from. for csv files it is the number ' .
                                 'of the column starting from 0, for json/xml it is field name.')
                     ->end()
+                    ->variableNode('settings')
+                        ->info('Legacy per-item settings. Ignored by the importer '
+                            . '(MappingConfigurationFactory reads settings only inside '
+                            . 'transformationPipeline entries and dataTarget), but present in '
+                            . 'configurations written by older versions, so it is accepted.')
+                    ->end()
                     ->scalarNode('transformationResultType')
                         ->cannotBeEmpty()
                         ->info('Result type of the transformation pipeline, used to check ' .

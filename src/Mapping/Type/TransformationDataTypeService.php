@@ -402,7 +402,7 @@ final class TransformationDataTypeService
 
         $compatibleFieldKeys = array_column($compatibleFields, 'key');
 
-        $isValid = in_array($fieldName, $compatibleFieldKeys);
+        $isValid = in_array($fieldName, $compatibleFieldKeys, true);
 
         if ($throwException && !$isValid) {
 
@@ -413,18 +413,15 @@ final class TransformationDataTypeService
             );
 
             $msg = sprintf(
-                'Field "%s" is not compatible with transformation '
-                . 'result type "%s" for classID "%s". '
-                . 'Compatible fields for this result type: %s. '
-                . 'The field "%s" accepts these result types: %s',
+                'Field "%s" of class "%s" cannot store transformation result type "%s". '
+                . 'It accepts: %s. Use get_import_config_context with the field_type_matrix '
+                . 'section for the full field to type map.',
                 $fieldName,
-                implode(', ', $transformationResultType),
                 $classId,
-                implode(', ', $compatibleFieldKeys),
-                $fieldName,
+                implode(', ', $transformationResultType),
                 $acceptedTypes !== []
                     ? implode(', ', $acceptedTypes)
-                    : 'none found'
+                    : 'no transformation result type'
             );
 
             throw new InvalidConfigurationException($msg);

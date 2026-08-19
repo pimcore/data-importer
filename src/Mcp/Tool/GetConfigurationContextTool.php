@@ -14,251 +14,254 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
+use function array_diff;
+use function array_map;
+use function implode;
+use function is_array;
+use function is_string;
 use Mcp\Capability\Attribute\McpTool;
-use Mcp\Schema\Content\TextContent;
+use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
-use Psr\Log\LoggerInterface;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Exception\InvalidMcpToolArgumentException;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use function sprintf;
+use Throwable;
 
 /**
- * MCP tool to retrieve configuration context in focused sections.
- *
- * Returns only the requested sections to keep responses compact
- * and avoid overwhelming the LLM context window.
- *
- * @internal
+ * Registered with the Pimcore Agent Bundle's MCP server when that bundle is installed, and
+ * usable as a handler in a custom Mcp\Server. See doc/08_MCP_Tools.md.
  */
 final readonly class GetConfigurationContextTool
 {
-    private const SECTION_OPERATORS = 'operators';
+    use DataImporterToolHelper;
 
-    private const SECTION_TARGETS = 'targets';
+    private const string TOOL_NAME = 'get_import_config_context';
 
-    private const SECTION_CLASSES = 'classes';
+    private const string SECTION_CLASSES = 'classes';
 
-    private const SECTION_FIELD_MATRIX = 'field_type_matrix';
+    private const string SECTION_LOADERS = 'loaders';
 
-    private const SECTION_SCHEMA = 'schema';
+    private const string SECTION_INTERPRETERS = 'interpreters';
 
-    private const VALID_SECTIONS = [
+    private const string SECTION_RESOLVER = 'resolver';
+
+    private const string SECTION_OPERATORS = 'operators';
+
+    private const string SECTION_TARGETS = 'targets';
+
+    private const string SECTION_FIELD_MATRIX = 'field_type_matrix';
+
+    private const string SECTION_SCHEMA = 'schema';
+
+    /** @var list<string> */
+    private const array VALID_SECTIONS = [
+        self::SECTION_CLASSES,
+        self::SECTION_LOADERS,
+        self::SECTION_INTERPRETERS,
+        self::SECTION_RESOLVER,
         self::SECTION_OPERATORS,
         self::SECTION_TARGETS,
-        self::SECTION_CLASSES,
         self::SECTION_FIELD_MATRIX,
         self::SECTION_SCHEMA,
     ];
 
-    private const DEFAULT_SECTIONS = [
-        self::SECTION_OPERATORS,
-        self::SECTION_TARGETS,
+    /**
+     * Cheap orientation: what to import into and where the data comes from. Everything that
+     * costs real context, above all the operator catalogue and the full schema, is opt in.
+     *
+     * @var list<string>
+     */
+    private const array DEFAULT_SECTIONS = [
         self::SECTION_CLASSES,
+        self::SECTION_LOADERS,
+        self::SECTION_INTERPRETERS,
     ];
 
     public function __construct(
         private ConfigurationSchemaService $configurationSchemaService,
-        private LoggerInterface $logger
+        private SecurityServiceInterface $securityService,
+        private McpToolErrorHandlerInterface $errorHandler,
     ) {
     }
 
     #[McpTool(
-        name: 'get_configuration_context',
-        description: 'Get context needed to build Data Importer configurations. '
-            . 'Use the "include" parameter to request specific sections (comma-separated): '
-            . '"operators" (transformation operators with acceptedInputTypes and outputTypes '
-            . '— chain operators where outputTypes of one match acceptedInputTypes of the next), '
-            . '"targets" (data target types: direct, manyToManyRelation, classificationstore), '
-            . '"classes" (available data object classes for import targets), '
-            . '"field_type_matrix" (requires classId — shows which fields accept which '
-            . 'transformation result types, e.g. "numeric" fields, "dataObject" fields, '
-            . '"gallery" fields), '
-            . '"schema" (full JSON schema for config validation — large, only request when needed). '
-            . 'Default sections when include is empty: operators, targets, classes.'
+        name: self::TOOL_NAME,
+        title: 'Get Import Configuration Context',
+        description: 'Reference data for building a Data Importer configuration. Start with '
+            . 'get_import_config_examples for the overall shape, then call this for detail. '
+            . 'Sections: classes (import targets and their ids), loaders (where data comes from), '
+            . 'interpreters (file formats), resolver (loading, location and publishing strategies), '
+            . 'targets (dataTarget types), operators (transformation operators, with the input and '
+            . 'output types you chain them by), field_type_matrix (requires classId: which field '
+            . 'accepts which result type), schema (the full JSON schema, large, use only when a '
+            . 'validation error is otherwise unexplainable). Defaults to classes, loaders and '
+            . 'interpreters.',
+        // Pure lookup over the class and service definitions.
+        annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]
     public function execute(
-        string $classId = '',
-        string $include = '',
-        bool $includeExamples = false
+        #[Schema(
+            type: 'array',
+            description: 'Sections to return. Omit for classes, loaders and interpreters.',
+            items: ['type' => 'string', 'enum' => self::VALID_SECTIONS],
+        )]
+        ?array $sections = null,
+        #[Schema(
+            type: 'string',
+            description: 'Data object class id or name. Required for the field_type_matrix section.'
+        )]
+        ?string $classId = null,
     ): CallToolResult {
+        $denied = $this->denyIfNotAllowed($this->securityService);
+        if ($denied !== null) {
+            return $denied;
+        }
+
         try {
-            $sections = $this->parseSections($include);
+            $requested = $this->resolveSections($sections);
             $context = [];
 
-            if (in_array(self::SECTION_OPERATORS, $sections, true)) {
-                $context['transformation_operators'] =
-                    $this->getOperators();
+            foreach ($requested as $section) {
+                $context[$section] = $this->buildSection($section, $classId);
             }
-
-            if (in_array(self::SECTION_TARGETS, $sections, true)) {
-                $context['data_target_types'] = $this->getTargets();
-            }
-
-            if (in_array(self::SECTION_CLASSES, $sections, true)) {
-                $context['available_classes'] = $this->getClasses();
-            }
-
-            if (
-                in_array(self::SECTION_FIELD_MATRIX, $sections, true)
-                && $classId !== ''
-            ) {
-                $context['field_type_matrix'] =
-                    $this->getFieldTypeMatrix($classId);
-            }
-
-            if (in_array(self::SECTION_SCHEMA, $sections, true)) {
-                $context['schema'] = $this->getSchema();
-            }
-
-            if ($includeExamples) {
-                $context['examples'] = $this->getExamples();
-            }
-
-            return new CallToolResult(
-                [new TextContent(
-                    json_encode($context, JSON_PRETTY_PRINT)
-                )],
-                isError: false
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Failed to get configuration context',
-                [
-                    'classId' => $classId,
-                    'exception' => $e
-                ]
-            );
-
-            return new CallToolResult(
-                [
-                    new TextContent(
-                        json_encode(
-                            [
-                                'error' => $e->getMessage(),
-                                'type' => get_class($e)
-                            ],
-                            JSON_PRETTY_PRINT
-                        )
-                    )
-                ],
-                isError: true
-            );
+        } catch (Throwable $e) {
+            return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['classId' => $classId]);
         }
+
+        return $this->successResult($context);
     }
 
     /**
-     * @return string[]
+     * @param list<mixed>|null $sections
+     *
+     * @return list<string>
+     *
+     * @throws InvalidMcpToolArgumentException
      */
-    private function parseSections(string $include): array
+    private function resolveSections(?array $sections): array
     {
-        if ($include === '') {
+        if ($sections === null || $sections === []) {
             return self::DEFAULT_SECTIONS;
         }
 
-        $requested = array_map(
-            'trim',
-            explode(',', $include)
+        $names = array_map(
+            static fn (mixed $section): string => is_string($section) ? $section : '',
+            $sections
         );
 
-        $valid = array_filter(
-            $requested,
-            static fn (string $s): bool => in_array(
-                $s,
-                self::VALID_SECTIONS,
-                true
-            )
-        );
-
-        return $valid !== [] ? array_values($valid) : self::DEFAULT_SECTIONS;
-    }
-
-    private function getSchema(): array
-    {
-        return $this->configurationSchemaService->getCompleteSchema();
-    }
-
-    private function getOperators(): array
-    {
-        $schema = $this->configurationSchemaService
-            ->getMappingConfigSchema();
-
-        if (isset(
-            $schema['items']['properties']['transformationPipeline']['availableOperators']
-        )) {
-            return $schema['items']['properties']['transformationPipeline']['availableOperators'];
+        // Silently dropping an unknown section used to serve the full default payload as if
+        // nothing had happened, so a typo cost thousands of tokens and produced no signal.
+        $unknown = array_diff($names, self::VALID_SECTIONS);
+        if ($unknown !== []) {
+            throw new InvalidMcpToolArgumentException(sprintf(
+                'Unknown section(s): %s. Valid sections: %s.',
+                implode(', ', $unknown),
+                implode(', ', self::VALID_SECTIONS)
+            ));
         }
 
-        $this->logger->warning(
-            'No transformation operators found in schema'
-        );
-
-        return [];
+        return $names;
     }
 
-    private function getTargets(): array
+    /**
+     * @throws InvalidMcpToolArgumentException
+     *
+     * @return array<array-key, mixed>
+     */
+    private function buildSection(string $section, ?string $classId): array
     {
-        $schema = $this->configurationSchemaService
-            ->getMappingConfigSchema();
-
-        if (isset(
-            $schema['items']['properties']['dataTarget']['availableTargets']
-        )) {
-            return $schema['items']['properties']['dataTarget']['availableTargets'];
-        }
-
-        $this->logger->warning('No data targets found in schema');
-
-        return [];
+        return match ($section) {
+            self::SECTION_CLASSES => $this->configurationSchemaService->getAvailableClasses(),
+            self::SECTION_LOADERS => $this->availableTypes(
+                $this->configurationSchemaService->getLoaderConfigSchema()
+            ),
+            self::SECTION_INTERPRETERS => $this->availableTypes(
+                $this->configurationSchemaService->getInterpreterConfigSchema()
+            ),
+            self::SECTION_RESOLVER => $this->configurationSchemaService->getResolverConfigSchema(),
+            self::SECTION_OPERATORS => $this->fromMappingSchema(
+                ['transformationPipeline', 'availableOperators']
+            ),
+            self::SECTION_TARGETS => $this->fromMappingSchema(['dataTarget', 'availableTargets']),
+            self::SECTION_FIELD_MATRIX => $this->fieldTypeMatrix($classId),
+            self::SECTION_SCHEMA => $this->slimSchema(),
+            default => [],
+        };
     }
 
-    private function getClasses(): array
+    /**
+     * @param array<string, mixed> $schema
+     *
+     * @return array<array-key, mixed>
+     */
+    private function availableTypes(array $schema): array
     {
-        return $this->configurationSchemaService->getAvailableClasses();
+        $types = $schema['availableTypes'] ?? $schema['properties']['type']['availableTypes'] ?? [];
+
+        return is_array($types) ? $types : [];
     }
 
-    private function getExamples(): array
+    /**
+     * @param list<string> $path
+     *
+     * @return array<array-key, mixed>
+     */
+    private function fromMappingSchema(array $path): array
     {
-        $examplesPath = __DIR__ . '/../../../docs/examples';
-
-        if (!is_dir($examplesPath)) {
-            return [];
-        }
-
-        $examples = [];
-        $files = glob($examplesPath . '/*.yaml');
-
-        if ($files === false) {
-            return [];
-        }
-
-        sort($files);
-
-        foreach ($files as $file) {
-            $content = file_get_contents($file);
-            if ($content === false) {
-                continue;
+        $node = $this->configurationSchemaService->getMappingConfigSchema()['items']['properties'] ?? null;
+        foreach ($path as $key) {
+            if (!is_array($node) || !isset($node[$key])) {
+                return [];
             }
 
-            try {
-                $config = \Symfony\Component\Yaml\Yaml::parse($content);
-            } catch (\Exception $e) {
-                continue;
-            }
-
-            $examples[] = [
-                'name' => basename($file, '.yaml'),
-                'title' => $config['general']['name'] ?? 'Unknown',
-                'description' =>
-                    $config['general']['description'] ?? '',
-                'configuration' => $config
-            ];
+            $node = $node[$key];
         }
 
-        return $examples;
+        return is_array($node) ? $node : [];
     }
 
-    private function getFieldTypeMatrix(string $classId): array
+    /**
+     * @throws InvalidMcpToolArgumentException
+     *
+     * @return array<array-key, mixed>
+     */
+    private function fieldTypeMatrix(?string $classId): array
     {
-        return $this->configurationSchemaService->getFieldTypeMatrix(
-            $classId
-        );
+        if ($classId === null || $classId === '') {
+            // Returning [] here was indistinguishable from a class with no fields, and flipped
+            // the response from an object to an array.
+            throw new InvalidMcpToolArgumentException(
+                'The field_type_matrix section requires a classId.'
+            );
+        }
+
+        return $this->configurationSchemaService->getFieldTypeMatrix($classId);
+    }
+
+    /**
+     * The complete schema embeds the operator and target catalogues verbatim, which are also
+     * their own sections. Requesting both charged for them twice, and the catalogues are the
+     * bulk of it.
+     *
+     * @return array<array-key, mixed>
+     */
+    private function slimSchema(): array
+    {
+        $schema = $this->configurationSchemaService->getCompleteSchema();
+        $mapping = &$schema['mappingConfig']['items']['properties'];
+
+        if (isset($mapping['transformationPipeline']['availableOperators'])) {
+            $mapping['transformationPipeline']['availableOperators'] =
+                'See the "operators" section of this tool.';
+        }
+
+        if (isset($mapping['dataTarget']['availableTargets'])) {
+            $mapping['dataTarget']['availableTargets'] = 'See the "targets" section of this tool.';
+        }
+
+        return $schema;
     }
 }
