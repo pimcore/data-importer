@@ -217,11 +217,57 @@ class ConfigurationValidationService
             return $errors;
         }
 
+        $errors = array_merge($errors, $this->validateResolverStrategySettings($config));
+
         // Also try to instantiate through factory to check dependencies
         try {
             $this->factories->resolver()->loadResolver($config);
         } catch (InvalidConfigurationException $e) {
             $errors[] = new ValidationError('resolverConfig', $e->getMessage());
+        }
+
+        return $errors;
+    }
+
+    /**
+     * The four resolver strategies each declare their own settings schema. Without this they
+     * were accepted unchecked, so a typo in a strategy setting only surfaced at import time.
+     *
+     * @param array<string, mixed> $config
+     *
+     * @return ValidationError[]
+     */
+    private function validateResolverStrategySettings(array $config): array
+    {
+        $strategies = [
+            'loadingStrategy' => $this->locators->loadStrategy(),
+            'createLocationStrategy' => $this->locators->locationStrategy(),
+            'locationUpdateStrategy' => $this->locators->locationStrategy(),
+            'publishingStrategy' => $this->locators->publishStrategy(),
+        ];
+
+        $errors = [];
+        foreach ($strategies as $key => $locator) {
+            $strategy = $config[$key] ?? null;
+            if (!is_array($strategy) || !is_string($strategy['type'] ?? null)) {
+                continue;
+            }
+
+            $settings = $this->normalizeSettings(
+                $strategy['settings'] ?? [],
+                'resolverConfig.' . $key . '.settings',
+                $errors
+            );
+            if ($settings === null) {
+                continue;
+            }
+
+            $errors = array_merge($errors, $this->validateSchemaAwareSettings(
+                'resolverConfig.' . $key,
+                $locator,
+                $strategy['type'],
+                $settings
+            ));
         }
 
         return $errors;
@@ -307,6 +353,8 @@ class ConfigurationValidationService
         }
 
         foreach ($mappingConfig as $index => $mappingItem) {
+            $errors = array_merge($errors, $this->validateMappingItemSettings((string) $index, $mappingItem));
+
             try {
                 $mappingConfiguration = $this->factories->mappingConfiguration()->loadMappingConfigurationItem(
                     $configName,
@@ -473,6 +521,61 @@ class ConfigurationValidationService
      *
      * @return ValidationError[]
      */
+    /**
+     * The data target and every transformation operator declare their own settings schema.
+     *
+     * @param array<string, mixed> $mappingItem
+     *
+     * @return ValidationError[]
+     */
+    private function validateMappingItemSettings(string $index, array $mappingItem): array
+    {
+        $errors = [];
+        $path = 'mappingConfig[' . $index . ']';
+
+        $dataTarget = $mappingItem['dataTarget'] ?? null;
+        if (is_array($dataTarget) && is_string($dataTarget['type'] ?? null)) {
+            $settings = $this->normalizeSettings(
+                $dataTarget['settings'] ?? [],
+                $path . '.dataTarget.settings',
+                $errors
+            );
+            if ($settings !== null) {
+                $errors = array_merge($errors, $this->validateSchemaAwareSettings(
+                    $path . '.dataTarget',
+                    $this->locators->dataTarget(),
+                    $dataTarget['type'],
+                    $settings
+                ));
+            }
+        }
+
+        foreach (($mappingItem['transformationPipeline'] ?? []) as $step => $operator) {
+            if (!is_array($operator) || !is_string($operator['type'] ?? null)) {
+                continue;
+            }
+
+            $operatorPath = $path . '.transformationPipeline[' . $step . ']';
+            $settings = $this->normalizeSettings(
+                $operator['settings'] ?? [],
+                $operatorPath . '.settings',
+                $errors
+            );
+            if ($settings === null) {
+                continue;
+            }
+
+            $errors = array_merge($errors, $this->validateSchemaAwareSettings(
+                $operatorPath,
+                $this->locators->operator(),
+                $operator['type'],
+                $settings
+            ));
+        }
+
+        return $errors;
+    }
+
     private function validateSchemaAwareSettings(
         string $path,
         ServiceLocator $locator,

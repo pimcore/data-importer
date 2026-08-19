@@ -191,7 +191,9 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface, Tr
                         'How to determine the unit: "id" (unit ID from input), '
                         . '"abbr" (abbreviation from input), or "static" (fixed unit)'
                     )
-                    ->values(['id', 'abbr', 'static'])
+                    // '' is what the configuration UI stores when nothing is selected, and
+                    // setSettings() carries it through, so it has to be permissible here.
+                    ->values(['', 'id', 'abbr', 'static'])
                     ->defaultValue('id')
                 ->end()
                 ->scalarNode('staticUnitSelect')
@@ -199,6 +201,13 @@ class QuantityValue extends AbstractOperator implements SchemaAwareInterface, Tr
                     ->defaultValue(null)
                 ->end()
                 ->booleanNode('unitNullIfNoValueCheckbox')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('If true, sets unit to null when value is null or empty')
                     ->defaultValue(false)
                 ->end()

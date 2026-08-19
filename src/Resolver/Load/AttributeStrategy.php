@@ -115,6 +115,13 @@ final class AttributeStrategy extends AbstractLoad implements SchemaAwareInterfa
                     ->info('Language code for localized attributes')
                 ->end()
                 ->booleanNode('includeUnpublished')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->defaultValue(false)
                     ->info(
                         'Whether to include unpublished objects in the ' .

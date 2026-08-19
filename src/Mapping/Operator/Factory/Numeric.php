@@ -121,6 +121,13 @@ final class Numeric extends AbstractOperator implements SchemaAwareInterface, Tr
         $rootNode
             ->children()
                 ->booleanNode('returnNullIfEmpty')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('If true, returns null when input is empty or non-numeric (instead of 0.0)')
                     ->defaultValue(false)
                 ->end()

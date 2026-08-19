@@ -270,10 +270,24 @@ class ImportAsset extends AbstractOperator implements SchemaAwareInterface, Tran
                     ->defaultValue('/')
                 ->end()
                 ->booleanNode('useExisting')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('If true, uses existing asset if found at target path instead of creating new one')
                     ->defaultValue(false)
                 ->end()
                 ->booleanNode('overwriteExisting')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('If true, overwrites existing asset data if content has changed')
                     ->defaultValue(false)
                 ->end()

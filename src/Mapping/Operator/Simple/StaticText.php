@@ -142,6 +142,13 @@ final class StaticText extends AbstractOperator implements SchemaAwareInterface,
                     ->defaultValue('')
                 ->end()
                 ->booleanNode('alwaysAdd')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('If true, adds text even when input is empty')
                     ->defaultValue(false)
                 ->end()

@@ -248,10 +248,24 @@ class Direct implements DataTargetInterface, SchemaAwareInterface, DataTargetFie
                     ->defaultValue(null)
                 ->end()
                 ->booleanNode('writeIfSourceIsEmpty')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('Write to target even if source data is empty')
                     ->defaultValue(true)
                 ->end()
                 ->booleanNode('writeIfTargetIsNotEmpty')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
                     ->info('Write to target even if target already has a value')
                     ->defaultValue(true)
                 ->end()
