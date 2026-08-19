@@ -34,6 +34,8 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class ConfigurationDefinitionPass implements CompilerPassInterface
 {
+    private const LOCATORS_ARGUMENT = '$locators';
+
     public function process(ContainerBuilder $container): void
     {
         if (!$container->hasDefinition(ConfigurationDefinition::class)) {
@@ -100,16 +102,16 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
         ]);
 
         $container->getDefinition(ConfigurationDefinition::class)
-            ->setArgument('$locators', $locators);
+            ->setArgument(self::LOCATORS_ARGUMENT, $locators);
 
         if ($container->hasDefinition(ConfigurationValidationService::class)) {
             $container->getDefinition(ConfigurationValidationService::class)
-                ->setArgument('$locators', $locators);
+                ->setArgument(self::LOCATORS_ARGUMENT, $locators);
         }
 
         if ($container->hasDefinition(ConfigurationSchemaService::class)) {
             $container->getDefinition(ConfigurationSchemaService::class)
-                ->setArgument('$locators', $locators);
+                ->setArgument(self::LOCATORS_ARGUMENT, $locators);
         }
     }
 

@@ -17,7 +17,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 } elseif (getenv('PIMCORE_PROJECT_ROOT')) {
     define('PIMCORE_PROJECT_ROOT', getenv('PIMCORE_PROJECT_ROOT'));
 } else {
-    throw new \Exception(
+    throw new \InvalidArgumentException(
         'Unknown configuration! Pimcore project root not found, please set env variable PIMCORE_PROJECT_ROOT.'
     );
 }

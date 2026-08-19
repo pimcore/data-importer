@@ -34,6 +34,8 @@ final class ConfigurationParserTraitTest extends Unit
     use ConfigurationParserTrait;
 
     private const string JSON_BODY = '{"general": {"name": "csv-car-import"}, "mappingConfig": []}';
+    private const string MSG_NOT_AN_OBJECT = 'must be an object';
+
 
     private const string YAML_BODY = "general:\n    name: csv-car-import\nmappingConfig: []\n";
 
@@ -51,7 +53,7 @@ final class ConfigurationParserTraitTest extends Unit
     {
         // Detection has to see the bracket as JSON; a top level list is still not a configuration.
         $this->expectException(InvalidMcpToolArgumentException::class);
-        $this->expectExceptionMessage('must be an object');
+        $this->expectExceptionMessage(self::MSG_NOT_AN_OBJECT);
 
         $this->parseConfiguration('[{"label": "Name"}]', '');
     }
@@ -118,7 +120,7 @@ final class ConfigurationParserTraitTest extends Unit
     public function testAYamlScalarIsRejectedBecauseAConfigurationIsAnArray(): void
     {
         $this->expectException(InvalidMcpToolArgumentException::class);
-        $this->expectExceptionMessage('must be an object');
+        $this->expectExceptionMessage(self::MSG_NOT_AN_OBJECT);
 
         $this->parseConfiguration('just a string', '');
     }
@@ -126,7 +128,7 @@ final class ConfigurationParserTraitTest extends Unit
     public function testAnEmptyBodyIsRejectedAsANonArray(): void
     {
         $this->expectException(InvalidMcpToolArgumentException::class);
-        $this->expectExceptionMessage('must be an object');
+        $this->expectExceptionMessage(self::MSG_NOT_AN_OBJECT);
 
         $this->parseConfiguration('', '');
     }

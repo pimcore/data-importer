@@ -20,6 +20,8 @@ use Pimcore\Tests\Support\Util\TestHelper;
 
 class SimpleOperatorTest extends Unit
 {
+    private const string HELLO_TEST = 'Hello Test';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -38,7 +40,7 @@ class SimpleOperatorTest extends Unit
     {
         $service = $this->tester->grabService(StringReplace::class);
         $service->setSettings(['search' => 'Test', 'replace' => 'Result']);
-        $data = $service->process('Hello Test');
+        $data = $service->process(self::HELLO_TEST);
 
         $this->assertEquals($data, 'Hello Result');
     }
@@ -47,7 +49,7 @@ class SimpleOperatorTest extends Unit
     {
         $service = $this->tester->grabService(StringReplace::class);
         $service->setSettings(['search' => 'Test', 'replace' => 'Result']);
-        $data = $service->process(['Hello Test', 'Test Array', '*Test*']);
+        $data = $service->process([self::HELLO_TEST, 'Test Array', '*Test*']);
 
         $this->assertEquals($data[0], 'Hello Result');
         $this->assertEquals($data[1], 'Result Array');
@@ -95,7 +97,7 @@ class SimpleOperatorTest extends Unit
     {
         $service = $this->tester->grabService(StringReplace::class);
         $service->setSettings(['search' => 'Test', 'replace' => '']);
-        $data = $service->process(['Hello Test', '', 'Test']);
+        $data = $service->process([self::HELLO_TEST, '', 'Test']);
 
         $this->assertEquals($data[0], 'Hello ');
         $this->assertEquals($data[1], '');

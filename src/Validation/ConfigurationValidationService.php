@@ -35,6 +35,8 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
  */
 class ConfigurationValidationService
 {
+    private const SETTINGS_SUFFIX = '.settings';
+
     private const MSG_VALIDATION_FAILED = 'Validation failed: ';
 
     private Processor $configProcessor;
@@ -255,7 +257,7 @@ class ConfigurationValidationService
 
             $settings = $this->normalizeSettings(
                 $strategy['settings'] ?? [],
-                'resolverConfig.' . $key . '.settings',
+                'resolverConfig.' . $key . self::SETTINGS_SUFFIX,
                 $errors
             );
             if ($settings === null) {
@@ -537,7 +539,7 @@ class ConfigurationValidationService
         if (is_array($dataTarget) && is_string($dataTarget['type'] ?? null)) {
             $settings = $this->normalizeSettings(
                 $dataTarget['settings'] ?? [],
-                $path . '.dataTarget.settings',
+                $path . '.dataTarget' . self::SETTINGS_SUFFIX,
                 $errors
             );
             if ($settings !== null) {
@@ -558,7 +560,7 @@ class ConfigurationValidationService
             $operatorPath = $path . '.transformationPipeline[' . $step . ']';
             $settings = $this->normalizeSettings(
                 $operator['settings'] ?? [],
-                $operatorPath . '.settings',
+                $operatorPath . self::SETTINGS_SUFFIX,
                 $errors
             );
             if ($settings === null) {
@@ -601,7 +603,7 @@ class ConfigurationValidationService
         try {
             $this->configProcessor->process($treeBuilder->buildTree(), [$settings]);
         } catch (\Exception $e) {
-            $errors[] = new ValidationError($path . '.settings', $e->getMessage());
+            $errors[] = new ValidationError($path . self::SETTINGS_SUFFIX, $e->getMessage());
         }
 
         return $errors;

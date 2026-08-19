@@ -87,9 +87,8 @@ final class ReduceArrayKeyValuePairs extends AbstractOperator implements
 
     public function getOutputTypes(): array
     {
-        return [
-            TransformationDataTypeService::DEFAULT_ARRAY
-        ];
+        // Derived rather than restated, so it cannot drift from what the operator produces.
+        return [$this->evaluateReturnType(TransformationDataTypeService::DEFAULT_ARRAY)];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

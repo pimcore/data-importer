@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Settings;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * Defines the complete configuration structure for Data Importer
@@ -30,7 +29,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  *
  * This ensures single source of truth for the configuration structure.
  */
-class ConfigurationDefinition implements ConfigurationInterface
+final class ConfigurationDefinition
 {
     private const INFO_STRATEGY_SETTINGS = 'Strategy-specific settings';
 
@@ -49,29 +48,6 @@ class ConfigurationDefinition implements ConfigurationInterface
     ) {
     }
 
-    public function getConfigTreeBuilder(): TreeBuilder
-    {
-        $treeBuilder = new TreeBuilder('configuration');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
-        $rootNode = $treeBuilder->getRootNode();
-
-        $rootNode
-            ->children()
-                ->append($this->getGeneralNode())
-                ->append($this->getLoaderConfigNode())
-                ->append($this->getInterpreterConfigNode())
-                ->append($this->getResolverConfigNode())
-                ->append($this->getProcessingConfigNode())
-                ->append($this->getMappingConfigNode())
-                ->append($this->getExecutionConfigNode())
-            ->end();
-
-        return $treeBuilder;
-    }
-
-    /**
-     * Get TreeBuilder for general configuration section
-     */
     public function getGeneralConfigTreeBuilder(): TreeBuilder
     {
         $builder = new TreeBuilder('general');
@@ -518,102 +494,32 @@ class ConfigurationDefinition implements ConfigurationInterface
     /**
      * Define general configuration node
      */
-    protected function getGeneralNode()
-    {
-        $builder = new TreeBuilder('general');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyGeneralConfigDefinition($node);
-
-        return $node;
-    }
 
     /**
      * Define loader configuration node
      * Note: Settings are validated by the specific loader's SchemaAwareInterface
      */
-    protected function getLoaderConfigNode()
-    {
-        $builder = new TreeBuilder('loaderConfig');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyLoaderConfigDefinition($node);
-
-        return $node;
-    }
 
     /**
      * Define interpreter configuration node
      * Note: Settings are validated by the specific interpreter's SchemaAwareInterface
      */
-    protected function getInterpreterConfigNode()
-    {
-        $builder = new TreeBuilder('interpreterConfig');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyInterpreterConfigDefinition($node);
-
-        return $node;
-    }
 
     /**
      * Define resolver configuration node
      * Note: Strategy settings are validated by the specific strategy's SchemaAwareInterface
      */
-    protected function getResolverConfigNode()
-    {
-        $builder = new TreeBuilder('resolverConfig');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyResolverConfigDefinition($node);
-
-        return $node;
-    }
 
     /**
      * Define processing configuration node
      */
-    protected function getProcessingConfigNode()
-    {
-        $builder = new TreeBuilder('processingConfig');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyProcessingConfigDefinition($node);
-
-        return $node;
-    }
 
     /**
      * Define mapping configuration node
      * Note: Operators and data targets are validated by their respective SchemaAwareInterface implementations
      */
-    protected function getMappingConfigNode()
-    {
-        $builder = new TreeBuilder('mappingConfig');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyMappingConfigDefinition($node);
-
-        return $node;
-    }
 
     /**
      * Define execution configuration node
      */
-    protected function getExecutionConfigNode()
-    {
-        $builder = new TreeBuilder('executionConfig');
-        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $node */
-        $node = $builder->getRootNode();
-
-        $this->applyExecutionConfigDefinition($node);
-
-        return $node;
-    }
 }

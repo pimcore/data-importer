@@ -126,8 +126,13 @@ final class SaveDataImporterConfigToolTest extends Unit
         // Otherwise a copied configuration would be written under the name it was copied from,
         // which is the name the caller asked to keep untouched.
         $captured = null;
+        $capturedName = null;
         $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
-            'updateConfiguration' => static function (string $name, array $configuration) use (&$captured): int {
+            'updateConfiguration' => static function (string $name, array $configuration) use (
+                &$capturedName,
+                &$captured
+            ): int {
+                $capturedName = $name;
                 $captured = $configuration;
 
                 return self::MODIFICATION_DATE;
@@ -145,14 +150,20 @@ final class SaveDataImporterConfigToolTest extends Unit
             '{"general": {"name": "some-other-config"}, "mappingConfig": []}'
         ));
 
+        $this->assertSame(self::CONFIG_NAME, $capturedName);
         $this->assertSame(self::CONFIG_NAME, $captured['general']['name']);
     }
 
     public function testYamlIsAcceptedJustLikeJson(): void
     {
         $captured = null;
+        $capturedName = null;
         $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
-            'updateConfiguration' => static function (string $name, array $configuration) use (&$captured): int {
+            'updateConfiguration' => static function (string $name, array $configuration) use (
+                &$capturedName,
+                &$captured
+            ): int {
+                $capturedName = $name;
                 $captured = $configuration;
 
                 return self::MODIFICATION_DATE;

@@ -25,9 +25,9 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     include getenv('PIMCORE_PROJECT_ROOT') . '/vendor/autoload.php';
     $pimcoreTestDir = getenv('PIMCORE_PROJECT_ROOT') . '/vendor/pimcore/pimcore/tests';
 } elseif (getenv('PIMCORE_PROJECT_ROOT') != '') {
-    throw new \Exception('Invalid Pimcore project root "' . getenv('PIMCORE_PROJECT_ROOT') . '"');
+    throw new \InvalidArgumentException('Invalid Pimcore project root "' . getenv('PIMCORE_PROJECT_ROOT') . '"');
 } else {
-    throw new \Exception(
+    throw new \InvalidArgumentException(
         'Unknown configuration! Pimcore project root not found, please set env variable PIMCORE_PROJECT_ROOT.'
     );
 }
