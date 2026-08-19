@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -22,13 +24,13 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class ResolverConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const LOAD_TAG = 'pimcore.datahub.data_importer.resolver.load';
+    private const LOAD_TAG = ServiceTags::RESOLVER_LOAD;
 
-    private const LOCATION_TAG = 'pimcore.datahub.data_importer.resolver.location';
+    private const LOCATION_TAG = ServiceTags::RESOLVER_LOCATION;
 
-    private const PUBLISH_TAG = 'pimcore.datahub.data_importer.resolver.publish';
+    private const PUBLISH_TAG = ServiceTags::RESOLVER_PUBLISH;
 
-    private const FACTORY_TAG = 'pimcore.datahub.data_importer.resolver.factory';
+    private const FACTORY_TAG = ServiceTags::RESOLVER_FACTORY;
 
     public function process(ContainerBuilder $container): void
     {

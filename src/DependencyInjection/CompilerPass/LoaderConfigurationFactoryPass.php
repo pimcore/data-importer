@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -22,7 +24,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class LoaderConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const LOADER_TAG = 'pimcore.datahub.data_importer.loader';
+    private const LOADER_TAG = ServiceTags::LOADER;
 
     public function process(ContainerBuilder $container): void
     {

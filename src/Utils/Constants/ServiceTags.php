@@ -17,9 +17,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Utils\Constants;
 /**
  * Service tags of the bundle's extension points.
  *
- * The compiler passes that build the configuration factories keep their own private copies,
- * which is why these are declared once here for everything that needs to read the same tags
- * without reaching into another pass.
+ * Declared once here so the compiler passes that build the configuration factories and the
+ * passes that read the same tags do not each repeat the literal.
  *
  * @internal
  */
@@ -38,6 +37,8 @@ final class ServiceTags
     public const string RESOLVER_LOCATION = 'pimcore.datahub.data_importer.resolver.location';
 
     public const string RESOLVER_PUBLISH = 'pimcore.datahub.data_importer.resolver.publish';
+
+    public const string RESOLVER_FACTORY = 'pimcore.datahub.data_importer.resolver.factory';
 
     public const string CLEANUP = 'pimcore.datahub.data_importer.cleanup';
 }

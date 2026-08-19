@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -22,7 +24,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class InterpreterConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const INTERPRETER_TAG = 'pimcore.datahub.data_importer.interpreter';
+    private const INTERPRETER_TAG = ServiceTags::INTERPRETER;
 
     public function process(ContainerBuilder $container): void
     {
