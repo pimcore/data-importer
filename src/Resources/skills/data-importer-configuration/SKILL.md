@@ -96,8 +96,8 @@ settings:
 
 not `settings: '{"assetPath":"..."}'`. A JSON string is rejected.
 
-**Quote numeric class ids.** `dataObjectClassId: 6` is parsed as a number and rejected; write
-`dataObjectClassId: '6'`.
+**Class ids are strings.** A numeric one such as `6` is accepted either way, but quoting it
+(`dataObjectClassId: '6'`) matches how it is stored and read back.
 
 **Enrich before validating.** Without `transformationResultType`, every field is checked as type
 `default`, so numeric, date and relation targets report spurious incompatibilities.

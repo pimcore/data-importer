@@ -47,9 +47,13 @@ final class ConfigurationParserTraitTest extends Unit
         $this->assertSame(self::PARSED, $this->parseConfiguration(self::JSON_BODY, ''));
     }
 
-    public function testJsonIsDetectedFromALeadingBracket(): void
+    public function testJsonIsDetectedFromALeadingBracketAndThenRejectedAsAList(): void
     {
-        $this->assertSame([['label' => 'Name']], $this->parseConfiguration('[{"label": "Name"}]', ''));
+        // Detection has to see the bracket as JSON; a top level list is still not a configuration.
+        $this->expectException(InvalidMcpToolArgumentException::class);
+        $this->expectExceptionMessage('must be an object');
+
+        $this->parseConfiguration('[{"label": "Name"}]', '');
     }
 
     public function testDetectionIgnoresLeadingWhitespace(): void

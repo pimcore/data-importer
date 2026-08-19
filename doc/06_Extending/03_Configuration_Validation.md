@@ -58,6 +58,6 @@ Schema includes available types, required fields, constraints, and descriptions 
 
 Implement these interfaces to enable validation and AI agent support:
 
-- **`SchemaAwareInterface`** - For loaders, interpreters, resolvers, and operators. See [Extend Custom Strategies](01_Extend_Custom_Strategies.md).
+- **`SchemaAwareInterface`** - For loaders, interpreters, resolvers, and operators. See [Custom Strategies](01_Custom_Strategies.md).
 - **`DataTargetFieldValidatorInterface`** - For data targets to validate field-level settings and provide field-specific schemas.
 - **`TransformationTypeAwareInterface`** - For operators to declare accepted input types and output types for transformation data type validation.

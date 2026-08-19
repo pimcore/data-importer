@@ -30,6 +30,9 @@ services:
 
     # Validation Services
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition: ~
+    Pimcore\Bundle\DataImporterBundle\Tool\LoadableAttributesInterface:
+        alias: Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader
+
     Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepositoryInterface:
         class: Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepository
 

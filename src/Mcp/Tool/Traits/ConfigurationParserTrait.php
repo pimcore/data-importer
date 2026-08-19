@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits;
 
+use function array_is_list;
 use function is_array;
 use const JSON_THROW_ON_ERROR;
 use function ltrim;
@@ -61,7 +62,7 @@ trait ConfigurationParserTrait
             ? $this->parseJson($config)
             : $this->parseYaml($config);
 
-        if (!is_array($parsed)) {
+        if (!is_array($parsed) || array_is_list($parsed)) {
             throw new InvalidMcpToolArgumentException(
                 'The configuration must be an object, not a bare scalar or list.'
             );

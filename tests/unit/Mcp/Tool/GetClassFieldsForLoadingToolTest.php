@@ -18,7 +18,7 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetClassFieldsForLoadingTool;
 use Pimcore\Bundle\DataImporterBundle\Tests\unit\Helper\Traits\McpToolResultTrait;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
-use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
+use Pimcore\Bundle\DataImporterBundle\Tool\LoadableAttributesInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\UserNotFoundException;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandler;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
@@ -39,7 +39,7 @@ final class GetClassFieldsForLoadingToolTest extends Unit
 
     public function testDeniedWhenMissingPermission(): void
     {
-        $tool = $this->buildTool(allowed: false, schemaService: $this->unreachableSchemaService());
+        $tool = $this->buildTool(allowed: false, loader: $this->unreachableLoader());
 
         $this->assertToolError($tool->execute(self::CLASS_ID), self::MISSING_PERMISSION, 'permission_denied');
     }
@@ -55,7 +55,7 @@ final class GetClassFieldsForLoadingToolTest extends Unit
         ]);
 
         $tool = new GetClassFieldsForLoadingTool(
-            $this->unreachableSchemaService(),
+            $this->unreachableLoader(),
             $securityService,
             new McpToolErrorHandler(new NullLogger()),
         );
@@ -63,58 +63,38 @@ final class GetClassFieldsForLoadingToolTest extends Unit
         $this->assertToolError($tool->execute(self::CLASS_ID), self::MISSING_PERMISSION, 'permission_denied');
     }
 
-    public function testReturnsTheUnionOfTheLoadableTypesSortedAndDeduplicated(): void
+    public function testReturnsExactlyWhatTheLoaderConsidersLoadable(): void
     {
-        $tool = $this->buildTool(allowed: true, schemaService: $this->schemaService([
-            'default' => ['name', 'sku'],
-            'numeric' => ['price', 'sku'],
-            'calculated' => ['margin'],
-            // Not loadable: must not appear even though the matrix carries them.
-            'date' => ['releaseDate'],
-            'dataObject' => ['manufacturer'],
-        ]));
+        // The tool must answer the same question assertAttributeLoadable() asks, so it reads the
+        // loader rather than deriving a narrower set from the transformation type matrix.
+        $tool = $this->buildTool(allowed: true, loader: $this->loader(['id', 'key', 'name', 'sku']));
 
         $payload = $this->assertToolSuccess($tool->execute(self::CLASS_ID));
 
         $this->assertSame(self::CLASS_ID, $payload['classId']);
-        $this->assertSame(['margin', 'name', 'price', 'sku'], $payload['filterableFields']);
-    }
-
-    public function testAMatrixWithoutTheLoadableTypesIsReportedAsNotFound(): void
-    {
-        // A class that exists but exposes nothing filterable answers exactly like an unknown one,
-        // which is the point: both are a dead end the agent must fix by picking another class id.
-        $tool = $this->buildTool(allowed: true, schemaService: $this->schemaService([
-            'date' => ['releaseDate'],
-        ]));
-
-        $this->assertToolError(
-            $tool->execute(self::CLASS_ID),
-            'No loadable fields for class "CAR". Check the class id with the classes section '
-            . 'of get_import_config_context.',
-            'not_found'
-        );
+        $this->assertSame(['id', 'key', 'name', 'sku'], $payload['filterableFields']);
     }
 
     public function testUnknownClassIsReportedAsNotFoundRatherThanAnEmptySuccess(): void
     {
-        // getFieldTypeMatrix() answers [] for a class id it cannot resolve.
-        $tool = $this->buildTool(allowed: true, schemaService: $this->schemaService([]));
+        // listLoadableAttributes() answers [] for a class id it cannot resolve, which would
+        // otherwise be indistinguishable from a class with nothing to load by.
+        $tool = $this->buildTool(allowed: true, loader: $this->loader([]));
 
         $this->assertToolError(
             $tool->execute('does-not-exist'),
-            'No loadable fields for class "does-not-exist". Check the class id with the classes '
-            . 'section of get_import_config_context.',
+            'Class "does-not-exist" not found. Check the class id with the classes section of '
+            . 'get_import_config_context.',
             'not_found'
         );
     }
 
     public function testGenericFailureIsGenericisedAndNeverLeaksTheRawMessage(): void
     {
-        $tool = $this->buildTool(allowed: true, schemaService: $this->makeEmpty(
-            ConfigurationSchemaService::class,
+        $tool = $this->buildTool(allowed: true, loader: $this->makeEmpty(
+            LoadableAttributesInterface::class,
             [
-                'getFieldTypeMatrix' => static function (): never {
+                'listLoadableAttributes' => static function (): never {
                     throw new StubFailureException('class definition storage unreachable at 10.0.0.5:3306');
                 },
             ]
@@ -128,30 +108,30 @@ final class GetClassFieldsForLoadingToolTest extends Unit
     }
 
     /**
-     * @param array<string, list<string>> $matrix
+     * @param list<string> $attributes
      */
-    private function schemaService(array $matrix): ConfigurationSchemaService
+    private function loader(array $attributes): LoadableAttributesInterface
     {
-        return $this->makeEmpty(ConfigurationSchemaService::class, ['getFieldTypeMatrix' => $matrix]);
+        return $this->makeEmpty(LoadableAttributesInterface::class, ['listLoadableAttributes' => $attributes]);
     }
 
-    private function unreachableSchemaService(): ConfigurationSchemaService
+    private function unreachableLoader(): LoadableAttributesInterface
     {
-        return $this->makeEmpty(ConfigurationSchemaService::class, [
-            'getFieldTypeMatrix' => static function (): never {
-                self::fail('The schema service must not be reached without the permission.');
+        return $this->makeEmpty(LoadableAttributesInterface::class, [
+            'listLoadableAttributes' => static function (): never {
+                self::fail('The loader must not be reached without the permission.');
             },
         ]);
     }
 
     private function buildTool(
         bool $allowed,
-        ConfigurationSchemaService $schemaService,
+        LoadableAttributesInterface $loader,
     ): GetClassFieldsForLoadingTool {
         $user = $this->makeEmpty(UserInterface::class, ['isAllowed' => $allowed]);
 
         return new GetClassFieldsForLoadingTool(
-            $schemaService,
+            $loader,
             $this->makeEmpty(SecurityServiceInterface::class, ['getCurrentUser' => $user]),
             new McpToolErrorHandler(new NullLogger()),
         );

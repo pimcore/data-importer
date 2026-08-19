@@ -20,13 +20,15 @@ use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\Objectbrick\Definition;
 use Pimcore\Model\Element\ElementInterface;
+use function sort;
 use function sprintf;
 
 /**
  * @internal
  */
-final class DataObjectLoader
+final class DataObjectLoader implements LoadableAttributesInterface
 {
     private const CLASS_FIELD_NAME = 'classFieldName';
 
@@ -109,12 +111,7 @@ final class DataObjectLoader
         }
 
         if ($this->isObjectBrickAttribute($attributeName)) {
-            if ($this->getObjectBrickParts($attributeName) === []) {
-                throw new InvalidConfigurationException(sprintf(
-                    'Object brick attribute `%s` must be given as `classField.brickName.brickField`.',
-                    $attributeName
-                ));
-            }
+            $this->assertObjectBrickAttributeExists($classDefinition, $attributeName);
 
             return;
         }
@@ -135,6 +132,81 @@ final class DataObjectLoader
                 $fieldDefinition->getFieldType()
             ));
         }
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    private function assertObjectBrickAttributeExists(
+        ClassDefinition $classDefinition,
+        string $attributeName
+    ): void {
+        $parts = $this->getObjectBrickParts($attributeName);
+        if ($parts === []) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick attribute `%s` must be given as `classField.brickName.brickField`.',
+                $attributeName
+            ));
+        }
+
+        $brick = Definition::getByKey($parts[self::BRICK_NAME]);
+        if (!$brick instanceof Definition) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick `%s` does not exist.',
+                $parts[self::BRICK_NAME]
+            ));
+        }
+
+        if (!$classDefinition->getFieldDefinition($parts[self::CLASS_FIELD_NAME]) instanceof Data) {
+            throw new InvalidConfigurationException(sprintf(
+                'Field `%s` does not exist in class `%s`.',
+                $parts[self::CLASS_FIELD_NAME],
+                $classDefinition->getName()
+            ));
+        }
+
+        if (!$brick->getFieldDefinition($parts[self::BRICK_ATTRIBUTE_NAME]) instanceof Data) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick `%s` has no field `%s`.',
+                $parts[self::BRICK_NAME],
+                $parts[self::BRICK_ATTRIBUTE_NAME]
+            ));
+        }
+    }
+
+    /**
+     * Every attribute this class can be looked up by, for callers that need to offer a choice
+     * rather than check one. Same rule as assertAttributeLoadable().
+     *
+     * @return list<string>
+     */
+    public function listLoadableAttributes(string $classId): array
+    {
+        $classDefinition = ClassDefinition::getById($classId);
+        if (!$classDefinition instanceof ClassDefinition) {
+            return [];
+        }
+
+        $attributes = self::SYSTEM_COLUMNS;
+        foreach ($classDefinition->getFieldDefinitions() as $fieldDefinition) {
+            if ($fieldDefinition instanceof Localizedfields) {
+                foreach ($fieldDefinition->getFieldDefinitions() as $localized) {
+                    if ($localized->isFilterable()) {
+                        $attributes[] = $localized->getName();
+                    }
+                }
+
+                continue;
+            }
+
+            if ($fieldDefinition->isFilterable()) {
+                $attributes[] = $fieldDefinition->getName();
+            }
+        }
+
+        sort($attributes);
+
+        return $attributes;
     }
 
     private function resolveFieldDefinition(ClassDefinition $classDefinition, string $attributeName): ?Data
