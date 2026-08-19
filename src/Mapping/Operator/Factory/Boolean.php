@@ -19,9 +19,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Boolean extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class Boolean extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData

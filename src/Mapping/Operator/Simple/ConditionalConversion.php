@@ -19,19 +19,16 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ConditionalConversion extends AbstractOperator implements
+/**
+ * @internal
+ */
+final class ConditionalConversion extends AbstractOperator implements
     SchemaAwareInterface,
     TransformationTypeAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $original;
+    private string $original;
 
-    /**
-     * @var string
-     */
-    protected $converted;
+    private string $converted;
 
     public function setSettings(array $settings): void
     {

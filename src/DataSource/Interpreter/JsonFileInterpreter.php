@@ -21,19 +21,16 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
+/**
+ * @internal
+ */
 class JsonFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     protected string $path;
 
-    /**
-     * @var array|null
-     */
-    protected $cachedContent = null;
+    protected ?array $cachedContent = null;
 
-    /**
-     * @var string|null
-     */
-    protected $cachedFilePath = null;
+    protected ?string $cachedFilePath = null;
 
     protected function loadDataRaw(string $path): array
     {

@@ -19,9 +19,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\DataObject\Data\RgbaColor;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsColor extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class AsColor extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @throws \Exception

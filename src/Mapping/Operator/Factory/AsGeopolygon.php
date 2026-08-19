@@ -19,7 +19,12 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeopolygon extends GeopolyAbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class AsGeopolygon extends GeopolyAbstractOperator implements
+    SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @param string $inputType

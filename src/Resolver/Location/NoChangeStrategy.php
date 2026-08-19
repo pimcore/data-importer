@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class NoChangeStrategy implements LocationStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class NoChangeStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
     public function updateParent(ElementInterface $element, array $inputData): ElementInterface
     {

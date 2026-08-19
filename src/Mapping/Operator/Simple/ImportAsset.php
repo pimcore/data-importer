@@ -23,9 +23,10 @@ use Pimcore\Model\Element\DuplicateFullPathException;
 use Pimcore\Model\Element\Service;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ImportAsset extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+class ImportAsset extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @var string

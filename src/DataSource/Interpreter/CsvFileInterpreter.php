@@ -18,31 +18,22 @@ use Pimcore\Version;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Mime\MimeTypes;
 
-class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     private const UTF8_BOM = "\xEF\xBB\xBF";
 
-    /**
-     * @var bool
-     */
-    protected $skipFirstRow;
+    private bool $skipFirstRow;
 
-    protected bool $saveHeaderName;
+    private bool $saveHeaderName;
 
-    /**
-     * @var string
-     */
-    protected $delimiter;
+    private string $delimiter;
 
-    /**
-     * @var string
-     */
-    protected $enclosure;
+    private string $enclosure;
 
-    /**
-     * @var string
-     */
-    protected $escape;
+    private string $escape;
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
@@ -199,6 +190,10 @@ class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwareInter
 
             fclose($handle);
         }
+
+        // Fail loud with a clear message instead of returning data that cannot be JSON-encoded
+        // for the preview response (which otherwise surfaces as a generic "invalid data" error).
+        $this->assertValidRowEncoding($previewData);
 
         $previewDataColumns = array_keys($previewData);
         if (empty($columns)) {

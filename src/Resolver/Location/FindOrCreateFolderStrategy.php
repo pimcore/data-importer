@@ -20,39 +20,16 @@ use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class FindOrCreateFolderStrategy implements LocationStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class FindOrCreateFolderStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
-    /**
-     * @var mixed
-     */
-    protected $dataSourceIndex;
+    private mixed $dataSourceIndex;
 
-    /**
-     * @var string
-     */
-    protected $findStrategy;
+    private ?string $fallbackPath = null;
 
-    /**
-     * @var string
-     */
-    protected $fallbackPath;
-
-    /**
-     * @var mixed
-     */
-    protected $attributeDataObjectClassId;
-
-    /**
-     * @var string
-     */
-    protected $attributeName;
-
-    /**
-     * @var string
-     */
-    protected $attributeLanguage;
-
-    public function __construct(protected DataObjectLoader $dataObjectLoader)
+    public function __construct(private readonly DataObjectLoader $dataObjectLoader)
     {
     }
 
@@ -93,10 +70,6 @@ class FindOrCreateFolderStrategy implements LocationStrategyInterface, SchemaAwa
         }
 
         return $element->setParent($newParent);
-    }
-
-    protected function loadById()
-    {
     }
 
     public function getSchemaDescription(): string

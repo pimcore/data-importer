@@ -19,7 +19,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ReduceArrayKeyValuePairs extends AbstractOperator implements
+/**
+ * @internal
+ */
+final class ReduceArrayKeyValuePairs extends AbstractOperator implements
     SchemaAwareInterface,
     TransformationTypeAwareInterface
 {

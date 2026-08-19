@@ -18,16 +18,16 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class LoadAsset extends ImportAsset implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class LoadAsset extends ImportAsset implements SchemaAwareInterface
 {
-    const LOAD_STRATEGY_ID = 'id';
+    private const LOAD_STRATEGY_ID = 'id';
 
-    const LOAD_STRATEGY_PATH = 'path';
+    private const LOAD_STRATEGY_PATH = 'path';
 
-    /**
-     * @var string
-     */
-    protected $loadStrategy;
+    private string $loadStrategy;
 
     public function setSettings(array $settings): void
     {

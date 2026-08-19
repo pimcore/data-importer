@@ -25,49 +25,34 @@ use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
-    const FIND_BY_ID = 'id';
+    private const FIND_BY_ID = 'id';
 
-    const FIND_BY_PATH = 'path';
+    private const FIND_BY_PATH = 'path';
 
-    const FIND_BY_ATTRIBUTE = 'attribute';
+    private const FIND_BY_ATTRIBUTE = 'attribute';
 
-    /**
-     * @var mixed
-     */
-    protected $dataSourceIndex;
+    private mixed $dataSourceIndex;
 
-    /**
-     * @var string
-     */
-    protected $findStrategy;
+    private string $findStrategy;
 
-    /**
-     * @var string
-     */
-    protected $fallbackPath;
+    private ?string $fallbackPath = null;
 
-    /**
-     * @var mixed
-     */
-    protected $attributeDataObjectClassId;
+    private mixed $attributeDataObjectClassId;
 
-    /**
-     * @var string
-     */
-    protected $attributeName;
+    private string $attributeName;
 
-    /**
-     * @var string
-     */
-    protected $attributeLanguage;
+    private string $attributeLanguage;
 
-    protected bool $saveAsVariant = false;
+    private bool $saveAsVariant = false;
 
-    protected TransformationDataTypeService $transformationDataTypeService;
+    private TransformationDataTypeService $transformationDataTypeService;
 
-    public function __construct(protected DataObjectLoader $dataObjectLoader)
+    public function __construct(private readonly DataObjectLoader $dataObjectLoader)
     {
     }
 
@@ -131,7 +116,7 @@ class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterf
                 );
 
             $this->attributeName = $settings['attributeName'];
-            $this->attributeLanguage = $settings['attributeLanguage'] ?? null;
+            $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
         }
     }
 
@@ -194,10 +179,6 @@ class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterf
         }
 
         return $element;
-    }
-
-    protected function loadById()
-    {
     }
 
     /**

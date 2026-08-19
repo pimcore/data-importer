@@ -21,9 +21,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ObjectField extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class ObjectField extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     private string $attribute;
 

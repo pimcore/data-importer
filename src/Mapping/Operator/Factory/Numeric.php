@@ -19,9 +19,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Numeric extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class Numeric extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     private bool $returnNullIfEmpty = false;
 

@@ -17,17 +17,14 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AssetLoader implements DataLoaderInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class AssetLoader implements DataLoaderInterface, SchemaAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $assetPath;
+    private string $assetPath;
 
-    /**
-     * @var string
-     */
-    protected $temporaryFile = null;
+    private ?string $temporaryFile = null;
 
     public function loadData(): string
     {
@@ -52,7 +49,11 @@ class AssetLoader implements DataLoaderInterface, SchemaAwareInterface
 
     public function cleanup(): void
     {
-        unlink($this->temporaryFile);
+        if ($this->temporaryFile !== null && is_file($this->temporaryFile)) {
+            unlink($this->temporaryFile);
+        }
+
+        $this->temporaryFile = null;
     }
 
     public function getSchemaDescription(): string

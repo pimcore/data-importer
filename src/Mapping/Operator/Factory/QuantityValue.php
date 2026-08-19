@@ -20,9 +20,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class QuantityValue extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+class QuantityValue extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @var string

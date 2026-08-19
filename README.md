@@ -1,45 +1,46 @@
 ---
 title: Data Importer
 ---
- 
+
 # Pimcore Data Importer
 
-This extension adds a comprehensive import functionality to Pimcore Datahub. It allows importing data from external 
-sources and adjusting it to Pimcore Data Objects based on a configured mapping without writing any code.
-
-## Features in a Nutshell
-- Multiple imports configuration directly in Datahub. 
-- Data import from various data sources.
-- Supported File Formats: `csv`, `xlsx`, `json`, `xml`.
-- Strategies configuration for: 
-  - loading existing elements for updating data.
-  - defining location for newly imported data.
-  - publishing data.
-  - cleanup of existing data. 
--  Mappings definition for adjusting data to Pimcore Data Objects with:
-   - simple transformations.
-   - preview of imported data.
-- Imports execution directly in Pimcore Datahub or on a regular base via cron definitions. 
-- Import status updates and extensive logging information. 
+The Data Importer adds import functionality to Pimcore Datahub. It reads data from external sources and writes it into
+Pimcore data objects based on a configured mapping, without writing code.
 
 ![Mapping](./doc/img/mapping.png)
 *Mapping and preview of data*
 
-## Documentation Overview
-- [Installation](./doc/01_Installation.md)
-- [Configuration](./doc/03_Configuration/README.md)
-- [Import Execution Details](./doc/04_Import_Execution_Details.md)
-- [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md)
-- [Extending](./doc/06_Extending/README.md)
-  - [Custom Strategies](./doc/06_Extending/01_Extend_Custom_Strategies.md)
-  - [Configuration Validation](./doc/06_Extending/02_Configuration_Validation.md)
-  - [MCP Server (Experimental)](./doc/06_Extending/04_MCP_Server.md)
-- [Troubleshooting/FAQ](./doc/06_Troubleshooting_FAQ.md) 
+## Features
 
-## Further Information
-On other Pimcore Datahub adapters and export solutions:
-- [Datahub (GraphQL API)](https://pimcore.com/docs/platform/Datahub/)
-- [Datahub Simple Rest API](https://pimcore.com/docs/platform/Datahub_Simple_Rest/)
--  [Datahub File Export](https://pimcore.com/docs/platform/Datahub_File_Export/)
-- [Datahub Productsup](https://pimcore.com/docs/platform/Datahub_Productsup/)
-- [Datahub CI Hub](https://pimcore.com/docs/platform/Datahub_CI_Hub/)
+- Import configurations managed directly in Datahub, edited in Pimcore Studio.
+- Six data sources: asset, upload, HTTP, SFTP, push endpoint, and SQL.
+- Five file formats: CSV, JSON, XML, XLSX, and SQL query results.
+- Resolver strategies that decide whether a record updates an existing data object or creates a new one, where it is
+  stored, and whether it is published.
+- A mapping editor with a live preview of the source data and of every transformation step.
+- Delta check to skip unchanged records, and cleanup to remove data objects that left the source.
+- Manual, scheduled, command-line and push-triggered execution.
+- Progress tracking and detailed import logs.
+
+## Documentation
+
+Start here:
+
+- [Installation](./doc/01_Installation/README.md): install the bundle and set up queue processing.
+- [Getting Started](./doc/02_Getting_Started.md): build a first import end to end.
+
+Reference:
+
+- [Configuration](./doc/03_Configuration/README.md): every option of an import configuration.
+- [Import Execution Details](./doc/04_Import_Execution_Details.md): what happens between the trigger and the data.
+- [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md): watch and audit an import.
+- [Extending](./doc/06_Extending/README.md): custom strategies, events, and configuration validation.
+- [Troubleshooting / FAQ](./doc/08_Troubleshooting_FAQ.md): common problems.
+- [Upgrade Notes](./doc/01_Installation/01_Upgrade.md): breaking changes per release.
+
+## Other Datahub Adapters
+
+- [Datahub (GraphQL API)](https://github.com/pimcore/data-hub/blob/2026.x/doc/01_Installation_and_Upgrade/README.md)
+- [Datahub Simple REST API](https://github.com/pimcore/data-hub-simple-rest/blob/2026.x/doc/01_Installation/README.md)
+- [Datahub File Export](https://github.com/pimcore/data-hub-file-export/blob/2026.x/doc/01_Installation/README.md)
+- [Datahub Productsup](https://github.com/pimcore/data-hub-productsup/blob/2026.x/doc/01_Installation/README.md)

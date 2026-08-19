@@ -19,22 +19,16 @@ use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $attributeName;
+    private string $attributeName;
 
-    /**
-     * @var string
-     */
-    protected $attributeLanguage;
+    private string $attributeLanguage;
 
-    /**
-     * @var bool
-     */
-    protected $includeUnpublished;
+    private bool $includeUnpublished;
 
     protected TransformationDataTypeService $transformationDataTypeService;
 
@@ -60,7 +54,7 @@ class AttributeStrategy extends AbstractLoad implements SchemaAwareInterface
         }
 
         $this->attributeName = $settings['attributeName'];
-        $this->attributeLanguage = $settings['language'] ?? null;
+        $this->attributeLanguage = $settings['language'] ?? '';
         $this->includeUnpublished = $settings['includeUnpublished'] ?? false;
 
         //to validate if an existing classId is set

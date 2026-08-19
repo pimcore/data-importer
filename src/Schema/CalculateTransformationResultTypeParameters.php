@@ -32,8 +32,14 @@ final readonly class CalculateTransformationResultTypeParameters
         #[Property(
             description: 'A single mapping configuration entry to evaluate the transformation result type for',
             properties: [
-                new Property(property: 'label', type: 'string'),
-                new Property(property: 'dataSourceIndex', description: 'Data source column indices'),
+                new Property(property: 'label', description: 'Mapping label', type: 'string', example: 'SKU'),
+                new Property(
+                    property: 'dataSourceIndex',
+                    description: 'Data source column indices',
+                    type: 'array',
+                    items: new Items(type: 'integer'),
+                    example: [0]
+                ),
                 new Property(property: 'transformationPipeline', type: 'array', items: new Items(type: 'object')),
                 new Property(property: 'dataTarget', type: 'object'),
             ],

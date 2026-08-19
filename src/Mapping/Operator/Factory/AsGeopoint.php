@@ -20,9 +20,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeopoint extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class AsGeopoint extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData

@@ -19,14 +19,12 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Date extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class Date extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $format;
+    private string $format;
 
     public function setSettings(array $settings): void
     {

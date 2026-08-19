@@ -23,10 +23,10 @@ use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
-class Direct implements
-    DataTargetInterface,
-    SchemaAwareInterface,
-    DataTargetFieldValidatorInterface
+/**
+ * @internal
+ */
+class Direct implements DataTargetInterface, SchemaAwareInterface, DataTargetFieldValidatorInterface
 {
     /**
      * @var string

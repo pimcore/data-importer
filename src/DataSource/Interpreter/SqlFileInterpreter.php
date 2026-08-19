@@ -16,7 +16,10 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 
-class SqlFileInterpreter extends JsonFileInterpreter implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class SqlFileInterpreter extends JsonFileInterpreter implements SchemaAwareInterface
 {
     public function getSchemaDescription(): string
     {

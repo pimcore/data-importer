@@ -18,25 +18,20 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class UploadLoader implements DataLoaderInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class UploadLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     use TemporaryFileHelperTrait;
 
-    /**
-     * @var string
-     */
-    protected $uploadFilePath;
+    private string $uploadFilePath;
 
-    /**
-     * @var string
-     */
-    protected $temporaryFile = null;
+    private ?string $temporaryFile = null;
 
-    protected FilesystemOperator $pimcoreDataImporterUploadStorage;
-
-    public function __construct(FilesystemOperator $pimcoreDataImporterUploadStorage)
-    {
-        $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;
+    public function __construct(
+        private readonly FilesystemOperator $pimcoreDataImporterUploadStorage,
+    ) {
     }
 
     public function loadData(): string

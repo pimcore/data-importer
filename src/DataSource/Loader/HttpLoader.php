@@ -18,25 +18,19 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Filesystem\Filesystem;
 
-class HttpLoader implements DataLoaderInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class HttpLoader implements DataLoaderInterface, SchemaAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $url;
+    private string $url;
 
-    /**
-     * @var string
-     */
-    protected $schema;
+    private string $schema;
 
-    /**
-     * @var string
-     */
-    protected $importFilePath;
+    private string $importFilePath;
 
     public function __construct(
-        protected Filesystem $filesystem
+        private readonly Filesystem $filesystem,
     ) {
     }
 

@@ -25,7 +25,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class SqlLoader implements DataLoaderInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class SqlLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     private string $connection;
 
@@ -41,7 +44,7 @@ class SqlLoader implements DataLoaderInterface, SchemaAwareInterface
 
     private Connection $databaseConnection;
 
-    public function __construct(private Component\Filesystem\Filesystem $filesystem)
+    public function __construct(private readonly Component\Filesystem\Filesystem $filesystem)
     {
     }
 

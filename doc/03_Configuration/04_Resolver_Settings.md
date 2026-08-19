@@ -1,70 +1,120 @@
+---
+title: Resolver Settings
+description: Decide which data object a record belongs to, where it is stored, and whether it is published.
+---
+
 # Resolver Settings
 
-Resolver settings are responsible to define to which Pimcore data imported data should
-be imported to and consists of following parts: 
+The resolver answers three questions for every imported record, in this order:
+
+1. Does a matching data object already exist? (**Element Loading**)
+2. If not, where is the new object created? (**Element Creation**) - if yes, does it move? (**Element Location Update**)
+3. Is the object published afterwards? (**Element Publishing**)
 
 <div class="image-as-lightbox"></div>
 
 ![Resolver Settings](../img/resolver_settings.png)
 
-### Class
-Define the Pimcore data object class of the imported data.
+Several strategies need a **Data Source Index**: the field of the import record that holds the value to look up.
 
-### Element Loading
-Define a strategy the importer should use for looking for existing Pimcore data objects in order
-to update them instead of creating new data objects.
+## Data Object Class
 
-Following strategies are available: 
+The Pimcore data object class the records are imported into. It determines which fields the
+[mapping](./05_Mapping_Configuration/README.md) can write to.
 
-#### Loading Strategy: `No Loading`
-Does not look for any existing Pimcore data objects. Import always creates new data objects. 
+## Element Loading
 
-#### Loading Strategy: `Id`
-Look for data objects based on their id. 
-- **Data Source Index**: Field of import that contains the id to look for. 
+How the importer finds an existing data object so it updates it instead of creating a duplicate.
 
-#### Loading Strategy: `Path`
-Look for data objects based on their full path. 
-- **Data Source Index**: Field of import that contains the path to look for. 
+### `No Loading`
 
-#### Loading Strategy: `Attribute`
-Look for data objects based on a specific attribute (e.g. Remote Id, EAN, ...). 
-- **Data Source Index**: Field of import that contains the attribute value to look for. 
-- **Attribute Name**: Attribute of data object to look for. 
+Never looks for an existing object. Every record creates a new data object.
 
+### `Id`
 
-### Element Creation 
-Define location of new created data objects. 
+Looks up the object by its Pimcore ID.
 
-#### Location Strategy: `Static Path`
-Always put new elements to a fixed specific folder. 
-- **Path**: Folder where to put new elements to. 
+- **Data Source Index**: field holding the ID.
 
-#### Location Strategy: `Find Parent`
-Find parent based on a strategy. 
-- **Find Strategy**: Strategy find to parent
-  - Loading Strategy `Id`: Load based on id. 
-  - Loading Strategy `Path`: Load based on full path.
-  - Loading Strategy `Attribute`: Load based on data attribute with additional settings:
-    - Class: Data object class to look for (can be different one that the imported data object class)
-    - Attribute Name: Attribute of data object to look for. 
-- **Data Source Index**: Field of import that contains the value to look for.
-- **Fallback Path**: Folder to use if parent cannot be found. 
+### `Path`
 
+Looks up the object by its full path.
 
-### Element Location Update
-Define location updates of data objects. The importer applies the location update strategy to all imported data objects -
-no matter if they are updated or created. 
+- **Data Source Index**: field holding the path.
 
-For details on the strategies see Element Creation above. In addition, there is a `No Change` strategy that does not change
-the location of elements at all. 
+### `Attribute`
 
+Looks up the object by one of its attributes, for example a remote ID or an EAN.
 
-### Element Publishing
-Define a strategy to set the published state of data object during import. 
+- **Data Source Index**: field holding the attribute value.
+- **Attribute Name**: attribute of the data object to match against.
+- **Language**: for localized attributes, the language to search in.
+- **Include unpublished objects**: also match unpublished objects. Disabled by default, so an unpublished object is not
+  found and the import creates a second one.
 
-Following strategies are available: 
-- **Always Publish**: Always publishes new created or updated data objects.
-- **Attribute Based**: Set publish state based on a field of the import data.
-- **No Change, Publish New**: Do not change existing data objects and set new data objects to `published`.
-- **No Change, Unpublish New**: Do not change existing data objects and set new data objects to `unpublished`. 
+## Element Creation
+
+Where a new data object is placed. This applies only to records for which **Element Loading** found nothing.
+
+### `Static Path`
+
+Puts every new object into one fixed folder.
+
+- **Path**: target folder.
+
+### `Find or Create Folder`
+
+Reads a folder path from the record and uses it. If the path does not exist, the folders are created.
+
+- **Data Source Index**: field holding the folder path.
+- **Fallback Path**: folder used when the record holds no path.
+
+### `Find Parent`
+
+Looks up an existing data object and uses it as the parent.
+
+- **Find Strategy**: how the parent is located.
+  - `By ID`: by Pimcore ID.
+  - `By Path`: by full path.
+  - `By Attribute`: by an attribute value, with these extra settings:
+    - **Class**: data object class to search, may differ from the imported class.
+    - **Attribute Name**: attribute to match against.
+    - **Language**: for localized attributes, the language to search in.
+- **Data Source Index**: field holding the value to look up.
+- **Fallback Path**: folder used when the parent cannot be found.
+- **As Variant**: creates the new object as a variant of the resolved parent instead of a child.
+
+### `Do Not Create`
+
+Creates nothing. Records without a matching existing object are skipped, which turns the import into an update-only
+import.
+
+## Element Location Update
+
+Whether an object that **Element Loading** found is moved.
+
+The available strategies are `No Change`, `Static Path`, `Find or Create Folder` and `Find Parent`, with the same
+settings as under Element Creation. `No Change` leaves the object where it is.
+
+:::note
+
+Element Creation applies to newly created objects, Element Location Update applies to existing ones. A record never runs
+through both.
+
+A variant cannot change its parent. If a location update strategy would move a variant, the record fails with an error.
+
+:::
+
+## Element Publishing
+
+The published state of an imported object.
+
+| Strategy | Existing objects | New objects |
+|---|---|---|
+| `Always Publish` | published | published |
+| `Attribute Based` | set from a field of the record | set from a field of the record |
+| `No Change / Publish New` | unchanged | published |
+| `No Change / Unpublish New` | unchanged | unpublished |
+
+`Attribute Based` needs a **Data Source Index**: the field holding the published state. When the record does not contain
+that field, the object is unpublished.

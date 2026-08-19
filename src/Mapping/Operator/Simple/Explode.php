@@ -19,19 +19,14 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Explode extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class Explode extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $delimiter;
+    private string $delimiter;
 
-    /**
-     * @var bool
-     */
-    protected $keepSubArrays;
+    private bool $keepSubArrays;
 
     public function setSettings(array $settings): void
     {

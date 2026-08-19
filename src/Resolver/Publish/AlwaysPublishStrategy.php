@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AlwaysPublishStrategy implements PublishStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class AlwaysPublishStrategy implements PublishStrategyInterface, SchemaAwareInterface
 {
     public function setSettings(array $settings): void
     {

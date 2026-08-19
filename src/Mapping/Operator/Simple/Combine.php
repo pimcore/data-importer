@@ -19,14 +19,12 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Combine extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class Combine extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $glue;
+    private string $glue;
 
     public function setSettings(array $settings): void
     {

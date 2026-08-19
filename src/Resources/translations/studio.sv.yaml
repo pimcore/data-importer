@@ -1,0 +1,325 @@
+data-importer.adapter.dataImporterDataObject: Data Objects Importer
+data-hub.adapter.dataImporterDataObject: Data Objects Importer
+data-importer.tabs.general: Allmänt
+data-importer.tabs.permissions: Behörigheter
+data-importer.tabs.data-setup: Datainställning
+data-importer.tabs.import-logs: Importloggar
+data-importer.tabs.execution: Körning
+
+# Data Setup Steps
+data-importer.data-setup.steps.data-source.title: Datakälla
+data-importer.data-setup.steps.data-source.description: Konfigurera datakälla och filformat
+data-importer.data-setup.steps.preview-import.title: Importförhandsvisning
+data-importer.data-setup.steps.preview-import.description: Förhandsgranska data som ska importeras
+data-importer.data-setup.steps.resolver.title: Resolver
+data-importer.data-setup.steps.resolver.description: Konfigurera regler för dataupplösning
+data-importer.data-setup.steps.mapping.title: Mapping
+data-importer.data-setup.steps.mapping.description: Mappa källfält till målfält
+data-importer.data-setup.steps.processing-settings.title: Bearbetningsinställningar
+data-importer.data-setup.steps.processing-settings.description: Konfigurera bearbetningsinställningar för import
+
+# Data Source
+data-importer.data-source.title: Datakälla
+data-importer.data-source.type: Typ
+data-importer.data-source.type-label: Datakälletyp
+
+# Loaders
+data-importer.loader.asset: Asset
+data-importer.loader.upload: Upload
+data-importer.loader.http: HTTP
+data-importer.loader.sftp: SFTP
+data-importer.loader.push: Push
+data-importer.loader.sql: SQL
+
+# Asset Loader
+data-importer.loader.asset.asset-path: Asset-sökväg
+
+# Upload Loader
+data-importer.loader.upload.status: Upload-status
+data-importer.loader.upload.file-uploaded: Filen har laddats upp
+data-importer.loader.upload.no-file: Ingen fil uppladdad ännu
+data-importer.loader.upload.file-path: Sökväg för uppladdad fil
+data-importer.loader.upload.open-upload: Ladda upp fil
+data-importer.loader.upload.modal-title: Ladda upp importfil
+
+# HTTP Loader
+data-importer.loader.http.schema: Schema
+data-importer.loader.http.url: URL
+
+# SFTP Loader
+data-importer.loader.sftp.host: Host
+data-importer.loader.sftp.port: Port
+data-importer.loader.sftp.username: Användarnamn
+data-importer.loader.sftp.password: Lösenord
+data-importer.loader.sftp.remote-path: Fjärrsökväg
+
+# Push Loader
+data-importer.loader.push.api-key: API Key
+data-importer.loader.push.api-key.generate: Generera API Key
+data-importer.loader.push.api-key-required: Ange en API Key
+data-importer.loader.push.api-key-min-length: API Key måste vara minst 16 tecken lång
+data-importer.loader.push.ignore-not-empty-queue: Ignorera icke-tom kö
+data-importer.loader.push.endpoint: Endpoint
+
+# SQL Loader
+data-importer.loader.sql.connection: Databasanslutning
+data-importer.loader.sql.select: SELECT
+data-importer.loader.sql.from: FROM
+data-importer.loader.sql.where: WHERE
+data-importer.loader.sql.group-by: GROUP BY
+
+# File Format
+data-importer.file-format.title: Filformat
+data-importer.file-format.type: Typ
+
+# Interpreters
+data-importer.interpreter.csv: CSV
+data-importer.interpreter.json: JSON
+data-importer.interpreter.xml: XML
+data-importer.interpreter.xlsx: XLSX
+data-importer.interpreter.sql: SQL
+
+# CSV Interpreter
+data-importer.interpreter.csv.delimiter: Avgränsare
+data-importer.interpreter.csv.enclosure: Textavgränsare
+data-importer.interpreter.csv.escape: Escape-tecken
+data-importer.interpreter.csv.required: '{{field}} är obligatoriskt'
+data-importer.interpreter.csv.single-char-only: '{{field}} måste vara tomt eller ett enskilt tecken'
+data-importer.interpreter.csv.skip-first-row: Hoppa över första raden
+data-importer.interpreter.csv.save-header-name: Spara rubriknamn
+
+# JSON Interpreter
+data-importer.interpreter.json.path: JMESPath
+
+# XML Interpreter
+data-importer.interpreter.xml.xpath: XPath
+data-importer.interpreter.xml.schema: Schema
+
+# XLSX Interpreter
+data-importer.interpreter.xlsx.sheet-name: Bladnamn
+data-importer.interpreter.xlsx.skip-first-row: Hoppa över första raden
+
+# SQL Interpreter
+data-importer.interpreter.sql.info: SQL-tolken använder frågekonfigurationen från SQL-laddaren.
+
+# Resolver
+data-importer.resolver.title: Resolver
+data-importer.resolver.class: Data Object-klass
+data-importer.resolver.class-placeholder: Välj klass
+data-importer.resolver.element-loading: Elementladdning
+data-importer.resolver.loading-strategy: Laddningsstrategi
+data-importer.resolver.loading-strategy.tooltip: Definierar hur befintliga element matchas före import. Om inget element hittas tillämpas skapanderegler.
+data-importer.resolver.loading-strategy.notLoad: Ingen laddning
+data-importer.resolver.loading-strategy.id: Id
+data-importer.resolver.loading-strategy.path: Sökväg
+data-importer.resolver.loading-strategy.attribute: Attribut
+data-importer.resolver.loading-strategy.attribute-name: Attributnamn
+data-importer.resolver.loading-strategy.attribute-name-placeholder: Välj attribut
+data-importer.resolver.loading-strategy.data-source-index: Datakälleindex
+data-importer.resolver.loading-strategy.data-source-index-placeholder: Välj kolumn
+data-importer.resolver.loading-strategy.language: Språk
+data-importer.resolver.loading-strategy.language-placeholder: Välj språk
+data-importer.resolver.loading-strategy.include-unpublished: Inkludera opublicerade objekt
+data-importer.resolver.element-creation: Elementskapande
+data-importer.resolver.create-location-strategy: Platsstrategi
+data-importer.resolver.create-location-strategy.tooltip: Styr var nyskapade element placeras när inget befintligt element kunde hittas.
+data-importer.resolver.location-strategy.staticPath: Statisk sökväg
+data-importer.resolver.location-strategy.findOrCreateFolder: Hitta eller skapa mapp
+data-importer.resolver.location-strategy.findParent: Hitta överordnat element
+data-importer.resolver.location-strategy.doNotCreate: Skapa inte
+data-importer.resolver.location-strategy.noChange: Ingen ändring
+data-importer.resolver.location-strategy.path: Sökväg
+data-importer.resolver.location-strategy.path-placeholder: Ange sökväg
+data-importer.resolver.location-strategy.data-source-index: Datakälleindex
+data-importer.resolver.location-strategy.data-source-index-placeholder: Välj kolumn
+data-importer.resolver.location-strategy.fallback-path: Reservsökväg
+data-importer.resolver.location-strategy.fallback-path.tooltip: Används när en dynamisk målplats inte kan bestämmas från källdata.
+data-importer.resolver.location-strategy.fallback-path-placeholder: Ange reservsökväg
+data-importer.resolver.location-strategy.find-strategy: Sökstrategi
+data-importer.resolver.location-strategy.find-strategy.id: Via ID
+data-importer.resolver.location-strategy.find-strategy.path: Via sökväg
+data-importer.resolver.location-strategy.find-strategy.attribute: Via attribut
+data-importer.resolver.location-strategy.attribute-class: Klass
+data-importer.resolver.location-strategy.attribute-name: Attributnamn
+data-importer.resolver.location-strategy.attribute-language: Språk
+data-importer.resolver.location-strategy.as-variant: Som variant
+data-importer.resolver.element-location-update: Uppdatering av elementplats
+data-importer.resolver.location-update-strategy: Platsstrategi
+data-importer.resolver.location-update-strategy.tooltip: Styr om och hur platsen för redan matchade element ändras vid import.
+data-importer.resolver.element-publishing: Elementpublicering
+data-importer.resolver.publishing-strategy: Publiceringsstrategi
+data-importer.resolver.publishing-strategy.tooltip: Definierar publicerings- eller avpubliceringsbeteende för importerade element.
+data-importer.resolver.publishing-strategy.noChangeUnpublishNew: Ingen ändring / Avpublicera nya
+data-importer.resolver.publishing-strategy.noChangePublishNew: Ingen ändring / Publicera nya
+data-importer.resolver.publishing-strategy.alwaysPublish: Publicera alltid
+data-importer.resolver.publishing-strategy.attributeBased: Attributbaserad
+data-importer.resolver.publishing-strategy.data-source-index: Datakälleindex
+data-importer.resolver.publishing-strategy.data-source-index-placeholder: Välj kolumn
+
+# Processing Settings
+data-importer.processing.title: Bearbetningsinställningar
+data-importer.processing.execution.title: Körning
+data-importer.processing.id-delta.title: ID, Delta Check & rensning
+data-importer.processing.execution-type: Körningstyp
+data-importer.processing.execution-type.tooltip: Sekventiell kör ett objekt i taget. Parallell bearbetar flera objekt samtidigt.
+data-importer.processing.execution-type.sequential: Sekventiell
+data-importer.processing.execution-type.parallel: Parallell
+data-importer.processing.archive-import-file: Arkivera importfil
+data-importer.processing.disable-versioning: Inaktivera versionshantering
+data-importer.processing.id-data-index: Dataindex för ID-fält
+data-importer.processing.id-data-index.tooltip: Kolumn som används som stabil identifierare för Delta Check och rensning. Dessa alternativ är bara tillgängliga när ett ID-dataindex har angetts.
+data-importer.processing.id-data-index-placeholder: Välj kolumn
+data-importer.processing.delta-check: Delta Check
+data-importer.processing.cleanup.title: Rensning
+data-importer.processing.cleanup.do-cleanup: Rensa ej importerade element
+data-importer.processing.cleanup.strategy: Rensningsstrategi
+data-importer.processing.cleanup.strategy.tooltip: Avgör vad som händer med befintliga element som inte finns med i den aktuella importen.
+data-importer.processing.cleanup.strategy.delete: Ta bort
+data-importer.processing.cleanup.strategy.unpublish: Avpublicera
+data-importer.processing.logging.title: Loggningsinställningar (Application Logger)
+data-importer.processing.logging.info.title: Info
+data-importer.processing.logging.info.disable-logs: Inaktivera infologgar
+data-importer.processing.logging.info.disable-file-objects: Inaktivera info-filobjekt
+data-importer.processing.logging.error.title: Fel
+data-importer.processing.logging.error.disable-logs: Inaktivera felloggar
+data-importer.processing.logging.error.disable-file-objects: Inaktivera fel-filobjekt
+
+# Preview Import
+data-importer.preview-import.title: Importförhandsvisning
+data-importer.preview-import.choose-preview-data: Välj förhandsvisningsdata
+data-importer.preview-import.upload-file: Ladda upp fil
+data-importer.preview-import.copy-from-source: Kopiera från datakälla
+data-importer.preview-import.search-placeholder: Sök efter namn, källa, mål
+data-importer.preview-import.column.label: Etikett
+data-importer.preview-import.column.data: Data
+data-importer.preview-import.prev: Föregående post
+data-importer.preview-import.next: Nästa post
+
+# Mapping
+data-importer.mapping.title: Mapping-konfiguration
+data-importer.mapping.title-short: Mappings
+data-importer.mapping.add: Ny
+data-importer.mapping.new-modal.title: Ny Mapping
+data-importer.mapping.new-modal.source-label: Källkolumn
+data-importer.mapping.new-modal.source-required: Välj en källkolumn
+data-importer.mapping.collapse-all: Fäll ihop alla
+data-importer.mapping.expand-all: Expandera alla
+data-importer.mapping.auto-fill: Autofyll
+data-importer.mapping.autofill-suggestions.title: Copilot autofyll-förslag
+data-importer.mapping.autofill-suggestions.score: Poäng
+data-importer.mapping.autofill-suggestions.source: Källa
+data-importer.mapping.autofill-suggestions.destination: Destination (Datamål)
+data-importer.mapping.autofill-suggestions.result: Förhandsvisningsresultat
+data-importer.mapping.autofill-suggestions.selected: '{{count}} vald(a)'
+data-importer.mapping.autofill-suggestions.reject-all: Avvisa alla
+data-importer.mapping.autofill-suggestions.apply: Tillämpa valt autofyll
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Inga förslag hittades för omappade kolumner.
+data-importer.mapping.autofill-suggestions.no-source-columns: Inga källkolumner tillgängliga. Kör en förhandsvisning av importen först.
+data-importer.mapping.empty-state: Skapa en mapping direkt från kolumnen Källor, eller klicka på Ny för att skapa en manuellt.
+data-importer.mapping.filter-empty: 'Inga mappings för "{{source}}" ännu.'
+data-importer.mapping.sources.title: Källor med förhandsvisning
+data-importer.mapping.sources.reset-view: Återställ vy
+data-importer.mapping.sources.empty: Ingen förhandsvisningsdata tillgänglig. Konfigurera en datakälla och kör en importförhandsvisning först.
+data-importer.mapping.item.new-label: Ny Mapping
+data-importer.mapping.item.label: Etikett
+data-importer.mapping.item.advanced: Avancerat
+data-importer.mapping.item.delete: Ta bort mapping
+data-importer.mapping.item.source: Källa
+data-importer.mapping.item.source-placeholder: Välj källkolumner
+data-importer.mapping.item.destination: Mål
+data-importer.mapping.item.destination-placeholder: Välj fält
+data-importer.mapping.item.requires-advanced-setup: Kräver avancerad konfiguration
+data-importer.mapping.item.data-source-index: Datakälleindex
+data-importer.mapping.item.data-source-index-placeholder: Välj källkolumner
+data-importer.mapping.item.transformation-pipeline.title: Transformationspipeline
+data-importer.mapping.item.transformation-pipeline.empty: Ingen Transformationspipeline konfigurerad
+data-importer.mapping.item.transformation-result.title: Transformationsresultat
+data-importer.mapping.item.transformation-result.type: Resultattyp
+data-importer.mapping.item.data-target.title: Datamål
+data-importer.mapping.item.data-target.type: Måltyp
+data-importer.mapping.item.data-target.type-placeholder: Välj måltyp
+data-importer.mapping.item.data-target.type.direct: Direkt
+data-importer.mapping.item.data-target.type.classificationstore: Classification Store
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store Batch
+data-importer.mapping.item.data-target.type.manyToManyRelation: Many-to-Many Relation
+data-importer.mapping.item.data-target.field-name: Fältnamn
+data-importer.mapping.item.data-target.field-name-placeholder: Välj fält
+data-importer.mapping.item.data-target.language: Språk
+data-importer.mapping.item.data-target.language-placeholder: Välj språk
+data-importer.mapping.item.data-target.write-if-target-is-not-empty: Skriv om målet inte är tomt
+data-importer.mapping.item.data-target.write-if-source-is-empty: Skriv om källan är tom
+
+# Advanced Mapping Modal
+data-importer.mapping.advanced-modal.title: Redigera mapping & transformationer
+data-importer.mapping.advanced-modal.save: Spara
+data-importer.mapping.advanced-modal.refresh-all-previews: Uppdatera alla förhandsvisningar
+data-importer.mapping.advanced-modal.step-source: Källa
+data-importer.mapping.advanced-modal.step-transformations: Transformationer
+data-importer.mapping.advanced-modal.step-target: Datamål
+data-importer.mapping.advanced-modal.no-transformers: Inga transformatorer konfigurerade. Lägg till en nedan.
+data-importer.mapping.advanced-modal.add-transformation: + Lägg till transformation
+data-importer.mapping.advanced-modal.result-type: Resultattyp
+data-importer.mapping.advanced-modal.write-if-target-not-empty: Skriv om målet inte är tomt
+data-importer.mapping.advanced-modal.write-if-source-empty: Skriv om källan är tom
+data-importer.mapping.advanced-modal.transformer.move-up: Flytta upp
+data-importer.mapping.advanced-modal.transformer.move-down: Flytta ner
+data-importer.mapping.advanced-modal.transformer.remove: Ta bort
+data-importer.mapping.advanced-modal.transformer.edit-source: Redigera källattribut
+data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Datamanipulering
+data-importer.mapping.advanced-modal.transformer.group.data-types: Datatyper
+data-importer.mapping.advanced-modal.transformer.group.load-import: Ladda / Importera
+data-importer.mapping.advanced-modal.recalculate-result-type: Beräkna om transformationsresultattyp
+data-importer.mapping.advanced-modal.step-source.label: Källattribut
+data-importer.mapping.advanced-modal.step-source.description: Välj från listan eller lägg till en ny källa
+data-importer.mapping.advanced-modal.step-source.import-preview: Importförhandsvisning
+data-importer.mapping.advanced-modal.step-source.search-placeholder: Sök
+data-importer.mapping.advanced-modal.step-source.column-name: Namn
+data-importer.mapping.advanced-modal.step-source.column-data: Data
+data-importer.mapping.advanced-modal.loading: Laddar…
+data-importer.mapping.advanced-modal.no-data: Inga data
+data-importer.mapping.advanced-modal.no-preview: Ingen förhandsvisning tillgänglig
+data-importer.mapping.advanced-modal.step-target.type: Typ
+data-importer.mapping.advanced-modal.step-target.field-name: Fältnamn
+data-importer.mapping.advanced-modal.step-target.overwrite: Skriv över
+data-importer.mapping.advanced-modal.step-target.preview-result: Förhandsvisningsresultat
+data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Skriv till detta fält även om målfältet redan innehåller ett värde
+data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Skriv till detta fält även om källdata är tom
+data-importer.mapping.advanced-modal.step-target.overwrite-mode: Överskrivningsläge
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Ersätt
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Sammanfoga
+data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
+data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nyckel vald
+data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i grupp {{group}}'
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Välj Classification Store Key
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Sök och välj en nyckel för detta Classification Store-fält
+data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch kräver transformationsresultattyp: array, quantityValueArray, inputQuantityValueArray eller dateArray.'
+data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: 'Many-to-Many Relation kräver transformationsresultattyp: advancedDataObject, dataObjectArray, assetArray eller advancedAssetArray.'
+
+error.error_environment: Förhandsvisningsfilen är inte giltig för den konfigurerade tolken. Ladda upp eller kopiera förhandsvisningsdata på nytt.
+
+# Execution Tab
+data-importer.execution.settings.title: Körningsinställningar
+data-importer.execution.schedule-type: Schematyp
+data-importer.execution.schedule-type.recurring: Återkommande / Cron
+data-importer.execution.schedule-type.job: Engångsjobb
+data-importer.execution.cron-definition: Cron-definition
+data-importer.execution.cron-generator: Cron-generator
+data-importer.execution.scheduled-at: Schemalagd till
+data-importer.execution.manual-execution: Manuell körning
+data-importer.execution.start-import: Starta import
+data-importer.execution.start-import.success: Importen startades
+data-importer.execution.start-import.error: Det gick inte att starta importen
+data-importer.execution.start-import.tooltip-dirty: Spara dina ändringar innan du startar importen
+data-importer.execution.start-import.tooltip-push: Push-laddaren stöder inte manuell körning
+data-importer.execution.cancel.success: Importen avbröts
+data-importer.execution.cancel.error: Det gick inte att avbryta importen
+data-importer.execution.status.title: Körningsstatus
+data-importer.execution.status.not-running: Körs inte
+data-importer.execution.status.finished: Alla objekt bearbetade. Ingen import körs.
+data-importer.execution.status.current-progress: Aktuellt förlopp
+data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} objekt bearbetade...'
+data-importer.execution.status.cancel: Avbryt körning & rensa kö
+data-importer.execution.cron-validating: Validerar Cron-uttryck...
+data-importer.validation.required: '{{field}} är obligatoriskt'
+user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportör

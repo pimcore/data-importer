@@ -17,27 +17,18 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class Classificationstore implements DataTargetInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class Classificationstore implements DataTargetInterface, SchemaAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $fieldName;
+    private string $fieldName;
 
-    /**
-     * @var string
-     */
-    protected $language;
+    private string $language;
 
-    /**
-     * @var int
-     */
-    protected $keyId;
+    private int $keyId;
 
-    /**
-     * @var int
-     */
-    protected $groupId;
+    private int $groupId;
 
     public function setSettings(array $settings): void
     {

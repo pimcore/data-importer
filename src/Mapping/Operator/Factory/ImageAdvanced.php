@@ -21,9 +21,10 @@ use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class ImageAdvanced extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class ImageAdvanced extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData

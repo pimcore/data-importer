@@ -18,12 +18,12 @@ use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StaticPathStrategy implements LocationStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class StaticPathStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $path;
+    private string $path;
 
     public function setSettings(array $settings): void
     {

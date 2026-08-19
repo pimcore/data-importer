@@ -19,28 +19,20 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StaticText extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class StaticText extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
-    const MODE_APPEND = 'append';
+    public const MODE_APPEND = 'append';
 
-    const MODE_PREPEND = 'prepend';
+    public const MODE_PREPEND = 'prepend';
 
-    /**
-     * @var string
-     */
-    protected $mode;
+    private string $mode;
 
-    /**
-     * @var string
-     */
-    protected $text;
+    private string $text;
 
-    /**
-     * @var bool
-     */
-    protected $alwaysAdd;
+    private bool $alwaysAdd;
 
     public function setSettings(array $settings): void
     {

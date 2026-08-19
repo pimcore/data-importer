@@ -19,13 +19,14 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class StringReplace extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class StringReplace extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
-    protected string $search;
+    private string $search;
 
-    protected string $replace;
+    private string $replace;
 
     public function setSettings(array $settings): void
     {

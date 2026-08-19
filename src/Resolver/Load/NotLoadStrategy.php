@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class NotLoadStrategy implements LoadStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class NotLoadStrategy implements LoadStrategyInterface, SchemaAwareInterface
 {
     public function loadElement(array $inputData): ?ElementInterface
     {

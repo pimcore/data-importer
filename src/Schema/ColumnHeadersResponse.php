@@ -38,9 +38,19 @@ final class ColumnHeadersResponse implements AdditionalAttributesInterface
             type: 'array',
             items: new Items(
                 properties: [
-                    new Property(property: 'id', description: 'Column index', type: 'string'),
-                    new Property(property: 'dataIndex', description: 'Column data index', type: 'string'),
-                    new Property(property: 'label', description: 'Column label', type: 'string'),
+                    new Property(property: 'id', description: 'Column index', type: 'string', example: '0'),
+                    new Property(
+                        property: 'dataIndex',
+                        description: 'Column data index',
+                        type: 'string',
+                        example: 'col_0'
+                    ),
+                    new Property(
+                        property: 'label',
+                        description: 'Column label',
+                        type: 'string',
+                        example: 'Product Name'
+                    ),
                 ],
                 type: 'object'
             )

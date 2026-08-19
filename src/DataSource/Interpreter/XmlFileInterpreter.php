@@ -21,29 +21,20 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Util\Exception\XmlParsingException;
 use Symfony\Component\Config\Util\XmlUtils;
 
-class XmlFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class XmlFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
-    /**
-     * @var string|null
-     */
-    protected $xpath;
+    private string $xpath;
 
-    /**
-     * @var string|null
-     */
-    protected $schema;
+    private ?string $schema;
 
-    /**
-     * @var \DOMDocument|null
-     */
-    protected $cachedContent = null;
+    private ?\DOMDocument $cachedContent = null;
 
-    /**
-     * @var string|null
-     */
-    protected $cachedFilePath = null;
+    private ?string $cachedFilePath = null;
 
-    protected function loadDataRaw(string $path)
+    private function loadDataRaw(string $path)
     {
         $schema = $this->schema;
 
@@ -63,7 +54,7 @@ class XmlFileInterpreter extends AbstractInterpreter implements SchemaAwareInter
      *
      * @throws InvalidInputException
      */
-    protected function loadData(string $path)
+    private function loadData(string $path)
     {
         if ($this->cachedFilePath !== $path || !empty($this->cachedContent)) {
             $dom = $this->loadDataRaw($path);

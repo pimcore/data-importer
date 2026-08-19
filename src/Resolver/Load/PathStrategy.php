@@ -17,7 +17,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class PathStrategy extends AbstractLoad implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class PathStrategy extends AbstractLoad implements SchemaAwareInterface
 {
     /**
      * @param string $identifier

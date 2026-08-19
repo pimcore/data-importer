@@ -17,7 +17,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData

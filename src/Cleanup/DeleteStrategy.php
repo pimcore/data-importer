@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class DeleteStrategy implements CleanupStrategyInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class DeleteStrategy implements CleanupStrategyInterface, SchemaAwareInterface
 {
     public function doCleanup(ElementInterface $element): void
     {

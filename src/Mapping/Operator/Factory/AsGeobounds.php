@@ -21,9 +21,10 @@ use Pimcore\Model\DataObject\Data\Geobounds;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class AsGeobounds extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class AsGeobounds extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData

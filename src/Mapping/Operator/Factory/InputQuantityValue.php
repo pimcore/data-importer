@@ -18,7 +18,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class InputQuantityValue extends QuantityValue implements SchemaAwareInterface
+/**
+ * @internal
+ */
+final class InputQuantityValue extends QuantityValue implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData

@@ -23,40 +23,25 @@ use Pimcore\Logger;
 use Symfony\Component;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class SftpLoader implements DataLoaderInterface, SchemaAwareInterface
+/**
+ * @internal
+ */
+final class SftpLoader implements DataLoaderInterface, SchemaAwareInterface
 {
-    /**
-     * @var string
-     */
-    protected $importFilePath;
+    private string $importFilePath;
 
-    /**
-     * @var string
-     */
-    protected $remotePath;
+    private string $remotePath;
 
-    /**
-     * @var string
-     */
-    protected $host;
+    private string $host;
 
-    /**
-     * @var string
-     */
-    protected $port;
+    private string $port;
 
-    /**
-     * @var string
-     */
-    protected $username;
+    private string $username;
 
-    /**
-     * @var string
-     */
-    protected $password;
+    private string $password;
 
     public function __construct(
-        protected Component\Filesystem\Filesystem $filesystem
+        private readonly Component\Filesystem\Filesystem $filesystem,
     ) {
     }
 

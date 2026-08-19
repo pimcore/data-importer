@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class ConfigurationPreparationService
+/**
+ * @internal
+ */
+final class ConfigurationPreparationService
 {
     /**
      * @param string $configName

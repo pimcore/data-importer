@@ -19,9 +19,10 @@ use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
-class FlattenArray extends AbstractOperator implements
-    SchemaAwareInterface,
-    TransformationTypeAwareInterface
+/**
+ * @internal
+ */
+final class FlattenArray extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     public function setSettings(array $settings): void
     {
