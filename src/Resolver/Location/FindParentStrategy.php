@@ -15,7 +15,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
@@ -23,7 +22,6 @@ use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * @internal
@@ -50,18 +48,8 @@ final class FindParentStrategy implements LocationStrategyInterface, SchemaAware
 
     private bool $saveAsVariant = false;
 
-    private TransformationDataTypeService $transformationDataTypeService;
-
     public function __construct(private readonly DataObjectLoader $dataObjectLoader)
     {
-    }
-
-    #[Required]
-    public function setTransformationDataTypeService(
-        TransformationDataTypeService $transformationDataTypeService
-    ): void {
-        $this->transformationDataTypeService =
-            $transformationDataTypeService;
     }
 
     public function setSettings(array $settings): void
@@ -100,23 +88,13 @@ final class FindParentStrategy implements LocationStrategyInterface, SchemaAware
                 );
             }
 
-            if (empty($settings['attributeName'])) {
-                throw new InvalidConfigurationException('Empty data attribute name.');
-            }
-
-            $this->transformationDataTypeService
-                ->checkFieldAvailable(
-                    $this->attributeName,
-                    $this->attributeDataObjectClassId,
-                    [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
-                    true,
-                    true,
-                    true,
-                    true
-                );
-
-            $this->attributeName = $settings['attributeName'];
+            $this->attributeName = $settings['attributeName'] ?? '';
             $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
+
+            $this->dataObjectLoader->assertAttributeLoadable(
+                $this->attributeDataObjectClassId,
+                $this->attributeName
+            );
         }
     }
 

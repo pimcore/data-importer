@@ -13,11 +13,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
 use Mcp\Capability\Attribute\McpTool;
-use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;

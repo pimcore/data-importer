@@ -12,9 +12,14 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tool;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Db;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
+use function sprintf;
 
 /**
  * @internal
@@ -59,6 +64,80 @@ final class DataObjectLoader
         }
 
         return $fullAttributeName;
+    }
+
+    /**
+     * Asserts that an attribute can actually be used to look an object up.
+     *
+     * This mirrors what loadByAttribute() does rather than what a field can hold: a dotted
+     * object brick path is resolved through a listing condition, everything else goes through
+     * Pimcore's getBy<Field>() static getter, which refuses a field whose type is not
+     * filterable. Gating on the transformation data type instead rejected perfectly loadable
+     * fields (dates, relations, checkboxes, multiselects) while accepting `password`, whose
+     * getter throws.
+     *
+     * @throws InvalidConfigurationException
+     */
+    public function assertAttributeLoadable(string $classId, string $attributeName): void
+    {
+        if ($attributeName === '') {
+            throw new InvalidConfigurationException('The attributeName attribute is required.');
+        }
+
+        $classDefinition = ClassDefinition::getById($classId);
+        if (!$classDefinition instanceof ClassDefinition) {
+            throw new InvalidConfigurationException(
+                sprintf('Class `%s` not found. Make sure to use an existing data object class ID.', $classId)
+            );
+        }
+
+        if ($this->isObjectBrickAttribute($attributeName)) {
+            if ($this->getObjectBrickParts($attributeName) === []) {
+                throw new InvalidConfigurationException(sprintf(
+                    'Object brick attribute `%s` must be given as `classField.brickName.brickField`.',
+                    $attributeName
+                ));
+            }
+
+            return;
+        }
+
+        $fieldDefinition = $this->resolveFieldDefinition($classDefinition, $attributeName);
+        if (!$fieldDefinition instanceof Data) {
+            throw new InvalidConfigurationException(sprintf(
+                'Attribute `%s` does not exist in class `%s`.',
+                $attributeName,
+                $classDefinition->getName()
+            ));
+        }
+
+        if (!$fieldDefinition->isFilterable()) {
+            throw new InvalidConfigurationException(sprintf(
+                'Attribute `%s` cannot be used to load an object: field type `%s` is not filterable.',
+                $attributeName,
+                $fieldDefinition->getFieldType()
+            ));
+        }
+    }
+
+    private function resolveFieldDefinition(ClassDefinition $classDefinition, string $attributeName): ?Data
+    {
+        $fieldDefinition = $classDefinition->getFieldDefinition($attributeName);
+        if ($fieldDefinition instanceof Data) {
+            return $fieldDefinition;
+        }
+
+        // getBy<Field>() falls back to the localized fields container, so a localized child is
+        // just as loadable as a top level field.
+        $localizedFields = $classDefinition->getFieldDefinition('localizedfields');
+        if ($localizedFields instanceof Localizedfields) {
+            $localizedDefinition = $localizedFields->getFieldDefinition($attributeName);
+            if ($localizedDefinition instanceof Data) {
+                return $localizedDefinition;
+            }
+        }
+
+        return null;
     }
 
     public function loadByAttribute(string $className,

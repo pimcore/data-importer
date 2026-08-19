@@ -90,20 +90,10 @@ final class LoadDataObject extends AbstractOperator implements SchemaAwareInterf
                 );
             }
 
-            if (empty($this->attributeName)) {
-                throw new InvalidConfigurationException('The attributeName attribute is required');
-            }
-
-            $this->transformationDataTypeService
-                ->checkFieldAvailable(
-                    $this->attributeName,
-                    $this->attributeDataObjectClassId,
-                    [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
-                    true,
-                    true,
-                    true,
-                    true
-                );
+            $this->dataObjectLoader->assertAttributeLoadable(
+                $this->attributeDataObjectClassId,
+                $this->attributeName
+            );
         }
     }
 
