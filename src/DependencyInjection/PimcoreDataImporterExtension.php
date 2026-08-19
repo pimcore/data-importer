@@ -12,6 +12,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
+use Mcp\Capability\Attribute\McpTool;
+use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
@@ -54,14 +56,11 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
 
-        // MCP Server configuration
-        $container->setParameter(
-            'pimcore_data_importer.mcp_server.enabled',
-            $config['mcp_server']['enabled']
-        );
-
-        // Load MCP services if enabled (auth handled by pimcore_mcp firewall)
-        if ($config['mcp_server']['enabled']) {
+        // The MCP tools are only registrable when an MCP host has pulled in mcp/sdk. The
+        // resource makes that decision part of what the container is invalidated on, so
+        // installing or removing the SDK reshapes the container instead of leaving a stale one.
+        $container->addResource(new ClassExistenceResource(McpTool::class));
+        if (class_exists(McpTool::class)) {
             $loader->load('services/mcp.yml');
         }
     }

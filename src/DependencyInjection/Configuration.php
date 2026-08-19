@@ -56,18 +56,6 @@ final class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
             ->end()
-            ->arrayNode('mcp_server')
-                ->addDefaultsIfNotSet()
-                ->info('[EXPERIMENTAL] Configure MCP (Model Context Protocol) server for AI integration. ' .
-                       'Authentication is handled by the pimcore_mcp firewall (studio-backend-bundle).')
-                ->children()
-                    ->booleanNode('enabled')
-                        ->defaultFalse()
-                        ->info('Enable the MCP server endpoint. When enabled, provides configuration and ' .
-                               'validation tools for AI agents.')
-                    ->end()
-                ->end()
-            ->end()
         ->end();
 
         return $treeBuilder;
