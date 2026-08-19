@@ -18,23 +18,34 @@ objects. You build it as one document and write it in one call.
 > types are all install specific. Every one of them comes from a tool. Guessing them is the most
 > common cause of a rejected configuration.
 
-1. **`get_import_config_examples`** - start here, always. Three complete working configurations
+1. **Read the source data first.** A mapping cannot be derived from field names alone: you need
+   the values to see that `"130.0 kw"` needs a quantity value with a unit, that `productionYear`
+   arrives as a string and needs the numeric operator, that `color` is a comma separated list, or
+   that `mainimage` is a URL to import as an asset. When the source is a Pimcore asset, stage it
+   with `stage_asset` and read or grep the local file; that works on the whole file rather than a
+   sample, so distributions and edge cases are visible too. `stage_asset` lives in the
+   `pimcore-assets-read` group, so an agent that builds import configurations should be granted
+   that group alongside the Data Importer ones.
+
+   For a source that is not an asset (HTTP, SFTP, SQL, push, upload) the file is not reachable
+   this way. Ask for a sample, or for the field list and a few example values.
+2. **`get_import_config_examples`** - start here for the configuration shape. Three complete working configurations
    with a summary of what each uses. Copy the closest one; it is the cheapest way to learn the
    required top level structure. The class ids and field names in them are illustrative, so
    replace them.
-2. **`get_import_config_context`** - reference data. It defaults to `classes`, `loaders` and
+3. **`get_import_config_context`** - reference data. It defaults to `classes`, `loaders` and
    `interpreters`, which is what you need to decide *what to import into* and *where the data
    comes from*. Request more sections only when you need them:
    - `resolver` before writing `resolverConfig`
    - `targets` and `operators` before writing `mappingConfig`
    - `field_type_matrix` (needs `classId`) to learn which field accepts which result type
    - `schema` only when a validation error is otherwise unexplainable; it is large.
-3. **`list_import_configs`** - check whether the name is taken before creating.
-4. **Build the configuration** (see the structure below).
-5. **`enrich_import_config`** - computes `transformationResultType` for every mapping item.
+4. **`list_import_configs`** - check whether the name is taken before creating.
+5. **Build the configuration** (see the structure below).
+6. **`enrich_import_config`** - computes `transformationResultType` for every mapping item.
    Returns `[{index, label, transformationResultType}]`; set each on the matching item.
-6. **`validate_import_config`** - fix every error and validate again before writing.
-7. **`create_import_config`** then **`save_import_config`** - create makes an empty entry, save
+7. **`validate_import_config`** - fix every error and validate again before writing.
+8. **`create_import_config`** then **`save_import_config`** - create makes an empty entry, save
    writes the document.
 
 To change an existing configuration, read it with `get_import_config`, modify it, then enrich,
@@ -83,7 +94,8 @@ mappingConfig:            # one entry per target field
 ```
 
 `dataSourceIndex` is the source field. For CSV it is the column number as a string starting at
-`'0'`; for JSON and XML it is the field name.
+`'0'`, so read the header row to work out which number you want; for JSON and XML it is the field
+name.
 
 ## Rules that decide whether it works
 

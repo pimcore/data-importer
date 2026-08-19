@@ -39,6 +39,7 @@ All handlers are in the `Pimcore\Bundle\DataImporterBundle\Mcp\Tool` namespace a
 ### The order they are called in
 
 ```
+stage_asset (agent bundle)          read the source file itself, see the actual values
 get_import_config_examples          copy the closest working configuration
 get_import_config_context           classes, loaders, interpreters (default), then
                                     resolver / targets / operators / field_type_matrix
@@ -51,6 +52,14 @@ save_import_config                  write the document
 
 To change an existing configuration, read it with `get_import_config`, modify, then enrich,
 validate and save.
+
+The first step is not one of these tools, and it matters. A mapping cannot be derived from field
+names alone: the values are what say that `"130.0 kw"` needs a quantity value with a unit, that a
+year arrives as a string and needs the numeric operator, or that a column holds a URL to import as
+an asset. When the source is a Pimcore asset, the Agent Bundle's `stage_asset` puts the whole file
+on the local filesystem for the agent to read or grep, which is why an agent that builds import
+configurations should also be granted `pimcore-assets-read`. Sources that are not assets (HTTP,
+SFTP, SQL, push, upload) are not reachable that way, and the agent has to be given a sample.
 
 ### `get_import_config_context`
 
@@ -194,6 +203,8 @@ Attach them to an agent through its `pimcoreMcpServers` list (tool schemas sent 
 pimcoreMcpServers:
   - pimcore-data-importer-read
   - pimcore-data-importer-direct-write
+  # so the agent can stage and read the source file it is writing a mapping for
+  - pimcore-assets-read
 ```
 
 Granting only `pimcore-data-importer-read` gives an agent that can explain and validate
