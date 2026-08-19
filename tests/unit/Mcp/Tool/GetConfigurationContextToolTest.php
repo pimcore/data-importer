@@ -115,7 +115,10 @@ final class GetConfigurationContextToolTest extends Unit
     {
         $payload = $this->assertToolSuccess($this->buildTool(allowed: true)->execute(['resolver']));
 
-        $this->assertSame(['properties' => ['loadingStrategy' => ['availableTypes' => ['id' => []]]]], $payload['resolver']);
+        $this->assertSame(
+            ['properties' => ['loadingStrategy' => ['availableTypes' => ['id' => []]]]],
+            $payload['resolver'],
+        );
     }
 
     public function testOperatorAndTargetCataloguesAreReadOutOfTheMappingSchema(): void

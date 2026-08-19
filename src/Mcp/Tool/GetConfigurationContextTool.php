@@ -251,15 +251,15 @@ final readonly class GetConfigurationContextTool
     private function slimSchema(): array
     {
         $schema = $this->configurationSchemaService->getCompleteSchema();
-        $mapping = &$schema['mappingConfig']['items']['properties'];
 
-        if (isset($mapping['transformationPipeline']['availableOperators'])) {
-            $mapping['transformationPipeline']['availableOperators'] =
+        if (isset($schema['mappingConfig']['items']['properties']['transformationPipeline']['availableOperators'])) {
+            $schema['mappingConfig']['items']['properties']['transformationPipeline']['availableOperators'] =
                 'See the "operators" section of this tool.';
         }
 
-        if (isset($mapping['dataTarget']['availableTargets'])) {
-            $mapping['dataTarget']['availableTargets'] = 'See the "targets" section of this tool.';
+        if (isset($schema['mappingConfig']['items']['properties']['dataTarget']['availableTargets'])) {
+            $schema['mappingConfig']['items']['properties']['dataTarget']['availableTargets'] =
+                'See the "targets" section of this tool.';
         }
 
         return $schema;

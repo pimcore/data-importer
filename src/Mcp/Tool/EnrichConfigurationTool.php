@@ -19,12 +19,14 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ToolAnnotations;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Exception\InvalidMcpToolArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use function sprintf;
 use Throwable;
 
 /**
@@ -143,11 +145,19 @@ final readonly class EnrichConfigurationTool
      * @param array<string, mixed> $mappingItem
      *
      * @return array{index: int|string, label: string, transformationResultType: string}
+     *
+     * @throws InvalidMcpToolArgumentException
      */
     private function describeItem(int|string $index, array $mappingItem, string $configName): array
     {
-        $mappingConfiguration = $this->mappingConfigurationFactory
-            ->loadMappingConfigurationItem($configName, $mappingItem, false);
+        try {
+            $mappingConfiguration = $this->mappingConfigurationFactory
+                ->loadMappingConfigurationItem($configName, $mappingItem, false);
+        } catch (InvalidConfigurationException $e) {
+            throw new InvalidMcpToolArgumentException(
+                sprintf('mappingConfig[%s]: %s', $index, $e->getMessage())
+            );
+        }
 
         return [
             'index' => $index,
