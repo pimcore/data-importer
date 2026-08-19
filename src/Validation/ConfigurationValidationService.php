@@ -166,7 +166,11 @@ class ConfigurationValidationService
         }
 
         // Validate settings using SchemaAwareInterface if available
-        $settings = $this->normalizeSettings($config['settings'] ?? []);
+        $settings = $this->normalizeSettings($config['settings'] ?? [], 'loaderConfig.settings', $errors);
+        if ($settings === null) {
+            return $errors;
+        }
+
         $schemaErrors = $this->validateSchemaAwareSettings(
             'loaderConfig',
             $this->dataLoaderLocator,
@@ -207,7 +211,11 @@ class ConfigurationValidationService
         }
 
         // Validate settings using SchemaAwareInterface if available
-        $settings = $this->normalizeSettings($config['settings'] ?? []);
+        $settings = $this->normalizeSettings($config['settings'] ?? [], 'interpreterConfig.settings', $errors);
+        if ($settings === null) {
+            return $errors;
+        }
+
         $schemaErrors = $this->validateSchemaAwareSettings(
             'interpreterConfig',
             $this->interpreterLocator,
@@ -283,8 +291,14 @@ class ConfigurationValidationService
         if (!empty($config['cleanup']['strategy'])) {
             $strategyType = $config['cleanup']['strategy'];
             $settings = $this->normalizeSettings(
-                $config['cleanup']['settings'] ?? []
+                $config['cleanup']['settings'] ?? [],
+                'processingConfig.cleanup.settings',
+                $errors
             );
+            if ($settings === null) {
+                return $errors;
+            }
+
             $schemaErrors = $this->validateSchemaAwareSettings(
                 'processingConfig.cleanup',
                 $this->cleanupStrategyLocator,
@@ -293,8 +307,8 @@ class ConfigurationValidationService
             );
             $errors = array_merge($errors, $schemaErrors);
 
-            if (!empty($schemaErrors)) {
-                return array_merge($errors, $schemaErrors);
+            if ($schemaErrors !== []) {
+                return $errors;
             }
 
             // Also try to instantiate through factory to check dependencies
@@ -411,6 +425,9 @@ class ConfigurationValidationService
         }
 
         $classId = $resolverConfig['dataObjectClassId'] ?? null;
+        if (is_int($classId)) {
+            $classId = (string) $classId;
+        }
 
         if (empty($classId)) {
             throw new InvalidConfigurationException(
@@ -452,33 +469,41 @@ class ConfigurationValidationService
      *
      * @param mixed $settings Settings value (must be array)
      *
-     * @return array Validated settings array
+     * Returns null when the value cannot be used, appending the reason to $errors, so the
+     * caller keeps collecting rather than throwing out of validateConfiguration().
+     * @param ValidationError[] $errors
      *
-     * @throws InvalidConfigurationException if settings is a JSON string
+     * @return array<string, mixed>|null
      */
-    private function normalizeSettings($settings): array
+    private function normalizeSettings(mixed $settings, string $path, array &$errors): ?array
     {
         if (is_array($settings)) {
             return $settings;
         }
 
         if (is_string($settings)) {
-            throw new InvalidConfigurationException(
+            $errors[] = new ValidationError(
+                $path,
                 'Settings must be a nested YAML structure, not a JSON ' .
                 'string. Use proper YAML nesting: "settings:\\n  ' .
                 'fieldName: value" instead of "settings: ' .
                 '\\"{\\\"fieldName\\\":\\\"value\\\"}\\""'
             );
+
+            return null;
         }
 
         if ($settings === null) {
             return [];
         }
 
-        throw new InvalidConfigurationException(
+        $errors[] = new ValidationError(
+            $path,
             'Settings must be an array or null, ' .
             gettype($settings) . ' given'
         );
+
+        return null;
     }
 
     /**

@@ -56,11 +56,6 @@ mappingConfig:
                 language: ''
                 writeIfTargetIsNotEmpty: true
                 writeIfSourceIsEmpty: true
-        settings:
-            loadStrategy: attribute
-            attributeDataObjectClassId: CA
-            attributeName: id
-            attributeLanguage: ''
         transformationPipeline:
             -
                 settings:
@@ -83,11 +78,6 @@ mappingConfig:
                 language: ''
                 writeIfTargetIsNotEmpty: true
                 writeIfSourceIsEmpty: true
-        settings:
-            parentFolder: /importFolder
-            useExisting: 'on'
-            overwriteExisting: 'on'
-            pregMatch: ''
         transformationPipeline:
             -
                 settings:

@@ -304,7 +304,7 @@ final class LoadDataObject extends AbstractOperator implements SchemaAwareInterf
         $rootNode
             ->children()
                 ->enumNode('loadStrategy')
-                    ->isRequired()
+                    ->defaultValue(self::LOAD_STRATEGY_ID)
                     ->info(
                         'Strategy for loading objects: "id" (by numeric ID), '
                         . '"path" (by full path), or "attribute" (by field value)'

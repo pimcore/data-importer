@@ -23,6 +23,7 @@ use Symfony\Component\Config\Definition\IntegerNode;
 use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\Config\Definition\ScalarNode;
+use Symfony\Component\Config\Definition\VariableNode;
 
 /**
  * Converts Symfony Config TreeBuilder to JSON Schema format
@@ -96,6 +97,9 @@ class TreeBuilderToJsonSchemaConverter
             $schema = ['type' => 'string', 'enum' => $node->getValues()];
         } elseif ($node instanceof ScalarNode) {
             $schema = ['type' => 'string'];
+        } elseif ($node instanceof VariableNode) {
+            // A bare variableNode holds a nested structure, not a scalar.
+            $schema = ['type' => 'object'];
         }
 
         return $schema;

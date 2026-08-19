@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
+use function sprintf;
 
 /**
  * @internal
@@ -233,6 +234,12 @@ final class TransformationDataTypeService
     public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite, bool $includeAdvancedRelations): array
     {
         $class = ClassDefinition::getById($classId);
+        if (!$class instanceof ClassDefinition) {
+            throw new InvalidConfigurationException(sprintf(
+                'Class `%s` not found. Make sure to use an existing data object class ID.',
+                $classId
+            ));
+        }
 
         $attributes = [];
 
@@ -312,6 +319,12 @@ final class TransformationDataTypeService
     public function getClassificationStoreAttributes(string $classId): array
     {
         $class = ClassDefinition::getById($classId);
+        if (!$class instanceof ClassDefinition) {
+            throw new InvalidConfigurationException(sprintf(
+                'Class `%s` not found. Make sure to use an existing data object class ID.',
+                $classId
+            ));
+        }
 
         $attributes = [];
         foreach ($class->getFieldDefinitions() as $definition) {

@@ -54,8 +54,6 @@ mappingConfig:
                 language: en
                 writeIfTargetIsNotEmpty: true
                 writeIfSourceIsEmpty: true
-        settings:
-            mode: both
         transformationPipeline:
             -
                 settings:
@@ -73,10 +71,6 @@ mappingConfig:
                 language: ''
                 writeIfTargetIsNotEmpty: true
                 writeIfSourceIsEmpty: true
-        settings:
-            delimiter: ' '
-            unitSourceSelect: abbr
-            staticUnitSelect: ''
         transformationPipeline:
             -
                 settings:
@@ -99,8 +93,6 @@ mappingConfig:
                 language: ''
                 writeIfTargetIsNotEmpty: true
                 writeIfSourceIsEmpty: true
-        settings:
-            delimiter: ','
         transformationPipeline:
             -
                 settings:

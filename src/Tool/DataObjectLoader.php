@@ -12,6 +12,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tool;
 
+use function in_array;
+use function mb_strtolower;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Db;
 use Pimcore\Model\DataObject;
@@ -33,6 +35,14 @@ final class DataObjectLoader
     private const BRICK_ATTRIBUTE_NAME = 'brickFieldName';
 
     private const BRICK_ATTRIBUTE_SEPARATOR = '.';
+
+    /**
+     * Object columns that getBy<Field>() resolves without a class field definition. Mirrors
+     * AbstractObject::$objectColumns, which is matched case-insensitively there.
+     *
+     * @var list<string>
+     */
+    private const array SYSTEM_COLUMNS = ['id', 'parentid', 'type', 'key', 'classid', 'classname', 'path'];
 
     private function isObjectBrickAttribute(string $attributeName): bool
     {
@@ -82,6 +92,13 @@ final class DataObjectLoader
     {
         if ($attributeName === '') {
             throw new InvalidConfigurationException('The attributeName attribute is required.');
+        }
+
+        // System columns are not class field definitions but are loadable: getDataObject()
+        // special-cases `id`, and AbstractObject exposes the rest as query columns. This is
+        // what makes loading by SYSTEM ID / SYSTEM Key / SYSTEM Fullpath work.
+        if (in_array(mb_strtolower($attributeName), self::SYSTEM_COLUMNS, true)) {
+            return;
         }
 
         $classDefinition = ClassDefinition::getById($classId);

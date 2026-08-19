@@ -129,7 +129,7 @@ final class Trim extends AbstractOperator implements SchemaAwareInterface, Trans
                 ->enumNode('mode')
                     ->info('Trimming mode: "both", "left", or "right"')
                     ->values([self::MODE_BOTH, self::MODE_LEFT, self::MODE_RIGHT])
-                    ->isRequired()
+                    ->defaultValue(self::MODE_BOTH)
                 ->end()
             ->end();
 

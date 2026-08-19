@@ -357,6 +357,21 @@ class ConfigurationDefinition implements ConfigurationInterface
                         self::INFO_DEFAULT_FALSE
                     )
                 ->end()
+                ->booleanNode('disableVersioning')
+                    ->info(
+                        'Whether to disable object versioning during import - ' .
+                        self::INFO_DEFAULT_FALSE
+                    )
+                ->end()
+                ->arrayNode('logging')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('disableInfoLogs')
+                            ->defaultFalse()
+                            ->info('Whether to suppress info level import logs')
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('cleanup')
                     ->children()
                         ->booleanNode('doCleanup')
@@ -370,9 +385,9 @@ class ConfigurationDefinition implements ConfigurationInterface
                                 [null],
                                 array_keys($this->cleanupStrategyLocator->getProvidedServices())
                             ))
-                            ->isRequired()
                             ->info(
-                                'Cleanup strategy to use, use unpublish by default'
+                                'Cleanup strategy to use, required when doCleanup is true, ' .
+                                'defaults to unpublish'
                             )
                         ->end()
                         ->variableNode('settings')
@@ -481,19 +496,10 @@ class ConfigurationDefinition implements ConfigurationInterface
                                 'of the column starting from 0, for json/xml it is field name.')
                     ->end()
                     ->scalarNode('transformationResultType')
-                        ->isRequired()
                         ->cannotBeEmpty()
-                        ->info('Name of the result type of the transformation pipeline. ' .
-                            'This is used to validate compatibility with the data target. ' .
-                            'Default value is `default`, other values are possible. '.
-                            'Type can be calculated automatically using the tool ' .
-                            'enrich_configuration_with_transformation_result_types.')
-                    ->end()
-                    ->scalarNode('transformationResultType')
-                        ->info(
-                            'Expected result type after transformations - ' .
-                            self::INFO_OPTIONAL_OMIT
-                        )
+                        ->info('Result type of the transformation pipeline, used to check ' .
+                            'compatibility with the data target. Defaults to `default`. ' .
+                            'Use the enrich_import_config tool to calculate it.')
                     ->end()
                     ->arrayNode('transformationPipeline')
                         ->arrayPrototype()
