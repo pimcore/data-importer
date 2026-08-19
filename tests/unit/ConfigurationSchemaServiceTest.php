@@ -202,10 +202,12 @@ class ConfigurationSchemaServiceTest extends Unit
         $service = $this->tester->grabService(ConfigurationSchemaService::class);
         $schema = $service->getMappingConfigSchema();
 
+        // mappingConfig is a prototyped array of mapping items, so the schema is an array
+        // with an items shape. The previous assertion had its arguments the wrong way round
+        // and demanded "object".
         $this->assertIsArray($schema);
-        $this->assertEquals($schema['type'], 'object');
-        // Mapping config currently only defines type/default; just ensure schema exists
-        $this->assertIsArray($schema);
+        $this->assertSame('array', $schema['type']);
+        $this->assertArrayHasKey('items', $schema);
     }
 
     /**
