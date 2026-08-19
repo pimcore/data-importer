@@ -84,58 +84,32 @@ class ConfigurationDefinitionPass implements CompilerPassInterface
         $dataTargetLocator = ServiceLocatorTagPass::register($container, $dataTargets);
         $cleanupStrategyLocator = ServiceLocatorTagPass::register($container, $cleanupStrategies);
 
-        // Inject into ConfigurationDefinition
-        $definition = $container->getDefinition(ConfigurationDefinition::class);
-        $definition->setArgument('$dataLoaderLocator', $dataLoaderLocator);
-        $definition->setArgument('$interpreterLocator', $interpreterLocator);
-        $definition->setArgument('$loadStrategyLocator', $loadStrategyLocator);
-        $definition->setArgument('$locationStrategyLocator', $locationStrategyLocator);
-        $definition->setArgument('$publishStrategyLocator', $publishStrategyLocator);
-        $definition->setArgument('$operatorLocator', $operatorLocator);
-        $definition->setArgument('$dataTargetLocator', $dataTargetLocator);
-        $definition->setArgument('$cleanupStrategyLocator', $cleanupStrategyLocator);
+        // One locator bundle, injected into every consumer that needs the full set.
+        $locators = $container->hasDefinition(ConfigurationSchemaLocators::class)
+            ? $container->getDefinition(ConfigurationSchemaLocators::class)
+            : $container->register(ConfigurationSchemaLocators::class, ConfigurationSchemaLocators::class);
+        $locators->setArguments([
+            $dataLoaderLocator,
+            $interpreterLocator,
+            $loadStrategyLocator,
+            $locationStrategyLocator,
+            $publishStrategyLocator,
+            $operatorLocator,
+            $dataTargetLocator,
+            $cleanupStrategyLocator,
+        ]);
 
-        // Inject into ConfigurationValidationService (only needs subset)
+        $container->getDefinition(ConfigurationDefinition::class)
+            ->setArgument('$locators', $locators);
+
         if ($container->hasDefinition(ConfigurationValidationService::class)) {
-            $validationDefinition = $container->getDefinition(ConfigurationValidationService::class);
-            $validationDefinition->setArgument('$dataLoaderLocator', $dataLoaderLocator);
-            $validationDefinition->setArgument('$interpreterLocator', $interpreterLocator);
-            $validationDefinition->setArgument('$cleanupStrategyLocator', $cleanupStrategyLocator);
+            $container->getDefinition(ConfigurationValidationService::class)
+                ->setArgument('$locators', $locators);
         }
 
-        // Inject into ConfigurationSchemaService (needs all ServiceLocators)
         if ($container->hasDefinition(ConfigurationSchemaService::class)) {
-            $schemaDefinition = $container->getDefinition(ConfigurationSchemaService::class);
-            // Create ConfigurationSchemaLocators bundle
-            if (!$container->hasDefinition(ConfigurationSchemaLocators::class)) {
-                $locatorsDefinition = $container->register(
-                    ConfigurationSchemaLocators::class,
-                    ConfigurationSchemaLocators::class
-                )->setArguments([
-                        $dataLoaderLocator,
-                        $interpreterLocator,
-                        $loadStrategyLocator,
-                        $locationStrategyLocator,
-                        $publishStrategyLocator,
-                        $operatorLocator,
-                        $dataTargetLocator,
-                        $cleanupStrategyLocator,
-                    ]);
-            } else {
-                $locatorsDefinition = $container->getDefinition(ConfigurationSchemaLocators::class);
-                $locatorsDefinition->setArguments([
-                    $dataLoaderLocator,
-                    $interpreterLocator,
-                    $loadStrategyLocator,
-                    $locationStrategyLocator,
-                    $publishStrategyLocator,
-                    $operatorLocator,
-                    $dataTargetLocator,
-                    $cleanupStrategyLocator,
-                ]);
-            }
-            // Inject locators bundle into schema service
-            $schemaDefinition->setArgument('$locators', $locatorsDefinition);
+            $container->getDefinition(ConfigurationSchemaService::class)
+                ->setArgument('$locators', $locators);
         }
     }
 

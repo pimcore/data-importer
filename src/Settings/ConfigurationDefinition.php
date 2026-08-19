@@ -15,9 +15,9 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**
  * Defines the complete configuration structure for Data Importer
@@ -44,40 +44,9 @@ class ConfigurationDefinition implements ConfigurationInterface
 
     private const INFO_DEFAULT_FALSE = 'if not specified, use false';
 
-    protected ServiceLocator $dataLoaderLocator;
-
-    protected ServiceLocator $interpreterLocator;
-
-    protected ServiceLocator $loadStrategyLocator;
-
-    protected ServiceLocator $locationStrategyLocator;
-
-    protected ServiceLocator $publishStrategyLocator;
-
-    protected ServiceLocator $operatorLocator;
-
-    protected ServiceLocator $dataTargetLocator;
-
-    protected ServiceLocator $cleanupStrategyLocator;
-
     public function __construct(
-        ServiceLocator $dataLoaderLocator,
-        ServiceLocator $interpreterLocator,
-        ServiceLocator $loadStrategyLocator,
-        ServiceLocator $locationStrategyLocator,
-        ServiceLocator $publishStrategyLocator,
-        ServiceLocator $operatorLocator,
-        ServiceLocator $dataTargetLocator,
-        ServiceLocator $cleanupStrategyLocator
+        private readonly ConfigurationSchemaLocators $locators
     ) {
-        $this->dataLoaderLocator = $dataLoaderLocator;
-        $this->interpreterLocator = $interpreterLocator;
-        $this->loadStrategyLocator = $loadStrategyLocator;
-        $this->locationStrategyLocator = $locationStrategyLocator;
-        $this->publishStrategyLocator = $publishStrategyLocator;
-        $this->operatorLocator = $operatorLocator;
-        $this->dataTargetLocator = $dataTargetLocator;
-        $this->cleanupStrategyLocator = $cleanupStrategyLocator;
     }
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -260,7 +229,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->children()
                         ->enumNode('type')
                             ->isRequired()
-                            ->values(array_keys($this->loadStrategyLocator->getProvidedServices()))
+                            ->values(array_keys($this->locators->loadStrategy()->getProvidedServices()))
                             ->info('Type of loading strategy')
                         ->end()
                         ->variableNode('settings')
@@ -276,7 +245,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->children()
                         ->enumNode('type')
                             ->isRequired()
-                            ->values(array_keys($this->locationStrategyLocator->getProvidedServices()))
+                            ->values(array_keys($this->locators->locationStrategy()->getProvidedServices()))
                             ->info('Type of location strategy for creating new elements')
                         ->end()
                         ->variableNode('settings')
@@ -292,7 +261,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->children()
                         ->enumNode('type')
                             ->isRequired()
-                            ->values(array_keys($this->locationStrategyLocator->getProvidedServices()))
+                            ->values(array_keys($this->locators->locationStrategy()->getProvidedServices()))
                             ->info('Type of location strategy for updating existing elements')
                         ->end()
                         ->variableNode('settings')
@@ -308,7 +277,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                     ->children()
                         ->enumNode('type')
                             ->isRequired()
-                            ->values(array_keys($this->publishStrategyLocator->getProvidedServices()))
+                            ->values(array_keys($this->locators->publishStrategy()->getProvidedServices()))
                             ->info('Type of publishing strategy')
                         ->end()
                         ->variableNode('settings')
@@ -383,7 +352,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->enumNode('strategy')
                             ->values(array_merge(
                                 [null],
-                                array_keys($this->cleanupStrategyLocator->getProvidedServices())
+                                array_keys($this->locators->cleanupStrategy()->getProvidedServices())
                             ))
                             ->info(
                                 'Cleanup strategy to use, required when doCleanup is true, ' .
@@ -440,7 +409,7 @@ class ConfigurationDefinition implements ConfigurationInterface
             ->children()
                 ->enumNode('type')
                     ->isRequired()
-                    ->values(array_keys($this->dataLoaderLocator->getProvidedServices()))
+                    ->values(array_keys($this->locators->dataLoader()->getProvidedServices()))
                     ->info('Type of data loader (e.g., asset, http, sftp, upload)')
                 ->end()
                 ->variableNode('settings')
@@ -462,7 +431,7 @@ class ConfigurationDefinition implements ConfigurationInterface
             ->children()
                 ->enumNode('type')
                     ->isRequired()
-                    ->values(array_keys($this->interpreterLocator->getProvidedServices()))
+                    ->values(array_keys($this->locators->interpreter()->getProvidedServices()))
                     ->info('Type of data interpreter (e.g., csv, json, xml, xlsx)')
                 ->end()
                 ->variableNode('settings')
@@ -512,7 +481,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                             ->children()
                                 ->enumNode('type')
                                     ->isRequired()
-                                    ->values(array_keys($this->operatorLocator->getProvidedServices()))
+                                    ->values(array_keys($this->locators->operator()->getProvidedServices()))
                                     ->info('Type of operator')
                                 ->end()
                                 ->variableNode('settings')
@@ -530,7 +499,7 @@ class ConfigurationDefinition implements ConfigurationInterface
                         ->children()
                             ->enumNode('type')
                                 ->isRequired()
-                                ->values(array_keys($this->dataTargetLocator->getProvidedServices()))
+                                ->values(array_keys($this->locators->dataTarget()->getProvidedServices()))
                                 ->info('Type of data target')
                             ->end()
                             ->variableNode('settings')

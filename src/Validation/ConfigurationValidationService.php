@@ -14,16 +14,12 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Validation;
 
-use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
-use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 
@@ -41,54 +37,15 @@ class ConfigurationValidationService
 {
     private const MSG_VALIDATION_FAILED = 'Validation failed: ';
 
-    protected ConfigurationPreparationService $configurationPreparationService;
-
-    protected DataLoaderFactory $dataLoaderFactory;
-
-    protected InterpreterFactory $interpreterFactory;
-
-    protected ResolverFactory $resolverFactory;
-
-    protected MappingConfigurationFactory $mappingConfigurationFactory;
-
-    protected ImportProcessingService $importProcessingService;
-
-    protected CleanupStrategyFactory $cleanupStrategyFactory;
-
-    protected ServiceLocator $dataLoaderLocator;
-
-    protected ServiceLocator $interpreterLocator;
-
-    protected ServiceLocator $cleanupStrategyLocator;
-
-    protected Processor $configProcessor;
-
-    protected ConfigurationDefinition $configDefinition;
+    private Processor $configProcessor;
 
     public function __construct(
-        ConfigurationPreparationService $configurationPreparationService,
-        DataLoaderFactory $dataLoaderFactory,
-        InterpreterFactory $interpreterFactory,
-        ResolverFactory $resolverFactory,
-        MappingConfigurationFactory $mappingConfigurationFactory,
-        ImportProcessingService $importProcessingService,
-        CleanupStrategyFactory $cleanupStrategyFactory,
-        ServiceLocator $dataLoaderLocator,
-        ServiceLocator $interpreterLocator,
-        ServiceLocator $cleanupStrategyLocator,
-        ConfigurationDefinition $configDefinition
+        private readonly ConfigurationPreparationService $configurationPreparationService,
+        private readonly ConfigurationFactories $factories,
+        private readonly ImportProcessingService $importProcessingService,
+        private readonly ConfigurationSchemaLocators $locators,
+        private readonly ConfigurationDefinition $configDefinition,
     ) {
-        $this->configurationPreparationService = $configurationPreparationService;
-        $this->dataLoaderFactory = $dataLoaderFactory;
-        $this->interpreterFactory = $interpreterFactory;
-        $this->resolverFactory = $resolverFactory;
-        $this->mappingConfigurationFactory = $mappingConfigurationFactory;
-        $this->importProcessingService = $importProcessingService;
-        $this->cleanupStrategyFactory = $cleanupStrategyFactory;
-        $this->dataLoaderLocator = $dataLoaderLocator;
-        $this->interpreterLocator = $interpreterLocator;
-        $this->cleanupStrategyLocator = $cleanupStrategyLocator;
-        $this->configDefinition = $configDefinition;
         $this->configProcessor = new Processor();
     }
 
@@ -173,7 +130,7 @@ class ConfigurationValidationService
 
         $schemaErrors = $this->validateSchemaAwareSettings(
             'loaderConfig',
-            $this->dataLoaderLocator,
+            $this->locators->dataLoader(),
             $config['type'],
             $settings
         );
@@ -185,7 +142,7 @@ class ConfigurationValidationService
 
         // Also try to instantiate through factory to check dependencies
         try {
-            $this->dataLoaderFactory->loadDataLoader($config);
+            $this->factories->dataLoader()->loadDataLoader($config);
         } catch (InvalidConfigurationException $e) {
             $errors[] = new ValidationError('loaderConfig', $e->getMessage());
         }
@@ -218,7 +175,7 @@ class ConfigurationValidationService
 
         $schemaErrors = $this->validateSchemaAwareSettings(
             'interpreterConfig',
-            $this->interpreterLocator,
+            $this->locators->interpreter(),
             $config['type'],
             $settings
         );
@@ -230,7 +187,7 @@ class ConfigurationValidationService
 
         // Also try to instantiate through factory to check dependencies
         try {
-            $this->interpreterFactory->loadInterpreter(
+            $this->factories->interpreter()->loadInterpreter(
                 'validation',
                 $config,
                 ['executionType' => ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL],
@@ -262,7 +219,7 @@ class ConfigurationValidationService
 
         // Also try to instantiate through factory to check dependencies
         try {
-            $this->resolverFactory->loadResolver($config);
+            $this->factories->resolver()->loadResolver($config);
         } catch (InvalidConfigurationException $e) {
             $errors[] = new ValidationError('resolverConfig', $e->getMessage());
         }
@@ -301,7 +258,7 @@ class ConfigurationValidationService
 
             $schemaErrors = $this->validateSchemaAwareSettings(
                 'processingConfig.cleanup',
-                $this->cleanupStrategyLocator,
+                $this->locators->cleanupStrategy(),
                 $strategyType,
                 $settings
             );
@@ -313,7 +270,7 @@ class ConfigurationValidationService
 
             // Also try to instantiate through factory to check dependencies
             try {
-                $this->cleanupStrategyFactory->loadCleanupStrategy($strategyType);
+                $this->factories->cleanupStrategy()->loadCleanupStrategy($strategyType);
             } catch (InvalidConfigurationException $e) {
                 $errors[] = new ValidationError('processingConfig.cleanup.strategy', $e->getMessage());
             }
@@ -351,7 +308,7 @@ class ConfigurationValidationService
 
         foreach ($mappingConfig as $index => $mappingItem) {
             try {
-                $mappingConfiguration = $this->mappingConfigurationFactory->loadMappingConfigurationItem(
+                $mappingConfiguration = $this->factories->mappingConfiguration()->loadMappingConfigurationItem(
                     $configName,
                     $mappingItem,
                     false

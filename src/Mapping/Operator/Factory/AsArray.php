@@ -64,7 +64,9 @@ final class AsArray extends AbstractOperator implements SchemaAwareInterface, Tr
 
     public function getOutputTypes(): array
     {
-        return $this->getAcceptedInputTypes();
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
     }
 
     public function getConfigTreeBuilder(): ?TreeBuilder

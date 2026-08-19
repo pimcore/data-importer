@@ -30,6 +30,7 @@ services:
 
     # Validation Services
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition: ~
+    Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationFactories: ~
     Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService: ~
     Pimcore\Bundle\DataImporterBundle\Validation\Schema\TreeBuilderToJsonSchemaConverter: ~
     Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators: ~
