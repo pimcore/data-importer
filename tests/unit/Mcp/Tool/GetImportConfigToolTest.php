@@ -15,29 +15,31 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Mcp\Tool;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetImportConfigTool;
-use Pimcore\Bundle\DataImporterBundle\Tests\unit\Helper\Traits\DataHubConfigurationFixtureTrait;
 use Pimcore\Bundle\DataImporterBundle\Tests\unit\Helper\Traits\McpToolResultTrait;
+use Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepositoryInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\UserNotFoundException;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandler;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
-use Pimcore\Model\User;
 use Pimcore\Model\UserInterface;
 use Psr\Log\NullLogger;
 
 /**
- * The tool reads through the static Data Hub Configuration model rather than an injected service,
- * so these tests stand a container in front of it that serves the configurations from memory. See
- * {@see DataHubConfigurationFixtureTrait} for what that costs and why nothing here touches a
- * database.
+ * The tool asks {@see ImportConfigurationRepositoryInterface} for one configuration by name, so
+ * every test here stubs that one seam: no container, no settings store, no static Data Hub model
+ * and nothing global to restore afterwards.
+ *
+ * Deciding which names are readable, the adapter type filter and the per configuration read right,
+ * is the repository's job. All the tool sees is a configuration or a null, which is why the three
+ * reasons a name can be withheld collapse into one answer here.
  *
  * @internal
  */
 final class GetImportConfigToolTest extends Unit
 {
-    use DataHubConfigurationFixtureTrait;
     use McpToolResultTrait;
 
     private const string MISSING_PERMISSION = 'Missing permission '
@@ -45,16 +47,11 @@ final class GetImportConfigToolTest extends Unit
 
     private const string CONFIG_NAME = 'csv-car-import';
 
-    protected function _after(): void
-    {
-        $this->restoreDataHubConfigurations();
-    }
+    private const int MODIFICATION_DATE = 1769026708;
 
     public function testDeniedWhenMissingPermission(): void
     {
-        $this->expectNoDataHubConfigurationAccess();
-
-        $tool = $this->buildTool(allowed: false);
+        $tool = $this->buildTool(allowed: false, configurations: $this->unreachableRepository());
 
         $this->assertToolError(
             $tool->execute(self::CONFIG_NAME),
@@ -67,9 +64,8 @@ final class GetImportConfigToolTest extends Unit
     {
         // The MCP firewall is stateless, so an expired or revoked bearer reaches the tool with
         // no resolvable user. That must read as a denial, not as an internal failure.
-        $this->expectNoDataHubConfigurationAccess();
-
         $tool = new GetImportConfigTool(
+            $this->unreachableRepository(),
             $this->makeEmpty(SecurityServiceInterface::class, [
                 'getCurrentUser' => static function (): never {
                     throw new UserNotFoundException();
@@ -87,118 +83,160 @@ final class GetImportConfigToolTest extends Unit
 
     public function testTheStoredConfigurationIsReturnedWholeUnderTheRequestedName(): void
     {
-        $stored = $this->importerConfiguration(self::CONFIG_NAME) + [
-            'loaderConfig' => ['type' => 'push'],
-            'mappingConfig' => [['label' => 'Name', 'dataSourceIndex' => 0]],
-        ];
-        $this->giveDataHubConfigurations([self::CONFIG_NAME => $stored]);
+        $stored = $this->storedConfiguration(self::CONFIG_NAME);
+        $tool = $this->buildTool(
+            allowed: true,
+            configurations: $this->repositoryServing($this->importerConfiguration($stored), $requested),
+        );
 
-        $payload = $this->assertToolSuccess($this->buildTool(allowed: true)->execute(self::CONFIG_NAME));
+        $payload = $this->assertToolSuccess($tool->execute(self::CONFIG_NAME));
 
+        $this->assertSame(self::CONFIG_NAME, $requested, 'The tool must look up the name it was given.');
         $this->assertSame(['name', 'modificationDate', 'configuration'], array_keys($payload));
         $this->assertSame(self::CONFIG_NAME, $payload['name']);
         // The modification date is what save_import_config needs for optimistic locking.
-        $this->assertSame(1769026708, $payload['modificationDate']);
-        $this->assertSame($stored['loaderConfig'], $payload['configuration']['loaderConfig']);
-        $this->assertSame($stored['mappingConfig'], $payload['configuration']['mappingConfig']);
-        // Data Hub stamps the stored general block with whether this instance may write it back.
-        $this->assertSame(
-            $stored['general'] + ['writeable' => false],
-            $payload['configuration']['general'],
-        );
+        $this->assertSame(self::MODIFICATION_DATE, $payload['modificationDate']);
+        // Whole and verbatim, down to the general block Data Hub stamps with whether this
+        // instance may write it back: what comes back has to be what save_import_config takes.
+        $this->assertSame($stored, $payload['configuration']);
     }
 
-    public function testAnUnknownNameIsReportedAsNotFound(): void
+    /**
+     * Unknown, owned by another Data Hub adapter, or not readable by this user: the repository
+     * answers null to all three and every one of them has to read as not_found. Answering
+     * permission_denied to the last one would confirm to the agent, and to whoever is driving it,
+     * that a configuration it may not read exists.
+     *
+     * @dataProvider withheldNameProvider
+     */
+    public function testANameTheRepositoryWithholdsIsReportedAsNotFound(string $name): void
     {
-        $this->giveDataHubConfigurations([self::CONFIG_NAME => $this->importerConfiguration(self::CONFIG_NAME)]);
+        $tool = $this->buildTool(allowed: true, configurations: $this->repositoryServing(null, $requested));
 
         $this->assertToolError(
-            $this->buildTool(allowed: true)->execute('typo-import'),
-            'Data Importer configuration "typo-import" not found.',
+            $tool->execute($name),
+            'Data Importer configuration "' . $name . '" not found.',
             'not_found'
         );
+        $this->assertSame($name, $requested, 'The tool must look up the name it was given.');
     }
 
-    public function testAConfigurationOfAnotherDataHubAdapterIsReportedAsNotFound(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function withheldNameProvider(): array
     {
-        // The name exists, but it belongs to a different Data Hub adapter. Serving it would hand
-        // the agent a configuration it cannot validate, enrich or save with these tools.
-        $this->giveDataHubConfigurations([
-            'graphql-cars' => $this->importerConfiguration('graphql-cars', type: 'dataHubGraphQL'),
-        ]);
-
-        $this->assertToolError(
-            $this->buildTool(allowed: true)->execute('graphql-cars'),
-            'Data Importer configuration "graphql-cars" not found.',
-            'not_found'
-        );
-    }
-
-    public function testAUserWithoutReadRightsOnTheConfigurationIsDenied(): void
-    {
-        // The bundle-wide permission is not the per-configuration one: Data Hub grants read per
-        // configuration, and this tool has to honour that second gate too.
-        $this->giveDataHubConfigurations(
-            [self::CONFIG_NAME => $this->importerConfiguration(self::CONFIG_NAME)],
-            currentUser: $this->readerWithoutRights(),
-        );
-
-        $this->assertToolError(
-            $this->buildTool(allowed: true)->execute(self::CONFIG_NAME),
-            'You are not allowed to read configuration "csv-car-import".',
-            'permission_denied'
-        );
+        return [
+            'no configuration of that name' => ['typo-import'],
+            'a configuration of another adapter' => ['graphql-cars'],
+            'a configuration this user may not read' => [self::CONFIG_NAME],
+        ];
     }
 
     public function testGenericFailureIsGenericisedAndNeverLeaksTheRawMessage(): void
     {
-        $this->breakDataHubConfigurationAccess('config storage unreachable at 10.0.0.5:3306');
+        $tool = $this->buildTool(
+            allowed: true,
+            configurations: $this->makeEmpty(ImportConfigurationRepositoryInterface::class, [
+                'findReadableByName' => static function (): never {
+                    throw new StubFailureException('config storage unreachable at 10.0.0.5:3306');
+                },
+            ]),
+        );
 
         $this->assertGenericInternalError(
-            $this->buildTool(allowed: true)->execute(self::CONFIG_NAME),
+            $tool->execute(self::CONFIG_NAME),
             'get_import_config',
             '10.0.0.5'
         );
     }
 
     /**
-     * Pimcore\Model\User is final, so this is a real one: no roles and no permissions, which is
-     * what an editor who was never granted the Data Hub adapter permission looks like.
+     * Fails the test if any configuration is read at all, which is what the permission gate is
+     * there to prevent.
      */
-    private function readerWithoutRights(): User
+    private function unreachableRepository(): ImportConfigurationRepositoryInterface
     {
-        $user = new User();
-        $user->setName('editor');
-        $user->setAdmin(false);
-
-        return $user;
+        return $this->makeEmpty(ImportConfigurationRepositoryInterface::class, [
+            'findReadable' => static function (): never {
+                self::fail('No Data Importer configuration may be read here.');
+            },
+            'findReadableByName' => static function (): never {
+                self::fail('No Data Importer configuration may be read here.');
+            },
+        ]);
     }
 
     /**
+     * Answers one lookup with $configuration, or withholds the name by answering null, and
+     * records the name it was asked for in $requested.
+     *
+     * The name is recorded rather than asserted inside the stub because the tool catches every
+     * Throwable the repository raises, which would swallow a failed assertion and report it as an
+     * internal error instead of as the mismatch it is.
+     */
+    private function repositoryServing(
+        ?Configuration $configuration,
+        ?string &$requested,
+    ): ImportConfigurationRepositoryInterface {
+        $requested = null;
+
+        return $this->makeEmpty(ImportConfigurationRepositoryInterface::class, [
+            'findReadableByName' => static function (string $name) use ($configuration, &$requested): ?Configuration {
+                $requested = $name;
+
+                return $configuration;
+            },
+        ]);
+    }
+
+    /**
+     * A configuration as the repository hands it over. Only the two reads the tool makes are
+     * populated, so a read it stops making shows up as a missing value rather than being covered
+     * by a fixture that carries it anyway.
+     *
+     * @param array<string, mixed> $stored
+     */
+    private function importerConfiguration(array $stored): Configuration
+    {
+        return $this->makeEmpty(Configuration::class, [
+            'getModificationDate' => self::MODIFICATION_DATE,
+            'getConfiguration' => $stored,
+        ]);
+    }
+
+    /**
+     * What Data Hub returns for a stored import configuration, trimmed to one loader and one
+     * mapping row: enough shape to tell a whole answer from a partial one.
+     *
      * @return array<string, mixed>
      */
-    private function importerConfiguration(
-        string $name,
-        string $type = ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
-    ): array {
+    private function storedConfiguration(string $name): array
+    {
         return [
             'general' => [
                 'name' => $name,
-                'type' => $type,
+                'type' => ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
                 'path' => '',
                 'group' => '',
                 'active' => true,
-                'modificationDate' => 1769026708,
+                'modificationDate' => self::MODIFICATION_DATE,
                 'createDate' => 1769026497,
+                'writeable' => false,
             ],
+            'loaderConfig' => ['type' => 'push'],
+            'mappingConfig' => [['label' => 'Name', 'dataSourceIndex' => 0]],
         ];
     }
 
-    private function buildTool(bool $allowed): GetImportConfigTool
-    {
+    private function buildTool(
+        bool $allowed,
+        ?ImportConfigurationRepositoryInterface $configurations = null,
+    ): GetImportConfigTool {
         $user = $this->makeEmpty(UserInterface::class, ['isAllowed' => $allowed]);
 
         return new GetImportConfigTool(
+            $configurations ?? $this->makeEmpty(ImportConfigurationRepositoryInterface::class),
             $this->makeEmpty(SecurityServiceInterface::class, ['getCurrentUser' => $user]),
             new McpToolErrorHandler(new NullLogger()),
         );

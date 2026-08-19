@@ -14,12 +14,12 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
+use function array_map;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
-use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepositoryInterface;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Throwable;
@@ -35,6 +35,7 @@ final readonly class ListImportConfigsTool
     private const string TOOL_NAME = 'list_import_configs';
 
     public function __construct(
+        private ImportConfigurationRepositoryInterface $configurations,
         private SecurityServiceInterface $securityService,
         private McpToolErrorHandlerInterface $errorHandler,
     ) {
@@ -57,18 +58,10 @@ final readonly class ListImportConfigsTool
         }
 
         try {
-            $configs = [];
-            foreach (Configuration::getList() as $configuration) {
-                if ($configuration->getType() !== ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT) {
-                    continue;
-                }
-
-                if (!$configuration->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ)) {
-                    continue;
-                }
-
-                $configs[] = $this->describe($configuration);
-            }
+            $configs = array_map(
+                fn (Configuration $configuration): array => $this->describe($configuration),
+                $this->configurations->findReadable()
+            );
         } catch (Throwable $e) {
             return $this->handledError($this->errorHandler, $e, self::TOOL_NAME);
         }

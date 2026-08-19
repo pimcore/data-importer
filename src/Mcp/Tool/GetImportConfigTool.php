@@ -18,9 +18,7 @@ use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ToolAnnotations;
-use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
-use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepositoryInterface;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use function sprintf;
@@ -37,6 +35,7 @@ final readonly class GetImportConfigTool
     private const string TOOL_NAME = 'get_import_config';
 
     public function __construct(
+        private ImportConfigurationRepositoryInterface $configurations,
         private SecurityServiceInterface $securityService,
         private McpToolErrorHandlerInterface $errorHandler,
     ) {
@@ -59,21 +58,10 @@ final readonly class GetImportConfigTool
         }
 
         try {
-            $configuration = Configuration::getByName($name);
-
-            if (
-                !$configuration instanceof Configuration
-                || $configuration->getType() !== ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT
-            ) {
+            $configuration = $this->configurations->findReadableByName($name);
+            if ($configuration === null) {
                 return $this->notFoundResult(
                     sprintf('Data Importer configuration "%s" not found.', $name)
-                );
-            }
-
-            if (!$configuration->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ)) {
-                return $this->errorResult(
-                    sprintf('You are not allowed to read configuration "%s".', $name),
-                    self::CODE_PERMISSION_DENIED
                 );
             }
 
