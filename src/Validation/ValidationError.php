@@ -15,18 +15,14 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Validation;
 
 /**
- * Represents a validation error or warning
+ * One validation finding: where it is, and what is wrong there.
  */
-class ValidationError
+final readonly class ValidationError
 {
-    protected string $path;
-
-    protected string $message;
-
-    public function __construct(string $path, string $message)
-    {
-        $this->path = $path;
-        $this->message = $message;
+    public function __construct(
+        private string $path,
+        private string $message,
+    ) {
     }
 
     public function getPath(): string
@@ -39,6 +35,9 @@ class ValidationError
         return $this->message;
     }
 
+    /**
+     * @return array{path: string, message: string}
+     */
     public function toArray(): array
     {
         return [

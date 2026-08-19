@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This source file is available under the terms of the
  * Pimcore Open Core License (POCL)
@@ -15,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Command;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService;
+use Pimcore\Bundle\DataImporterBundle\Validation\ValidationResult;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,8 +32,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * - bin/console datahub:data-importer:validate-config <config-name>
  * - bin/console datahub:data-importer:validate-config --schema
  * - bin/console datahub:data-importer:validate-config --schema-section=loaderConfig
+ *
+ * @internal
  */
-class ValidateConfigurationCommand extends Command
+final class ValidateConfigurationCommand extends Command
 {
     private const AVAILABLE_SECTIONS = [
         'general',
@@ -42,17 +47,11 @@ class ValidateConfigurationCommand extends Command
         'executionConfig',
     ];
 
-    protected ConfigurationValidationService $validationService;
-
-    protected ConfigurationSchemaService $schemaService;
-
     public function __construct(
-        ConfigurationValidationService $validationService,
-        ConfigurationSchemaService $schemaService
+        private readonly ConfigurationValidationService $validationService,
+        private readonly ConfigurationSchemaService $schemaService,
     ) {
         parent::__construct('datahub:data-importer:validate-config');
-        $this->validationService = $validationService;
-        $this->schemaService = $schemaService;
     }
 
     protected function configure(): void
@@ -95,24 +94,40 @@ class ValidateConfigurationCommand extends Command
         return $this->validateConfiguration($io, $configName, $jsonOutput);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function schemaForSection(string $section): array
+    {
+        return match ($section) {
+            'general' => $this->schemaService->getGeneralSchema(),
+            'loaderConfig' => $this->schemaService->getLoaderConfigSchema(),
+            'interpreterConfig' => $this->schemaService->getInterpreterConfigSchema(),
+            'resolverConfig' => $this->schemaService->getResolverConfigSchema(),
+            'processingConfig' => $this->schemaService->getProcessingConfigSchema(),
+            'mappingConfig' => $this->schemaService->getMappingConfigSchema(),
+            'executionConfig' => $this->schemaService->getExecutionConfigSchema(),
+            default => $this->schemaService->getCompleteSchema(),
+        };
+    }
+
     protected function showSchema(SymfonyStyle $io, ?string $section, bool $jsonOutput): int
     {
-        if ($section) {
-            $method = 'get' . ucfirst($section) . 'Schema';
-            if (!method_exists($this->schemaService, $method)) {
-                $io->error("Unknown schema section: $section");
+        if ($section !== null && $section !== '') {
+            if (!in_array($section, self::AVAILABLE_SECTIONS, true)) {
+                $io->error("Unknown schema section: {$section}");
                 $this->renderAvailableSections($io);
 
-                return Command::FAILURE;
+                return Command::INVALID;
             }
 
-            $schema = $this->schemaService->$method();
+            $schema = $this->schemaForSection($section);
         } else {
             $schema = $this->schemaService->getCompleteSchema();
         }
 
         if ($jsonOutput) {
-            $output = json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            $output = json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
             $io->writeln($output);
         } else {
             $this->displaySchema($io, $schema, $section ?: 'Complete Configuration');
@@ -136,7 +151,7 @@ class ValidateConfigurationCommand extends Command
         $result = $this->validationService->validateConfiguration($config);
 
         if ($jsonOutput) {
-            $output = json_encode($result->toArray(), JSON_PRETTY_PRINT);
+            $output = json_encode($result->toArray(), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
             $io->writeln($output);
         } else {
             $this->renderValidationResult($io, $result);
@@ -216,7 +231,7 @@ class ValidateConfigurationCommand extends Command
         $io->writeln("    Default: $defaultValue");
     }
 
-    private function renderValidationResult(SymfonyStyle $io, object $result): void
+    private function renderValidationResult(SymfonyStyle $io, ValidationResult $result): void
     {
         if ($result->isValid()) {
             $io->success('Configuration is valid');
@@ -229,7 +244,7 @@ class ValidateConfigurationCommand extends Command
         $this->renderWarnings($io, $result);
     }
 
-    private function renderErrors(SymfonyStyle $io, object $result): void
+    private function renderErrors(SymfonyStyle $io, ValidationResult $result): void
     {
         if (!$result->hasErrors()) {
             return;
@@ -241,7 +256,7 @@ class ValidateConfigurationCommand extends Command
         }
     }
 
-    private function renderWarnings(SymfonyStyle $io, object $result): void
+    private function renderWarnings(SymfonyStyle $io, ValidationResult $result): void
     {
         if (!$result->hasWarnings()) {
             return;

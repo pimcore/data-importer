@@ -15,32 +15,19 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Validation;
 
 /**
- * Represents the result of a configuration validation
+ * The outcome of validating one configuration.
  */
-class ValidationResult
+final readonly class ValidationResult
 {
-    protected bool $valid;
-
     /**
-     * @var ValidationError[]
-     */
-    protected array $errors;
-
-    /**
-     * @var ValidationError[]
-     */
-    protected array $warnings;
-
-    /**
-     * @param bool $valid
      * @param ValidationError[] $errors
      * @param ValidationError[] $warnings
      */
-    public function __construct(bool $valid, array $errors = [], array $warnings = [])
-    {
-        $this->valid = $valid;
-        $this->errors = $errors;
-        $this->warnings = $warnings;
+    public function __construct(
+        private bool $valid,
+        private array $errors = [],
+        private array $warnings = [],
+    ) {
     }
 
     public function isValid(): bool
@@ -66,12 +53,12 @@ class ValidationResult
 
     public function hasErrors(): bool
     {
-        return !empty($this->errors);
+        return $this->errors !== [];
     }
 
     public function hasWarnings(): bool
     {
-        return !empty($this->warnings);
+        return $this->warnings !== [];
     }
 
     /**
