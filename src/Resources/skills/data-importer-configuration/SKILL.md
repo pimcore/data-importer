@@ -172,18 +172,24 @@ type, add an operator that outputs an accepted one or target another field. Edit
 `acceptedInputTypes` and `outputTypes` (the `operators` section). The output of one must be
 accepted by the next, and the last output is the result type the item produces.
 
-**One target field, one mapping item.** Items are applied in order and each writes its target
-outright, so a later item on the same `fieldName` replaces what an earlier one wrote rather than
-adding to it. That happens even when the later pipeline produced nothing: an operator that
-resolves to no value can still yield an empty result, and `writeIfSourceIsEmpty` defaults to
-writing it. Two items may share a `fieldName` only when their `language` differs, which is how a
-localized field is filled per language.
+**By default the last item on a field wins.** Items are applied in order and each writes its
+target outright, so a later item on the same `fieldName` replaces what an earlier one wrote rather
+than adding to it. It replaces it even when its own pipeline produced nothing, because with the
+default settings the value is written without being looked at. Splitting one field across several
+items therefore keeps only the last of them.
 
 **Columns that belong in one field belong in one item.** When several source columns feed the same
 target, list them all in the `dataSourceIndex` of one item instead of writing an item per column:
 `dataSourceIndex: ['4', '5', '6']` hands the pipeline an array, which is what operators that
 collect values expect. Where the target holds a single value, reduce the array in the pipeline,
 for example with `combine`.
+
+**Several items on one field need a reason and a guard.** Two are correct when their `language`
+differs, which is how a localized field is filled per language. They are also correct when the
+source guarantees that at most one of their columns carries a value per record, and then every one
+of them has to set `writeIfSourceIsEmpty: false`, so an item whose column is empty leaves the
+value alone; `writeIfTargetIsNotEmpty: false` instead lets the first value that arrives win. With
+both settings left at their default the guard is absent and the columns overwrite each other.
 
 **Give every record an identity.** The column that identifies a record belongs in two places: a
 mapping item whose `dataTarget.settings.fieldName` is `key`, and the loading strategy that finds
