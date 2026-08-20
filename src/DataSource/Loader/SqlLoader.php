@@ -111,8 +111,10 @@ final class SqlLoader implements DataLoaderInterface, SchemaAwareInterface
         }
         $this->from = $settings['from'];
 
-        $this->where = $settings['where'];
-        $this->groupBy = $settings['groupBy'];
+        // Both are optional in the schema with a '' default, so a configuration that omits
+        // them must not reach an undefined key here.
+        $this->where = $settings['where'] ?? '';
+        $this->groupBy = $settings['groupBy'] ?? '';
     }
 
     public function getSchemaDescription(): string

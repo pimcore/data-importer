@@ -28,7 +28,7 @@ final class XmlFileInterpreter extends AbstractInterpreter implements SchemaAwar
 {
     private string $xpath;
 
-    private ?string $schema;
+    private string $schema = '';
 
     private ?\DOMDocument $cachedContent = null;
 
@@ -146,7 +146,9 @@ final class XmlFileInterpreter extends AbstractInterpreter implements SchemaAwar
             throw new InvalidConfigurationException('Empty XPath.');
         }
         $this->xpath = $settings['xpath'];
-        $this->schema = $settings['schema'];
+        // Optional in the schema with a '' default, so a configuration that omits it must
+        // not reach an undefined key here.
+        $this->schema = $settings['schema'] ?? '';
     }
 
     public function getSchemaDescription(): string
