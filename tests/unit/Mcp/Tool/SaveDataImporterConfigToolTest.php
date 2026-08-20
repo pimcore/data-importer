@@ -135,7 +135,7 @@ final class SaveDataImporterConfigToolTest extends Unit
             'updateConfiguration' => static function (string $name, array $configuration) use (
                 &$captured
             ): int {
-                $captured = $configuration;
+                $captured = [$name, $configuration];
 
                 return self::MODIFICATION_DATE;
             },
@@ -152,9 +152,10 @@ final class SaveDataImporterConfigToolTest extends Unit
             '{"general": {"active": true, "type": "somethingElse"}, "mappingConfig": []}'
         ));
 
+        $this->assertSame(self::CONFIG_NAME, $captured[0]);
         $this->assertSame(
             ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
-            $captured['general']['type'],
+            $captured[1]['general']['type'],
         );
     }
 
@@ -194,14 +195,11 @@ final class SaveDataImporterConfigToolTest extends Unit
     public function testYamlIsAcceptedJustLikeJson(): void
     {
         $captured = null;
-        $capturedName = null;
         $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
             'updateConfiguration' => static function (string $name, array $configuration) use (
-                &$capturedName,
                 &$captured
             ): int {
-                $capturedName = $name;
-                $captured = $configuration;
+                $captured = [$name, $configuration];
 
                 return self::MODIFICATION_DATE;
             },
@@ -214,13 +212,14 @@ final class SaveDataImporterConfigToolTest extends Unit
         );
 
         $this->assertToolSuccess($tool->execute(self::CONFIG_NAME, self::YAML_BODY, 'yaml'));
+        $this->assertSame(self::CONFIG_NAME, $captured[0]);
         $this->assertSame(
             ['general' => [
                 'active' => true,
                 'name' => self::CONFIG_NAME,
                 'type' => ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
             ], 'mappingConfig' => []],
-            $captured,
+            $captured[1],
         );
     }
 

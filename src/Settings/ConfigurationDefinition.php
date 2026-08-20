@@ -43,6 +43,8 @@ final class ConfigurationDefinition
 
     private const INFO_DEFAULT_FALSE = 'if not specified, use false';
 
+    private const INFO_STORAGE_MANAGED = 'Managed by the storage layer';
+
     public function __construct(
         private readonly ConfigurationSchemaLocators $locators
     ) {
@@ -180,13 +182,13 @@ final class ConfigurationDefinition
                 // Written by the storage layer rather than by the author, and present in every
                 // stored configuration, so the schema has to accept them.
                 ->integerNode('modificationDate')
-                    ->info('Managed by the storage layer')
+                    ->info(self::INFO_STORAGE_MANAGED)
                 ->end()
                 ->integerNode('createDate')
-                    ->info('Managed by the storage layer')
+                    ->info(self::INFO_STORAGE_MANAGED)
                 ->end()
                 ->booleanNode('writeable')
-                    ->info('Managed by the storage layer')
+                    ->info(self::INFO_STORAGE_MANAGED)
                 ->end()
             ->end();
     }
