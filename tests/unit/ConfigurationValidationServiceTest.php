@@ -23,8 +23,8 @@ use Pimcore\Tests\Support\Util\TestHelper;
 class ConfigurationValidationServiceTest extends Unit
 {
     private const ASSET_PATH = '/Import/test.csv';
-    private const MSG_INVALID_CONFIG = 'self::MSG_INVALID_CONFIG';
-    private const MSG_HAS_ERRORS = 'self::MSG_HAS_ERRORS';
+    private const MSG_INVALID_CONFIG = 'The configuration should not be valid.';
+    private const MSG_HAS_ERRORS = 'The result should carry at least one error.';
 
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
@@ -245,8 +245,8 @@ class ConfigurationValidationServiceTest extends Unit
 
         $result = $service->validateConfiguration($config);
 
-        $this->assertFalse($result->isValid(), 'self::MSG_INVALID_CONFIG');
-        $this->assertTrue($result->hasErrors(), 'self::MSG_HAS_ERRORS');
+        $this->assertFalse($result->isValid(), self::MSG_INVALID_CONFIG);
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
     }
 
     /**
@@ -320,7 +320,7 @@ class ConfigurationValidationServiceTest extends Unit
         $result = $service->validateConfiguration($config);
 
         $this->assertFalse($result->isValid(), 'Configuration with invalid cleanup strategy should be invalid');
-        $this->assertTrue($result->hasErrors(), 'self::MSG_HAS_ERRORS');
+        $this->assertTrue($result->hasErrors(), self::MSG_HAS_ERRORS);
     }
 
     /**
