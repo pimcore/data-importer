@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Settings;
 
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\CronScheduler;
+use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\JobScheduler;
 use Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
@@ -367,9 +369,14 @@ final class ConfigurationDefinition
         $node
             ->children()
                 ->enumNode('scheduleType')
-                    ->values(['recurring', 'cron'])
+                    // `recurring` is what Studio writes for a cron schedule and `job` for a
+                    // one off run; `cron` is the value stored by older configurations. Every
+                    // value SchedulerFactory dispatches on has to be listed, otherwise a
+                    // configuration written in Studio fails validation.
+                    ->values(['recurring', CronScheduler::NAME, JobScheduler::NAME])
                     ->info(
-                        'Type of scheduling (recurring or cron) - ' .
+                        'Type of scheduling: recurring or cron for a cron expression in ' .
+                        'cronDefinition, job for a single run at scheduledAt - ' .
                         self::INFO_OPTIONAL_OMIT
                     )
                 ->end()
