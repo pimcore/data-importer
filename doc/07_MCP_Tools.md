@@ -40,6 +40,7 @@ All handlers are in the `Pimcore\Bundle\DataImporterBundle\Mcp\Tool` namespace a
 
 ```
 stage_asset (agent bundle)          read the source file itself, see the actual values
+(ask the user)                      which loader the import should use, and how to reach it
 get_import_config_examples          copy the closest working configuration
 get_import_config_context           classes, loaders, interpreters (default), then
                                     resolver / targets / operators / field_type_matrix
@@ -53,13 +54,22 @@ save_import_config                  write the document
 To change an existing configuration, read it with `get_import_config`, modify, then enrich,
 validate and save.
 
-The first step is not one of these tools, and it matters. A mapping cannot be derived from field
-names alone: the values are what say that `"130.0 kw"` needs a quantity value with a unit, that a
-year arrives as a string and needs the numeric operator, or that a column holds a URL to import as
-an asset. When the source is a Pimcore asset, the Agent Bundle's `stage_asset` puts the whole file
-on the local filesystem for the agent to read or grep, which is why an agent that builds import
-configurations should also be granted `pimcore-assets-read`. Sources that are not assets (HTTP,
-SFTP, SQL, push, upload) are not reachable that way, and the agent has to be given a sample.
+The first two steps are not tools, and both matter.
+
+Reading the source data is the first. A mapping cannot be derived from field names alone: the
+values are what say that `"130.0 kw"` needs a quantity value with a unit, that a year arrives as a
+string and needs the numeric operator, or that a column holds a URL to import as an asset. The
+agent reads the file directly, not through the loader it is about to configure, because none of
+these tools fetches a file over HTTP, SFTP or SQL for inspection. When the source is a Pimcore
+asset, the Agent Bundle's `stage_asset` puts the whole file on the local filesystem to read or
+grep, which is why an agent that builds import configurations should also be granted
+`pimcore-assets-read`. For anything else the agent has to be given the file or a sample of it.
+
+Which data source to configure is the second, and it is a separate question. The file the agent
+analysed and the loader the configuration uses are often not the same: a sample sent by the user
+may correspond to a nightly SFTP pull, and a staged asset may be a one off while the real import
+uses `upload`. The agent asks which loader to configure and for whatever that loader needs rather
+than assuming the import reads from wherever the sample came from.
 
 ### `get_import_config_context`
 
