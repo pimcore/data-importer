@@ -25,6 +25,7 @@ use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\ValidationError;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotWriteableException;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Throwable;
@@ -115,7 +116,7 @@ final readonly class SaveDataImporterConfigTool
                 $configArray,
                 time()
             );
-        } catch (ForbiddenException $e) {
+        } catch (ForbiddenException | NotWriteableException $e) {
             return $this->errorResult($e->getMessage(), self::CODE_PERMISSION_DENIED);
         } catch (Throwable $e) {
             return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['name' => $name]);

@@ -21,6 +21,7 @@ use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotWriteableException;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Throwable;
@@ -80,7 +81,7 @@ final readonly class CreateDataImporterConfigTool
                 ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
                 $path ?? ''
             );
-        } catch (ForbiddenException $e) {
+        } catch (ForbiddenException | NotWriteableException $e) {
             return $this->errorResult($e->getMessage(), self::CODE_PERMISSION_DENIED);
         } catch (Throwable $e) {
             return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['name' => $name]);
