@@ -34,33 +34,50 @@ objects. You build it as one document and write it in one call.
    - Anything else: ask for the file, or for a representative sample of it. Say that you need the
      values and not only the field names, and why.
 
+   Reading the first rows is not reading the file. Take the header and its column count, then
+   per column: a sample of values, how often it is empty, and whether it holds more than one
+   shape. A URL column that also holds `/Some Folder/file.jpg` needs `loadAsset`, not
+   `importAsset`. For a column you will resolve into a relation, check that its distinct values
+   exist as objects, and report the ones that do not instead of calling the relation mapped.
+
    Do not infer the data from field names and start mapping anyway.
-2. **Ask which data source the import should use, and how to reach it.** The file you analysed
-   and the loader you configure are two separate things: a sample the user sent may correspond to
-   a nightly SFTP pull, and an asset you staged may be a one off while the real import uses
-   `upload`. Never assume the import reads from wherever your sample came from.
+2. **Settle the data source before building.** The file you analysed and the loader you
+   configure are two separate things. If the source is a Pimcore asset the user pointed at, use
+   the `asset` loader with that path and say so in one line. Otherwise ask: a sample sent by hand
+   may correspond to a nightly SFTP pull, and an asset you staged may be a one off while the real
+   import uses `upload`.
 
    Ask which loader the configuration should use and for whatever it needs, for example the URL
    for `http`, the host, path and credentials for `sftp`, or the connection and query for `sql`.
    The `loaders` section of `get_import_config_context` lists the types and their settings.
-3. **`get_import_config_examples`** - start here for the configuration shape. Three complete working configurations
+3. **Get the target fields before you propose a mapping.** `get_import_config_context` with
+   `field_type_matrix` and the class id lists every field the importer can write, object brick
+   paths included. A mapping proposal is a claim that those fields exist, so name a target for
+   each column you claim, and never call a column unmappable until it is missing from that list.
+4. **`get_import_config_examples`** - start here for the configuration shape. Three complete working configurations
    with a summary of what each uses. Copy the closest one; it is the cheapest way to learn the
    required top level structure. The class ids and field names in them are illustrative, so
    replace them.
-4. **`get_import_config_context`** - reference data. It defaults to `classes`, `loaders` and
+5. **`get_import_config_context`** - reference data. It defaults to `classes`, `loaders` and
    `interpreters`, which is what you need to decide *what to import into* and *where the data
    comes from*. Request more sections only when you need them:
    - `resolver` before writing `resolverConfig`
    - `targets` and `operators` before writing `mappingConfig`
-   - `field_type_matrix` (needs `classId`) to learn which field accepts which result type
    - `schema` only when a validation error is otherwise unexplainable; it is large.
-5. **`list_import_configs`** - check whether the name is taken before creating.
-6. **Build the configuration** (see the structure below).
-7. **`validate_import_config`** - loop here. Fix every error and validate again; leave this
+6. **`list_import_configs`** - check whether the name is taken before creating.
+7. **Build the configuration** (see the structure below). Before you write `loadingStrategy` or a
+   `loadDataObject` operator, call **`get_class_fields_for_loading`**: it lists the attributes
+   this class can be looked up by.
+8. **`validate_import_config`** - loop here. Fix every error and validate again; leave this
    step on `{valid: true}` and not before. Do not iterate on `save_import_config` instead: it
    rejects an invalid document, but each attempt resends the whole configuration.
-8. **`create_import_config`** then **`save_import_config`** - create makes an empty entry, save
+9. **`create_import_config`** then **`save_import_config`** - create makes an empty entry, save
    writes the document.
+10. **Report what you stored.** Name, loader and source, target class and folder, the columns you
+    mapped, the columns you did not and why, and `general.active`. Describe what the pipeline
+    does rather than what you meant it to do: `loadDataObject` looks an object up, it never
+    creates one. Then say how it runs - `run_import_config`, or the Run button in Studio if you
+    were not granted the execute group.
 
 To change an existing configuration, read it with `get_import_config`, modify it, validate and
 `save_import_config`.
@@ -127,6 +144,10 @@ settings:
 
 not `settings: '{"assetPath":"..."}'`. A JSON string is rejected.
 
+**Write the configuration as YAML.** In YAML a backslash is one character. A JSON document is
+escaped a second time when it becomes the tool argument, which is how a CSV `escape: \` arrives
+as two characters and is rejected.
+
 **Class ids are strings.** A numeric one such as `6` is accepted either way, but quoting it
 (`dataObjectClassId: '6'`) matches how it is stored and read back.
 
@@ -143,6 +164,17 @@ cannot store a type, either change the target field or add an operator that conv
 **Chain operators by type.** Each operator in `transformationPipeline` declares
 `acceptedInputTypes` and `outputTypes` (the `operators` section). The output of one must be
 accepted by the next, and the last output is the result type the item produces.
+
+**Give every record an identity.** The column that identifies a record belongs in two places: a
+mapping item whose `dataTarget.settings.fieldName` is `key`, and the loading strategy that finds
+the object again on the next run. Without the `key` target every created object gets a random
+`import-...` key; without a matching loading strategy every run creates duplicates instead of
+updating what is already there.
+
+Pick the strategy from the values, not from the column name. `path` needs a full object path such
+as `/import/cars/ab-123`. `attribute` needs a field `get_class_fields_for_loading` lists.
+`notLoad` always creates. An identifier the class has no field for goes to `key`, and is loaded
+with `attribute` on `key`.
 
 **Loading by attribute needs a loadable field.** The attribute must be a top level field of the
 class that Pimcore can filter on, or one of the system columns `id`, `key`, `path`. Object brick

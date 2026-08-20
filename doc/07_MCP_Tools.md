@@ -50,11 +50,14 @@ as not found rather than acted on.
 
 ```
 stage_asset (agent bundle)          read the source file itself, see the actual values
-(ask the user)                      which loader the import should use, and how to reach it
+(ask the user)                      which loader the import should use, unless it is an asset
+get_import_config_context           field_type_matrix: what the class can actually store,
+                                    before any mapping is proposed
 get_import_config_examples          copy the closest working configuration
 get_import_config_context           classes, loaders, interpreters (default), then
-                                    resolver / targets / operators / field_type_matrix
+                                    resolver / targets / operators
 list_import_configs                 is the name free?
+get_class_fields_for_loading        what the class can be looked up by
 validate_import_config              fix every error, validate again
 create_import_config                make the entry
 save_import_config                  write the document
