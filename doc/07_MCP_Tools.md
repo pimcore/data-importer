@@ -24,6 +24,14 @@ boundary they build on lives in `pimcore/studio-backend-bundle` `^2026.3`.
 All handlers are in the `Pimcore\Bundle\DataImporterBundle\Mcp\Tool` namespace and require the
 `plugin_datahub_config` permission. Each returns a single JSON text content block.
 
+MCP tools bypass the Symfony `#[IsGranted]` pipeline the Studio controllers rely on, so every tool
+checks that permission itself before doing anything. On top of it, the per configuration Data Hub
+rights still apply: reads resolve through a repository that filters by adapter type and the `read`
+right, writes go through the Data Hub configuration service, which enforces `create` and
+`read`+`update`, and `run_import_config` goes through the same Studio import service the Studio
+button uses, which requires `update`. A name that is not a Data Importer configuration is reported
+as not found rather than acted on.
+
 | Tool | Handler | Purpose |
 |---|---|---|
 | `get_import_config_examples` | `GetConfigurationExamplesTool` | Complete working configurations to copy |
@@ -35,6 +43,8 @@ All handlers are in the `Pimcore\Bundle\DataImporterBundle\Mcp\Tool` namespace a
 | `enrich_import_config` | `EnrichConfigurationTool` | Compute `transformationResultType` per mapping item |
 | `create_import_config` | `CreateDataImporterConfigTool` | Create a new, empty configuration |
 | `save_import_config` | `SaveDataImporterConfigTool` | Replace a configuration's content |
+| `run_import_config` | `RunImportConfigTool` | Start the import a configuration describes |
+| `get_import_status` | `GetImportStatusTool` | Progress of a running or finished import |
 
 ### The order they are called in
 
@@ -49,6 +59,8 @@ enrich_import_config                compute transformationResultType per mapping
 validate_import_config              fix every error, validate again
 create_import_config                make the entry
 save_import_config                  write the document
+run_import_config                   start the import (writes data objects)
+get_import_status                   poll until isRunning is false
 ```
 
 To change an existing configuration, read it with `get_import_config`, modify, then enrich,
@@ -203,8 +215,9 @@ serves each group under `/pimcore-mcp/agent/<group>`.
 
 | Group | Tools |
 |---|---|
-| `pimcore-data-importer-read` | `get_import_config_examples`, `get_import_config_context`, `list_import_configs`, `get_import_config`, `get_class_fields_for_loading`, `validate_import_config`, `enrich_import_config` |
+| `pimcore-data-importer-read` | `get_import_config_examples`, `get_import_config_context`, `list_import_configs`, `get_import_config`, `get_class_fields_for_loading`, `validate_import_config`, `enrich_import_config`, `get_import_status` |
 | `pimcore-data-importer-direct-write` | `create_import_config`, `save_import_config` |
+| `pimcore-data-importer-execute` | `run_import_config` |
 
 Attach them to an agent through its `pimcoreMcpServers` list (tool schemas sent with every turn) or
 `pimcoreMetaGroups` list (discovered on demand through the meta-tool):
@@ -219,6 +232,12 @@ pimcoreMcpServers:
 
 Granting only `pimcore-data-importer-read` gives an agent that can explain and validate
 configurations without being able to write one.
+
+`pimcore-data-importer-execute` is separate from the write group because running an import and
+authoring a configuration are different powers, and either is useful without the other. Grant it
+to an agent that should trigger imports it may not edit; withhold it from an agent that maintains
+configurations but must never move production data. Running an import creates and updates data
+objects, so `run_import_config` is annotated as destructive and open world.
 
 This bundle also contributes a **`data-importer-configuration` skill**, which carries the calling
 order, the configuration structure and the rules that decide whether a configuration works. It is

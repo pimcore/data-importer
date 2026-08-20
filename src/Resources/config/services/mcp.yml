@@ -44,6 +44,10 @@ services:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
 
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetImportStatusTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
+
     # --- Direct write (create / replace a configuration, no approval step) ---
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\CreateDataImporterConfigTool:
         tags:
@@ -54,3 +58,14 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\SaveDataImporterConfigTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-direct-write' }
+
+    # --- Execute (start an import, which writes data objects) ---
+    # Its own group on purpose: running an import is a different power from authoring a
+    # configuration, and either one is useful without the other. Granting this group lets an
+    # agent trigger imports it is not allowed to edit, and withholding it lets an agent
+    # maintain configurations without ever being able to move production data.
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\RunImportConfigTool:
+        tags:
+            - name: 'pimcore.mcp_tool'
+              group: 'pimcore-data-importer-execute'
+              description: 'Start Data Importer imports (creates and updates data objects)'

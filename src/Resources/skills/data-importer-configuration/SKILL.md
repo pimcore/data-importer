@@ -65,6 +65,12 @@ objects. You build it as one document and write it in one call.
 To change an existing configuration, read it with `get_import_config`, modify it, then enrich,
 validate and `save_import_config`.
 
+Saving does not run anything. `run_import_config` starts the import and `get_import_status`
+reports the queue; poll the latter until `isRunning` is false. Running writes real data objects,
+so validate first, and expect `run_import_config` to be unavailable unless the agent has been
+granted the `pimcore-data-importer-execute` group, which is deliberately separate from the group
+that writes configurations.
+
 ## Structure
 
 ```yaml
