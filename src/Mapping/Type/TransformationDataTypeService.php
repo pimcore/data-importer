@@ -413,9 +413,12 @@ final class TransformationDataTypeService
             );
 
             $msg = sprintf(
-                'Field "%s" of class "%s" cannot store transformation result type "%s". '
-                . 'It accepts: %s. Use get_import_config_context with the field_type_matrix '
-                . 'section for the full field to type map.',
+                'Field "%s" of class "%s" cannot store "%s", the result type its '
+                . 'transformationPipeline produces. It accepts: %s. The result type is computed '
+                . 'from the pipeline, so editing the transformationResultType property changes '
+                . 'nothing: add an operator that outputs an accepted type, or target another '
+                . 'field. Use get_import_config_context with the operators_by_output section to '
+                . 'find the operator, or field_type_matrix for the full field to type map.',
                 $fieldName,
                 $classId,
                 implode(', ', $transformationResultType),

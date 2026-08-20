@@ -89,12 +89,26 @@ than assuming the import reads from wherever the sample came from.
 
 | Parameter | Type | Description |
 |---|---|---|
-| `sections` | array of enum, optional | `classes`, `loaders`, `interpreters`, `resolver`, `targets`, `operators`, `field_type_matrix`, `schema`. Defaults to classes, loaders and interpreters. |
+| `sections` | array of enum, optional | `classes`, `loaders`, `interpreters`, `resolver`, `targets`, `operators`, `field_type_matrix`, `operators_by_output`, `schema`. Defaults to classes, loaders and interpreters. |
 | `classId` | string, optional | Data object class id or name. Required for `field_type_matrix`. |
+| `detail` | enum, optional | `brief` (the default) or `full`. |
 
 An unknown section is an error naming the valid ones, rather than a silent fallback to the
-defaults. The `schema` section is large; its operator and target catalogues are pointers to the
-`operators` and `targets` sections rather than copies of them.
+defaults. An unknown `detail` is rejected the same way.
+
+`brief` lists the setting names of each type in the catalogue sections; `full` adds the schema of
+every setting. Whether a type is the right one is answered by its description and the names of its
+settings, and the schemas only matter once those settings are being written, so the catalogues are
+brief unless asked otherwise. On the demo dataset that takes the `operators` section from 11.4 KB
+to 7.2 KB and `resolver` from 7.3 KB to 3.6 KB.
+
+Two catalogues used to be shipped twice. The `schema` section carries pointers to the `operators`
+and `targets` sections rather than copies of them, and `locationUpdateStrategy.availableTypes`
+points at `createLocationStrategy.availableTypes`, which is byte for byte the same catalogue.
+
+`operators_by_output` inverts the operator catalogue: given the result type a target field
+accepts, it names the operators that produce it. This is the lookup that the "cannot store" error
+points at, and reading it costs about 900 bytes instead of the whole operator catalogue.
 
 ### `enrich_import_config`
 

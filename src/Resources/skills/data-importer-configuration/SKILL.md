@@ -63,7 +63,12 @@ objects. You build it as one document and write it in one call.
    comes from*. Request more sections only when you need them:
    - `resolver` before writing `resolverConfig`
    - `targets` and `operators` before writing `mappingConfig`
+   - `operators_by_output` when a field rejects the type your pipeline produces: it names the
+     operator that produces an accepted one
    - `schema` only when a validation error is otherwise unexplainable; it is large.
+
+   Catalogues come back in `brief` form, which names each type's settings. Ask for `detail: full`
+   once you know which handful of types you are going to write settings for.
 6. **`list_import_configs`** - check whether the name is taken before creating.
 7. **Build the configuration** (see the structure below). Before you write `loadingStrategy` or a
    `loadDataObject` operator, call **`get_class_fields_for_loading`**: it lists the attributes
@@ -158,8 +163,10 @@ one in front of the Studio editor. `enrich_import_config` reports the computed t
 need to see them, for instance to work out why a target field is rejected.
 
 **A field must accept the result type your pipeline produces.** `get_import_config_context` with
-`field_type_matrix` lists, per result type, the fields that accept it. If validation says a field
-cannot store a type, either change the target field or add an operator that converts the value.
+`field_type_matrix` lists, per result type, the fields that accept it, and `operators_by_output`
+lists, per result type, the operators that produce it. If validation says a field cannot store a
+type, add an operator that outputs an accepted one or target another field. Editing
+`transformationResultType` changes nothing, because the type is computed from the pipeline.
 
 **Chain operators by type.** Each operator in `transformationPipeline` declares
 `acceptedInputTypes` and `outputTypes` (the `operators` section). The output of one must be

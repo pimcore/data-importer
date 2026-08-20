@@ -36,11 +36,47 @@ final class GetConfigurationContextToolTest extends Unit
         . PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG;
 
     private const string VALID_SECTIONS = 'classes, loaders, interpreters, resolver, operators, '
-        . 'targets, field_type_matrix, schema';
+        . 'targets, field_type_matrix, operators_by_output, schema';
 
     private const string OPERATOR_POINTER = 'See the "operators" section of this tool.';
 
     private const string TARGET_POINTER = 'See the "targets" section of this tool.';
+
+    /** @var array<string, mixed> */
+    private const array OPERATORS = [
+        'trim' => [
+            'type' => 'trim',
+            'description' => 'Trims whitespace',
+            'settings' => ['mode' => ['type' => 'string', 'description' => 'Trimming mode']],
+            'acceptedInputTypes' => ['default'],
+            'outputTypes' => ['default'],
+        ],
+        'numeric' => [
+            'type' => 'numeric',
+            'description' => 'Casts to a number',
+            'settings' => [],
+            'acceptedInputTypes' => ['default'],
+            'outputTypes' => ['numeric'],
+        ],
+    ];
+
+    /** @var array<string, mixed> */
+    private const array TARGETS = [
+        'direct' => [
+            'type' => 'direct',
+            'description' => 'Writes to a field',
+            'settings' => ['fieldName' => ['type' => 'string', 'description' => 'Target field']],
+        ],
+    ];
+
+    /** @var array<string, mixed> */
+    private const array LOCATION_TYPES = [
+        'staticPath' => [
+            'type' => 'staticPath',
+            'description' => 'Puts every element in one folder',
+            'settings' => ['path' => ['type' => 'string', 'description' => 'Folder path']],
+        ],
+    ];
 
     public function testDeniedWhenMissingPermission(): void
     {
@@ -111,13 +147,39 @@ final class GetConfigurationContextToolTest extends Unit
         $this->assertSame([], $payload['loaders']);
     }
 
-    public function testResolverSectionIsServedVerbatim(): void
+    public function testTheSecondLocationCatalogueIsReplacedByAPointerToTheFirst(): void
     {
+        // Both location strategies choose from the same catalogue, and it is the largest part of
+        // the section, so shipping it twice doubled the cost of the section for nothing.
         $payload = $this->assertToolSuccess($this->buildTool(allowed: true)->execute(['resolver']));
 
+        $properties = $payload['resolver']['properties'];
+
         $this->assertSame(
-            ['properties' => ['loadingStrategy' => ['availableTypes' => ['id' => []]]]],
-            $payload['resolver'],
+            'Same as createLocationStrategy.availableTypes.',
+            $properties['locationUpdateStrategy']['availableTypes'],
+        );
+        $this->assertArrayHasKey('staticPath', $properties['createLocationStrategy']['availableTypes']);
+    }
+
+    public function testACatalogueThatDiffersBetweenTheLocationStrategiesIsKept(): void
+    {
+        $schemaService = $this->schemaService([
+            'getResolverConfigSchema' => [
+                'properties' => [
+                    'createLocationStrategy' => ['availableTypes' => self::LOCATION_TYPES],
+                    'locationUpdateStrategy' => ['availableTypes' => ['noChange' => ['description' => 'Stays']]],
+                ],
+            ],
+        ]);
+
+        $payload = $this->assertToolSuccess(
+            $this->buildTool(allowed: true, schemaService: $schemaService)->execute(['resolver'])
+        );
+
+        $this->assertSame(
+            ['noChange' => ['description' => 'Stays']],
+            $payload['resolver']['properties']['locationUpdateStrategy']['availableTypes'],
         );
     }
 
@@ -128,8 +190,59 @@ final class GetConfigurationContextToolTest extends Unit
         );
 
         $this->assertSame(['operators', 'targets'], array_keys($payload));
-        $this->assertSame(['trim' => ['label' => 'Trim']], $payload['operators']);
-        $this->assertSame(['direct' => ['label' => 'Direct']], $payload['targets']);
+        $this->assertSame(['trim', 'numeric'], array_keys($payload['operators']));
+        $this->assertSame(['direct'], array_keys($payload['targets']));
+    }
+
+    public function testTheBriefCatalogueNamesEachSettingRatherThanDescribingIt(): void
+    {
+        // The default. Whether a type is the right one is answered by the description and the
+        // setting names; the schema of each setting only matters once it is being written.
+        $payload = $this->assertToolSuccess($this->buildTool(allowed: true)->execute(['operators']));
+
+        $this->assertSame(
+            [
+                'description' => 'Trims whitespace',
+                'settings' => ['mode'],
+                'acceptedInputTypes' => ['default'],
+                'outputTypes' => ['default'],
+            ],
+            $payload['operators']['trim'],
+        );
+    }
+
+    public function testTheFullCatalogueKeepsTheSettingSchemas(): void
+    {
+        $payload = $this->assertToolSuccess(
+            $this->buildTool(allowed: true)->execute(['operators'], null, 'full')
+        );
+
+        $this->assertSame(self::OPERATORS['trim'], $payload['operators']['trim']);
+    }
+
+    public function testAnUnknownDetailIsRejectedRatherThanSilentlyIgnored(): void
+    {
+        $result = $this->buildTool(allowed: true)->execute(['operators'], null, 'verbose');
+
+        $this->assertToolError(
+            $result,
+            'Unknown detail "verbose". Valid values: brief, full.',
+            'invalid_request'
+        );
+    }
+
+    public function testOperatorsByOutputAnswersWhichOperatorProducesAType(): void
+    {
+        // The lookup four consecutive failed saves were groping for: the target field rejects
+        // "default" and accepts "numeric", so which operator gets the pipeline there?
+        $payload = $this->assertToolSuccess(
+            $this->buildTool(allowed: true)->execute(['operators_by_output'])
+        );
+
+        $this->assertSame(
+            ['default' => ['trim'], 'numeric' => ['numeric']],
+            $payload['operators_by_output'],
+        );
     }
 
     public function testAMissingMappingSchemaPathCollapsesToAnEmptyList(): void
@@ -265,13 +378,17 @@ final class GetConfigurationContextToolTest extends Unit
                 'properties' => ['type' => ['availableTypes' => ['csv' => ['label' => 'CSV']]]],
             ],
             'getResolverConfigSchema' => [
-                'properties' => ['loadingStrategy' => ['availableTypes' => ['id' => []]]],
+                'properties' => [
+                    'loadingStrategy' => ['availableTypes' => ['id' => []]],
+                    'createLocationStrategy' => ['availableTypes' => self::LOCATION_TYPES],
+                    'locationUpdateStrategy' => ['availableTypes' => self::LOCATION_TYPES],
+                ],
             ],
             'getMappingConfigSchema' => [
                 'items' => [
                     'properties' => [
-                        'transformationPipeline' => ['availableOperators' => ['trim' => ['label' => 'Trim']]],
-                        'dataTarget' => ['availableTargets' => ['direct' => ['label' => 'Direct']]],
+                        'transformationPipeline' => ['availableOperators' => self::OPERATORS],
+                        'dataTarget' => ['availableTargets' => self::TARGETS],
                     ],
                 ],
             ],

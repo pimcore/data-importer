@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tool;
 
+use function implode;
 use function in_array;
 use function mb_strtolower;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -120,19 +121,35 @@ final class DataObjectLoader implements LoadableAttributesInterface
         $fieldDefinition = $this->resolveFieldDefinition($classDefinition, $attributeName);
         if (!$fieldDefinition instanceof Data) {
             throw new InvalidConfigurationException(sprintf(
-                'Attribute `%s` does not exist in class `%s`.',
+                'Attribute `%s` does not exist in class `%s`. %s',
                 $attributeName,
-                $classDefinition->getName()
+                $classDefinition->getName(),
+                $this->describeLoadableAttributes($classDefinition)
             ));
         }
 
         if (!$fieldDefinition->isFilterable()) {
             throw new InvalidConfigurationException(sprintf(
-                'Attribute `%s` cannot be used to load an object: field type `%s` is not filterable.',
+                'Attribute `%s` cannot be used to load an object: field type `%s` is not '
+                . 'filterable. %s',
                 $attributeName,
-                $fieldDefinition->getFieldType()
+                $fieldDefinition->getFieldType(),
+                $this->describeLoadableAttributes($classDefinition)
             ));
         }
+    }
+
+    /**
+     * The caller's next question is always "then what may I use?", and the answer is already
+     * computed. Spelling it out here saves a round trip through listLoadableAttributes().
+     */
+    private function describeLoadableAttributes(ClassDefinition $classDefinition): string
+    {
+        return sprintf(
+            'Loadable attributes: %s. Object brick paths (classField.brickName.brickField) are '
+            . 'also accepted.',
+            implode(', ', $this->loadableAttributesOf($classDefinition))
+        );
     }
 
     /**
@@ -213,6 +230,14 @@ final class DataObjectLoader implements LoadableAttributesInterface
             return [];
         }
 
+        return $this->loadableAttributesOf($classDefinition);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function loadableAttributesOf(ClassDefinition $classDefinition): array
+    {
         $attributes = self::SYSTEM_COLUMNS;
         foreach ($classDefinition->getFieldDefinitions() as $fieldDefinition) {
             if ($fieldDefinition instanceof Localizedfields) {

@@ -15,10 +15,14 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
 use function array_diff;
+use function array_filter;
+use function array_keys;
 use function array_map;
 use function implode;
+use function in_array;
 use function is_array;
 use function is_string;
+use function ksort;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Result\CallToolResult;
@@ -54,6 +58,8 @@ final readonly class GetConfigurationContextTool
 
     private const string SECTION_FIELD_MATRIX = 'field_type_matrix';
 
+    private const string SECTION_OPERATORS_BY_OUTPUT = 'operators_by_output';
+
     private const string SECTION_SCHEMA = 'schema';
 
     /** @var list<string> */
@@ -65,8 +71,19 @@ final readonly class GetConfigurationContextTool
         self::SECTION_OPERATORS,
         self::SECTION_TARGETS,
         self::SECTION_FIELD_MATRIX,
+        self::SECTION_OPERATORS_BY_OUTPUT,
         self::SECTION_SCHEMA,
     ];
+
+    private const string DETAIL_BRIEF = 'brief';
+
+    private const string DETAIL_FULL = 'full';
+
+    /** @var list<string> */
+    private const array VALID_DETAILS = [self::DETAIL_BRIEF, self::DETAIL_FULL];
+
+    private const string SEE_CREATE_LOCATION =
+        'Same as createLocationStrategy.availableTypes.';
 
     /**
      * Cheap orientation: what to import into and where the data comes from. Everything that
@@ -95,10 +112,13 @@ final readonly class GetConfigurationContextTool
             . 'Sections: classes (import targets and their ids), loaders (where data comes from), '
             . 'interpreters (file formats), resolver (loading, location and publishing strategies), '
             . 'targets (dataTarget types), operators (transformation operators, with the input and '
-            . 'output types you chain them by), field_type_matrix (requires classId: which field '
-            . 'accepts which result type), schema (the full JSON schema, large, use only when a '
-            . 'validation error is otherwise unexplainable). Defaults to classes, loaders and '
-            . 'interpreters.',
+            . 'output types you chain them by), operators_by_output (which operator produces '
+            . 'which result type, the lookup for making a pipeline fit its target field), '
+            . 'field_type_matrix (requires classId: which field accepts which result type), '
+            . 'schema (the full JSON schema, large, use only when a validation error is '
+            . 'otherwise unexplainable). Defaults to classes, loaders and interpreters, and to '
+            . 'detail=brief, which names each setting instead of describing it; ask for '
+            . 'detail=full once you know which types you are going to use.',
         // Pure lookup over the class and service definitions.
         annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]
@@ -114,6 +134,13 @@ final readonly class GetConfigurationContextTool
             description: 'Data object class id or name. Required for the field_type_matrix section.'
         )]
         ?string $classId = null,
+        #[Schema(
+            type: 'string',
+            description: 'How much detail the catalogues carry. brief (the default) lists the '
+                . 'setting names of each type; full adds the schema of every setting.',
+            enum: self::VALID_DETAILS,
+        )]
+        ?string $detail = null,
     ): CallToolResult {
         $denied = $this->denyIfNotAllowed($this->securityService);
         if ($denied !== null) {
@@ -122,10 +149,11 @@ final readonly class GetConfigurationContextTool
 
         try {
             $requested = $this->resolveSections($sections);
+            $brief = $this->resolveDetail($detail) === self::DETAIL_BRIEF;
             $context = [];
 
             foreach ($requested as $section) {
-                $context[$section] = $this->buildSection($section, $classId);
+                $context[$section] = $this->buildSection($section, $classId, $brief);
             }
         } catch (Throwable $e) {
             return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['classId' => $classId]);
@@ -171,25 +199,139 @@ final readonly class GetConfigurationContextTool
      *
      * @return array<array-key, mixed>
      */
-    private function buildSection(string $section, ?string $classId): array
+    private function buildSection(string $section, ?string $classId, bool $brief): array
     {
         return match ($section) {
             self::SECTION_CLASSES => $this->configurationSchemaService->getAvailableClasses(),
-            self::SECTION_LOADERS => $this->availableTypes(
-                $this->configurationSchemaService->getLoaderConfigSchema()
+            self::SECTION_LOADERS => $this->catalogue(
+                $this->availableTypes($this->configurationSchemaService->getLoaderConfigSchema()),
+                $brief
             ),
-            self::SECTION_INTERPRETERS => $this->availableTypes(
-                $this->configurationSchemaService->getInterpreterConfigSchema()
+            self::SECTION_INTERPRETERS => $this->catalogue(
+                $this->availableTypes($this->configurationSchemaService->getInterpreterConfigSchema()),
+                $brief
             ),
-            self::SECTION_RESOLVER => $this->configurationSchemaService->getResolverConfigSchema(),
-            self::SECTION_OPERATORS => $this->fromMappingSchema(
-                ['transformationPipeline', 'availableOperators']
+            self::SECTION_RESOLVER => $this->slimResolver($brief),
+            self::SECTION_OPERATORS => $this->catalogue($this->operatorCatalogue(), $brief),
+            self::SECTION_TARGETS => $this->catalogue(
+                $this->fromMappingSchema(['dataTarget', 'availableTargets']),
+                $brief
             ),
-            self::SECTION_TARGETS => $this->fromMappingSchema(['dataTarget', 'availableTargets']),
             self::SECTION_FIELD_MATRIX => $this->fieldTypeMatrix($classId),
+            self::SECTION_OPERATORS_BY_OUTPUT => $this->operatorsByOutput(),
             self::SECTION_SCHEMA => $this->slimSchema(),
             default => [],
         };
+    }
+
+    /**
+     * @throws InvalidMcpToolArgumentException
+     */
+    private function resolveDetail(?string $detail): string
+    {
+        if ($detail === null || $detail === '') {
+            return self::DETAIL_BRIEF;
+        }
+
+        if (!in_array($detail, self::VALID_DETAILS, true)) {
+            throw new InvalidMcpToolArgumentException(sprintf(
+                'Unknown detail "%s". Valid values: %s.',
+                $detail,
+                implode(', ', self::VALID_DETAILS)
+            ));
+        }
+
+        return $detail;
+    }
+
+    /**
+     * A catalogue entry describes one type. In brief form the settings are named rather than
+     * described, which is what an agent needs to decide whether a type is the right one; the
+     * schema of each setting only matters once it is writing them.
+     *
+     * @param array<array-key, mixed> $types
+     *
+     * @return array<array-key, mixed>
+     */
+    private function catalogue(array $types, bool $brief): array
+    {
+        if (!$brief) {
+            return $types;
+        }
+
+        return array_map($this->briefEntry(...), $types);
+    }
+
+    private function briefEntry(mixed $entry): mixed
+    {
+        if (!is_array($entry)) {
+            return $entry;
+        }
+
+        $settings = $entry['settings'] ?? null;
+
+        return array_filter([
+            'description' => $entry['description'] ?? null,
+            'settings' => is_array($settings) ? array_keys($settings) : null,
+            'acceptedInputTypes' => $entry['acceptedInputTypes'] ?? null,
+            'outputTypes' => $entry['outputTypes'] ?? null,
+        ], static fn (mixed $value): bool => $value !== null);
+    }
+
+    /**
+     * @return array<array-key, mixed>
+     */
+    private function operatorCatalogue(): array
+    {
+        return $this->fromMappingSchema(['transformationPipeline', 'availableOperators']);
+    }
+
+    /**
+     * The lookup the operator catalogue cannot answer without being read end to end: given the
+     * result type a target field accepts, which operator produces it.
+     *
+     * @return array<string, list<string>>
+     */
+    private function operatorsByOutput(): array
+    {
+        $byOutput = [];
+
+        foreach ($this->operatorCatalogue() as $type => $operator) {
+            $outputTypes = is_array($operator) ? ($operator['outputTypes'] ?? []) : [];
+            foreach (is_array($outputTypes) ? $outputTypes : [] as $outputType) {
+                $byOutput[(string) $outputType][] = (string) $type;
+            }
+        }
+
+        ksort($byOutput);
+
+        return $byOutput;
+    }
+
+    /**
+     * Both location strategies choose from the same catalogue, and it is the largest part of the
+     * resolver section, so shipping it twice doubled the cost of the section for nothing.
+     *
+     * @return array<array-key, mixed>
+     */
+    private function slimResolver(bool $brief): array
+    {
+        $schema = $this->configurationSchemaService->getResolverConfigSchema();
+        $strategies = ['loadingStrategy', 'createLocationStrategy', 'locationUpdateStrategy', 'publishingStrategy'];
+
+        foreach ($strategies as $strategy) {
+            $types = $schema['properties'][$strategy]['availableTypes'] ?? null;
+            if (is_array($types)) {
+                $schema['properties'][$strategy]['availableTypes'] = $this->catalogue($types, $brief);
+            }
+        }
+
+        $createTypes = $schema['properties']['createLocationStrategy']['availableTypes'] ?? null;
+        if ($createTypes !== null && $createTypes === ($schema['properties']['locationUpdateStrategy']['availableTypes'] ?? null)) {
+            $schema['properties']['locationUpdateStrategy']['availableTypes'] = self::SEE_CREATE_LOCATION;
+        }
+
+        return $schema;
     }
 
     /**
