@@ -76,6 +76,9 @@ class ConfigurationValidationService
             return new ValidationResult(false, $errors, $warnings);
         }
 
+        // Validate general
+        $errors = array_merge($errors, $this->validateGeneralConfig($config['general'] ?? []));
+
         // Validate loaderConfig
         $loaderErrors = $this->validateLoaderConfig($config['loaderConfig'] ?? []);
         $errors = array_merge($errors, $loaderErrors);
@@ -105,6 +108,22 @@ class ConfigurationValidationService
         $errors = array_merge($errors, $executionErrors);
 
         return new ValidationResult(empty($errors), $errors, $warnings);
+    }
+
+    /**
+     * Validate the general section, which carries the name, type and active flag every
+     * configuration needs before it can be stored or run.
+     */
+    protected function validateGeneralConfig(array $config): array
+    {
+        try {
+            $treeBuilder = $this->configDefinition->getGeneralConfigTreeBuilder();
+            $this->configProcessor->process($treeBuilder->buildTree(), [$config]);
+        } catch (\Exception $e) {
+            return [new ValidationError('general', self::MSG_VALIDATION_FAILED . $e->getMessage())];
+        }
+
+        return [];
     }
 
     /**

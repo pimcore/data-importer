@@ -21,6 +21,7 @@ use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\Traits\ConfigurationParserTrait;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\ValidationError;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
@@ -88,6 +89,9 @@ final readonly class SaveDataImporterConfigTool
         try {
             $configArray = $this->parseConfiguration($configuration, $format ?? '');
             $configArray['general']['name'] = $name;
+            // The only value the schema accepts, so it is the tool's to set rather than
+            // something the caller has to know and repeat.
+            $configArray['general']['type'] = ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT;
 
             $validationResult = $this->validationService->validateConfiguration($configArray);
             if (!$validationResult->isValid()) {

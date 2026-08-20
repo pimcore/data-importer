@@ -127,8 +127,9 @@ class that Pimcore can filter on, or one of the system columns `id`, `key`, `pat
 paths like `attributes.Engine.cylinders` work too. A field type that is not filterable, and a
 field that does not exist, are both rejected.
 
-**`active` defaults to false.** A configuration that validates and saves but has
-`general.active: false` will never run.
+**`general` needs `name` and `active`.** Both are required, and validation names the missing one.
+`save_import_config` sets `name` and `type` itself, so the value you pass for `active` is the real
+decision: a configuration that validates and saves with `general.active: false` will never run.
 
 ## When validation fails
 

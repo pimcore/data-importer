@@ -18,6 +18,7 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\SaveDataImporterConfigTool;
 use Pimcore\Bundle\DataImporterBundle\Tests\unit\Helper\Traits\McpToolResultTrait;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ConfigurationTypes;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService;
 use Pimcore\Bundle\DataImporterBundle\Validation\ValidationError;
@@ -115,10 +116,46 @@ final class SaveDataImporterConfigToolTest extends Unit
 
         $this->assertSame(self::CONFIG_NAME, $captured[0]);
         $this->assertSame(
-            ['general' => ['active' => true, 'name' => self::CONFIG_NAME], 'mappingConfig' => []],
+            ['general' => [
+                'active' => true,
+                'name' => self::CONFIG_NAME,
+                'type' => ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
+            ], 'mappingConfig' => []],
             $captured[1],
         );
         $this->assertGreaterThan(0, $captured[2], 'The write is stamped with the current time.');
+    }
+
+    public function testTheConfigurationTypeIsSetByTheToolRatherThanTakenFromTheBody(): void
+    {
+        // There is exactly one value the schema accepts, and general.type is now enforced, so
+        // leaving it to the caller only creates a way to fail validation for no reason.
+        $captured = null;
+        $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
+            'updateConfiguration' => static function (string $name, array $configuration) use (
+                &$captured
+            ): int {
+                $captured = $configuration;
+
+                return self::MODIFICATION_DATE;
+            },
+        ]);
+
+        $tool = $this->buildTool(
+            allowed: true,
+            configurationService: $configurationService,
+            validationService: $this->validationService(new ValidationResult(true)),
+        );
+
+        $this->assertToolSuccess($tool->execute(
+            self::CONFIG_NAME,
+            '{"general": {"active": true, "type": "somethingElse"}, "mappingConfig": []}'
+        ));
+
+        $this->assertSame(
+            ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
+            $captured['general']['type'],
+        );
     }
 
     public function testTheNameArgumentWinsOverTheNameInsideTheBody(): void
@@ -178,7 +215,11 @@ final class SaveDataImporterConfigToolTest extends Unit
 
         $this->assertToolSuccess($tool->execute(self::CONFIG_NAME, self::YAML_BODY, 'yaml'));
         $this->assertSame(
-            ['general' => ['active' => true, 'name' => self::CONFIG_NAME], 'mappingConfig' => []],
+            ['general' => [
+                'active' => true,
+                'name' => self::CONFIG_NAME,
+                'type' => ConfigurationTypes::DATA_IMPORTER_DATA_OBJECT,
+            ], 'mappingConfig' => []],
             $captured,
         );
     }

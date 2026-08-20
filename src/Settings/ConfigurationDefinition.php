@@ -177,6 +177,17 @@ final class ConfigurationDefinition
                 ->scalarNode('path')
                     ->info('Optional path for the configuration')
                 ->end()
+                // Written by the storage layer rather than by the author, and present in every
+                // stored configuration, so the schema has to accept them.
+                ->integerNode('modificationDate')
+                    ->info('Managed by the storage layer')
+                ->end()
+                ->integerNode('createDate')
+                    ->info('Managed by the storage layer')
+                ->end()
+                ->booleanNode('writeable')
+                    ->info('Managed by the storage layer')
+                ->end()
             ->end();
     }
 
