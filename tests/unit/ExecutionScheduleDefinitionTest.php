@@ -26,11 +26,14 @@ use Symfony\Component\Config\Definition\Processor;
  */
 class ExecutionScheduleDefinitionTest extends Unit
 {
+    /**
+     * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
+     */
     protected $tester;
 
     private function processExecutionConfig(array $config): array
     {
-        $definition = (new \ReflectionClass(ConfigurationDefinition::class))->newInstanceWithoutConstructor();
+        $definition = $this->tester->grabService(ConfigurationDefinition::class);
 
         return (new Processor())->process(
             $definition->getExecutionConfigTreeBuilder()->buildTree(),

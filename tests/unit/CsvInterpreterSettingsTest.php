@@ -16,7 +16,7 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Explode;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException as SymfonyInvalidConfigurationException;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException as SchemaException;
 use Symfony\Component\Config\Definition\Processor;
 
 /**
@@ -27,15 +27,22 @@ use Symfony\Component\Config\Definition\Processor;
  */
 class CsvInterpreterSettingsTest extends Unit
 {
+    /**
+     * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
+     */
     protected $tester;
 
-    private const DOUBLE_ESCAPED_BACKSLASH = '\\\\';
+    private const string DOUBLE_ESCAPED_BACKSLASH = '\\\\';
 
     private function interpreter(): CsvFileInterpreter
     {
-        return (new \ReflectionClass(CsvFileInterpreter::class))->newInstanceWithoutConstructor();
+        return $this->tester->grabService(CsvFileInterpreter::class);
     }
 
+    /**
+     * The path an MCP written configuration takes: the settings are checked against the schema
+     * before anything is stored, so a value fgetcsv() cannot use never reaches it.
+     */
     private function processCsvSettings(array $settings): array
     {
         return (new Processor())->process(
@@ -52,31 +59,14 @@ class CsvInterpreterSettingsTest extends Unit
         $this->interpreter()->setSettings(['escape' => self::DOUBLE_ESCAPED_BACKSLASH]);
     }
 
-    public function testASingleBackslashEscapeStaysAccepted(): void
+    public function testTheEscapeValuesFgetcsvAcceptsAreLetThrough(): void
     {
-        $interpreter = $this->interpreter();
-        $interpreter->setSettings(['escape' => '\\']);
+        // A single character and empty are exactly what fgetcsv() accepts, so neither may be
+        // mistaken for a value to reject. Empty in particular must not read as missing.
+        $this->expectNotToPerformAssertions();
 
-        $this->assertSame('\\', $this->readSetting($interpreter, 'escape'));
-    }
-
-    public function testAnEmptyEscapeIsAccepted(): void
-    {
-        // Empty is what fgetcsv() itself asks for, so it must not be treated as missing.
-        $interpreter = $this->interpreter();
-        $interpreter->setSettings(['escape' => '']);
-
-        $this->assertSame('', $this->readSetting($interpreter, 'escape'));
-    }
-
-    public function testAMissingEscapeFallsBackToTheDefault(): void
-    {
-        $interpreter = $this->interpreter();
-        $interpreter->setSettings([]);
-
-        $this->assertSame('\\', $this->readSetting($interpreter, 'escape'));
-        $this->assertSame(',', $this->readSetting($interpreter, 'delimiter'));
-        $this->assertSame('"', $this->readSetting($interpreter, 'enclosure'));
+        $this->interpreter()->setSettings(['escape' => '\\']);
+        $this->interpreter()->setSettings(['escape' => '']);
     }
 
     public function testAMultiCharacterDelimiterIsRejected(): void
@@ -105,9 +95,7 @@ class CsvInterpreterSettingsTest extends Unit
 
     public function testTheSchemaRejectsATwoCharacterEscapeBeforeItCanBeStored(): void
     {
-        // The path an MCP written configuration takes: caught at validation, so the broken
-        // value never reaches fgetcsv() in the first place.
-        $this->expectException(SymfonyInvalidConfigurationException::class);
+        $this->expectException(SchemaException::class);
         $this->expectExceptionMessage('it must be empty or exactly one character');
 
         $this->processCsvSettings(['escape' => self::DOUBLE_ESCAPED_BACKSLASH]);
@@ -128,30 +116,40 @@ class CsvInterpreterSettingsTest extends Unit
 
     public function testTheSchemaRejectsAMultiCharacterDelimiter(): void
     {
-        $this->expectException(SymfonyInvalidConfigurationException::class);
+        $this->expectException(SchemaException::class);
         $this->expectExceptionMessage('it must be exactly one character');
 
         $this->processCsvSettings(['delimiter' => '\\t']);
     }
 
+    public function testTheDefaultsAreThemselvesValidCharacters(): void
+    {
+        // A configuration that omits the character settings has to keep working.
+        $settings = $this->processCsvSettings([]);
+
+        $this->assertSame(',', $settings['delimiter']);
+        $this->assertSame('"', $settings['enclosure']);
+        $this->assertSame('\\', $settings['escape']);
+    }
+
     public function testTheExplodeSchemaRejectsAnEmptyDelimiter(): void
     {
         // explode() throws a ValueError on an empty separator.
-        $this->expectException(SymfonyInvalidConfigurationException::class);
+        $this->expectException(SchemaException::class);
         $this->expectExceptionMessage('The explode delimiter must not be empty.');
 
-        $explode = (new \ReflectionClass(Explode::class))->newInstanceWithoutConstructor();
-
-        (new Processor())->process(
-            $explode->getConfigTreeBuilder()->buildTree(),
-            [['delimiter' => '']]
-        );
+        $this->processExplodeSettings(['delimiter' => '']);
     }
 
-    private function readSetting(CsvFileInterpreter $interpreter, string $property): string
+    public function testTheExplodeDelimiterDefaultsToASpace(): void
     {
-        $reflectionProperty = new \ReflectionProperty(CsvFileInterpreter::class, $property);
+        $this->assertSame(' ', $this->processExplodeSettings([])['delimiter']);
+    }
 
-        return $reflectionProperty->getValue($interpreter);
+    private function processExplodeSettings(array $settings): array
+    {
+        $explode = $this->tester->grabService(Explode::class);
+
+        return (new Processor())->process($explode->getConfigTreeBuilder()->buildTree(), [$settings]);
     }
 }
