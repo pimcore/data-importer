@@ -109,7 +109,10 @@ final class SaveDataImporterConfigToolTest extends Unit
 
         $payload = $this->assertToolSuccess($tool->execute(self::CONFIG_NAME, self::JSON_BODY));
 
-        $this->assertSame(['saved', 'name', 'modificationDate'], array_keys($payload));
+        $this->assertSame(
+            ['saved', 'name', 'modificationDate', 'transformationResultTypes'],
+            array_keys($payload)
+        );
         $this->assertTrue($payload['saved']);
         $this->assertSame(self::CONFIG_NAME, $payload['name']);
         $this->assertSame(self::MODIFICATION_DATE, $payload['modificationDate']);
@@ -124,6 +127,75 @@ final class SaveDataImporterConfigToolTest extends Unit
             $captured[1],
         );
         $this->assertGreaterThan(0, $captured[2], 'The write is stamped with the current time.');
+    }
+
+    public function testTheComputedResultTypeIsWrittenIntoEveryMappingItem(): void
+    {
+        // Studio's mapping editor reads transformationResultType to choose the attributes it
+        // offers for the target field, so the stored document has to carry it - but the caller
+        // is never asked for it, because validation has just computed it from the pipeline.
+        $captured = [];
+        $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
+            'updateConfiguration' => static function (string $name, array $configuration) use (
+                &$captured
+            ): int {
+                $captured = [$name, $configuration];
+
+                return self::MODIFICATION_DATE;
+            },
+        ]);
+
+        $tool = $this->buildTool(
+            allowed: true,
+            configurationService: $configurationService,
+            validationService: $this->validationService(
+                new ValidationResult(true, [], [], [0 => 'numeric', 1 => 'gallery'])
+            ),
+        );
+
+        $payload = $this->assertToolSuccess($tool->execute(
+            self::CONFIG_NAME,
+            '{"general": {"active": true}, "mappingConfig": [{"label": "Year"}, {"label": "Images"}]}'
+        ));
+
+        $this->assertSame('numeric', $captured[1]['mappingConfig'][0]['transformationResultType']);
+        $this->assertSame('gallery', $captured[1]['mappingConfig'][1]['transformationResultType']);
+        $this->assertSame([0 => 'numeric', 1 => 'gallery'], $payload['transformationResultTypes']);
+    }
+
+    public function testAResultTypeSuppliedByTheCallerIsReplacedByTheComputedOne(): void
+    {
+        // Nothing validates an incoming value: the importer derives the type from the pipeline
+        // and never reads the property. A wrong one would only mislead the editor, so it loses.
+        $captured = [];
+        $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
+            'updateConfiguration' => static function (string $name, array $configuration) use (
+                &$captured
+            ): int {
+                $captured = [$name, $configuration];
+
+                return self::MODIFICATION_DATE;
+            },
+        ]);
+
+        $tool = $this->buildTool(
+            allowed: true,
+            configurationService: $configurationService,
+            validationService: $this->validationService(
+                new ValidationResult(true, [], [], [0 => 'quantityValue'])
+            ),
+        );
+
+        $this->assertToolSuccess($tool->execute(
+            self::CONFIG_NAME,
+            '{"general": {"active": true}, "mappingConfig": '
+            . '[{"label": "Power", "transformationResultType": "default"}]}'
+        ));
+
+        $this->assertSame(
+            'quantityValue',
+            $captured[1]['mappingConfig'][0]['transformationResultType']
+        );
     }
 
     public function testTheConfigurationTypeIsSetByTheToolRatherThanTakenFromTheBody(): void

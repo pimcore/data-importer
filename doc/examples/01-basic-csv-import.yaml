@@ -3,7 +3,7 @@ general:
     name: import-sample-1
     description: 'Import data from a CSV file with simplest mapping'
     group: ''
-    active: false
+    active: true
     path: null
     modificationDate: 1769026708
     createDate: 1769026497
@@ -51,7 +51,7 @@ mappingConfig:
         transformationPipeline: { }
 executionConfig:
     scheduleType: recurring
-    scheduledAt: ''
+    cronDefinition: '0 2 * * *'
 permissions:
     user: { }
     role: { }

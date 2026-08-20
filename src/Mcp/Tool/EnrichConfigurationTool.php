@@ -51,12 +51,12 @@ final readonly class EnrichConfigurationTool
     #[McpTool(
         name: self::TOOL_NAME,
         title: 'Enrich Import Configuration',
-        description: 'Compute the transformationResultType of every mapping item. The type is '
-            . 'derived from the transformation pipeline and cannot be guessed. Run this before '
-            . 'validate_import_config: validation without it assumes "default" for every field and '
-            . 'rejects numeric, date and relation targets. Returns only the computed types as '
-            . '[{index, label, transformationResultType}]; set each one on the matching mapping '
-            . 'item of the configuration you already hold, then validate.',
+        description: 'Report the result type each mapping item\'s transformation pipeline '
+            . 'produces, without storing anything. This is a diagnostic, not a required step: '
+            . 'validate_import_config computes the same types itself, and save_import_config '
+            . 'writes them into the configuration for you. Use it to work out why a target field '
+            . 'is reported as incompatible, or to pick a target that accepts what a pipeline '
+            . 'produces. Returns [{index, label, transformationResultType}].',
         // Computes over the supplied configuration; nothing is stored.
         annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]

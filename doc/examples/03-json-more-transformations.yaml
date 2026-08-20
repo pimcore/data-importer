@@ -4,7 +4,7 @@ general:
     description: 'JSON import with transformations for multiselect fields, 
                   quantity value and trimming and data targets for localized fields and object bricks'
     group: ''
-    active: false
+    active: true
     path: null
     modificationDate: 1769028025
     createDate: 1769026497
@@ -100,8 +100,7 @@ mappingConfig:
                 type: explode
 executionConfig:
     scheduleType: recurring
-    cronDefinition: ''
-    scheduledAt: ''
+    cronDefinition: '0 2 * * *'
 permissions:
     user: {  }
     role: {  }

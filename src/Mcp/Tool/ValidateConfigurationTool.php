@@ -48,11 +48,11 @@ final readonly class ValidateConfigurationTool
         name: self::TOOL_NAME,
         title: 'Validate Import Configuration',
         description: 'Validate a Data Importer configuration before saving it. Returns '
-            . '{valid: true} or {valid: false, errors: [{path, message}]}. Run enrich_import_config '
-            . 'first: without transformationResultType every field is checked as type "default", '
-            . 'which produces spurious incompatibility errors on numeric, date and relation targets. '
-            . 'Accepts JSON or YAML, auto-detected. In YAML, every settings block must be a nested '
-            . 'structure, never a JSON string.',
+            . '{valid: true} or {valid: false, errors: [{path, message}]}. The result type of '
+            . 'every mapping item is computed from its transformationPipeline, so a missing or '
+            . 'stale transformationResultType in the document changes nothing here. Accepts JSON '
+            . 'or YAML, auto-detected. In YAML, every settings block must be a nested structure, '
+            . 'never a JSON string.',
         // Pure function over the supplied configuration: nothing is stored.
         annotations: new ToolAnnotations(readOnlyHint: true, idempotentHint: true, openWorldHint: false)
     )]

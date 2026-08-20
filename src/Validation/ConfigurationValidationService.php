@@ -95,19 +95,20 @@ class ConfigurationValidationService
         $processingErrors = $this->validateProcessingConfig($config['processingConfig'] ?? []);
         $errors = array_merge($errors, $processingErrors);
 
-        // Validate mappingConfig
-        $mappingErrors = $this->validateMappingConfig(
+        // Validate mappingConfig. It also reports the result type each pipeline produces, which
+        // the caller stores for Studio's mapping editor.
+        $mapping = $this->validateMappingConfig(
             $configuration['general']['name'] ?? 'validation',
             $config['mappingConfig'] ?? [],
             $config['resolverConfig'] ?? []
         );
-        $errors = array_merge($errors, $mappingErrors);
+        $errors = array_merge($errors, $mapping['errors']);
 
         // Validate executionConfig
         $executionErrors = $this->validateExecutionConfig($config['executionConfig'] ?? []);
         $errors = array_merge($errors, $executionErrors);
 
-        return new ValidationResult(empty($errors), $errors, $warnings);
+        return new ValidationResult(empty($errors), $errors, $warnings, $mapping['types']);
     }
 
     /**
@@ -349,6 +350,11 @@ class ConfigurationValidationService
     /**
      * Validate mapping configuration
      */
+    /**
+     * Validates every mapping item and reports the result type its pipeline produces.
+     *
+     * @return array{errors: list<ValidationError>, types: array<int|string, string>}
+     */
     protected function validateMappingConfig(
         string $configName,
         array $mappingConfig,
@@ -356,11 +362,12 @@ class ConfigurationValidationService
     ): array {
 
         $errors = [];
+        $types = [];
 
         if (empty($mappingConfig)) {
             $errors[] = new ValidationError('mappingConfig', 'Mapping configuration is required');
 
-            return $errors;
+            return ['errors' => $errors, 'types' => $types];
         }
 
         // Validate using TreeBuilder from ConfigurationDefinition (includes cleanup strategy enum validation)
@@ -370,7 +377,7 @@ class ConfigurationValidationService
         } catch (\Exception $e) {
             $errors[] = new ValidationError('mappingConfig', self::MSG_VALIDATION_FAILED . $e->getMessage());
 
-            return $errors;
+            return ['errors' => $errors, 'types' => $types];
         }
 
         foreach ($mappingConfig as $index => $mappingItem) {
@@ -402,6 +409,8 @@ class ConfigurationValidationService
 
                 // Validate data target field compatibility
                 if ($transformationResultType !== null) {
+                    $types[$index] = $transformationResultType;
+
                     try {
                         $this->validateDataTargetField(
                             $mappingConfiguration,
@@ -420,7 +429,7 @@ class ConfigurationValidationService
             }
         }
 
-        return $errors;
+        return ['errors' => $errors, 'types' => $types];
     }
 
     /**

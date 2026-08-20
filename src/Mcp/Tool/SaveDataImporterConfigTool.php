@@ -53,11 +53,12 @@ final readonly class SaveDataImporterConfigTool
     #[McpTool(
         name: self::TOOL_NAME,
         title: 'Save Import Configuration',
-        description: 'Replace an existing Data Importer configuration by name. Run '
-            . 'enrich_import_config and then validate_import_config first; this tool validates '
-            . 'again and refuses to save an invalid configuration. Fails if the name does not '
-            . 'exist, so create it with create_import_config. Set general.active to true or the '
-            . 'import never runs.',
+        description: 'Replace an existing Data Importer configuration by name. Validate it with '
+            . 'validate_import_config first; this tool validates again and refuses to save an '
+            . 'invalid configuration. Fails if the name does not exist, so create it with '
+            . 'create_import_config. Set general.active to true or the import never runs. The '
+            . 'transformationResultType of every mapping item is computed here and written for '
+            . 'you, so you never have to supply it; the computed types come back in the result.',
         annotations: new ToolAnnotations(
             readOnlyHint: false,
             destructiveHint: true,
@@ -111,9 +112,11 @@ final readonly class SaveDataImporterConfigTool
                 ]);
             }
 
+            $resultTypes = $validationResult->getTransformationResultTypes();
+
             $modificationDate = $this->configurationService->updateConfiguration(
                 $name,
-                $configArray,
+                $this->applyTransformationResultTypes($configArray, $resultTypes),
                 time()
             );
         } catch (ForbiddenException | NotWriteableException $e) {
@@ -126,6 +129,30 @@ final readonly class SaveDataImporterConfigTool
             'saved' => true,
             'name' => $name,
             'modificationDate' => $modificationDate,
+            'transformationResultTypes' => $resultTypes,
         ]);
+    }
+
+    /**
+     * Studio's mapping editor reads transformationResultType to choose which class attributes it
+     * offers for a mapping item's target field, so a stored configuration has to carry it. The
+     * importer never reads it - it derives the type from the pipeline, exactly as validation just
+     * did - so nothing would catch a wrong value. Writing the computed one keeps the stored
+     * document consistent with the pipeline and spares the caller a guess.
+     *
+     * @param array<string, mixed> $configArray
+     * @param array<int|string, string> $resultTypes
+     *
+     * @return array<string, mixed>
+     */
+    private function applyTransformationResultTypes(array $configArray, array $resultTypes): array
+    {
+        foreach ($resultTypes as $index => $resultType) {
+            if (isset($configArray['mappingConfig'][$index])) {
+                $configArray['mappingConfig'][$index]['transformationResultType'] = $resultType;
+            }
+        }
+
+        return $configArray;
     }
 }

@@ -468,9 +468,10 @@ final class ConfigurationDefinition
                     ->end()
                     ->scalarNode('transformationResultType')
                         ->cannotBeEmpty()
-                        ->info('Result type of the transformation pipeline, used to check ' .
-                            'compatibility with the data target. Defaults to `default`. ' .
-                            'Use the enrich_import_config tool to calculate it.')
+                        ->info('Result type of the transformation pipeline, read by the Studio ' .
+                            'editor to choose the attributes offered for the data target. ' .
+                            'Computed from the pipeline and written by save_import_config, so a ' .
+                            'value supplied here is replaced. Defaults to `default`.')
                     ->end()
                     ->arrayNode('transformationPipeline')
                         ->arrayPrototype()

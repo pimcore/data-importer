@@ -22,12 +22,29 @@ final readonly class ValidationResult
     /**
      * @param ValidationError[] $errors
      * @param ValidationError[] $warnings
+     * @param array<int|string, string> $transformationResultTypes
      */
     public function __construct(
         private bool $valid,
         private array $errors = [],
         private array $warnings = [],
+        private array $transformationResultTypes = [],
     ) {
+    }
+
+    /**
+     * The result type each mapping item's transformation pipeline produces, keyed by its index
+     * in mappingConfig.
+     *
+     * Validation computes this from the pipeline itself, and so does the importer, which never
+     * reads the stored property. Studio's mapping editor does read it, to pick the attribute
+     * list offered for the target field, so a stored configuration has to carry it.
+     *
+     * @return array<int|string, string>
+     */
+    public function getTransformationResultTypes(): array
+    {
+        return $this->transformationResultTypes;
     }
 
     public function isValid(): bool

@@ -40,7 +40,7 @@ as not found rather than acted on.
 | `get_import_config` | `GetImportConfigTool` | Read one configuration to modify it |
 | `get_class_fields_for_loading` | `GetClassFieldsForLoadingTool` | Filter fields for the Load Data Object operator |
 | `validate_import_config` | `ValidateConfigurationTool` | Validate before saving |
-| `enrich_import_config` | `EnrichConfigurationTool` | Compute `transformationResultType` per mapping item |
+| `enrich_import_config` | `EnrichConfigurationTool` | Report the result type each mapping pipeline produces |
 | `create_import_config` | `CreateDataImporterConfigTool` | Create a new, empty configuration |
 | `save_import_config` | `SaveDataImporterConfigTool` | Replace a configuration's content |
 | `run_import_config` | `RunImportConfigTool` | Start the import a configuration describes |
@@ -55,7 +55,6 @@ get_import_config_examples          copy the closest working configuration
 get_import_config_context           classes, loaders, interpreters (default), then
                                     resolver / targets / operators / field_type_matrix
 list_import_configs                 is the name free?
-enrich_import_config                compute transformationResultType per mapping item
 validate_import_config              fix every error, validate again
 create_import_config                make the entry
 save_import_config                  write the document
@@ -63,8 +62,8 @@ run_import_config                   start the import (writes data objects)
 get_import_status                   poll until isRunning is false
 ```
 
-To change an existing configuration, read it with `get_import_config`, modify, then enrich,
-validate and save.
+To change an existing configuration, read it with `get_import_config`, modify, validate and
+save.
 
 The first two steps are not tools, and both matter.
 
@@ -102,10 +101,17 @@ Takes a full configuration or a single mapping item and returns only the compute
 {"types": [{"index": 0, "label": "Article Number", "transformationResultType": "default"}]}
 ```
 
-Set each value on the matching mapping item of the configuration you already hold. Running this
-before `validate_import_config` matters: without `transformationResultType`, validation checks
-every field as type `default` and reports spurious incompatibilities on numeric, date and relation
-targets.
+This is a diagnostic rather than a step in the sequence. The result type is derived from the
+transformation pipeline, and `validate_import_config` derives it the same way, so a configuration
+that omits `transformationResultType` validates exactly like one that carries it. Reach for this
+tool to find out why a target field is reported as incompatible, or to choose a target that
+accepts what a pipeline produces.
+
+`save_import_config` computes the types as well and writes them into the stored configuration, so
+a caller never has to supply them. That matters because the Studio mapping editor reads the stored
+value to decide which class attributes it offers for a mapping item's target field, while the
+importer ignores it and derives the type from the pipeline. A value written by hand is therefore
+never checked against anything, which is why the tool replaces it.
 
 ### `validate_import_config` and `save_import_config`
 

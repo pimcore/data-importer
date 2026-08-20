@@ -56,14 +56,14 @@ objects. You build it as one document and write it in one call.
    - `schema` only when a validation error is otherwise unexplainable; it is large.
 5. **`list_import_configs`** - check whether the name is taken before creating.
 6. **Build the configuration** (see the structure below).
-7. **`enrich_import_config`** - computes `transformationResultType` for every mapping item.
-   Returns `[{index, label, transformationResultType}]`; set each on the matching item.
-8. **`validate_import_config`** - fix every error and validate again before writing.
-9. **`create_import_config`** then **`save_import_config`** - create makes an empty entry, save
+7. **`validate_import_config`** - loop here. Fix every error and validate again; leave this
+   step on `{valid: true}` and not before. Do not iterate on `save_import_config` instead: it
+   rejects an invalid document, but each attempt resends the whole configuration.
+8. **`create_import_config`** then **`save_import_config`** - create makes an empty entry, save
    writes the document.
 
-To change an existing configuration, read it with `get_import_config`, modify it, then enrich,
-validate and `save_import_config`.
+To change an existing configuration, read it with `get_import_config`, modify it, validate and
+`save_import_config`.
 
 Saving does not run anything. `run_import_config` starts the import and `get_import_status`
 reports the queue; poll the latter until `isRunning` is false. Running writes real data objects,
@@ -105,7 +105,6 @@ processingConfig:
 mappingConfig:            # one entry per target field
   - label: Article Number
     dataSourceIndex: ['articleNumber']
-    transformationResultType: default
     dataTarget:
       type: direct
       settings:
@@ -131,8 +130,11 @@ not `settings: '{"assetPath":"..."}'`. A JSON string is rejected.
 **Class ids are strings.** A numeric one such as `6` is accepted either way, but quoting it
 (`dataObjectClassId: '6'`) matches how it is stored and read back.
 
-**Enrich before validating.** Without `transformationResultType`, every field is checked as type
-`default`, so numeric, date and relation targets report spurious incompatibilities.
+**Never write `transformationResultType` yourself.** It is computed from the pipeline, by
+validation and by the importer alike, and `save_import_config` writes it into the stored
+configuration for you. Nothing checks a value you supply, so guessing at it only puts a wrong
+one in front of the Studio editor. `enrich_import_config` reports the computed types when you
+need to see them, for instance to work out why a target field is rejected.
 
 **A field must accept the result type your pipeline produces.** `get_import_config_context` with
 `field_type_matrix` lists, per result type, the fields that accept it. If validation says a field
@@ -140,7 +142,7 @@ cannot store a type, either change the target field or add an operator that conv
 
 **Chain operators by type.** Each operator in `transformationPipeline` declares
 `acceptedInputTypes` and `outputTypes` (the `operators` section). The output of one must be
-accepted by the next, and the last output is the item's `transformationResultType`.
+accepted by the next, and the last output is the result type the item produces.
 
 **Loading by attribute needs a loadable field.** The attribute must be a top level field of the
 class that Pimcore can filter on, or one of the system columns `id`, `key`, `path`. Object brick
