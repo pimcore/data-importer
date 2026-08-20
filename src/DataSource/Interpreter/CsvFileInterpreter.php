@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Version;
@@ -63,9 +64,36 @@ final class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwar
     {
         $this->skipFirstRow = $settings['skipFirstRow'] ?? false;
         $this->saveHeaderName = $settings['saveHeaderName'] ?? false;
-        $this->delimiter = $settings['delimiter'] ?? ',';
-        $this->enclosure = $settings['enclosure'] ?? '"';
-        $this->escape = $settings['escape'] ?? '\\';
+        $this->delimiter = $this->assertSingleCharacter('delimiter', $settings['delimiter'] ?? ',', false);
+        $this->enclosure = $this->assertSingleCharacter('enclosure', $settings['enclosure'] ?? '"', false);
+        $this->escape = $this->assertSingleCharacter('escape', $settings['escape'] ?? '\\', true);
+    }
+
+    /**
+     * fgetcsv() throws a ValueError for anything longer than a single character, which surfaces
+     * as an unexplained 500 on preview and as a failing import at runtime. Configurations that
+     * are written programmatically rather than through the UI run into this easily: a JSON
+     * encoded backslash escape is one character, a double encoded one is two.
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function assertSingleCharacter(string $setting, mixed $value, bool $allowEmpty): string
+    {
+        if (is_scalar($value)) {
+            $stringValue = (string) $value;
+            $length = strlen($stringValue);
+
+            if ($length === 1 || ($allowEmpty && $length === 0)) {
+                return $stringValue;
+            }
+        }
+
+        throw new InvalidConfigurationException(sprintf(
+            'The CSV `%s` must be %s, %s given.',
+            $setting,
+            $allowEmpty ? 'empty or exactly one character' : 'exactly one character',
+            var_export($value, true)
+        ));
     }
 
     public function getSchemaDescription(): string
@@ -92,15 +120,27 @@ final class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwar
                 ->end()
                 ->scalarNode('delimiter')
                     ->defaultValue(',')
-                    ->info('Field delimiter character')
+                    ->info('Field delimiter, exactly one character')
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => strlen((string) $value) !== 1)
+                        ->thenInvalid('Invalid CSV delimiter %s, it must be exactly one character.')
+                    ->end()
                 ->end()
                 ->scalarNode('enclosure')
                     ->defaultValue('"')
-                    ->info('Field enclosure character')
+                    ->info('Field enclosure, exactly one character')
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => strlen((string) $value) !== 1)
+                        ->thenInvalid('Invalid CSV enclosure %s, it must be exactly one character.')
+                    ->end()
                 ->end()
                 ->scalarNode('escape')
                     ->defaultValue('\\')
-                    ->info('Escape character')
+                    ->info('Escape character, empty or exactly one character')
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => strlen((string) $value) > 1)
+                        ->thenInvalid('Invalid CSV escape %s, it must be empty or exactly one character.')
+                    ->end()
                 ->end()
             ->end();
 

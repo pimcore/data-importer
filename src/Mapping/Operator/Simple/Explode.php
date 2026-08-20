@@ -120,8 +120,14 @@ final class Explode extends AbstractOperator implements SchemaAwareInterface, Tr
         $rootNode
             ->children()
                 ->scalarNode('delimiter')
-                    ->info('The delimiter string used to split the input')
+                    ->info('The delimiter string used to split the input, must not be empty')
                     ->defaultValue(' ')
+                    // explode() throws a ValueError on an empty separator, so an empty
+                    // delimiter fails the import rather than leaving the value unsplit.
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => (string) $value === '')
+                        ->thenInvalid('The explode delimiter must not be empty.')
+                    ->end()
                 ->end()
                 ->booleanNode('keepSubArrays')
                     // Configurations written by the previous UI store checkboxes as the
