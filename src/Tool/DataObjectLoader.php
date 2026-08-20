@@ -20,6 +20,7 @@ use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 use Pimcore\Model\Element\ElementInterface;
 use function sort;
@@ -157,7 +158,8 @@ final class DataObjectLoader implements LoadableAttributesInterface
             ));
         }
 
-        if (!$classDefinition->getFieldDefinition($parts[self::CLASS_FIELD_NAME]) instanceof Data) {
+        $classField = $classDefinition->getFieldDefinition($parts[self::CLASS_FIELD_NAME]);
+        if (!$classField instanceof Data) {
             throw new InvalidConfigurationException(sprintf(
                 'Field `%s` does not exist in class `%s`.',
                 $parts[self::CLASS_FIELD_NAME],
@@ -165,11 +167,35 @@ final class DataObjectLoader implements LoadableAttributesInterface
             ));
         }
 
-        if (!$brick->getFieldDefinition($parts[self::BRICK_ATTRIBUTE_NAME]) instanceof Data) {
+        // Existing is not enough: the first part has to be the brick container the brick is
+        // stored in. Any other field type produces a listing condition against a table that
+        // does not hold the brick, which fails only once the import runs.
+        if (!$classField instanceof Objectbricks) {
+            throw new InvalidConfigurationException(sprintf(
+                'Field `%s` in class `%s` is not an object brick container but `%s`.',
+                $parts[self::CLASS_FIELD_NAME],
+                $classDefinition->getName(),
+                $classField->getFieldType()
+            ));
+        }
+
+        $brickField = $brick->getFieldDefinition($parts[self::BRICK_ATTRIBUTE_NAME]);
+        if (!$brickField instanceof Data) {
             throw new InvalidConfigurationException(sprintf(
                 'Object brick `%s` has no field `%s`.',
                 $parts[self::BRICK_NAME],
                 $parts[self::BRICK_ATTRIBUTE_NAME]
+            ));
+        }
+
+        // Same rule as the non-brick path: loading filters on the column, so a field type that
+        // cannot be filtered cannot be loaded by.
+        if (!$brickField->isFilterable()) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick attribute `%s` cannot be used to load an object: '
+                . 'field type `%s` is not filterable.',
+                $attributeName,
+                $brickField->getFieldType()
             ));
         }
     }
