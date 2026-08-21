@@ -125,7 +125,13 @@ final class GetConfigurationContextToolTest extends Unit
         $payload = $this->assertToolSuccess($this->buildTool(allowed: true)->execute(['loaders']));
 
         $this->assertSame(['loaders'], array_keys($payload));
-        $this->assertSame(['push' => ['label' => 'Push'], 'asset' => ['label' => 'Asset']], $payload['loaders']);
+        $this->assertSame(
+            [
+                'push' => ['description' => 'Pushed to the endpoint', 'settings' => []],
+                'asset' => ['description' => 'Read from an asset', 'settings' => []],
+            ],
+            $payload['loaders'],
+        );
     }
 
     public function testInterpreterTypesFallBackToTheNestedTypeProperty(): void
@@ -133,7 +139,7 @@ final class GetConfigurationContextToolTest extends Unit
         // The two schema builders nest availableTypes differently; the tool has to read both.
         $payload = $this->assertToolSuccess($this->buildTool(allowed: true)->execute(['interpreters']));
 
-        $this->assertSame(['csv' => ['label' => 'CSV']], $payload['interpreters']);
+        $this->assertSame(['csv' => ['description' => 'Parsed as CSV', 'settings' => []]], $payload['interpreters']);
     }
 
     public function testATypeCatalogueThatIsNotAnArrayCollapsesToAnEmptyList(): void
@@ -372,10 +378,19 @@ final class GetConfigurationContextToolTest extends Unit
         return $this->makeEmpty(ConfigurationSchemaService::class, $overrides + [
             'getAvailableClasses' => ['6' => 'Car'],
             'getLoaderConfigSchema' => [
-                'availableTypes' => ['push' => ['label' => 'Push'], 'asset' => ['label' => 'Asset']],
+                'availableTypes' => [
+                    'push' => ['type' => 'push', 'description' => 'Pushed to the endpoint', 'settings' => []],
+                    'asset' => ['type' => 'asset', 'description' => 'Read from an asset', 'settings' => []],
+                ],
             ],
             'getInterpreterConfigSchema' => [
-                'properties' => ['type' => ['availableTypes' => ['csv' => ['label' => 'CSV']]]],
+                'properties' => [
+                    'type' => [
+                        'availableTypes' => [
+                            'csv' => ['type' => 'csv', 'description' => 'Parsed as CSV', 'settings' => []],
+                        ],
+                    ],
+                ],
             ],
             'getResolverConfigSchema' => [
                 'properties' => [
