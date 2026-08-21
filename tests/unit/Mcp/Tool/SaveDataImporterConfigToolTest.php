@@ -386,7 +386,7 @@ final class SaveDataImporterConfigToolTest extends Unit
         // A missing configuration name arrives here as a plain exception from the Data Hub service.
         $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
             'updateConfiguration' => static function (): never {
-                throw new StubFailureException('config storage unreachable at 10.0.0.5:3306');
+                throw new StubFailureException('config storage unreachable at db.internal:3306');
             },
         ]);
 
@@ -399,7 +399,7 @@ final class SaveDataImporterConfigToolTest extends Unit
         $this->assertGenericInternalError(
             $tool->execute(self::CONFIG_NAME, self::JSON_BODY),
             'save_import_config',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

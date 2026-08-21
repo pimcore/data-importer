@@ -186,11 +186,11 @@ final class RunImportConfigToolTest extends Unit
         $tool = $this->buildTool(
             allowed: true,
             importService: $this->importServiceThrowing(
-                new StubFailureException('sftp connect failed for user root@10.0.0.9')
+                new StubFailureException('sftp connect failed for user root@sftp.internal')
             ),
         );
 
-        $this->assertGenericInternalError($tool->execute(self::CONFIG_NAME), 'run_import_config', '10.0.0.9');
+        $this->assertGenericInternalError($tool->execute(self::CONFIG_NAME), 'run_import_config', 'sftp.internal');
     }
 
     /**

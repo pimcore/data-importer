@@ -95,7 +95,7 @@ final class GetClassFieldsForLoadingToolTest extends Unit
             LoadableAttributesInterface::class,
             [
                 'listLoadableAttributes' => static function (): never {
-                    throw new StubFailureException('class definition storage unreachable at 10.0.0.5:3306');
+                    throw new StubFailureException('class definition storage unreachable at db.internal:3306');
                 },
             ]
         ));
@@ -103,7 +103,7 @@ final class GetClassFieldsForLoadingToolTest extends Unit
         $this->assertGenericInternalError(
             $tool->execute(self::CLASS_ID),
             'get_class_fields_for_loading',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

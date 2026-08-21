@@ -353,14 +353,14 @@ final class GetConfigurationContextToolTest extends Unit
     {
         $schemaService = $this->schemaService([
             'getAvailableClasses' => static function (): never {
-                throw new StubFailureException('class definition storage unreachable at 10.0.0.5:3306');
+                throw new StubFailureException('class definition storage unreachable at db.internal:3306');
             },
         ]);
 
         $this->assertGenericInternalError(
             $this->buildTool(allowed: true, schemaService: $schemaService)->execute(),
             'get_import_config_context',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

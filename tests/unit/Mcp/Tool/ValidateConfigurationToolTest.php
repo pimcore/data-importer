@@ -179,7 +179,7 @@ final class ValidateConfigurationToolTest extends Unit
     {
         $validationService = $this->makeEmpty(ConfigurationValidationService::class, [
             'validateConfiguration' => static function (): never {
-                throw new StubFailureException('class definition storage unreachable at 10.0.0.5:3306');
+                throw new StubFailureException('class definition storage unreachable at db.internal:3306');
             },
         ]);
 
@@ -188,7 +188,7 @@ final class ValidateConfigurationToolTest extends Unit
         $this->assertGenericInternalError(
             $tool->execute(self::JSON_BODY),
             'validate_import_config',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

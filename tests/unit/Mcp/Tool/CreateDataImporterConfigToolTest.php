@@ -144,7 +144,7 @@ final class CreateDataImporterConfigToolTest extends Unit
         // A duplicate name arrives here as a plain exception from the Data Hub service.
         $configurationService = $this->makeEmpty(ConfigurationServiceInterface::class, [
             'addConfiguration' => static function (): never {
-                throw new StubFailureException('config storage unreachable at 10.0.0.5:3306');
+                throw new StubFailureException('config storage unreachable at db.internal:3306');
             },
         ]);
 
@@ -153,7 +153,7 @@ final class CreateDataImporterConfigToolTest extends Unit
         $this->assertGenericInternalError(
             $tool->execute(self::CONFIG_NAME),
             'create_import_config',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

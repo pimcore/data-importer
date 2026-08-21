@@ -139,7 +139,7 @@ final class GetImportConfigToolTest extends Unit
             allowed: true,
             configurations: $this->makeEmpty(ImportConfigurationRepositoryInterface::class, [
                 'findReadableByName' => static function (): never {
-                    throw new StubFailureException('config storage unreachable at 10.0.0.5:3306');
+                    throw new StubFailureException('config storage unreachable at db.internal:3306');
                 },
             ]),
         );
@@ -147,7 +147,7 @@ final class GetImportConfigToolTest extends Unit
         $this->assertGenericInternalError(
             $tool->execute(self::CONFIG_NAME),
             'get_import_config',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

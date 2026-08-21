@@ -25,9 +25,4 @@ final class SqlFileInterpreter extends JsonFileInterpreter implements SchemaAwar
     {
         return 'Interpret SQL query results (inherits JSON interpreter settings)';
     }
-
-    public function getConfigTreeBuilder(): \Symfony\Component\Config\Definition\Builder\TreeBuilder
-    {
-        return parent::getConfigTreeBuilder();
-    }
 }

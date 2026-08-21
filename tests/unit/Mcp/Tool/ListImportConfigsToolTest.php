@@ -148,12 +148,12 @@ final class ListImportConfigsToolTest extends Unit
             allowed: true,
             configurations: $this->makeEmpty(ImportConfigurationRepositoryInterface::class, [
                 'findReadable' => static function (): never {
-                    throw new StubFailureException('config storage unreachable at 10.0.0.5:3306');
+                    throw new StubFailureException('config storage unreachable at db.internal:3306');
                 },
             ]),
         );
 
-        $this->assertGenericInternalError($tool->execute(), 'list_import_configs', '10.0.0.5');
+        $this->assertGenericInternalError($tool->execute(), 'list_import_configs', 'db.internal');
     }
 
     /**

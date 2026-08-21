@@ -327,7 +327,7 @@ final class EnrichConfigurationToolTest extends Unit
     public function testGenericFailureIsGenericisedAndNeverLeaksTheRawMessage(): void
     {
         $operators = ['trim' => $this->operator(static function (): never {
-            throw new StubFailureException('operator registry unreachable at 10.0.0.5:3306');
+            throw new StubFailureException('operator registry unreachable at db.internal:3306');
         })];
 
         $tool = $this->buildTool(allowed: true, operators: $operators);
@@ -335,7 +335,7 @@ final class EnrichConfigurationToolTest extends Unit
         $this->assertGenericInternalError(
             $tool->execute($this->configurationWithTrim(['name' => 'csv-car-import'])),
             'enrich_import_config',
-            '10.0.0.5'
+            'db.internal'
         );
     }
 

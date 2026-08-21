@@ -153,12 +153,12 @@ final class GetImportStatusToolTest extends Unit
             allowed: true,
             importService: $this->makeEmpty(ImportServiceInterface::class, [
                 'checkImportProgress' => static function (): never {
-                    throw new StubFailureException('tmp store unreachable at 10.0.0.7:6379');
+                    throw new StubFailureException('tmp store unreachable at redis.internal:6379');
                 },
             ]),
         );
 
-        $this->assertGenericInternalError($tool->execute(self::CONFIG_NAME), 'get_import_status', '10.0.0.7');
+        $this->assertGenericInternalError($tool->execute(self::CONFIG_NAME), 'get_import_status', 'redis.internal');
     }
 
     private function unreachableImportService(): ImportServiceInterface

@@ -327,7 +327,8 @@ final readonly class GetConfigurationContextTool
         }
 
         $createTypes = $schema['properties']['createLocationStrategy']['availableTypes'] ?? null;
-        if ($createTypes !== null && $createTypes === ($schema['properties']['locationUpdateStrategy']['availableTypes'] ?? null)) {
+        $updateTypes = $schema['properties']['locationUpdateStrategy']['availableTypes'] ?? null;
+        if ($createTypes !== null && $createTypes === $updateTypes) {
             $schema['properties']['locationUpdateStrategy']['availableTypes'] = self::SEE_CREATE_LOCATION;
         }
 
