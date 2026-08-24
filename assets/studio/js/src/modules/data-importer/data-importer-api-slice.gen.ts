@@ -616,7 +616,7 @@ export type BundleDataImporterUnitDataResponse = {
         [key: string]: string | number | boolean | object;
     };
     /** List of quantity value units */
-    UnitList: {
+    unitList: {
         /** The unit ID */
         unitId?: string;
         /** The unit abbreviation */
