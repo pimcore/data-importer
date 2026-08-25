@@ -447,6 +447,7 @@ export type BundleDataImporterTransformationResultTypeResponse = {
 export type BundleDataImporterCalculateTransformationResultTypeParameters = {
     /** A single mapping configuration entry to evaluate the transformation result type for */
     currentConfig: {
+        /** Mapping label */
         label?: string;
         /** Data source column indices */
         dataSourceIndex?: any;
@@ -499,7 +500,9 @@ export type BundleDataImporterConfigurationDetail = {
     };
     /** User permissions */
     userPermissions: {
+        /** Whether the user can update this configuration */
         update?: boolean;
+        /** Whether the user can delete this configuration */
         delete?: boolean;
     };
     /** Modification date timestamp */
@@ -560,7 +563,7 @@ export type BundleDataImporterDataPreviewResponse = {
         /** Column label */
         label?: string;
         /** Cell data value */
-        data?: any;
+        data?: string;
         /** Whether this column is mapped */
         mapped?: boolean;
     }[];
