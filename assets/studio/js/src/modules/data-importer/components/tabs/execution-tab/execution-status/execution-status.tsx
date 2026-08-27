@@ -13,6 +13,7 @@ import {
   Button,
   Progress,
   Text,
+  Tooltip,
   useMessage
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
@@ -164,13 +165,18 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
               </div>
               { /* Cancelling a run is an execution action, so `disabled` is passed
                    explicitly instead of inheriting the read-only form state. */ }
-              <Button
-                disabled={ !canRunImport }
-                loading={ isCancelling }
-                onClick={ () => { void handleCancelExecution() } }
-              >
-                { t('data-importer.execution.status.cancel') }
-              </Button>
+              <Tooltip title={ canRunImport ? undefined : t('data-hub.config.no-update-permission') }>
+                { /* span needed so Tooltip works on a disabled button */ }
+                <span>
+                  <Button
+                    disabled={ !canRunImport }
+                    loading={ isCancelling }
+                    onClick={ () => { void handleCancelExecution() } }
+                  >
+                    { t('data-importer.execution.status.cancel') }
+                  </Button>
+                </span>
+              </Tooltip>
             </>
             )
           : (
