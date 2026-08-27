@@ -16,6 +16,8 @@ import { ApiError, isBundleActive } from '@pimcore/studio-ui-bundle/modules/app'
 import { isNil } from 'lodash'
 import { type DataImporterFormValues } from '../types'
 import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
+import { resolveConfigCapabilities, type ConfigGeneralSettings, type ConfigUserPermissions } from '../utils/config-capabilities'
+import { ConfigCapabilitiesProvider } from './config-capabilities-context'
 import { DataSetupTab } from './tabs/data-setup-tab'
 import { ExecutionTab } from './tabs/execution-tab'
 import { ImportLogsTab } from './tabs/import-logs-tab'
@@ -43,11 +45,14 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     () => (configData?.configuration ?? {}) as BackendConfiguration,
     [configData?.configuration]
   )
-  const userPermissions = (configData?.userPermissions ?? {}) as { update?: boolean, delete?: boolean }
-  const generalConfig = (backendConfig?.general ?? {}) as { writeable?: boolean }
-  const isWriteable = userPermissions.update === true && generalConfig.writeable !== false
-  const canDelete = userPermissions.delete === true && generalConfig.writeable !== false
-  const saveDisabledTooltipKey = generalConfig.writeable !== false && userPermissions.update !== true ? 'data-hub.config.no-update-permission' : 'config_not_writeable'
+  const capabilities = useMemo(
+    () => resolveConfigCapabilities(
+      configData?.userPermissions as ConfigUserPermissions | undefined,
+      backendConfig?.general as ConfigGeneralSettings | undefined
+    ),
+    [configData?.userPermissions, backendConfig?.general]
+  )
+  const { canSaveConfig, canDeleteConfig, saveDisabledTooltipKey } = capabilities
 
   const handleSaveToApi = async (updatedConfig: BackendConfiguration, modificationDate: number): Promise<{ modificationDate?: number }> => {
     const response = await updateConfig({
@@ -72,7 +77,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     modificationDate: configData?.modificationDate,
     isLoading: loading,
     requestId,
-    isWriteable,
+    isWriteable: canSaveConfig,
     transformToForm: transformBackendToForm,
     transformToBackend: transformFormToBackend,
     onSave: handleSaveToApi,
@@ -114,18 +119,18 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     {
       key: 'permissions',
       label: t('data-importer.tabs.permissions'),
-      children: <PermissionsTab isWriteable={ isWriteable } />
+      children: <PermissionsTab isWriteable={ canSaveConfig } />
     }
   ]
 
   const toolbar = (
     <ConfigToolbar
-      canDelete={ canDelete }
+      canDelete={ canDeleteConfig }
       configName={ configName }
       isDirty={ isDirty }
       isLoading={ loading }
       isSaving={ isSaving }
-      isWriteable={ isWriteable }
+      isWriteable={ canSaveConfig }
       onDelete={ onDelete }
       onRefresh={ refetch }
       onSave={ handleSave }
@@ -134,15 +139,17 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
   )
 
   return (
-    <BaseDetailView
-      disabled={ !isWriteable }
-      form={ form }
-      initialValues={ initialValues }
-      isLoading={ loading }
-      onValuesChange={ handleValuesChange }
-      requestId={ requestId ?? '' }
-      tabs={ tabs }
-      toolbar={ toolbar }
-    />
+    <ConfigCapabilitiesProvider capabilities={ capabilities }>
+      <BaseDetailView
+        disabled={ !canSaveConfig }
+        form={ form }
+        initialValues={ initialValues }
+        isLoading={ loading }
+        onValuesChange={ handleValuesChange }
+        requestId={ requestId ?? '' }
+        tabs={ tabs }
+        toolbar={ toolbar }
+      />
+    </ConfigCapabilitiesProvider>
   )
 }
