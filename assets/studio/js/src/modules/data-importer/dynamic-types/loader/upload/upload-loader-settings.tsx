@@ -9,10 +9,11 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { Alert, Button, Form, Input, Space, ImportModal, Spin } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Form, Input, Space, ImportModal, Spin, Tooltip } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { getPrefix } from '@pimcore/studio-ui-bundle/api'
 import { useBundleDataImporterConfigHasImportFileUploadedQuery } from '../../../data-importer-api-slice-enhanced'
+import { useConfigCapabilities } from '../../../components/config-capabilities-context'
 
 export interface UploadLoaderSettingsProps {
   configName: string
@@ -27,6 +28,7 @@ function resolveStatusType (isError: boolean, hasUploadedFile: boolean): 'succes
 export const UploadLoaderSettings = ({ configName }: UploadLoaderSettingsProps): React.JSX.Element => {
   const { t } = useTranslation()
   const form = Form.useFormInstance()
+  const { canRunImport } = useConfigCapabilities()
   const [modalOpen, setModalOpen] = useState(false)
   const {
     data: fileStatus,
@@ -82,12 +84,21 @@ export const UploadLoaderSettings = ({ configName }: UploadLoaderSettingsProps):
         <Input />
       </Form.Item>
 
-      <Button
-        onClick={ () => { setModalOpen(true) } }
-        type="primary"
-      >
-        { t('data-importer.loader.upload.open-upload') }
-      </Button>
+      { /* The surrounding form is read-only for a configuration that cannot be
+           persisted, but uploading an import file is an execution action and only
+           requires the update permission. `disabled` is therefore always passed
+           explicitly so the button does not inherit the form's disabled state. */ }
+      <Tooltip title={ canRunImport ? undefined : t('data-hub.config.no-update-permission') }>
+        <span>
+          <Button
+            disabled={ !canRunImport }
+            onClick={ () => { setModalOpen(true) } }
+            type="primary"
+          >
+            { t('data-importer.loader.upload.open-upload') }
+          </Button>
+        </span>
+      </Tooltip>
 
       <ImportModal
         action={ uploadAction }
