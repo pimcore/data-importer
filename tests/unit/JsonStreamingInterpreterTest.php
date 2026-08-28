@@ -125,6 +125,12 @@ class JsonStreamingInterpreterTest extends Unit
         }
     }
 
+    public function testStreamingThrowsWhenFileCannotBeOpened(): void
+    {
+        $this->expectException(JsonMachineException::class);
+        $this->streamAll($this->createInterpreter(), sys_get_temp_dir() . '/di_json_does_not_exist.json');
+    }
+
     public function testStreamingThrowsOnInvalidJson(): void
     {
         $path = $this->writeJson('[{"sku":"A"},{"sku":');

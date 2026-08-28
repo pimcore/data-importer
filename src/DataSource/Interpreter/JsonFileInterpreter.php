@@ -208,9 +208,11 @@ class JsonFileInterpreter extends AbstractInterpreter
      */
     protected function streamItems(string $path): \Generator
     {
-        $handle = fopen($path, 'rb');
+        $handle = @fopen($path, 'rb');
         if ($handle === false) {
-            return;
+            // fail loud: silently yielding nothing would let the import report success
+            // without creating any queue items
+            throw new JsonMachineException(sprintf('Could not open JSON file `%s` for reading.', $path));
         }
 
         try {
