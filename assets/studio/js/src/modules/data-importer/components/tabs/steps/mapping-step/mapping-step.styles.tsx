@@ -228,6 +228,18 @@ export const useStyles = createStyles(({ css, token }) => {
       }
     `,
 
+    // Expanded mapping — the open section is highlighted so it reads as the one being
+    // edited among the collapsed ones. Needs !important: the SDK draws the panel border
+    // from `.ant-collapse.collapse-item--theme-default.collapse-item--bordered`, which
+    // outranks this selector, and it is a `border` shorthand. The DnD rules above are
+    // !important for the same reason and are one class more specific, so a drag still
+    // takes over the border while it is in progress.
+    panelExpanded: css`
+      & .ant-collapse {
+        border-color: ${token.colorPrimaryBorder} !important;
+      }
+    `,
+
     // Source drop zone — structural only, no DnD visuals (panel wrapper handles those).
     sourceDropZone: css`
       border-radius: ${token.borderRadius}px;
@@ -402,8 +414,8 @@ export const useStyles = createStyles(({ css, token }) => {
       line-height: 1;
     `,
 
-    // Gear icon shown above the arrow when advanced config is set
-    arrowGearIcon: css`
+    // Transformation icon shown above the arrow when an advanced setup exists
+    arrowAdvancedIcon: css`
       display: flex;
       align-items: center;
       justify-content: center;
@@ -420,20 +432,30 @@ export const useStyles = createStyles(({ css, token }) => {
       flex-shrink: 0;
     `,
 
-    // Advanced destination: plain text lines (not a Select)
+    // Advanced destination: plain text lines (not a Select). Matches token.fontSize so it
+    // lines up with the Select it replaces — fontSizeSM rendered it 10px against the 12px
+    // used by every control around it.
     destinationTextBlock: css`
       display: flex;
       flex-direction: column;
+      justify-content: center;
+      /* Occupies the same box as the Select it replaces, so the text lands on the same
+         vertical center as the source Select and the arrow between them. */
+      min-height: ${token.controlHeight}px;
       padding: 0 ${token.paddingXXS}px;
-      font-size: ${token.fontSizeSM}px;
+      font-size: ${token.fontSize}px;
       line-height: 22px;
       color: ${token.colorText};
     `,
 
-    // In-progress hint: "Requires advanced setup" text — entire string in warning text color
+    // In-progress hint: "Requires advanced setup" text — entire string in warning text color.
+    // Occupies the same destination slot, so it follows the same size.
     requiresAdvancedHint: css`
+      display: flex;
+      align-items: center;
+      min-height: ${token.controlHeight}px;
       padding: 0 ${token.paddingXXS}px;
-      font-size: ${token.fontSizeSM}px;
+      font-size: ${token.fontSize}px;
       line-height: 22px;
       color: ${token.colorWarningText};
     `,
