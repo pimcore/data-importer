@@ -18,6 +18,7 @@
     "ext-json": "*",
     "doctrine/dbal": "^4.4",
     "dragonmantank/cron-expression": "^3.1",
+    "halaxa/json-machine": "^1.2",
     "league/flysystem-sftp-v3": "^3.0",
     "mtdowling/jmespath.php": "^2.8",
     "nesbot/carbon": "^2.72 || ^3.8.4",

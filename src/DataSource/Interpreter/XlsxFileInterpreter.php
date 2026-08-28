@@ -26,26 +26,46 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
  */
 final class XlsxFileInterpreter extends AbstractInterpreter
 {
+    private const IMPORT_CHUNK_SIZE = 1000;
+
     private bool $skipFirstRow;
 
     private string $sheetName;
 
+    /**
+     * Reads the workbook in bounded chunks instead of one toArray() call -
+     * large files would otherwise exhaust the memory limit.
+     */
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        $reader = IOFactory::createReaderForFile($path);
-        $reader->setReadDataOnly(true);
-        $spreadSheet = $reader->load($path);
+        $worksheetInfo = $this->getWorksheetInfo($path);
 
-        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
-
-        $data = $spreadSheet->getActiveSheet()->toArray();
-
-        if ($this->skipFirstRow) {
-            array_shift($data);
+        if ($worksheetInfo === null) {
+            throw new InvalidConfigurationException(sprintf('Sheet "%s" not found in file.', $this->sheetName));
         }
 
-        foreach ($data as $rowData) {
-            $this->processImportRow($rowData);
+        $totalRows = $worksheetInfo['totalRows'];
+        $lastColumnLetter = $worksheetInfo['lastColumnLetter'];
+        $startRow = $this->skipFirstRow ? 2 : 1;
+
+        for ($chunkStart = $startRow; $chunkStart <= $totalRows; $chunkStart += self::IMPORT_CHUNK_SIZE) {
+            $chunkEnd = min($chunkStart + self::IMPORT_CHUNK_SIZE - 1, $totalRows);
+
+            $reader = IOFactory::createReaderForFile($path);
+            $reader->setReadDataOnly(true);
+            $reader->setLoadSheetsOnly($this->sheetName);
+            $reader->setReadFilter(new ChunkedRowsReadFilter($chunkStart, $chunkEnd));
+            $spreadSheet = $reader->load($path);
+
+            $spreadSheet->setActiveSheetIndexByName($this->sheetName);
+            $sheet = $spreadSheet->getActiveSheet();
+
+            for ($rowNumber = $chunkStart; $rowNumber <= $chunkEnd; $rowNumber++) {
+                $this->processImportRow($this->readRow($sheet, $rowNumber, $lastColumnLetter));
+            }
+
+            $spreadSheet->disconnectWorksheets();
+            unset($spreadSheet);
         }
     }
 

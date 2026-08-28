@@ -12,8 +12,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use League\Flysystem\FilesystemException;
+use League\Flysystem\UnableToWriteFile;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
@@ -22,6 +23,7 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
+use Pimcore\Tool\Storage;
 use Psr\Log\LoggerAwareTrait;
 
 /**
@@ -147,10 +149,16 @@ abstract class AbstractInterpreter implements InterpreterInterface
         }
 
         if ($this->doArchiveImportFile) {
-            $this->applicationLogger->info($archiveLogMessage, [
+            $context = [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                'fileObject' => new FileObject(file_get_contents($path))
-            ]);
+            ];
+
+            $archivedFilePath = $this->archiveImportFile($path);
+            if ($archivedFilePath !== null) {
+                $context['fileObject'] = $archivedFilePath;
+            }
+
+            $this->applicationLogger->info($archiveLogMessage, $context);
         }
 
         $this->updateExecutionPackageInformation();
@@ -159,6 +167,38 @@ abstract class AbstractInterpreter implements InterpreterInterface
     }
 
     abstract protected function doInterpretFileAndCallProcessRow(string $path): void;
+
+    /**
+     * Streams the import file into the application-log storage instead of loading it into
+     * memory via FileObject (large source files would otherwise exhaust the memory limit).
+     * Returns the storage path in the same format FileObject produces, so the log viewer
+     * can resolve it, or null when archiving failed.
+     */
+    private function archiveImportFile(string $path): ?string
+    {
+        $storagePath = date('/Y/m/d/') . uniqid('fileobject_', true);
+
+        $stream = fopen($path, 'rb');
+        if ($stream === false) {
+            $this->logger->warning(sprintf('Could not open import file `%s` for archiving.', $path));
+
+            return null;
+        }
+
+        try {
+            Storage::get('application_log')->writeStream($storagePath, $stream);
+        } catch (FilesystemException | UnableToWriteFile $exception) {
+            $this->logger->warning(sprintf('Could not archive import file to `%s`: %s', $storagePath, $exception->getMessage()));
+
+            return null;
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+
+        return $storagePath;
+    }
 
     protected function processImportRow(array $data)
     {

@@ -15,6 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use JmesPath\Env as JmesPath;
 use JmesPath\Parser as Parser;
 use JmesPath\SyntaxErrorException;
+use JsonMachine\Exception\JsonMachineException;
+use JsonMachine\Items;
+use JsonMachine\JsonDecoder\ExtJsonDecoder;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
@@ -24,6 +27,8 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
  */
 class JsonFileInterpreter extends AbstractInterpreter
 {
+    private const UTF8_BOM = "\xEF\xBB\xBF";
+
     protected string $path;
 
     protected ?array $cachedContent = null;
@@ -54,6 +59,14 @@ class JsonFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
+        if ($this->getStreamingJsonPointer() !== null) {
+            foreach ($this->streamItems($path) as $dataRow) {
+                $this->processImportRow($dataRow);
+            }
+
+            return;
+        }
+
         $data = $this->loadData($path);
 
         foreach ($data as $dataRow) {
@@ -84,9 +97,8 @@ class JsonFileInterpreter extends AbstractInterpreter
      */
     protected function prepareContent($content)
     {
-        $UTF8_BOM = chr(0xEF) . chr(0xBB) . chr(0xBF);
         $first3 = substr($content, 0, 3);
-        if ($first3 === $UTF8_BOM) {
+        if ($first3 === self::UTF8_BOM) {
             $content = substr($content, 3);
         }
 
@@ -104,6 +116,10 @@ class JsonFileInterpreter extends AbstractInterpreter
             if ($ext !== 'json') {
                 return false;
             }
+        }
+
+        if ($this->getStreamingJsonPointer() !== null) {
+            return $this->validateStreamed($path);
         }
 
         $data = $this->loadDataRaw($path);
@@ -129,18 +145,22 @@ class JsonFileInterpreter extends AbstractInterpreter
         $readRecordNumber = 0;
 
         if ($this->fileValid($path)) {
-            $data = $this->loadData($path);
-
-            $previewDataRow = $data[$recordNumber] ?? null;
-
-            if (empty($previewDataRow)) {
-                $previewDataRow = end($data);
-                $readRecordNumber = count($data) - 1;
+            if ($this->getStreamingJsonPointer() !== null) {
+                [$previewDataRow, $readRecordNumber] = $this->readStreamedRecord($path, $recordNumber);
             } else {
-                $readRecordNumber = $recordNumber;
+                $data = $this->loadData($path);
+
+                $previewDataRow = $data[$recordNumber] ?? null;
+
+                if (empty($previewDataRow)) {
+                    $previewDataRow = end($data);
+                    $readRecordNumber = count($data) - 1;
+                } else {
+                    $readRecordNumber = $recordNumber;
+                }
             }
 
-            foreach ($previewDataRow as $index => $columnData) {
+            foreach ($previewDataRow ?? [] as $index => $columnData) {
                 $previewData[$index] = $columnData;
             }
 
@@ -157,5 +177,104 @@ class JsonFileInterpreter extends AbstractInterpreter
     private function getValueFromPath(array $data): mixed
     {
         return JmesPath::search($this->path, $data);
+    }
+
+    /**
+     * Returns the JSON pointer equivalent of the configured JMESPath expression when the
+     * expression is simple enough to stream (empty, or a plain dotted field path). Complex
+     * JMESPath expressions (filters, projections, functions, ...) need the whole document
+     * in memory and return null here, falling back to the full-load code path.
+     */
+    protected function getStreamingJsonPointer(): ?string
+    {
+        if (empty($this->path)) {
+            return '';
+        }
+
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/', $this->path) === 1) {
+            return '/' . str_replace('.', '/', $this->path);
+        }
+
+        return null;
+    }
+
+    /**
+     * Streams the records below the configured path one by one so the whole file never
+     * has to be decoded into memory at once.
+     *
+     * @return \Generator<array>
+     */
+    protected function streamItems(string $path): \Generator
+    {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return;
+        }
+
+        try {
+            $this->skipByteOrderMark($handle);
+
+            $items = Items::fromStream($handle, [
+                'pointer' => $this->getStreamingJsonPointer(),
+                'decoder' => new ExtJsonDecoder(true),
+            ]);
+
+            foreach ($items as $item) {
+                yield $item;
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Validates the file by streaming through all records, keeping memory usage bounded.
+     */
+    private function validateStreamed(string $path): bool
+    {
+        try {
+            foreach ($this->streamItems($path) as $item) {
+                // iterate to let the streaming parser see the whole document
+            }
+
+            return true;
+        } catch (JsonMachineException $exception) {
+            $this->applicationLogger->error('Reading file ERROR: ' . $exception->getMessage(), [
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Streams up to the requested record and returns it together with the record number that
+     * was actually read (the last record when the requested one is out of range).
+     *
+     * @return array{0: ?array, 1: int}
+     */
+    private function readStreamedRecord(string $path, int $recordNumber): array
+    {
+        $currentRecordNumber = -1;
+        $currentRow = null;
+
+        foreach ($this->streamItems($path) as $row) {
+            $currentRow = $row;
+            $currentRecordNumber++;
+
+            if ($currentRecordNumber === $recordNumber && !empty($currentRow)) {
+                return [$currentRow, $currentRecordNumber];
+            }
+        }
+
+        return [$currentRow, max(0, $currentRecordNumber)];
+    }
+
+    private function skipByteOrderMark($handle): void
+    {
+        $bom = fread($handle, strlen(self::UTF8_BOM));
+        if (0 !== strncmp(self::UTF8_BOM, (string)$bom, strlen(self::UTF8_BOM))) {
+            rewind($handle);
+        }
     }
 }
