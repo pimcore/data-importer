@@ -27,6 +27,8 @@ class XmlStreamingInterpreterTest extends Unit
 {
     protected $tester;
 
+    private const PRODUCT_XPATH = '/catalog/product';
+
     private const SAMPLE_XML = '<?xml version="1.0" encoding="UTF-8"?>
 <catalog>
     <product><sku>A</sku><name>One</name></product>
@@ -34,9 +36,11 @@ class XmlStreamingInterpreterTest extends Unit
     <product><sku>C</sku><name>Three</name></product>
 </catalog>';
 
-    private function createInterpreter(string $xpath = '/catalog/product', ?string $schema = null): XmlFileInterpreter
+    private function createInterpreter(string $xpath = self::PRODUCT_XPATH, ?string $schema = null): XmlFileInterpreter
     {
-        $interpreter = (new \ReflectionClass(XmlFileInterpreter::class))->newInstanceWithoutConstructor();
+        // the constructor collaborators are final and cannot be doubled; none of the code
+        // paths exercised here touch them
+        $interpreter = (new \ReflectionClass(XmlFileInterpreter::class))->newInstanceWithoutConstructor(); // NOSONAR
         $interpreter->setLogger(new NullLogger());
         $interpreter->setConfigName('test_xml_streaming');
         $interpreter->setExecutionType(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
@@ -75,7 +79,10 @@ class XmlStreamingInterpreterTest extends Unit
 
     public function testSimpleAbsolutePathIsStreamable(): void
     {
-        $this->assertSame(['catalog', 'product'], $this->invokeStreamingElementPath($this->createInterpreter('/catalog/product')));
+        $this->assertSame(
+            ['catalog', 'product'],
+            $this->invokeStreamingElementPath($this->createInterpreter(self::PRODUCT_XPATH))
+        );
     }
 
     public function testComplexXpathExpressionsAreNotStreamed(): void
@@ -172,10 +179,10 @@ class XmlStreamingInterpreterTest extends Unit
         $invalidPath = $this->writeXml('<?xml version="1.0"?><catalog><unexpected/></catalog>');
 
         try {
-            $this->assertCount(3, $this->streamAll($this->createInterpreter('/catalog/product', $schema), $validPath));
+            $this->assertCount(3, $this->streamAll($this->createInterpreter(self::PRODUCT_XPATH, $schema), $validPath));
 
             $this->expectException(XmlParsingException::class);
-            $this->streamAll($this->createInterpreter('/catalog/product', $schema), $invalidPath);
+            $this->streamAll($this->createInterpreter(self::PRODUCT_XPATH, $schema), $invalidPath);
         } finally {
             @unlink($validPath);
             @unlink($invalidPath);

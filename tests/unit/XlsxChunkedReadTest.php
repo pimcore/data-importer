@@ -33,7 +33,9 @@ class XlsxChunkedReadTest extends Unit
 
     private function createInterpreter(bool $skipFirstRow = false): XlsxFileInterpreter
     {
-        $interpreter = (new \ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor();
+        // the constructor collaborators are final and cannot be doubled; none of the code
+        // paths exercised here touch them
+        $interpreter = (new \ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor(); // NOSONAR
         $interpreter->setLogger(new NullLogger());
         $interpreter->setConfigName('test_xlsx_chunked');
         $interpreter->setExecutionType(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
@@ -103,8 +105,9 @@ class XlsxChunkedReadTest extends Unit
                 $spreadSheet->setActiveSheetIndexByName('Sheet1');
                 $sheet = $spreadSheet->getActiveSheet();
 
+                $lastColumnLetter = $worksheetInfo['lastColumnLetter'];
                 for ($rowNumber = $chunkStart; $rowNumber <= $chunkEnd; $rowNumber++) {
-                    $collected[] = $readRow->invoke($interpreter, $sheet, $rowNumber, $worksheetInfo['lastColumnLetter']);
+                    $collected[] = $readRow->invoke($interpreter, $sheet, $rowNumber, $lastColumnLetter);
                 }
 
                 $spreadSheet->disconnectWorksheets();

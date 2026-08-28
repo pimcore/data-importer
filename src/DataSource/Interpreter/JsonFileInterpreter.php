@@ -191,7 +191,9 @@ class JsonFileInterpreter extends AbstractInterpreter
             return '';
         }
 
-        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/', $this->path) === 1) {
+        // any expression reaching this point already passed the JMESPath parser, so a
+        // loose word-character check is enough to recognize a plain dotted field path
+        if (preg_match('/^\w+(\.\w+)*$/', $this->path) === 1) {
             return '/' . str_replace('.', '/', $this->path);
         }
 
@@ -233,9 +235,8 @@ class JsonFileInterpreter extends AbstractInterpreter
     private function validateStreamed(string $path): bool
     {
         try {
-            foreach ($this->streamItems($path) as $item) {
-                // iterate to let the streaming parser see the whole document
-            }
+            // iterate to let the streaming parser see the whole document
+            iterator_count($this->streamItems($path));
 
             return true;
         } catch (JsonMachineException $exception) {

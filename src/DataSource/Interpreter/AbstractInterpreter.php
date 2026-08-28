@@ -188,7 +188,9 @@ abstract class AbstractInterpreter implements InterpreterInterface
         try {
             Storage::get('application_log')->writeStream($storagePath, $stream);
         } catch (FilesystemException | UnableToWriteFile $exception) {
-            $this->logger->warning(sprintf('Could not archive import file to `%s`: %s', $storagePath, $exception->getMessage()));
+            $this->logger->warning(
+                sprintf('Could not archive import file to `%s`: %s', $storagePath, $exception->getMessage())
+            );
 
             return null;
         } finally {

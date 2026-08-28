@@ -29,7 +29,9 @@ class JsonStreamingInterpreterTest extends Unit
 
     private function createInterpreter(string $jmesPath = ''): JsonFileInterpreter
     {
-        $interpreter = (new \ReflectionClass(JsonFileInterpreter::class))->newInstanceWithoutConstructor();
+        // the constructor collaborators are final and cannot be doubled; none of the code
+        // paths exercised here touch them
+        $interpreter = (new \ReflectionClass(JsonFileInterpreter::class))->newInstanceWithoutConstructor(); // NOSONAR
         $interpreter->setLogger(new NullLogger());
         $interpreter->setConfigName('test_json_streaming');
         $interpreter->setExecutionType(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
