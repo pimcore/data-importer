@@ -439,10 +439,12 @@ export const useStyles = createStyles(({ css, token }) => {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      /* Occupies the same box as the Select it replaces, so the text lands on the same
-         vertical center as the source Select and the arrow between them. */
-min-height: ${token.controlHeight}px;
+      /* Fills the destination column and centers within it, so the text stays on the same
+         vertical center as the source control and the arrow — including when a multi-source
+         Select wraps onto several lines and sourcesDestRow stretches both columns taller.
+         The min-height keeps the unwrapped case matching the Select it replaces. */
       flex: 1;
+      min-height: ${token.controlHeight}px;
       padding: 0 ${token.paddingXXS}px;
       font-size: ${token.fontSize}px;
       line-height: 22px;
@@ -454,6 +456,7 @@ min-height: ${token.controlHeight}px;
     requiresAdvancedHint: css`
       display: flex;
       align-items: center;
+      flex: 1;
       min-height: ${token.controlHeight}px;
       padding: 0 ${token.paddingXXS}px;
       font-size: ${token.fontSize}px;
