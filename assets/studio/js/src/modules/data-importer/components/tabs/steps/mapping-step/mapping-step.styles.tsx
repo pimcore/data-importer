@@ -441,7 +441,8 @@ export const useStyles = createStyles(({ css, token }) => {
       justify-content: center;
       /* Occupies the same box as the Select it replaces, so the text lands on the same
          vertical center as the source Select and the arrow between them. */
-      min-height: ${token.controlHeight}px;
+min-height: ${token.controlHeight}px;
+      flex: 1;
       padding: 0 ${token.paddingXXS}px;
       font-size: ${token.fontSize}px;
       line-height: 22px;
