@@ -10,7 +10,9 @@
     "lint-fix-watch": "nodemon --watch './js/**/*' --exec \"eslint ./js --fix --cache\" -e js,jsx,ts,tsx",
     "check-types": "tsc --noEmit",
     "check-types-watch": "tsc --noEmit --watch",
-    "build-api-client": "TS_NODE_COMPILER_OPTIONS='{\"moduleResolution\":\"node\"}' npx @rtk-query/codegen-openapi ./build/api/openapi-config.ts"
+    "fetch-api-docs": "node ./build/api/fetch-and-patch-docs.mjs",
+    "build-api-client": "TS_NODE_COMPILER_OPTIONS='{\"moduleResolution\":\"node\"}' npx @rtk-query/codegen-openapi ./build/api/openapi-config.ts",
+    "update-api-client": "npm run fetch-api-docs && npm run build-api-client && npm run check-types"
   },
   "license": "proprietary",
   "private": true,
