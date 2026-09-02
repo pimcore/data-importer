@@ -31,7 +31,7 @@ export const QuantityValueTransformerForm = ({ settings, onChange }: QuantityVal
 
   const { data: unitData, isLoading: isLoadingUnits } = useBundleDataImporterDataTypeLoadUnitDataQuery()
   const unitOptions = useMemo(
-    () => (unitData?.UnitList ?? []).map((u) => ({
+    () => (unitData?.unitList ?? []).map((u) => ({
       value: u.unitId ?? '',
       label: u.abbreviation ?? u.unitId ?? ''
     })),
