@@ -4,7 +4,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use OpenApi\Attributes\Property;
-use OpenApi\Generator;
 use Pimcore\Bundle\DataImporterBundle\Schema\UnitDataResponse;
 use ReflectionClass;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
@@ -43,8 +42,12 @@ class UnitDataResponseTest extends Unit
         $documented = [];
         foreach ($constructor->getParameters() as $parameter) {
             foreach ($parameter->getAttributes(Property::class) as $attribute) {
-                $property = $attribute->newInstance()->property;
-                $documented[] = Generator::isDefault($property) ? $parameter->getName() : $property;
+                // Read the attribute's declared arguments via reflection instead of newInstance():
+                // instantiating OpenApi\Attributes\Property runs swagger-php's AbstractAnnotation
+                // constructor, which reads the static Generator::$context. That's only initialized
+                // by a full Generator::scan() run, not by reflecting a single attribute in isolation,
+                // and accessing it beforehand throws (varies by swagger-php version/dependency set).
+                $documented[] = $attribute->getArguments()['property'] ?? $parameter->getName();
             }
         }
 
