@@ -450,7 +450,7 @@ export type BundleDataImporterCalculateTransformationResultTypeParameters = {
         /** Mapping label */
         label?: string;
         /** Data source column indices */
-        dataSourceIndex?: any;
+        dataSourceIndex?: number[];
         transformationPipeline?: object[];
         dataTarget?: object;
     };
