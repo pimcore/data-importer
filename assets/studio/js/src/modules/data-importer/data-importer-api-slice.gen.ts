@@ -450,7 +450,7 @@ export type BundleDataImporterCalculateTransformationResultTypeParameters = {
         /** Mapping label */
         label?: string;
         /** Data source column indices */
-        dataSourceIndex?: any;
+        dataSourceIndex?: string[];
         transformationPipeline?: object[];
         dataTarget?: object;
     };
@@ -562,8 +562,8 @@ export type BundleDataImporterDataPreviewResponse = {
         dataIndex?: string;
         /** Column label */
         label?: string;
-        /** Cell data value */
-        data?: string;
+        /** Cell data value. May be any JSON value (string, number, boolean, array, object or null) depending on the source data type. */
+        data?: any;
         /** Whether this column is mapped */
         mapped?: boolean;
     }[];

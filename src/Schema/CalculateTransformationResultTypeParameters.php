@@ -37,8 +37,8 @@ final readonly class CalculateTransformationResultTypeParameters
                     property: 'dataSourceIndex',
                     description: 'Data source column indices',
                     type: 'array',
-                    items: new Items(type: 'integer'),
-                    example: [0]
+                    items: new Items(type: 'string'),
+                    example: ['0']
                 ),
                 new Property(property: 'transformationPipeline', type: 'array', items: new Items(type: 'object')),
                 new Property(property: 'dataTarget', type: 'object'),
