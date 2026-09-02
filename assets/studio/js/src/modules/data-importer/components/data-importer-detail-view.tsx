@@ -15,6 +15,7 @@ import { useBundleDataImporterConfigGetQuery, useBundleDataImporterConfigSaveMut
 import { ApiError } from '@pimcore/studio-ui-bundle/modules/app'
 import { isNil } from 'lodash'
 import { type DataImporterFormValues } from '../types'
+import { isBundleActive } from '../utils/is-bundle-active'
 import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
 import { DataSetupTab } from './tabs/data-setup-tab'
 import { ExecutionTab } from './tabs/execution-tab'
@@ -101,12 +102,16 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
         isDirty={ isDirty }
                 />
     },
-    {
-      key: 'import-logs',
-      label: t('data-importer.tabs.import-logs'),
-      fullHeight: true,
-      children: <ImportLogsTab configName={ configName } />
-    },
+    // Import logs are read through the application logger, so the tab is only
+    // available when that bundle is enabled and installed.
+    ...(isBundleActive('PimcoreApplicationLoggerBundle')
+      ? [{
+          key: 'import-logs',
+          label: t('data-importer.tabs.import-logs'),
+          fullHeight: true,
+          children: <ImportLogsTab configName={ configName } />
+        }]
+      : []),
     {
       key: 'permissions',
       label: t('data-importer.tabs.permissions'),
