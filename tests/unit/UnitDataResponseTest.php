@@ -14,9 +14,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use OpenApi\Attributes\Property;
+use OpenApi\Context;
 use OpenApi\Generator;
 use Pimcore\Bundle\DataImporterBundle\Schema\UnitDataResponse;
 use ReflectionClass;
+use ReflectionProperty;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
@@ -47,11 +49,22 @@ class UnitDataResponseTest extends Unit
         $constructor = (new ReflectionClass(UnitDataResponse::class))->getConstructor();
         $this->assertNotNull($constructor);
 
+        // ReflectionAttribute::getArguments() evaluates any `new` expression used as an
+        // argument value (e.g. the nested `items: new Items(...)` on the unitList property),
+        // which constructs real swagger-php annotation objects. Their constructor reads the
+        // static Generator::$context; on swagger-php < 5.0.2 (resolved by the "lowest"
+        // dependency CI matrix) that property has no default and is genuinely uninitialized
+        // outside of a full Generator::scan() run, so accessing it throws. Initialize it to a
+        // standalone context so reflecting the attribute in isolation doesn't fail.
+        $contextProperty = new ReflectionProperty(Generator::class, 'context');
+        if (!$contextProperty->isInitialized()) {
+            Generator::$context = new Context();
+        }
+
         $documented = [];
         foreach ($constructor->getParameters() as $parameter) {
             foreach ($parameter->getAttributes(Property::class) as $attribute) {
-                $property = $attribute->newInstance()->property;
-                $documented[] = Generator::isDefault($property) ? $parameter->getName() : $property;
+                $documented[] = $attribute->getArguments()['property'] ?? $parameter->getName();
             }
         }
 
