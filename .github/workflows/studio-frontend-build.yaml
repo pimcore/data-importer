@@ -2,13 +2,15 @@ name: "Studio Frontend Build"
 
 on:
   push:
+    branches:
+      - "[0-9]+.[0-9]+"
+      - "[0-9]+.x"
     paths:
       - "assets/studio/**"
       - "src/Resources/public/studio/build/**"
   pull_request:
     paths:
       - "assets/studio/**"
-      - "src/Resources/public/studio/build/**"
   workflow_dispatch:
 
 concurrency:
