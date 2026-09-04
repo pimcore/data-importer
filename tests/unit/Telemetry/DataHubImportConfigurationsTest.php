@@ -14,114 +14,93 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Telemetry;
 
+use function array_key_first;
 use Codeception\Test\Unit;
 use function json_encode;
-use Pimcore\Bundle\DataHubBundle\Configuration\Dao;
 use Pimcore\Bundle\DataHubBundle\Telemetry\DataHubConfigurationUsage;
 use Pimcore\Bundle\DataImporterBundle\Telemetry\DataHubImportConfigurations;
 use Pimcore\Model\Tool\SettingsStore;
-use ReflectionProperty;
 use Symfony\Component\Yaml\Yaml;
 use function time;
 use function uniqid;
 
 /**
  * The adapter over Data Hub's shared configuration read, exercised against the real store rather than a
- * double: a configuration is seeded exactly as Data Hub's own Dao stores it, read back through
+ * double: an import configuration is seeded exactly as Data Hub's own Dao stores it, read back through
  * {@see \Pimcore\Bundle\DataHubBundle\Configuration::getList()}, and the adapter's answer checked.
  *
- * This is what pins the adapter type. {@see DataHubImportConfigurations} names `dataImporterDataObject`,
- * and only a configuration stored under exactly that type may make it true; a typo or drift there fails
- * these tests, while the provider tests, which mock the seam, would still pass.
+ * This is what pins the adapter type. The seeded configuration carries the type this bundle registers with
+ * Data Hub - read from the registration itself - and is the only active configuration in the store, so the
+ * adapter reads true only if it asks Data Hub for exactly that type. A typo or drift in
+ * {@see DataHubImportConfigurations} fails this test while the provider tests, which mock the seam, would
+ * still pass.
  *
- * DB-backed: the unit suite connects the database. Every seeded entry carries a unique name and is removed
+ * One store-backed case, deliberately: Data Hub's Dao memoises the configuration list for the lifetime of
+ * the process and offers no reset, so a second listing would still see the first one's store. Whether an
+ * inactive configuration or another adapter's configuration counts is decided in
+ * {@see DataHubConfigurationUsage::hasActiveOfType()}, not here.
+ *
+ * DB-backed: the unit suite connects the database. The seeded entry carries a unique name and is removed
  * again in {@see _after()}.
  */
 class DataHubImportConfigurationsTest extends Unit
 {
     private const SETTINGS_STORE_SCOPE = 'pimcore_data_hub';
 
-    private const IMPORTER_TYPE = 'dataImporterDataObject';
+    private const REGISTRATION = __DIR__ . '/../../../src/Resources/config/pimcore/config.yml';
 
-    /**
-     * @var list<string>
-     */
-    private array $seeded = [];
-
-    protected function _before(): void
-    {
-        $this->forgetCachedList();
-    }
+    private ?string $seeded = null;
 
     protected function _after(): void
     {
-        foreach ($this->seeded as $name) {
-            SettingsStore::delete($name, self::SETTINGS_STORE_SCOPE);
+        if ($this->seeded !== null) {
+            SettingsStore::delete($this->seeded, self::SETTINGS_STORE_SCOPE);
+            $this->seeded = null;
         }
-        $this->seeded = [];
-        $this->forgetCachedList();
     }
 
     public function testAnActiveImportConfigurationIsUsed(): void
     {
-        $this->seed(self::IMPORTER_TYPE, active: true);
+        $this->seedActiveConfiguration($this->registeredAdapterType());
 
-        $this->assertTrue($this->adapter()->hasActive());
+        $adapter = new DataHubImportConfigurations(new DataHubConfigurationUsage());
+
+        $this->assertTrue($adapter->hasActive());
     }
 
     /**
-     * Active rather than merely existing: a disabled import is one somebody built and then switched off.
+     * The seed above is built from the registration; this pins the registration itself to the identifier
+     * Data Hub knows this bundle by.
      */
-    public function testAnInactiveImportConfigurationIsNotUsed(): void
+    public function testThisBundleRegistersTheImporterTypeWithDataHub(): void
     {
-        $this->seed(self::IMPORTER_TYPE, active: false);
-
-        $used = $this->adapter()->hasActive();
-
-        $this->assertFalse($used);
-        $this->assertNotNull($used);
+        $this->assertSame('dataImporterDataObject', $this->registeredAdapterType());
     }
 
     /**
-     * Data Hub keeps every adapter's configurations in one store; another adapter's active configuration
-     * is not an import.
+     * The one adapter type under `pimcore_data_hub.supported_types` in this bundle's own configuration.
      */
-    public function testAnActiveConfigurationOfAnotherAdapterIsNotAnImport(): void
+    private function registeredAdapterType(): string
     {
-        $this->seed('graphql', active: true);
+        $types = Yaml::parseFile(self::REGISTRATION)['pimcore_data_hub']['supported_types'];
 
-        $this->assertFalse($this->adapter()->hasActive());
+        $this->assertCount(1, $types, 'this bundle is expected to register exactly one Data Hub adapter type');
+
+        return (string) array_key_first($types);
     }
 
     /**
-     * The type these tests seed is the one this bundle registers with Data Hub, so the adapter, the tests
-     * and the registration cannot drift apart unnoticed.
+     * Stores an active configuration the way Data Hub's Dao does: the configuration array itself, under
+     * its name, in the `pimcore_data_hub` settings-store scope. Only `general` matters to the read under
+     * test.
      */
-    public function testTheImporterTypeIsTheOneRegisteredWithDataHub(): void
-    {
-        $registered = Yaml::parseFile(__DIR__ . '/../../../src/Resources/config/pimcore/config.yml');
-
-        $this->assertArrayHasKey(self::IMPORTER_TYPE, $registered['pimcore_data_hub']['supported_types']);
-    }
-
-    private function adapter(): DataHubImportConfigurations
-    {
-        // A fresh instance each time: DataHubConfigurationUsage memoises its read for the lifetime of the
-        // service, which is one snapshot run.
-        return new DataHubImportConfigurations(new DataHubConfigurationUsage());
-    }
-
-    /**
-     * Stores a configuration the way Data Hub's Dao does: the configuration array itself, under its name,
-     * in the `pimcore_data_hub` settings-store scope. Only `general` matters to the read under test.
-     */
-    private function seed(string $type, bool $active): void
+    private function seedActiveConfiguration(string $type): void
     {
         $name = uniqid('telemetry_test_');
         $now = time();
         $data = [
             'general' => [
-                'active' => $active,
+                'active' => true,
                 'type' => $type,
                 'name' => $name,
                 'path' => '',
@@ -137,15 +116,6 @@ class DataHubImportConfigurationsTest extends Unit
             SettingsStore::TYPE_STRING,
             self::SETTINGS_STORE_SCOPE
         );
-        $this->seeded[] = $name;
-    }
-
-    /**
-     * Data Hub's Dao memoises the configuration list in a private static for the lifetime of the process -
-     * right for one snapshot run, wrong for a test that seeds between cases.
-     */
-    private function forgetCachedList(): void
-    {
-        (new ReflectionProperty(Dao::class, '_config'))->setValue(null, null);
+        $this->seeded = $name;
     }
 }
