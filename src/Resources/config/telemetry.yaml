@@ -1,0 +1,16 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # usage.* provider; the core telemetry extension point is guaranteed by the pimcore/pimcore
+    # constraint in composer.json, so it is loaded unconditionally.
+    #
+    # Import configurations are Data Hub configurations of this bundle's adapter type, read through Data
+    # Hub's shared memoised service rather than a table.
+    Pimcore\Bundle\DataImporterBundle\Telemetry\DataHubImportConfigurations: ~
+
+    Pimcore\Bundle\DataImporterBundle\Telemetry\ImportConfigurationsInterface:
+        '@Pimcore\Bundle\DataImporterBundle\Telemetry\DataHubImportConfigurations'
+
+    Pimcore\Bundle\DataImporterBundle\Telemetry\DataImporterUsageProvider: ~
