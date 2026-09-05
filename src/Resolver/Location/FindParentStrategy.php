@@ -15,16 +15,18 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class FindParentStrategy implements LocationStrategyInterface
+final class FindParentStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
     private const FIND_BY_ID = 'id';
 
@@ -52,7 +54,11 @@ final class FindParentStrategy implements LocationStrategyInterface
 
     public function setSettings(array $settings): void
     {
-        if ($settings['dataSourceIndex'] !== 0 && $settings['dataSourceIndex'] !== '0' && empty($settings['dataSourceIndex'])) {
+        if (
+            $settings['dataSourceIndex'] !== 0 &&
+            $settings['dataSourceIndex'] !== '0' &&
+            empty($settings['dataSourceIndex'])
+        ) {
             throw new InvalidConfigurationException('Empty data source index.');
         }
 
@@ -75,12 +81,21 @@ final class FindParentStrategy implements LocationStrategyInterface
 
             $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'];
 
-            if (empty($settings['attributeName'])) {
-                throw new InvalidConfigurationException('Empty data attribute name.');
+            $findClass = ClassDefinition::getById($this->attributeDataObjectClassId);
+            if (empty($findClass)) {
+                throw new InvalidConfigurationException(
+                    "Class `{$this->attributeDataObjectClassId}` not found. "
+                    . 'Make sure to use an existing data object class ID.'
+                );
             }
 
-            $this->attributeName = $settings['attributeName'];
+            $this->attributeName = $settings['attributeName'] ?? '';
             $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
+
+            $this->dataObjectLoader->assertAttributeLoadable(
+                $this->attributeDataObjectClassId,
+                $this->attributeName
+            );
         }
     }
 
@@ -103,7 +118,9 @@ final class FindParentStrategy implements LocationStrategyInterface
                 case self::FIND_BY_ATTRIBUTE:
                     $class = ClassDefinition::getById($this->attributeDataObjectClassId);
                     if (empty($class)) {
-                        throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
+                        throw new InvalidConfigurationException(
+                            "Class `{$this->attributeDataObjectClassId}` not found."
+                        );
                     }
                     $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
                     $newParent = $this->dataObjectLoader->loadByAttribute($className,
@@ -199,5 +216,51 @@ final class FindParentStrategy implements LocationStrategyInterface
         } catch (Exception) {
             return null;
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Finds and sets the parent object based on ID, path, or attribute value from input data';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('dataSourceIndex')
+                    ->isRequired()
+                    ->info('Index in input data array containing the parent identifier')
+                ->end()
+                ->scalarNode('findStrategy')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('How to find the parent: "id", "path", or "attribute"')
+                ->end()
+                ->scalarNode('fallbackPath')
+                    ->info('Fallback path if parent is not found')
+                ->end()
+                ->scalarNode('asVariant')
+                    ->info('Whether to save the element as a variant (value: "on")')
+                ->end()
+                ->scalarNode('attributeDataObjectClassId')
+                    ->info(
+                        'Data object class ID for attribute-based parent lookup '
+                        . '(required when findStrategy is "attribute")'
+                    )
+                ->end()
+                ->scalarNode('attributeName')
+                    ->info('Attribute name for parent lookup (required when findStrategy is "attribute")')
+                ->end()
+                ->scalarNode('attributeLanguage')
+                    ->info('Language code for localized attribute lookup')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

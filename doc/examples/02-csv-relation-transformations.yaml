@@ -1,0 +1,97 @@
+general:
+    type: dataImporterDataObject
+    name: import-sample-2
+    description: 'Import data from a CSV file with importing relations and multiple images to a gallery'
+    group: ''
+    active: true
+    path: null
+    modificationDate: 1769027624
+    createDate: 1769026497
+loaderConfig:
+    type: push
+    settings:
+        apiKey: 65d2a64460d01a3157659cf1a2fac165
+interpreterConfig:
+    type: csv
+    settings:
+        skipFirstRow: true
+        delimiter: ','
+        enclosure: '"'
+        escape: \
+resolverConfig:
+    elementType: dataObject
+    dataObjectClassId: 34
+    loadingStrategy:
+        type: attribute
+        settings:
+            dataSourceIndex: '2'
+            attributeName: sku
+            language: ''
+    createLocationStrategy:
+        type: findParent
+        settings:
+            findStrategy: attribute
+            attributeDataObjectClassId: 34
+            attributeName: seriesId
+            attributeLanguage: ''
+            dataSourceIndex: '3'
+            fallbackPath: /import/orphan
+    locationUpdateStrategy:
+        type: noChange
+    publishingStrategy:
+        type: noChangePublishNew
+processingConfig:
+    executionType: parallel
+    idDataIndex: ''
+mappingConfig:
+    -
+        label: 'Category Relation'
+        dataSourceIndex:
+            - '1'
+        transformationResultType: dataObject
+        dataTarget:
+            type: direct
+            settings:
+                fieldName: category
+                language: ''
+                writeIfTargetIsNotEmpty: true
+                writeIfSourceIsEmpty: true
+        transformationPipeline:
+            -
+                settings:
+                    loadStrategy: attribute
+                    attributeDataObjectClassId: CA
+                    attributeName: id
+                    attributeLanguage: ''
+                type: loadDataObject
+    -
+        label: 'Image Gallery'
+        dataSourceIndex:
+            - '5'
+            - '6'
+            - '7'
+        transformationResultType: gallery
+        dataTarget:
+            type: direct
+            settings:
+                fieldName: gallery
+                language: ''
+                writeIfTargetIsNotEmpty: true
+                writeIfSourceIsEmpty: true
+        transformationPipeline:
+            -
+                settings:
+                    parentFolder: /importFolder
+                    useExisting: 'on'
+                    overwriteExisting: 'on'
+                    pregMatch: ''
+                type: importAsset
+            -
+                type: gallery
+executionConfig:
+    scheduleType: recurring
+    cronDefinition: '0 2 * * *'
+permissions:
+    user: {  }
+    role: {  }
+workspaces: {  }

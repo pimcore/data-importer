@@ -18,11 +18,13 @@ use JmesPath\SyntaxErrorException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-class JsonFileInterpreter extends AbstractInterpreter
+class JsonFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     protected string $path;
 
@@ -157,5 +159,28 @@ class JsonFileInterpreter extends AbstractInterpreter
     private function getValueFromPath(array $data): mixed
     {
         return JmesPath::search($this->path, $data);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Interpret JSON file data with optional JMESPath querying';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('path')
+                    ->defaultValue('')
+                    ->info('JMESPath expression to extract data from JSON (leave empty to use root)')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

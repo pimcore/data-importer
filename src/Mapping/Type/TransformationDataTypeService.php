@@ -12,14 +12,19 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
+use function sprintf;
 
 /**
  * @internal
  */
 final class TransformationDataTypeService
 {
+    // Represents all types, needed for documentation of operators that accept all types
+    public const ALL_TYPES = 'any';
+
     public const DEFAULT_TYPE = 'default';
 
     public const DEFAULT_ARRAY = 'array';
@@ -168,6 +173,16 @@ final class TransformationDataTypeService
         $this->transformationDataTypesMapping[$transformationTargetType][] = $pimcoreDataType;
     }
 
+    /**
+     * Get all registered transformation target types
+     *
+     * @return string[] List of all transformation target types
+     */
+    public function getAllTransformationTargetTypes(): array
+    {
+        return array_keys($this->transformationDataTypesMapping);
+    }
+
     private function addTypesToAttributesArray(
         ClassDefinition\Data $fieldDefinition,
         string $targetType,
@@ -219,6 +234,12 @@ final class TransformationDataTypeService
     public function getPimcoreDataTypes(string $classId, $transformationTargetType, bool $includeSystemRead, bool $includeSystemWrite, bool $includeAdvancedRelations): array
     {
         $class = ClassDefinition::getById($classId);
+        if (!$class instanceof ClassDefinition) {
+            throw new InvalidConfigurationException(sprintf(
+                'Class `%s` not found. Make sure to use an existing data object class ID.',
+                $classId
+            ));
+        }
 
         $attributes = [];
 
@@ -298,6 +319,12 @@ final class TransformationDataTypeService
     public function getClassificationStoreAttributes(string $classId): array
     {
         $class = ClassDefinition::getById($classId);
+        if (!$class instanceof ClassDefinition) {
+            throw new InvalidConfigurationException(sprintf(
+                'Class `%s` not found. Make sure to use an existing data object class ID.',
+                $classId
+            ));
+        }
 
         $attributes = [];
         foreach ($class->getFieldDefinitions() as $definition) {
@@ -321,5 +348,90 @@ final class TransformationDataTypeService
     public function getPimcoreTypesByTransformationTargetType(string $transformationTargetType): array
     {
         return $this->transformationDataTypesMapping[$transformationTargetType] ?? [];
+    }
+
+    /**
+     * Find all transformation result types that a given field accepts
+     *
+     * @return string[]
+     */
+    public function getAcceptedTypesForField(
+        string $fieldName,
+        string $classId
+    ): array {
+        $accepted = [];
+
+        foreach ($this->getAllTransformationTargetTypes() as $type) {
+            $fields = $this->getPimcoreDataTypes(
+                $classId,
+                $type,
+                true,
+                true,
+                true
+            );
+            $keys = array_column($fields, 'key');
+
+            if (in_array($fieldName, $keys, true)) {
+                $accepted[] = $type;
+            }
+        }
+
+        return $accepted;
+    }
+
+    /**
+     * Checks if a field is available for a specific transformation
+     * target type
+     */
+    public function checkFieldAvailable(
+        string $fieldName,
+        string $classId,
+        array $transformationResultType,
+        bool $includeSystemRead = false,
+        bool $includeSystemWrite = false,
+        bool $includeAdvancedRelations = true,
+        bool $throwException = false
+    ): bool {
+        $compatibleFields = $this->getPimcoreDataTypes(
+            $classId,
+            $transformationResultType,
+            $includeSystemRead,
+            $includeSystemWrite,
+            $includeAdvancedRelations
+        );
+
+        $compatibleFieldKeys = array_column($compatibleFields, 'key');
+
+        $isValid = in_array($fieldName, $compatibleFieldKeys, true);
+
+        if ($throwException && !$isValid) {
+
+            // Find which result types the target field actually accepts
+            $acceptedTypes = $this->getAcceptedTypesForField(
+                $fieldName,
+                $classId
+            );
+
+            $msg = sprintf(
+                'Field "%s" of class "%s" cannot store "%s", the result type its '
+                . 'transformationPipeline produces. It accepts: %s. The result type is computed '
+                . 'from the pipeline, so editing the transformationResultType property changes '
+                . 'nothing: add an operator that outputs an accepted type, or target another '
+                . 'field. Use get_import_config_context with the operators_by_output section to '
+                . 'find the operator, or field_type_matrix for the full field to type map.',
+                $fieldName,
+                $classId,
+                implode(', ', $transformationResultType),
+                $acceptedTypes !== []
+                    ? implode(', ', $acceptedTypes)
+                    : 'no transformation result type'
+            );
+
+            throw new InvalidConfigurationException($msg);
+
+        }
+
+        return $isValid;
+
     }
 }

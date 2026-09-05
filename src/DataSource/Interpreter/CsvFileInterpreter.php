@@ -12,14 +12,17 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Version;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Mime\MimeTypes;
 
 /**
  * @internal
  */
-final class CsvFileInterpreter extends AbstractInterpreter
+final class CsvFileInterpreter extends AbstractInterpreter implements SchemaAwareInterface
 {
     private const UTF8_BOM = "\xEF\xBB\xBF";
 
@@ -61,9 +64,87 @@ final class CsvFileInterpreter extends AbstractInterpreter
     {
         $this->skipFirstRow = $settings['skipFirstRow'] ?? false;
         $this->saveHeaderName = $settings['saveHeaderName'] ?? false;
-        $this->delimiter = $settings['delimiter'] ?? ',';
-        $this->enclosure = $settings['enclosure'] ?? '"';
-        $this->escape = $settings['escape'] ?? '\\';
+        $this->delimiter = $this->assertSingleCharacter('delimiter', $settings['delimiter'] ?? ',', false);
+        $this->enclosure = $this->assertSingleCharacter('enclosure', $settings['enclosure'] ?? '"', false);
+        $this->escape = $this->assertSingleCharacter('escape', $settings['escape'] ?? '\\', true);
+    }
+
+    /**
+     * fgetcsv() throws a ValueError for anything longer than a single character, which surfaces
+     * as an unexplained 500 on preview and as a failing import at runtime. Configurations that
+     * are written programmatically rather than through the UI run into this easily: a JSON
+     * encoded backslash escape is one character, a double encoded one is two.
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function assertSingleCharacter(string $setting, mixed $value, bool $allowEmpty): string
+    {
+        if (is_scalar($value)) {
+            $stringValue = (string) $value;
+            $length = strlen($stringValue);
+
+            if ($length === 1 || ($allowEmpty && $length === 0)) {
+                return $stringValue;
+            }
+        }
+
+        throw new InvalidConfigurationException(sprintf(
+            'The CSV `%s` must be %s, %s given.',
+            $setting,
+            $allowEmpty ? 'empty or exactly one character' : 'exactly one character',
+            var_export($value, true)
+        ));
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Interpret CSV file data';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->booleanNode('skipFirstRow')
+                    ->defaultValue(false)
+                    ->info('Skip the first row of the CSV file (header row)')
+                ->end()
+                ->booleanNode('saveHeaderName')
+                    ->defaultValue(false)
+                    ->info('Use header names as array keys for data rows')
+                ->end()
+                ->scalarNode('delimiter')
+                    ->defaultValue(',')
+                    ->info('Field delimiter, exactly one character')
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => strlen((string) $value) !== 1)
+                        ->thenInvalid('Invalid CSV delimiter %s, it must be exactly one character.')
+                    ->end()
+                ->end()
+                ->scalarNode('enclosure')
+                    ->defaultValue('"')
+                    ->info('Field enclosure, exactly one character')
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => strlen((string) $value) !== 1)
+                        ->thenInvalid('Invalid CSV enclosure %s, it must be exactly one character.')
+                    ->end()
+                ->end()
+                ->scalarNode('escape')
+                    ->defaultValue('\\')
+                    ->info('Escape character, empty or exactly one character')
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => strlen((string) $value) > 1)
+                        ->thenInvalid('Invalid CSV escape %s, it must be empty or exactly one character.')
+                    ->end()
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -128,7 +209,10 @@ final class CsvFileInterpreter extends AbstractInterpreter
             }
 
             $previousData = null;
-            while ($readRecordNumber < $recordNumber && ($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false) {
+            while (
+                $readRecordNumber < $recordNumber &&
+                ($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false
+            ) {
                 if ($header !== null) {
                     $data = array_combine($header, $data);
                 }

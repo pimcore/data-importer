@@ -13,12 +13,14 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @internal
  */
-final class PushLoader implements DataLoaderInterface
+final class PushLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     private string $apiKey;
 
@@ -67,5 +69,33 @@ final class PushLoader implements DataLoaderInterface
     public function isIgnoreNotEmptyQueue(): bool
     {
         return $this->ignoreNotEmptyQueue;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Receive data pushed via API endpoint';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('apiKey')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('API key for authenticating push requests')
+                ->end()
+                ->booleanNode('ignoreNotEmptyQueue')
+                    ->defaultValue(false)
+                    ->info('Whether to ignore validation errors when queue is not empty')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

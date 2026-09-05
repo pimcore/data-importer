@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
+
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -22,7 +24,7 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class CleanupStrategyConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const CLEANUP_TAG = 'pimcore.datahub.data_importer.cleanup';
+    private const CLEANUP_TAG = ServiceTags::CLEANUP;
 
     public function process(ContainerBuilder $container): void
     {

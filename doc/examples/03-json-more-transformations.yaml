@@ -1,0 +1,107 @@
+general:
+    type: dataImporterDataObject
+    name: import-sample-3
+    description: 'JSON import with transformations for multiselect fields, 
+                  quantity value and trimming and data targets for localized fields and object bricks'
+    group: ''
+    active: true
+    path: null
+    modificationDate: 1769028025
+    createDate: 1769026497
+loaderConfig:
+    type: asset
+    settings:
+        assetPath: '/Import Test/erp-export.json'
+interpreterConfig:
+    type: json
+    settings:
+        path: ''
+resolverConfig:
+    elementType: dataObject
+    dataObjectClassId: PD
+    loadingStrategy:
+        type: attribute
+        settings:
+            dataSourceIndex: artno
+            attributeName: artno
+            language: ''
+    createLocationStrategy:
+        type: findParent
+        settings:
+            findStrategy: attribute
+            attributeDataObjectClassId: PD
+            attributeName: series
+            attributeLanguage: ''
+            dataSourceIndex: series
+            fallbackPath: /import/orphan
+    locationUpdateStrategy:
+        type: noChange
+    publishingStrategy:
+        type: noChangePublishNew
+processingConfig:
+    executionType: parallel
+    idDataIndex: ''
+mappingConfig:
+    -
+        label: 'Description EN'
+        dataSourceIndex:
+            - description_en
+        transformationResultType: default
+        dataTarget:
+            type: direct
+            settings:
+                fieldName: description
+                language: en
+                writeIfTargetIsNotEmpty: true
+                writeIfSourceIsEmpty: true
+        transformationPipeline:
+            -
+                settings:
+                    mode: both
+                type: trim
+    -
+        label: Mileage
+        dataSourceIndex:
+            - weight
+        transformationResultType: quantityValue
+        dataTarget:
+            type: direct
+            settings:
+                fieldName: technicalSpecs.Dimensions.weight
+                language: ''
+                writeIfTargetIsNotEmpty: true
+                writeIfSourceIsEmpty: true
+        transformationPipeline:
+            -
+                settings:
+                    delimiter: ' '
+                type: explode
+            -
+                settings:
+                    unitSourceSelect: abbr
+                    staticUnitSelect: ''
+                type: quantityValue
+    -
+        label: Color
+        dataSourceIndex:
+            - color
+        transformationResultType: array
+        dataTarget:
+            type: direct
+            settings:
+                fieldName: color
+                language: ''
+                writeIfTargetIsNotEmpty: true
+                writeIfSourceIsEmpty: true
+        transformationPipeline:
+            -
+                settings:
+                    delimiter: ','
+                type: explode
+executionConfig:
+    scheduleType: recurring
+    cronDefinition: '0 2 * * *'
+permissions:
+    user: {  }
+    role: {  }
+workspaces: {  }

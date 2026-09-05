@@ -13,12 +13,14 @@
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Asset;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class AssetLoader implements DataLoaderInterface
+final class AssetLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     private string $assetPath;
 
@@ -52,5 +54,29 @@ final class AssetLoader implements DataLoaderInterface
         }
 
         $this->temporaryFile = null;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from a Pimcore asset';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('assetPath')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Path to the asset in Pimcore (e.g., /Import/data.csv)')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

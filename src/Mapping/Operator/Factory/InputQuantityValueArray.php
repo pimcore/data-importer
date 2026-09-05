@@ -14,11 +14,13 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class InputQuantityValueArray extends QuantityValueArray
+final class InputQuantityValueArray extends QuantityValueArray implements SchemaAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -55,7 +57,11 @@ final class InputQuantityValueArray extends QuantityValueArray
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for input quantity value operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for input quantity value operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE_ARRAY;
@@ -73,7 +79,8 @@ final class InputQuantityValueArray extends QuantityValueArray
 
             foreach ($inputData as $key => $data) {
                 if ($data instanceof \Pimcore\Model\DataObject\Data\InputQuantityValue) {
-                    $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' . ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
+                    $preview[$key] = 'InputQuantityValue: ' . $data->getValue() . ' ' .
+                        ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
                 } else {
                     $preview[$key] = $data;
                 }
@@ -83,5 +90,31 @@ final class InputQuantityValueArray extends QuantityValueArray
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of value-unit pairs into an array of InputQuantityValue objects. '
+            . 'Each item should be [value, unit].';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::INPUT_QUANTITY_VALUE_ARRAY
+        ];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

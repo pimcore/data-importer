@@ -13,15 +13,20 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\DataTargetFieldValidatorInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * @internal
  */
-class Direct implements DataTargetInterface
+class Direct implements DataTargetInterface, SchemaAwareInterface, DataTargetFieldValidatorInterface
 {
     /**
      * @var string
@@ -43,6 +48,16 @@ class Direct implements DataTargetInterface
      */
     protected $writeIfTargetIsNotEmpty;
 
+    protected TransformationDataTypeService $transformationDataTypeService;
+
+    #[Required]
+    public function setTransformationDataTypeService(
+        TransformationDataTypeService $transformationDataTypeService
+    ): void {
+        $this->transformationDataTypeService =
+            $transformationDataTypeService;
+    }
+
     /**
      * @param array $settings
      *
@@ -58,8 +73,12 @@ class Direct implements DataTargetInterface
         $this->language = $settings['language'] ?? null;
 
         //note - cannot be replaced with ?? as $settings['writeIfSourceIsEmpty'] can be false on purpose
-        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty']) ? $settings['writeIfSourceIsEmpty'] : true;
-        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty']) ? $settings['writeIfTargetIsNotEmpty'] : true;
+        $this->writeIfSourceIsEmpty = isset($settings['writeIfSourceIsEmpty'])
+            ? $settings['writeIfSourceIsEmpty']
+            : true;
+        $this->writeIfTargetIsNotEmpty = isset($settings['writeIfTargetIsNotEmpty'])
+            ? $settings['writeIfTargetIsNotEmpty']
+            : true;
     }
 
     /**
@@ -203,5 +222,71 @@ class Direct implements DataTargetInterface
         }
 
         return $fieldDefinition;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Direct field mapping target';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('fieldName')
+                    ->info('Name of the target field')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('language')
+                    ->info('Language for localized fields')
+                    ->defaultValue(null)
+                ->end()
+                ->booleanNode('writeIfSourceIsEmpty')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
+                    ->info('Write to target even if source data is empty')
+                    ->defaultValue(true)
+                ->end()
+                ->booleanNode('writeIfTargetIsNotEmpty')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
+                    ->info('Write to target even if target already has a value')
+                    ->defaultValue(true)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
+    }
+
+    public function validateTargetField(
+        string $transformationResultType,
+        string $classId
+    ): void {
+        $this->transformationDataTypeService
+            ->checkFieldAvailable(
+                $this->fieldName,
+                $classId,
+                [$transformationResultType],
+                false,
+                true,
+                true,
+                true
+            );
     }
 }

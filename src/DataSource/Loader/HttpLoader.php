@@ -14,12 +14,14 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * @internal
  */
-final class HttpLoader implements DataLoaderInterface
+final class HttpLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     private string $url;
 
@@ -72,5 +74,34 @@ final class HttpLoader implements DataLoaderInterface
             throw new InvalidConfigurationException('Empty Schema.');
         }
         $this->schema = $settings['schema'];
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from HTTP/HTTPS URL';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('url')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('URL path to the file (without protocol)')
+                ->end()
+                ->scalarNode('schema')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Protocol to use (http:// or https://)')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

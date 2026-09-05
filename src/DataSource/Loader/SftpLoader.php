@@ -18,13 +18,15 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\PhpseclibV3\SftpAdapter;
 use League\Flysystem\PhpseclibV3\SftpConnectionProvider;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Logger;
 use Symfony\Component;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class SftpLoader implements DataLoaderInterface
+final class SftpLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     private string $importFilePath;
 
@@ -85,7 +87,11 @@ final class SftpLoader implements DataLoaderInterface
         } catch (FilesystemException $e) {
             Logger::error($e);
 
-            throw new InvalidConfigurationException(sprintf('Could not copy from remote location `%s` to local tmp file `%s`', $loggingRemoteUrl, $this->importFilePath));
+            throw new InvalidConfigurationException(sprintf(
+                'Could not copy from remote location `%s` to local tmp file `%s`',
+                $loggingRemoteUrl,
+                $this->importFilePath
+            ));
         }
     }
 
@@ -120,5 +126,50 @@ final class SftpLoader implements DataLoaderInterface
             throw new InvalidConfigurationException('Empty Remote Path.');
         }
         $this->remotePath = $settings['remotePath'];
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from SFTP server';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('host')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('SFTP server hostname or IP address')
+                ->end()
+                ->scalarNode('port')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->defaultValue('22')
+                    ->info('SFTP server port')
+                ->end()
+                ->scalarNode('username')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('SFTP username')
+                ->end()
+                ->scalarNode('password')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('SFTP password')
+                ->end()
+                ->scalarNode('remotePath')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Path to the file on the remote server')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

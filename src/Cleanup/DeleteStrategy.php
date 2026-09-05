@@ -12,15 +12,28 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Cleanup;
 
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class DeleteStrategy implements CleanupStrategyInterface
+final class DeleteStrategy implements CleanupStrategyInterface, SchemaAwareInterface
 {
     public function doCleanup(ElementInterface $element): void
     {
         $element->delete();
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Delete elements that are no longer in the import data';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

@@ -12,12 +12,14 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class NoChangeUnpublishNewStrategy implements PublishStrategyInterface
+final class NoChangeUnpublishNewStrategy implements PublishStrategyInterface, SchemaAwareInterface
 {
     public function setSettings(array $settings): void
     {
@@ -31,5 +33,16 @@ final class NoChangeUnpublishNewStrategy implements PublishStrategyInterface
         }
 
         return $element;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Keeps newly created objects unpublished but does not change the publish state of existing ones';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

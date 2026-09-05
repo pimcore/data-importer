@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
@@ -110,5 +111,31 @@ abstract class AbstractLoad implements LoadStrategyInterface
         }
 
         return $inputData[$this->dataSourceIndex];
+    }
+
+    /**
+     * Creates base TreeBuilder with common configuration options.
+     * Child classes should call this and add their specific settings.
+     */
+    protected function getBaseConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('dataSourceIndex')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info(
+                        'Index/key of the data source field containing the identifier ' .
+                        'to match against'
+                    )
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

@@ -12,10 +12,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
+use Mcp\Capability\Attribute\McpTool;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -53,6 +55,14 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+
+        // The MCP tools are only registrable when an MCP host has pulled in mcp/sdk. The
+        // resource makes that decision part of what the container is invalidated on, so
+        // installing or removing the SDK reshapes the container instead of leaving a stale one.
+        $container->addResource(new ClassExistenceResource(McpTool::class));
+        if (class_exists(McpTool::class)) {
+            $loader->load('services/mcp.yml');
+        }
     }
 
     public function prepend(ContainerBuilder $container): void
@@ -64,6 +74,15 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         if ($container->hasExtension('doctrine_migrations')) {
             $loader->load('doctrine_migrations.yml');
+        }
+
+        // The Pimcore Agent Bundle reads agent skills from pimcore_agent.skills.paths.
+        // Contributing the path here, guarded on the extension being registered, keeps the
+        // integration optional: this bundle must not depend on the agent bundle.
+        if ($container->hasExtension('pimcore_agent')) {
+            $container->prependExtensionConfig('pimcore_agent', [
+                'skills' => ['paths' => [__DIR__ . '/../Resources/skills']],
+            ]);
         }
 
         $loader->load('studio_ui.yaml');

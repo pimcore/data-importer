@@ -28,6 +28,21 @@ services:
         tags:
             - { name: kernel.event_listener, event: 'Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent', method: importPrepared }
 
+    # Validation Services
+    Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationDefinition: ~
+    Pimcore\Bundle\DataImporterBundle\Tool\LoadableAttributesInterface:
+        alias: Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader
+
+    Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepositoryInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Tool\ImportConfigurationRepository
+
+    Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationFactories: ~
+    Pimcore\Bundle\DataImporterBundle\Validation\ConfigurationValidationService: ~
+    Pimcore\Bundle\DataImporterBundle\Validation\Schema\TreeBuilderToJsonSchemaConverter: ~
+    Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaLocators: ~
+    Pimcore\Bundle\DataImporterBundle\Validation\Schema\ConfigurationSchemaService:
+        public: true
+
     Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask:
         tags:
             - { name: pimcore.maintenance.task, type: data_importer.restart_queue_workers }

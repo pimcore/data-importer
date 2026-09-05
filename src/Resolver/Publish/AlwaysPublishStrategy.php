@@ -12,12 +12,14 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class AlwaysPublishStrategy implements PublishStrategyInterface
+final class AlwaysPublishStrategy implements PublishStrategyInterface, SchemaAwareInterface
 {
     public function setSettings(array $settings): void
     {
@@ -31,5 +33,16 @@ final class AlwaysPublishStrategy implements PublishStrategyInterface
         }
 
         return $element;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Always sets the object to published state';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

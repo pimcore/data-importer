@@ -12,12 +12,14 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class NoChangeStrategy implements LocationStrategyInterface
+final class NoChangeStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
     public function updateParent(ElementInterface $element, array $inputData): ElementInterface
     {
@@ -27,5 +29,16 @@ final class NoChangeStrategy implements LocationStrategyInterface
     public function setSettings(array $settings): void
     {
         //nothing to do
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Does not change the parent location of the object';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }
