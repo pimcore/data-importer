@@ -25,3 +25,4 @@ jobs:
     uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build.yaml@main
     with:
       build-output-path: './src/Resources/public/studio/'
+      test: true
