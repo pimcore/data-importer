@@ -2,13 +2,17 @@ name: "Studio Frontend Build"
 
 on:
   push:
+    branches:
+      - "main"
+      - "[0-9]+.[0-9]+"
+      - "[0-9]+.x"
     paths:
       - "assets/studio/**"
-      - "src/Resources/public/studio/build/**"
+      - "build-dist/**"
   pull_request:
     paths:
       - "assets/studio/**"
-      - "src/Resources/public/studio/build/**"
+      - "build-dist/**"
   workflow_dispatch:
 
 concurrency:
@@ -20,6 +24,4 @@ permissions:
 
 jobs:
   studio-frontend-build:
-    uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build.yaml@main
-    with:
-      build-output-path: './src/Resources/public/studio/'
+    uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build-packaged.yaml@main

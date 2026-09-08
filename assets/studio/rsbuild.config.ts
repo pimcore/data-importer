@@ -1,21 +1,15 @@
 import { defineConfig } from '@rsbuild/core'
 import { pluginReact } from '@rsbuild/plugin-react'
 import { pluginModuleFederation } from '@module-federation/rsbuild-plugin';
-import { pluginGenerateEntrypoints } from '@pimcore/studio-ui-bundle/rsbuild/plugins';
+import { pluginGenerateEntrypoints, pluginWriteBuildId } from '@pimcore/studio-ui-bundle/rsbuild/plugins';
 import { createDynamicRemote } from '@pimcore/studio-ui-bundle/rsbuild/utils';
 import path from 'node:path'
 import fs from 'node:fs';
-import { v4 } from 'uuid';
+import { getBuildGroupId } from '@pimcore/studio-ui-bundle/bundler/build-id';
 import packages from './package.json'
 
-const buildId = v4();
+const buildId = getBuildGroupId(__dirname);
 const buildPath = path.resolve(__dirname, '..', '..', 'src', 'Resources', 'public', 'studio', 'build', buildId);
-
-if (fs.existsSync( path.resolve(__dirname, '..', '..', 'src', 'Resources', 'public', 'studio', 'build'))) {
-  for (const file of fs.readdirSync(path.resolve(__dirname, '..', '..', 'src', 'Resources', 'public', 'studio', 'build'))) {
-    fs.rmSync(path.resolve(__dirname, '..', '..', 'src', 'Resources', 'public', 'studio', 'build', file), { recursive: true });
-  }
-}
 
 if (!fs.existsSync(buildPath)) {
   fs.mkdirSync(buildPath, { recursive: true });
@@ -63,6 +57,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    pluginWriteBuildId({ buildId }),
     pluginGenerateEntrypoints(),
     pluginReact(),
     pluginModuleFederation({
