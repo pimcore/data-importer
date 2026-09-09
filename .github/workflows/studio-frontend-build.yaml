@@ -24,4 +24,4 @@ permissions:
 
 jobs:
   studio-frontend-build:
-    uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build-packaged.yaml@main
+    uses: pimcore/workflows-collection-public/.github/workflows/reusable-studio-frontend-build-packaged.yaml@9d871b230bc5450ece43e527160000a3dc16f3e5 # main
