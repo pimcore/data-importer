@@ -12,10 +12,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
+use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectHandlerInterface;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -41,8 +43,6 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-        // usage.* telemetry provider; core extension point guaranteed by the composer constraint
-        $loader->load('telemetry.yaml');
         $loader->load('studio_backend.yaml');
 
         $definition = $container->getDefinition(DataImporterHandler::class);
@@ -52,6 +52,14 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $definition = $container->getDefinition(DataImporterListener::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+
+        // Change Control integration is optional: the subject handler and the review
+        // hydrator implement its interfaces, so they can only be registered when it is
+        // installed. The resource makes that part of what the container is invalidated on.
+        $container->addResource(new ClassExistenceResource(SubjectHandlerInterface::class));
+        if (interface_exists(SubjectHandlerInterface::class)) {
+            $loader->load('services/change_control.yml');
+        }
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
