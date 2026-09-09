@@ -37,3 +37,6 @@ Thumbs.db
 
 # studio related
 /assets/studio/node_modules
+
+# Expanded frontend build is generated from build-dist/build-<id>.zip, not committed
+/src/Resources/public/studio/build/
