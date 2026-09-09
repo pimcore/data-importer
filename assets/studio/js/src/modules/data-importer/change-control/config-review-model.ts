@@ -73,25 +73,30 @@ function assign (target: Record<string, unknown>, address: string, value: unknow
 }
 
 /**
- * The configuration as the change set proposes it: the current values with the proposed
- * leaves laid over them, so the editor renders the outcome rather than a patch.
+ * The configuration as the change set proposes it: the live document with the proposed leaves
+ * laid over it.
+ *
+ * The live document has to come from the importer's own endpoint. A review payload carries
+ * only the CHANGED subset of the state, which is the right thing for a diff and far too
+ * little for an editor - mounted on it alone, every untouched select renders empty.
  */
-export function proposedConfiguration (payload: ReviewPayload | undefined): BackendConfiguration {
-  const config: Record<string, unknown> = {}
+export function proposedConfiguration (
+  payload: ReviewPayload | undefined,
+  live: BackendConfiguration | undefined
+): BackendConfiguration {
+  const config: Record<string, unknown> = structuredClone(live ?? {}) as Record<string, unknown>
   if (payload == null) return config as BackendConfiguration
 
   for (const [slotKey, slot] of Object.entries(payload.slots ?? {})) {
-    const current = slot.current ?? {}
     const proposed = slot.proposed ?? {}
 
     if (slotKey === MAPPING_SLOT) {
       // the mapping list rides one address, whole
-      const rows = proposed.mappingConfig ?? current.mappingConfig
+      const rows = proposed.mappingConfig
       if (rows !== undefined) config.mappingConfig = rows
       continue
     }
 
-    for (const [address, value] of Object.entries(current)) assign(config, address, value)
     for (const [address, value] of Object.entries(proposed)) assign(config, address, value)
   }
 

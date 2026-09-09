@@ -11,6 +11,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Checkbox, Tag } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
+import { useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
+import type { BackendConfiguration } from '../utils/transformers'
 import { FormAnnotationsProvider } from './studio-form-annotations'
 import {
   annotationsFor, configChanges, formatValue, mappingDiff, proposedConfiguration,
@@ -51,9 +53,13 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const { data, isLoading, error } = useChangeSetReview(changeSetId, contextRef)
   const payload = data as ReviewPayload | undefined
 
+  // the review payload carries only what changed; the editor needs the whole document
+  const { data: liveConfig, isLoading: liveLoading } = useBundleDataImporterConfigGetQuery({ name: subjectRef })
+  const live = liveConfig?.configuration as BackendConfiguration | undefined
+
   const changes = useMemo(() => configChanges(payload), [payload])
   const mappings = useMemo(() => mappingDiff(payload), [payload])
-  const configuration = useMemo(() => proposedConfiguration(payload), [payload])
+  const configuration = useMemo(() => proposedConfiguration(payload, live), [payload, live])
 
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set())
 
@@ -84,7 +90,7 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   if (error != null) {
     return <div className={ styles.state }>The proposed changes could not be loaded.</div>
   }
-  if (isLoading || payload === undefined) {
+  if (isLoading || liveLoading || payload === undefined) {
     return <div className={ styles.state }>Loading the proposed configuration…</div>
   }
 
