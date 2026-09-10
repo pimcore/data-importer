@@ -14,6 +14,7 @@ import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDet
 import { isBundleActive } from '@pimcore/studio-ui-bundle/modules/app'
 import { type DataImporterFormValues } from '../types'
 import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
+import { ConfigEditorModeProvider } from './config-editor-mode'
 import { DataSetupTab } from './tabs/data-setup-tab'
 import { ExecutionTab } from './tabs/execution-tab'
 import { ImportLogsTab } from './tabs/import-logs-tab'
@@ -36,6 +37,12 @@ export interface DataImporterConfigEditorProps {
   modificationDate?: number
   onChange?: DataHubAdapterDetailViewProps['onChange']
   requestId?: string
+  /**
+   * false drops everything that belongs to a configuration as it is RUNNING - the import
+   * logs, the run button, the execution status. A configuration that is only proposed has
+   * no runtime to show.
+   */
+  showRuntime?: boolean
   renderToolbar?: (state: ConfigEditorToolbarState) => React.ReactNode
 }
 
@@ -53,7 +60,8 @@ export const DataImporterConfigEditor = ({
   modificationDate,
   onChange = ignoreChange,
   requestId,
-  renderToolbar
+  renderToolbar,
+  showRuntime = true
 }: DataImporterConfigEditorProps): React.JSX.Element => {
   const { t } = useTranslation()
 
@@ -91,11 +99,12 @@ export const DataImporterConfigEditor = ({
       children: <ExecutionTab
         configName={ configName }
         isDirty={ isDirty }
+        showRuntime={ showRuntime }
                 />
     },
     // Import logs are read through the application logger, so the tab is only
     // available when that bundle is enabled and installed.
-    ...(isBundleActive('PimcoreApplicationLoggerBundle')
+    ...(showRuntime && isBundleActive('PimcoreApplicationLoggerBundle')
       ? [{
           key: 'import-logs',
           label: t('data-importer.tabs.import-logs'),
@@ -111,15 +120,17 @@ export const DataImporterConfigEditor = ({
   ]
 
   return (
-    <BaseDetailView
-      disabled={ !isWriteable }
-      form={ form }
-      initialValues={ initialValues }
-      isLoading={ isLoading }
-      onValuesChange={ handleValuesChange }
-      requestId={ requestId ?? '' }
-      tabs={ tabs }
-      toolbar={ renderToolbar?.({ isDirty, onSave: handleSave }) }
-    />
+    <ConfigEditorModeProvider readOnly={ !isWriteable }>
+      <BaseDetailView
+        disabled={ !isWriteable }
+        form={ form }
+        initialValues={ initialValues }
+        isLoading={ isLoading }
+        onValuesChange={ handleValuesChange }
+        requestId={ requestId ?? '' }
+        tabs={ tabs }
+        toolbar={ renderToolbar?.({ isDirty, onSave: handleSave }) }
+      />
+    </ConfigEditorModeProvider>
   )
 }
