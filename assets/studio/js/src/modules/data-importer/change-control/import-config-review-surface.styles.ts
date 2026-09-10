@@ -12,6 +12,91 @@ import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ token, css }) => ({
   // the shell renders the review full-bleed; the breathing room is this surface's to add
+  railTop: css`
+    flex: 0 0 auto;
+    padding: ${token.paddingXS}px ${token.paddingXS}px ${token.paddingSM}px;
+  `,
+  summaryLine: css`
+    font-weight: ${token.fontWeightStrong};
+  `,
+  pills: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${token.marginXXS}px;
+    margin-top: ${token.marginXS}px;
+  `,
+  chips: css`
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${token.marginXXS}px;
+    padding: 0 ${token.paddingXS}px ${token.paddingXS}px;
+  `,
+  chip: css`
+    font-size: ${token.fontSizeSM}px;
+    line-height: 22px;
+    padding: 0 ${token.paddingSM}px;
+    border-radius: 999px;
+    cursor: pointer;
+    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorder};
+    color: ${token.colorTextSecondary};
+
+    &[aria-pressed='true'] {
+      background: ${token.colorPrimaryBg};
+      border-color: ${token.colorPrimaryBorder};
+      color: ${token.colorPrimaryText};
+      font-weight: ${token.fontWeightStrong};
+    }
+  `,
+  search: css`
+    flex: 0 0 auto;
+    padding: 0 ${token.paddingXS}px ${token.paddingSM}px;
+  `,
+  tree: css`
+    flex: 1;
+    overflow: auto;
+    padding: 0 ${token.paddingXXS}px;
+  `,
+  railFoot: css`
+    flex: 0 0 auto;
+    padding: ${token.paddingSM}px ${token.paddingXS}px ${token.paddingXS}px;
+    font-size: ${token.fontSizeSM}px;
+    line-height: 1.5;
+    color: ${token.colorTextTertiary};
+    text-wrap: pretty;
+  `,
+  sectionLabelText: css`
+    flex: 1;
+    font-weight: ${token.fontWeightStrong};
+  `,
+  groupLabelActive: css`
+    flex: 1;
+    font-weight: ${token.fontWeightStrong};
+    color: ${token.colorPrimaryText};
+  `,
+  rowLabel: css`
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `,
+  rowTarget: css`
+    display: flex;
+    gap: ${token.marginXS}px;
+    align-items: center;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorPrimaryBg};
+  `,
   layout: css`
     display: flex;
     align-items: stretch;
@@ -94,6 +179,15 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     gap: ${token.marginXS}px;
     align-items: flex-start;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
+    border-radius: ${token.borderRadius}px;
+
+    &:hover { background: ${token.colorBgContainer}; }
+  `,
+  row: css`
+    display: flex;
+    gap: ${token.marginXS}px;
+    align-items: center;
     padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
     border-radius: ${token.borderRadius}px;
 

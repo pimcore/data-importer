@@ -9,8 +9,8 @@
  */
 
 import React from 'react'
-import { Checkbox, Tag } from '@pimcore/studio-ui-bundle/components'
-import { formatValue, type ChangeGroup, type ConfigChange } from './config-review-model'
+import { Checkbox, Input, Tag } from '@pimcore/studio-ui-bundle/components'
+import { formatValue, type ConfigChange, type TabGroup } from './config-review-model'
 import { type MappingRowDiff } from './mapping-diff'
 import { type useStyles } from './import-config-review-surface.styles'
 
@@ -24,82 +24,181 @@ export const STATUS_COLOR: Record<string, string> = {
   moved: 'processing'
 }
 
-interface SectionProps {
-  readonly group: ChangeGroup
-  readonly collapsed: boolean
-  readonly excluded: ReadonlySet<string>
-  readonly onToggleCollapsed: () => void
-  readonly onToggleExcluded: (addresses: string[], include: boolean) => void
+export const STATE_FILTERS = ['All', 'Changed', 'Added', 'Removed'] as const
+
+export type StateFilter = typeof STATE_FILTERS[number]
+
+interface HeadProps {
+  readonly changed: number
+  readonly added: number
+  readonly removed: number
+  readonly tabsTouched: number
+  readonly tabCount: number
   readonly styles: Styles
 }
 
-export const Section: React.FC<SectionProps> = ({
-  group, collapsed, excluded, onToggleCollapsed, onToggleExcluded, styles
-}) => {
-  const addresses = group.changes.map((change) => change.address)
-  const includedCount = addresses.filter((address) => !excluded.has(address)).length
+/** What the change set is, before what is in it. */
+export const RailHead: React.FC<HeadProps> = ({ changed, added, removed, tabsTouched, tabCount, styles }) => (
+  <div className={ styles.railTop }>
+    <div className={ styles.summaryLine }>
+      { changed + added + removed } changes · { tabsTouched } of { tabCount } tabs affected
+    </div>
+    <div className={ styles.pills }>
+      <Tag color="warning">{ changed } changed</Tag>
+      <Tag color="success">{ added } added</Tag>
+      <Tag color="error">{ removed } removed</Tag>
+    </div>
+  </div>
+)
 
-  return (
-    <div className={ styles.section }>
-      <div className={ styles.sectionHead }>
-        <Checkbox
-          checked={ includedCount > 0 }
-          indeterminate={ includedCount > 0 && includedCount < addresses.length }
-          onChange={ (event) => { onToggleExcluded(addresses, event.target.checked) } }
-        />
+interface FiltersProps {
+  readonly filter: StateFilter
+  readonly query: string
+  readonly onFilter: (filter: StateFilter) => void
+  readonly onQuery: (query: string) => void
+  readonly styles: Styles
+}
+
+export const RailFilters: React.FC<FiltersProps> = ({ filter, query, onFilter, onQuery, styles }) => (
+  <>
+    <div
+      aria-label="Filter by state"
+      className={ styles.chips }
+      role="group"
+    >
+      { STATE_FILTERS.map((option) => (
         <button
-          className={ styles.sectionButton }
-          onClick={ onToggleCollapsed }
+          aria-pressed={ filter === option }
+          className={ styles.chip }
+          key={ option }
+          onClick={ () => { onFilter(option) } }
           type="button"
         >
-          <span className={ styles.caret }>{ collapsed ? '▸' : '▾' }</span>
-          <span className={ styles.sectionLabel }>{ group.label }</span>
-          <span className={ styles.count }>{ group.changes.length }</span>
+          { option }
         </button>
-      </div>
-
-      { !collapsed && group.changes.map((change) => (
-        <div
-          className={ styles.change }
-          key={ change.address }
-          title={ change.address }
-        >
-          <Checkbox
-            checked={ !excluded.has(change.address) }
-            onChange={ (event) => { onToggleExcluded([change.address], event.target.checked) } }
-          />
-          <span className={ styles.changeBody }>
-            <span className={ styles.changeHead }>
-              <span className={ styles.changeLabel }>{ leafOf(change) }</span>
-              <Tag color={ STATUS_COLOR[change.status] }>{ change.status }</Tag>
-            </span>
-            <span className={ styles.changeValues }>
-              { change.status !== 'added' && (
-                <>
-                  <span className={ styles.was }>{ formatValue(change.current) }</span>
-                  <span>→</span>
-                </>
-              ) }
-              <span className={ styles.now }>{ formatValue(change.proposed) }</span>
-            </span>
-          </span>
-        </div>
       )) }
     </div>
+    <div className={ styles.search }>
+      <Input
+        onChange={ (event) => { onQuery(event.target.value) } }
+        placeholder="Find a field"
+        size="small"
+        value={ query }
+      />
+    </div>
+  </>
+)
+
+interface TreeProps {
+  readonly tabs: TabGroup[]
+  readonly excluded: ReadonlySet<string>
+  readonly collapsed: ReadonlySet<string>
+  readonly activeTab: string
+  readonly target: string | null
+  readonly onToggleCollapsed: (tab: string) => void
+  readonly onToggleExcluded: (addresses: string[], include: boolean) => void
+  readonly onJump: (change: ConfigChange) => void
+  readonly styles: Styles
+}
+
+/**
+ * Tab → section → field. A row is a place in the editor, not only an entry in a list: the
+ * label carries the reader there, and the checkbox decides whether it lands.
+ */
+export const ChangeTree: React.FC<TreeProps> = ({
+  tabs, excluded, collapsed, activeTab, target, onToggleCollapsed, onToggleExcluded, onJump, styles
+}) => {
+  if (tabs.length === 0) {
+    return <div className={ styles.state }>No fields match your search.</div>
+  }
+
+  return (
+    <>
+      { tabs.map((tab) => {
+        const addresses = tab.groups.reduce<string[]>(
+          (all, group) => [...all, ...group.changes.map((change) => change.address)], [])
+        const included = addresses.filter((address) => !excluded.has(address)).length
+        const isOpen = !collapsed.has(tab.tab)
+
+        return (
+          <div
+            className={ styles.section }
+            key={ tab.tab }
+          >
+            <div className={ styles.sectionHead }>
+              <Checkbox
+                checked={ included > 0 }
+                indeterminate={ included > 0 && included < addresses.length }
+                onChange={ (event) => { onToggleExcluded(addresses, event.target.checked) } }
+              />
+              <button
+                className={ styles.sectionButton }
+                onClick={ () => { onToggleCollapsed(tab.tab) } }
+                type="button"
+              >
+                <span className={ styles.caret }>{ isOpen ? '▾' : '▸' }</span>
+                <span className={ activeTab === tab.tab ? styles.groupLabelActive : styles.sectionLabelText }>
+                  { tab.label }
+                </span>
+                <span className={ styles.count }>{ tab.count }</span>
+              </button>
+            </div>
+
+            { isOpen && tab.groups.map((group) => (
+              <div key={ group.section }>
+                <div className={ styles.sectionLabel }>{ group.label }</div>
+                { group.changes.map((change) => (
+                  <div
+                    className={ target === change.address ? styles.rowTarget : styles.row }
+                    key={ change.address }
+                  >
+                    <Checkbox
+                      checked={ !excluded.has(change.address) }
+                      disabled={ change.locked }
+                      onChange={ (event) => { onToggleExcluded([change.address], event.target.checked) } }
+                    />
+                    <button
+                      className={ styles.rowLabel }
+                      onClick={ () => { onJump(change) } }
+                      title={ change.address }
+                      type="button"
+                    >
+                      { change.label }
+                    </button>
+                    <Tag color={ change.locked ? 'default' : STATUS_COLOR[change.status] }>
+                      { change.locked ? 'whole' : change.status }
+                    </Tag>
+                  </div>
+                )) }
+              </div>
+            )) }
+          </div>
+        )
+      }) }
+    </>
   )
 }
 
-interface MappingSectionProps {
+interface MappingProps {
   readonly rows: MappingRowDiff[]
+  readonly onJump: () => void
   readonly styles: Styles
 }
 
-export const MappingSection: React.FC<MappingSectionProps> = ({ rows, styles }) => (
+/** The mapping list is one address, so it is one entry that carries you to the step. */
+export const MappingSection: React.FC<MappingProps> = ({ rows, onJump, styles }) => (
   <div className={ styles.section }>
     <div className={ styles.sectionHead }>
       <span className={ styles.sectionSpacer } />
-      <span className={ styles.sectionLabel }>Mappings</span>
-      <span className={ styles.count }>{ rows.length }</span>
+      <button
+        className={ styles.sectionButton }
+        onClick={ onJump }
+        type="button"
+      >
+        <span className={ styles.caret } />
+        <span className={ styles.sectionLabelText }>Mappings</span>
+        <span className={ styles.count }>{ rows.length }</span>
+      </button>
     </div>
 
     { rows.map((row) => (
@@ -123,9 +222,7 @@ export const MappingSection: React.FC<MappingSectionProps> = ({ rows, styles }) 
       </div>
     )) }
 
-    <div className={ styles.note }>
-      Proposed as a whole — a single row cannot be withheld.
-    </div>
+    <div className={ styles.note }>Proposed as a whole — a single row cannot be withheld.</div>
   </div>
 )
 
@@ -158,7 +255,8 @@ export const NewConfigurationSummary: React.FC<NewConfigurationSummaryProps> = (
   </div>
 )
 
-function leafOf (change: ConfigChange): string {
-  const segments = change.address.split('.')
-  return segments[segments.length - 1]
-}
+/** the value shown beside a change, kept to one line by the rail's styles */
+export const changePreview = (change: ConfigChange): string =>
+  change.status === 'added'
+    ? formatValue(change.proposed)
+    : `${formatValue(change.current)} → ${formatValue(change.proposed)}`

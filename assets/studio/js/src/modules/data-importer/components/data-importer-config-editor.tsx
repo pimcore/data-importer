@@ -10,14 +10,25 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, useDetailView } from '@pimcore/data-hub'
+import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, useDetailView } from '@pimcore/data-hub'
+import { Content, ContentLayout, FormKit, Tabs } from '@pimcore/studio-ui-bundle/components'
+
 import { isBundleActive } from '@pimcore/studio-ui-bundle/modules/app'
+import { useEditorShellStyles } from './config-editor-shell.styles'
 import { type DataImporterFormValues } from '../types'
 import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
 import { ConfigEditorModeProvider } from './config-editor-mode'
 import { DataSetupTab } from './tabs/data-setup-tab'
 import { ExecutionTab } from './tabs/execution-tab'
 import { ImportLogsTab } from './tabs/import-logs-tab'
+/** what BaseDetailView called a TabItem; kept so the tab list reads the same */
+interface EditorTab {
+  key: string
+  label: string
+  children: React.ReactNode
+  fullHeight?: boolean
+}
+
 
 /** a mount that does not report dirty state still has to satisfy useDetailView */
 const ignoreChange = (): void => undefined
@@ -44,7 +55,22 @@ export interface DataImporterConfigEditorProps {
    */
   showRuntime?: boolean
   renderToolbar?: (state: ConfigEditorToolbarState) => React.ReactNode
+  /** drive the tab from outside; omit to keep the tab strip's own state */
+  activeTab?: string
+  onTabChange?: (key: string) => void
+  /** drive the Data Setup step from outside */
+  activeStep?: number
+  onStepChange?: (step: number) => void
 }
+
+/** the tab keys, so a caller can address one without repeating the strings */
+export const CONFIG_TABS = {
+  general: 'general',
+  dataSetup: 'data-setup',
+  execution: 'execution',
+  importLogs: 'import-logs',
+  permissions: 'permissions'
+} as const
 
 /**
  * The configuration editor, over a configuration it is handed rather than one it fetches.
@@ -61,9 +87,14 @@ export const DataImporterConfigEditor = ({
   onChange = ignoreChange,
   requestId,
   renderToolbar,
-  showRuntime = true
+  showRuntime = true,
+  activeTab,
+  onTabChange,
+  activeStep,
+  onStepChange
 }: DataImporterConfigEditorProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useEditorShellStyles()
 
   // Shared form state management
   const { form, isDirty, initialValues, handleSave, handleValuesChange } = useDetailView<DataImporterFormValues, BackendConfiguration>({
@@ -79,7 +110,7 @@ export const DataImporterConfigEditor = ({
     onChange
   })
 
-  const tabs: TabItem[] = [
+  const tabs: EditorTab[] = [
     {
       key: 'general',
       label: t('data-importer.tabs.general'),
@@ -90,7 +121,9 @@ export const DataImporterConfigEditor = ({
       label: t('data-importer.tabs.data-setup'),
       fullHeight: true,
       children: <DataSetupTab
+        activeStep={ activeStep }
         configName={ configName }
+        onStepChange={ onStepChange }
                 />
     },
     {
@@ -119,18 +152,49 @@ export const DataImporterConfigEditor = ({
     }
   ]
 
+  // The same primitives data-hub's BaseDetailView arranges, called directly so the tab
+  // strip can be controlled. BaseDetailView passes `defaultActiveKey`, which leaves the
+  // active tab as its private state and puts it out of reach of anything that wants to
+  // navigate to a field. It holds no other logic, so nothing is lost by composing here.
+  const wrappedTabs = tabs.map((tab) => ({
+    ...tab,
+    children: tab.fullHeight === true ? tab.children : <Content padded>{ tab.children }</Content>
+  }))
+
   return (
     <ConfigEditorModeProvider readOnly={ !isWriteable }>
-      <BaseDetailView
-        disabled={ !isWriteable }
-        form={ form }
-        initialValues={ initialValues }
-        isLoading={ isLoading }
-        onValuesChange={ handleValuesChange }
-        requestId={ requestId ?? '' }
-        tabs={ tabs }
-        toolbar={ renderToolbar?.({ isDirty, onSave: handleSave }) }
-      />
+      <ContentLayout renderToolbar={ renderToolbar?.({ isDirty, onSave: handleSave }) }>
+        <Content
+          loading={ isLoading }
+          overflow={ { x: 'auto', y: 'hidden' } }
+        >
+          { !isLoading && (
+            <div className={ styles.formWrapper }>
+              <FormKit
+                formProps={ {
+                  form,
+                  initialValues,
+                  layout: 'vertical',
+                  onValuesChange: handleValuesChange,
+                  disabled: !isWriteable
+                } }
+                key={ requestId ?? '' }
+                wrapInPanel={ false }
+              >
+                <Tabs
+                  activeKey={ activeTab }
+                  defaultActiveKey={ CONFIG_TABS.general }
+                  fullHeight
+                  items={ wrappedTabs }
+                  noTabBarMargin
+                  onChange={ onTabChange }
+                  type="card"
+                />
+              </FormKit>
+            </div>
+          ) }
+        </Content>
+      </ContentLayout>
     </ConfigEditorModeProvider>
   )
 }

@@ -29,10 +29,14 @@ export interface ConfigChange {
   readonly address: string
   /** the same field as the editor's form binds it, when it binds it at all */
   readonly formPath?: string
+  /** the field's own name, which is what a reader recognises */
+  readonly label: string
   readonly section: string
   readonly status: FormItemAnnotationStatus
   readonly current: unknown
   readonly proposed: unknown
+  /** proposed as part of a group; it cannot be withheld on its own */
+  readonly locked?: boolean
 }
 
 /** the general.* keys the editor's form lifts to its root; see ConfigurationPathMapper */
@@ -113,10 +117,75 @@ export const SECTION_LABELS: Record<string, string> = {
   permissions: 'Permissions'
 }
 
+/**
+ * Where a section lives in the editor: which tab, and for Data Setup which step. This is
+ * what lets the rail navigate rather than only list. Step 1 is Preview Import, which no
+ * configuration value lands in.
+ */
+export const SECTION_TARGET: Record<string, { tab: string, step?: number }> = {
+  general: { tab: 'general' },
+  dataSource: { tab: 'data-setup', step: 0 },
+  resolver: { tab: 'data-setup', step: 2 },
+  mapping: { tab: 'data-setup', step: 3 },
+  processing: { tab: 'data-setup', step: 4 },
+  execution: { tab: 'execution' },
+  permissions: { tab: 'permissions' }
+}
+
+export const TAB_LABELS: Record<string, string> = {
+  general: 'General',
+  'data-setup': 'Data Setup',
+  execution: 'Execution',
+  permissions: 'Permissions'
+}
+
 export interface ChangeGroup {
   readonly section: string
   readonly label: string
   readonly changes: ConfigChange[]
+}
+
+export interface TabGroup {
+  readonly tab: string
+  readonly label: string
+  readonly groups: ChangeGroup[]
+  readonly count: number
+}
+
+/** The tab a section's changes show up in; unknown sections fall back to their own name. */
+export function tabOf (section: string): string {
+  return SECTION_TARGET[section]?.tab ?? section
+}
+
+/**
+ * Changes grouped tab → section, in the order the editor lays them out. The rail reads as
+ * the editor is navigated, so a row can carry the reader there.
+ */
+export function groupByTab (changes: ConfigChange[]): TabGroup[] {
+  const groups = groupChanges(changes)
+  const byTab = new Map<string, ChangeGroup[]>()
+  for (const group of groups) {
+    const tab = tabOf(group.section)
+    byTab.set(tab, [...(byTab.get(tab) ?? []), group])
+  }
+
+  const ordered = [...Object.keys(TAB_LABELS), ...byTab.keys()]
+  const seen = new Set<string>()
+  const result: TabGroup[] = []
+  for (const tab of ordered) {
+    if (seen.has(tab)) continue
+    seen.add(tab)
+    const own = byTab.get(tab)
+    if (own === undefined) continue
+    result.push({
+      tab,
+      label: TAB_LABELS[tab] ?? tab,
+      groups: own,
+      count: own.reduce((total, group) => total + group.changes.length, 0)
+    })
+  }
+
+  return result
 }
 
 /** Changes grouped the way the editor is laid out, so the rail reads as the form does. */
@@ -171,6 +240,7 @@ export function configChanges (payload: ReviewPayload | undefined): ConfigChange
       changes.push({
         address,
         formPath: toFormPath(address),
+        label: address.split('.').pop() ?? address,
         section: slotKey,
         status: before === undefined ? 'added' : 'changed',
         current: before,
