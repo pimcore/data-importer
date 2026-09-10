@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { isEqual, MAPPING_SLOT, type ReviewPayload } from './config-review-model'
+import { beforeOf, isEqual, MAPPING_SLOT, type ReviewMode, type ReviewPayload } from './config-review-model'
 
 /** The mapping rows before and after, matched by mappingId where the rows carry one. */
 export interface MappingRowDiff {
@@ -52,12 +52,12 @@ const rowTarget = (row: MappingRow): string => {
 const rowId = (row: MappingRow): string | undefined =>
   typeof row.mappingId === 'string' && row.mappingId !== '' ? row.mappingId : undefined
 
-export function mappingDiff (payload: ReviewPayload | undefined): MappingRowDiff[] {
+export function mappingDiff (payload: ReviewPayload | undefined, mode: ReviewMode = 'review'): MappingRowDiff[] {
   const slot = payload?.slots?.[MAPPING_SLOT]
   if (slot == null) return []
 
   const proposed = (slot.proposed?.mappingConfig ?? []) as MappingRow[]
-  const current = (slot.current?.mappingConfig ?? []) as MappingRow[]
+  const current = (beforeOf(slot, mode).mappingConfig ?? []) as MappingRow[]
   if (!Array.isArray(proposed) || !Array.isArray(current)) return []
 
   const byId = new Map<string, number>()

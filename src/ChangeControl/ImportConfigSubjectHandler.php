@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 use Pimcore\Bundle\ChangeControlBundle\Merge\Exception\UnsupportedMergeSaveModeException;
 use Pimcore\Bundle\ChangeControlBundle\Merge\MergeSaveMode;
 use Pimcore\Bundle\ChangeControlBundle\Merge\StateShapeInterface;
-use Pimcore\Bundle\ChangeControlBundle\Merge\StructuralShape;
 use Pimcore\Bundle\ChangeControlBundle\Subject\Exception\SubjectAccessDeniedException;
 use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectHandlerInterface;
 use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectRef;
@@ -50,7 +49,7 @@ final readonly class ImportConfigSubjectHandler implements SubjectHandlerInterfa
      * Bookkeeping the editor never binds and a draft must never carry: it changes on every
      * save, so a draft holding it would report a change nobody made.
      */
-    private const array VOLATILE_GENERAL = ['modificationDate', 'createDate', 'creationDate', 'writeable'];
+    public const array VOLATILE_GENERAL = ['modificationDate', 'createDate', 'creationDate', 'writeable'];
 
     public function __construct(
         private ConfigurationServiceInterface $configurations,
@@ -66,7 +65,7 @@ final readonly class ImportConfigSubjectHandler implements SubjectHandlerInterfa
 
     public function shape(SubjectRef $subject): StateShapeInterface
     {
-        return new StructuralShape();
+        return new ImportConfigShape();
     }
 
     public function readState(SubjectRef $subject): array

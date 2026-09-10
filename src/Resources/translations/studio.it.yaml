@@ -323,3 +323,45 @@ data-importer.execution.status.cancel: Annulla esecuzione e svuota la coda
 data-importer.execution.cron-validating: 'Validazione dell''espressione Cron...'
 data-importer.validation.required: '{{field}} è obbligatorio'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Importatore oggetti dati
+
+# Change Control review
+data-importer.review.summary: '{{count}} modifiche · {{tabs}} di {{total}} schede interessate'
+data-importer.review.count.changed: '{{count}} modificati'
+data-importer.review.count.added: '{{count}} aggiunti'
+data-importer.review.count.removed: '{{count}} rimossi'
+data-importer.review.filter.label: Filtra per stato
+data-importer.review.filter.all: Tutti
+data-importer.review.filter.changed: Modificati
+data-importer.review.filter.added: Aggiunti
+data-importer.review.filter.removed: Rimossi
+data-importer.review.find-field: Cerca un campo
+data-importer.review.no-match: Nessun campo corrisponde alla ricerca.
+data-importer.review.status.added: aggiunto
+data-importer.review.status.changed: modificato
+data-importer.review.status.removed: rimosso
+data-importer.review.status.moved: spostato
+data-importer.review.status.whole: intero
+data-importer.review.mappings: Mapping
+data-importer.review.mappings-whole: 'Proposto nel suo insieme — una singola riga non può essere esclusa.'
+data-importer.review.foot: 'Approva applica solo ciò che è selezionato. Le righe raggruppate — la lista dei mapping — sono proposte nel loro insieme.'
+data-importer.review.new.title: Nuova configurazione
+data-importer.review.new.settings: '{{count}} impostazioni'
+data-importer.review.new.mappings: '{{count}} mapping'
+data-importer.review.new.note: 'Nulla qui sostituisce un valore esistente, quindi non c''è nulla da confrontare — leggila nell''editor. Una nuova configurazione viene approvata o rifiutata per intero.'
+data-importer.review.was: 'prima {{value}}'
+data-importer.review.value.empty: vuoto
+data-importer.review.value.yes: sì
+data-importer.review.value.no: no
+data-importer.review.state.merged: Applicato
+data-importer.review.state.discarded: Rifiutato
+data-importer.review.state.refined: Rivisto
+data-importer.review.resolved-at: 'Risolto il {{when}}'
+data-importer.review.history-notice: Valori così com’erano quando la modifica è stata proposta.
+data-importer.review.load-failed: Impossibile caricare le modifiche proposte.
+data-importer.review.loading: 'Caricamento della configurazione proposta…'
+data-importer.review.section.general: Generale
+data-importer.review.section.data-source: Origine dati
+data-importer.review.section.resolver: Resolver
+data-importer.review.section.processing: Elaborazione
+data-importer.review.section.execution: Esecuzione
+data-importer.review.section.permissions: Permessi

@@ -323,3 +323,45 @@ data-importer.execution.status.cancel: Avbryt körning & rensa kö
 data-importer.execution.cron-validating: Validerar Cron-uttryck...
 data-importer.validation.required: '{{field}} är obligatoriskt'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportör
+
+# Change Control review
+data-importer.review.summary: '{{count}} ändringar · {{tabs}} av {{total}} flikar berörda'
+data-importer.review.count.changed: '{{count}} ändrade'
+data-importer.review.count.added: '{{count}} tillagda'
+data-importer.review.count.removed: '{{count}} borttagna'
+data-importer.review.filter.label: Filtrera efter status
+data-importer.review.filter.all: Alla
+data-importer.review.filter.changed: Ändrade
+data-importer.review.filter.added: Tillagda
+data-importer.review.filter.removed: Borttagna
+data-importer.review.find-field: Hitta ett fält
+data-importer.review.no-match: Inga fält matchar sökningen.
+data-importer.review.status.added: tillagd
+data-importer.review.status.changed: ändrad
+data-importer.review.status.removed: borttagen
+data-importer.review.status.moved: flyttad
+data-importer.review.status.whole: hela
+data-importer.review.mappings: Mappningar
+data-importer.review.mappings-whole: 'Föreslås som en helhet — en enskild rad kan inte undantas.'
+data-importer.review.foot: 'Godkänn tillämpar bara det som är ikryssat. Grupperade rader — mappningslistan — föreslås som en helhet.'
+data-importer.review.new.title: Ny konfiguration
+data-importer.review.new.settings: '{{count}} inställningar'
+data-importer.review.new.mappings: '{{count}} mappningar'
+data-importer.review.new.note: 'Inget här ersätter ett befintligt värde, så det finns inget att jämföra med — läs den i editorn. En ny konfiguration godkänns eller avvisas i sin helhet.'
+data-importer.review.was: 'var {{value}}'
+data-importer.review.value.empty: tom
+data-importer.review.value.yes: ja
+data-importer.review.value.no: nej
+data-importer.review.state.merged: Tillämpad
+data-importer.review.state.discarded: Avvisad
+data-importer.review.state.refined: Justerad
+data-importer.review.resolved-at: 'Avgjord {{when}}'
+data-importer.review.history-notice: Värden som de var när ändringen föreslogs.
+data-importer.review.load-failed: De föreslagna ändringarna kunde inte läsas in.
+data-importer.review.loading: 'Läser in den föreslagna konfigurationen…'
+data-importer.review.section.general: Allmänt
+data-importer.review.section.data-source: Datakälla
+data-importer.review.section.resolver: Resolver
+data-importer.review.section.processing: Bearbetning
+data-importer.review.section.execution: Körning
+data-importer.review.section.permissions: Behörigheter

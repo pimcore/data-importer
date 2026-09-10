@@ -29,6 +29,11 @@ class ImportConfigDetailHydratorTest extends Unit
 
     protected function _before(): void
     {
+        // the Change Control bundle is an optional integration this repository cannot install
+        if (!class_exists(SlotDetail::class)) {
+            static::markTestSkipped('Change Control bundle not installed');
+        }
+
         $this->hydrator = new ImportConfigDetailHydrator();
         $this->subject = new SubjectRef(ImportConfigSubjectHandler::TYPE, Uuid::v4(), 'car-import');
     }

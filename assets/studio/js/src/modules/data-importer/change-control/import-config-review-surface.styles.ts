@@ -58,6 +58,18 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow: auto;
     padding: 0 ${token.paddingXXS}px;
   `,
+  history: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${token.marginXXS}px;
+    padding-bottom: ${token.paddingXS}px;
+  `,
+  historyState: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    color: ${token.colorTextSecondary};
+  `,
   railFoot: css`
     flex: 0 0 auto;
     padding: ${token.paddingSM}px ${token.paddingXS}px ${token.paddingXS}px;

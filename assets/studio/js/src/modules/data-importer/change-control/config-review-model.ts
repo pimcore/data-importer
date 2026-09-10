@@ -24,6 +24,18 @@ export interface ReviewPayload {
   readonly meta?: { readonly label?: string, readonly changedFieldNames?: string[] }
 }
 
+/** review: what is proposed against the live document; history: what was recorded against its base */
+export type ReviewMode = 'review' | 'history'
+
+/**
+ * The side a change is read against. While a change set is open that is the live document,
+ * so a reviewer sees what approving would do now. Once it is resolved the live document has
+ * moved on - after a merge it IS the proposal - and only the base it was recorded against
+ * still says what changed.
+ */
+export const beforeOf = (slot: ReviewSlot, mode: ReviewMode): Record<string, unknown> =>
+  (mode === 'history' ? slot.base : slot.current) ?? {}
+
 export interface ConfigChange {
   /** document path — what the merge accepts as an exclude path */
   readonly address: string
@@ -107,14 +119,14 @@ export function proposedConfiguration (
   return config as BackendConfiguration
 }
 
-/** what the editor calls each slot, in the order it shows them */
+/** what the editor calls each slot, as translation keys, in the order it shows them */
 export const SECTION_LABELS: Record<string, string> = {
-  general: 'General',
-  dataSource: 'Data source',
-  resolver: 'Resolver',
-  processing: 'Processing',
-  execution: 'Execution',
-  permissions: 'Permissions'
+  general: 'data-importer.review.section.general',
+  dataSource: 'data-importer.review.section.data-source',
+  resolver: 'data-importer.review.section.resolver',
+  processing: 'data-importer.review.section.processing',
+  execution: 'data-importer.review.section.execution',
+  permissions: 'data-importer.review.section.permissions'
 }
 
 /**
@@ -132,11 +144,12 @@ export const SECTION_TARGET: Record<string, { tab: string, step?: number }> = {
   permissions: { tab: 'permissions' }
 }
 
+/** the editor's own tab titles, so the rail names a tab exactly as the strip does */
 export const TAB_LABELS: Record<string, string> = {
-  general: 'General',
-  'data-setup': 'Data Setup',
-  execution: 'Execution',
-  permissions: 'Permissions'
+  general: 'data-importer.tabs.general',
+  'data-setup': 'data-importer.tabs.data-setup',
+  execution: 'data-importer.tabs.execution',
+  permissions: 'data-importer.tabs.permissions'
 }
 
 export interface ChangeGroup {
@@ -216,22 +229,22 @@ export function groupChanges (changes: ConfigChange[]): ChangeGroup[] {
  * previous value, so enumerating every field says only "all of it" at great length — and
  * withholding single leaves would land a configuration that was never reviewed as a whole.
  */
-export function isNewConfiguration (payload: ReviewPayload | undefined): boolean {
+export function isNewConfiguration (payload: ReviewPayload | undefined, mode: ReviewMode = 'review'): boolean {
   const slots = Object.values(payload?.slots ?? {})
   if (slots.length === 0) return false
 
-  return slots.every((slot) => Object.keys(slot.current ?? {}).length === 0)
+  return slots.every((slot) => Object.keys(beforeOf(slot, mode)).length === 0)
 }
 
 /** Every leaf the change set actually changes, in the order the editor shows the sections. */
-export function configChanges (payload: ReviewPayload | undefined): ConfigChange[] {
+export function configChanges (payload: ReviewPayload | undefined, mode: ReviewMode = 'review'): ConfigChange[] {
   if (payload == null) return []
 
   const changes: ConfigChange[] = []
   for (const [slotKey, slot] of Object.entries(payload.slots ?? {})) {
     if (slotKey === MAPPING_SLOT) continue
 
-    const current = slot.current ?? {}
+    const current = beforeOf(slot, mode)
     const proposed = slot.proposed ?? {}
 
     for (const [address, value] of Object.entries(proposed)) {
@@ -252,21 +265,31 @@ export function configChanges (payload: ReviewPayload | undefined): ConfigChange
   return changes
 }
 
-export function annotationsFor (changes: ConfigChange[]): FormAnnotations {
+/** the words a value is printed with; the rail hands in its translations */
+export interface ValueLabels {
+  readonly empty: string
+  readonly yes: string
+  readonly no: string
+}
+
+/**
+ * @param hint what to print under a changed field - the value it had, in the reader's words
+ */
+export function annotationsFor (changes: ConfigChange[], hint: (change: ConfigChange) => string): FormAnnotations {
   const annotations: FormAnnotations = {}
   for (const change of changes) {
     if (change.formPath === undefined) continue
     annotations[change.formPath] = {
       status: change.status,
-      hint: change.status === 'added' ? undefined : formatValue(change.current)
+      hint: change.status === 'added' ? undefined : hint(change)
     }
   }
   return annotations
 }
 
-export function formatValue (value: unknown): string {
-  if (value === undefined || value === null || value === '') return '—'
-  if (typeof value === 'boolean') return value ? 'yes' : 'no'
+export function formatValue (value: unknown, labels: ValueLabels): string {
+  if (value === undefined || value === null || value === '') return labels.empty
+  if (typeof value === 'boolean') return value ? labels.yes : labels.no
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)
 }
