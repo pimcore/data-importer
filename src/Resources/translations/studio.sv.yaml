@@ -333,9 +333,6 @@ data-importer.review.status.removed: borttagen
 data-importer.review.status.moved: flyttad
 data-importer.review.mappings: Mappningar
 data-importer.review.new.title: Ny konfiguration
-data-importer.review.new.settings: '{{count}} inställningar'
-data-importer.review.new.mappings: '{{count}} mappningar'
-data-importer.review.new.note: 'En ny konfiguration godkänns eller avvisas i sin helhet; läs den i editorn.'
 data-importer.review.state.merged: Tillämpad
 data-importer.review.state.discarded: Avvisad
 data-importer.review.state.refined: Justerad

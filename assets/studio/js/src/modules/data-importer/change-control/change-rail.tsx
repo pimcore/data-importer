@@ -131,30 +131,3 @@ export const ChangeList: React.FC<ListProps> = ({ groups, mappings, activeSectio
 
   return <>{ ordered }</>
 }
-
-interface NewConfigurationSummaryProps {
-  readonly name: string
-  readonly settingCount: number
-  readonly mappingCount: number
-  readonly styles: Styles
-}
-
-/**
- * A create has no previous values, so listing every field says only "all of it" at length.
- */
-export const NewConfigurationSummary: React.FC<NewConfigurationSummaryProps> = ({
-  name, settingCount, mappingCount, styles
-}) => {
-  const { t } = useTranslation()
-
-  return (
-    <div className={ styles.group }>
-      <div className={ styles.headlineStatic }>{ t(`${T}.new.title`) }</div>
-      <div className={ styles.newName }>{ name }</div>
-      <div className={ styles.note }>
-        { t(`${T}.new.settings`, { count: settingCount }) } · { t(`${T}.new.mappings`, { count: mappingCount }) }
-      </div>
-      <div className={ styles.note }>{ t(`${T}.new.note`) }</div>
-    </div>
-  )
-}

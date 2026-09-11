@@ -333,9 +333,6 @@ data-importer.review.status.removed: supprimé
 data-importer.review.status.moved: déplacé
 data-importer.review.mappings: Mappings
 data-importer.review.new.title: Nouvelle configuration
-data-importer.review.new.settings: '{{count}} réglages'
-data-importer.review.new.mappings: '{{count}} mappings'
-data-importer.review.new.note: 'Une nouvelle configuration est approuvée ou rejetée en bloc ; lisez-la dans l’éditeur.'
 data-importer.review.state.merged: Appliqué
 data-importer.review.state.discarded: Rejeté
 data-importer.review.state.refined: Affiné

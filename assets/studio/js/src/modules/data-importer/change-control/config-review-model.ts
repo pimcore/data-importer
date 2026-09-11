@@ -32,6 +32,9 @@ export interface ConfigChange {
 /** the general.* keys the editor's form lifts to its root; see ConfigurationPathMapper */
 const FLATTENED = ['active', 'description', 'group', 'name']
 
+/** identity and bookkeeping: the subject's, never a change a reviewer weighs */
+const NOT_A_CHANGE = new Set(['general.name', 'general.type', 'general.path'])
+
 /**
  * A document path as the editor's form binds it, or undefined when the form has no field for
  * it — bookkeeping under `general`, most of all, which a reviewer must not be offered.
@@ -185,6 +188,7 @@ export function configChanges (payload: ReviewPayload | undefined, mode: ReviewM
     const proposed = slot.proposed ?? {}
 
     for (const [address, value] of Object.entries(proposed)) {
+      if (NOT_A_CHANGE.has(address)) continue
       const before = current[address]
       if (isEqual(before, value)) continue
       changes.push({

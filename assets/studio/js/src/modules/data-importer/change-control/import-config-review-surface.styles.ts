@@ -97,18 +97,11 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorPrimary};
     cursor: pointer;
   `,
-  headlineStatic: css`
-    min-height: ${token.controlHeight}px;
-    display: flex;
-    align-items: center;
-    font-weight: ${token.fontWeightStrong};
-    color: ${token.colorText};
-  `,
-  /* a listing: bulleted, one hairline apart, the mark at the end of the line */
+  /* a listing: the field's name from the left edge, its mark at the end, one hairline apart */
   items: css`
     list-style: none;
     margin: 0;
-    padding: 0 0 0 ${token.paddingXS}px;
+    padding: 0;
   `,
   item: css`
     display: flex;
@@ -118,16 +111,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: ${token.paddingXXS}px 0;
     border-bottom: 1px solid ${token.colorSplit};
     color: ${token.colorText};
-
-    &::before {
-      content: '';
-      flex: 0 0 auto;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: ${token.colorTextQuaternary};
-      margin-right: ${token.marginXXS}px;
-    }
 
     &:last-child {
       border-bottom: none;
@@ -147,10 +130,6 @@ export const useStyles = createStyles(({ token, css }) => ({
   state: css`
     padding: ${token.paddingLG}px;
     color: ${token.colorTextSecondary};
-  `,
-  newName: css`
-    font-weight: ${token.fontWeightStrong};
-    color: ${token.colorText};
   `,
   editor: css`
     flex: 1;

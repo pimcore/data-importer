@@ -194,6 +194,8 @@ final readonly class ProposeImportConfigTool
                 'subjectRef' => $name,
                 'subjectState' => $state,
                 'label' => $label,
+                // the card and the review title say "new" rather than "changed" on this
+                'isNew' => $existing === null,
             ], (int) $this->securityService->getCurrentUser()->getId());
 
             $result = ['proposalId' => $proposalId, 'name' => $name];

@@ -21,7 +21,7 @@ import {
 } from './config-review-model'
 import { fieldLabel } from './field-labels'
 import { mappingDiff } from './mapping-diff'
-import { ChangeList, NewConfigurationSummary } from './change-rail'
+import { ChangeList } from './change-rail'
 import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
@@ -151,30 +151,18 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
           />
         ) }
         <div className={ styles.list }>
-          { isNew
-            ? (
-              <NewConfigurationSummary
-                mappingCount={ mappings.length }
-                name={ subjectRef }
-                settingCount={ changes.length }
-                styles={ styles }
-              />
-              )
-            : (
-              <>
-                <div className={ styles.summary }>
-                  { t(`${T}.changes`, { count: changes.length + changedMappings.length }) }
-                </div>
-                <ChangeList
-                  activeSection={ activeSection }
-                  groups={ groups }
-                  labelFor={ labelFor }
-                  mappings={ changedMappings }
-                  onJump={ jumpToSection }
-                  styles={ styles }
-                />
-              </>
-              ) }
+          <div className={ styles.summary }>
+            { isNew && <>{ t(`${T}.new.title`) } · </> }
+            { t(`${T}.changes`, { count: changes.length + changedMappings.length }) }
+          </div>
+          <ChangeList
+            activeSection={ activeSection }
+            groups={ groups }
+            labelFor={ labelFor }
+            mappings={ changedMappings }
+            onJump={ jumpToSection }
+            styles={ styles }
+          />
         </div>
       </aside>
 
