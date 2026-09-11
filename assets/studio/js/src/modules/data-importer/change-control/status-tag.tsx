@@ -30,6 +30,7 @@ export const StatusTag: React.FC<{ readonly status: ChangeStatus }> = ({ status 
   return (
     <Tag
       color={ STATUS_COLOUR[status] }
+      data-review-mark=""
       style={ { marginInlineEnd: 0 } }
     >
       { t(`data-importer.review.status.${status}`) }

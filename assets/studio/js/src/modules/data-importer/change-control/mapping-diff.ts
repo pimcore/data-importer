@@ -40,6 +40,14 @@ export const mappingRows = (diff: MappingRowDiff[]): MappingRow[] => diff.map((e
 const naturalKey = (row: MappingRow): string =>
   `${String(row.label ?? '')}|${JSON.stringify(row.dataSourceIndex ?? null)}`
 
+/** what a row reads and where it writes: the identity a renamed row keeps */
+const targetKey = (row: MappingRow): string | undefined => {
+  const settings = row.dataTarget?.settings ?? {}
+  const field = settings.fieldName
+  if (typeof field !== 'string' || field === '') return undefined
+  return `${JSON.stringify(row.dataSourceIndex ?? null)}|${row.dataTarget?.type ?? ''}:${field}:${String(settings.language ?? '')}`
+}
+
 const rowLabel = (row: MappingRow): string => {
   if (typeof row.label === 'string' && row.label !== '') return row.label
   const source = row.dataSourceIndex
@@ -67,16 +75,28 @@ export function mappingDiff (payload: ReviewPayload | undefined, mode: ReviewMod
 
   const byId = new Map<string, number>()
   const byNatural = new Map<string, number>()
+  const byTarget = new Map<string, number>()
   current.forEach((row, index) => {
     const id = rowId(row)
     if (id !== undefined) byId.set(id, index)
     if (!byNatural.has(naturalKey(row))) byNatural.set(naturalKey(row), index)
+    const target = targetKey(row)
+    if (target !== undefined && !byTarget.has(target)) byTarget.set(target, index)
   })
+  // a row matches by its id, else by label and source, else by source and target — so a
+  // relabelled row reads as changed rather than as one dropped and another added
+  const matchOf = (row: MappingRow): number | undefined => {
+    const id = rowId(row)
+    const target = targetKey(row)
+    return (id !== undefined ? byId.get(id) : undefined) ??
+      byNatural.get(naturalKey(row)) ??
+      (target !== undefined ? byTarget.get(target) : undefined)
+  }
 
   const matched = new Set<number>()
   const rows: MappingRowDiff[] = proposed.map((row, index) => {
     const id = rowId(row)
-    const at = (id !== undefined ? byId.get(id) : undefined) ?? byNatural.get(naturalKey(row))
+    const at = matchOf(row)
     const key = id ?? `#${index}`
     const target = rowTarget(row)
 

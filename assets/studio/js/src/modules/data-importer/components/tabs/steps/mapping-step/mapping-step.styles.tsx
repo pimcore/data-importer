@@ -19,12 +19,13 @@ export const useStyles = createStyles(({ css, token }) => {
     // Three-column flex layout: left(flex:2) + center(46px fixed) + right(flex:3)
     // DataSetupTab gives this div a real bounded height via flex:1 + min-height:0,
     // so height:100% and overflow:hidden here are clean — no JS measurement needed.
-    // min-width:800px combined with overflow:auto on stepContentMapping shows a
-    // horizontal scrollbar if the viewport is too narrow.
+    // min-width combined with overflow:auto on stepContentMapping shows a horizontal
+    // scrollbar if the viewport is too narrow; 720px still fits the editor beside a
+    // review rail in a 90vw modal on a 1200px screen.
     mappingLayout: css`
       width: 100%;
       height: 100%;
-      min-width: 900px;
+      min-width: 720px;
     `,
 
     mappingLayoutLeft: css`

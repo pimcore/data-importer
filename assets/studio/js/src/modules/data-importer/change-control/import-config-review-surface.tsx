@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Content } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
@@ -47,6 +47,15 @@ export interface ImportConfigReviewSurfaceProps {
 }
 
 const T = 'data-importer.review'
+
+/** a field the SDK marked, or a mapping row carrying its own mark */
+const MARK_SELECTOR = '.pimcore-form-item-annotated, [data-review-mark]'
+
+/** the editor's tabs are antd's, which keep every pane mounted and flag the shown one */
+const ACTIVE_PANE_SELECTOR = '.ant-tabs-tabpane-active'
+
+const SCROLL_INTERVAL_MS = 250
+const SCROLL_ATTEMPTS = 24
 
 /**
  * An import configuration reviews as the importer's own editor: the proposed configuration
@@ -96,6 +105,41 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const [tab, setTab] = useState('general')
   const [step, setStep] = useState<number | undefined>(undefined)
 
+  // a jump lands on the first marked field of the section, not on the section's top: the
+  // step may still be rendering or the tab still sliding in, so the scroll is checked and
+  // retried briefly rather than fired once
+  const editorRef = useRef<HTMLDivElement>(null)
+  const scrollPending = useRef(false)
+  // a step's chunk loads lazily the first time its tab opens, which on a slow host takes
+  // seconds; each jump starts a new job so a stale chain stops looking
+  const scrollJob = useRef(0)
+  const scrollToMark = useCallback((attempt = 0, job = ++scrollJob.current): void => {
+    if (job !== scrollJob.current) return
+    const root = editorRef.current
+    // the pane being left is still laid out for a moment after the switch, and the new
+    // one has no active flag yet: only the active pane is searched — never the whole
+    // editor — and only a laid-out mark can be scrolled to
+    const pane = root?.querySelector(ACTIVE_PANE_SELECTOR)
+    const marks = pane == null ? [] : Array.from(pane.querySelectorAll(MARK_SELECTOR))
+    const mark = marks.find((element) => element.getClientRects().length > 0)
+    if (root !== null && mark !== undefined) {
+      const bounds = root.getBoundingClientRect()
+      const box = mark.getBoundingClientRect()
+      if (box.top >= bounds.top && box.bottom <= bounds.bottom) return
+      mark.scrollIntoView({ block: 'center' })
+    }
+    if (attempt < SCROLL_ATTEMPTS) window.setTimeout(() => { scrollToMark(attempt + 1, job) }, SCROLL_INTERVAL_MS)
+  }, [])
+  useEffect(() => {
+    if (!scrollPending.current) return
+    scrollPending.current = false
+    // the pane being left can still carry the active flag on the commit that switches
+    // tabs; the first look waits one interval so it sees the new one
+    const job = ++scrollJob.current
+    const timer = window.setTimeout(() => { scrollToMark(0, job) }, SCROLL_INTERVAL_MS)
+    return () => { window.clearTimeout(timer) }
+  }, [tab, step, scrollToMark])
+
   // a count is a verdict; none until the change set has actually been read
   useEffect(() => {
     if (payload === undefined) return
@@ -111,9 +155,14 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const jumpToSection = useCallback((section: string): void => {
     const destination = SECTION_TARGET[section]
     if (destination === undefined) return
+    if (destination.tab === tab && (destination.step ?? step) === step) {
+      scrollToMark()
+      return
+    }
+    scrollPending.current = true
     setTab(destination.tab)
     setStep(destination.step)
-  }, [])
+  }, [tab, step, scrollToMark])
 
   const labelFor = useCallback(
     (change: ConfigChange): string => fieldLabel(change.address, configuration, t),
@@ -185,7 +234,10 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
             ) }
       </aside>
 
-      <div className={ styles.editor }>
+      <div
+        className={ styles.editor }
+        ref={ editorRef }
+      >
         { FormAnnotationsProvider !== null
           ? <FormAnnotationsProvider annotations={ annotations }>{ editor }</FormAnnotationsProvider>
           : editor }
