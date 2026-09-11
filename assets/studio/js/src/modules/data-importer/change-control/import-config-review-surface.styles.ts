@@ -63,32 +63,71 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     flex-direction: column;
   `,
-  /* the headline is the section's name at body size; the arrow beside it is the only control */
+  /* the headline is the section's name at body size, and the whole line opens the section:
+     a button stripped back to text, with the arrow as its one ornament */
   headline: css`
+    display: inline-flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    min-height: ${token.controlHeight}px;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-weight: ${token.fontWeightStrong};
+    color: ${token.colorText};
+    cursor: pointer;
+
+    &:hover {
+      color: ${token.colorPrimary};
+    }
+  `,
+  headlineActive: css`
+    display: inline-flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    min-height: ${token.controlHeight}px;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-weight: ${token.fontWeightStrong};
+    color: ${token.colorPrimary};
+    cursor: pointer;
+  `,
+  headlineStatic: css`
+    min-height: ${token.controlHeight}px;
     display: flex;
     align-items: center;
-    gap: ${token.marginXXS}px;
-    min-height: ${token.controlHeight}px;
-  `,
-  headlineLabel: css`
-    font-size: ${token.fontSize}px;
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorText};
   `,
-  headlineActive: css`
-    font-size: ${token.fontSize}px;
-    font-weight: ${token.fontWeightStrong};
-    color: ${token.colorPrimary};
+  /* a listing: bulleted, one hairline apart, the mark at the end of the line */
+  items: css`
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 ${token.paddingXS}px;
   `,
-  /* a listing, not controls: the field's name and its mark, one hairline apart */
   item: css`
     display: flex;
     align-items: center;
     gap: ${token.marginXS}px;
     min-height: ${token.controlHeightSM}px;
-    padding: ${token.paddingXXS}px 0 ${token.paddingXXS}px ${token.paddingSM}px;
+    padding: ${token.paddingXXS}px 0;
     border-bottom: 1px solid ${token.colorSplit};
-    color: ${token.colorTextSecondary};
+    color: ${token.colorText};
+
+    &::before {
+      content: '';
+      flex: 0 0 auto;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: ${token.colorTextQuaternary};
+      margin-right: ${token.marginXXS}px;
+    }
 
     &:last-child {
       border-bottom: none;

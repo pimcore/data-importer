@@ -10,7 +10,7 @@
 
 
 import React from 'react'
-import { IconButton } from '@pimcore/studio-ui-bundle/components'
+import { Icon } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type ChangeGroup, type ConfigChange } from './config-review-model'
 import { type MappingRowDiff } from './mapping-diff'
@@ -31,21 +31,23 @@ interface HeadlineProps {
   readonly styles: Styles
 }
 
-/** A section's name, and the one control in the rail: the arrow that opens it in the editor. */
+/** A section's name, and the one control in the rail: the whole line opens it in the editor. */
 const Headline: React.FC<HeadlineProps> = ({ label, active, onJump, styles }) => {
   const { t } = useTranslation()
 
   return (
-    <div className={ styles.headline }>
-      <span className={ active ? styles.headlineActive : styles.headlineLabel }>{ label }</span>
-      <IconButton
-        icon={ { value: 'arrow-narrow-right' } }
-        onClick={ onJump }
-        size="small"
-        tooltip={ { title: t(`${T}.open-section`) } }
-        type="link"
+    <button
+      className={ active ? styles.headlineActive : styles.headline }
+      onClick={ onJump }
+      title={ t(`${T}.open-section`) }
+      type="button"
+    >
+      <span>{ label }</span>
+      <Icon
+        options={ { width: 14, height: 14 } }
+        value="arrow-narrow-right"
       />
-    </div>
+    </button>
   )
 }
 
@@ -80,15 +82,17 @@ export const ChangeList: React.FC<ListProps> = ({ groups, mappings, activeSectio
           onJump={ () => { onJump('mapping') } }
           styles={ styles }
         />
-        { mappings.map((row) => (
-          <div
-            className={ styles.item }
-            key={ row.key }
-          >
-            <span className={ styles.itemLabel }>{ row.label }</span>
-            { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
-          </div>
-        )) }
+        <ul className={ styles.items }>
+          { mappings.map((row) => (
+            <li
+              className={ styles.item }
+              key={ row.key }
+            >
+              <span className={ styles.itemLabel }>{ row.label }</span>
+              { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
+            </li>
+          )) }
+        </ul>
       </div>
       )
 
@@ -103,16 +107,18 @@ export const ChangeList: React.FC<ListProps> = ({ groups, mappings, activeSectio
         onJump={ () => { onJump(group.section) } }
         styles={ styles }
       />
-      { group.changes.map((change) => (
-        <div
-          className={ styles.item }
-          key={ change.address }
-          title={ change.address }
-        >
-          <span className={ styles.itemLabel }>{ labelFor(change) }</span>
-          <StatusTag status={ change.status } />
-        </div>
-      )) }
+      <ul className={ styles.items }>
+        { group.changes.map((change) => (
+          <li
+            className={ styles.item }
+            key={ change.address }
+            title={ change.address }
+          >
+            <span className={ styles.itemLabel }>{ labelFor(change) }</span>
+            <StatusTag status={ change.status } />
+          </li>
+        )) }
+      </ul>
     </div>
   ))
 
@@ -143,7 +149,7 @@ export const NewConfigurationSummary: React.FC<NewConfigurationSummaryProps> = (
 
   return (
     <div className={ styles.group }>
-      <div className={ styles.headline }><span className={ styles.headlineLabel }>{ t(`${T}.new.title`) }</span></div>
+      <div className={ styles.headlineStatic }>{ t(`${T}.new.title`) }</div>
       <div className={ styles.newName }>{ name }</div>
       <div className={ styles.note }>
         { t(`${T}.new.settings`, { count: settingCount }) } · { t(`${T}.new.mappings`, { count: mappingCount }) }
