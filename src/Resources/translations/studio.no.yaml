@@ -341,7 +341,6 @@ data-importer.review.state.refined: Justert
 data-importer.review.resolved-at: 'Avgjort {{when}}'
 data-importer.review.history-notice: Verdier slik de var da endringen ble foreslått.
 data-importer.review.load-failed: De foreslåtte endringene kunne ikke lastes.
-data-importer.review.loading: 'Laster den foreslåtte konfigurasjonen…'
 data-importer.review.section.general: Generelt
 data-importer.review.section.data-source: Datakilde
 data-importer.review.section.resolver: Resolver

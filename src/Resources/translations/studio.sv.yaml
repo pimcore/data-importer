@@ -341,7 +341,6 @@ data-importer.review.state.refined: Justerad
 data-importer.review.resolved-at: 'Avgjord {{when}}'
 data-importer.review.history-notice: Värden som de var när ändringen föreslogs.
 data-importer.review.load-failed: De föreslagna ändringarna kunde inte läsas in.
-data-importer.review.loading: 'Läser in den föreslagna konfigurationen…'
 data-importer.review.section.general: Allmänt
 data-importer.review.section.data-source: Datakälla
 data-importer.review.section.resolver: Resolver

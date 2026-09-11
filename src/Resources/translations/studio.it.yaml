@@ -341,7 +341,6 @@ data-importer.review.state.refined: Rivisto
 data-importer.review.resolved-at: 'Risolto il {{when}}'
 data-importer.review.history-notice: Valori così com’erano quando la modifica è stata proposta.
 data-importer.review.load-failed: Impossibile caricare le modifiche proposte.
-data-importer.review.loading: 'Caricamento della configurazione proposta…'
 data-importer.review.section.general: Generale
 data-importer.review.section.data-source: Origine dati
 data-importer.review.section.resolver: Resolver

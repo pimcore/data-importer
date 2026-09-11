@@ -10,6 +10,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { Content } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
 import { api, useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
 import type { BackendConfiguration } from '../utils/transformers'
@@ -96,9 +97,11 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const paneRef = useRef<HTMLDivElement>(null)
   const { target, jumpTo } = useJumpToField(paneRef)
 
+  // a count is a verdict; none until the change set has actually been read
   useEffect(() => {
+    if (payload === undefined) return
     onStatsChange?.(changes.length + changedMappings.length)
-  }, [changes.length, changedMappings.length, onStatsChange])
+  }, [payload, changes.length, changedMappings.length, onStatsChange])
 
   // an anchor rides in each annotation's hint, which is a node the form renders in place
   const annotations = useMemo<FormAnnotations>(() => {
@@ -145,7 +148,7 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
     return <div className={ styles.state }>{ t(`${T}.load-failed`) }</div>
   }
   if (isLoading || liveLoading || payload === undefined) {
-    return <div className={ styles.state }>{ t(`${T}.loading`) }</div>
+    return <Content loading />
   }
 
   const editor = (

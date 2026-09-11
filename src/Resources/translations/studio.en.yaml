@@ -341,7 +341,6 @@ data-importer.review.state.refined: Refined
 data-importer.review.resolved-at: 'Resolved at {{when}}'
 data-importer.review.history-notice: Values as they were when the change was proposed.
 data-importer.review.load-failed: The proposed changes could not be loaded.
-data-importer.review.loading: 'Loading the proposed configuration…'
 data-importer.review.section.general: General
 data-importer.review.section.data-source: Data source
 data-importer.review.section.resolver: Resolver

@@ -75,7 +75,7 @@ export const useStyles = createStyles(({ token, css }) => ({
   group: css`
     display: flex;
     flex-direction: column;
-    gap: ${token.marginXXS}px;
+    gap: ${token.marginXS}px;
   `,
   caption: css`
     ${plain}
@@ -95,26 +95,33 @@ export const useStyles = createStyles(({ token, css }) => ({
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorPrimary};
   `,
+  /* a row reads as a control: bordered, filled, lifting on hover — the same card language
+     the change-control rail uses for its subjects */
   row: css`
     ${plain}
     gap: ${token.marginXS}px;
-    min-height: ${token.controlHeightSM}px;
-    padding: 0 ${token.paddingXXS}px 0 ${token.paddingSM}px;
-    border-radius: ${token.borderRadiusSM}px;
+    min-height: ${token.controlHeight}px;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorFillQuaternary};
     color: ${token.colorText};
+    transition: background ${token.motionDurationFast}, border-color ${token.motionDurationFast};
 
     &:hover {
       background: ${token.colorFillTertiary};
+      border-color: ${token.colorBorder};
     }
   `,
   rowTarget: css`
     ${plain}
     gap: ${token.marginXS}px;
-    min-height: ${token.controlHeightSM}px;
-    padding: 0 ${token.paddingXXS}px 0 ${token.paddingSM}px;
-    border-radius: ${token.borderRadiusSM}px;
-    color: ${token.colorText};
+    min-height: ${token.controlHeight}px;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    border: 1px solid ${token.colorPrimaryBorder};
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorPrimaryBg};
+    color: ${token.colorText};
   `,
   rowLabel: css`
     flex: 1;
