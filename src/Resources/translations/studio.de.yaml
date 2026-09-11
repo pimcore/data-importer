@@ -325,6 +325,7 @@ data-importer.validation.required: '{{field}} ist erforderlich'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Datenobjekt-Importer
 
 # Change Control review
+data-importer.review.open-section: Im Editor öffnen
 data-importer.review.changes: '{{count}} Änderungen'
 data-importer.review.status.added: hinzugefügt
 data-importer.review.status.changed: geändert

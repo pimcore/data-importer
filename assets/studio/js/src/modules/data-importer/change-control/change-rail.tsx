@@ -8,7 +8,9 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+
 import React from 'react'
+import { IconButton } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type ChangeGroup, type ConfigChange } from './config-review-model'
 import { type MappingRowDiff } from './mapping-diff'
@@ -22,26 +24,47 @@ const T = 'data-importer.review'
 /** the mapping step sits between the resolver and the processing settings in the editor */
 const MAPPINGS_AFTER = 'resolver'
 
+interface HeadlineProps {
+  readonly label: string
+  readonly active: boolean
+  readonly onJump: () => void
+  readonly styles: Styles
+}
+
+/** A section's name, and the one control in the rail: the arrow that opens it in the editor. */
+const Headline: React.FC<HeadlineProps> = ({ label, active, onJump, styles }) => {
+  const { t } = useTranslation()
+
+  return (
+    <div className={ styles.headline }>
+      <span className={ active ? styles.headlineActive : styles.headlineLabel }>{ label }</span>
+      <IconButton
+        icon={ { value: 'arrow-narrow-right' } }
+        onClick={ onJump }
+        size="small"
+        tooltip={ { title: t(`${T}.open-section`) } }
+        type="link"
+      />
+    </div>
+  )
+}
+
 interface ListProps {
   readonly groups: ChangeGroup[]
   readonly mappings: MappingRowDiff[]
   /** the section the editor currently shows, so the reader knows where they are */
   readonly activeSection: string | undefined
-  readonly target: string | null
   readonly labelFor: (change: ConfigChange) => string
-  readonly onJump: (change: ConfigChange) => void
-  readonly onJumpMappings: () => void
+  readonly onJump: (section: string) => void
   readonly styles: Styles
 }
 
 /**
- * A map of the change, in the order the editor lays it out: one caption per section, one row
- * per changed field. A row is a place — its label carries the reader to the field, the mark
- * says what happened there. Nothing here is decided; the change set is approved whole.
+ * A map of the change, in the order the editor lays it out: one headline per section that
+ * opens it in the editor, and under it what changed there — a listing, not controls. Nothing
+ * here is decided; the change set is approved whole.
  */
-export const ChangeList: React.FC<ListProps> = ({
-  groups, mappings, activeSection, target, labelFor, onJump, onJumpMappings, styles
-}) => {
+export const ChangeList: React.FC<ListProps> = ({ groups, mappings, activeSection, labelFor, onJump, styles }) => {
   const { t } = useTranslation()
 
   const mappingGroup = mappings.length === 0
@@ -51,23 +74,20 @@ export const ChangeList: React.FC<ListProps> = ({
         className={ styles.group }
         key="mapping"
       >
-        <button
-          className={ activeSection === 'mapping' ? styles.captionActive : styles.caption }
-          onClick={ onJumpMappings }
-          type="button"
-        >
-          { t(`${T}.mappings`) }
-        </button>
+        <Headline
+          active={ activeSection === 'mapping' }
+          label={ t(`${T}.mappings`) }
+          onJump={ () => { onJump('mapping') } }
+          styles={ styles }
+        />
         { mappings.map((row) => (
-          <button
-            className={ styles.row }
+          <div
+            className={ styles.item }
             key={ row.key }
-            onClick={ onJumpMappings }
-            type="button"
           >
-            <span className={ styles.rowLabel }>{ row.label }</span>
+            <span className={ styles.itemLabel }>{ row.label }</span>
             { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
-          </button>
+          </div>
         )) }
       </div>
       )
@@ -77,24 +97,21 @@ export const ChangeList: React.FC<ListProps> = ({
       className={ styles.group }
       key={ group.section }
     >
-      <button
-        className={ activeSection === group.section ? styles.captionActive : styles.caption }
-        onClick={ () => { onJump(group.changes[0]) } }
-        type="button"
-      >
-        { t(group.label) }
-      </button>
+      <Headline
+        active={ activeSection === group.section }
+        label={ t(group.label) }
+        onJump={ () => { onJump(group.section) } }
+        styles={ styles }
+      />
       { group.changes.map((change) => (
-        <button
-          className={ target === change.address ? styles.rowTarget : styles.row }
+        <div
+          className={ styles.item }
           key={ change.address }
-          onClick={ () => { onJump(change) } }
           title={ change.address }
-          type="button"
         >
-          <span className={ styles.rowLabel }>{ labelFor(change) }</span>
+          <span className={ styles.itemLabel }>{ labelFor(change) }</span>
           <StatusTag status={ change.status } />
-        </button>
+        </div>
       )) }
     </div>
   ))
@@ -126,7 +143,7 @@ export const NewConfigurationSummary: React.FC<NewConfigurationSummaryProps> = (
 
   return (
     <div className={ styles.group }>
-      <div className={ styles.caption }>{ t(`${T}.new.title`) }</div>
+      <div className={ styles.headline }><span className={ styles.headlineLabel }>{ t(`${T}.new.title`) }</span></div>
       <div className={ styles.newName }>{ name }</div>
       <div className={ styles.note }>
         { t(`${T}.new.settings`, { count: settingCount }) } · { t(`${T}.new.mappings`, { count: mappingCount }) }

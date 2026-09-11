@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Content } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
@@ -25,7 +25,6 @@ import { ChangeList, NewConfigurationSummary } from './change-rail'
 import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
-import { fieldAnchorId, useJumpToField } from './use-jump-to-field'
 
 /**
  * The props the Change Control review lane hands every surface. Typed here rather than
@@ -45,8 +44,6 @@ export interface ImportConfigReviewSurfaceProps {
 }
 
 const T = 'data-importer.review'
-
-const MAPPING_TARGET = SECTION_TARGET.mapping
 
 /**
  * An import configuration reviews as the importer's own editor: the proposed configuration
@@ -94,44 +91,22 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const [tab, setTab] = useState('general')
   const [step, setStep] = useState<number | undefined>(undefined)
 
-  const paneRef = useRef<HTMLDivElement>(null)
-  const { target, jumpTo } = useJumpToField(paneRef)
-
   // a count is a verdict; none until the change set has actually been read
   useEffect(() => {
     if (payload === undefined) return
     onStatsChange?.(changes.length + changedMappings.length)
   }, [payload, changes.length, changedMappings.length, onStatsChange])
 
-  // an anchor rides in each annotation's hint, which is a node the form renders in place
-  const annotations = useMemo<FormAnnotations>(() => {
-    const base = { ...annotationsFor(changes), ...mappingAnnotations(payload, mode) }
-    const marked: FormAnnotations = {}
-    for (const [path, annotation] of Object.entries(base)) {
-      marked[path] = {
-        ...annotation,
-        hint: (
-          <span
-            data-field-anchor={ fieldAnchorId(path) }
-            id={ fieldAnchorId(path) }
-          />
-        )
-      }
-    }
-    return marked
-  }, [changes, payload, mode])
+  const annotations = useMemo<FormAnnotations>(
+    () => ({ ...annotationsFor(changes), ...mappingAnnotations(payload, mode) }),
+    [changes, payload, mode]
+  )
 
-  const jumpToChange = useCallback((change: ConfigChange): void => {
-    const destination = SECTION_TARGET[change.section]
+  const jumpToSection = useCallback((section: string): void => {
+    const destination = SECTION_TARGET[section]
     if (destination === undefined) return
     setTab(destination.tab)
-    if (destination.step !== undefined) setStep(destination.step)
-    if (change.formPath !== undefined) jumpTo(change.formPath, change.address)
-  }, [jumpTo])
-
-  const jumpToMappings = useCallback((): void => {
-    setTab(MAPPING_TARGET.tab)
-    setStep(MAPPING_TARGET.step)
+    setStep(destination.step)
   }, [])
 
   const labelFor = useCallback(
@@ -195,20 +170,15 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
                   groups={ groups }
                   labelFor={ labelFor }
                   mappings={ changedMappings }
-                  onJump={ jumpToChange }
-                  onJumpMappings={ jumpToMappings }
+                  onJump={ jumpToSection }
                   styles={ styles }
-                  target={ target }
                 />
               </>
               ) }
         </div>
       </aside>
 
-      <div
-        className={ styles.editor }
-        ref={ paneRef }
-      >
+      <div className={ styles.editor }>
         { FormAnnotationsProvider !== null
           ? <FormAnnotationsProvider annotations={ annotations }>{ editor }</FormAnnotationsProvider>
           : editor }

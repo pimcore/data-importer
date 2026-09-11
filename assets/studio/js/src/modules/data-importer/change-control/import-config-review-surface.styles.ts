@@ -10,19 +10,6 @@
 
 import { createStyles } from 'antd-style'
 
-/* the rail's caption and row are buttons stripped back to text: the keyboard reaches them */
-const plain = `
-  display: flex;
-  align-items: center;
-  width: 100%;
-  border: none;
-  background: none;
-  margin: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-`
-
 export const useStyles = createStyles(({ token, css }) => ({
   /* the modal keeps its own gutters; the surface fills the width between them */
   layout: css`
@@ -75,55 +62,39 @@ export const useStyles = createStyles(({ token, css }) => ({
   group: css`
     display: flex;
     flex-direction: column;
-    gap: ${token.marginXS}px;
   `,
-  caption: css`
-    ${plain}
-    padding: 0 0 ${token.paddingXXS}px;
-    font-size: ${token.fontSizeSM}px;
+  /* the headline is the section's name at body size; the arrow beside it is the only control */
+  headline: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXXS}px;
+    min-height: ${token.controlHeight}px;
+  `,
+  headlineLabel: css`
+    font-size: ${token.fontSize}px;
     font-weight: ${token.fontWeightStrong};
-    color: ${token.colorTextSecondary};
-
-    &:hover {
-      color: ${token.colorPrimary};
-    }
+    color: ${token.colorText};
   `,
-  captionActive: css`
-    ${plain}
-    padding: 0 0 ${token.paddingXXS}px;
-    font-size: ${token.fontSizeSM}px;
+  headlineActive: css`
+    font-size: ${token.fontSize}px;
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorPrimary};
   `,
-  /* a row reads as a control: bordered, filled, lifting on hover — the same card language
-     the change-control rail uses for its subjects */
-  row: css`
-    ${plain}
+  /* a listing, not controls: the field's name and its mark, one hairline apart */
+  item: css`
+    display: flex;
+    align-items: center;
     gap: ${token.marginXS}px;
-    min-height: ${token.controlHeight}px;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorFillQuaternary};
-    color: ${token.colorText};
-    transition: background ${token.motionDurationFast}, border-color ${token.motionDurationFast};
+    min-height: ${token.controlHeightSM}px;
+    padding: ${token.paddingXXS}px 0 ${token.paddingXXS}px ${token.paddingSM}px;
+    border-bottom: 1px solid ${token.colorSplit};
+    color: ${token.colorTextSecondary};
 
-    &:hover {
-      background: ${token.colorFillTertiary};
-      border-color: ${token.colorBorder};
+    &:last-child {
+      border-bottom: none;
     }
   `,
-  rowTarget: css`
-    ${plain}
-    gap: ${token.marginXS}px;
-    min-height: ${token.controlHeight}px;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px;
-    border: 1px solid ${token.colorPrimaryBorder};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorPrimaryBg};
-    color: ${token.colorText};
-  `,
-  rowLabel: css`
+  itemLabel: css`
     flex: 1;
     min-width: 0;
     overflow: hidden;

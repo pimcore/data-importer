@@ -325,6 +325,7 @@ data-importer.validation.required: '{{field}} är obligatoriskt'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportör
 
 # Change Control review
+data-importer.review.open-section: Öppna i editorn
 data-importer.review.changes: '{{count}} ändringar'
 data-importer.review.status.added: tillagd
 data-importer.review.status.changed: ändrad
