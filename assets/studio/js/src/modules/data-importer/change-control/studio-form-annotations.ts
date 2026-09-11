@@ -43,3 +43,18 @@ export const FormAnnotationsProvider: ProviderComponent | null =
   typeof exported === 'function' ? exported as ProviderComponent : null
 
 export const supportsFormAnnotations = FormAnnotationsProvider !== null
+
+type AnnotationHook = (name: Array<string | number> | string | undefined) => FormItemAnnotation | undefined
+
+const exportedHook = (StudioComponents as unknown as Record<string, unknown>).useFormItemAnnotation
+
+/**
+ * The SDK's own per-item lookup, so a control the form does not bind through Form.Item — a
+ * mapping row's header — can still read the mark the review put on it. A no-op where the
+ * SDK has no annotation layer, so callers can use it unconditionally.
+ */
+export const useFormItemAnnotation: AnnotationHook =
+  typeof exportedHook === 'function' ? exportedHook as AnnotationHook : () => undefined
+
+/** the key the provider files an annotation under: the item's name path, dot-joined */
+export const annotationKey = (name: Array<string | number>): string => name.map(String).join('.')

@@ -325,24 +325,14 @@ data-importer.validation.required: '{{field}} ist erforderlich'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Datenobjekt-Importer
 
 # Change Control review
-data-importer.review.summary: '{{count}} Änderungen · {{tabs}} von {{total}} Tabs betroffen'
-data-importer.review.count.changed: '{{count}} geändert'
-data-importer.review.count.added: '{{count}} hinzugefügt'
-data-importer.review.count.removed: '{{count}} entfernt'
-data-importer.review.filter.label: Nach Status filtern
-data-importer.review.filter.all: Alle
-data-importer.review.filter.changed: Geändert
-data-importer.review.filter.added: Hinzugefügt
-data-importer.review.filter.removed: Entfernt
-data-importer.review.find-field: Feld suchen
-data-importer.review.no-match: Keine Felder entsprechen der Suche.
+data-importer.review.changes: '{{count}} Änderungen'
 data-importer.review.status.added: hinzugefügt
 data-importer.review.status.changed: geändert
 data-importer.review.status.removed: entfernt
 data-importer.review.status.moved: verschoben
 data-importer.review.status.whole: gesamt
 data-importer.review.mappings: Mappings
-data-importer.review.mappings-whole: 'Als Ganzes vorgeschlagen — eine einzelne Zeile kann nicht ausgenommen werden.'
+data-importer.review.mappings-whole: Die Mapping-Liste wird als Ganzes vorgeschlagen.
 data-importer.review.foot: 'Übernommen wird nur, was angehakt ist. Gruppierte Zeilen — die Mapping-Liste — werden als Ganzes vorgeschlagen.'
 data-importer.review.new.title: Neue Konfiguration
 data-importer.review.new.settings: '{{count}} Einstellungen'

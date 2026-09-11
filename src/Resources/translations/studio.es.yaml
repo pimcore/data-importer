@@ -325,24 +325,14 @@ data-importer.validation.required: '{{field}} es obligatorio'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Importador de objetos de datos
 
 # Change Control review
-data-importer.review.summary: '{{count}} cambios · {{tabs}} de {{total}} pestañas afectadas'
-data-importer.review.count.changed: '{{count}} modificados'
-data-importer.review.count.added: '{{count}} añadidos'
-data-importer.review.count.removed: '{{count}} eliminados'
-data-importer.review.filter.label: Filtrar por estado
-data-importer.review.filter.all: Todos
-data-importer.review.filter.changed: Modificados
-data-importer.review.filter.added: Añadidos
-data-importer.review.filter.removed: Eliminados
-data-importer.review.find-field: Buscar un campo
-data-importer.review.no-match: Ningún campo coincide con la búsqueda.
+data-importer.review.changes: '{{count}} cambios'
 data-importer.review.status.added: añadido
 data-importer.review.status.changed: modificado
 data-importer.review.status.removed: eliminado
 data-importer.review.status.moved: movido
 data-importer.review.status.whole: completo
 data-importer.review.mappings: Mapeos
-data-importer.review.mappings-whole: 'Propuesto en conjunto — no se puede excluir una sola fila.'
+data-importer.review.mappings-whole: La lista de mapeos se propone en conjunto.
 data-importer.review.foot: 'Aprobar aplica solo lo marcado. Las filas agrupadas — la lista de mapeos — se proponen en conjunto.'
 data-importer.review.new.title: Nueva configuración
 data-importer.review.new.settings: '{{count}} ajustes'

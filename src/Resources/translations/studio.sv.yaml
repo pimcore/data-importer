@@ -325,24 +325,14 @@ data-importer.validation.required: '{{field}} är obligatoriskt'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportör
 
 # Change Control review
-data-importer.review.summary: '{{count}} ändringar · {{tabs}} av {{total}} flikar berörda'
-data-importer.review.count.changed: '{{count}} ändrade'
-data-importer.review.count.added: '{{count}} tillagda'
-data-importer.review.count.removed: '{{count}} borttagna'
-data-importer.review.filter.label: Filtrera efter status
-data-importer.review.filter.all: Alla
-data-importer.review.filter.changed: Ändrade
-data-importer.review.filter.added: Tillagda
-data-importer.review.filter.removed: Borttagna
-data-importer.review.find-field: Hitta ett fält
-data-importer.review.no-match: Inga fält matchar sökningen.
+data-importer.review.changes: '{{count}} ändringar'
 data-importer.review.status.added: tillagd
 data-importer.review.status.changed: ändrad
 data-importer.review.status.removed: borttagen
 data-importer.review.status.moved: flyttad
 data-importer.review.status.whole: hela
 data-importer.review.mappings: Mappningar
-data-importer.review.mappings-whole: 'Föreslås som en helhet — en enskild rad kan inte undantas.'
+data-importer.review.mappings-whole: Mappningslistan föreslås som en helhet.
 data-importer.review.foot: 'Godkänn tillämpar bara det som är ikryssat. Grupperade rader — mappningslistan — föreslås som en helhet.'
 data-importer.review.new.title: Ny konfiguration
 data-importer.review.new.settings: '{{count}} inställningar'

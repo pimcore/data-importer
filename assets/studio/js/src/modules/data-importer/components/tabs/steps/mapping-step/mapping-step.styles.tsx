@@ -583,6 +583,22 @@ export const useStyles = createStyles(({ css, token }) => {
       }
 
       animation: mapping-item-slide-in 400ms ease-in-out;
+    `,
+    // a review marks a row in its header: the mark, and for a dropped row the label struck
+    annotatedTitle: css`
+      display: inline-flex;
+      align-items: center;
+      gap: ${token.marginXS}px;
+      min-width: 0;
+    `,
+    removedTitle: css`
+      text-decoration: line-through;
+      color: ${token.colorTextTertiary};
+    `,
+    titleHint: css`
+      font-size: ${token.fontSizeSM}px;
+      font-weight: normal;
+      color: ${token.colorTextSecondary};
     `
   }
 })

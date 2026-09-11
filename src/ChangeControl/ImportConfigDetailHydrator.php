@@ -98,6 +98,11 @@ final readonly class ImportConfigDetailHydrator implements DetailHydratorInterfa
 
     public function dehydrate(SubjectRef $subject, array $patch, array $proposed, ?UserInterface $user = null): array
     {
+        // a create has no tree yet: the patch IS the document, every section of it
+        if ($proposed === []) {
+            return $patch;
+        }
+
         // the surface is read-only, so a patch can only name a section the tree already has;
         // anything else is a rendering artefact and never becomes a stored leaf
         return array_filter(

@@ -325,24 +325,14 @@ data-importer.validation.required: '{{field}} est requis'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Importateur d'objets de données
 
 # Change Control review
-data-importer.review.summary: '{{count}} modifications · {{tabs}} onglets sur {{total}} concernés'
-data-importer.review.count.changed: '{{count}} modifiés'
-data-importer.review.count.added: '{{count}} ajoutés'
-data-importer.review.count.removed: '{{count}} supprimés'
-data-importer.review.filter.label: Filtrer par état
-data-importer.review.filter.all: Tous
-data-importer.review.filter.changed: Modifiés
-data-importer.review.filter.added: Ajoutés
-data-importer.review.filter.removed: Supprimés
-data-importer.review.find-field: Rechercher un champ
-data-importer.review.no-match: Aucun champ ne correspond à la recherche.
+data-importer.review.changes: '{{count}} modifications'
 data-importer.review.status.added: ajouté
 data-importer.review.status.changed: modifié
 data-importer.review.status.removed: supprimé
 data-importer.review.status.moved: déplacé
 data-importer.review.status.whole: entier
 data-importer.review.mappings: Mappings
-data-importer.review.mappings-whole: 'Proposé en bloc — une ligne seule ne peut pas être exclue.'
+data-importer.review.mappings-whole: La liste des mappings est proposée en bloc.
 data-importer.review.foot: 'Approuver n''applique que ce qui est coché. Les lignes groupées — la liste des mappings — sont proposées en bloc.'
 data-importer.review.new.title: Nouvelle configuration
 data-importer.review.new.settings: '{{count}} réglages'

@@ -11,58 +11,47 @@
 import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ token, css }) => ({
-  // the shell renders the review full-bleed; the breathing room is this surface's to add
-  railTop: css`
-    flex: 0 0 auto;
-    padding: ${token.paddingXS}px ${token.paddingXS}px ${token.paddingSM}px;
-  `,
-  summaryLine: css`
-    font-weight: ${token.fontWeightStrong};
-  `,
-  pills: css`
+  /* the modal keeps its own gutters; the surface fills the width between them */
+  layout: css`
     display: flex;
-    flex-wrap: wrap;
-    gap: ${token.marginXXS}px;
-    margin-top: ${token.marginXS}px;
+    align-items: stretch;
+    gap: ${token.marginLG}px;
+    height: 70vh;
+    min-height: 420px;
   `,
-  chips: css`
-    flex: 0 0 auto;
+  rail: css`
+    width: 288px;
+    flex: 0 0 288px;
+    min-height: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: ${token.marginXXS}px;
-    padding: 0 ${token.paddingXS}px ${token.paddingXS}px;
+    flex-direction: column;
+    border-right: 1px solid ${token.colorBorderSecondary};
   `,
-  chip: css`
-    font-size: ${token.fontSizeSM}px;
-    line-height: 22px;
-    padding: 0 ${token.paddingSM}px;
-    border-radius: 999px;
-    cursor: pointer;
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorder};
-    color: ${token.colorTextSecondary};
-
-    &[aria-pressed='true'] {
-      background: ${token.colorPrimaryBg};
-      border-color: ${token.colorPrimaryBorder};
-      color: ${token.colorPrimaryText};
-      font-weight: ${token.fontWeightStrong};
-    }
-  `,
-  search: css`
-    flex: 0 0 auto;
-    padding: 0 ${token.paddingXS}px ${token.paddingSM}px;
-  `,
-  tree: css`
+  list: css`
     flex: 1;
-    overflow: auto;
-    padding: 0 ${token.paddingXXS}px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: ${token.padding}px;
+    display: flex;
+    flex-direction: column;
+    gap: ${token.marginSM}px;
+  `,
+  caption: css`
+    padding: ${token.paddingXS}px 0;
+    font-size: ${token.fontSizeSM}px;
+    font-weight: ${token.fontWeightStrong};
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: ${token.colorTextTertiary};
   `,
   history: css`
     display: flex;
     flex-direction: column;
     gap: ${token.marginXXS}px;
-    padding-bottom: ${token.paddingXS}px;
+    padding: ${token.paddingXS}px ${token.padding}px ${token.paddingSM}px 0;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+    margin-bottom: ${token.marginXS}px;
   `,
   historyState: css`
     display: flex;
@@ -70,210 +59,125 @@ export const useStyles = createStyles(({ token, css }) => ({
     gap: ${token.marginXS}px;
     color: ${token.colorTextSecondary};
   `,
-  railFoot: css`
-    flex: 0 0 auto;
-    padding: ${token.paddingSM}px ${token.paddingXS}px ${token.paddingXS}px;
-    font-size: ${token.fontSizeSM}px;
-    line-height: 1.5;
-    color: ${token.colorTextTertiary};
-    text-wrap: pretty;
+  group: css`
+    display: flex;
+    flex-direction: column;
   `,
-  sectionLabelText: css`
+  groupHead: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    min-height: ${token.controlHeight}px;
+  `,
+  groupLabel: css`
     flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
     font-weight: ${token.fontWeightStrong};
+    color: ${token.colorText};
+    text-align: left;
+    cursor: pointer;
   `,
   groupLabelActive: css`
     flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
     font-weight: ${token.fontWeightStrong};
-    color: ${token.colorPrimaryText};
+    color: ${token.colorPrimary};
+    text-align: left;
+    cursor: pointer;
+  `,
+  count: css`
+    color: ${token.colorTextTertiary};
+    font-size: ${token.fontSizeSM}px;
+    font-variant-numeric: tabular-nums;
+  `,
+  sectionLabel: css`
+    padding: ${token.paddingXXS}px 0 0 ${token.paddingLG}px;
+    font-size: ${token.fontSizeSM}px;
+    color: ${token.colorTextTertiary};
+  `,
+  row: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    min-height: ${token.controlHeightSM}px;
+    padding-left: ${token.paddingLG}px;
+    border-radius: ${token.borderRadiusSM}px;
+  `,
+  rowTarget: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    min-height: ${token.controlHeightSM}px;
+    padding-left: ${token.paddingLG}px;
+    border-radius: ${token.borderRadiusSM}px;
+    background: ${token.colorPrimaryBg};
   `,
   rowLabel: css`
     flex: 1;
     min-width: 0;
-    border: none;
-    background: none;
-    padding: 0;
-    cursor: pointer;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  `,
-  rowTarget: css`
-    display: flex;
-    gap: ${token.marginXS}px;
-    align-items: center;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorPrimaryBg};
-  `,
-  layout: css`
-    display: flex;
-    align-items: stretch;
-    gap: ${token.marginLG}px;
-    height: 70vh;
-    min-height: 420px;
-    padding: 0 ${token.paddingLG}px;
-  `,
-  rail: css`
-    width: 310px;
-    flex-shrink: 0;
-    overflow: auto;
-    padding: ${token.paddingSM}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusLG}px;
-    background: ${token.colorFillQuaternary};
-    display: flex;
-    flex-direction: column;
-    gap: ${token.marginXXS}px;
-  `,
-  railHead: css`
-    display: flex;
-    align-items: center;
-    gap: ${token.marginXS}px;
-    font-size: ${token.fontSizeSM}px;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    font-weight: ${token.fontWeightStrong};
-    color: ${token.colorTextTertiary};
-    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXS}px;
-  `,
-  count: css`
-    font-variant-numeric: tabular-nums;
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextTertiary};
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 100px;
-    padding: 0 ${token.paddingXS}px;
-    letter-spacing: 0;
-  `,
-  section: css`
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    padding-bottom: ${token.marginXXS}px;
-  `,
-  sectionHead: css`
-    display: flex;
-    align-items: center;
-    gap: ${token.marginXS}px;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px;
-  `,
-  sectionButton: css`
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: ${token.marginXS}px;
+    white-space: nowrap;
     border: none;
     background: none;
     padding: 0;
-    cursor: pointer;
+    margin: 0;
+    font: inherit;
     color: ${token.colorText};
     text-align: left;
-  `,
-  sectionSpacer: css`
-    width: 16px;
-    flex-shrink: 0;
-  `,
-  caret: css`
-    color: ${token.colorTextTertiary};
-    font-size: ${token.fontSizeSM}px;
-    width: 10px;
-  `,
-  sectionLabel: css`
-    flex: 1;
-    font-weight: ${token.fontWeightStrong};
-  `,
-  change: css`
-    display: flex;
-    gap: ${token.marginXS}px;
-    align-items: flex-start;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
-    border-radius: ${token.borderRadius}px;
+    cursor: pointer;
 
-    &:hover { background: ${token.colorBgContainer}; }
+    &:hover {
+      color: ${token.colorPrimary};
+    }
   `,
-  row: css`
-    display: flex;
-    gap: ${token.marginXS}px;
+  mappingRow: css`
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
-    border-radius: ${token.borderRadius}px;
-
-    &:hover { background: ${token.colorBgContainer}; }
+    column-gap: ${token.marginXS}px;
+    padding: ${token.paddingXXS}px 0 ${token.paddingXXS}px ${token.paddingLG}px;
   `,
-  mapping: css`
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    padding: ${token.paddingXXS}px ${token.paddingXS}px ${token.paddingXXS}px ${token.paddingLG}px;
-  `,
-  changeBody: css`
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  `,
-  changeHead: css`
-    display: flex;
-    align-items: center;
-    gap: ${token.marginXXS}px;
-    min-width: 0;
-  `,
-  changeLabel: css`
-    font-weight: ${token.fontWeightStrong};
-    word-break: break-word;
-  `,
-  changeValues: css`
-    display: flex;
-    gap: ${token.marginXXS}px;
+  rowMeta: css`
+    grid-column: 1 / -1;
     font-size: ${token.fontSizeSM}px;
     color: ${token.colorTextSecondary};
-    min-width: 0;
-
-    > span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   was: css`
     text-decoration: line-through;
     color: ${token.colorTextTertiary};
-    max-width: 45%;
-  `,
-  now: css`
-    color: ${token.colorText};
   `,
   note: css`
+    padding: ${token.paddingXXS}px 0 0 ${token.paddingLG}px;
     font-size: ${token.fontSizeSM}px;
     color: ${token.colorTextTertiary};
-    padding: ${token.paddingXS}px ${token.paddingXS}px ${token.paddingXS}px ${token.paddingLG}px;
+  `,
+  foot: css`
+    flex: 0 0 auto;
+    padding: ${token.paddingXS}px ${token.padding}px 0 0;
+    font-size: ${token.fontSizeSM}px;
+    color: ${token.colorTextTertiary};
   `,
   state: css`
-    padding: ${token.paddingSM}px;
+    padding: ${token.paddingLG}px;
     color: ${token.colorTextSecondary};
-  `,
-  newConfig: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.marginXXS}px;
   `,
   newName: css`
-    font-size: ${token.fontSizeLG}px;
     font-weight: ${token.fontWeightStrong};
-    padding: 0 ${token.paddingXS}px;
-    word-break: break-word;
-  `,
-  newCounts: css`
-    display: flex;
-    gap: ${token.marginXXS}px;
-    color: ${token.colorTextSecondary};
-    padding: 0 ${token.paddingXS}px ${token.paddingXS}px;
-    font-variant-numeric: tabular-nums;
+    color: ${token.colorText};
   `,
   editor: css`
     flex: 1;

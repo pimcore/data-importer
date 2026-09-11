@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { beforeOf, isEqual, MAPPING_SLOT, type ReviewMode, type ReviewPayload } from './config-review-model'
+import { beforeOf, isEqual, MAPPING_SLOT, type ReviewMode, type ReviewPayload } from './review-payload'
 
 /** The mapping rows before and after, matched by mappingId where the rows carry one. */
 export interface MappingRowDiff {
@@ -17,14 +17,19 @@ export interface MappingRowDiff {
   readonly target: string
   readonly status: 'added' | 'removed' | 'changed' | 'unchanged'
   readonly currentTarget?: string
+  /** the row as the editor should show it: the proposed one, or the dropped one it stands in for */
+  readonly row: MappingRow
 }
 
-interface MappingRow {
+export interface MappingRow {
   readonly mappingId?: string
   readonly label?: string
   readonly dataSourceIndex?: unknown
   readonly dataTarget?: { readonly type?: string, readonly settings?: Record<string, unknown> }
 }
+
+/** the order the rows are shown in: proposed rows as proposed, a dropped row where it was */
+export const mappingRows = (diff: MappingRowDiff[]): MappingRow[] => diff.map((entry) => entry.row)
 
 /**
  * Rows match on `mappingId` where both sides carry one. They do not always: the id is minted
@@ -76,7 +81,7 @@ export function mappingDiff (payload: ReviewPayload | undefined, mode: ReviewMod
     const target = rowTarget(row)
 
     if (at === undefined || matched.has(at)) {
-      return { key, label: rowLabel(row), target, status: 'added' as const }
+      return { key, label: rowLabel(row), target, status: 'added' as const, row }
     }
     matched.add(at)
 
@@ -92,7 +97,8 @@ export function mappingDiff (payload: ReviewPayload | undefined, mode: ReviewMod
       label: rowLabel(row),
       target,
       currentTarget: rowTarget(before),
-      status: isEqual(comparable(before), comparable(row)) ? ('unchanged' as const) : ('changed' as const)
+      status: isEqual(comparable(before), comparable(row)) ? ('unchanged' as const) : ('changed' as const),
+      row
     }
   })
 
@@ -103,7 +109,8 @@ export function mappingDiff (payload: ReviewPayload | undefined, mode: ReviewMod
       key: rowId(row) ?? `current#${index}`,
       label: rowLabel(row),
       target: rowTarget(row),
-      status: 'removed' as const
+      status: 'removed' as const,
+      row
     })
   })
 

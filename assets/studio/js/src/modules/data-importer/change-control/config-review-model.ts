@@ -9,32 +9,12 @@
  */
 
 import type { BackendConfiguration } from '../utils/transformers'
-import type { FormAnnotations, FormItemAnnotationStatus } from './studio-form-annotations'
+import { annotationKey, type FormAnnotations, type FormItemAnnotationStatus } from './studio-form-annotations'
+import { mappingDiff, mappingRows } from './mapping-diff'
+import { beforeOf, MAPPING_SLOT, isEqual, type ReviewMode, type ReviewPayload } from './review-payload'
 
-/** one slot of the review payload, as the change-set API ships it */
-export interface ReviewSlot {
-  readonly shape: string
-  readonly proposed?: Record<string, unknown> | null
-  readonly current?: Record<string, unknown> | null
-  readonly base?: Record<string, unknown> | null
-}
-
-export interface ReviewPayload {
-  readonly slots: Record<string, ReviewSlot>
-  readonly meta?: { readonly label?: string, readonly changedFieldNames?: string[] }
-}
-
-/** review: what is proposed against the live document; history: what was recorded against its base */
-export type ReviewMode = 'review' | 'history'
-
-/**
- * The side a change is read against. While a change set is open that is the live document,
- * so a reviewer sees what approving would do now. Once it is resolved the live document has
- * moved on - after a merge it IS the proposal - and only the base it was recorded against
- * still says what changed.
- */
-export const beforeOf = (slot: ReviewSlot, mode: ReviewMode): Record<string, unknown> =>
-  (mode === 'history' ? slot.base : slot.current) ?? {}
+export type { ReviewMode, ReviewPayload, ReviewSlot } from './review-payload'
+export { beforeOf, isEqual, MAPPING_SLOT } from './review-payload'
 
 export interface ConfigChange {
   /** document path — what the merge accepts as an exclude path */
@@ -54,8 +34,6 @@ export interface ConfigChange {
 /** the general.* keys the editor's form lifts to its root; see ConfigurationPathMapper */
 const FLATTENED = ['active', 'description', 'group', 'name']
 
-export const MAPPING_SLOT = 'mapping'
-
 /**
  * A document path as the editor's form binds it, or undefined when the form has no field for
  * it — bookkeeping under `general`, most of all, which a reviewer must not be offered.
@@ -69,8 +47,6 @@ export function toFormPath (address: string): string | undefined {
   }
   return address
 }
-
-export const isEqual = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 
 /** Un-flattens `a.b.c` leaves back into a nested object. */
 function assign (target: Record<string, unknown>, address: string, value: unknown): void {
@@ -98,7 +74,8 @@ function assign (target: Record<string, unknown>, address: string, value: unknow
  */
 export function proposedConfiguration (
   payload: ReviewPayload | undefined,
-  live: BackendConfiguration | undefined
+  live: BackendConfiguration | undefined,
+  mode: ReviewMode = 'review'
 ): BackendConfiguration {
   const config: Record<string, unknown> = structuredClone(live ?? {}) as Record<string, unknown>
   if (payload == null) return config as BackendConfiguration
@@ -107,9 +84,9 @@ export function proposedConfiguration (
     const proposed = slot.proposed ?? {}
 
     if (slotKey === MAPPING_SLOT) {
-      // the mapping list rides one address, whole
-      const rows = proposed.mappingConfig
-      if (rows !== undefined) config.mappingConfig = rows
+      // the mapping list rides one address, whole. The editor shows it in review order: a
+      // dropped row stays where it was, marked, so the reader sees what stops being imported
+      if (proposed.mappingConfig !== undefined) config.mappingConfig = mappingRows(mappingDiff(payload, mode))
       continue
     }
 
@@ -117,6 +94,28 @@ export function proposedConfiguration (
   }
 
   return config as BackendConfiguration
+}
+
+/**
+ * The mark on each mapping row, keyed the way the row header looks itself up. Rows bind no
+ * Form.Item, so the mark sits on the row, and a changed target is spelt out as the hint.
+ */
+export function mappingAnnotations (
+  payload: ReviewPayload | undefined,
+  mode: ReviewMode,
+  hint: (before: string) => string
+): FormAnnotations {
+  const annotations: FormAnnotations = {}
+  mappingDiff(payload, mode).forEach((entry, index) => {
+    if (entry.status === 'unchanged') return
+    annotations[annotationKey(['mappingConfig', index])] = {
+      status: entry.status,
+      hint: entry.status === 'changed' && entry.currentTarget !== undefined && entry.currentTarget !== entry.target
+        ? hint(entry.currentTarget)
+        : undefined
+    }
+  })
+  return annotations
 }
 
 /** what the editor calls each slot, as translation keys, in the order it shows them */

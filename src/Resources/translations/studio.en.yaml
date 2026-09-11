@@ -325,24 +325,14 @@ data-importer.validation.required: '{{field}} is required'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Data Object Importer
 
 # Change Control review
-data-importer.review.summary: '{{count}} changes · {{tabs}} of {{total}} tabs affected'
-data-importer.review.count.changed: '{{count}} changed'
-data-importer.review.count.added: '{{count}} added'
-data-importer.review.count.removed: '{{count}} removed'
-data-importer.review.filter.label: Filter by state
-data-importer.review.filter.all: All
-data-importer.review.filter.changed: Changed
-data-importer.review.filter.added: Added
-data-importer.review.filter.removed: Removed
-data-importer.review.find-field: Find a field
-data-importer.review.no-match: No fields match your search.
+data-importer.review.changes: '{{count}} changes'
 data-importer.review.status.added: added
 data-importer.review.status.changed: changed
 data-importer.review.status.removed: removed
 data-importer.review.status.moved: moved
 data-importer.review.status.whole: whole
 data-importer.review.mappings: Mappings
-data-importer.review.mappings-whole: 'Proposed as a whole — a single row cannot be withheld.'
+data-importer.review.mappings-whole: The mapping list is proposed as a whole.
 data-importer.review.foot: 'Approve applies only what is ticked. Grouped rows — the mapping list — are proposed as a whole.'
 data-importer.review.new.title: New configuration
 data-importer.review.new.settings: '{{count}} settings'

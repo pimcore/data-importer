@@ -325,24 +325,14 @@ data-importer.validation.required: '{{field}} er påkrevd'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportør
 
 # Change Control review
-data-importer.review.summary: '{{count}} endringer · {{tabs}} av {{total}} faner berørt'
-data-importer.review.count.changed: '{{count}} endret'
-data-importer.review.count.added: '{{count}} lagt til'
-data-importer.review.count.removed: '{{count}} fjernet'
-data-importer.review.filter.label: Filtrer etter status
-data-importer.review.filter.all: Alle
-data-importer.review.filter.changed: Endret
-data-importer.review.filter.added: Lagt til
-data-importer.review.filter.removed: Fjernet
-data-importer.review.find-field: Finn et felt
-data-importer.review.no-match: Ingen felt samsvarer med søket.
+data-importer.review.changes: '{{count}} endringer'
 data-importer.review.status.added: lagt til
 data-importer.review.status.changed: endret
 data-importer.review.status.removed: fjernet
 data-importer.review.status.moved: flyttet
 data-importer.review.status.whole: hele
 data-importer.review.mappings: Mappinger
-data-importer.review.mappings-whole: 'Foreslått som en helhet — en enkelt rad kan ikke holdes tilbake.'
+data-importer.review.mappings-whole: Mappinglisten foreslås som en helhet.
 data-importer.review.foot: 'Godkjenn bruker bare det som er huket av. Grupperte rader — mappinglisten — foreslås som en helhet.'
 data-importer.review.new.title: Ny konfigurasjon
 data-importer.review.new.settings: '{{count}} innstillinger'

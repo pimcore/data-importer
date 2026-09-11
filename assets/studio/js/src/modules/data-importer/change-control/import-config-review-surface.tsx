@@ -9,19 +9,17 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
-import { useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
+import { api, useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
 import type { BackendConfiguration } from '../utils/transformers'
 import { FormAnnotationsProvider, type FormAnnotations } from './studio-form-annotations'
 import {
-  annotationsFor, configChanges, formatValue, groupByTab, isNewConfiguration, proposedConfiguration,
-  SECTION_TARGET, TAB_LABELS, type ConfigChange, type ReviewMode, type ReviewPayload, type ValueLabels
+  annotationsFor, configChanges, formatValue, groupByTab, isNewConfiguration, mappingAnnotations,
+  proposedConfiguration, SECTION_TARGET, type ConfigChange, type ReviewMode, type ReviewPayload, type ValueLabels
 } from './config-review-model'
 import { mappingDiff } from './mapping-diff'
-import {
-  ChangeTree, MappingSection, NewConfigurationSummary, RailFilters, RailHead, type StateFilter
-} from './change-rail'
+import { ChangeTree, MappingSection, NewConfigurationSummary } from './change-rail'
 import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
@@ -46,9 +44,6 @@ export interface ImportConfigReviewSurfaceProps {
 
 const T = 'data-importer.review'
 
-/** above this many changed leaves the tabs start folded, or the rail is a wall of text */
-const COLLAPSE_ABOVE = 12
-
 const MAPPING_TARGET = SECTION_TARGET.mapping
 
 /**
@@ -69,41 +64,36 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const history = mode === 'history'
 
   // the review payload carries only what changed; the editor needs the whole document
-  const { data: liveConfig, isLoading: liveLoading } = useBundleDataImporterConfigGetQuery({ name: subjectRef })
+  const { data: liveConfig, isLoading: liveLoading, isError: liveMissing } = useBundleDataImporterConfigGetQuery({ name: subjectRef })
   const live = liveConfig?.configuration as BackendConfiguration | undefined
+  const dispatch = useAppDispatch()
 
   const changes = useMemo(() => configChanges(payload, mode), [payload, mode])
   const mappings = useMemo(() => mappingDiff(payload, mode), [payload, mode])
-  const configuration = useMemo(() => proposedConfiguration(payload, live), [payload, live])
+  const configuration = useMemo(() => proposedConfiguration(payload, live, mode), [payload, live, mode])
   const isNew = useMemo(() => isNewConfiguration(payload, mode), [payload, mode])
 
+  // a configuration that does not exist yet has no live document, and the editor's steps read
+  // one by name; the proposed document stands in, so the mapping step has something to load
+  useEffect(() => {
+    if (!liveMissing || payload === undefined) return
+    void dispatch(api.util.upsertQueryData('bundleDataImporterConfigGet', { name: subjectRef }, {
+      name: subjectRef,
+      configuration: configuration as Record<string, object>,
+      // nothing to write and nothing written yet: the review is read-only either way
+      userPermissions: { update: false, delete: false },
+      modificationDate: 0
+    }))
+  }, [liveMissing, payload, configuration, subjectRef, dispatch])
+
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set())
-  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
-  const [filter, setFilter] = useState<StateFilter>('all')
-  const [query, setQuery] = useState('')
   const [tab, setTab] = useState('general')
   const [step, setStep] = useState<number | undefined>(undefined)
-  const seeded = useRef(false)
 
   const paneRef = useRef<HTMLDivElement>(null)
   const { target, jumpTo } = useJumpToField(paneRef)
 
-  const visible = useMemo(() => changes.filter((change) => {
-    if (filter !== 'all' && change.status !== filter) return false
-    const needle = query.trim().toLowerCase()
-    return needle === '' || change.label.toLowerCase().includes(needle)
-  }), [changes, filter, query])
-
-  const tabGroups = useMemo(() => groupByTab(visible), [visible])
-
-  // a big change set opens folded; a small one has nothing to hide
-  useEffect(() => {
-    if (seeded.current || tabGroups.length === 0) return
-    seeded.current = true
-    if (changes.length > COLLAPSE_ABOVE) {
-      setCollapsed(new Set(tabGroups.map((group) => group.tab)))
-    }
-  }, [tabGroups, changes.length])
+  const tabGroups = useMemo(() => groupByTab(changes), [changes])
 
   const included = useMemo(
     () => changes.filter((change) => !excluded.has(change.address)),
@@ -131,10 +121,11 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   // an anchor rides in each annotation's hint, which is a node the form renders in place
   const annotations = useMemo<FormAnnotations>(() => {
     // a path or a cron expression is printed as it is; HTML escaping is for markup, not text nodes
-    const base = annotationsFor(included, (change) => t(`${T}.was`, {
-      value: formatValue(change.current, labels),
-      interpolation: { escapeValue: false }
-    }))
+    const was = (value: string): string => t(`${T}.was`, { value, interpolation: { escapeValue: false } })
+    const base = {
+      ...annotationsFor(included, (change) => was(formatValue(change.current, labels))),
+      ...mappingAnnotations(payload, mode, was)
+    }
     const marked: FormAnnotations = {}
     for (const [path, annotation] of Object.entries(base)) {
       marked[path] = {
@@ -151,7 +142,7 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
       }
     }
     return marked
-  }, [included, labels, t])
+  }, [included, payload, mode, labels, t])
 
   const toggleExcluded = useCallback((addresses: string[], include: boolean): void => {
     setExcluded((previous) => {
@@ -160,15 +151,6 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
         if (include) next.delete(address)
         else next.add(address)
       })
-      return next
-    })
-  }, [])
-
-  const toggleCollapsed = useCallback((key: string): void => {
-    setCollapsed((previous) => {
-      const next = new Set(previous)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
       return next
     })
   }, [])
@@ -193,11 +175,6 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
     return <div className={ styles.state }>{ t(`${T}.loading`) }</div>
   }
 
-  const counts = { changed: 0, added: 0, removed: 0 }
-  changes.forEach((change) => {
-    if (change.status in counts) counts[change.status as keyof typeof counts] += 1
-  })
-
   const editor = (
     <DataImporterConfigEditor
       activeStep={ step }
@@ -212,6 +189,8 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
     />
   )
 
+  const mappingsActive = tab === MAPPING_TARGET.tab && step === MAPPING_TARGET.step
+
   return (
     <div className={ styles.layout }>
       <aside className={ styles.rail }>
@@ -222,39 +201,25 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
             styles={ styles }
           />
         ) }
-        { isNew
-          ? (
-            <NewConfigurationSummary
-              mappingCount={ mappings.length }
-              name={ subjectRef }
-              settingCount={ changes.length }
-              styles={ styles }
-            />
-            )
-          : (
-            <>
-              <RailHead
-                added={ counts.added }
-                changed={ counts.changed }
-                removed={ counts.removed }
-                styles={ styles }
-                tabCount={ Object.keys(TAB_LABELS).length }
-                tabsTouched={ groupByTab(changes).length }
-              />
-              <RailFilters
-                filter={ filter }
-                onFilter={ setFilter }
-                onQuery={ setQuery }
-                query={ query }
+        <div className={ styles.list }>
+          { isNew
+            ? (
+              <NewConfigurationSummary
+                mappingCount={ mappings.length }
+                name={ subjectRef }
+                settingCount={ changes.length }
                 styles={ styles }
               />
-              <div className={ styles.tree }>
+              )
+            : (
+              <>
+                <div className={ styles.caption }>
+                  { t(`${T}.changes`, { count: included.length + changedMappings.length }) }
+                </div>
                 <ChangeTree
                   activeTab={ tab }
-                  collapsed={ collapsed }
                   excluded={ excluded }
                   onJump={ jumpToChange }
-                  onToggleCollapsed={ toggleCollapsed }
                   onToggleExcluded={ history ? undefined : toggleExcluded }
                   styles={ styles }
                   tabs={ tabGroups }
@@ -262,15 +227,16 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
                 />
                 { changedMappings.length > 0 && (
                   <MappingSection
+                    active={ mappingsActive }
                     onJump={ jumpToMappings }
                     rows={ changedMappings }
                     styles={ styles }
                   />
                 ) }
-              </div>
-              { !history && <div className={ styles.railFoot }>{ t(`${T}.foot`) }</div> }
-            </>
-            ) }
+              </>
+              ) }
+        </div>
+        { !history && !isNew && <div className={ styles.foot }>{ t(`${T}.foot`) }</div> }
       </aside>
 
       <div

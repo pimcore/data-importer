@@ -118,6 +118,14 @@ class ImportConfigDetailHydratorTest extends Unit
         static::assertSame(['general.description' => 'new'], $kept);
     }
 
+    /** a create has no tree to filter against: the whole document is the patch */
+    public function testDehydrateKeepsEveryLeafWhenNothingIsRecordedYet(): void
+    {
+        $patch = ['general' => ['name' => 'dealer-feed-import'], 'mappingConfig' => [['label' => 'vin']]];
+
+        static::assertSame($patch, $this->hydrator->dehydrate($this->subject, $patch, []));
+    }
+
     /**
      * @return array<string, mixed>
      */
