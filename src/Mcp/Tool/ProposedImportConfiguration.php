@@ -46,6 +46,12 @@ final class ProposedImportConfiguration
         'processingConfig', 'mappingConfig', 'executionConfig', 'permissions',
     ];
 
+    /**
+     * What the Data Hub adds to every stored document around the sections: a copy of an
+     * existing configuration carries them, and a create must not be refused for it.
+     */
+    private const array ENVELOPE = ['workspaces', 'schema'];
+
     /** the key a wrapped mapping list is handed back under */
     private const string MAPPING_WRAPPER = 'mappings';
 
@@ -110,7 +116,7 @@ final class ProposedImportConfiguration
      */
     public static function unknownSections(array $proposed, array $stored): array
     {
-        return array_values(array_diff(array_keys($proposed), self::SECTIONS, array_keys($stored)));
+        return array_values(array_diff(array_keys($proposed), self::SECTIONS, self::ENVELOPE, array_keys($stored)));
     }
 
     /**

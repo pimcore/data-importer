@@ -113,6 +113,18 @@ class ProposedImportConfigurationTest extends Unit
         );
     }
 
+    /** a copy of a stored document carries the Data Hub's envelope; a create keeps it too */
+    public function testTheDataHubEnvelopeIsKnownOnACreate(): void
+    {
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownSections(
+                ['general' => [], 'workspaces' => [], 'schema' => ['queryEntities' => []]],
+                []
+            )
+        );
+    }
+
     public function testATypeTheInstallationHasIsAccepted(): void
     {
         $state = $this->stored();
