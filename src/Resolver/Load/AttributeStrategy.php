@@ -22,7 +22,7 @@ final class AttributeStrategy extends AbstractLoad
 {
     private string $attributeName;
 
-    private string $attributeLanguage;
+    private ?string $attributeLanguage = null;
 
     private bool $includeUnpublished;
 
@@ -56,7 +56,7 @@ final class AttributeStrategy extends AbstractLoad
         return $this->dataObjectLoader->loadByAttribute($this->getClassName(),
             $this->attributeName,
             $identifier,
-            $this->attributeLanguage,
+            $this->attributeLanguage ?? '',
             $this->includeUnpublished,
             1);
     }
