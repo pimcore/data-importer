@@ -333,6 +333,10 @@ data-importer.review.status.removed: borttagen
 data-importer.review.status.moved: flyttad
 data-importer.review.mappings: Mappningar
 data-importer.review.new.title: Ny konfiguration
+data-importer.review.outline.active: Aktiv
+data-importer.review.outline.inactive: Inaktiv
+data-importer.review.outline.mappings: '{{count}} mappningar'
+data-importer.review.outline.scheduled: Schemalagd
 data-importer.review.state.merged: Tillämpad
 data-importer.review.state.discarded: Avvisad
 data-importer.review.state.refined: Justerad

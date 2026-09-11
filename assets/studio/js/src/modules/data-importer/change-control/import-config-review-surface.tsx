@@ -23,6 +23,8 @@ import {
 import { fieldLabel } from './field-labels'
 import { mappingDiff } from './mapping-diff'
 import { ChangeList } from './change-rail'
+import { configBrief } from './config-outline'
+import { ConfigBriefCard } from './config-outline-rail'
 import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
@@ -75,6 +77,8 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const isNew = useMemo(() => isNewConfiguration(payload, mode), [payload, mode])
   const groups = useMemo(() => groupChanges(changes), [changes])
   const changedMappings = useMemo(() => mappings.filter((row) => row.status !== 'unchanged'), [mappings])
+  // a new configuration is told in one glance; a listing of every leaf says only "all of it"
+  const brief = useMemo(() => isNew ? configBrief(configuration, t) : undefined, [isNew, configuration, t])
 
   // a configuration that does not exist yet has no live document, and the editor's steps read
   // one by name; the proposed document stands in, so the mapping step has something to load
@@ -98,9 +102,10 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
     onStatsChange?.(changes.length + changedMappings.length)
   }, [payload, changes.length, changedMappings.length, onStatsChange])
 
+  // every field of a new configuration is "added": marking each one says nothing
   const annotations = useMemo<FormAnnotations>(
-    () => ({ ...annotationsFor(changes), ...mappingAnnotations(payload, mode) }),
-    [changes, payload, mode]
+    () => isNew ? {} : { ...annotationsFor(changes), ...mappingAnnotations(payload, mode) },
+    [isNew, changes, payload, mode]
   )
 
   const jumpToSection = useCallback((section: string): void => {
@@ -153,20 +158,31 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
             styles={ styles }
           />
         ) }
-        <div className={ styles.list }>
-          <div className={ styles.summary }>
-            { isNew && <>{ t(`${T}.new.title`) } · </> }
-            { t(`${T}.changes`, { count: changes.length + changedMappings.length }) }
-          </div>
-          <ChangeList
-            activeSection={ activeSection }
-            groups={ groups }
-            labelFor={ labelFor }
-            mappings={ changedMappings }
-            onJump={ jumpToSection }
-            styles={ styles }
-          />
-        </div>
+        { brief !== undefined
+          ? (
+            <div className={ styles.list }>
+              <div className={ styles.summary }>{ t(`${T}.new.title`) }</div>
+              <ConfigBriefCard
+                brief={ brief }
+                styles={ styles }
+              />
+            </div>
+            )
+          : (
+            <div className={ styles.list }>
+              <div className={ styles.summary }>
+                { t(`${T}.changes`, { count: changes.length + changedMappings.length }) }
+              </div>
+              <ChangeList
+                activeSection={ activeSection }
+                groups={ groups }
+                labelFor={ labelFor }
+                mappings={ changedMappings }
+                onJump={ jumpToSection }
+                styles={ styles }
+              />
+            </div>
+            ) }
       </aside>
 
       <div className={ styles.editor }>

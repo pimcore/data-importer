@@ -333,6 +333,10 @@ data-importer.review.status.removed: entfernt
 data-importer.review.status.moved: verschoben
 data-importer.review.mappings: Mappings
 data-importer.review.new.title: Neue Konfiguration
+data-importer.review.outline.active: Aktiv
+data-importer.review.outline.inactive: Inaktiv
+data-importer.review.outline.mappings: '{{count}} Mappings'
+data-importer.review.outline.scheduled: Geplant
 data-importer.review.state.merged: Übernommen
 data-importer.review.state.discarded: Abgelehnt
 data-importer.review.state.refined: Überarbeitet

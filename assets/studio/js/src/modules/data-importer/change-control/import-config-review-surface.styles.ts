@@ -123,6 +123,69 @@ export const useStyles = createStyles(({ token, css }) => ({
     text-overflow: ellipsis;
     white-space: nowrap;
   `,
+  /* a new configuration in one glance: source above target on a connector, a card apart
+     from the editor, and how it runs as tags beneath */
+  brief: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${token.marginSM}px;
+    margin-right: ${token.margin}px;
+  `,
+  briefFlow: css`
+    display: flex;
+    flex-direction: column;
+    padding: ${token.paddingSM}px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadiusLG}px;
+    background: ${token.colorFillQuaternary};
+  `,
+  briefStop: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginSM}px;
+    min-width: 0;
+  `,
+  briefIcon: css`
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorderSecondary};
+    color: ${token.colorPrimary};
+  `,
+  briefText: css`
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: ${token.lineHeightSM};
+  `,
+  briefLabel: css`
+    font-weight: ${token.fontWeightStrong};
+    color: ${token.colorText};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  briefNote: css`
+    font-size: ${token.fontSizeSM}px;
+    color: ${token.colorTextSecondary};
+  `,
+  /* the line from source to target, hung under the icon's centre */
+  briefConnector: css`
+    width: 1px;
+    height: ${token.marginSM}px;
+    margin: ${token.marginXXS}px 0 ${token.marginXXS}px 14px;
+    background: ${token.colorBorder};
+  `,
+  briefTags: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${token.marginXXS}px;
+  `,
   note: css`
     font-size: ${token.fontSizeSM}px;
     color: ${token.colorTextTertiary};

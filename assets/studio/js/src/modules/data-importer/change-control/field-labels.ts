@@ -55,7 +55,7 @@ export const humanize = (key: string): string => {
 }
 
 /** t() hands the key back when it has no translation; that is the signal to fall back */
-const translated = (t: Translate, key: string): string | undefined => {
+export const translated = (t: Translate, key: string): string | undefined => {
   const label = t(key)
   return label === key ? undefined : label
 }
