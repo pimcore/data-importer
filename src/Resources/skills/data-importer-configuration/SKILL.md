@@ -21,6 +21,14 @@ next import executes.
 
 Never ask the user to paste a configuration. If you need it, read it.
 
+### Creating one
+
+A name nothing is stored under creates a new configuration. Do not build it from memory:
+read the closest existing one with `get_import_config`, change what the user asked for, and
+propose it under the new name. It needs a loader, a file format, a target class and the four
+resolver strategies — the tool says what is missing. A new configuration starts **inactive**
+unless the user asked for it to run; say so.
+
 ## The document
 
 | Section | What it holds |
@@ -64,6 +72,8 @@ mappingId: <uuid>                    # identity — see below
 - **`general.active`** is the on/off switch for the whole pipeline. Never flip it as a side
   effect of another change.
 - **Never propose a run.** Starting an import is a separate, explicit action.
+- **A copy keeps its preview data behind.** The new configuration has no preview until someone
+  runs one; that is expected, not an error.
 
 ## Proposing
 

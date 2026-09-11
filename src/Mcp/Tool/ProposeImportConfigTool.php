@@ -37,7 +37,7 @@ use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
 /**
- * Proposes a change to an import configuration instead of writing it.
+ * Proposes an import configuration — a change to one, or a new one — instead of writing it.
  *
  * The configuration rides a change set the user reviews field by field, so a dropped mapping
  * is seen before the next import runs without it. Registered only when both an MCP host and
@@ -54,6 +54,9 @@ final readonly class ProposeImportConfigTool
 
     private const string PROPOSAL_TYPE = 'subject-update';
 
+    /** the adapter type this bundle registers with the Data Hub */
+    private const string CONFIG_TYPE = 'dataImporterDataObject';
+
     public function __construct(
         private AgentSessionServiceInterface $sessionService,
         private ProposalWidgetEmitter $widgetEmitter,
@@ -67,12 +70,16 @@ final readonly class ProposeImportConfigTool
     #[McpTool(
         name: self::TOOL_NAME,
         title: 'Propose Import Configuration Changes',
-        description: 'Propose changes to an existing Data Importer configuration for user approval. '
-            . 'Does NOT write — the configuration rides a change set the user reviews field by field. '
-            . 'Read the current configuration first with get_import_config and send the COMPLETE '
-            . 'document back with your changes applied; anything you leave out keeps its current '
-            . 'value. Returns {proposalId, name}. The review widget is shown automatically once the '
-            . 'proposal succeeds; end your turn after a successful proposal and wait for the decision.',
+        description: 'Propose a Data Importer configuration for user approval — changes to an existing '
+            . 'one, or a new one under a name that does not exist yet. Does NOT write — the '
+            . 'configuration rides a change set the user reviews. For a change, read the current '
+            . 'configuration first with get_import_config and send the COMPLETE document back with '
+            . 'your changes applied; anything you leave out keeps its current value. For a new one, '
+            . 'send a complete document (copy a similar configuration and adjust it): it needs a '
+            . 'loader, a file format, a target class and the resolver strategies; it starts inactive '
+            . 'unless active is set. Returns {proposalId, name}. The review widget is shown '
+            . 'automatically once the proposal succeeds; end your turn after a successful proposal '
+            . 'and wait for the decision.',
         annotations: new ToolAnnotations(
             readOnlyHint: false,
             destructiveHint: false,
@@ -81,7 +88,7 @@ final readonly class ProposeImportConfigTool
         )
     )]
     public function execute(
-        #[Schema(type: 'string', description: 'Name of the existing configuration to change.')]
+        #[Schema(type: 'string', description: 'Name of the configuration: an existing one to change, or a new one to create.')]
         string $name,
         #[Schema(
             type: 'string',
@@ -105,10 +112,9 @@ final readonly class ProposeImportConfigTool
             }
 
             $existing = $this->load($name);
-            if ($existing === null) {
+            if ($existing === null && !ProposedImportConfiguration::isValidName($name)) {
                 return $this->errorResult(sprintf(
-                    'No import configuration named "%s". Only an existing one can be proposed against; '
-                    . 'list them with list_import_configs.',
+                    '"%s" cannot name a configuration: use letters, digits, "-" and "_", starting with a letter or digit.',
                     $name,
                 ));
             }
@@ -118,7 +124,8 @@ final readonly class ProposeImportConfigTool
                 return $this->errorResult('The configuration must be an object, or a JSON or YAML object string.');
             }
 
-            $stored = $existing->getConfiguration();
+            // a name nothing is stored under creates: the document is the whole configuration
+            $stored = $existing?->getConfiguration() ?? [];
 
             $unknown = ProposedImportConfiguration::unknownSections($proposed, $stored);
             if ($unknown !== []) {
@@ -149,7 +156,21 @@ final readonly class ProposeImportConfigTool
             }
             // identity and adapter type belong to the subject, never to a proposal
             $state['general']['name'] = $name;
-            $state['general']['type'] = $existing->getType();
+            $state['general']['type'] = $existing?->getType() ?? self::CONFIG_TYPE;
+
+            if ($existing === null) {
+                $missing = ProposedImportConfiguration::missingForCreate($state);
+                if ($missing !== []) {
+                    return $this->errorResult(sprintf(
+                        'A new configuration needs %s. Read a similar one with get_import_config and send '
+                        . 'the complete document under the new name.',
+                        implode(', ', $missing),
+                    ));
+                }
+                // a pipeline nobody switched on must not start running because it was reviewed
+                $state['general']['active'] ??= false;
+                $state['general']['path'] ??= '';
+            }
             // the subject strips these from its own state; proposing them back adds leaves
             // to the review that name a change nobody made
             foreach (ImportConfigSubjectHandler::VOLATILE_GENERAL as $volatile) {
@@ -157,7 +178,9 @@ final readonly class ProposeImportConfigTool
             }
 
             $proposalId = bin2hex(random_bytes(16));
-            $label = sprintf('Proposed changes to the %s configuration', $name);
+            $label = $existing === null
+                ? sprintf('A new %s configuration', $name)
+                : sprintf('Proposed changes to the %s configuration', $name);
 
             $this->sessionService->setProposalData($sessionId, $proposalId, [
                 'proposalType' => self::PROPOSAL_TYPE,

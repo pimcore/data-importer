@@ -25,6 +25,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_string;
+use function preg_match;
 use function range;
 use function sprintf;
 
@@ -63,6 +64,20 @@ final class ProposedImportConfiguration
     public const string FAMILY_DATA_TARGET = 'data target';
 
     public const string FAMILY_OPERATOR = 'transformation';
+
+    /** what a configuration cannot run without; the editor marks the same fields required */
+    private const array REQUIRED_TO_CREATE = [
+        'loaderConfig.type',
+        'interpreterConfig.type',
+        'resolverConfig.dataObjectClassId',
+        'resolverConfig.loadingStrategy.type',
+        'resolverConfig.createLocationStrategy.type',
+        'resolverConfig.locationUpdateStrategy.type',
+        'resolverConfig.publishingStrategy.type',
+    ];
+
+    /** a configuration name becomes a file name and a YAML key; keep it to what both accept */
+    private const string NAME_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_-]*$/';
 
     /** where a document names a type, and which family it must come from */
     private const array TYPED = [
@@ -207,5 +222,32 @@ final class ProposedImportConfiguration
         }
 
         return $node;
+    }
+
+    public static function isValidName(string $name): bool
+    {
+        return preg_match(self::NAME_PATTERN, $name) === 1;
+    }
+
+    /**
+     * The fields a new configuration still lacks. An update inherits them from the stored
+     * document; a create has nothing to inherit from, and a configuration without a loader,
+     * a format or a target class is not one the importer can run.
+     *
+     * @param array<string, mixed> $state
+     *
+     * @return list<string>
+     */
+    public static function missingForCreate(array $state): array
+    {
+        $missing = [];
+        foreach (self::REQUIRED_TO_CREATE as $path) {
+            $value = self::at($state, $path);
+            if ($value === null || $value === '') {
+                $missing[] = $path;
+            }
+        }
+
+        return $missing;
     }
 }

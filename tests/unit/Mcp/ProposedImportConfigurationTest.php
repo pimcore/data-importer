@@ -157,6 +157,57 @@ class ProposedImportConfigurationTest extends Unit
     }
 
     /**
+     * @dataProvider names
+     */
+    public function testANameIsWhatAFileAndAYamlKeyAccept(string $name, bool $valid): void
+    {
+        static::assertSame($valid, ProposedImportConfiguration::isValidName($name));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function names(): iterable
+    {
+        yield 'plain' => ['car-import', true];
+        yield 'underscore and digits' => ['dealer_feed_2', true];
+        yield 'spaces' => ['car import', false];
+        yield 'leading dash' => ['-cars', false];
+        yield 'path' => ['../cars', false];
+        yield 'empty' => ['', false];
+    }
+
+    public function testACompleteDocumentLacksNothingToCreate(): void
+    {
+        $state = $this->stored();
+        $state['interpreterConfig'] = ['type' => 'json'];
+        $state['resolverConfig'] = [
+            'dataObjectClassId' => 'CAR',
+            'loadingStrategy' => ['type' => 'notLoad'],
+            'createLocationStrategy' => ['type' => 'staticPath', 'settings' => ['path' => '/import']],
+            'locationUpdateStrategy' => ['type' => 'noChange'],
+            'publishingStrategy' => ['type' => 'noChangeUnpublishNew'],
+        ];
+
+        static::assertSame([], ProposedImportConfiguration::missingForCreate($state));
+    }
+
+    /** an update inherits these from the stored document; a create has nowhere to inherit from */
+    public function testACreateNamesWhatItStillLacks(): void
+    {
+        $state = ['general' => ['name' => 'dealer-feed'], 'loaderConfig' => ['type' => 'asset'], 'resolverConfig' => ['dataObjectClassId' => '']];
+
+        static::assertSame([
+            'interpreterConfig.type',
+            'resolverConfig.dataObjectClassId',
+            'resolverConfig.loadingStrategy.type',
+            'resolverConfig.createLocationStrategy.type',
+            'resolverConfig.locationUpdateStrategy.type',
+            'resolverConfig.publishingStrategy.type',
+        ], ProposedImportConfiguration::missingForCreate($state));
+    }
+
+    /**
      * @return array<string, list<string>>
      */
     private function vocabulary(): array
