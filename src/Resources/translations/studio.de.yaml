@@ -330,18 +330,11 @@ data-importer.review.status.added: hinzugefügt
 data-importer.review.status.changed: geändert
 data-importer.review.status.removed: entfernt
 data-importer.review.status.moved: verschoben
-data-importer.review.status.whole: gesamt
 data-importer.review.mappings: Mappings
-data-importer.review.mappings-whole: Die Mapping-Liste wird als Ganzes vorgeschlagen.
-data-importer.review.foot: 'Übernommen wird nur, was angehakt ist. Gruppierte Zeilen — die Mapping-Liste — werden als Ganzes vorgeschlagen.'
 data-importer.review.new.title: Neue Konfiguration
 data-importer.review.new.settings: '{{count}} Einstellungen'
 data-importer.review.new.mappings: '{{count}} Mappings'
-data-importer.review.new.note: 'Hier wird kein bestehender Wert ersetzt, es gibt also nichts zu vergleichen — lesen Sie sie im Editor. Eine neue Konfiguration wird als Ganzes übernommen oder abgelehnt.'
-data-importer.review.was: 'vorher {{value}}'
-data-importer.review.value.empty: leer
-data-importer.review.value.yes: ja
-data-importer.review.value.no: nein
+data-importer.review.new.note: 'Eine neue Konfiguration wird als Ganzes übernommen oder abgelehnt; lesen Sie sie im Editor.'
 data-importer.review.state.merged: Übernommen
 data-importer.review.state.discarded: Abgelehnt
 data-importer.review.state.refined: Überarbeitet

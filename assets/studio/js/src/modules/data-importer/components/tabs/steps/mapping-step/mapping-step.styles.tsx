@@ -594,11 +594,6 @@ export const useStyles = createStyles(({ css, token }) => {
     removedTitle: css`
       text-decoration: line-through;
       color: ${token.colorTextTertiary};
-    `,
-    titleHint: css`
-      font-size: ${token.fontSizeSM}px;
-      font-weight: normal;
-      color: ${token.colorTextSecondary};
     `
   }
 })

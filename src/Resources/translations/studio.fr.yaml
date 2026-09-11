@@ -330,18 +330,11 @@ data-importer.review.status.added: ajouté
 data-importer.review.status.changed: modifié
 data-importer.review.status.removed: supprimé
 data-importer.review.status.moved: déplacé
-data-importer.review.status.whole: entier
 data-importer.review.mappings: Mappings
-data-importer.review.mappings-whole: La liste des mappings est proposée en bloc.
-data-importer.review.foot: 'Approuver n''applique que ce qui est coché. Les lignes groupées — la liste des mappings — sont proposées en bloc.'
 data-importer.review.new.title: Nouvelle configuration
 data-importer.review.new.settings: '{{count}} réglages'
 data-importer.review.new.mappings: '{{count}} mappings'
-data-importer.review.new.note: 'Rien ici ne remplace une valeur existante, il n''y a donc rien à comparer — lisez-la dans l''éditeur. Une nouvelle configuration est approuvée ou rejetée en bloc.'
-data-importer.review.was: 'avant {{value}}'
-data-importer.review.value.empty: vide
-data-importer.review.value.yes: oui
-data-importer.review.value.no: non
+data-importer.review.new.note: 'Une nouvelle configuration est approuvée ou rejetée en bloc ; lisez-la dans l’éditeur.'
 data-importer.review.state.merged: Appliqué
 data-importer.review.state.discarded: Rejeté
 data-importer.review.state.refined: Affiné

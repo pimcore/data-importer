@@ -20,8 +20,13 @@ use function array_keys;
 use function array_map;
 use function array_values;
 use function count;
+use function explode;
+use function implode;
+use function in_array;
 use function is_array;
+use function is_string;
 use function range;
+use function sprintf;
 
 /**
  * What an agent hands propose_import_config, turned into the document a proposal can carry.
@@ -42,6 +47,33 @@ final class ProposedImportConfiguration
 
     /** the key a wrapped mapping list is handed back under */
     private const string MAPPING_WRAPPER = 'mappings';
+
+    public const string FAMILY_LOADER = 'loader';
+
+    public const string FAMILY_INTERPRETER = 'interpreter';
+
+    public const string FAMILY_LOADING = 'loading strategy';
+
+    public const string FAMILY_LOCATION = 'location strategy';
+
+    public const string FAMILY_PUBLISHING = 'publishing strategy';
+
+    public const string FAMILY_CLEANUP = 'cleanup strategy';
+
+    public const string FAMILY_DATA_TARGET = 'data target';
+
+    public const string FAMILY_OPERATOR = 'transformation';
+
+    /** where a document names a type, and which family it must come from */
+    private const array TYPED = [
+        'loaderConfig.type' => self::FAMILY_LOADER,
+        'interpreterConfig.type' => self::FAMILY_INTERPRETER,
+        'resolverConfig.loadingStrategy.type' => self::FAMILY_LOADING,
+        'resolverConfig.createLocationStrategy.type' => self::FAMILY_LOCATION,
+        'resolverConfig.locationUpdateStrategy.type' => self::FAMILY_LOCATION,
+        'resolverConfig.publishingStrategy.type' => self::FAMILY_PUBLISHING,
+        'processingConfig.cleanup.strategy' => self::FAMILY_CLEANUP,
+    ];
 
     /**
      * Top-level keys that are neither a section nor something the stored document already
@@ -106,5 +138,74 @@ final class ProposedImportConfiguration
         return array_keys($value) === array_map(strval(...), range(0, count($value) - 1))
             ? array_values($value)
             : null;
+    }
+
+    /**
+     * Every type the document names that this installation does not have, each with what it
+     * could have been. A select in the editor can only hold one of its options; a proposal must
+     * not be able to hold more.
+     *
+     * @param array<string, mixed>        $state
+     * @param array<string, list<string>> $vocabulary family => accepted types
+     *
+     * @return list<string>
+     */
+    public static function unknownValues(array $state, array $vocabulary): array
+    {
+        $problems = [];
+        $check = static function (string $path, mixed $value, string $family) use (&$problems, $vocabulary): void {
+            if ($value === null || $value === '' || !isset($vocabulary[$family])) {
+                return;
+            }
+            if (!is_string($value) || !in_array($value, $vocabulary[$family], true)) {
+                $problems[] = sprintf(
+                    '%s: "%s" is not a %s here; use one of %s',
+                    $path,
+                    is_string($value) ? $value : 'non-string',
+                    $family,
+                    implode(', ', $vocabulary[$family]),
+                );
+            }
+        };
+
+        foreach (self::TYPED as $path => $family) {
+            $check($path, self::at($state, $path), $family);
+        }
+
+        $mappings = $state['mappingConfig'] ?? [];
+        if (!is_array($mappings)) {
+            return $problems;
+        }
+        foreach ($mappings as $index => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $check(sprintf('mappingConfig[%s].dataTarget.type', $index), $row['dataTarget']['type'] ?? null, self::FAMILY_DATA_TARGET);
+            foreach (is_array($row['transformationPipeline'] ?? null) ? $row['transformationPipeline'] : [] as $step => $operator) {
+                $check(
+                    sprintf('mappingConfig[%s].transformationPipeline[%s].type', $index, $step),
+                    is_array($operator) ? ($operator['type'] ?? null) : null,
+                    self::FAMILY_OPERATOR,
+                );
+            }
+        }
+
+        return $problems;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function at(array $state, string $path): mixed
+    {
+        $node = $state;
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($node) || !isset($node[$segment])) {
+                return null;
+            }
+            $node = $node[$segment];
+        }
+
+        return $node;
     }
 }

@@ -15,11 +15,12 @@ import { api, useBundleDataImporterConfigGetQuery } from '../data-importer-api-s
 import type { BackendConfiguration } from '../utils/transformers'
 import { FormAnnotationsProvider, type FormAnnotations } from './studio-form-annotations'
 import {
-  annotationsFor, configChanges, formatValue, groupByTab, isNewConfiguration, mappingAnnotations,
-  proposedConfiguration, SECTION_TARGET, type ConfigChange, type ReviewMode, type ReviewPayload, type ValueLabels
+  annotationsFor, configChanges, groupChanges, isNewConfiguration, mappingAnnotations,
+  proposedConfiguration, SECTION_TARGET, type ConfigChange, type ReviewMode, type ReviewPayload
 } from './config-review-model'
+import { fieldLabel } from './field-labels'
 import { mappingDiff } from './mapping-diff'
-import { ChangeTree, MappingSection, NewConfigurationSummary } from './change-rail'
+import { ChangeList, NewConfigurationSummary } from './change-rail'
 import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
@@ -52,10 +53,11 @@ const MAPPING_TARGET = SECTION_TARGET.mapping
  *
  * The rail is a map of the change, not a list of it — a row names a place in the editor and
  * carries the reader there, which is why this owns the tab and the step rather than letting
- * the tab strip keep them to itself.
+ * the tab strip keep them to itself. A configuration is approved or rejected whole: the rail
+ * decides nothing.
  */
 export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps> = ({
-  subjectRef, changeSetId, contextRef, mode = 'review', state, resolvedAt, onExcludedChange, onStatsChange
+  subjectRef, changeSetId, contextRef, mode = 'review', state, resolvedAt, onStatsChange
 }) => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -72,6 +74,8 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   const mappings = useMemo(() => mappingDiff(payload, mode), [payload, mode])
   const configuration = useMemo(() => proposedConfiguration(payload, live, mode), [payload, live, mode])
   const isNew = useMemo(() => isNewConfiguration(payload, mode), [payload, mode])
+  const groups = useMemo(() => groupChanges(changes), [changes])
+  const changedMappings = useMemo(() => mappings.filter((row) => row.status !== 'unchanged'), [mappings])
 
   // a configuration that does not exist yet has no live document, and the editor's steps read
   // one by name; the proposed document stands in, so the mapping step has something to load
@@ -86,74 +90,33 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
     }))
   }, [liveMissing, payload, configuration, subjectRef, dispatch])
 
-  const [excluded, setExcluded] = useState<ReadonlySet<string>>(new Set())
   const [tab, setTab] = useState('general')
   const [step, setStep] = useState<number | undefined>(undefined)
 
   const paneRef = useRef<HTMLDivElement>(null)
   const { target, jumpTo } = useJumpToField(paneRef)
 
-  const tabGroups = useMemo(() => groupByTab(changes), [changes])
-
-  const included = useMemo(
-    () => changes.filter((change) => !excluded.has(change.address)),
-    [changes, excluded]
-  )
-  const changedMappings = useMemo(
-    () => mappings.filter((row) => row.status !== 'unchanged'),
-    [mappings]
-  )
-
   useEffect(() => {
-    onStatsChange?.(included.length + changedMappings.length)
-  }, [included.length, changedMappings.length, onStatsChange])
-
-  useEffect(() => {
-    onExcludedChange?.([...excluded])
-  }, [excluded, onExcludedChange])
-
-  const labels = useMemo<ValueLabels>(() => ({
-    empty: t(`${T}.value.empty`),
-    yes: t(`${T}.value.yes`),
-    no: t(`${T}.value.no`)
-  }), [t])
+    onStatsChange?.(changes.length + changedMappings.length)
+  }, [changes.length, changedMappings.length, onStatsChange])
 
   // an anchor rides in each annotation's hint, which is a node the form renders in place
   const annotations = useMemo<FormAnnotations>(() => {
-    // a path or a cron expression is printed as it is; HTML escaping is for markup, not text nodes
-    const was = (value: string): string => t(`${T}.was`, { value, interpolation: { escapeValue: false } })
-    const base = {
-      ...annotationsFor(included, (change) => was(formatValue(change.current, labels))),
-      ...mappingAnnotations(payload, mode, was)
-    }
+    const base = { ...annotationsFor(changes), ...mappingAnnotations(payload, mode) }
     const marked: FormAnnotations = {}
     for (const [path, annotation] of Object.entries(base)) {
       marked[path] = {
         ...annotation,
         hint: (
-          <>
-            <span
-              data-field-anchor={ fieldAnchorId(path) }
-              id={ fieldAnchorId(path) }
-            />
-            { annotation.hint }
-          </>
+          <span
+            data-field-anchor={ fieldAnchorId(path) }
+            id={ fieldAnchorId(path) }
+          />
         )
       }
     }
     return marked
-  }, [included, payload, mode, labels, t])
-
-  const toggleExcluded = useCallback((addresses: string[], include: boolean): void => {
-    setExcluded((previous) => {
-      const next = new Set(previous)
-      addresses.forEach((address) => {
-        if (include) next.delete(address)
-        else next.add(address)
-      })
-      return next
-    })
-  }, [])
+  }, [changes, payload, mode])
 
   const jumpToChange = useCallback((change: ConfigChange): void => {
     const destination = SECTION_TARGET[change.section]
@@ -167,6 +130,16 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
     setTab(MAPPING_TARGET.tab)
     setStep(MAPPING_TARGET.step)
   }, [])
+
+  const labelFor = useCallback(
+    (change: ConfigChange): string => fieldLabel(change.address, configuration, t),
+    [configuration, t]
+  )
+
+  // the section the editor is showing: the one whose tab and step are the current ones
+  const activeSection = useMemo(() => Object.entries(SECTION_TARGET)
+    .find(([, place]) => place.tab === tab && (place.step === undefined || place.step === step))?.[0],
+  [tab, step])
 
   if (error != null) {
     return <div className={ styles.state }>{ t(`${T}.load-failed`) }</div>
@@ -188,8 +161,6 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
       showRuntime={ false }
     />
   )
-
-  const mappingsActive = tab === MAPPING_TARGET.tab && step === MAPPING_TARGET.step
 
   return (
     <div className={ styles.layout }>
@@ -213,30 +184,22 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
               )
             : (
               <>
-                <div className={ styles.caption }>
-                  { t(`${T}.changes`, { count: included.length + changedMappings.length }) }
+                <div className={ styles.summary }>
+                  { t(`${T}.changes`, { count: changes.length + changedMappings.length }) }
                 </div>
-                <ChangeTree
-                  activeTab={ tab }
-                  excluded={ excluded }
+                <ChangeList
+                  activeSection={ activeSection }
+                  groups={ groups }
+                  labelFor={ labelFor }
+                  mappings={ changedMappings }
                   onJump={ jumpToChange }
-                  onToggleExcluded={ history ? undefined : toggleExcluded }
+                  onJumpMappings={ jumpToMappings }
                   styles={ styles }
-                  tabs={ tabGroups }
                   target={ target }
                 />
-                { changedMappings.length > 0 && (
-                  <MappingSection
-                    active={ mappingsActive }
-                    onJump={ jumpToMappings }
-                    rows={ changedMappings }
-                    styles={ styles }
-                  />
-                ) }
               </>
               ) }
         </div>
-        { !history && !isNew && <div className={ styles.foot }>{ t(`${T}.foot`) }</div> }
       </aside>
 
       <div

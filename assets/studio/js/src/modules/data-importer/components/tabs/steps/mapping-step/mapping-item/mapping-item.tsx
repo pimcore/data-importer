@@ -152,7 +152,6 @@ const MappingItemComponent = ({
       <span className={ styles.annotatedTitle }>
         <span className={ annotation.status === 'removed' ? styles.removedTitle : undefined }>{ label }</span>
         <StatusTag status={ annotation.status } />
-        { annotation.hint !== undefined && <span className={ styles.titleHint }>{ annotation.hint }</span> }
       </span>
       )
 

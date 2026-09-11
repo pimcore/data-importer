@@ -330,18 +330,11 @@ data-importer.review.status.added: tillagd
 data-importer.review.status.changed: ändrad
 data-importer.review.status.removed: borttagen
 data-importer.review.status.moved: flyttad
-data-importer.review.status.whole: hela
 data-importer.review.mappings: Mappningar
-data-importer.review.mappings-whole: Mappningslistan föreslås som en helhet.
-data-importer.review.foot: 'Godkänn tillämpar bara det som är ikryssat. Grupperade rader — mappningslistan — föreslås som en helhet.'
 data-importer.review.new.title: Ny konfiguration
 data-importer.review.new.settings: '{{count}} inställningar'
 data-importer.review.new.mappings: '{{count}} mappningar'
-data-importer.review.new.note: 'Inget här ersätter ett befintligt värde, så det finns inget att jämföra med — läs den i editorn. En ny konfiguration godkänns eller avvisas i sin helhet.'
-data-importer.review.was: 'var {{value}}'
-data-importer.review.value.empty: tom
-data-importer.review.value.yes: ja
-data-importer.review.value.no: nej
+data-importer.review.new.note: 'En ny konfiguration godkänns eller avvisas i sin helhet; läs den i editorn.'
 data-importer.review.state.merged: Tillämpad
 data-importer.review.state.discarded: Avvisad
 data-importer.review.state.refined: Justerad

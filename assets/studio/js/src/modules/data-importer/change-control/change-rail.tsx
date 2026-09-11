@@ -9,9 +9,8 @@
  */
 
 import React from 'react'
-import { Checkbox } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { type ConfigChange, type TabGroup } from './config-review-model'
+import { type ChangeGroup, type ConfigChange } from './config-review-model'
 import { type MappingRowDiff } from './mapping-diff'
 import { StatusTag } from './status-tag'
 import { type useStyles } from './import-config-review-surface.styles'
@@ -20,142 +19,94 @@ type Styles = ReturnType<typeof useStyles>['styles']
 
 const T = 'data-importer.review'
 
-interface TreeProps {
-  readonly tabs: TabGroup[]
-  readonly excluded: ReadonlySet<string>
-  readonly activeTab: string
+/** the mapping step sits between the resolver and the processing settings in the editor */
+const MAPPINGS_AFTER = 'resolver'
+
+interface ListProps {
+  readonly groups: ChangeGroup[]
+  readonly mappings: MappingRowDiff[]
+  /** the section the editor currently shows, so the reader knows where they are */
+  readonly activeSection: string | undefined
   readonly target: string | null
-  /** absent once the change set is resolved: nothing is left to decide */
-  readonly onToggleExcluded?: (addresses: string[], include: boolean) => void
+  readonly labelFor: (change: ConfigChange) => string
   readonly onJump: (change: ConfigChange) => void
+  readonly onJumpMappings: () => void
   readonly styles: Styles
 }
 
 /**
- * Tab → field, in the order the editor lays them out. A row is a place in the editor, not
- * only an entry in a list: the label carries the reader there, the checkbox decides whether
- * it lands. A tab that holds several sections names them; one that is its own section does not.
+ * A map of the change, in the order the editor lays it out: one caption per section, one row
+ * per changed field. A row is a place — its label carries the reader to the field, the mark
+ * says what happened there. Nothing here is decided; the change set is approved whole.
  */
-export const ChangeTree: React.FC<TreeProps> = ({
-  tabs, excluded, activeTab, target, onToggleExcluded, onJump, styles
+export const ChangeList: React.FC<ListProps> = ({
+  groups, mappings, activeSection, target, labelFor, onJump, onJumpMappings, styles
 }) => {
   const { t } = useTranslation()
 
-  return (
-    <>
-      { tabs.map((tab) => {
-        const addresses = tab.groups.reduce<string[]>(
-          (all, group) => [...all, ...group.changes.map((change) => change.address)], [])
-        const included = addresses.filter((address) => !excluded.has(address)).length
-        const first = tab.groups[0]?.changes[0]
-
-        return (
-          <div
-            className={ styles.group }
-            key={ tab.tab }
-          >
-            <div className={ styles.groupHead }>
-              { onToggleExcluded !== undefined && (
-                <Checkbox
-                  checked={ included > 0 }
-                  indeterminate={ included > 0 && included < addresses.length }
-                  onChange={ (event) => { onToggleExcluded(addresses, event.target.checked) } }
-                />
-              ) }
-              <button
-                className={ activeTab === tab.tab ? styles.groupLabelActive : styles.groupLabel }
-                onClick={ () => { if (first !== undefined) onJump(first) } }
-                type="button"
-              >
-                { t(tab.label) }
-              </button>
-              <span className={ styles.count }>{ tab.count }</span>
-            </div>
-
-            { tab.groups.map((group) => (
-              <React.Fragment key={ group.section }>
-                { tab.groups.length > 1 && <div className={ styles.sectionLabel }>{ t(group.label) }</div> }
-                { group.changes.map((change) => (
-                  <div
-                    className={ target === change.address ? styles.rowTarget : styles.row }
-                    key={ change.address }
-                  >
-                    { onToggleExcluded !== undefined && (
-                      <Checkbox
-                        checked={ !excluded.has(change.address) }
-                        disabled={ change.locked }
-                        onChange={ (event) => { onToggleExcluded([change.address], event.target.checked) } }
-                      />
-                    ) }
-                    <button
-                      className={ styles.rowLabel }
-                      onClick={ () => { onJump(change) } }
-                      title={ change.address }
-                      type="button"
-                    >
-                      { change.label }
-                    </button>
-                    <StatusTag status={ change.locked ? 'whole' : change.status } />
-                  </div>
-                )) }
-              </React.Fragment>
-            )) }
-          </div>
-        )
-      }) }
-    </>
-  )
-}
-
-interface MappingProps {
-  readonly rows: MappingRowDiff[]
-  readonly active: boolean
-  readonly onJump: () => void
-  readonly styles: Styles
-}
-
-/** The mapping list is one address, so it is one entry that carries you to the step. */
-export const MappingSection: React.FC<MappingProps> = ({ rows, active, onJump, styles }) => {
-  const { t } = useTranslation()
-
-  return (
-    <div className={ styles.group }>
-      <div className={ styles.groupHead }>
+  const mappingGroup = mappings.length === 0
+    ? null
+    : (
+      <div
+        className={ styles.group }
+        key="mapping"
+      >
         <button
-          className={ active ? styles.groupLabelActive : styles.groupLabel }
-          onClick={ onJump }
+          className={ activeSection === 'mapping' ? styles.captionActive : styles.caption }
+          onClick={ onJumpMappings }
           type="button"
         >
           { t(`${T}.mappings`) }
         </button>
-        <span className={ styles.count }>{ rows.length }</span>
-      </div>
-
-      { rows.map((row) => (
-        <div
-          className={ styles.mappingRow }
-          key={ row.key }
-        >
+        { mappings.map((row) => (
           <button
-            className={ styles.rowLabel }
-            onClick={ onJump }
+            className={ styles.row }
+            key={ row.key }
+            onClick={ onJumpMappings }
             type="button"
           >
-            { row.label }
+            <span className={ styles.rowLabel }>{ row.label }</span>
+            { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
           </button>
-          { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
-          <div className={ styles.rowMeta }>
-            { row.currentTarget !== undefined && row.currentTarget !== row.target && (
-              <><span className={ styles.was }>{ row.currentTarget }</span><span> → </span></>
-            ) }
-            <span>{ row.target }</span>
-          </div>
-        </div>
-      )) }
+        )) }
+      </div>
+      )
 
-      <div className={ styles.note }>{ t(`${T}.mappings-whole`) }</div>
+  const sections = groups.map((group) => (
+    <div
+      className={ styles.group }
+      key={ group.section }
+    >
+      <button
+        className={ activeSection === group.section ? styles.captionActive : styles.caption }
+        onClick={ () => { onJump(group.changes[0]) } }
+        type="button"
+      >
+        { t(group.label) }
+      </button>
+      { group.changes.map((change) => (
+        <button
+          className={ target === change.address ? styles.rowTarget : styles.row }
+          key={ change.address }
+          onClick={ () => { onJump(change) } }
+          title={ change.address }
+          type="button"
+        >
+          <span className={ styles.rowLabel }>{ labelFor(change) }</span>
+          <StatusTag status={ change.status } />
+        </button>
+      )) }
     </div>
-  )
+  ))
+
+  const at = groups.findIndex((group) => group.section === MAPPINGS_AFTER)
+  const ordered = mappingGroup === null
+    ? sections
+    : at === -1
+      ? [...sections, mappingGroup]
+      : [...sections.slice(0, at + 1), mappingGroup, ...sections.slice(at + 1)]
+
+  return <>{ ordered }</>
 }
 
 interface NewConfigurationSummaryProps {
@@ -167,7 +118,6 @@ interface NewConfigurationSummaryProps {
 
 /**
  * A create has no previous values, so listing every field says only "all of it" at length.
- * It is also all-or-nothing: withholding leaves would land a configuration nobody reviewed.
  */
 export const NewConfigurationSummary: React.FC<NewConfigurationSummaryProps> = ({
   name, settingCount, mappingCount, styles
@@ -178,7 +128,7 @@ export const NewConfigurationSummary: React.FC<NewConfigurationSummaryProps> = (
     <div className={ styles.group }>
       <div className={ styles.caption }>{ t(`${T}.new.title`) }</div>
       <div className={ styles.newName }>{ name }</div>
-      <div className={ styles.rowMeta }>
+      <div className={ styles.note }>
         { t(`${T}.new.settings`, { count: settingCount }) } · { t(`${T}.new.mappings`, { count: mappingCount }) }
       </div>
       <div className={ styles.note }>{ t(`${T}.new.note`) }</div>

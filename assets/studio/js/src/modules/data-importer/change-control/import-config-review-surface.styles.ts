@@ -10,6 +10,19 @@
 
 import { createStyles } from 'antd-style'
 
+/* the rail's caption and row are buttons stripped back to text: the keyboard reaches them */
+const plain = `
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: none;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+`
+
 export const useStyles = createStyles(({ token, css }) => ({
   /* the modal keeps its own gutters; the surface fills the width between them */
   layout: css`
@@ -20,8 +33,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     min-height: 420px;
   `,
   rail: css`
-    width: 288px;
-    flex: 0 0 288px;
+    width: 272px;
+    flex: 0 0 272px;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -35,10 +48,10 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding-right: ${token.padding}px;
     display: flex;
     flex-direction: column;
-    gap: ${token.marginSM}px;
+    gap: ${token.marginMD}px;
   `,
-  caption: css`
-    padding: ${token.paddingXS}px 0;
+  summary: css`
+    padding: ${token.paddingXS}px 0 ${token.paddingXXS}px;
     font-size: ${token.fontSizeSM}px;
     font-weight: ${token.fontWeightStrong};
     letter-spacing: .08em;
@@ -62,64 +75,45 @@ export const useStyles = createStyles(({ token, css }) => ({
   group: css`
     display: flex;
     flex-direction: column;
+    gap: ${token.marginXXS}px;
   `,
-  groupHead: css`
-    display: flex;
-    align-items: center;
-    gap: ${token.marginXS}px;
-    min-height: ${token.controlHeight}px;
-  `,
-  groupLabel: css`
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: none;
-    padding: 0;
-    margin: 0;
-    font: inherit;
+  caption: css`
+    ${plain}
+    padding: 0 0 ${token.paddingXXS}px;
+    font-size: ${token.fontSizeSM}px;
     font-weight: ${token.fontWeightStrong};
-    color: ${token.colorText};
-    text-align: left;
-    cursor: pointer;
+    color: ${token.colorTextSecondary};
+
+    &:hover {
+      color: ${token.colorPrimary};
+    }
   `,
-  groupLabelActive: css`
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: none;
-    padding: 0;
-    margin: 0;
-    font: inherit;
+  captionActive: css`
+    ${plain}
+    padding: 0 0 ${token.paddingXXS}px;
+    font-size: ${token.fontSizeSM}px;
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorPrimary};
-    text-align: left;
-    cursor: pointer;
-  `,
-  count: css`
-    color: ${token.colorTextTertiary};
-    font-size: ${token.fontSizeSM}px;
-    font-variant-numeric: tabular-nums;
-  `,
-  sectionLabel: css`
-    padding: ${token.paddingXXS}px 0 0 ${token.paddingLG}px;
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextTertiary};
   `,
   row: css`
-    display: flex;
-    align-items: center;
+    ${plain}
     gap: ${token.marginXS}px;
     min-height: ${token.controlHeightSM}px;
-    padding-left: ${token.paddingLG}px;
+    padding: 0 ${token.paddingXXS}px 0 ${token.paddingSM}px;
     border-radius: ${token.borderRadiusSM}px;
+    color: ${token.colorText};
+
+    &:hover {
+      background: ${token.colorFillTertiary};
+    }
   `,
   rowTarget: css`
-    display: flex;
-    align-items: center;
+    ${plain}
     gap: ${token.marginXS}px;
     min-height: ${token.controlHeightSM}px;
-    padding-left: ${token.paddingLG}px;
+    padding: 0 ${token.paddingXXS}px 0 ${token.paddingSM}px;
     border-radius: ${token.borderRadiusSM}px;
+    color: ${token.colorText};
     background: ${token.colorPrimaryBg};
   `,
   rowLabel: css`
@@ -128,46 +122,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    border: none;
-    background: none;
-    padding: 0;
-    margin: 0;
-    font: inherit;
-    color: ${token.colorText};
-    text-align: left;
-    cursor: pointer;
-
-    &:hover {
-      color: ${token.colorPrimary};
-    }
-  `,
-  mappingRow: css`
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    column-gap: ${token.marginXS}px;
-    padding: ${token.paddingXXS}px 0 ${token.paddingXXS}px ${token.paddingLG}px;
-  `,
-  rowMeta: css`
-    grid-column: 1 / -1;
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextSecondary};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  was: css`
-    text-decoration: line-through;
-    color: ${token.colorTextTertiary};
   `,
   note: css`
-    padding: ${token.paddingXXS}px 0 0 ${token.paddingLG}px;
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextTertiary};
-  `,
-  foot: css`
-    flex: 0 0 auto;
-    padding: ${token.paddingXS}px ${token.padding}px 0 0;
     font-size: ${token.fontSizeSM}px;
     color: ${token.colorTextTertiary};
   `,

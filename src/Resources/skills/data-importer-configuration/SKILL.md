@@ -74,6 +74,9 @@ and only what they tick is applied. So:
   rewrite wholesale loses the parts you left out of it.
 - A key that is not part of an import configuration is rejected, not stored. That is the tool
   telling you the document came from memory rather than from `get_import_config`.
+- Every `type` (loader, interpreter, the resolver strategies, cleanup, data targets, transformation
+  operators) must be one this installation has. A rejected value comes back with the allowed
+  list — pick from it, never invent a name that sounds right.
 - Give a one-sentence `summary` naming what actually changes — "Maps co2_emission and fuel_type,
   drops the additional-images mapping, moves the run to 03:00."
 - End your turn after a successful proposal. The review widget appears on its own; do not

@@ -330,18 +330,11 @@ data-importer.review.status.added: lagt til
 data-importer.review.status.changed: endret
 data-importer.review.status.removed: fjernet
 data-importer.review.status.moved: flyttet
-data-importer.review.status.whole: hele
 data-importer.review.mappings: Mappinger
-data-importer.review.mappings-whole: Mappinglisten foreslås som en helhet.
-data-importer.review.foot: 'Godkjenn bruker bare det som er huket av. Grupperte rader — mappinglisten — foreslås som en helhet.'
 data-importer.review.new.title: Ny konfigurasjon
 data-importer.review.new.settings: '{{count}} innstillinger'
 data-importer.review.new.mappings: '{{count}} mappinger'
-data-importer.review.new.note: 'Ingenting her erstatter en eksisterende verdi, så det er ingenting å sammenligne med — les den i editoren. En ny konfigurasjon godkjennes eller avvises i sin helhet.'
-data-importer.review.was: 'var {{value}}'
-data-importer.review.value.empty: tom
-data-importer.review.value.yes: ja
-data-importer.review.value.no: nei
+data-importer.review.new.note: 'En ny konfigurasjon godkjennes eller avvises i sin helhet; les den i editoren.'
 data-importer.review.state.merged: Tatt i bruk
 data-importer.review.state.discarded: Avvist
 data-importer.review.state.refined: Justert

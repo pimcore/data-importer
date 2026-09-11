@@ -113,6 +113,63 @@ class ProposedImportConfigurationTest extends Unit
         );
     }
 
+    public function testATypeTheInstallationHasIsAccepted(): void
+    {
+        $state = $this->stored();
+        $state['resolverConfig'] = ['publishingStrategy' => ['type' => 'alwaysPublish']];
+
+        static::assertSame([], ProposedImportConfiguration::unknownValues($state, $this->vocabulary()));
+    }
+
+    /** the editor's select cannot hold "publishNew"; neither can a proposal */
+    public function testAnInventedStrategyIsNamedWithTheAllowedOnes(): void
+    {
+        $state = $this->stored();
+        $state['resolverConfig'] = ['publishingStrategy' => ['type' => 'publishNew']];
+
+        $problems = ProposedImportConfiguration::unknownValues($state, $this->vocabulary());
+
+        static::assertCount(1, $problems);
+        static::assertStringContainsString('resolverConfig.publishingStrategy.type: "publishNew"', $problems[0]);
+        static::assertStringContainsString('alwaysPublish, noChangeUnpublishNew', $problems[0]);
+    }
+
+    public function testMappingTargetsAndOperatorsAreCheckedRowByRow(): void
+    {
+        $state = $this->stored();
+        $state['mappingConfig'][1]['dataTarget'] = ['type' => 'magic'];
+        $state['mappingConfig'][1]['transformationPipeline'] = [['type' => 'trim'], ['type' => 'shout']];
+
+        $problems = ProposedImportConfiguration::unknownValues($state, $this->vocabulary());
+
+        static::assertCount(2, $problems);
+        static::assertStringContainsString('mappingConfig[1].dataTarget.type: "magic"', $problems[0]);
+        static::assertStringContainsString('mappingConfig[1].transformationPipeline[1].type: "shout"', $problems[1]);
+    }
+
+    /** a family the installation does not register is not checked: it is not this tool's call */
+    public function testAnUnknownFamilyIsLeftAlone(): void
+    {
+        $state = $this->stored();
+        $state['loaderConfig'] = ['type' => 'carrier-pigeon'];
+
+        static::assertSame([], ProposedImportConfiguration::unknownValues($state, ['interpreter' => ['csv']]));
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function vocabulary(): array
+    {
+        return [
+            ProposedImportConfiguration::FAMILY_LOADER => ['asset', 'sftp'],
+            ProposedImportConfiguration::FAMILY_INTERPRETER => ['csv', 'json'],
+            ProposedImportConfiguration::FAMILY_PUBLISHING => ['alwaysPublish', 'noChangeUnpublishNew'],
+            ProposedImportConfiguration::FAMILY_DATA_TARGET => ['direct'],
+            ProposedImportConfiguration::FAMILY_OPERATOR => ['trim'],
+        ];
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -27,8 +27,6 @@ export interface ConfigChange {
   readonly status: FormItemAnnotationStatus
   readonly current: unknown
   readonly proposed: unknown
-  /** proposed as part of a group; it cannot be withheld on its own */
-  readonly locked?: boolean
 }
 
 /** the general.* keys the editor's form lifts to its root; see ConfigurationPathMapper */
@@ -98,22 +96,13 @@ export function proposedConfiguration (
 
 /**
  * The mark on each mapping row, keyed the way the row header looks itself up. Rows bind no
- * Form.Item, so the mark sits on the row, and a changed target is spelt out as the hint.
+ * Form.Item, so the mark sits on the row.
  */
-export function mappingAnnotations (
-  payload: ReviewPayload | undefined,
-  mode: ReviewMode,
-  hint: (before: string) => string
-): FormAnnotations {
+export function mappingAnnotations (payload: ReviewPayload | undefined, mode: ReviewMode): FormAnnotations {
   const annotations: FormAnnotations = {}
   mappingDiff(payload, mode).forEach((entry, index) => {
     if (entry.status === 'unchanged') return
-    annotations[annotationKey(['mappingConfig', index])] = {
-      status: entry.status,
-      hint: entry.status === 'changed' && entry.currentTarget !== undefined && entry.currentTarget !== entry.target
-        ? hint(entry.currentTarget)
-        : undefined
-    }
+    annotations[annotationKey(['mappingConfig', index])] = { status: entry.status }
   })
   return annotations
 }
@@ -143,61 +132,10 @@ export const SECTION_TARGET: Record<string, { tab: string, step?: number }> = {
   permissions: { tab: 'permissions' }
 }
 
-/** the editor's own tab titles, so the rail names a tab exactly as the strip does */
-export const TAB_LABELS: Record<string, string> = {
-  general: 'data-importer.tabs.general',
-  'data-setup': 'data-importer.tabs.data-setup',
-  execution: 'data-importer.tabs.execution',
-  permissions: 'data-importer.tabs.permissions'
-}
-
 export interface ChangeGroup {
   readonly section: string
   readonly label: string
   readonly changes: ConfigChange[]
-}
-
-export interface TabGroup {
-  readonly tab: string
-  readonly label: string
-  readonly groups: ChangeGroup[]
-  readonly count: number
-}
-
-/** The tab a section's changes show up in; unknown sections fall back to their own name. */
-export function tabOf (section: string): string {
-  return SECTION_TARGET[section]?.tab ?? section
-}
-
-/**
- * Changes grouped tab → section, in the order the editor lays them out. The rail reads as
- * the editor is navigated, so a row can carry the reader there.
- */
-export function groupByTab (changes: ConfigChange[]): TabGroup[] {
-  const groups = groupChanges(changes)
-  const byTab = new Map<string, ChangeGroup[]>()
-  for (const group of groups) {
-    const tab = tabOf(group.section)
-    byTab.set(tab, [...(byTab.get(tab) ?? []), group])
-  }
-
-  const ordered = [...Object.keys(TAB_LABELS), ...byTab.keys()]
-  const seen = new Set<string>()
-  const result: TabGroup[] = []
-  for (const tab of ordered) {
-    if (seen.has(tab)) continue
-    seen.add(tab)
-    const own = byTab.get(tab)
-    if (own === undefined) continue
-    result.push({
-      tab,
-      label: TAB_LABELS[tab] ?? tab,
-      groups: own,
-      count: own.reduce((total, group) => total + group.changes.length, 0)
-    })
-  }
-
-  return result
 }
 
 /** Changes grouped the way the editor is laid out, so the rail reads as the form does. */
@@ -264,31 +202,13 @@ export function configChanges (payload: ReviewPayload | undefined, mode: ReviewM
   return changes
 }
 
-/** the words a value is printed with; the rail hands in its translations */
-export interface ValueLabels {
-  readonly empty: string
-  readonly yes: string
-  readonly no: string
-}
-
-/**
- * @param hint what to print under a changed field - the value it had, in the reader's words
- */
-export function annotationsFor (changes: ConfigChange[], hint: (change: ConfigChange) => string): FormAnnotations {
+/** the review's marks on the fields the form binds: the status alone, the field says the rest */
+export function annotationsFor (changes: ConfigChange[]): FormAnnotations {
   const annotations: FormAnnotations = {}
   for (const change of changes) {
     if (change.formPath === undefined) continue
-    annotations[change.formPath] = {
-      status: change.status,
-      hint: change.status === 'added' ? undefined : hint(change)
-    }
+    annotations[change.formPath] = { status: change.status }
   }
   return annotations
 }
 
-export function formatValue (value: unknown, labels: ValueLabels): string {
-  if (value === undefined || value === null || value === '') return labels.empty
-  if (typeof value === 'boolean') return value ? labels.yes : labels.no
-  if (typeof value === 'object') return JSON.stringify(value)
-  return String(value)
-}

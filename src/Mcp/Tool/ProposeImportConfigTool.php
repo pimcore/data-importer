@@ -60,6 +60,7 @@ final readonly class ProposeImportConfigTool
         private BoundSessionReferenceResolver $boundSessionReferenceResolver,
         private SecurityServiceInterface $securityService,
         private McpToolErrorHandlerInterface $errorHandler,
+        private ImportConfigVocabulary $vocabulary,
     ) {
     }
 
@@ -140,6 +141,12 @@ final readonly class ProposeImportConfigTool
             }
 
             $state = ProposedImportConfiguration::fold($stored, $proposed);
+
+            // a select can only hold one of its options; a proposal must not hold more
+            $unknownValues = ProposedImportConfiguration::unknownValues($state, $this->vocabulary->all());
+            if ($unknownValues !== []) {
+                return $this->errorResult(implode("\n", $unknownValues));
+            }
             // identity and adapter type belong to the subject, never to a proposal
             $state['general']['name'] = $name;
             $state['general']['type'] = $existing->getType();

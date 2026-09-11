@@ -330,18 +330,11 @@ data-importer.review.status.added: added
 data-importer.review.status.changed: changed
 data-importer.review.status.removed: removed
 data-importer.review.status.moved: moved
-data-importer.review.status.whole: whole
 data-importer.review.mappings: Mappings
-data-importer.review.mappings-whole: The mapping list is proposed as a whole.
-data-importer.review.foot: 'Approve applies only what is ticked. Grouped rows — the mapping list — are proposed as a whole.'
 data-importer.review.new.title: New configuration
 data-importer.review.new.settings: '{{count}} settings'
 data-importer.review.new.mappings: '{{count}} mappings'
-data-importer.review.new.note: 'Nothing here replaces an existing value, so there is nothing to compare against — read it in the editor. A new configuration is approved or rejected whole.'
-data-importer.review.was: 'was {{value}}'
-data-importer.review.value.empty: empty
-data-importer.review.value.yes: yes
-data-importer.review.value.no: no
+data-importer.review.new.note: 'A new configuration is approved or rejected whole; read it in the editor.'
 data-importer.review.state.merged: Applied
 data-importer.review.state.discarded: Rejected
 data-importer.review.state.refined: Refined

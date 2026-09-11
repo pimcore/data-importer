@@ -330,18 +330,11 @@ data-importer.review.status.added: añadido
 data-importer.review.status.changed: modificado
 data-importer.review.status.removed: eliminado
 data-importer.review.status.moved: movido
-data-importer.review.status.whole: completo
 data-importer.review.mappings: Mapeos
-data-importer.review.mappings-whole: La lista de mapeos se propone en conjunto.
-data-importer.review.foot: 'Aprobar aplica solo lo marcado. Las filas agrupadas — la lista de mapeos — se proponen en conjunto.'
 data-importer.review.new.title: Nueva configuración
 data-importer.review.new.settings: '{{count}} ajustes'
 data-importer.review.new.mappings: '{{count}} mapeos'
-data-importer.review.new.note: 'Nada aquí reemplaza un valor existente, así que no hay nada con que comparar — léala en el editor. Una configuración nueva se aprueba o rechaza completa.'
-data-importer.review.was: 'antes {{value}}'
-data-importer.review.value.empty: vacío
-data-importer.review.value.yes: sí
-data-importer.review.value.no: no
+data-importer.review.new.note: 'Una configuración nueva se aprueba o rechaza completa; léala en el editor.'
 data-importer.review.state.merged: Aplicado
 data-importer.review.state.discarded: Rechazado
 data-importer.review.state.refined: Refinado
