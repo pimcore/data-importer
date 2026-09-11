@@ -12,10 +12,14 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
+use Mcp\Capability\Attribute\McpTool;
+use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectHandlerInterface;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
@@ -41,8 +45,6 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-        // usage.* telemetry provider; core extension point guaranteed by the composer constraint
-        $loader->load('telemetry.yaml');
         $loader->load('studio_backend.yaml');
 
         $definition = $container->getDefinition(DataImporterHandler::class);
@@ -52,6 +54,22 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $definition = $container->getDefinition(DataImporterListener::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+
+        // Change Control integration is optional: the subject handler and the review
+        // hydrator implement its interfaces, so they can only be registered when it is
+        // installed. The resource makes that part of what the container is invalidated on.
+        $container->addResource(new ClassExistenceResource(SubjectHandlerInterface::class));
+        if (interface_exists(SubjectHandlerInterface::class)) {
+            $loader->load('services/change_control.yml');
+
+            // the tools need an MCP host to be called through (mcp/sdk) and Studio's tool
+            // plumbing to answer through; the propose tool also needs this review lane
+            $container->addResource(new ClassExistenceResource(McpTool::class));
+            $container->addResource(new ClassExistenceResource(McpToolErrorHandlerInterface::class));
+            if (class_exists(McpTool::class) && interface_exists(McpToolErrorHandlerInterface::class)) {
+                $loader->load('services/mcp.yml');
+            }
+        }
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
@@ -66,6 +84,15 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         if ($container->hasExtension('doctrine_migrations')) {
             $loader->load('doctrine_migrations.yml');
+        }
+
+        // The Pimcore Agent Bundle reads agent skills from pimcore_agent.skills.paths.
+        // Contributing the path here, guarded on the extension being registered, keeps the
+        // integration optional: this bundle must not depend on the agent bundle.
+        if ($container->hasExtension('pimcore_agent')) {
+            $container->prependExtensionConfig('pimcore_agent', [
+                'skills' => ['paths' => [__DIR__ . '/../Resources/skills']],
+            ]);
         }
 
         $loader->load('studio_ui.yaml');

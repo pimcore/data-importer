@@ -9,20 +9,14 @@
  */
 
 import React, { useEffect, useMemo } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, ConfigToolbar, useDetailView, trackConfigError } from '@pimcore/data-hub'
+import { type DataHubAdapterDetailViewProps, ConfigToolbar, trackConfigError } from '@pimcore/data-hub'
 import { useBundleDataImporterConfigGetQuery, useBundleDataImporterConfigSaveMutation } from '../data-importer-api-slice-enhanced'
-import { ApiError, isBundleActive } from '@pimcore/studio-ui-bundle/modules/app'
+import { ApiError } from '@pimcore/studio-ui-bundle/modules/app'
 import { isNil } from 'lodash'
-import { type DataImporterFormValues } from '../types'
-import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
-import { DataSetupTab } from './tabs/data-setup-tab'
-import { ExecutionTab } from './tabs/execution-tab'
-import { ImportLogsTab } from './tabs/import-logs-tab'
+import { type BackendConfiguration } from '../utils/transformers'
+import { DataImporterConfigEditor } from './data-importer-config-editor'
 
 export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataHubAdapterDetailViewProps): React.JSX.Element => {
-  const { t } = useTranslation()
-
   // API hooks
   const { data: configData, error: fetchError, isLoading, isFetching, refetch, requestId } = useBundleDataImporterConfigGetQuery(
     { name: configName },
@@ -65,84 +59,30 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     return { modificationDate: response.data?.modificationDate }
   }
 
-  // Shared form state management
-  const { form, isDirty, initialValues, handleSave, handleValuesChange } = useDetailView<DataImporterFormValues, BackendConfiguration>({
-    configName,
-    configData: backendConfig,
-    modificationDate: configData?.modificationDate,
-    isLoading: loading,
-    requestId,
-    isWriteable,
-    transformToForm: transformBackendToForm,
-    transformToBackend: transformFormToBackend,
-    onSave: handleSaveToApi,
-    onChange
-  })
-
-  const tabs: TabItem[] = [
-    {
-      key: 'general',
-      label: t('data-importer.tabs.general'),
-      children: <GeneralTab adapterTypeLabel={ t('data-importer.adapter.dataImporterDataObject') } />
-    },
-    {
-      key: 'data-setup',
-      label: t('data-importer.tabs.data-setup'),
-      fullHeight: true,
-      children: <DataSetupTab
-        configName={ configName }
-                />
-    },
-    {
-      key: 'execution',
-      label: t('data-importer.tabs.execution'),
-      children: <ExecutionTab
-        configName={ configName }
-        isDirty={ isDirty }
-                />
-    },
-    // Import logs are read through the application logger, so the tab is only
-    // available when that bundle is enabled and installed.
-    ...(isBundleActive('PimcoreApplicationLoggerBundle')
-      ? [{
-          key: 'import-logs',
-          label: t('data-importer.tabs.import-logs'),
-          fullHeight: true,
-          children: <ImportLogsTab configName={ configName } />
-        }]
-      : []),
-    {
-      key: 'permissions',
-      label: t('data-importer.tabs.permissions'),
-      children: <PermissionsTab isWriteable={ isWriteable } />
-    }
-  ]
-
-  const toolbar = (
-    <ConfigToolbar
-      canDelete={ canDelete }
-      configName={ configName }
-      isDirty={ isDirty }
-      isLoading={ loading }
-      isSaving={ isSaving }
-      isWriteable={ isWriteable }
-      onDelete={ onDelete }
-      onRefresh={ refetch }
-      onSave={ handleSave }
-      saveDisabledTooltipKey={ saveDisabledTooltipKey }
-    />
-  )
-
   return (
-    <BaseDetailView
-      disabled={ !isWriteable }
-      form={ form }
-      initialValues={ initialValues }
+    <DataImporterConfigEditor
+      configName={ configName }
+      configuration={ backendConfig }
       isLoading={ loading }
-      onValuesChange={ handleValuesChange }
-      requestId={ requestId ?? '' }
-      tabs={ tabs }
-      toolbar={ toolbar }
+      isWriteable={ isWriteable }
+      modificationDate={ configData?.modificationDate }
+      onChange={ onChange }
+      onSave={ handleSaveToApi }
+      renderToolbar={ ({ isDirty, onSave }) => (
+        <ConfigToolbar
+          canDelete={ canDelete }
+          configName={ configName }
+          isDirty={ isDirty }
+          isLoading={ loading }
+          isSaving={ isSaving }
+          isWriteable={ isWriteable }
+          onDelete={ onDelete }
+          onRefresh={ refetch }
+          onSave={ onSave }
+          saveDisabledTooltipKey={ saveDisabledTooltipKey }
+        />
+      ) }
+      requestId={ requestId }
     />
   )
 }

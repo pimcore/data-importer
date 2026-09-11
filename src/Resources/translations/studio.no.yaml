@@ -323,3 +323,29 @@ data-importer.execution.status.cancel: Avbryt kjøring og tøm kø
 data-importer.execution.cron-validating: Validerer Cron-uttrykk...
 data-importer.validation.required: '{{field}} er påkrevd'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportør
+
+# Change Control review
+data-importer.review.open-section: Åpne i editoren
+data-importer.review.changes: '{{count}} endringer'
+data-importer.review.status.added: lagt til
+data-importer.review.status.changed: endret
+data-importer.review.status.removed: fjernet
+data-importer.review.status.moved: flyttet
+data-importer.review.mappings: Mappinger
+data-importer.review.new.title: Ny konfigurasjon
+data-importer.review.outline.active: Aktiv
+data-importer.review.outline.inactive: Inaktiv
+data-importer.review.outline.mappings: '{{count}} mappinger'
+data-importer.review.outline.scheduled: Planlagt
+data-importer.review.state.merged: Tatt i bruk
+data-importer.review.state.discarded: Avvist
+data-importer.review.state.refined: Justert
+data-importer.review.resolved-at: 'Avgjort {{when}}'
+data-importer.review.history-notice: Verdier slik de var da endringen ble foreslått.
+data-importer.review.load-failed: De foreslåtte endringene kunne ikke lastes.
+data-importer.review.section.general: Generelt
+data-importer.review.section.data-source: Datakilde
+data-importer.review.section.resolver: Resolver
+data-importer.review.section.processing: Behandling
+data-importer.review.section.execution: Kjøring
+data-importer.review.section.permissions: Tillatelser

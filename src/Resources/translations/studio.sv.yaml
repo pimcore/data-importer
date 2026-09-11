@@ -323,3 +323,29 @@ data-importer.execution.status.cancel: Avbryt körning & rensa kö
 data-importer.execution.cron-validating: Validerar Cron-uttryck...
 data-importer.validation.required: '{{field}} är obligatoriskt'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportör
+
+# Change Control review
+data-importer.review.open-section: Öppna i editorn
+data-importer.review.changes: '{{count}} ändringar'
+data-importer.review.status.added: tillagd
+data-importer.review.status.changed: ändrad
+data-importer.review.status.removed: borttagen
+data-importer.review.status.moved: flyttad
+data-importer.review.mappings: Mappningar
+data-importer.review.new.title: Ny konfiguration
+data-importer.review.outline.active: Aktiv
+data-importer.review.outline.inactive: Inaktiv
+data-importer.review.outline.mappings: '{{count}} mappningar'
+data-importer.review.outline.scheduled: Schemalagd
+data-importer.review.state.merged: Tillämpad
+data-importer.review.state.discarded: Avvisad
+data-importer.review.state.refined: Justerad
+data-importer.review.resolved-at: 'Avgjord {{when}}'
+data-importer.review.history-notice: Värden som de var när ändringen föreslogs.
+data-importer.review.load-failed: De föreslagna ändringarna kunde inte läsas in.
+data-importer.review.section.general: Allmänt
+data-importer.review.section.data-source: Datakälla
+data-importer.review.section.resolver: Resolver
+data-importer.review.section.processing: Bearbetning
+data-importer.review.section.execution: Körning
+data-importer.review.section.permissions: Behörigheter

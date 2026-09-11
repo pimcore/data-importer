@@ -35,7 +35,16 @@ interface PreviewDataServiceInterface
      * @throws MaxFileSizeExceededException
      * @throws Exception
      */
-    public function uploadPreviewData(string $name, UploadedFile $file): void;
+    /**
+     * @param string|null $scope           a change set under review: its preview lives beside the live one
+     * @param string|null $interpreterType the proposed interpreter, which sets the size limit
+     */
+    public function uploadPreviewData(
+        string $name,
+        UploadedFile $file,
+        ?string $scope = null,
+        ?string $interpreterType = null
+    ): void;
 
     /**
      * @throws NotFoundHttpException
@@ -45,7 +54,7 @@ interface PreviewDataServiceInterface
      * @throws InvalidConfigurationException
      * @throws Exception
      */
-    public function copyPreviewData(string $name, ?array $currentConfig): void;
+    public function copyPreviewData(string $name, ?array $currentConfig, ?string $scope = null): void;
 
     /**
      * @throws NotFoundHttpException
@@ -57,12 +66,13 @@ interface PreviewDataServiceInterface
     public function loadPreviewData(
         string $name,
         ?array $currentConfig,
-        int $recordNumber
+        int $recordNumber,
+        ?string $scope = null
     ): DataPreviewResponse;
 
     /**
      * @throws NotFoundHttpException
      * @throws ForbiddenException
      */
-    public function loadColumnHeaders(string $name, ?array $currentConfig): ColumnHeadersResponse;
+    public function loadColumnHeaders(string $name, ?array $currentConfig, ?string $scope = null): ColumnHeadersResponse;
 }

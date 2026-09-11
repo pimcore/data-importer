@@ -1,0 +1,34 @@
+# Loaded only when an MCP host is installed AND Change Control is - see
+# PimcoreDataImporterExtension. Without the review lane there is nothing to propose onto.
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: false
+        public: false
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListImportConfigsTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read', description: 'List the import configurations' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetImportConfigTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary:
+        arguments:
+            $loaders: !tagged_iterator { tag: 'pimcore.datahub.data_importer.loader', index_by: 'type' }
+            $interpreters: !tagged_iterator { tag: 'pimcore.datahub.data_importer.interpreter', index_by: 'type' }
+            $loadingStrategies: !tagged_iterator { tag: 'pimcore.datahub.data_importer.resolver.load', index_by: 'type' }
+            $locationStrategies: !tagged_iterator { tag: 'pimcore.datahub.data_importer.resolver.location', index_by: 'type' }
+            $publishingStrategies: !tagged_iterator { tag: 'pimcore.datahub.data_importer.resolver.publish', index_by: 'type' }
+            $cleanupStrategies: !tagged_iterator { tag: 'pimcore.datahub.data_importer.cleanup', index_by: 'type' }
+            $dataTargets: !tagged_iterator { tag: 'pimcore.datahub.data_importer.data_target', index_by: 'type' }
+            $operators: !tagged_iterator { tag: 'pimcore.datahub.data_importer.operator', index_by: 'type' }
+
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposeImportConfigTool:
+        tags:
+            - {
+                name: 'pimcore.mcp_tool',
+                group: 'pimcore-data-importer-propose',
+                description: 'Propose changes to an import configuration for review'
+              }
