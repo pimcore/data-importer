@@ -363,28 +363,31 @@ final class ImportProcessingService
 
     private function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
     {
-        if ($cleanupConfig['doCleanup'] ?? false) {
-            $element = null;
-
-            try {
-                $element = $resolver->loadElementByIdentifier($identifier);
-                if ($element) {
-                    $cleanupStrategy = $this->cleanupStrategyFactory->loadCleanupStrategy($cleanupConfig['strategy']);
-                    $cleanupStrategy->doCleanup($element);
-
-                    $message = "Element {$identifier} cleaned up ({$cleanupConfig['strategy']}) successfully.";
-                    $this->logInfo($configName, $message, [
-                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                        'relatedObject' => $element
-                    ]);
-                }
-            } catch (\Exception $e) {
-                $message = 'Error cleaning up element: ';
-                $this->logError($configName, $message . $e->getMessage(), [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'relatedObject' => $element,
-                ]);
+        if (!($cleanupConfig['doCleanup'] ?? false)) {
+            return;
+        }
+        try {
+            $element = $resolver->loadElementByIdentifier($identifier);
+            if ($element === null) {
+                return;
             }
+            $cleanupStrategy = $this->cleanupStrategyFactory->loadCleanupStrategy($cleanupConfig['strategy']);
+            if ($cleanupStrategy->doCleanup($element) === false) {
+                return;
+            }
+            $message = "Element {$identifier} cleaned up ({$cleanupConfig['strategy']}) successfully.";
+            $this->logger->info($message);
+            $this->applicationLogger->info($message, [
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'relatedObject' => $element
+            ]);
+        } catch (\Exception $e) {
+            $message = 'Error cleaning up element: ';
+            $this->logger->error($message . $e);
+            $this->applicationLogger->error($message . $e->getMessage(), [
+                'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                'relatedObject' => $element,
+            ]);
         }
     }
 
