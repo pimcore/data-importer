@@ -60,20 +60,31 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
     ) {
     }
 
-    public function uploadPreviewData(string $name, UploadedFile $file): void
-    {
+    public function uploadPreviewData(
+        string $name,
+        UploadedFile $file,
+        ?string $scope = null,
+        ?string $interpreterType = null
+    ): void {
         try {
-            $this->loadConfigurationWithPermission(
+            // a scoped preview writes nothing to the configuration: reading it is enough
+            $this->loadConfigurationForPreview(
                 $name,
-                PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE
+                $scope === null
+                    ? PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE
+                    : PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+                $scope
             );
 
             if ($file->getSize() === 0) {
                 throw new EnvironmentException('Uploaded file is empty');
             }
 
+            // the limit follows the interpreter; a proposal names its own, the store may have none
             $maxFileSize = $this->getMaxPreviewFileSize(
-                $this->configurationPreparationService->prepareConfiguration($name, null)
+                $interpreterType !== null
+                    ? ['interpreterConfig' => ['type' => $interpreterType]]
+                    : $this->configurationPreparationService->prepareConfiguration($name, null)
             );
 
             if ($file->getSize() > $maxFileSize) {
@@ -82,17 +93,21 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
             $user = $this->resolveCurrentUser();
 
-            $this->previewService->writePreviewFile($name, $file->getPathname(), $user);
+            $this->previewService->writePreviewFile($name, $file->getPathname(), $user, $scope);
         } finally {
             @unlink($file->getPathname());
         }
     }
 
-    public function copyPreviewData(string $name, ?array $currentConfig): void
+    public function copyPreviewData(string $name, ?array $currentConfig, ?string $scope = null): void
     {
-        $this->loadConfigurationWithPermission(
+        // a scoped preview writes nothing to the configuration: reading it is enough
+        $this->loadConfigurationForPreview(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE
+            $scope === null
+                ? PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE
+                : PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $preparedConfig = $this->configurationPreparationService->prepareConfiguration(
@@ -128,7 +143,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
             $user = $this->resolveCurrentUser();
 
-            $this->previewService->writePreviewFile($name, $sourcePath, $user);
+            $this->previewService->writePreviewFile($name, $sourcePath, $user, $scope);
         } finally {
             $loader->cleanup();
         }
@@ -148,16 +163,18 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
     public function loadPreviewData(
         string $name,
         ?array $currentConfig,
-        int $recordNumber
+        int $recordNumber,
+        ?string $scope = null
     ): DataPreviewResponse {
-        $this->loadConfigurationWithPermission(
+        $this->loadConfigurationForPreview(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $user = $this->resolveCurrentUser();
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope);
 
         if ($previewFilePath === null || !is_file($previewFilePath)) {
             throw new NotFoundHttpException(
@@ -213,11 +230,12 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         return $response;
     }
 
-    public function loadColumnHeaders(string $name, ?array $currentConfig): ColumnHeadersResponse
+    public function loadColumnHeaders(string $name, ?array $currentConfig, ?string $scope = null): ColumnHeadersResponse
     {
-        $this->loadConfigurationWithPermission(
+        $this->loadConfigurationForPreview(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $preparedConfig = $this->configurationPreparationService->prepareConfiguration(
@@ -227,7 +245,8 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
         $columnHeaders = $this->previewHydrator->loadAvailableColumnHeaders(
             $name,
-            $preparedConfig
+            $preparedConfig,
+            $scope
         );
 
         $response = $this->previewHydrator->hydrateColumnHeaders($columnHeaders);

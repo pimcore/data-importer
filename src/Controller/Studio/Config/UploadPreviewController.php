@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Controller\Studio\Config;
 
+use function is_string;
 use OpenApi\Attributes\Post;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
@@ -73,6 +74,16 @@ final class UploadPreviewController extends AbstractApiController
                 type: 'string',
                 format: 'binary'
             ),
+            new Property(
+                property: 'previewScope',
+                description: 'A change set under review: its preview data is kept beside the live configuration\'s, and a configuration that is only proposed so far is accepted',
+                type: 'string'
+            ),
+            new Property(
+                property: 'interpreterType',
+                description: 'The proposed interpreter, which sets the upload size limit',
+                type: 'string'
+            ),
         ],
         ['file']
     )]
@@ -95,7 +106,15 @@ final class UploadPreviewController extends AbstractApiController
             throw new EnvironmentException('Invalid file found in the request');
         }
 
-        $this->previewDataService->uploadPreviewData($name, $file);
+        // multipart: the review's scope and the proposed interpreter ride as form fields
+        $scope = $request->request->get('previewScope');
+        $interpreterType = $request->request->get('interpreterType');
+        $this->previewDataService->uploadPreviewData(
+            $name,
+            $file,
+            is_string($scope) && $scope !== '' ? $scope : null,
+            is_string($interpreterType) && $interpreterType !== '' ? $interpreterType : null,
+        );
 
         return new Response();
     }

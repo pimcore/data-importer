@@ -25,7 +25,7 @@ use function implode;
 use function in_array;
 use function is_array;
 use function is_string;
-use function preg_match;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationName;
 use function range;
 use function sprintf;
 
@@ -75,9 +75,6 @@ final class ProposedImportConfiguration
         'resolverConfig.locationUpdateStrategy.type',
         'resolverConfig.publishingStrategy.type',
     ];
-
-    /** a configuration name becomes a file name and a YAML key; keep it to what both accept */
-    private const string NAME_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_-]*$/';
 
     /**
      * Settings the editor only shows — and the import only reads — while another one is on.
@@ -237,7 +234,7 @@ final class ProposedImportConfiguration
 
     public static function isValidName(string $name): bool
     {
-        return preg_match(self::NAME_PATTERN, $name) === 1;
+        return ConfigurationName::isValid($name);
     }
 
     /**

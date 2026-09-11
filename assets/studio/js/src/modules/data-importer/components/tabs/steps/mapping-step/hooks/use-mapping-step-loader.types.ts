@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+import { type BackendConfiguration } from '../../../../../utils/transformers'
 import { type MappingConfigItem, type ClassAttribute } from '../../../../../types'
 import { type SourceRow } from '../sources-panel/sources-panel'
 
@@ -27,6 +28,8 @@ export interface UseMappingStepLoaderResult {
   classId: string | undefined
   mappingTrtList: string[] | undefined
   getMappingConfig: () => MappingConfigItem[]
+  /** the form as the backend would store it — what a preview request should describe */
+  getBackendConfig: () => BackendConfiguration
 }
 
 export function parseClassAttribute (raw: object): ClassAttribute {

@@ -29,7 +29,7 @@ interface PreviewHydratorInterface
      * Load available column headers from preview data.
      * Gracefully returns empty array on failure (no preview file, interpreter error, etc.)
      */
-    public function loadAvailableColumnHeaders(string $name, array $config): array;
+    public function loadAvailableColumnHeaders(string $name, array $config, ?string $scope = null): array;
 
     /**
      * Check if an array can be safely JSON-encoded.

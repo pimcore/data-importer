@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Content } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
+import { PreviewScopeProvider } from '../components/preview-scope'
 import { api, useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
 import type { BackendConfiguration } from '../utils/transformers'
 import { FormAnnotationsProvider, type FormAnnotations } from './studio-form-annotations'
@@ -127,17 +128,19 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   }
 
   const editor = (
-    <DataImporterConfigEditor
-      activeStep={ step }
-      activeTab={ tab }
-      configName={ subjectRef }
-      configuration={ configuration }
-      isWriteable={ false }
-      onSave={ async () => ({}) }
-      onStepChange={ setStep }
-      onTabChange={ setTab }
-      showRuntime={ false }
-    />
+    <PreviewScopeProvider scope={ changeSetId }>
+      <DataImporterConfigEditor
+        activeStep={ step }
+        activeTab={ tab }
+        configName={ subjectRef }
+        configuration={ configuration }
+        isWriteable={ false }
+        onSave={ async () => ({}) }
+        onStepChange={ setStep }
+        onTabChange={ setTab }
+        showRuntime={ false }
+      />
+    </PreviewScopeProvider>
   )
 
   return (

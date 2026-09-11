@@ -22,6 +22,8 @@ import { transformFormToBackend, type BackendConfiguration } from '../../../../u
 import { type DataImporterFormValues } from '../../../../types'
 import { StepHeading } from '../step-heading/step-heading'
 import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
+import { usePreviewScope } from '../../../preview-scope'
+import { ConfigProvider } from 'antd'
 
 export interface PreviewImportStepProps {
   configName: string
@@ -62,6 +64,9 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
   }, [form, configData])
 
   const [copyPreview, { isLoading: isCopying, error: copyPreviewError }] = useBundleDataImporterConfigCopyPreviewMutation()
+  const previewScope = usePreviewScope()
+  // the upload's size limit follows the interpreter; a proposal's is in the form, not the store
+  const interpreterType = Form.useWatch(['interpreterConfig', 'type']) as string | undefined
   const {
     dataPreview,
     currentRecordIndex,
@@ -104,7 +109,8 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
     const result = await copyPreview({
       name: configName,
       bundleDataImporterCopyPreviewParameters: {
-        currentConfig: getBackendConfig()
+        currentConfig: getBackendConfig(),
+        previewScope
       }
     })
 
@@ -182,30 +188,34 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
           >
             <StepHeading>{ t('data-importer.preview-import.title') }</StepHeading>
 
-            <Dropdown menu={ { items: dropdownItems } }>
-              <DropdownButton
-                disabled={ isWorking }
+            { /* provisioning and paging preview data reads the source, never the configuration:
+                 they stay live where the form is read-only, so a reviewer can look at the data */ }
+            <ConfigProvider componentDisabled={ false }>
+              <Dropdown menu={ { items: dropdownItems } }>
+                <DropdownButton
+                  disabled={ isWorking }
+                  type="default"
+                >
+                  { t('data-importer.preview-import.choose-preview-data') }
+                </DropdownButton>
+              </Dropdown>
+
+              <IconButton
+                disabled={ isWorking || recordIndex <= 0 }
+                icon={ { value: 'chevron-left' } }
+                onClick={ handlePrev }
+                tooltip={ { title: t('data-importer.preview-import.prev') } }
                 type="default"
-              >
-                { t('data-importer.preview-import.choose-preview-data') }
-              </DropdownButton>
-            </Dropdown>
+              />
 
-            <IconButton
-              disabled={ isWorking || recordIndex <= 0 }
-              icon={ { value: 'chevron-left' } }
-              onClick={ handlePrev }
-              tooltip={ { title: t('data-importer.preview-import.prev') } }
-              type="default"
-            />
-
-            <IconButton
-              disabled={ isWorking }
-              icon={ { value: 'chevron-right' } }
-              onClick={ handleNext }
-              tooltip={ { title: t('data-importer.preview-import.next') } }
-              type="default"
-            />
+              <IconButton
+                disabled={ isWorking }
+                icon={ { value: 'chevron-right' } }
+                onClick={ handleNext }
+                tooltip={ { title: t('data-importer.preview-import.next') } }
+                type="default"
+              />
+            </ConfigProvider>
           </Flex>
 
           <SearchInput
@@ -229,6 +239,10 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
 
       <ImportModal
         action={ `${getPrefix()}/bundle/data-importer/config/${configName}/upload-preview` }
+        data={ {
+          ...(previewScope !== undefined && { previewScope }),
+          ...(interpreterType !== undefined && { interpreterType })
+        } }
         onOpenChange={ (nextOpen) => { setUploadModalOpen(nextOpen) } }
         onUploadSuccess={ () => {
           setUploadModalOpen(false)

@@ -72,8 +72,8 @@ mappingId: <uuid>                    # identity — see below
 - **`general.active`** is the on/off switch for the whole pipeline. Never flip it as a side
   effect of another change.
 - **Never propose a run.** Starting an import is a separate, explicit action.
-- **A copy keeps its preview data behind.** The new configuration has no preview until someone
-  runs one; that is expected, not an error.
+- **A copy has no preview data of its own.** The reviewer can load some inside the review (copy
+  from the data source, or upload a file); you cannot, and a missing preview is not an error.
 
 ## Proposing
 

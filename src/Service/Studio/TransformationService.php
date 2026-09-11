@@ -52,11 +52,13 @@ final readonly class TransformationService implements TransformationServiceInter
     public function loadTransformationResultPreviews(
         string $name,
         ?array $currentConfig,
-        int $recordNumber
+        int $recordNumber,
+        ?string $scope = null
     ): TransformationResultPreviewsResponse {
-        $this->loadConfigurationWithPermission(
+        $this->loadConfigurationForPreview(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $user = $this->resolveCurrentUser();
@@ -66,7 +68,7 @@ final readonly class TransformationService implements TransformationServiceInter
             $currentConfig
         );
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope);
         $importDataRow = [];
 
         if ($previewFilePath !== null && is_file($previewFilePath)) {
@@ -107,11 +109,13 @@ final readonly class TransformationService implements TransformationServiceInter
 
     public function calculateTransformationResultType(
         string $name,
-        array $currentConfig
+        array $currentConfig,
+        ?string $scope = null
     ): TransformationResultTypeResponse {
-        $this->loadConfigurationWithPermission(
+        $this->loadConfigurationForPreview(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $mappingConfiguration = $this->mappingConfigurationFactory->loadMappingConfigurationItem(

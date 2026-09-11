@@ -13,9 +13,10 @@
 namespace Pimcore\Bundle\DataImporterBundle\Preview;
 
 use League\Flysystem\FilesystemOperator;
-use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationName;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 use Pimcore\Model\User;
+use function sprintf;
 
 /**
  * @internal
@@ -29,35 +30,40 @@ final class PreviewService
     ) {
     }
 
-    public function writePreviewFile(string $configName, string $sourcePath, User $user)
+    public function writePreviewFile(string $configName, string $sourcePath, User $user, ?string $scope = null): void
     {
-        $target = $this->getPreviewFilePath($configName, $user);
+        $target = $this->getPreviewFilePath($configName, $user, $scope);
         $this->pimcoreDataImporterPreviewStorage->write($target, file_get_contents($sourcePath));
     }
 
     /**
-     * @param string $configName
-     * @param User $user
+     * Where a user's preview of a configuration lives. A scope — a change set under review —
+     * keeps its own file beside the live one, in the same directory, so a proposal never
+     * overwrites the reviewer's preview of the stored configuration and goes with the
+     * configuration when that is deleted. The scoped name cannot collide with a live one:
+     * user ids are numeric.
      *
-     * @return string
-     *
-     * @throws \Exception
+     * The name and the scope become path segments, so both are checked here rather than
+     * resolved against the configuration store: a proposal may name a configuration that does
+     * not exist yet.
      */
-    private function getPreviewFilePath(string $configName, User $user): string
+    public function getPreviewFilePath(string $configName, User $user, ?string $scope = null): string
     {
-        $configuration = Configuration::getByName($configName);
-        if (!$configuration) {
-            throw new \Exception('Configuration ' . $configName . ' does not exist.');
+        if (!ConfigurationName::isValid($configName)) {
+            throw new \InvalidArgumentException(sprintf('"%s" cannot name a preview.', $configName));
+        }
+        if ($scope !== null && !ConfigurationName::isValid($scope)) {
+            throw new \InvalidArgumentException(sprintf('"%s" cannot scope a preview.', $scope));
         }
 
-        $filePath = $configuration->getName() . '/' . $user->getId() . '.import';
-
-        return $filePath;
+        return $scope === null
+            ? sprintf('%s/%s.import', $configName, $user->getId())
+            : sprintf('%s/_cs-%s-%s.import', $configName, $scope, $user->getId());
     }
 
-    public function getLocalPreviewFile(string $configName, User $user): ?string
+    public function getLocalPreviewFile(string $configName, User $user, ?string $scope = null): ?string
     {
-        $filePath = $this->getPreviewFilePath($configName, $user);
+        $filePath = $this->getPreviewFilePath($configName, $user, $scope);
 
         if ($this->pimcoreDataImporterPreviewStorage->fileExists($filePath)) {
             $stream = $this->pimcoreDataImporterPreviewStorage->readStream($filePath);
