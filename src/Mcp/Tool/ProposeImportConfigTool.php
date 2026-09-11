@@ -154,6 +154,12 @@ final readonly class ProposeImportConfigTool
             if ($unknownValues !== []) {
                 return $this->errorResult(implode("\n", $unknownValues));
             }
+
+            // a change the import would ignore is not worth a reviewer's turn
+            $ineffective = ProposedImportConfiguration::ineffectiveChanges($stored, $state);
+            if ($ineffective !== []) {
+                return $this->errorResult(implode("\n", $ineffective));
+            }
             // identity and adapter type belong to the subject, never to a proposal
             $state['general']['name'] = $name;
             $state['general']['type'] = $existing?->getType() ?? self::CONFIG_TYPE;

@@ -207,6 +207,38 @@ class ProposedImportConfigurationTest extends Unit
         ], ProposedImportConfiguration::missingForCreate($state));
     }
 
+    public function testAStrategyChangedBehindAnOffSwitchIsIneffective(): void
+    {
+        $stored = $this->stored();
+        $state = $stored;
+        $state['processingConfig']['cleanup']['strategy'] = 'delete';
+
+        $problems = ProposedImportConfiguration::ineffectiveChanges($stored, $state);
+
+        static::assertCount(1, $problems);
+        static::assertStringContainsString('processingConfig.cleanup.strategy has no effect while processingConfig.cleanup.doCleanup is off', $problems[0]);
+    }
+
+    public function testTheSameChangeWithTheSwitchOnIsFine(): void
+    {
+        $stored = $this->stored();
+        $state = $stored;
+        $state['processingConfig']['idDataIndex'] = 'vin';
+        $state['processingConfig']['cleanup'] = ['doCleanup' => true, 'strategy' => 'delete'];
+
+        static::assertSame([], ProposedImportConfiguration::ineffectiveChanges($stored, $state));
+    }
+
+    /** the stored document may carry an inert setting already; only a change to it is refused */
+    public function testAnInertSettingLeftAloneIsNotAProblem(): void
+    {
+        $stored = $this->stored();
+        $state = $stored;
+        $state['general']['description'] = 'unrelated';
+
+        static::assertSame([], ProposedImportConfiguration::ineffectiveChanges($stored, $state));
+    }
+
     /**
      * @return array<string, list<string>>
      */

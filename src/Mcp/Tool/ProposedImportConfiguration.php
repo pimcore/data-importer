@@ -79,6 +79,17 @@ final class ProposedImportConfiguration
     /** a configuration name becomes a file name and a YAML key; keep it to what both accept */
     private const string NAME_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_-]*$/';
 
+    /**
+     * Settings the editor only shows — and the import only reads — while another one is on.
+     * setting => the switch it depends on
+     */
+    private const array GATED = [
+        'processingConfig.cleanup.strategy' => 'processingConfig.cleanup.doCleanup',
+        'processingConfig.cleanup.doCleanup' => 'processingConfig.idDataIndex',
+        'processingConfig.doDeltaCheck' => 'processingConfig.idDataIndex',
+        'processingConfig.doDeltaCheckCheck' => 'processingConfig.idDataIndex',
+    ];
+
     /** where a document names a type, and which family it must come from */
     private const array TYPED = [
         'loaderConfig.type' => self::FAMILY_LOADER,
@@ -249,5 +260,38 @@ final class ProposedImportConfiguration
         }
 
         return $missing;
+    }
+
+    /**
+     * The settings a proposal changes that cannot take effect, because the switch they sit
+     * behind is off in the same document. The reviewer would see a change to a field the
+     * editor does not even show, and the import would ignore it.
+     *
+     * @param array<string, mixed> $stored
+     * @param array<string, mixed> $state
+     *
+     * @return list<string>
+     */
+    public static function ineffectiveChanges(array $stored, array $state): array
+    {
+        $problems = [];
+        foreach (self::GATED as $path => $switch) {
+            $before = self::at($stored, $path);
+            $after = self::at($state, $path);
+            if ($before === $after || $after === null || $after === '' || $after === false) {
+                continue;
+            }
+            $gate = self::at($state, $switch);
+            if ($gate === null || $gate === '' || $gate === false) {
+                $problems[] = sprintf(
+                    '%s has no effect while %s is off; switch it on in the same proposal, or leave %s as it is',
+                    $path,
+                    $switch,
+                    $path,
+                );
+            }
+        }
+
+        return $problems;
     }
 }

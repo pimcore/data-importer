@@ -24,6 +24,7 @@ const LABEL_KEYS: Record<string, string> = {
   'processingConfig.executionType': 'data-importer.processing.execution-type',
   'processingConfig.idDataIndex': 'data-importer.processing.id-data-index',
   'processingConfig.doDeltaCheck': 'data-importer.processing.delta-check',
+  'processingConfig.doDeltaCheckCheck': 'data-importer.processing.delta-check',
   'processingConfig.doArchiveImportFile': 'data-importer.processing.archive-import-file',
   'processingConfig.disableVersioning': 'data-importer.processing.disable-versioning',
   'processingConfig.cleanup.doCleanup': 'data-importer.processing.cleanup.do-cleanup',

@@ -37,7 +37,7 @@ unless the user asked for it to run; say so.
 | `loaderConfig` | where the file comes from — `{type, settings}`; type is `asset`, `sftp`, `http`, `upload`, `push` or `sql`. |
 | `interpreterConfig` | how it is parsed — `{type, settings}`; type is `csv`, `json`, `xlsx`, `xml` or `sql`. |
 | `resolverConfig` | which object a row becomes — `loadingStrategy`, `createLocationStrategy`, `locationUpdateStrategy`, `publishingStrategy`, each `{type, settings}`. |
-| `processingConfig` | `executionType`, `idDataIndex`, `doDeltaCheckCheck`, `cleanup: {strategy}`. |
+| `processingConfig` | `executionType`, `idDataIndex`, `doDeltaCheck`, `cleanup: {doCleanup, strategy}`. Delta check and cleanup only work with an `idDataIndex`; `cleanup.strategy` only while `cleanup.doCleanup` is true — change the switch together with the setting. |
 | `mappingConfig` | a **list**, one entry per column mapping (below). |
 | `executionConfig` | `scheduleType` and `cronDefinition`. |
 

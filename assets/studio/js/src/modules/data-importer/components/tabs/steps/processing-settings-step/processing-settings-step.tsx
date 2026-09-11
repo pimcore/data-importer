@@ -17,6 +17,7 @@ import { filterByLabel } from '../../../../utils/select-utils'
 import type { DataImporterFormValues } from '../../../../types'
 import { type ColumnHeaderOption } from '../../../../hooks/use-column-header-options'
 import { useStyles } from './processing-settings-step.styles'
+import { useFormItemAnnotation } from '../../../../change-control/studio-form-annotations'
 
 export interface ProcessingSettingsStepProps {
   columnHeaderOptions: ColumnHeaderOption[]
@@ -37,8 +38,14 @@ export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettin
     { value: 'unpublish', label: t('data-importer.processing.cleanup.strategy.unpublish') }
   ]
 
+  // a review marks a field the form would fold away — the strategy of a cleanup that is
+  // switched off, say. Keep it on screen, or the mark has nowhere to land
+  const deltaCheckReviewed = useFormItemAnnotation(['processingConfig', 'doDeltaCheck']) !== undefined
+  const doCleanupReviewed = useFormItemAnnotation(['processingConfig', 'cleanup', 'doCleanup']) !== undefined
+  const strategyReviewed = useFormItemAnnotation(['processingConfig', 'cleanup', 'strategy']) !== undefined
+
   const hasIdDataIndex = (values: DataImporterFormValues): boolean =>
-    Boolean(values.processingConfig?.idDataIndex)
+    Boolean(values.processingConfig?.idDataIndex) || deltaCheckReviewed || doCleanupReviewed || strategyReviewed
 
   // Watch parent logging toggles to auto-check sub-items when parent is enabled
   const disableInfoLogs = Form.useWatch(['processingConfig', 'logging', 'disableInfoLogs']) as boolean | undefined
@@ -124,7 +131,7 @@ export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettin
           </Form.Item>
 
           <Form.Conditional condition={ (values) =>
-            Boolean((values as unknown as DataImporterFormValues).processingConfig?.cleanup?.doCleanup)
+            Boolean((values as unknown as DataImporterFormValues).processingConfig?.cleanup?.doCleanup) || strategyReviewed
           }
           >
             <DataImporterPanel
