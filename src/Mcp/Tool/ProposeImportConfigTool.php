@@ -155,8 +155,9 @@ final readonly class ProposeImportConfigTool
                 return $this->errorResult(implode("\n", $unknownValues));
             }
 
-            // a change the import would ignore is not worth a reviewer's turn
-            $ineffective = ProposedImportConfiguration::ineffectiveChanges($stored, $state);
+            // a change the import would ignore is not worth a reviewer's turn; a create is
+            // reviewed whole, and a copy legitimately carries the inert values its source has
+            $ineffective = $existing === null ? [] : ProposedImportConfiguration::ineffectiveChanges($stored, $state);
             if ($ineffective !== []) {
                 return $this->errorResult(implode("\n", $ineffective));
             }
