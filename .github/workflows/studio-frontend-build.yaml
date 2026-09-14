@@ -12,7 +12,6 @@ on:
   pull_request:
     paths:
       - "assets/studio/**"
-      - "build-dist/**"
   workflow_dispatch:
 
 concurrency:
