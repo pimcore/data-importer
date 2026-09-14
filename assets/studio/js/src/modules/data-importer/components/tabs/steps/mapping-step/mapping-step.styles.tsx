@@ -20,12 +20,12 @@ export const useStyles = createStyles(({ css, token }) => {
     // DataSetupTab gives this div a real bounded height via flex:1 + min-height:0,
     // so height:100% and overflow:hidden here are clean — no JS measurement needed.
     // min-width combined with overflow:auto on stepContentMapping shows a horizontal
-    // scrollbar if the viewport is too narrow; 700px still fits the editor beside a
-    // 300px review rail in a 90vw modal on a 1200px screen.
+    // scrollbar if the viewport is too narrow; 680px still fits the editor beside a
+    // 320px review rail in a 90vw modal on a 1200px screen.
     mappingLayout: css`
       width: 100%;
       height: 100%;
-      min-width: 700px;
+      min-width: 680px;
     `,
 
     mappingLayoutLeft: css`

@@ -11,31 +11,31 @@
 import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ token, css }) => ({
-  /* the modal keeps its own gutters; the surface fills the width between them */
+  /* the modal's body already reaches the modal's edges and rules itself off from the title
+     above and the actions below; the review only has to fill it */
   layout: css`
     display: flex;
     align-items: stretch;
-    gap: ${token.marginLG}px;
+    flex: 1 1 auto;
     height: 70vh;
     min-height: 420px;
   `,
   rail: css`
-    width: 300px;
-    flex: 0 0 300px;
+    width: 320px;
+    flex: 0 0 320px;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid ${token.colorBorderSecondary};
+    padding: 0 ${token.paddingLG - 4}px;
+    border-right: 1px solid ${token.colorSplit};
   `,
   list: css`
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-right: ${token.padding}px;
     display: flex;
     flex-direction: column;
-    gap: ${token.marginMD}px;
   `,
   summary: css`
     padding: ${token.paddingXS}px 0 ${token.paddingXXS}px;
@@ -198,5 +198,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     flex: 1;
     min-width: 0;
     overflow: auto;
+    padding: 0 ${token.paddingLG}px;
   `
 }))
