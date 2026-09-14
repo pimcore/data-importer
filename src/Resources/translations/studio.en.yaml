@@ -332,7 +332,6 @@ data-importer.review.status.changed: changed
 data-importer.review.status.removed: removed
 data-importer.review.status.moved: moved
 data-importer.review.mappings: Mappings
-data-importer.review.new.title: New configuration
 data-importer.review.outline.active: Active
 data-importer.review.outline.inactive: Inactive
 data-importer.review.outline.mappings: '{{count}} field mappings'
@@ -341,7 +340,8 @@ data-importer.review.outline.map: Map
 data-importer.review.outline.write: Write
 data-importer.review.outline.run: Run
 data-importer.review.outline.data-objects: '{{class}} data objects'
-data-importer.review.outline.settings: '{{count}} settings across {{sections}} sections'
+data-importer.review.outline.settings: '**{{count}} settings** across {{sections}} sections'
+data-importer.review.outline.new: New
 data-importer.review.state.merged: Applied
 data-importer.review.state.discarded: Rejected
 data-importer.review.state.refined: Refined

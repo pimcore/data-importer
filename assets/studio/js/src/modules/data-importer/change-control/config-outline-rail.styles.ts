@@ -17,7 +17,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadiusLG}px;
     box-shadow: ${token.boxShadowTertiary};
-    margin-right: ${token.margin}px;
   `,
   head: css`
     display: flex;
@@ -38,6 +37,20 @@ export const useStyles = createStyles(({ token, css }) => ({
     white-space: nowrap;
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorText};
+  `,
+  /* that the whole configuration is new, where a change set would carry its marks */
+  tag: css`
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    height: ${token.controlHeightSM - 4}px;
+    padding: 0 ${token.paddingXS}px;
+    border-radius: ${token.borderRadiusSM}px;
+    background: ${token.colorPrimaryBg};
+    color: ${token.colorPrimary};
+    font-size: ${token.fontSizeSM - 1}px;
+    font-weight: ${token.fontWeightStrong};
+    line-height: 1;
   `,
   /* the on/off switch of the whole pipeline, said once and quietly */
   pill: css`
@@ -137,6 +150,10 @@ export const useStyles = createStyles(({ token, css }) => ({
     font-size: ${token.fontSizeSM}px;
     line-height: ${token.lineHeightSM};
     color: ${token.colorTextSecondary};
+
+    b {
+      color: ${token.colorText};
+    }
   `,
   footGroups: css`
     font-size: ${token.fontSizeSM - 1}px;

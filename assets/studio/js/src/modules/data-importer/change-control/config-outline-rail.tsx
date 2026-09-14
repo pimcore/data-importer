@@ -19,6 +19,12 @@ const T = 'data-importer.review.outline'
 
 const ICON = { width: 14, height: 14 }
 
+/** the translation marks its own emphasis with **…**, so a translator decides what carries it */
+const emphasised = (value: string): React.ReactNode[] =>
+  value.split('**').map((part, index) => (
+    index % 2 === 1 ? <b key={ `b${index}` }>{ part }</b> : <React.Fragment key={ `t${index}` }>{ part }</React.Fragment>
+  ))
+
 interface Props {
   readonly brief: ConfigBrief
   /** the surface still hands its own styles down; this card dresses itself */
@@ -62,6 +68,7 @@ export const ConfigBriefCard: React.FC<Props> = ({ brief }) => {
       <div className={ styles.head }>
         <div className={ styles.name }>
           <span className={ styles.nameText }>{ brief.name }</span>
+          <span className={ styles.tag }>{ t(`${T}.new`) }</span>
           <span className={ styles.pill }>
             <span className={ cx(styles.dot, brief.active && styles.dotOn) } />
             { t(`${T}.${brief.active ? 'active' : 'inactive'}`) }
@@ -77,7 +84,7 @@ export const ConfigBriefCard: React.FC<Props> = ({ brief }) => {
       { brief.groups.length > 0 && (
         <div className={ styles.foot }>
           <div className={ styles.footLead }>
-            { t(`${T}.settings`, { count: brief.total, sections: brief.groups.length }) }
+            { emphasised(t(`${T}.settings`, { count: brief.total, sections: brief.groups.length })) }
           </div>
           <div className={ styles.footGroups }>
             { brief.groups.map((group) => `${t(group.label)} ${group.count}`).join(' · ') }

@@ -210,7 +210,6 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
         { brief !== undefined
           ? (
             <div className={ styles.list }>
-              <div className={ styles.summary }>{ t(`${T}.new.title`) }</div>
               <ConfigBriefCard
                 brief={ brief }
                 styles={ styles }

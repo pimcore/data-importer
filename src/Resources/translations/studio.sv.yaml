@@ -332,7 +332,6 @@ data-importer.review.status.changed: ändrad
 data-importer.review.status.removed: borttagen
 data-importer.review.status.moved: flyttad
 data-importer.review.mappings: Mappningar
-data-importer.review.new.title: Ny konfiguration
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} fältmappningar'
@@ -341,7 +340,8 @@ data-importer.review.outline.map: Mappa
 data-importer.review.outline.write: Skriv
 data-importer.review.outline.run: Kör
 data-importer.review.outline.data-objects: '{{class}}-objekt'
-data-importer.review.outline.settings: '{{count}} inställningar i {{sections}} sektioner'
+data-importer.review.outline.settings: '**{{count}} inställningar** i {{sections}} sektioner'
+data-importer.review.outline.new: Ny
 data-importer.review.state.merged: Tillämpad
 data-importer.review.state.discarded: Avvisad
 data-importer.review.state.refined: Justerad
