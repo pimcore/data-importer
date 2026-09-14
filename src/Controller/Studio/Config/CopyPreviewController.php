@@ -78,7 +78,7 @@ final class CopyPreviewController extends AbstractApiController
         string $name,
         #[MapRequestPayload] CopyPreviewParameters $parameters
     ): Response {
-        $this->previewDataService->copyPreviewData($name, $parameters->getCurrentConfig());
+        $this->previewDataService->copyPreviewData($name, $parameters->getCurrentConfig(), $parameters->getPreviewScope());
 
         return new Response();
     }

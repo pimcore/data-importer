@@ -19,6 +19,7 @@ import {
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './preview-panel.styles'
+import { usePreviewScope } from '../../../../preview-scope'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
 
 interface ImportModeProps {
@@ -66,11 +67,13 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
 
   const [previews, setPreviews] = useState<string[]>([])
   const [resultRecordNumber, setResultRecordNumber] = useState(0)
+  const previewScope = usePreviewScope()
   const [resultRequest, setResultRequest] = useState<{
     name: string
     bundleDataImporterLoadPreviewParameters: {
       recordNumber: number
       currentConfig?: Record<string, object>
+      previewScope?: string
     }
   } | undefined>(undefined)
   const {
@@ -115,7 +118,8 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
       name: props.configName,
       bundleDataImporterLoadPreviewParameters: {
         recordNumber: record,
-        ...(currentConfig !== undefined && { currentConfig })
+        ...(currentConfig !== undefined && { currentConfig }),
+        ...(previewScope !== undefined && { previewScope })
       }
     })
   }

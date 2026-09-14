@@ -84,7 +84,8 @@ final class LoadTransformationResultController extends AbstractApiController
             $this->transformationService->loadTransformationResultPreviews(
                 $name,
                 $parameters->getCurrentConfig(),
-                $parameters->getRecordNumber()
+                $parameters->getRecordNumber(),
+                $parameters->getPreviewScope()
             )
         );
     }
