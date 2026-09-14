@@ -36,6 +36,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-size: ${token.fontSizeLG}px;
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorText};
   `,
@@ -50,7 +51,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     border-radius: ${token.borderRadiusSM}px;
     background: ${token.colorFillTertiary};
     color: ${token.colorTextSecondary};
-    font-size: ${token.fontSizeSM}px;
+    font-size: ${token.fontSize}px;
     line-height: 1;
   `,
   dot: css`
@@ -63,7 +64,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorSuccess};
   `,
   description: css`
-    font-size: ${token.fontSizeSM}px;
+    font-size: ${token.fontSize}px;
     line-height: ${token.lineHeightSM};
     color: ${token.colorTextSecondary};
     overflow-wrap: anywhere;
@@ -108,7 +109,7 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   /* the label of a step: what part it plays, not something to press */
   role: css`
-    font-size: ${token.fontSizeSM - 2}px;
+    font-size: ${token.fontSizeSM}px;
     font-weight: ${token.fontWeightStrong};
     letter-spacing: .07em;
     text-transform: uppercase;
@@ -126,7 +127,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     border: none;
     background: none;
     font: inherit;
-    font-size: ${token.fontSizeSM - 2}px;
+    font-size: ${token.fontSizeSM}px;
     font-weight: ${token.fontWeightStrong};
     letter-spacing: .07em;
     text-transform: uppercase;
@@ -145,7 +146,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow-wrap: anywhere;
   `,
   note: css`
-    font-size: ${token.fontSizeSM - 1}px;
+    font-size: ${token.fontSizeSM}px;
     line-height: ${token.lineHeightSM};
     color: ${token.colorTextTertiary};
     overflow-wrap: anywhere;
@@ -175,7 +176,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     font-variant-numeric: tabular-nums;
   `,
   footLead: css`
-    font-size: ${token.fontSizeSM}px;
+    font-size: ${token.fontSize}px;
     line-height: ${token.lineHeightSM};
     color: ${token.colorTextSecondary};
 
@@ -184,7 +185,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     }
   `,
   footGroups: css`
-    font-size: ${token.fontSizeSM - 1}px;
+    font-size: ${token.fontSizeSM}px;
     line-height: ${token.lineHeightSM};
     color: ${token.colorTextTertiary};
   `
