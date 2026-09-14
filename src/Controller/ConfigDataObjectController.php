@@ -118,7 +118,7 @@ class ConfigDataObjectController extends UserAwareController
         InterpreterFactory $interpreterFactory
     ) {
         $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
-        if (is_file($previewFilePath)) {
+        if ($previewFilePath && is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
                 $dataPreview = $interpreter->previewData($previewFilePath);
