@@ -14,6 +14,7 @@ import { Dropdown, DropdownButton, Box, Flex, Grid, IconButton, ImportModal, Sea
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { getPrefix } from '@pimcore/studio-ui-bundle/api'
 import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
+import { withApiMessage } from '../../../../utils/api-error-message'
 import {
   useBundleDataImporterConfigCopyPreviewMutation
 } from '../../../../data-importer-api-slice.gen'
@@ -88,12 +89,12 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
   useEffect(() => {
     if (previewError === undefined || previewError === null) return
     if (isNotFoundError(previewError)) return
-    trackError(new ApiError(previewError))
+    trackError(new ApiError(withApiMessage(previewError)))
   }, [previewError])
 
   useEffect(() => {
     if (copyPreviewError === undefined) return
-    trackError(new ApiError(copyPreviewError))
+    trackError(new ApiError(withApiMessage(copyPreviewError)))
   }, [copyPreviewError])
 
   const handlePrev = (): void => {

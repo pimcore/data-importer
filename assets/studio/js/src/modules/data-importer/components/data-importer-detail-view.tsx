@@ -12,6 +12,7 @@ import React, { useEffect, useMemo } from 'react'
 import { type DataHubAdapterDetailViewProps, ConfigToolbar, trackConfigError } from '@pimcore/data-hub'
 import { useBundleDataImporterConfigGetQuery, useBundleDataImporterConfigSaveMutation } from '../data-importer-api-slice-enhanced'
 import { ApiError } from '@pimcore/studio-ui-bundle/modules/app'
+import { withApiMessage } from '../utils/api-error-message'
 import { isNil } from 'lodash'
 import { type BackendConfiguration } from '../utils/transformers'
 import { DataImporterConfigEditor } from './data-importer-config-editor'
@@ -53,7 +54,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     })
 
     if ('error' in response) {
-      throw new ApiError(response.error ?? {})
+      throw new ApiError(withApiMessage(response.error))
     }
 
     return { modificationDate: response.data?.modificationDate }

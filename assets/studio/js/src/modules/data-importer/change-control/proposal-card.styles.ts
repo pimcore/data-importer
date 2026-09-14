@@ -158,6 +158,11 @@ export const useStyles = createStyles(({ token, css }) => ({
     justify-content: space-between;
     gap: ${token.marginXS}px;
     min-height: ${token.controlHeightSM}px;
+
+    /* the marks are tall for their row; without this they read as one block */
+    & + & {
+      margin-top: ${token.marginXXS}px;
+    }
   `,
   fieldLabel: css`
     min-width: 0;

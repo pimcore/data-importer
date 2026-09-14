@@ -26,7 +26,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 0 ${token.paddingLG - 4}px;
+    padding: 0 ${token.paddingLG}px;
     border-right: 1px solid ${token.colorSplit};
   `,
   list: css`
