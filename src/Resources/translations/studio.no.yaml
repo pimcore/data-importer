@@ -335,13 +335,19 @@ data-importer.review.mappings: Mappinger
 data-importer.review.new.title: Ny konfigurasjon
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
-data-importer.review.outline.mappings: '{{count}} mappinger'
-data-importer.review.outline.scheduled: Planlagt
+data-importer.review.outline.mappings: '{{count}} felttilordninger'
+data-importer.review.outline.read: Les
+data-importer.review.outline.map: Tilordne
+data-importer.review.outline.write: Skriv
+data-importer.review.outline.run: Kjør
+data-importer.review.outline.data-objects: '{{class}}-objekter'
+data-importer.review.outline.settings: '{{count}} innstillinger i {{sections}} seksjoner'
 data-importer.review.state.merged: Tatt i bruk
 data-importer.review.state.discarded: Avvist
 data-importer.review.state.refined: Justert
 data-importer.review.resolved-at: 'Avgjort {{when}}'
 data-importer.review.history-notice: Verdier slik de var da endringen ble foreslått.
+data-importer.review.snapshot: Skrivebeskyttet øyeblikksbilde
 data-importer.review.load-failed: De foreslåtte endringene kunne ikke lastes.
 data-importer.review.section.general: Generelt
 data-importer.review.section.data-source: Datakilde

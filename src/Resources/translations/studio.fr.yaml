@@ -335,13 +335,19 @@ data-importer.review.mappings: Mappings
 data-importer.review.new.title: Nouvelle configuration
 data-importer.review.outline.active: Active
 data-importer.review.outline.inactive: Inactive
-data-importer.review.outline.mappings: '{{count}} mappings'
-data-importer.review.outline.scheduled: Planifiée
+data-importer.review.outline.mappings: '{{count}} mappages de champs'
+data-importer.review.outline.read: Lire
+data-importer.review.outline.map: Mapper
+data-importer.review.outline.write: Écrire
+data-importer.review.outline.run: Exécuter
+data-importer.review.outline.data-objects: 'Objets {{class}}'
+data-importer.review.outline.settings: '{{count}} paramètres dans {{sections}} sections'
 data-importer.review.state.merged: Appliqué
 data-importer.review.state.discarded: Rejeté
 data-importer.review.state.refined: Affiné
 data-importer.review.resolved-at: 'Résolu le {{when}}'
 data-importer.review.history-notice: Valeurs telles qu’elles étaient lors de la proposition.
+data-importer.review.snapshot: Instantané en lecture seule
 data-importer.review.load-failed: Les modifications proposées n’ont pas pu être chargées.
 data-importer.review.section.general: Général
 data-importer.review.section.data-source: Source de données

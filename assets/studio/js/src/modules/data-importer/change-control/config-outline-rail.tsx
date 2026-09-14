@@ -9,56 +9,81 @@
  */
 
 import React from 'react'
-import { Icon, Tag } from '@pimcore/studio-ui-bundle/components'
+import { Icon } from '@pimcore/studio-ui-bundle/components'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type BriefStop, type ConfigBrief } from './config-outline'
-import { type useStyles } from './import-config-review-surface.styles'
+import { useStyles } from './config-outline-rail.styles'
+import { type useStyles as useSurfaceStyles } from './import-config-review-surface.styles'
 
-type Styles = ReturnType<typeof useStyles>['styles']
+const T = 'data-importer.review.outline'
 
-const Stop: React.FC<{ readonly stop: BriefStop, readonly styles: Styles }> = ({ stop, styles }) => (
-  <div className={ styles.briefStop }>
-    <span className={ styles.briefIcon }>
-      <Icon
-        options={ { width: 16, height: 16 } }
-        value={ stop.icon }
-      />
-    </span>
-    <span className={ styles.briefText }>
-      <span className={ styles.briefLabel }>{ stop.label }</span>
-      { stop.note !== undefined && <span className={ styles.briefNote }>{ stop.note }</span> }
-    </span>
-  </div>
-)
+const ICON = { width: 14, height: 14 }
+
+interface Props {
+  readonly brief: ConfigBrief
+  /** the surface still hands its own styles down; this card dresses itself */
+  readonly styles: ReturnType<typeof useSurfaceStyles>['styles']
+}
 
 /**
- * The rail for a configuration that does not exist yet: the pipeline in one glance — where
- * the data comes from, what it becomes — and how it runs, as tags. No sections, no fields:
- * the editor beside it has all of those.
+ * The rail for a configuration that does not exist yet: what it is called and whether it is
+ * live, the pipeline as read → map → write → run, and a count of what is left to read in the
+ * editor. Nothing here is a control: a create is approved or rejected whole.
  */
-export const ConfigBriefCard: React.FC<{ readonly brief: ConfigBrief, readonly styles: Styles }> = ({ brief, styles }) => (
-  <div className={ styles.brief }>
-    <div className={ styles.briefFlow }>
-      <Stop
-        stop={ brief.source }
-        styles={ styles }
-      />
-      <span className={ styles.briefConnector } />
-      <Stop
-        stop={ brief.target }
-        styles={ styles }
-      />
+export const ConfigBriefCard: React.FC<Props> = ({ brief }) => {
+  const { t } = useTranslation()
+  const { styles, cx } = useStyles()
+
+  const stop = (entry: BriefStop, index: number): React.JSX.Element => {
+    const last = index === brief.stops.length - 1
+
+    return (
+      <React.Fragment key={ entry.key }>
+        <div className={ styles.mark }>
+          <span className={ styles.badge }>
+            <Icon
+              options={ ICON }
+              value={ entry.icon }
+            />
+          </span>
+          { !last && <span className={ styles.line } /> }
+        </div>
+        <div className={ last ? styles.stopLast : styles.stop }>
+          <div className={ styles.role }>{ t(entry.role) }</div>
+          <div className={ styles.value }>{ entry.value }</div>
+          { entry.note !== undefined && <div className={ styles.note }>{ entry.note }</div> }
+        </div>
+      </React.Fragment>
+    )
+  }
+
+  return (
+    <div className={ styles.card }>
+      <div className={ styles.head }>
+        <div className={ styles.name }>
+          <span className={ styles.nameText }>{ brief.name }</span>
+          <span className={ styles.pill }>
+            <span className={ cx(styles.dot, brief.active && styles.dotOn) } />
+            { t(`${T}.${brief.active ? 'active' : 'inactive'}`) }
+          </span>
+        </div>
+        { brief.description !== undefined && (
+          <div className={ styles.description }>{ brief.description }</div>
+        ) }
+      </div>
+
+      <div className={ styles.flow }>{ brief.stops.map(stop) }</div>
+
+      { brief.groups.length > 0 && (
+        <div className={ styles.foot }>
+          <div className={ styles.footLead }>
+            { t(`${T}.settings`, { count: brief.total, sections: brief.groups.length }) }
+          </div>
+          <div className={ styles.footGroups }>
+            { brief.groups.map((group) => `${t(group.label)} ${group.count}`).join(' · ') }
+          </div>
+        </div>
+      ) }
     </div>
-    <div className={ styles.briefTags }>
-      { brief.tags.map((tag) => (
-        <Tag
-          bordered={ false }
-          color={ tag.colour }
-          key={ tag.key }
-          style={ { marginInlineEnd: 0 } }
-        >
-          { tag.label }
-        </Tag>
-      )) }
-    </div>
-  </div>
-)
+  )
+}

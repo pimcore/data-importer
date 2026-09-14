@@ -335,13 +335,19 @@ data-importer.review.mappings: Mappningar
 data-importer.review.new.title: Ny konfiguration
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
-data-importer.review.outline.mappings: '{{count}} mappningar'
-data-importer.review.outline.scheduled: Schemalagd
+data-importer.review.outline.mappings: '{{count}} fältmappningar'
+data-importer.review.outline.read: Läs
+data-importer.review.outline.map: Mappa
+data-importer.review.outline.write: Skriv
+data-importer.review.outline.run: Kör
+data-importer.review.outline.data-objects: '{{class}}-objekt'
+data-importer.review.outline.settings: '{{count}} inställningar i {{sections}} sektioner'
 data-importer.review.state.merged: Tillämpad
 data-importer.review.state.discarded: Avvisad
 data-importer.review.state.refined: Justerad
 data-importer.review.resolved-at: 'Avgjord {{when}}'
 data-importer.review.history-notice: Värden som de var när ändringen föreslogs.
+data-importer.review.snapshot: Skrivskyddad ögonblicksbild
 data-importer.review.load-failed: De föreslagna ändringarna kunde inte läsas in.
 data-importer.review.section.general: Allmänt
 data-importer.review.section.data-source: Datakälla
