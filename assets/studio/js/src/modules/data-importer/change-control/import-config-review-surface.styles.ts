@@ -20,8 +20,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     min-height: 420px;
   `,
   rail: css`
-    width: 272px;
-    flex: 0 0 272px;
+    width: 300px;
+    flex: 0 0 300px;
     min-height: 0;
     display: flex;
     flex-direction: column;

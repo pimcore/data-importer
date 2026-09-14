@@ -15,17 +15,15 @@ import { createStyles } from 'antd-style'
  * one tells what the pipeline does, and neither should look like a different product.
  */
 export const useStyles = createStyles(({ token, css }) => ({
+  /* flush in the rail rather than a box inside it: the rail's own edge does the separating */
   card: css`
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusLG}px;
-    box-shadow: ${token.boxShadowTertiary};
+    min-width: 0;
   `,
   head: css`
     display: flex;
     flex-direction: column;
     gap: ${token.marginXXS}px;
-    padding: ${token.padding}px ${token.padding}px ${token.paddingSM}px;
+    padding: ${token.paddingXS}px 0 ${token.paddingSM}px;
     border-bottom: 1px solid ${token.colorSplit};
   `,
   identity: css`
@@ -75,7 +73,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: grid;
     grid-template-columns: ${token.marginXS}px minmax(0, 1fr);
     column-gap: ${token.marginSM}px;
-    padding: ${token.padding}px;
+    padding: ${token.padding}px 0;
   `,
   mark: css`
     display: flex;
@@ -172,7 +170,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: ${token.paddingSM}px ${token.padding}px;
+    padding: ${token.paddingSM}px 0;
     border-top: 1px solid ${token.colorSplit};
     font-variant-numeric: tabular-nums;
   `,
