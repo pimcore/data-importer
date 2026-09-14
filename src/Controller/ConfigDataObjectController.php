@@ -118,7 +118,7 @@ class ConfigDataObjectController extends UserAwareController
         InterpreterFactory $interpreterFactory
     ) {
         $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
-        if (is_file($previewFilePath)) {
+        if ($previewFilePath && is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
                 $dataPreview = $interpreter->previewData($previewFilePath);
@@ -301,7 +301,7 @@ class ConfigDataObjectController extends UserAwareController
         $errorMessage = '';
         $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         $dataPreviewData = [];
-        if (is_file($previewFilePath)) {
+        if ($previewFilePath && is_file($previewFilePath)) {
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
             $mappedColumns = [];
@@ -399,7 +399,7 @@ class ConfigDataObjectController extends UserAwareController
         $errorMessage = '';
 
         try {
-            if (is_file($previewFilePath)) {
+            if ($previewFilePath && is_file($previewFilePath)) {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
 
                 $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber);
