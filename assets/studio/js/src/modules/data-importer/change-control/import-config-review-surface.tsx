@@ -218,11 +218,10 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
             )
           : (
             <div className={ styles.list }>
-              <div className={ styles.summary }>
-                { t(`${T}.changes`, { count: changes.length + changedMappings.length }) }
-              </div>
               <ChangeList
                 activeSection={ activeSection }
+                configuration={ configuration }
+                count={ changes.length + changedMappings.length }
                 groups={ groups }
                 labelFor={ labelFor }
                 mappings={ changedMappings }

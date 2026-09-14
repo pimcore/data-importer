@@ -10,7 +10,10 @@
 
 import { createStyles } from 'antd-style'
 
-/** The create summary owns its styles: it is one card, and the rail around it is not its business. */
+/**
+ * One card shell for both proposal rails: a changed configuration lists what moved, a new
+ * one tells what the pipeline does, and neither should look like a different product.
+ */
 export const useStyles = createStyles(({ token, css }) => ({
   card: css`
     background: ${token.colorBgContainer};
@@ -25,12 +28,12 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: ${token.padding}px ${token.padding}px ${token.paddingSM}px;
     border-bottom: 1px solid ${token.colorSplit};
   `,
-  name: css`
+  identity: css`
     display: flex;
     align-items: center;
     gap: ${token.marginXS}px;
   `,
-  nameText: css`
+  name: css`
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -38,33 +41,18 @@ export const useStyles = createStyles(({ token, css }) => ({
     font-weight: ${token.fontWeightStrong};
     color: ${token.colorText};
   `,
-  /* that the whole configuration is new, where a change set would carry its marks */
-  tag: css`
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    height: ${token.controlHeightSM - 4}px;
-    padding: 0 ${token.paddingXS}px;
-    border-radius: ${token.borderRadiusSM}px;
-    background: ${token.colorPrimaryBg};
-    color: ${token.colorPrimary};
-    font-size: ${token.fontSizeSM - 1}px;
-    font-weight: ${token.fontWeightStrong};
-    line-height: 1;
-  `,
   /* the on/off switch of the whole pipeline, said once and quietly */
   pill: css`
     flex: none;
     display: inline-flex;
     align-items: center;
     gap: ${token.marginXXS}px;
-    height: ${token.controlHeightSM - 4}px;
+    height: ${token.controlHeightSM - 2}px;
     padding: 0 ${token.paddingXS}px;
     border-radius: ${token.borderRadiusSM}px;
     background: ${token.colorFillTertiary};
     color: ${token.colorTextSecondary};
-    font-size: ${token.fontSizeSM - 1}px;
-    font-weight: ${token.fontWeightStrong};
+    font-size: ${token.fontSizeSM}px;
     line-height: 1;
   `,
   dot: css`
@@ -82,10 +70,10 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorTextSecondary};
     overflow-wrap: anywhere;
   `,
-  /* read, map, write, run — the marks in one column, the words in the other */
-  flow: css`
+  /* a dotted spine down the left, one node per section or per step of the pipeline */
+  spine: css`
     display: grid;
-    grid-template-columns: ${token.controlHeightSM}px minmax(0, 1fr);
+    grid-template-columns: ${token.marginXS}px minmax(0, 1fr);
     column-gap: ${token.marginSM}px;
     padding: ${token.padding}px;
   `,
@@ -93,17 +81,19 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding-top: ${token.marginXXS}px;
   `,
-  badge: css`
+  node: css`
     flex: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: ${token.controlHeightSM}px;
-    height: ${token.controlHeightSM}px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: ${token.colorPrimaryBg};
-    color: ${token.colorPrimary};
+    background: ${token.colorPrimary};
+  `,
+  /* a section the editor is not showing: the same node, hollow */
+  nodeMuted: css`
+    background: ${token.colorBgContainer};
+    box-shadow: inset 0 0 0 1px ${token.colorPrimaryBorder};
   `,
   line: css`
     flex: 1;
@@ -111,13 +101,14 @@ export const useStyles = createStyles(({ token, css }) => ({
     margin: ${token.marginXXS}px 0;
     background: ${token.colorPrimaryBorder};
   `,
-  stop: css`
+  entry: css`
     min-width: 0;
     padding-bottom: ${token.padding}px;
   `,
-  stopLast: css`
+  entryLast: css`
     min-width: 0;
   `,
+  /* the label of a step: what part it plays, not something to press */
   role: css`
     font-size: ${token.fontSizeSM - 2}px;
     font-weight: ${token.fontWeightStrong};
@@ -125,6 +116,29 @@ export const useStyles = createStyles(({ token, css }) => ({
     text-transform: uppercase;
     color: ${token.colorTextTertiary};
     line-height: ${token.lineHeightSM};
+  `,
+  /* the label of a section: the one control in the card, it opens the section in the editor */
+  section: css`
+    display: inline-flex;
+    align-items: center;
+    gap: ${token.marginXXS}px;
+    max-width: 100%;
+    margin: 0 0 ${token.marginXXS}px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: ${token.fontSizeSM - 2}px;
+    font-weight: ${token.fontWeightStrong};
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    line-height: ${token.lineHeightSM};
+    color: ${token.colorPrimary};
+    cursor: pointer;
+
+    &:hover {
+      color: ${token.colorPrimaryHover};
+    }
   `,
   value: css`
     font-weight: ${token.fontWeightStrong};
@@ -135,8 +149,24 @@ export const useStyles = createStyles(({ token, css }) => ({
   note: css`
     font-size: ${token.fontSizeSM - 1}px;
     line-height: ${token.lineHeightSM};
-    color: ${token.colorTextSecondary};
+    color: ${token.colorTextTertiary};
     overflow-wrap: anywhere;
+  `,
+  /* a changed field: its name, and what became of it */
+  field: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: ${token.marginXS}px;
+    min-height: ${token.controlHeightSM}px;
+  `,
+  fieldLabel: css`
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: ${token.fontWeightStrong};
+    color: ${token.colorText};
   `,
   foot: css`
     display: flex;

@@ -8,126 +8,119 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-
 import React from 'react'
-import { Icon } from '@pimcore/studio-ui-bundle/components'
+import { Icon, Tag } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import type { BackendConfiguration } from '../utils/transformers'
 import { type ChangeGroup, type ConfigChange } from './config-review-model'
 import { type MappingRowDiff } from './mapping-diff'
 import { StatusTag } from './status-tag'
-import { type useStyles } from './import-config-review-surface.styles'
-
-type Styles = ReturnType<typeof useStyles>['styles']
+import { ProposalCard, type CardNode } from './proposal-card'
+import { useStyles } from './proposal-card.styles'
+import { type useStyles as useSurfaceStyles } from './import-config-review-surface.styles'
 
 const T = 'data-importer.review'
+
+const ARROW = { width: 12, height: 12 }
 
 /** the mapping step sits between the resolver and the processing settings in the editor */
 const MAPPINGS_AFTER = 'resolver'
 
-interface HeadlineProps {
-  readonly label: string
-  readonly active: boolean
-  readonly onJump: () => void
-  readonly styles: Styles
-}
-
-/** A section's name, and the one control in the rail: the whole line opens it in the editor. */
-const Headline: React.FC<HeadlineProps> = ({ label, active, onJump, styles }) => {
-  const { t } = useTranslation()
-
-  return (
-    <button
-      className={ active ? styles.headlineActive : styles.headline }
-      onClick={ onJump }
-      title={ t(`${T}.open-section`) }
-      type="button"
-    >
-      <span>{ label }</span>
-      <Icon
-        options={ { width: 14, height: 14 } }
-        value="arrow-narrow-right"
-      />
-    </button>
-  )
-}
-
 interface ListProps {
+  readonly configuration: BackendConfiguration
+  readonly count: number
   readonly groups: ChangeGroup[]
   readonly mappings: MappingRowDiff[]
   /** the section the editor currently shows, so the reader knows where they are */
   readonly activeSection: string | undefined
   readonly labelFor: (change: ConfigChange) => string
   readonly onJump: (section: string) => void
-  readonly styles: Styles
+  /** the surface still hands its own styles down; this card dresses itself */
+  readonly styles: ReturnType<typeof useSurfaceStyles>['styles']
 }
 
 /**
- * A map of the change, in the order the editor lays it out: one headline per section that
- * opens it in the editor, and under it what changed there — a listing, not controls. Nothing
- * here is decided; the change set is approved whole.
+ * The rail for a configuration that already exists: a map of the change in the order the
+ * editor lays it out, one node per section that moved. A section's label opens it in the
+ * editor; the fields under it are a listing, because a change set is approved whole.
  */
-export const ChangeList: React.FC<ListProps> = ({ groups, mappings, activeSection, labelFor, onJump, styles }) => {
+export const ChangeList: React.FC<ListProps> = ({
+  configuration, count, groups, mappings, activeSection, labelFor, onJump
+}) => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
-  const mappingGroup = mappings.length === 0
-    ? null
-    : (
-      <div
-        className={ styles.group }
-        key="mapping"
+  const section = (key: string, label: string, rows: React.ReactNode): React.ReactNode => (
+    <>
+      <button
+        className={ styles.section }
+        onClick={ () => { onJump(key) } }
+        title={ t(`${T}.open-section`) }
+        type="button"
       >
-        <Headline
-          active={ activeSection === 'mapping' }
-          label={ t(`${T}.mappings`) }
-          onJump={ () => { onJump('mapping') } }
-          styles={ styles }
+        <span>{ label }</span>
+        <Icon
+          options={ ARROW }
+          value="arrow-narrow-right"
         />
-        <ul className={ styles.items }>
-          { mappings.map((row) => (
-            <li
-              className={ styles.item }
-              key={ row.key }
-            >
-              <span className={ styles.itemLabel }>{ row.label }</span>
-              { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
-            </li>
-          )) }
-        </ul>
-      </div>
-      )
+      </button>
+      { rows }
+    </>
+  )
 
-  const sections = groups.map((group) => (
-    <div
-      className={ styles.group }
-      key={ group.section }
-    >
-      <Headline
-        active={ activeSection === group.section }
-        label={ t(group.label) }
-        onJump={ () => { onJump(group.section) } }
-        styles={ styles }
-      />
-      <ul className={ styles.items }>
-        { group.changes.map((change) => (
-          <li
-            className={ styles.item }
-            key={ change.address }
-            title={ change.address }
+  const sectionNodes: CardNode[] = groups.map((group) => ({
+    key: group.section,
+    muted: activeSection !== group.section,
+    body: section(group.section, t(group.label), group.changes.map((change) => (
+      <div
+        className={ styles.field }
+        key={ change.address }
+        title={ change.address }
+      >
+        <span className={ styles.fieldLabel }>{ labelFor(change) }</span>
+        <StatusTag status={ change.status } />
+      </div>
+    )))
+  }))
+
+  const mappingNode: CardNode | null = mappings.length === 0
+    ? null
+    : {
+        key: 'mapping',
+        muted: activeSection !== 'mapping',
+        body: section('mapping', t(`${T}.mappings`), mappings.map((row) => (
+          <div
+            className={ styles.field }
+            key={ row.key }
           >
-            <span className={ styles.itemLabel }>{ labelFor(change) }</span>
-            <StatusTag status={ change.status } />
-          </li>
-        )) }
-      </ul>
-    </div>
-  ))
+            <span className={ styles.fieldLabel }>{ row.label }</span>
+            { row.status !== 'unchanged' && <StatusTag status={ row.status } /> }
+          </div>
+        )))
+      }
 
   const at = groups.findIndex((group) => group.section === MAPPINGS_AFTER)
-  const ordered = mappingGroup === null
-    ? sections
+  const nodes = mappingNode === null
+    ? sectionNodes
     : at === -1
-      ? [...sections, mappingGroup]
-      : [...sections.slice(0, at + 1), mappingGroup, ...sections.slice(at + 1)]
+      ? [...sectionNodes, mappingNode]
+      : [...sectionNodes.slice(0, at + 1), mappingNode, ...sectionNodes.slice(at + 1)]
 
-  return <>{ ordered }</>
+  return (
+    <ProposalCard
+      description={ typeof configuration.general?.description === 'string' && configuration.general.description !== ''
+        ? configuration.general.description
+        : undefined }
+      name={ typeof configuration.general?.name === 'string' ? configuration.general.name : '' }
+      nodes={ nodes }
+      tags={
+        <Tag
+          color="gold"
+          style={ { marginInlineEnd: 0 } }
+        >
+          { t(`${T}.changes`, { count }) }
+        </Tag>
+      }
+    />
+  )
 }
