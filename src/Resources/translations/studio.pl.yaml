@@ -1,0 +1,325 @@
+data-importer.adapter.dataImporterDataObject: Importer obiektów danych
+data-hub.adapter.dataImporterDataObject: Importer obiektów danych
+data-importer.tabs.general: Ogólne
+data-importer.tabs.permissions: Uprawnienia
+data-importer.tabs.data-setup: Konfiguracja danych
+data-importer.tabs.import-logs: Logi importu
+data-importer.tabs.execution: Wykonanie
+
+# Data Setup Steps
+data-importer.data-setup.steps.data-source.title: Źródło danych
+data-importer.data-setup.steps.data-source.description: Skonfiguruj źródło danych i format pliku
+data-importer.data-setup.steps.preview-import.title: Podgląd importu
+data-importer.data-setup.steps.preview-import.description: Wyświetl podgląd danych do zaimportowania
+data-importer.data-setup.steps.resolver.title: Resolver
+data-importer.data-setup.steps.resolver.description: Skonfiguruj reguły rozpoznawania danych
+data-importer.data-setup.steps.mapping.title: Mapowanie
+data-importer.data-setup.steps.mapping.description: Przypisz pola źródłowe do pól docelowych
+data-importer.data-setup.steps.processing-settings.title: Ustawienia przetwarzania
+data-importer.data-setup.steps.processing-settings.description: Skonfiguruj ustawienia przetwarzania importu
+
+# Data Source
+data-importer.data-source.title: Źródło danych
+data-importer.data-source.type: Typ
+data-importer.data-source.type-label: Typ źródła danych
+
+# Loaders
+data-importer.loader.asset: Asset
+data-importer.loader.upload: Prześlij
+data-importer.loader.http: HTTP
+data-importer.loader.sftp: SFTP
+data-importer.loader.push: Push
+data-importer.loader.sql: SQL
+
+# Asset Loader
+data-importer.loader.asset.asset-path: Ścieżka assetu
+
+# Upload Loader
+data-importer.loader.upload.status: Status przesyłania
+data-importer.loader.upload.file-uploaded: Plik przesłany pomyślnie
+data-importer.loader.upload.no-file: Nie przesłano jeszcze pliku
+data-importer.loader.upload.file-path: Ścieżka przesłanego pliku
+data-importer.loader.upload.open-upload: Prześlij plik
+data-importer.loader.upload.modal-title: Prześlij plik importu
+
+# HTTP Loader
+data-importer.loader.http.schema: Schemat
+data-importer.loader.http.url: URL
+
+# SFTP Loader
+data-importer.loader.sftp.host: Host
+data-importer.loader.sftp.port: Port
+data-importer.loader.sftp.username: Nazwa użytkownika
+data-importer.loader.sftp.password: Hasło
+data-importer.loader.sftp.remote-path: Ścieżka zdalna
+
+# Push Loader
+data-importer.loader.push.api-key: Klucz API
+data-importer.loader.push.api-key.generate: Generuj klucz API
+data-importer.loader.push.api-key-required: Wprowadź klucz API
+data-importer.loader.push.api-key-min-length: Klucz API musi mieć co najmniej 16 znaków
+data-importer.loader.push.ignore-not-empty-queue: Ignoruj niepustą kolejkę
+data-importer.loader.push.endpoint: Endpoint
+
+# SQL Loader
+data-importer.loader.sql.connection: Połączenie z bazą danych
+data-importer.loader.sql.select: SELECT
+data-importer.loader.sql.from: FROM
+data-importer.loader.sql.where: WHERE
+data-importer.loader.sql.group-by: GROUP BY
+
+# File Format
+data-importer.file-format.title: Format pliku
+data-importer.file-format.type: Typ
+
+# Interpreters
+data-importer.interpreter.csv: CSV
+data-importer.interpreter.json: JSON
+data-importer.interpreter.xml: XML
+data-importer.interpreter.xlsx: XLSX
+data-importer.interpreter.sql: SQL
+
+# CSV Interpreter
+data-importer.interpreter.csv.delimiter: Separator
+data-importer.interpreter.csv.enclosure: Znak cudzysłowu
+data-importer.interpreter.csv.escape: Znak ucieczki
+data-importer.interpreter.csv.required: "{{field}} jest wymagane"
+data-importer.interpreter.csv.single-char-only: "{{field}} musi być puste lub składać się z jednego znaku"
+data-importer.interpreter.csv.skip-first-row: Pomiń pierwszy wiersz
+data-importer.interpreter.csv.save-header-name: Zapisz nazwę nagłówka
+
+# JSON Interpreter
+data-importer.interpreter.json.path: JMESPath
+
+# XML Interpreter
+data-importer.interpreter.xml.xpath: XPath
+data-importer.interpreter.xml.schema: Schemat
+
+# XLSX Interpreter
+data-importer.interpreter.xlsx.sheet-name: Nazwa arkusza
+data-importer.interpreter.xlsx.skip-first-row: Pomiń pierwszy wiersz
+
+# SQL Interpreter
+data-importer.interpreter.sql.info: Interpreter SQL używa konfiguracji zapytania z loadera SQL.
+
+# Resolver
+data-importer.resolver.title: Resolver
+data-importer.resolver.class: Klasa obiektu danych
+data-importer.resolver.class-placeholder: Wybierz klasę
+data-importer.resolver.element-loading: Ładowanie elementów
+data-importer.resolver.loading-strategy: Strategia ładowania
+data-importer.resolver.loading-strategy.tooltip: Określa, jak istniejące elementy są dopasowywane przed importem. Jeśli nie znaleziono elementu, stosowane są reguły tworzenia.
+data-importer.resolver.loading-strategy.notLoad: Bez ładowania
+data-importer.resolver.loading-strategy.id: Id
+data-importer.resolver.loading-strategy.path: Ścieżka
+data-importer.resolver.loading-strategy.attribute: Atrybut
+data-importer.resolver.loading-strategy.attribute-name: Nazwa atrybutu
+data-importer.resolver.loading-strategy.attribute-name-placeholder: Wybierz atrybut
+data-importer.resolver.loading-strategy.data-source-index: Indeks źródła danych
+data-importer.resolver.loading-strategy.data-source-index-placeholder: Wybierz kolumnę
+data-importer.resolver.loading-strategy.language: Język
+data-importer.resolver.loading-strategy.language-placeholder: Wybierz język
+data-importer.resolver.loading-strategy.include-unpublished: Uwzględnij nieopublikowane obiekty
+data-importer.resolver.element-creation: Tworzenie elementów
+data-importer.resolver.create-location-strategy: Strategia lokalizacji
+data-importer.resolver.create-location-strategy.tooltip: Określa, gdzie umieszczane są nowo utworzone elementy, gdy nie rozpoznano istniejącego elementu.
+data-importer.resolver.location-strategy.staticPath: Ścieżka statyczna
+data-importer.resolver.location-strategy.findOrCreateFolder: Znajdź lub utwórz folder
+data-importer.resolver.location-strategy.findParent: Znajdź element nadrzędny
+data-importer.resolver.location-strategy.doNotCreate: Nie twórz
+data-importer.resolver.location-strategy.noChange: Bez zmian
+data-importer.resolver.location-strategy.path: Ścieżka
+data-importer.resolver.location-strategy.path-placeholder: Wprowadź ścieżkę
+data-importer.resolver.location-strategy.data-source-index: Indeks źródła danych
+data-importer.resolver.location-strategy.data-source-index-placeholder: Wybierz kolumnę
+data-importer.resolver.location-strategy.fallback-path: Ścieżka zapasowa
+data-importer.resolver.location-strategy.fallback-path.tooltip: Używana, gdy dynamicznej lokalizacji docelowej nie można ustalić na podstawie danych źródłowych.
+data-importer.resolver.location-strategy.fallback-path-placeholder: Wprowadź ścieżkę zapasową
+data-importer.resolver.location-strategy.find-strategy: Strategia wyszukiwania
+data-importer.resolver.location-strategy.find-strategy.id: Wg ID
+data-importer.resolver.location-strategy.find-strategy.path: Wg ścieżki
+data-importer.resolver.location-strategy.find-strategy.attribute: Wg atrybutu
+data-importer.resolver.location-strategy.attribute-class: Klasa
+data-importer.resolver.location-strategy.attribute-name: Nazwa atrybutu
+data-importer.resolver.location-strategy.attribute-language: Język
+data-importer.resolver.location-strategy.as-variant: Jako wariant
+data-importer.resolver.element-location-update: Aktualizacja lokalizacji elementu
+data-importer.resolver.location-update-strategy: Strategia lokalizacji
+data-importer.resolver.location-update-strategy.tooltip: Określa, czy i jak lokalizacja już rozpoznanych elementów jest zmieniana podczas importu.
+data-importer.resolver.element-publishing: Publikowanie elementów
+data-importer.resolver.publishing-strategy: Strategia publikacji
+data-importer.resolver.publishing-strategy.tooltip: Określa zachowanie publikowania lub cofania publikacji importowanych elementów.
+data-importer.resolver.publishing-strategy.noChangeUnpublishNew: Bez zmian / nie publikuj nowych
+data-importer.resolver.publishing-strategy.noChangePublishNew: Bez zmian / publikuj nowe
+data-importer.resolver.publishing-strategy.alwaysPublish: Zawsze publikuj
+data-importer.resolver.publishing-strategy.attributeBased: Na podstawie atrybutu
+data-importer.resolver.publishing-strategy.data-source-index: Indeks źródła danych
+data-importer.resolver.publishing-strategy.data-source-index-placeholder: Wybierz kolumnę
+
+# Processing Settings
+data-importer.processing.title: Ustawienia przetwarzania
+data-importer.processing.execution.title: Wykonanie
+data-importer.processing.id-delta.title: ID, kontrola delty i czyszczenie
+data-importer.processing.execution-type: Typ wykonania
+data-importer.processing.execution-type.tooltip: Sekwencyjne przetwarza elementy jeden po drugim. Równoległe przetwarza wiele elementów jednocześnie.
+data-importer.processing.execution-type.sequential: Sekwencyjne
+data-importer.processing.execution-type.parallel: Równoległe
+data-importer.processing.archive-import-file: Archiwizuj plik importu
+data-importer.processing.disable-versioning: Wyłącz wersjonowanie
+data-importer.processing.id-data-index: Indeks danych pola ID
+data-importer.processing.id-data-index.tooltip: Kolumna używana jako stały identyfikator dla kontroli delty i czyszczenia. Te opcje są dostępne tylko wtedy, gdy ustawiono indeks danych ID.
+data-importer.processing.id-data-index-placeholder: Wybierz kolumnę
+data-importer.processing.delta-check: Kontrola delty
+data-importer.processing.cleanup.title: Czyszczenie
+data-importer.processing.cleanup.do-cleanup: Wyczyść niezaimportowane elementy
+data-importer.processing.cleanup.strategy: Strategia czyszczenia
+data-importer.processing.cleanup.strategy.tooltip: Określa, co dzieje się z istniejącymi elementami, których nie ma w bieżącym imporcie.
+data-importer.processing.cleanup.strategy.delete: Usuń
+data-importer.processing.cleanup.strategy.unpublish: Cofnij publikację
+data-importer.processing.logging.title: Ustawienia logowania (logger aplikacji)
+data-importer.processing.logging.info.title: Informacja
+data-importer.processing.logging.info.disable-logs: Wyłącz logi informacyjne
+data-importer.processing.logging.info.disable-file-objects: Wyłącz obiekty plikowe logów informacyjnych
+data-importer.processing.logging.error.title: Błąd
+data-importer.processing.logging.error.disable-logs: Wyłącz logi błędów
+data-importer.processing.logging.error.disable-file-objects: Wyłącz obiekty plikowe logów błędów
+
+# Preview Import
+data-importer.preview-import.title: Podgląd importu
+data-importer.preview-import.choose-preview-data: Wybierz dane podglądu
+data-importer.preview-import.upload-file: Prześlij plik
+data-importer.preview-import.copy-from-source: Kopiuj ze źródła danych
+data-importer.preview-import.search-placeholder: Szukaj po nazwie, źródle, miejscu docelowym
+data-importer.preview-import.column.label: Etykieta
+data-importer.preview-import.column.data: Dane
+data-importer.preview-import.prev: Poprzedni rekord
+data-importer.preview-import.next: Następny rekord
+
+# Mapping
+data-importer.mapping.title: Konfiguracja mapowania
+data-importer.mapping.title-short: Mapowania
+data-importer.mapping.add: Nowy
+data-importer.mapping.new-modal.title: Nowe mapowanie
+data-importer.mapping.new-modal.source-label: Kolumna źródłowa
+data-importer.mapping.new-modal.source-required: Wybierz kolumnę źródłową
+data-importer.mapping.collapse-all: Zwiń wszystko
+data-importer.mapping.expand-all: Rozwiń wszystko
+data-importer.mapping.auto-fill: Autouzupełnianie
+data-importer.mapping.autofill-suggestions.title: Sugestie autouzupełniania Copilot
+data-importer.mapping.autofill-suggestions.score: Wynik
+data-importer.mapping.autofill-suggestions.source: Źródło
+data-importer.mapping.autofill-suggestions.destination: Miejsce docelowe (cel danych)
+data-importer.mapping.autofill-suggestions.result: Wynik podglądu
+data-importer.mapping.autofill-suggestions.selected: "Wybrano {{count}}"
+data-importer.mapping.autofill-suggestions.reject-all: Odrzuć wszystkie
+data-importer.mapping.autofill-suggestions.apply: Zastosuj wybrane autouzupełnianie
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Nie znaleziono sugestii dla niezmapowanych kolumn.
+data-importer.mapping.autofill-suggestions.no-source-columns: Brak dostępnych kolumn źródłowych. Najpierw uruchom podgląd importu.
+data-importer.mapping.empty-state: Utwórz mapowanie bezpośrednio z kolumny Źródła lub kliknij Nowy, aby utworzyć je ręcznie.
+data-importer.mapping.filter-empty: 'Brak mapowań dla "{{source}}".'
+data-importer.mapping.sources.title: Źródła z podglądem
+data-importer.mapping.sources.reset-view: Resetuj widok
+data-importer.mapping.sources.empty: Brak dostępnych danych podglądu. Najpierw skonfiguruj źródło danych i uruchom podgląd importu.
+data-importer.mapping.item.new-label: Nowe mapowanie
+data-importer.mapping.item.label: Etykieta
+data-importer.mapping.item.advanced: Zaawansowane
+data-importer.mapping.item.delete: Usuń mapowanie
+data-importer.mapping.item.source: Źródło
+data-importer.mapping.item.source-placeholder: Wybierz kolumny źródłowe
+data-importer.mapping.item.destination: Miejsce docelowe
+data-importer.mapping.item.destination-placeholder: Wybierz pole
+data-importer.mapping.item.requires-advanced-setup: Wymaga konfiguracji zaawansowanej
+data-importer.mapping.item.data-source-index: Indeks źródła danych
+data-importer.mapping.item.data-source-index-placeholder: Wybierz kolumny źródłowe
+data-importer.mapping.item.transformation-pipeline.title: Pipeline transformacji
+data-importer.mapping.item.transformation-pipeline.empty: Nie skonfigurowano pipeline'u transformacji
+data-importer.mapping.item.transformation-result.title: Wynik transformacji
+data-importer.mapping.item.transformation-result.type: Typ wyniku
+data-importer.mapping.item.data-target.title: Cel danych
+data-importer.mapping.item.data-target.type: Typ docelowy
+data-importer.mapping.item.data-target.type-placeholder: Wybierz typ celu
+data-importer.mapping.item.data-target.type.direct: Bezpośredni
+data-importer.mapping.item.data-target.type.classificationstore: Magazyn klasyfikacji
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Partia Classification Store
+data-importer.mapping.item.data-target.type.manyToManyRelation: Relacja wiele-do-wielu
+data-importer.mapping.item.data-target.field-name: Nazwa pola
+data-importer.mapping.item.data-target.field-name-placeholder: Wybierz pole
+data-importer.mapping.item.data-target.language: Język
+data-importer.mapping.item.data-target.language-placeholder: Wybierz język
+data-importer.mapping.item.data-target.write-if-target-is-not-empty: Zapisz, jeśli cel nie jest pusty
+data-importer.mapping.item.data-target.write-if-source-is-empty: Zapisz, jeśli źródło jest puste
+
+# Advanced Mapping Modal
+data-importer.mapping.advanced-modal.title: Edycja mapowania i transformacje
+data-importer.mapping.advanced-modal.save: Zapisz
+data-importer.mapping.advanced-modal.refresh-all-previews: Odśwież wszystkie podglądy
+data-importer.mapping.advanced-modal.step-source: Źródło
+data-importer.mapping.advanced-modal.step-transformations: Transformacje
+data-importer.mapping.advanced-modal.step-target: Cel danych
+data-importer.mapping.advanced-modal.no-transformers: Nie skonfigurowano transformatorów. Dodaj jeden poniżej.
+data-importer.mapping.advanced-modal.add-transformation: + Dodaj transformację
+data-importer.mapping.advanced-modal.result-type: Typ wyniku
+data-importer.mapping.advanced-modal.write-if-target-not-empty: Zapisz, jeśli cel nie jest pusty
+data-importer.mapping.advanced-modal.write-if-source-empty: Zapisz, jeśli źródło jest puste
+data-importer.mapping.advanced-modal.transformer.move-up: Przenieś w górę
+data-importer.mapping.advanced-modal.transformer.move-down: Przenieś w dół
+data-importer.mapping.advanced-modal.transformer.remove: Usuń
+data-importer.mapping.advanced-modal.transformer.edit-source: Edytuj atrybuty źródłowe
+data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Manipulacja danymi
+data-importer.mapping.advanced-modal.transformer.group.data-types: Typy danych
+data-importer.mapping.advanced-modal.transformer.group.load-import: Ładowanie / import
+data-importer.mapping.advanced-modal.recalculate-result-type: Przelicz ponownie typ wyniku transformacji
+data-importer.mapping.advanced-modal.step-source.label: Atrybut(y) źródłowe
+data-importer.mapping.advanced-modal.step-source.description: Wybierz z listy lub dodaj nowe źródło
+data-importer.mapping.advanced-modal.step-source.import-preview: Podgląd importu
+data-importer.mapping.advanced-modal.step-source.search-placeholder: Szukaj
+data-importer.mapping.advanced-modal.step-source.column-name: Nazwa
+data-importer.mapping.advanced-modal.step-source.column-data: Dane
+data-importer.mapping.advanced-modal.loading: Ładowanie…
+data-importer.mapping.advanced-modal.no-data: Brak danych
+data-importer.mapping.advanced-modal.no-preview: Brak dostępnego podglądu
+data-importer.mapping.advanced-modal.step-target.type: Typ
+data-importer.mapping.advanced-modal.step-target.field-name: Nazwa pola
+data-importer.mapping.advanced-modal.step-target.overwrite: Nadpisz
+data-importer.mapping.advanced-modal.step-target.preview-result: Wynik podglądu
+data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Zapisz do tego pola, nawet jeśli pole docelowe zawiera już wartość
+data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Zapisz do tego pola, nawet jeśli dane źródłowe są puste
+data-importer.mapping.advanced-modal.step-target.overwrite-mode: Tryb nadpisywania
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Zamień
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Scal
+data-importer.mapping.advanced-modal.step-target.classification-store-key: Klucz Classification Store
+data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Nie wybrano klucza
+data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} w grupie {{group}}"
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Wybierz klucz Classification Store
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Wyszukaj i wybierz klucz dla tego pola Classification Store
+data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Partia Classification Store wymaga typu wyniku transformacji: array, quantityValueArray, inputQuantityValueArray lub dateArray."
+data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: "Relacja wiele-do-wielu wymaga typu wyniku transformacji: advancedDataObject, dataObjectArray, assetArray lub advancedAssetArray."
+
+error.error_environment: Plik podglądu nie jest prawidłowy dla skonfigurowanego interpretera. Prześlij lub skopiuj ponownie dane podglądu.
+
+# Execution Tab
+data-importer.execution.settings.title: Ustawienia wykonania
+data-importer.execution.schedule-type: Typ harmonogramu
+data-importer.execution.schedule-type.recurring: Cykliczny / cron
+data-importer.execution.schedule-type.job: Zadanie jednorazowe
+data-importer.execution.cron-definition: Definicja cron
+data-importer.execution.cron-generator: Generator cron
+data-importer.execution.scheduled-at: Zaplanowano na
+data-importer.execution.manual-execution: Wykonanie ręczne
+data-importer.execution.start-import: Rozpocznij import
+data-importer.execution.start-import.success: Import rozpoczęty pomyślnie
+data-importer.execution.start-import.error: Nie udało się rozpocząć importu
+data-importer.execution.start-import.tooltip-dirty: Zapisz zmiany przed rozpoczęciem importu
+data-importer.execution.start-import.tooltip-push: Loader push nie obsługuje wykonania ręcznego
+data-importer.execution.cancel.success: Import anulowany
+data-importer.execution.cancel.error: Nie udało się anulować importu
+data-importer.execution.status.title: Status wykonania
+data-importer.execution.status.not-running: Nie działa
+data-importer.execution.status.finished: Wszystkie elementy przetworzone. Żaden import nie jest uruchomiony.
+data-importer.execution.status.current-progress: Bieżący postęp
+data-importer.execution.status.processing: "Przetworzono {{processedItems}} / {{totalItems}} elementów..."
+data-importer.execution.status.cancel: Anuluj wykonanie i wyczyść kolejkę
+data-importer.execution.cron-validating: Walidacja wyrażenia cron...
+data-importer.validation.required: "{{field}} jest wymagane"
+user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Adapter Datahub - Import obiektów danych

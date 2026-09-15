@@ -1,0 +1,325 @@
+data-importer.adapter.dataImporterDataObject: Gegevensobjecten-importer
+data-hub.adapter.dataImporterDataObject: Gegevensobjecten-importer
+data-importer.tabs.general: Algemeen
+data-importer.tabs.permissions: Rechten
+data-importer.tabs.data-setup: Gegevensinstellingen
+data-importer.tabs.import-logs: Importlogs
+data-importer.tabs.execution: Uitvoering
+
+# Data Setup Steps
+data-importer.data-setup.steps.data-source.title: Gegevensbron
+data-importer.data-setup.steps.data-source.description: Configureer de gegevensbron en het bestandsformaat
+data-importer.data-setup.steps.preview-import.title: Importvoorbeeld
+data-importer.data-setup.steps.preview-import.description: Bekijk een voorbeeld van de te importeren gegevens
+data-importer.data-setup.steps.resolver.title: Resolver
+data-importer.data-setup.steps.resolver.description: Configureer regels voor gegevensresolutie
+data-importer.data-setup.steps.mapping.title: Mapping
+data-importer.data-setup.steps.mapping.description: Wijs bronvelden toe aan doelvelden
+data-importer.data-setup.steps.processing-settings.title: Verwerkingsinstellingen
+data-importer.data-setup.steps.processing-settings.description: Configureer de instellingen voor importverwerking
+
+# Data Source
+data-importer.data-source.title: Gegevensbron
+data-importer.data-source.type: Type
+data-importer.data-source.type-label: Type gegevensbron
+
+# Loaders
+data-importer.loader.asset: Asset
+data-importer.loader.upload: Uploaden
+data-importer.loader.http: HTTP
+data-importer.loader.sftp: SFTP
+data-importer.loader.push: Push
+data-importer.loader.sql: SQL
+
+# Asset Loader
+data-importer.loader.asset.asset-path: Assetpad
+
+# Upload Loader
+data-importer.loader.upload.status: Uploadstatus
+data-importer.loader.upload.file-uploaded: Bestand succesvol geüpload
+data-importer.loader.upload.no-file: Nog geen bestand geüpload
+data-importer.loader.upload.file-path: Pad van geüpload bestand
+data-importer.loader.upload.open-upload: Bestand uploaden
+data-importer.loader.upload.modal-title: Importbestand uploaden
+
+# HTTP Loader
+data-importer.loader.http.schema: Schema
+data-importer.loader.http.url: URL
+
+# SFTP Loader
+data-importer.loader.sftp.host: Host
+data-importer.loader.sftp.port: Poort
+data-importer.loader.sftp.username: Gebruikersnaam
+data-importer.loader.sftp.password: Wachtwoord
+data-importer.loader.sftp.remote-path: Extern pad
+
+# Push Loader
+data-importer.loader.push.api-key: API Key
+data-importer.loader.push.api-key.generate: API Key genereren
+data-importer.loader.push.api-key-required: Voer een API-key in
+data-importer.loader.push.api-key-min-length: De API-key moet minimaal 16 tekens lang zijn
+data-importer.loader.push.ignore-not-empty-queue: Niet-lege wachtrij negeren
+data-importer.loader.push.endpoint: Endpoint
+
+# SQL Loader
+data-importer.loader.sql.connection: Databaseverbinding
+data-importer.loader.sql.select: SELECT
+data-importer.loader.sql.from: FROM
+data-importer.loader.sql.where: WHERE
+data-importer.loader.sql.group-by: GROUP BY
+
+# File Format
+data-importer.file-format.title: Bestandsformaat
+data-importer.file-format.type: Type
+
+# Interpreters
+data-importer.interpreter.csv: CSV
+data-importer.interpreter.json: JSON
+data-importer.interpreter.xml: XML
+data-importer.interpreter.xlsx: XLSX
+data-importer.interpreter.sql: SQL
+
+# CSV Interpreter
+data-importer.interpreter.csv.delimiter: Scheidingsteken
+data-importer.interpreter.csv.enclosure: Tekstscheidingsteken
+data-importer.interpreter.csv.escape: Escape-teken
+data-importer.interpreter.csv.required: "{{field}} is verplicht"
+data-importer.interpreter.csv.single-char-only: "{{field}} moet leeg zijn of uit één teken bestaan"
+data-importer.interpreter.csv.skip-first-row: Eerste rij overslaan
+data-importer.interpreter.csv.save-header-name: Kopnaam opslaan
+
+# JSON Interpreter
+data-importer.interpreter.json.path: JMESPath
+
+# XML Interpreter
+data-importer.interpreter.xml.xpath: XPath
+data-importer.interpreter.xml.schema: Schema
+
+# XLSX Interpreter
+data-importer.interpreter.xlsx.sheet-name: Bladnaam
+data-importer.interpreter.xlsx.skip-first-row: Eerste rij overslaan
+
+# SQL Interpreter
+data-importer.interpreter.sql.info: De SQL-interpreter gebruikt de queryconfiguratie van de SQL-loader.
+
+# Resolver
+data-importer.resolver.title: Resolver
+data-importer.resolver.class: Gegevensobjectklasse
+data-importer.resolver.class-placeholder: Klasse selecteren
+data-importer.resolver.element-loading: Elementen laden
+data-importer.resolver.loading-strategy: Laadstrategie
+data-importer.resolver.loading-strategy.tooltip: Bepaalt hoe bestaande elementen vóór de import worden gematcht. Als geen element wordt gevonden, gelden de aanmaakregels.
+data-importer.resolver.loading-strategy.notLoad: Niet laden
+data-importer.resolver.loading-strategy.id: Id
+data-importer.resolver.loading-strategy.path: Pad
+data-importer.resolver.loading-strategy.attribute: Attribuut
+data-importer.resolver.loading-strategy.attribute-name: Attribuutnaam
+data-importer.resolver.loading-strategy.attribute-name-placeholder: Attribuut selecteren
+data-importer.resolver.loading-strategy.data-source-index: Gegevensbronindex
+data-importer.resolver.loading-strategy.data-source-index-placeholder: Kolom selecteren
+data-importer.resolver.loading-strategy.language: Taal
+data-importer.resolver.loading-strategy.language-placeholder: Taal selecteren
+data-importer.resolver.loading-strategy.include-unpublished: Niet-gepubliceerde objecten opnemen
+data-importer.resolver.element-creation: Elementen aanmaken
+data-importer.resolver.create-location-strategy: Locatiestrategie
+data-importer.resolver.create-location-strategy.tooltip: Bepaalt waar nieuw aangemaakte elementen worden geplaatst wanneer geen bestaand element is gevonden.
+data-importer.resolver.location-strategy.staticPath: Statisch pad
+data-importer.resolver.location-strategy.findOrCreateFolder: Map zoeken of aanmaken
+data-importer.resolver.location-strategy.findParent: Bovenliggend element zoeken
+data-importer.resolver.location-strategy.doNotCreate: Niet aanmaken
+data-importer.resolver.location-strategy.noChange: Geen wijziging
+data-importer.resolver.location-strategy.path: Pad
+data-importer.resolver.location-strategy.path-placeholder: Pad invoeren
+data-importer.resolver.location-strategy.data-source-index: Gegevensbronindex
+data-importer.resolver.location-strategy.data-source-index-placeholder: Kolom selecteren
+data-importer.resolver.location-strategy.fallback-path: Terugvalpad
+data-importer.resolver.location-strategy.fallback-path.tooltip: Gebruikt wanneer een dynamische doellocatie niet uit de brongegevens kan worden bepaald.
+data-importer.resolver.location-strategy.fallback-path-placeholder: Terugvalpad invoeren
+data-importer.resolver.location-strategy.find-strategy: Zoekstrategie
+data-importer.resolver.location-strategy.find-strategy.id: Op ID
+data-importer.resolver.location-strategy.find-strategy.path: Op pad
+data-importer.resolver.location-strategy.find-strategy.attribute: Op attribuut
+data-importer.resolver.location-strategy.attribute-class: Klasse
+data-importer.resolver.location-strategy.attribute-name: Attribuutnaam
+data-importer.resolver.location-strategy.attribute-language: Taal
+data-importer.resolver.location-strategy.as-variant: Als variant
+data-importer.resolver.element-location-update: Elementlocatie bijwerken
+data-importer.resolver.location-update-strategy: Locatiestrategie
+data-importer.resolver.location-update-strategy.tooltip: Bepaalt of en hoe de locatie van al gevonden elementen tijdens de import wordt gewijzigd.
+data-importer.resolver.element-publishing: Elementen publiceren
+data-importer.resolver.publishing-strategy: Publicatiestrategie
+data-importer.resolver.publishing-strategy.tooltip: Bepaalt het publicatie- of depublicatiegedrag voor geïmporteerde elementen.
+data-importer.resolver.publishing-strategy.noChangeUnpublishNew: Geen wijziging / nieuwe niet publiceren
+data-importer.resolver.publishing-strategy.noChangePublishNew: Geen wijziging / nieuwe publiceren
+data-importer.resolver.publishing-strategy.alwaysPublish: Altijd publiceren
+data-importer.resolver.publishing-strategy.attributeBased: Op basis van attribuut
+data-importer.resolver.publishing-strategy.data-source-index: Gegevensbronindex
+data-importer.resolver.publishing-strategy.data-source-index-placeholder: Kolom selecteren
+
+# Processing Settings
+data-importer.processing.title: Verwerkingsinstellingen
+data-importer.processing.execution.title: Uitvoering
+data-importer.processing.id-delta.title: ID, deltacontrole & opschoning
+data-importer.processing.execution-type: Uitvoeringstype
+data-importer.processing.execution-type.tooltip: Sequentieel verwerkt items één voor één. Parallel verwerkt meerdere items tegelijk.
+data-importer.processing.execution-type.sequential: Sequentieel
+data-importer.processing.execution-type.parallel: Parallel
+data-importer.processing.archive-import-file: Importbestand archiveren
+data-importer.processing.disable-versioning: Versiebeheer uitschakelen
+data-importer.processing.id-data-index: Gegevensindex van het ID-veld
+data-importer.processing.id-data-index.tooltip: Kolom die als stabiele identificatie voor deltacontrole en opschoning wordt gebruikt. Deze opties zijn alleen beschikbaar als een ID-gegevensindex is ingesteld.
+data-importer.processing.id-data-index-placeholder: Kolom selecteren
+data-importer.processing.delta-check: Deltacontrole
+data-importer.processing.cleanup.title: Opschoning
+data-importer.processing.cleanup.do-cleanup: Niet-geïmporteerde elementen opschonen
+data-importer.processing.cleanup.strategy: Opschoningsstrategie
+data-importer.processing.cleanup.strategy.tooltip: Bepaalt wat er gebeurt met bestaande elementen die niet in de huidige import voorkomen.
+data-importer.processing.cleanup.strategy.delete: Verwijderen
+data-importer.processing.cleanup.strategy.unpublish: Publicatie ongedaan maken
+data-importer.processing.logging.title: Loginstellingen (toepassingslogger)
+data-importer.processing.logging.info.title: Info
+data-importer.processing.logging.info.disable-logs: Infologs uitschakelen
+data-importer.processing.logging.info.disable-file-objects: Infobestandsobjecten uitschakelen
+data-importer.processing.logging.error.title: Fout
+data-importer.processing.logging.error.disable-logs: Foutlogs uitschakelen
+data-importer.processing.logging.error.disable-file-objects: Foutbestandsobjecten uitschakelen
+
+# Preview Import
+data-importer.preview-import.title: Importvoorbeeld
+data-importer.preview-import.choose-preview-data: Voorbeeldgegevens kiezen
+data-importer.preview-import.upload-file: Bestand uploaden
+data-importer.preview-import.copy-from-source: Kopiëren uit gegevensbron
+data-importer.preview-import.search-placeholder: Zoeken op naam, bron, bestemming
+data-importer.preview-import.column.label: Label
+data-importer.preview-import.column.data: Gegevens
+data-importer.preview-import.prev: Vorig record
+data-importer.preview-import.next: Volgend record
+
+# Mapping
+data-importer.mapping.title: Mappingconfiguratie
+data-importer.mapping.title-short: Mappings
+data-importer.mapping.add: Nieuw
+data-importer.mapping.new-modal.title: Nieuwe mapping
+data-importer.mapping.new-modal.source-label: Bronkolom
+data-importer.mapping.new-modal.source-required: Selecteer een bronkolom
+data-importer.mapping.collapse-all: Alles samenvouwen
+data-importer.mapping.expand-all: Alles uitvouwen
+data-importer.mapping.auto-fill: Automatisch invullen
+data-importer.mapping.autofill-suggestions.title: Copilot-suggesties voor automatisch invullen
+data-importer.mapping.autofill-suggestions.score: Score
+data-importer.mapping.autofill-suggestions.source: Bron
+data-importer.mapping.autofill-suggestions.destination: Bestemming (gegevensdoel)
+data-importer.mapping.autofill-suggestions.result: Voorbeeldresultaat
+data-importer.mapping.autofill-suggestions.selected: "{{count}} geselecteerd"
+data-importer.mapping.autofill-suggestions.reject-all: Alles afwijzen
+data-importer.mapping.autofill-suggestions.apply: Geselecteerde suggesties toepassen
+data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.empty: Geen suggesties gevonden voor niet-gemapte kolommen.
+data-importer.mapping.autofill-suggestions.no-source-columns: Geen bronkolommen beschikbaar. Voer eerst een importvoorbeeld uit.
+data-importer.mapping.empty-state: Maak een mapping rechtstreeks vanuit de kolom Bronnen, of klik op Nieuw om er handmatig een te maken.
+data-importer.mapping.filter-empty: 'Nog geen mappings voor "{{source}}".'
+data-importer.mapping.sources.title: Bronnen met voorbeeld
+data-importer.mapping.sources.reset-view: Weergave herstellen
+data-importer.mapping.sources.empty: Geen voorbeeldgegevens beschikbaar. Configureer eerst een gegevensbron en voer een importvoorbeeld uit.
+data-importer.mapping.item.new-label: Nieuwe mapping
+data-importer.mapping.item.label: Label
+data-importer.mapping.item.advanced: Geavanceerd
+data-importer.mapping.item.delete: Mapping verwijderen
+data-importer.mapping.item.source: Bron
+data-importer.mapping.item.source-placeholder: Bronkolommen selecteren
+data-importer.mapping.item.destination: Bestemming
+data-importer.mapping.item.destination-placeholder: Veld selecteren
+data-importer.mapping.item.requires-advanced-setup: Vereist geavanceerde configuratie
+data-importer.mapping.item.data-source-index: Gegevensbronindex
+data-importer.mapping.item.data-source-index-placeholder: Bronkolommen selecteren
+data-importer.mapping.item.transformation-pipeline.title: Transformatiepipeline
+data-importer.mapping.item.transformation-pipeline.empty: Geen transformatiepipeline geconfigureerd
+data-importer.mapping.item.transformation-result.title: Transformatieresultaat
+data-importer.mapping.item.transformation-result.type: Resultaattype
+data-importer.mapping.item.data-target.title: Gegevensdoel
+data-importer.mapping.item.data-target.type: Doeltype
+data-importer.mapping.item.data-target.type-placeholder: Doeltype selecteren
+data-importer.mapping.item.data-target.type.direct: Direct
+data-importer.mapping.item.data-target.type.classificationstore: Classificatieopslag
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store-batch
+data-importer.mapping.item.data-target.type.manyToManyRelation: Veel-op-veel-relatie
+data-importer.mapping.item.data-target.field-name: Veldnaam
+data-importer.mapping.item.data-target.field-name-placeholder: Veld selecteren
+data-importer.mapping.item.data-target.language: Taal
+data-importer.mapping.item.data-target.language-placeholder: Taal selecteren
+data-importer.mapping.item.data-target.write-if-target-is-not-empty: Schrijven als doel niet leeg is
+data-importer.mapping.item.data-target.write-if-source-is-empty: Schrijven als bron leeg is
+
+# Advanced Mapping Modal
+data-importer.mapping.advanced-modal.title: Mapping bewerken & transformaties
+data-importer.mapping.advanced-modal.save: Opslaan
+data-importer.mapping.advanced-modal.refresh-all-previews: Alle voorbeelden vernieuwen
+data-importer.mapping.advanced-modal.step-source: Bron
+data-importer.mapping.advanced-modal.step-transformations: Transformaties
+data-importer.mapping.advanced-modal.step-target: Gegevensdoel
+data-importer.mapping.advanced-modal.no-transformers: Geen transformers geconfigureerd. Voeg er hieronder een toe.
+data-importer.mapping.advanced-modal.add-transformation: + Transformatie toevoegen
+data-importer.mapping.advanced-modal.result-type: Resultaattype
+data-importer.mapping.advanced-modal.write-if-target-not-empty: Schrijven als doel niet leeg is
+data-importer.mapping.advanced-modal.write-if-source-empty: Schrijven als bron leeg is
+data-importer.mapping.advanced-modal.transformer.move-up: Omhoog verplaatsen
+data-importer.mapping.advanced-modal.transformer.move-down: Omlaag verplaatsen
+data-importer.mapping.advanced-modal.transformer.remove: Verwijderen
+data-importer.mapping.advanced-modal.transformer.edit-source: Bronattributen bewerken
+data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Gegevensmanipulatie
+data-importer.mapping.advanced-modal.transformer.group.data-types: Gegevenstypen
+data-importer.mapping.advanced-modal.transformer.group.load-import: Laden / importeren
+data-importer.mapping.advanced-modal.recalculate-result-type: Transformatieresultaattype opnieuw berekenen
+data-importer.mapping.advanced-modal.step-source.label: Bronattribuut/-attributen
+data-importer.mapping.advanced-modal.step-source.description: Kies uit de lijst of voeg een nieuwe bron toe
+data-importer.mapping.advanced-modal.step-source.import-preview: Importvoorbeeld
+data-importer.mapping.advanced-modal.step-source.search-placeholder: Zoeken
+data-importer.mapping.advanced-modal.step-source.column-name: Naam
+data-importer.mapping.advanced-modal.step-source.column-data: Gegevens
+data-importer.mapping.advanced-modal.loading: Laden…
+data-importer.mapping.advanced-modal.no-data: Geen gegevens
+data-importer.mapping.advanced-modal.no-preview: Geen voorbeeld beschikbaar
+data-importer.mapping.advanced-modal.step-target.type: Type
+data-importer.mapping.advanced-modal.step-target.field-name: Veldnaam
+data-importer.mapping.advanced-modal.step-target.overwrite: Overschrijven
+data-importer.mapping.advanced-modal.step-target.preview-result: Voorbeeldresultaat
+data-importer.mapping.advanced-modal.step-target.write-if-target-not-empty.tooltip: Naar dit veld schrijven, ook als het doelveld al een waarde bevat
+data-importer.mapping.advanced-modal.step-target.write-if-source-empty.tooltip: Naar dit veld schrijven, ook als de brongegevens leeg zijn
+data-importer.mapping.advanced-modal.step-target.overwrite-mode: Overschrijfmodus
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.replace: Vervangen
+data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Samenvoegen
+data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store-sleutel
+data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Geen sleutel geselecteerd
+data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} in groep {{group}}"
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Classification Store-sleutel selecteren
+data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Zoek en selecteer een sleutel voor dit Classification Store-veld
+data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store-batch vereist transformatieresultaattype: array, quantityValueArray, inputQuantityValueArray of dateArray."
+data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: "Veel-op-veel-relatie vereist transformatieresultaattype: advancedDataObject, dataObjectArray, assetArray of advancedAssetArray."
+
+error.error_environment: Het voorbeeldbestand is niet geldig voor de geconfigureerde interpreter. Upload of kopieer de voorbeeldgegevens opnieuw.
+
+# Execution Tab
+data-importer.execution.settings.title: Uitvoeringsinstellingen
+data-importer.execution.schedule-type: Planningstype
+data-importer.execution.schedule-type.recurring: Terugkerend / cron
+data-importer.execution.schedule-type.job: Eenmalige taak
+data-importer.execution.cron-definition: Cron-definitie
+data-importer.execution.cron-generator: Cron-generator
+data-importer.execution.scheduled-at: Gepland op
+data-importer.execution.manual-execution: Handmatige uitvoering
+data-importer.execution.start-import: Import starten
+data-importer.execution.start-import.success: Import succesvol gestart
+data-importer.execution.start-import.error: Import starten mislukt
+data-importer.execution.start-import.tooltip-dirty: Sla je wijzigingen op voordat je de import start
+data-importer.execution.start-import.tooltip-push: De push-loader ondersteunt geen handmatige uitvoering
+data-importer.execution.cancel.success: Import geannuleerd
+data-importer.execution.cancel.error: Import annuleren mislukt
+data-importer.execution.status.title: Uitvoeringsstatus
+data-importer.execution.status.not-running: Niet actief
+data-importer.execution.status.finished: Alle items verwerkt. Geen import actief.
+data-importer.execution.status.current-progress: Huidige voortgang
+data-importer.execution.status.processing: "{{processedItems}} / {{totalItems}} items verwerkt..."
+data-importer.execution.status.cancel: Uitvoering annuleren & wachtrij opschonen
+data-importer.execution.cron-validating: Cron-expressie valideren...
+data-importer.validation.required: "{{field}} is verplicht"
+user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub-adapter - Gegevensobjectimport
