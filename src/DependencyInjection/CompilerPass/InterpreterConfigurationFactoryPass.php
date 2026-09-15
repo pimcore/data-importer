@@ -33,6 +33,16 @@ final class InterpreterConfigurationFactoryPass implements CompilerPassInterface
                 foreach ($tags as $attributes) {
                     $interpreters[$attributes['type']] = new Reference($id);
                 }
+
+                // Wire the event dispatcher into every interpreter that supports it (built-in
+                // and custom alike), so PreInterpretFileEvent/PreQueueRowEvent are dispatched.
+                $definition = $container->getDefinition($id);
+                $class = $definition->getClass() ?? $id;
+                if (method_exists($class, 'setEventDispatcher')
+                    && !$definition->hasMethodCall('setEventDispatcher')
+                ) {
+                    $definition->addMethodCall('setEventDispatcher', [new Reference('event_dispatcher')]);
+                }
             }
         }
 
