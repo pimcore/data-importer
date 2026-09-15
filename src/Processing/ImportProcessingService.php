@@ -241,6 +241,10 @@ final class ImportProcessingService
                     $event = new PreSaveEvent($configName, $importDataRow, $element);
                     $this->eventDispatcher->dispatch($event);
 
+                    if ($event->shouldSkipSave()) {
+                        return;
+                    }
+
                     $this->checkKey($element);
                     $element
                         ->setUserModification($userOwner)

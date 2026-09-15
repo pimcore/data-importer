@@ -17,4 +17,15 @@ namespace Pimcore\Bundle\DataImporterBundle\Event\DataObject;
  */
 final class PreSaveEvent extends AbstractDataObjectImportEvent
 {
+    protected $skipSave  = false;
+
+    public function shouldSkipSave(): bool
+    {
+        return $this->skipSave;
+    }
+
+    public function setSkipSave(bool $skipSave): void
+    {
+        $this->skipSave = $skipSave;
+    }
 }
