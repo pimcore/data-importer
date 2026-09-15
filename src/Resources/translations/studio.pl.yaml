@@ -83,8 +83,8 @@ data-importer.interpreter.sql: SQL
 data-importer.interpreter.csv.delimiter: Separator
 data-importer.interpreter.csv.enclosure: Znak cudzysłowu
 data-importer.interpreter.csv.escape: Znak ucieczki
-data-importer.interpreter.csv.required: "{{field}} jest wymagane"
-data-importer.interpreter.csv.single-char-only: "{{field}} musi być puste lub składać się z jednego znaku"
+data-importer.interpreter.csv.required: "Pole {{field}} jest wymagane"
+data-importer.interpreter.csv.single-char-only: "Pole {{field}} musi być puste lub składać się z jednego znaku"
 data-importer.interpreter.csv.skip-first-row: Pomiń pierwszy wiersz
 data-importer.interpreter.csv.save-header-name: Zapisz nazwę nagłówka
 
@@ -240,8 +240,8 @@ data-importer.mapping.item.data-target.title: Cel danych
 data-importer.mapping.item.data-target.type: Typ docelowy
 data-importer.mapping.item.data-target.type-placeholder: Wybierz typ celu
 data-importer.mapping.item.data-target.type.direct: Bezpośredni
-data-importer.mapping.item.data-target.type.classificationstore: Magazyn klasyfikacji
-data-importer.mapping.item.data-target.type.classificationstoreBatch: Partia Classification Store
+data-importer.mapping.item.data-target.type.classificationstore: Classification Store
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store Batch
 data-importer.mapping.item.data-target.type.manyToManyRelation: Relacja wiele-do-wielu
 data-importer.mapping.item.data-target.field-name: Nazwa pola
 data-importer.mapping.item.data-target.field-name-placeholder: Wybierz pole
@@ -270,7 +270,7 @@ data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Manipu
 data-importer.mapping.advanced-modal.transformer.group.data-types: Typy danych
 data-importer.mapping.advanced-modal.transformer.group.load-import: Ładowanie / import
 data-importer.mapping.advanced-modal.recalculate-result-type: Przelicz ponownie typ wyniku transformacji
-data-importer.mapping.advanced-modal.step-source.label: Atrybut(y) źródłowe
+data-importer.mapping.advanced-modal.step-source.label: Atrybuty źródłowe
 data-importer.mapping.advanced-modal.step-source.description: Wybierz z listy lub dodaj nowe źródło
 data-importer.mapping.advanced-modal.step-source.import-preview: Podgląd importu
 data-importer.mapping.advanced-modal.step-source.search-placeholder: Szukaj
@@ -293,7 +293,7 @@ data-importer.mapping.advanced-modal.step-target.classification-store-key-placeh
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} w grupie {{group}}"
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Wybierz klucz Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Wyszukaj i wybierz klucz dla tego pola Classification Store
-data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Partia Classification Store wymaga typu wyniku transformacji: array, quantityValueArray, inputQuantityValueArray lub dateArray."
+data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store Batch wymaga typu wyniku transformacji: array, quantityValueArray, inputQuantityValueArray lub dateArray."
 data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: "Relacja wiele-do-wielu wymaga typu wyniku transformacji: advancedDataObject, dataObjectArray, assetArray lub advancedAssetArray."
 
 error.error_environment: Plik podglądu nie jest prawidłowy dla skonfigurowanego interpretera. Prześlij lub skopiuj ponownie dane podglądu.
@@ -321,5 +321,5 @@ data-importer.execution.status.current-progress: Bieżący postęp
 data-importer.execution.status.processing: "Przetworzono {{processedItems}} / {{totalItems}} elementów..."
 data-importer.execution.status.cancel: Anuluj wykonanie i wyczyść kolejkę
 data-importer.execution.cron-validating: Walidacja wyrażenia cron...
-data-importer.validation.required: "{{field}} jest wymagane"
+data-importer.validation.required: "Pole {{field}} jest wymagane"
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Adapter Datahub - Import obiektów danych

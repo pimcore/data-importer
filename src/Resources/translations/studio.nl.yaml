@@ -240,8 +240,8 @@ data-importer.mapping.item.data-target.title: Gegevensdoel
 data-importer.mapping.item.data-target.type: Doeltype
 data-importer.mapping.item.data-target.type-placeholder: Doeltype selecteren
 data-importer.mapping.item.data-target.type.direct: Direct
-data-importer.mapping.item.data-target.type.classificationstore: Classificatieopslag
-data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store-batch
+data-importer.mapping.item.data-target.type.classificationstore: Classification Store
+data-importer.mapping.item.data-target.type.classificationstoreBatch: Classification Store Batch
 data-importer.mapping.item.data-target.type.manyToManyRelation: Veel-op-veel-relatie
 data-importer.mapping.item.data-target.field-name: Veldnaam
 data-importer.mapping.item.data-target.field-name-placeholder: Veld selecteren
@@ -293,7 +293,7 @@ data-importer.mapping.advanced-modal.step-target.classification-store-key-placeh
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} in groep {{group}}"
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Classification Store-sleutel selecteren
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Zoek en selecteer een sleutel voor dit Classification Store-veld
-data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store-batch vereist transformatieresultaattype: array, quantityValueArray, inputQuantityValueArray of dateArray."
+data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store Batch vereist transformatieresultaattype: array, quantityValueArray, inputQuantityValueArray of dateArray."
 data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation: "Veel-op-veel-relatie vereist transformatieresultaattype: advancedDataObject, dataObjectArray, assetArray of advancedAssetArray."
 
 error.error_environment: Het voorbeeldbestand is niet geldig voor de geconfigureerde interpreter. Upload of kopieer de voorbeeldgegevens opnieuw.
