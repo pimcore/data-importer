@@ -198,48 +198,50 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
   )
 
   return (
-    <div className={ styles.layout }>
-      <aside className={ styles.rail }>
-        { history && state !== undefined && (
-          <HistoryHead
-            resolvedAt={ resolvedAt }
-            state={ state }
-            styles={ styles }
-          />
-        ) }
-        { brief !== undefined
-          ? (
-            <div className={ styles.list }>
-              <ConfigBriefCard
-                brief={ brief }
-                styles={ styles }
-              />
-            </div>
-            )
-          : (
-            <div className={ styles.list }>
-              <ChangeList
-                activeSection={ activeSection }
-                configuration={ configuration }
-                count={ changes.length + changedMappings.length }
-                groups={ groups }
-                labelFor={ labelFor }
-                mappings={ changedMappings }
-                onJump={ jumpToSection }
-                styles={ styles }
-              />
-            </div>
-            ) }
-      </aside>
+    <>
+      { history && state !== undefined && (
+        <HistoryHead
+          resolvedAt={ resolvedAt }
+          state={ state }
+          styles={ styles }
+        />
+      ) }
+      <div className={ styles.layout }>
+        <aside className={ styles.rail }>
+          { brief !== undefined
+            ? (
+              <div className={ styles.list }>
+                <ConfigBriefCard
+                  brief={ brief }
+                  styles={ styles }
+                />
+              </div>
+              )
+            : (
+              <div className={ styles.list }>
+                <ChangeList
+                  activeSection={ activeSection }
+                  configuration={ configuration }
+                  count={ changes.length + changedMappings.length }
+                  groups={ groups }
+                  labelFor={ labelFor }
+                  mappings={ changedMappings }
+                  onJump={ jumpToSection }
+                  styles={ styles }
+                />
+              </div>
+              ) }
+        </aside>
 
-      <div
-        className={ styles.editor }
-        ref={ editorRef }
-      >
-        { FormAnnotationsProvider !== null
-          ? <FormAnnotationsProvider annotations={ annotations }>{ editor }</FormAnnotationsProvider>
-          : editor }
+        <div
+          className={ styles.editor }
+          ref={ editorRef }
+        >
+          { FormAnnotationsProvider !== null
+            ? <FormAnnotationsProvider annotations={ annotations }>{ editor }</FormAnnotationsProvider>
+            : editor }
+        </div>
       </div>
-    </div>
+    </>
   )
 }

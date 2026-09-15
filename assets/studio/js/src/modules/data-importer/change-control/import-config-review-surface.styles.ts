@@ -45,19 +45,32 @@ export const useStyles = createStyles(({ token, css }) => ({
     text-transform: uppercase;
     color: ${token.colorTextTertiary};
   `,
+  /* the twin of the change-control review header: one quiet line, the notice in a tooltip */
   history: css`
     display: flex;
-    flex-direction: column;
-    gap: ${token.marginXXS}px;
-    padding: ${token.paddingXS}px ${token.padding}px ${token.paddingSM}px 0;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
-    margin-bottom: ${token.marginXS}px;
-  `,
-  historyState: css`
-    display: flex;
     align-items: center;
-    gap: ${token.marginXS}px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 ${token.paddingLG}px;
+    margin-bottom: ${token.marginSM}px;
+    font-size: ${token.fontSizeSM}px;
     color: ${token.colorTextSecondary};
+  `,
+  historyMeta: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  `,
+  historyDivider: css`
+    color: ${token.colorTextQuaternary};
+  `,
+  historySnapshot: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: ${token.colorTextTertiary};
+    border-bottom: 1px dashed ${token.colorBorder};
+    cursor: help;
   `,
   group: css`
     display: flex;
@@ -185,10 +198,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     flex-wrap: wrap;
     gap: ${token.marginXXS}px;
-  `,
-  note: css`
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextTertiary};
   `,
   state: css`
     padding: ${token.paddingLG}px;

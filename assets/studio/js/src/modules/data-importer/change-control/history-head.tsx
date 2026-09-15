@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { Tag } from '@pimcore/studio-ui-bundle/components'
+import { Icon, Tag, Tooltip } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type useStyles } from './import-config-review-surface.styles'
 
@@ -23,6 +23,12 @@ const STATE_COLOR: Record<string, string> = {
   refined: 'processing'
 }
 
+const STATE_ICON: Record<string, string> = {
+  merged: 'check-circle',
+  discarded: 'x-circle',
+  refined: 'check-circle'
+}
+
 interface HistoryHeadProps {
   readonly state: string
   readonly resolvedAt?: number
@@ -33,18 +39,41 @@ interface HistoryHeadProps {
 const formatResolvedAt = (unixMillis: number | undefined): string | null =>
   unixMillis != null && Number.isFinite(unixMillis) && unixMillis > 0 ? new Date(unixMillis).toLocaleString() : null
 
-/** A resolved change set: what became of it, and that the values below are as they were. */
+// the twin of the change-control review header: one quiet line, the long notice in a tooltip
 export const HistoryHead: React.FC<HistoryHeadProps> = ({ state, resolvedAt, styles }) => {
   const { t } = useTranslation()
   const when = formatResolvedAt(resolvedAt)
 
   return (
-    <div className={ styles.history }>
-      <div className={ styles.historyState }>
-        <Tag color={ STATE_COLOR[state] ?? 'default' }>{ t(`${T}.state.${state}`, state) }</Tag>
-        { when !== null && <span>{ t(`${T}.resolved-at`, { when, interpolation: { escapeValue: false } }) }</span> }
-      </div>
-      <div className={ styles.note }>{ t(`${T}.history-notice`) }</div>
+    <div
+      className={ styles.history }
+      data-testid="review-history-header"
+    >
+      <Tag
+        color={ STATE_COLOR[state] ?? 'default' }
+        iconName={ STATE_ICON[state] }
+      >
+        { t(`${T}.state.${state}`, state) }
+      </Tag>
+      { when !== null && (
+        <span className={ styles.historyMeta }>
+          <Icon value="history" />
+          { t(`${T}.resolved-at`, { when, interpolation: { escapeValue: false } }) }
+        </span>
+      ) }
+      <span className={ styles.historyDivider }>|</span>
+      <Tooltip
+        placement="bottom"
+        title={ t(`${T}.history-notice`) }
+      >
+        <span
+          className={ styles.historySnapshot }
+          data-testid="review-history-snapshot"
+        >
+          <Icon value="info" />
+          { t(`${T}.snapshot`) }
+        </span>
+      </Tooltip>
     </div>
   )
 }
