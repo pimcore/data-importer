@@ -61,21 +61,21 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
      */
     public function activeExecutionConfigs(): ?array
     {
-        try {
-            $list = ($this->listConfigurations)();
-        } catch (Exception) {
-            return null;
-        }
-
         $configs = [];
 
-        foreach ($list as $configuration) {
-            if ($configuration->getType() !== self::ADAPTER_TYPE || !$this->isActive($configuration)) {
-                continue;
-            }
+        // The listing may be lazy, so the walk stays inside the guard: a failure while iterating is the
+        // same "unreadable" as one while creating it.
+        try {
+            foreach (($this->listConfigurations)() as $configuration) {
+                if ($configuration->getType() !== self::ADAPTER_TYPE || !$this->isActive($configuration)) {
+                    continue;
+                }
 
-            $execution = $configuration->getConfiguration()['executionConfig'] ?? [];
-            $configs[] = is_array($execution) ? $execution : [];
+                $execution = $configuration->getConfiguration()['executionConfig'] ?? [];
+                $configs[] = is_array($execution) ? $execution : [];
+            }
+        } catch (Exception) {
+            return null;
         }
 
         return $configs;

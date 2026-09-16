@@ -82,6 +82,22 @@ class DataHubImportConfigurationsTest extends Unit
         $this->assertSame([['id' => 1], ['id' => 2], ['id' => 3]], $reader->activeExecutionConfigs());
     }
 
+    /**
+     * The listing is any iterable, so a lazy one may fail only while it is walked; that failure is the
+     * same "unreadable" as one at creation time.
+     */
+    public function testAListingThatFailsWhileIteratingIsUnknownToo(): void
+    {
+        $listing = function (): iterable {
+            yield $this->configuration('dataImporterDataObject', true, ['executionConfig' => []]);
+
+            throw new ConnectionException('store went away mid-listing');
+        };
+        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), $listing);
+
+        $this->assertNull($reader->activeExecutionConfigs());
+    }
+
     public function testNoConfigurationsIsAnHonestEmptyList(): void
     {
         $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), static fn (): array => []);
