@@ -27,9 +27,10 @@ class DataHubImportConfigurationsTest extends Unit
 {
     public function testAnUnreadableListingIsUnknownNotEmpty(): void
     {
-        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), static function (): array {
+        $listing = static function (): array {
             throw new ConnectionException('data hub listing unavailable');
-        });
+        };
+        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), $listing);
 
         $this->assertNull($reader->activeExecutionConfigs());
     }
@@ -39,16 +40,21 @@ class DataHubImportConfigurationsTest extends Unit
      */
     public function testReturnsTheExecutionConfigOfActiveImportConfigurations(): void
     {
-        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), fn (): array => [
+        $listing = fn (): array => [
             $this->configuration('dataImporterDataObject', true, [
                 'general' => ['name' => 'secret'],
                 'executionConfig' => ['cronDefinition' => '0 * * * *'],
             ]),
-            $this->configuration('dataImporterDataObject', false, ['executionConfig' => ['cronDefinition' => '* * * * *']]),
-            $this->configuration('fileExport', true, ['executionConfig' => ['cronDefinitionFullExport' => '0 0 * * *']]),
+            $this->configuration('dataImporterDataObject', false, [
+                'executionConfig' => ['cronDefinition' => '* * * * *'],
+            ]),
+            $this->configuration('fileExport', true, [
+                'executionConfig' => ['cronDefinitionFullExport' => '0 0 * * *'],
+            ]),
             $this->configuration('dataImporterDataObject', 'on', ['executionConfig' => 'not-an-array']),
             $this->configuration('dataImporterDataObject', '1', []),
-        ]);
+        ];
+        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), $listing);
 
         $this->assertSame(
             [['cronDefinition' => '0 * * * *'], [], []],
