@@ -15,9 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Telemetry;
 
 use Closure;
 use Exception;
-use function filter_var;
 use function is_array;
-use function is_bool;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Telemetry\DataHubConfigurationUsage;
 
@@ -83,10 +81,11 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
         return $configs;
     }
 
+    /**
+     * The same truthiness Data Hub's usage reader and the import execution apply to the stored flag.
+     */
     private function isActive(Configuration $configuration): bool
     {
-        $active = $configuration->isActive();
-
-        return is_bool($active) ? $active : filter_var($active, FILTER_VALIDATE_BOOLEAN);
+        return (bool) $configuration->isActive();
     }
 }

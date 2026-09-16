@@ -63,6 +63,25 @@ class DataHubImportConfigurationsTest extends Unit
         );
     }
 
+    /**
+     * The active flag is read with the same truthiness the product applies: Data Hub's usage reader casts
+     * `isActive()` to bool and the import execution checks plain truthiness, so the string `false` counts
+     * as active here exactly as it does for an import run.
+     */
+    public function testReadsTheActiveFlagWithTheProductsTruthiness(): void
+    {
+        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), fn (): array => [
+            $this->configuration('dataImporterDataObject', 'on', ['executionConfig' => ['id' => 1]]),
+            $this->configuration('dataImporterDataObject', '1', ['executionConfig' => ['id' => 2]]),
+            $this->configuration('dataImporterDataObject', 'false', ['executionConfig' => ['id' => 3]]),
+            $this->configuration('dataImporterDataObject', '0', ['executionConfig' => ['id' => 4]]),
+            $this->configuration('dataImporterDataObject', '', ['executionConfig' => ['id' => 5]]),
+            $this->configuration('dataImporterDataObject', false, ['executionConfig' => ['id' => 6]]),
+        ]);
+
+        $this->assertSame([['id' => 1], ['id' => 2], ['id' => 3]], $reader->activeExecutionConfigs());
+    }
+
     public function testNoConfigurationsIsAnHonestEmptyList(): void
     {
         $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), static fn (): array => []);
