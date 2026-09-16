@@ -41,12 +41,15 @@ class DataImporterSnapshotCollectorTest extends Unit
             ['scheduleType' => 'job', 'scheduledAt' => '01-10-2026 04:00'],
             ['scheduleType' => 'cron', 'cronDefinition' => ''],
             ['scheduleType' => 'job', 'scheduledAt' => ''],
+            // the scheduler rejects these two via empty(), so they never fire
+            ['scheduleType' => 'cron', 'cronDefinition' => '0'],
+            ['scheduleType' => 'job', 'scheduledAt' => '0'],
             [],
         ])->collect();
 
         $this->assertSame(1, $metrics['schema_version'] ?? null);
         $this->assertSame(3, $metrics['config_count_scheduled'] ?? null);
-        $this->assertSame(3, $metrics['config_count_manual'] ?? null);
+        $this->assertSame(5, $metrics['config_count_manual'] ?? null);
     }
 
     public function testNoActiveConfigurationIsAnHonestZero(): void

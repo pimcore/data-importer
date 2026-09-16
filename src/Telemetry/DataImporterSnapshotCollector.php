@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Telemetry;
 
-use function is_string;
+use function in_array;
 use Pimcore\Telemetry\Snapshot\SnapshotCollectorInterface;
 
 /**
@@ -72,14 +72,18 @@ final readonly class DataImporterSnapshotCollector implements SnapshotCollectorI
     private function isScheduled(array $execution): bool
     {
         if (($execution['scheduleType'] ?? null) === self::SCHEDULE_JOB) {
-            return $this->hasValue($execution['scheduledAt'] ?? null);
+            return $this->schedules($execution['scheduledAt'] ?? null);
         }
 
-        return $this->hasValue($execution['cronDefinition'] ?? null);
+        return $this->schedules($execution['cronDefinition'] ?? null);
     }
 
-    private function hasValue(mixed $value): bool
+    /**
+     * Whether a schedule value would make the scheduler fire: SchedulerFactory rejects the values PHP's
+     * empty() covers (null, '', '0', 0, false, []), so those count as unscheduled here as well.
+     */
+    private function schedules(mixed $value): bool
     {
-        return is_string($value) && $value !== '';
+        return !in_array($value, [null, '', '0', 0, 0.0, false, []], true);
     }
 }
