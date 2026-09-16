@@ -14,3 +14,10 @@ services:
         '@Pimcore\Bundle\DataImporterBundle\Telemetry\DataHubImportConfigurations'
 
     Pimcore\Bundle\DataImporterBundle\Telemetry\DataImporterUsageProvider: ~
+
+    # data_importer.* collector: how the active import configurations are triggered
+    Pimcore\Bundle\DataImporterBundle\Telemetry\DataImporterSnapshotCollector: ~
+
+    # datahub.import_manual_started: one event per import started by hand from Studio (never cron or push);
+    # autoconfigure tags it as a kernel.event_subscriber
+    Pimcore\Bundle\DataImporterBundle\Telemetry\ImportStartTelemetrySubscriber: ~

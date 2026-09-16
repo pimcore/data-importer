@@ -13,6 +13,10 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Telemetry;
 
+use Closure;
+use Exception;
+use function is_array;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Telemetry\DataHubConfigurationUsage;
 
 /**
@@ -30,13 +34,58 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
      */
     private const ADAPTER_TYPE = 'dataImporterDataObject';
 
+    /**
+     * @var Closure(): iterable<Configuration>
+     */
+    private Closure $listConfigurations;
+
+    /**
+     * @param (Closure(): iterable<Configuration>)|null $listConfigurations defaults to Data Hub's listing;
+     *                                                                       injectable for tests
+     */
     public function __construct(
         private DataHubConfigurationUsage $configurations,
+        ?Closure $listConfigurations = null,
     ) {
+        $this->listConfigurations = $listConfigurations ?? static fn (): array => Configuration::getList();
     }
 
     public function hasActive(): ?bool
     {
         return $this->configurations->hasActiveOfType([self::ADAPTER_TYPE]);
+    }
+
+    /**
+     * The shared read knows types and activity only, so the execution configurations come from the same
+     * location-aware listing directly - one more pass over the store, once a day.
+     */
+    public function activeExecutionConfigs(): ?array
+    {
+        $configs = [];
+
+        // The listing may be lazy, so the walk stays inside the guard: a failure while iterating is the
+        // same "unreadable" as one while creating it.
+        try {
+            foreach (($this->listConfigurations)() as $configuration) {
+                if ($configuration->getType() !== self::ADAPTER_TYPE || !$this->isActive($configuration)) {
+                    continue;
+                }
+
+                $execution = $configuration->getConfiguration()['executionConfig'] ?? [];
+                $configs[] = is_array($execution) ? $execution : [];
+            }
+        } catch (Exception) {
+            return null;
+        }
+
+        return $configs;
+    }
+
+    /**
+     * The same truthiness Data Hub's usage reader and the import execution apply to the stored flag.
+     */
+    private function isActive(Configuration $configuration): bool
+    {
+        return (bool) $configuration->isActive();
     }
 }
