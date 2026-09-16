@@ -13,6 +13,11 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Telemetry;
 
+use Exception;
+use function filter_var;
+use function is_array;
+use function is_bool;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Telemetry\DataHubConfigurationUsage;
 
 /**
@@ -38,5 +43,39 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
     public function hasActive(): ?bool
     {
         return $this->configurations->hasActiveOfType([self::ADAPTER_TYPE]);
+    }
+
+    /**
+     * The shared read knows types and activity only, so the execution configurations come from the same
+     * location-aware listing directly - one more pass over the store, once a day.
+     */
+    public function activeExecutionConfigs(): ?array
+    {
+        try {
+            $list = Configuration::getList();
+        } catch (Exception) {
+            return null;
+        }
+
+        $configs = [];
+
+        foreach ($list as $configuration) {
+            if ($configuration->getType() !== self::ADAPTER_TYPE || !$this->isActive($configuration)) {
+                continue;
+            }
+
+            $data = $configuration->getConfiguration();
+            $execution = is_array($data) ? ($data['executionConfig'] ?? []) : [];
+            $configs[] = is_array($execution) ? $execution : [];
+        }
+
+        return $configs;
+    }
+
+    private function isActive(Configuration $configuration): bool
+    {
+        $active = $configuration->isActive();
+
+        return is_bool($active) ? $active : filter_var($active, FILTER_VALIDATE_BOOLEAN);
     }
 }
