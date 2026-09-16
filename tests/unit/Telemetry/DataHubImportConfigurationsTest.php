@@ -129,14 +129,15 @@ class DataHubImportConfigurationsTest extends Unit
      */
     public function testReadsTheActiveFlagWithTheProductsTruthiness(): void
     {
-        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), fn (): array => [
+        $listing = fn (): array => [
             $this->configuration('dataImporterDataObject', 'on', ['executionConfig' => ['id' => 1]]),
             $this->configuration('dataImporterDataObject', '1', ['executionConfig' => ['id' => 2]]),
             $this->configuration('dataImporterDataObject', 'false', ['executionConfig' => ['id' => 3]]),
             $this->configuration('dataImporterDataObject', '0', ['executionConfig' => ['id' => 4]]),
             $this->configuration('dataImporterDataObject', '', ['executionConfig' => ['id' => 5]]),
             $this->configuration('dataImporterDataObject', false, ['executionConfig' => ['id' => 6]]),
-        ]);
+        ];
+        $reader = new DataHubImportConfigurations(new DataHubConfigurationUsage(), $listing);
 
         $this->assertSame([['id' => 1], ['id' => 2], ['id' => 3]], $reader->activeExecutionConfigs());
     }
