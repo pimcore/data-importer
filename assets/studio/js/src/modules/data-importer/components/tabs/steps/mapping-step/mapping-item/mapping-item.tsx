@@ -25,7 +25,7 @@ import { DND_TYPE } from '../sources-panel/sources-panel'
 import { findMappingIndexById } from '../utils/mapping-identity'
 import { MappingItemContent } from './mapping-item-content'
 import { useFormItemAnnotation } from '../../../../../change-control/studio-form-annotations'
-import { StatusTag } from '../../../../../change-control/status-tag'
+import { StatusTag } from '@pimcore/data-hub'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true

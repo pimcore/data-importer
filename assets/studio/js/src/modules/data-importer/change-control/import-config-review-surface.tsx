@@ -211,10 +211,7 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
           { brief !== undefined
             ? (
               <div className={ styles.list }>
-                <ConfigBriefCard
-                  brief={ brief }
-                  styles={ styles }
-                />
+                <ConfigBriefCard brief={ brief } />
               </div>
               )
             : (
@@ -222,12 +219,10 @@ export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps>
                 <ChangeList
                   activeSection={ activeSection }
                   configuration={ configuration }
-                  count={ changes.length + changedMappings.length }
                   groups={ groups }
                   labelFor={ labelFor }
                   mappings={ changedMappings }
                   onJump={ jumpToSection }
-                  styles={ styles }
                 />
               </div>
               ) }
