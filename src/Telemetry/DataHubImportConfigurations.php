@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Telemetry;
 
+use Closure;
 use Exception;
 use function filter_var;
 use function is_array;
@@ -35,9 +36,20 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
      */
     private const ADAPTER_TYPE = 'dataImporterDataObject';
 
+    /**
+     * @var Closure(): iterable<Configuration>
+     */
+    private Closure $listConfigurations;
+
+    /**
+     * @param (Closure(): iterable<Configuration>)|null $listConfigurations defaults to Data Hub's listing;
+     *                                                                       injectable for tests
+     */
     public function __construct(
         private DataHubConfigurationUsage $configurations,
+        ?Closure $listConfigurations = null,
     ) {
+        $this->listConfigurations = $listConfigurations ?? static fn (): array => Configuration::getList();
     }
 
     public function hasActive(): ?bool
@@ -52,7 +64,7 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
     public function activeExecutionConfigs(): ?array
     {
         try {
-            $list = Configuration::getList();
+            $list = ($this->listConfigurations)();
         } catch (Exception) {
             return null;
         }
@@ -64,8 +76,7 @@ final readonly class DataHubImportConfigurations implements ImportConfigurations
                 continue;
             }
 
-            $data = $configuration->getConfiguration();
-            $execution = is_array($data) ? ($data['executionConfig'] ?? []) : [];
+            $execution = $configuration->getConfiguration()['executionConfig'] ?? [];
             $configs[] = is_array($execution) ? $execution : [];
         }
 
