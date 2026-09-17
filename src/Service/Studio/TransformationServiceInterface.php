@@ -36,7 +36,8 @@ interface TransformationServiceInterface
     public function loadTransformationResultPreviews(
         string $name,
         ?array $currentConfig,
-        int $recordNumber
+        int $recordNumber,
+        ?string $scope = null
     ): TransformationResultPreviewsResponse;
 
     /**
@@ -46,6 +47,7 @@ interface TransformationServiceInterface
      */
     public function calculateTransformationResultType(
         string $name,
-        array $currentConfig
+        array $currentConfig,
+        ?string $scope = null
     ): TransformationResultTypeResponse;
 }

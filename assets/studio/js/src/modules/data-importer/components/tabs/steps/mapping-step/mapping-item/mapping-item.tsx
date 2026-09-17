@@ -24,6 +24,8 @@ import { DndClassDiv } from '../dnd-class-div/dnd-class-div'
 import { DND_TYPE } from '../sources-panel/sources-panel'
 import { findMappingIndexById } from '../utils/mapping-identity'
 import { MappingItemContent } from './mapping-item-content'
+import { useFormItemAnnotation } from '../../../../../change-control/studio-form-annotations'
+import { StatusTag } from '../../../../../change-control/status-tag'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -139,9 +141,19 @@ const MappingItemComponent = ({
   }, [expanded, attributes, selectedFieldName])
   const isLocalized = selectedAttr?.localized ?? false
 
-  const panelTitle = (itemLabel !== undefined && itemLabel !== '')
+  const label = (itemLabel !== undefined && itemLabel !== '')
     ? itemLabel
     : t('data-importer.mapping.item.new-label')
+  // a review marks the row as a whole: the row binds no Form.Item of its own
+  const annotation = useFormItemAnnotation(['mappingConfig', fieldIndex])
+  const panelTitle = annotation === undefined
+    ? label
+    : (
+      <span className={ styles.annotatedTitle }>
+        <span className={ annotation.status === 'removed' ? styles.removedTitle : undefined }>{ label }</span>
+        <StatusTag status={ annotation.status } />
+      </span>
+      )
 
   const handleDrop = useCallback((info: DragAndDropInfo): void => {
     const index = getCurrentIndexByMappingId()

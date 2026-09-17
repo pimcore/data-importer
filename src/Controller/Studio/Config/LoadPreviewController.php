@@ -84,7 +84,8 @@ final class LoadPreviewController extends AbstractApiController
             $this->previewDataService->loadPreviewData(
                 $name,
                 $parameters->getCurrentConfig(),
-                $parameters->getRecordNumber()
+                $parameters->getRecordNumber(),
+                $parameters->getPreviewScope()
             )
         );
     }

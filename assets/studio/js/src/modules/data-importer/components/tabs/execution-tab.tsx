@@ -23,6 +23,8 @@ import { ExecutionStatus } from './execution-tab/execution-status/execution-stat
 export interface ExecutionTabProps {
   configName: string
   isDirty: boolean
+  /** false hides what only a live configuration has: the run button and its status */
+  showRuntime?: boolean
 }
 
 const isRecurring = (values: DataImporterFormValues): boolean =>
@@ -31,7 +33,7 @@ const isRecurring = (values: DataImporterFormValues): boolean =>
 const isOneTimeJob = (values: DataImporterFormValues): boolean =>
   values.executionConfig?.scheduleType === 'job'
 
-export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.JSX.Element => {
+export const ExecutionTab = ({ configName, isDirty, showRuntime = true }: ExecutionTabProps): React.JSX.Element => {
   const { t } = useTranslation()
 
   const scheduleTypeOptions = [
@@ -42,10 +44,12 @@ export const ExecutionTab = ({ configName, isDirty }: ExecutionTabProps): React.
   return (
     <>
       { /* ── Manual Execution + Execution Status (isolated to avoid poll-driven re-renders) ── */ }
-      <ExecutionStatus
-        configName={ configName }
-        isDirty={ isDirty }
-      />
+      { showRuntime && (
+        <ExecutionStatus
+          configName={ configName }
+          isDirty={ isDirty }
+        />
+      ) }
 
       { /* ── Scheduled Execution ── */ }
       <DataImporterPanel title={ t('data-importer.execution.settings.title') }>

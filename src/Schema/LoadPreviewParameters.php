@@ -48,6 +48,12 @@ final readonly class LoadPreviewParameters
             example: 0
         )]
         private int $recordNumber = 0,
+        #[Property(
+            description: 'A change set under review: its preview data is kept beside the live configuration\'s, and a configuration that is only proposed so far is accepted',
+            type: 'string',
+        )]
+        // a plain string, not ?string: the Studio codegen turns a nullable into `any`
+        private string $previewScope = '',
     ) {
     }
 
@@ -59,5 +65,10 @@ final readonly class LoadPreviewParameters
     public function getRecordNumber(): int
     {
         return $this->recordNumber;
+    }
+
+    public function getPreviewScope(): ?string
+    {
+        return $this->previewScope !== '' ? $this->previewScope : null;
     }
 }

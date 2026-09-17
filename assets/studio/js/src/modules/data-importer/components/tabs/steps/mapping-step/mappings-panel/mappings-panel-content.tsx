@@ -16,6 +16,7 @@ import { useStyles } from '../mapping-step.styles'
 import { MappingDropZone, MappingItemWithFilter } from '../mapping-item'
 import { EmptyDropZone } from './empty-drop-zone'
 import { FilteredEmptyState } from './filtered-empty-state'
+import { useConfigEditorReadOnly } from '../../../../config-editor-mode'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -64,6 +65,7 @@ export const MappingsPanelContent = React.memo(({
   onDropped,
   getMappingIdByIndex
 }: MappingsPanelContentProps): React.JSX.Element => {
+  const readOnly = useConfigEditorReadOnly()
   const { t } = useTranslation()
   const { styles } = useStyles()
   const renderCountRef = useRef(0)
@@ -190,26 +192,30 @@ export const MappingsPanelContent = React.memo(({
           className={ styles.mappingsActions }
           gap="extra-small"
         >
-          <IconTextButton
-            icon={ { value: 'new' } }
-            onClick={ () => { onAddItem(add, fields.length) } }
-            type="default"
-          >
-            { t('data-importer.mapping.add') }
-          </IconTextButton>
+          { !readOnly && (
+            <>
+              <IconTextButton
+                icon={ { value: 'new' } }
+                onClick={ () => { onAddItem(add, fields.length) } }
+                type="default"
+              >
+                { t('data-importer.mapping.add') }
+              </IconTextButton>
 
-          <Divider
-            className={ styles.mappingsDivider }
-            type="vertical"
-          />
+              <Divider
+                className={ styles.mappingsDivider }
+                type="vertical"
+              />
 
-          <IconTextButton
-            icon={ { value: 'autofill' } }
-            onClick={ onOpenAutofillSuggestions }
-            type="default"
-          >
-            { t('data-importer.mapping.auto-fill') }
-          </IconTextButton>
+              <IconTextButton
+                icon={ { value: 'autofill' } }
+                onClick={ onOpenAutofillSuggestions }
+                type="default"
+              >
+                { t('data-importer.mapping.auto-fill') }
+              </IconTextButton>
+            </>
+          ) }
 
           { hasItems && (
             <Button
