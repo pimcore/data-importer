@@ -447,9 +447,10 @@ export type BundleDataImporterTransformationResultTypeResponse = {
 export type BundleDataImporterCalculateTransformationResultTypeParameters = {
     /** A single mapping configuration entry to evaluate the transformation result type for */
     currentConfig: {
+        /** Mapping label */
         label?: string;
         /** Data source column indices */
-        dataSourceIndex?: any;
+        dataSourceIndex?: string[];
         transformationPipeline?: object[];
         dataTarget?: object;
     };
@@ -499,7 +500,9 @@ export type BundleDataImporterConfigurationDetail = {
     };
     /** User permissions */
     userPermissions: {
+        /** Whether the user can update this configuration */
         update?: boolean;
+        /** Whether the user can delete this configuration */
         delete?: boolean;
     };
     /** Modification date timestamp */
@@ -559,7 +562,7 @@ export type BundleDataImporterDataPreviewResponse = {
         dataIndex?: string;
         /** Column label */
         label?: string;
-        /** Cell data value */
+        /** Cell data value. May be any JSON value (string, number, boolean, array, object or null) depending on the source data type. */
         data?: any;
         /** Whether this column is mapped */
         mapped?: boolean;
@@ -616,7 +619,7 @@ export type BundleDataImporterUnitDataResponse = {
         [key: string]: string | number | boolean | object;
     };
     /** List of quantity value units */
-    UnitList: {
+    unitList: {
         /** The unit ID */
         unitId?: string;
         /** The unit abbreviation */

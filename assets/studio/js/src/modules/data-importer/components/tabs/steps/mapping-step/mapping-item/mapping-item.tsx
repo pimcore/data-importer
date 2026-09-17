@@ -82,7 +82,7 @@ const MappingItemComponent = ({
   }
 
   const { t } = useTranslation()
-  const { styles } = useStyles()
+  const { styles, cx } = useStyles()
   const form = Form.useFormInstance()
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const settings = useSettings()
@@ -173,7 +173,7 @@ const MappingItemComponent = ({
       onDrop={ handleDrop }
       variant="default"
     >
-      <DndClassDiv className={ styles.panelDndWrapper }>
+      <DndClassDiv className={ cx(styles.panelDndWrapper, expanded && styles.panelExpanded) }>
         <Panel
           active={ expanded }
           border

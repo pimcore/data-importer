@@ -33,6 +33,7 @@ export function DataTargetClassificationstoreSettings (props: DynamicTypeDataTar
         <StepTargetClassificationstoreKeySearch
           classId={ classId ?? '' }
           fieldName={ fieldName }
+          keyId={ settings?.keyId }
           onChange={ (keyId) => { onChange({ ...settings, keyId }) } }
           transformationResultType={ transformationResultType }
         />

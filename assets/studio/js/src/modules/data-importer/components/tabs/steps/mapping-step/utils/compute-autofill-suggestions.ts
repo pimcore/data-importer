@@ -19,6 +19,7 @@ export interface MappingSuggestion {
   sourceLabel: string
   targetFieldName: string
   targetFieldLabel: string
+  transformationResultType: string
   score: number
   language: string | null
   previewResult: string | null
@@ -117,8 +118,15 @@ function buildUsedIndices (existingMappings: MappingConfigItem[]): Set<string> {
   return used
 }
 
-function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): ClassAttribute[] {
-  const attrsByKey = new Map<string, ClassAttribute>()
+interface PoolEntry {
+  attr: ClassAttribute
+  transformationResultType: string
+}
+
+// the default map key wins when an attribute is offered by several result types,
+// so simple fields keep the default transformation result type
+function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): PoolEntry[] {
+  const attrsByKey = new Map<string, PoolEntry>()
   const keyOrder = [
     DEFAULT_ATTR_MAP_KEY,
     ...Object.keys(attributesMap).filter((k) => k !== DEFAULT_ATTR_MAP_KEY)
@@ -126,7 +134,10 @@ function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): Cl
   for (const mapKey of keyOrder) {
     for (const attr of (attributesMap[mapKey] ?? [])) {
       if (!attrsByKey.has(attr.key)) {
-        attrsByKey.set(attr.key, attr)
+        attrsByKey.set(attr.key, {
+          attr,
+          transformationResultType: mapKey === DEFAULT_ATTR_MAP_KEY ? 'default' : mapKey
+        })
       }
     }
   }
@@ -134,32 +145,32 @@ function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): Cl
 }
 
 interface BestMatch {
-  attr: ClassAttribute
+  entry: PoolEntry
   score: number
   language: string | null
 }
 
 // Track full-name match and locale-aware base-name match separately to
 // avoid order-dependent language clearing when a later full match ties.
-function findBestMatch (label: string, attrs: ClassAttribute[], validLanguages: Set<string>): BestMatch | null {
+function findBestMatch (label: string, entries: PoolEntry[], validLanguages: Set<string>): BestMatch | null {
   const detectedLocale = detectLocaleSuffix(label, validLanguages)
   let bestFullScore = -1
-  let bestFullAttr: ClassAttribute | null = null
+  let bestFullEntry: PoolEntry | null = null
   let bestBaseScore = -1
-  let bestBaseAttr: ClassAttribute | null = null
+  let bestBaseEntry: PoolEntry | null = null
   let bestBaseLanguage: string | null = null
 
-  for (const attr of attrs) {
-    const score = matchScore(label, attr)
+  for (const entry of entries) {
+    const score = matchScore(label, entry.attr)
     if (score > bestFullScore) {
       bestFullScore = score
-      bestFullAttr = attr
+      bestFullEntry = entry
     }
-    if (attr.localized === true && detectedLocale !== null) {
-      const baseScore = matchScore(detectedLocale.base, attr)
+    if (entry.attr.localized === true && detectedLocale !== null) {
+      const baseScore = matchScore(detectedLocale.base, entry.attr)
       if (baseScore > bestBaseScore) {
         bestBaseScore = baseScore
-        bestBaseAttr = attr
+        bestBaseEntry = entry
         bestBaseLanguage = detectedLocale.locale
       }
     }
@@ -167,13 +178,13 @@ function findBestMatch (label: string, attrs: ClassAttribute[], validLanguages: 
 
   // Prefer the base match when it scores at least as well as the full match
   // so that a localized field with language wins over a bare full-name match.
-  const useBase = bestBaseScore >= bestFullScore && bestBaseAttr !== null
-  const attr = useBase ? bestBaseAttr! : bestFullAttr
+  const useBase = bestBaseScore >= bestFullScore && bestBaseEntry !== null
+  const entry = useBase ? bestBaseEntry! : bestFullEntry
   const score = useBase ? bestBaseScore : bestFullScore
   const language = useBase ? bestBaseLanguage : null
 
-  if (attr === null || score < MIN_SCORE) return null
-  return { attr, score, language }
+  if (entry === null || score < MIN_SCORE) return null
+  return { entry, score, language }
 }
 
 export function computeAutofillSuggestions (
@@ -184,14 +195,14 @@ export function computeAutofillSuggestions (
   validLanguages: string[]
 ): MappingSuggestion[] {
   const usedIndices = buildUsedIndices(existingMappings)
-  const attrs = flattenAttributes(attributesMap)
+  const entries = flattenAttributes(attributesMap)
   const validLanguagesSet = new Set(validLanguages.map((l) => l.toLowerCase()))
   const suggestions: MappingSuggestion[] = []
 
   for (const col of columnHeaderOptions) {
     if (usedIndices.has(col.value)) continue
 
-    const best = findBestMatch(col.label, attrs, validLanguagesSet)
+    const best = findBestMatch(col.label, entries, validLanguagesSet)
     if (best === null) continue
 
     const previewRow = sourceRows.find((r) => r.dataIndex === col.value)
@@ -199,8 +210,9 @@ export function computeAutofillSuggestions (
       id: uuid(),
       sourceIndex: col.value,
       sourceLabel: col.label,
-      targetFieldName: best.attr.key,
-      targetFieldLabel: best.attr.title,
+      targetFieldName: best.entry.attr.key,
+      targetFieldLabel: best.entry.attr.title,
+      transformationResultType: best.entry.transformationResultType,
       score: best.score,
       language: best.language,
       previewResult: previewRow?.value ?? null

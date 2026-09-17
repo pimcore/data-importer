@@ -105,7 +105,8 @@ export const CronDefinitionSection = (): React.JSX.Element => {
 
   return (
     <Form.Item
-      hasFeedback={ !isValidating }
+      // no success tick on an empty field — it would look like a cron is already set
+      hasFeedback={ !isValidating && rawCronValue.trim().length > 0 }
       label={
         <Flex
           align="center"

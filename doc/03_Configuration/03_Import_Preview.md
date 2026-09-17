@@ -1,25 +1,45 @@
+---
+title: Import Preview
+description: Load a sample record to build and validate the mapping against real data.
+---
+
 # Import Preview
 
-The import configuration allows you to show a preview of the data which helps
-to setup the [mapping configuration](06_Mapping_Configuration/README.md) and
-validate the expected results. 
+The import preview loads a small extract of the source data and shows one record at a time. Use it to check that the
+[file format](./02_File_Formats.md) settings parse the data as expected, and to build the
+[mapping configuration](./05_Mapping_Configuration/README.md) against real values.
+
+The preview never writes to Pimcore.
 
 <div class="image-as-lightbox"></div>
 
 ![Import Preview](../img/import_preview.png)
 
-The preview interprets the file the same way as actual import data sources
-will be interpreted when executing the import and shows one record of the preview
-file at once. The preview does not import any data though. 
+## Loading a Preview File
 
-Any changes in file format settings result in a reloading of the uploaded preview 
-file. Reloading the preview file or paging the records will also update the
-processing result preview of the [mapping configuration](06_Mapping_Configuration/README.md).
+Two options are available in the **Preview Import** step:
 
-There are two options for loading the preview file:
-- Upload an extra preview file. 
-- Copy the preview file from the configured data source (not possible with push data source).   
+- **Upload file**: upload a separate preview file.
+- **Copy from data source**: copy the file the configured data source points at. Not available for the `Push` data
+  source, which has no file to copy.
 
-For both options, preview files are saved per user and import configuration in Pimcores `tmp` directory and 
-should only be a small extract of the actual import files - due to loading performance and used storage space.
+Preview files are stored per user and per import configuration under `var/tmp/datahub/dataimporter/preview`. Both
+options reject files larger than 10 MB. Keep the preview well below that: the whole file is parsed on every change.
 
+## Effect on the Rest of the Configuration
+
+The preview record feeds the later steps:
+
+- The parsed field names become the selectable **source columns** in the mapping step.
+- The [transformation pipeline](./05_Mapping_Configuration/01_Transformation_Pipeline.md) shows the result of each
+  operator for the currently displayed record.
+
+Changing the file format settings reloads the preview file. Reloading it or paging to another record refreshes the
+transformation results as well.
+
+:::note
+
+If the preview file does not match the configured file format, the preview reports that the file is not valid for the
+configured interpreter. Re-upload or re-copy the preview data after correcting the format settings.
+
+:::

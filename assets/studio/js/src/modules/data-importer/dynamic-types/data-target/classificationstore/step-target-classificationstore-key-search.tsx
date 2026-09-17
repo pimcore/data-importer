@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { Button, Flex, Input, Tooltip } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, Input } from '@pimcore/studio-ui-bundle/components'
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useStyles } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target.styles'
@@ -34,8 +34,6 @@ export function StepTargetClassificationstoreKeySearch ({
   const { styles } = useStyles()
 
   const [keyModalOpen, setKeyModalOpen] = useState(false)
-
-  const canOpenKeyModal = classId !== '' && fieldName !== '' && (transformationResultType ?? '') !== ''
 
   const { data: keyNameResponse } = useBundleDataImporterClassificationstoreLoadKeyNameQuery(
     { keyId: keyId ?? '' },
@@ -83,20 +81,14 @@ export function StepTargetClassificationstoreKeySearch ({
             readOnly
             value={ keyLabel }
           />
-          <Tooltip title={ canOpenKeyModal ? undefined : t('data-importer.mapping.advanced-modal.step-target.classification-store-key-search-tooltip') }>
-            { /* span needed so Tooltip works on a disabled button */ }
-            <span>
-              <Button
-                disabled={ !canOpenKeyModal }
-                onClick={ () => {
-                  setKeyModalOpen(true)
-                } }
-                type="default"
-              >
-                {t('search')}
-              </Button>
-            </span>
-          </Tooltip>
+          <Button
+            onClick={ () => {
+              setKeyModalOpen(true)
+            } }
+            type="default"
+          >
+            {t('search')}
+          </Button>
         </Flex>
       </div>
     </>

@@ -8,9 +8,9 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React from 'react'
+import React, { useRef } from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
-import { type MappingConfigItem } from '../../../../../types'
+import { type DataImporterFormValues, type MappingConfigItem } from '../../../../../types'
 import { useMappingItemContext } from '../mapping-item-context'
 import { useStyles } from '../mapping-step.styles'
 import { MappingDropZone } from './mapping-drop-zone'
@@ -67,9 +67,25 @@ export const MappingItemWithFilter = React.memo(({
   const { configName, classId, columnHeaderOptions, attributesMap } = useMappingItemContext()
   const { styles, cx } = useStyles()
 
-  // Watch only this item's index in mappingConfig. Selector is O(1) by path.
-  const itemByIndex = Form.useWatch(['mappingConfig', fieldIndex]) as MappingConfigItem | undefined
-  const item: MappingConfigItem = itemByIndex ?? {}
+  const form = Form.useFormInstance()
+
+  // `fieldIndex` shifts whenever a mapping is inserted or removed above this one, but
+  // `Form.useWatch` registers its watcher exactly once — rc-field-form explicitly does not
+  // support a dynamic name path. A plain `useWatch(['mappingConfig', fieldIndex])` therefore
+  // keeps the value it read for the *previous* index: right after an add/remove every row
+  // below the change renders a neighbouring row's label, sources and data target.
+  //
+  // Subscribing through a selector that reads the index from a ref keeps that single
+  // registration valid for value edits, and the value itself is read from the form during
+  // render so it always belongs to the CURRENT index. Structural changes always re-render
+  // this component (the field's `name` changes), so the fresh read cannot go stale.
+  const fieldIndexRef = useRef(fieldIndex)
+  fieldIndexRef.current = fieldIndex
+
+  Form.useWatch((values: DataImporterFormValues) => values?.mappingConfig?.[fieldIndexRef.current])
+
+  const item: MappingConfigItem =
+    (form.getFieldValue(['mappingConfig', fieldIndex]) as MappingConfigItem | undefined) ?? {}
 
   const dataSourceIndex = item.dataSourceIndex
   const isHidden = activeFilter !== null && !(dataSourceIndex ?? []).includes(activeFilter)

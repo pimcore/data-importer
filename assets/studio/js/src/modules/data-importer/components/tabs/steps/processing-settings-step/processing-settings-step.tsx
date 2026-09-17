@@ -11,31 +11,21 @@
 import React, { useEffect } from 'react'
 import { Flex, Select, Form, Switch } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { useBundleDataImporterConfigGetQuery } from '../../../../data-importer-api-slice-enhanced'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { StepHeading } from '../step-heading/step-heading'
 import { filterByLabel } from '../../../../utils/select-utils'
 import type { DataImporterFormValues } from '../../../../types'
+import { type ColumnHeaderOption } from '../../../../hooks/use-column-header-options'
 import { useStyles } from './processing-settings-step.styles'
 
 export interface ProcessingSettingsStepProps {
-  configName: string
+  columnHeaderOptions: ColumnHeaderOption[]
 }
 
-export const ProcessingSettingsStep = ({ configName }: ProcessingSettingsStepProps): React.JSX.Element => {
+export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettingsStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles, cx } = useStyles()
   const form = Form.useFormInstance()
-
-  const { data: configData } = useBundleDataImporterConfigGetQuery({ name: configName })
-
-  const columnHeaderOptions = (configData?.columnHeaders ?? []).map((header) => {
-    // API returns objects {id, dataIndex, label}; type says string[] — handle both
-    const h = header as unknown as { dataIndex?: string, label?: string } | string
-    const value = typeof h === 'string' ? h : (h.dataIndex ?? '')
-    const label = typeof h === 'string' ? h : (h.label ?? h.dataIndex ?? '')
-    return { value, label }
-  })
 
   const executionTypeOptions = [
     { value: 'sequential', label: t('data-importer.processing.execution-type.sequential') },

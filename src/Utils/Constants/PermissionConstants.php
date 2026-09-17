@@ -19,11 +19,13 @@ final class PermissionConstants
 {
     public const string PLUGIN_DATA_IMPORTER_CONFIG = 'plugin_datahub_config';
 
-    public const string PLUGIN_DATA_IMPORTER_PERMISSION_READ = 'plugin_datahub_permission_read';
+    // Per-configuration permission types as evaluated by Configuration::isAllowed() against the
+    // per-config permission grid (must match the grid keys: read/update/delete).
+    public const string PLUGIN_DATA_IMPORTER_PERMISSION_READ = 'read';
 
-    public const string PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE = 'plugin_datahub_permission_update';
+    public const string PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE = 'update';
 
-    public const string PLUGIN_DATA_IMPORTER_PERMISSION_DELETE = 'plugin_datahub_permission_delete';
+    public const string PLUGIN_DATA_IMPORTER_PERMISSION_DELETE = 'delete';
 
     public const string PLUGIN_DATA_IMPORTER_ADMIN = 'plugin_datahub_admin';
 }

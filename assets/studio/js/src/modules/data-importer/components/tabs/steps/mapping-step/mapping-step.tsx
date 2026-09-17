@@ -214,33 +214,32 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
       })
     }
 
-    setActiveFilter((currentFilter) => {
-      if (currentFilter !== null) {
-        const currentItems = getMappingConfig()
-        const remaining = currentItems.filter((_, i) => i !== index)
-        const stillReferenced = remaining.some((item) =>
-          (item.dataSourceIndex ?? []).includes(currentFilter)
-        )
-        if (!stillReferenced) {
-          remove(index)
-          if (debugEnabled) {
-            console.debug('[DI][Action] remove mapping + clear filter', {
-              index,
-              clearedFilter: currentFilter
-            })
-          }
-          return null
-        }
+    // Read the filter from the ref instead of a state updater: `remove()` mutates the form
+    // store, and a state updater must stay pure — React invokes it twice in StrictMode,
+    // which would delete two mappings for a single click.
+    const currentFilter = activeFilterRef.current
+    let clearedFilter: string | null = null
+
+    if (currentFilter !== null) {
+      const remaining = getMappingConfig().filter((_, i) => i !== index)
+      const stillReferenced = remaining.some((item) =>
+        (item.dataSourceIndex ?? []).includes(currentFilter)
+      )
+      if (!stillReferenced) {
+        clearedFilter = currentFilter
+        setActiveFilter(null)
       }
-      remove(index)
-      if (debugEnabled) {
-        console.debug('[DI][Action] remove mapping done', {
-          index,
-          keptFilter: currentFilter
-        })
-      }
-      return currentFilter
-    })
+    }
+
+    remove(index)
+
+    if (debugEnabled) {
+      console.debug('[DI][Action] remove mapping done', {
+        index,
+        clearedFilter,
+        keptFilter: clearedFilter === null ? currentFilter : null
+      })
+    }
   }, [getMappingConfig])
 
   const createMappingItemFromSource = useCallback((dataIndex: string, label: string): MappingConfigItem => {
