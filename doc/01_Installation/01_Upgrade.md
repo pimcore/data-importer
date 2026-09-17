@@ -5,6 +5,15 @@ description: Breaking changes and migration steps per release.
 
 # Upgrade Notes
 
+## Upgrade to 2026.3.0
+
+### Skipping Element Persistence From a `PreSaveEvent` Listener
+
+- `DataObject\PreSaveEvent` now carries a skip flag: a listener can call `setSkipSave(true)` to stop the import
+  from persisting the current element. The element is not saved, `DataObject\PostSaveEvent` is not dispatched, and
+  the skip is written to the import log. Processing continues with the next record.
+- The flag defaults to `false`, so imports without such a listener behave exactly as before. No migration needed.
+
 ## Upgrade to 2026.2.6
 
 ### Frontend Build Ships as a Packaged Archive

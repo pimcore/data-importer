@@ -242,6 +242,11 @@ final class ImportProcessingService
                     $this->eventDispatcher->dispatch($event);
 
                     if ($event->shouldSkipSave()) {
+                        $this->logInfo($configName, 'Saving of element skipped by PreSaveEvent listener.', [
+                            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                            'relatedObject' => $element
+                        ]);
+
                         return;
                     }
 

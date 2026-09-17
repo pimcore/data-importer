@@ -18,7 +18,9 @@ Listening for events customizes import behaviour without replacing any component
 | `PostPreparationEvent` | After an import was prepared and the queue items were created. |
 
 The three `DataObject` events share a base class exposing the import configuration name, the raw source record, and the
-data object. `ProcessElementExceptionEvent` adds the thrown exception, the error message, and the mapping configuration
+data object. `DataObject\PreSaveEvent` additionally lets a listener skip the persistence of the current element with
+`setSkipSave(true)`: the element is not saved, no `DataObject\PostSaveEvent` is dispatched, the skip is written to the
+import log, and the import continues with the next record. `ProcessElementExceptionEvent` adds the thrown exception, the error message, and the mapping configuration
 that failed, when the failure can be attributed to one.
 
 `PostPreparationEvent` exposes the configuration name, the execution type, and whether the source file was interpreted.
@@ -46,6 +48,17 @@ final class ImportListener
         $dataObject = $event->getDataObject();
 
         // adjust $dataObject based on $rawData
+    }
+}
+```
+
+Skip the persistence of a record the import should not write:
+
+```php
+public function __invoke(PreSaveEvent $event): void
+{
+    if (($event->getRawData()['status'] ?? null) === 'draft') {
+        $event->setSkipSave(true);
     }
 }
 ```
