@@ -20,7 +20,9 @@ Listening for events customizes import behaviour without replacing any component
 The three `DataObject` events share a base class exposing the import configuration name, the raw source record, and the
 data object. `DataObject\PreSaveEvent` additionally lets a listener skip the persistence of the current element with
 `setSkipSave(true)`: the element is not saved, no `DataObject\PostSaveEvent` is dispatched, the skip is written to the
-import log, and the import continues with the next record. `ProcessElementExceptionEvent` adds the thrown exception, the error message, and the mapping configuration
+import log, and the import continues with the next record. An existing element is reloaded after the skip, so the
+changes the mapping applied to it in memory are discarded rather than carried over to a later record resolving the
+same element. `ProcessElementExceptionEvent` adds the thrown exception, the error message, and the mapping configuration
 that failed, when the failure can be attributed to one.
 
 `PostPreparationEvent` exposes the configuration name, the execution type, and whether the source file was interpreted.

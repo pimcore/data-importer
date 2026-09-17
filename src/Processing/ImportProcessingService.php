@@ -30,6 +30,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
@@ -246,6 +247,7 @@ final class ImportProcessingService
                             'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                             'relatedObject' => $element
                         ]);
+                        $this->discardUnsavedChanges($element);
 
                         return;
                     }
@@ -323,6 +325,22 @@ final class ImportProcessingService
 
             $this->logError($configName, $message, $errorContext);
         }
+    }
+
+    /**
+     * A skipped element keeps the changes the mapping applied to it in memory. Pimcore hands out
+     * runtime-cached instances, so a later row resolving the same element would otherwise inherit -
+     * and save - the values of the skipped row. Reloading it registers a clean instance instead.
+     */
+    private function discardUnsavedChanges(ElementInterface $element): void
+    {
+        $type = ElementService::getElementType($element);
+
+        if ($type === null || !$element->getId()) {
+            return;
+        }
+
+        ElementService::getElementById($type, $element->getId(), ['force' => true]);
     }
 
     /**

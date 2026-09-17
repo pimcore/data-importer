@@ -12,6 +12,8 @@ description: Breaking changes and migration steps per release.
 - `DataObject\PreSaveEvent` now carries a skip flag: a listener can call `setSkipSave(true)` to stop the import
   from persisting the current element. The element is not saved, `DataObject\PostSaveEvent` is not dispatched, and
   the skip is written to the import log. Processing continues with the next record.
+- A skipped element that already exists is reloaded afterwards, so the changes the mapping applied to it in
+  memory cannot leak into a later row that resolves the same element.
 - The flag defaults to `false`, so imports without such a listener behave exactly as before. No migration needed.
 
 ## Upgrade to 2026.2.6
