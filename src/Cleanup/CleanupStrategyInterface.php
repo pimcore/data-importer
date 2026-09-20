@@ -19,5 +19,5 @@ interface CleanupStrategyInterface
     /**
      * Apply cleanup on given element
      */
-    public function doCleanup(ElementInterface $element): void;
+    public function doCleanup(ElementInterface $element): bool;
 }
