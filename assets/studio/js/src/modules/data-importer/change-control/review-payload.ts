@@ -8,17 +8,14 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-/** one slot of the review payload, as the change-set API ships it */
-export interface ReviewSlot {
-  readonly shape: string
-  readonly proposed?: Record<string, unknown> | null
-  readonly current?: Record<string, unknown> | null
-  readonly base?: Record<string, unknown> | null
-}
+import type { ChangeSetReviewData, ReviewSlotData } from '@pimcore/change-control-bundle/sdk'
 
-export interface ReviewPayload {
-  readonly slots: Record<string, ReviewSlot>
-  readonly meta?: { readonly label?: string, readonly changedFieldNames?: string[] }
+/** one slot of the review payload, as the change-set API ships it */
+export type ReviewSlot = ReviewSlotData
+
+/** what this surface reads off a review; the API ships more, and meta is absent while loading */
+export type ReviewPayload = Pick<ChangeSetReviewData, 'slots'> & {
+  readonly meta?: Partial<ChangeSetReviewData['meta']>
 }
 
 /** review: what is proposed against the live document; history: what was recorded against its base */

@@ -9,17 +9,18 @@
  */
 
 import { container } from '@pimcore/studio-ui-bundle'
+import { isNil } from 'lodash'
+import type * as ChangeControl from '@pimcore/change-control-bundle/sdk'
 import { ImportConfigReviewSurface } from './import-config-review-surface'
 
-/** Change Control binds this at onInit; the id is its published contract, not an import. */
-const REVIEW_SURFACE_REGISTRY_ID = 'ChangeControl/Review/SurfaceRegistry'
+/**
+ * Change Control binds this at onInit. Types only from the package — the review lane is an
+ * optional installation, and a value import would make loading this module depend on it.
+ */
+const REVIEW_SURFACE_REGISTRY_ID: typeof ChangeControl.REVIEW_SURFACE_REGISTRY_ID = 'ChangeControl/Review/SurfaceRegistry'
 
 /** the subject type ImportConfigSubjectHandler registers under */
 const SUBJECT_TYPE = 'data-importer-config'
-
-interface SurfaceRegistry {
-  register: (key: string, surface: unknown) => void
-}
 
 /**
  * Registers the importer's review surface, if Change Control is installed at all. Resolving
@@ -29,15 +30,19 @@ interface SurfaceRegistry {
 export function registerChangeControlReviewSurface (): void {
   // every module's onInit runs synchronously, so a macrotask is after all of them
   setTimeout(() => {
-    let registry: SurfaceRegistry | undefined
+    let registry: ChangeControl.ReviewSurfaceRegistry | undefined
     try {
-      registry = container.get<SurfaceRegistry>(REVIEW_SURFACE_REGISTRY_ID)
+      registry = container.get<ChangeControl.ReviewSurfaceRegistry>(REVIEW_SURFACE_REGISTRY_ID)
     } catch {
       return
     }
 
-    if (typeof registry?.register === 'function') {
-      registry.register(SUBJECT_TYPE, ImportConfigReviewSurface)
+    if (isNil(registry)) {
+      return
     }
+
+    // a dynamic type is read for its id and its component, so the entry is the pair itself;
+    // ReviewSurfaceType is a value, and constructing it would pull the remote in
+    registry.registerDynamicType({ id: SUBJECT_TYPE, component: ImportConfigReviewSurface })
   }, 0)
 }

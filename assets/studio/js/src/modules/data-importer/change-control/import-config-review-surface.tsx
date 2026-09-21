@@ -14,6 +14,7 @@ import { Content } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
 import { PreviewScopeProvider } from '../components/preview-scope'
 import { api, useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
+import type { ReviewDiffViewProps } from '@pimcore/change-control-bundle/sdk'
 import type { BackendConfiguration } from '../utils/transformers'
 import { FormAnnotationsProvider, type FormAnnotations } from './studio-form-annotations'
 import {
@@ -29,22 +30,8 @@ import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
 
-/**
- * The props the Change Control review lane hands every surface. Typed here rather than
- * imported: the review contract is not published to consuming bundles yet.
- */
-export interface ImportConfigReviewSurfaceProps {
-  readonly subjectRef: string
-  readonly changeSetId?: string
-  readonly contextRef?: string
-  /** review while the change set is open; history once it is resolved */
-  readonly mode?: ReviewMode
-  /** the resolved state — 'merged' | 'discarded' | 'refined' — shown in history */
-  readonly state?: string
-  readonly resolvedAt?: number
-  readonly onExcludedChange?: (paths: string[]) => void
-  readonly onStatsChange?: (changed: number) => void
-}
+/** the props the Change Control review lane hands every surface */
+export type ImportConfigReviewSurfaceProps = ReviewDiffViewProps
 
 const T = 'data-importer.review'
 
@@ -66,14 +53,15 @@ const SCROLL_ATTEMPTS = 24
  * the tab strip keep them to itself. A configuration is approved or rejected whole: the rail
  * decides nothing.
  */
-export const ImportConfigReviewSurface: React.FC<ImportConfigReviewSurfaceProps> = ({
-  subjectRef, changeSetId, contextRef, mode = 'review', state, resolvedAt, onStatsChange
-}) => {
+export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps): React.JSX.Element => {
+  const { subjectRef, changeSetId, contextRef, compareAgainst, state, resolvedAt, onStatsChange } = props
   const { t } = useTranslation()
   const { styles } = useStyles()
   const { data, isLoading, error } = useChangeSetReview(changeSetId, contextRef)
   const payload = data as ReviewPayload | undefined
-  const history = mode === 'history'
+  // the lane resolves the stance and hands it down; 'base' is what history used to mean here
+  const history = compareAgainst === 'base'
+  const mode: ReviewMode = history ? 'history' : 'review'
 
   // the review payload carries only what changed; the editor needs the whole document
   const { data: liveConfig, isLoading: liveLoading, isError: liveMissing } = useBundleDataImporterConfigGetQuery({ name: subjectRef })
