@@ -101,14 +101,22 @@ final readonly class ImportConfigSubjectHandler implements SubjectHandlerInterfa
         // a configuration is live the moment it is written, so a mode this cannot land is
         // refused here rather than at apply — the review meta probes with each mode
         if ($mode !== MergeSaveMode::Publish) {
-            throw SubjectAccessDeniedException::forRef(self::TYPE, $subject->ref, MergeSaveMode::Publish->requiredPermission());
+            throw SubjectAccessDeniedException::forRef(
+                self::TYPE,
+                $subject->ref,
+                MergeSaveMode::Publish->requiredPermission(),
+            );
         }
 
         $this->assertConfigPermission($subject, $user);
     }
 
-    public function applyMerged(SubjectRef $subject, array $finalData, UserInterface $mergedBy, MergeSaveMode $mode): array
-    {
+    public function applyMerged(
+        SubjectRef $subject,
+        array $finalData,
+        UserInterface $mergedBy,
+        MergeSaveMode $mode,
+    ): array {
         if ($mode !== MergeSaveMode::Publish) {
             throw UnsupportedMergeSaveModeException::by(self::class, $mode);
         }

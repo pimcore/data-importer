@@ -47,8 +47,14 @@ class ImportConfigShapeTest extends Unit
 
     public function testAListIsAtomic(): void
     {
-        static::assertSame(NodeKind::Atomic, $this->shape->kindOf(['mappingConfig'], [['label' => 'a'], ['label' => 'b']]));
-        static::assertSame(NodeKind::Atomic, $this->shape->kindOf(['mappingConfig', '0', 'dataSourceIndex'], ['mileage']));
+        static::assertSame(
+            NodeKind::Atomic,
+            $this->shape->kindOf(['mappingConfig'], [['label' => 'a'], ['label' => 'b']]),
+        );
+        static::assertSame(
+            NodeKind::Atomic,
+            $this->shape->kindOf(['mappingConfig', '0', 'dataSourceIndex'], ['mileage']),
+        );
     }
 
     public function testScalarsAndEmptyArraysAreAtomic(): void

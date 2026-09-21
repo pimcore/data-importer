@@ -47,7 +47,8 @@ final readonly class CalculateTransformationResultTypeParameters
         )]
         private array $currentConfig,
         #[Property(
-            description: 'A change set under review: its preview data is kept beside the live configuration\'s, and a configuration that is only proposed so far is accepted',
+            description: 'A change set under review: its preview data is kept beside the live '
+                . 'configuration\'s, and a configuration that is only proposed so far is accepted',
             type: 'string',
         )]
         // a plain string, not ?string: the Studio codegen turns a nullable into `any`

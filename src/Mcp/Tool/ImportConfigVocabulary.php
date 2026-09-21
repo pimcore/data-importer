@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
 use function array_keys;
+use function array_map;
 use function iterator_to_array;
 
 /**
@@ -30,35 +31,14 @@ final class ImportConfigVocabulary
     private array $types;
 
     /**
-     * @param iterable<string, object> $loaders
-     * @param iterable<string, object> $interpreters
-     * @param iterable<string, object> $loadingStrategies
-     * @param iterable<string, object> $locationStrategies
-     * @param iterable<string, object> $publishingStrategies
-     * @param iterable<string, object> $cleanupStrategies
-     * @param iterable<string, object> $dataTargets
-     * @param iterable<string, object> $operators
+     * One tagged iterator per family, keyed by the family name the refusals print. Keyed rather
+     * than one argument each: the families are data, and the list grows with the tag families.
+     *
+     * @param array<string, iterable<string, object>> $families
      */
-    public function __construct(
-        iterable $loaders,
-        iterable $interpreters,
-        iterable $loadingStrategies,
-        iterable $locationStrategies,
-        iterable $publishingStrategies,
-        iterable $cleanupStrategies,
-        iterable $dataTargets,
-        iterable $operators,
-    ) {
-        $this->types = [
-            ProposedImportConfiguration::FAMILY_LOADER => $this->keysOf($loaders),
-            ProposedImportConfiguration::FAMILY_INTERPRETER => $this->keysOf($interpreters),
-            ProposedImportConfiguration::FAMILY_LOADING => $this->keysOf($loadingStrategies),
-            ProposedImportConfiguration::FAMILY_LOCATION => $this->keysOf($locationStrategies),
-            ProposedImportConfiguration::FAMILY_PUBLISHING => $this->keysOf($publishingStrategies),
-            ProposedImportConfiguration::FAMILY_CLEANUP => $this->keysOf($cleanupStrategies),
-            ProposedImportConfiguration::FAMILY_DATA_TARGET => $this->keysOf($dataTargets),
-            ProposedImportConfiguration::FAMILY_OPERATOR => $this->keysOf($operators),
-        ];
+    public function __construct(array $families)
+    {
+        $this->types = array_map($this->keysOf(...), $families);
     }
 
     /**

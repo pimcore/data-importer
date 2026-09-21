@@ -50,7 +50,12 @@ final readonly class GetImportConfigTool
             . 'interpreterConfig, resolverConfig, processingConfig, mappingConfig and executionConfig. '
             . 'Always read a configuration before proposing changes to it — propose_import_config '
             . 'takes the complete document back, not a patch.',
-        annotations: new ToolAnnotations(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)
+        annotations: new ToolAnnotations(
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+        )
     )]
     public function execute(
         #[Schema(type: 'string', description: 'Name of the configuration, as list_import_configs reports it.')]

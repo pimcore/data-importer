@@ -88,7 +88,10 @@ final readonly class ProposeImportConfigTool
         )
     )]
     public function execute(
-        #[Schema(type: 'string', description: 'Name of the configuration: an existing one to change, or a new one to create.')]
+        #[Schema(
+            type: 'string',
+            description: 'Name of the configuration: an existing one to change, or a new one to create.'
+        )]
         string $name,
         #[Schema(
             type: 'string',
@@ -112,77 +115,7 @@ final readonly class ProposeImportConfigTool
             }
 
             $existing = $this->load($name);
-            if ($existing === null && !ProposedImportConfiguration::isValidName($name)) {
-                return $this->errorResult(sprintf(
-                    '"%s" cannot name a configuration: use letters, digits, "-" and "_", starting with a letter or digit.',
-                    $name,
-                ));
-            }
-
-            $proposed = $this->decode($configuration);
-            if ($proposed === null) {
-                return $this->errorResult('The configuration must be an object, or a JSON or YAML object string.');
-            }
-
-            // a name nothing is stored under creates: the document is the whole configuration
-            $stored = $existing?->getConfiguration() ?? [];
-
-            $unknown = ProposedImportConfiguration::unknownSections($proposed, $stored);
-            if ($unknown !== []) {
-                return $this->errorResult(sprintf(
-                    '%s is not part of an import configuration. Read the current document with '
-                    . 'get_import_config and send that back with your changes applied, rather than '
-                    . 'writing one from memory.',
-                    implode(', ', $unknown),
-                ));
-            }
-
-            if (array_key_exists('mappingConfig', $proposed)) {
-                $mappings = ProposedImportConfiguration::mappingList($proposed['mappingConfig']);
-                if ($mappings === null) {
-                    return $this->errorResult(
-                        'mappingConfig must be a list of mapping entries, one per column.'
-                    );
-                }
-                $proposed['mappingConfig'] = $mappings;
-            }
-
-            $state = ProposedImportConfiguration::fold($stored, $proposed);
-
-            // a select can only hold one of its options; a proposal must not hold more
-            $unknownValues = ProposedImportConfiguration::unknownValues($state, $this->vocabulary->all());
-            if ($unknownValues !== []) {
-                return $this->errorResult(implode("\n", $unknownValues));
-            }
-
-            // a change the import would ignore is not worth a reviewer's turn; a create is
-            // reviewed whole, and a copy legitimately carries the inert values its source has
-            $ineffective = $existing === null ? [] : ProposedImportConfiguration::ineffectiveChanges($stored, $state);
-            if ($ineffective !== []) {
-                return $this->errorResult(implode("\n", $ineffective));
-            }
-            // identity and adapter type belong to the subject, never to a proposal
-            $state['general']['name'] = $name;
-            $state['general']['type'] = $existing?->getType() ?? self::CONFIG_TYPE;
-
-            if ($existing === null) {
-                $missing = ProposedImportConfiguration::missingForCreate($state);
-                if ($missing !== []) {
-                    return $this->errorResult(sprintf(
-                        'A new configuration needs %s. Read a similar one with get_import_config and send '
-                        . 'the complete document under the new name.',
-                        implode(', ', $missing),
-                    ));
-                }
-                // a pipeline nobody switched on must not start running because it was reviewed
-                $state['general']['active'] ??= false;
-                $state['general']['path'] ??= '';
-            }
-            // the subject strips these from its own state; proposing them back adds leaves
-            // to the review that name a change nobody made
-            foreach (ImportConfigSubjectHandler::VOLATILE_GENERAL as $volatile) {
-                unset($state['general'][$volatile]);
-            }
+            $state = $this->buildState($name, $configuration, $existing);
 
             $proposalId = bin2hex(random_bytes(16));
             $label = $existing === null
@@ -209,6 +142,8 @@ final readonly class ProposeImportConfigTool
             );
 
             return $this->successResult($result);
+        } catch (ProposalRefusedException $e) {
+            return $this->errorResult($e->getMessage());
         } catch (Throwable $e) {
             return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['name' => $name]);
         }
@@ -246,5 +181,119 @@ final readonly class ProposeImportConfigTool
         }
 
         return is_string($configuration?->getName()) ? $configuration : null;
+    }
+
+    /**
+     * The document as it would be recorded, or a refusal saying what to send instead.
+     *
+     * @throws ProposalRefusedException
+     */
+    private function buildState(string $name, array|string $configuration, ?Configuration $existing): array
+    {
+        if ($existing === null && !ProposedImportConfiguration::isValidName($name)) {
+            throw new ProposalRefusedException(sprintf(
+                '"%s" cannot name a configuration: use letters, digits, "-" and "_", '
+                . 'starting with a letter or digit.',
+                $name,
+            ));
+        }
+
+        // a name nothing is stored under creates: the document is the whole configuration
+        $stored = $existing?->getConfiguration() ?? [];
+        $state = ProposedImportConfiguration::fold($stored, $this->readSections($configuration, $stored));
+
+        $this->assertRecordable($state, $stored, $existing);
+
+        return $this->withSubjectIdentity($state, $name, $existing);
+    }
+
+    /**
+     * @throws ProposalRefusedException
+     */
+    private function readSections(array|string $configuration, array $stored): array
+    {
+        $proposed = $this->decode($configuration);
+        if ($proposed === null) {
+            throw new ProposalRefusedException(
+                'The configuration must be an object, or a JSON or YAML object string.'
+            );
+        }
+
+        $unknown = ProposedImportConfiguration::unknownSections($proposed, $stored);
+        if ($unknown !== []) {
+            throw new ProposalRefusedException(sprintf(
+                '%s is not part of an import configuration. Read the current document with '
+                . 'get_import_config and send that back with your changes applied, rather than '
+                . 'writing one from memory.',
+                implode(', ', $unknown),
+            ));
+        }
+
+        if (array_key_exists('mappingConfig', $proposed)) {
+            $mappings = ProposedImportConfiguration::mappingList($proposed['mappingConfig']);
+            if ($mappings === null) {
+                throw new ProposalRefusedException(
+                    'mappingConfig must be a list of mapping entries, one per column.'
+                );
+            }
+            $proposed['mappingConfig'] = $mappings;
+        }
+
+        return $proposed;
+    }
+
+    /**
+     * @throws ProposalRefusedException
+     */
+    private function assertRecordable(array $state, array $stored, ?Configuration $existing): void
+    {
+        // a select can only hold one of its options; a proposal must not hold more
+        $unknownValues = ProposedImportConfiguration::unknownValues($state, $this->vocabulary->all());
+        if ($unknownValues !== []) {
+            throw new ProposalRefusedException(implode("\n", $unknownValues));
+        }
+
+        // a change the import would ignore is not worth a reviewer's turn; a create is
+        // reviewed whole, and a copy legitimately carries the inert values its source has
+        if ($existing === null) {
+            return;
+        }
+
+        $ineffective = ProposedImportConfiguration::ineffectiveChanges($stored, $state);
+        if ($ineffective !== []) {
+            throw new ProposalRefusedException(implode("\n", $ineffective));
+        }
+    }
+
+    /**
+     * @throws ProposalRefusedException
+     */
+    private function withSubjectIdentity(array $state, string $name, ?Configuration $existing): array
+    {
+        // identity and adapter type belong to the subject, never to a proposal
+        $state['general']['name'] = $name;
+        $state['general']['type'] = $existing?->getType() ?? self::CONFIG_TYPE;
+
+        if ($existing === null) {
+            $missing = ProposedImportConfiguration::missingForCreate($state);
+            if ($missing !== []) {
+                throw new ProposalRefusedException(sprintf(
+                    'A new configuration needs %s. Read a similar one with get_import_config and send '
+                    . 'the complete document under the new name.',
+                    implode(', ', $missing),
+                ));
+            }
+            // a pipeline nobody switched on must not start running because it was reviewed
+            $state['general']['active'] ??= false;
+            $state['general']['path'] ??= '';
+        }
+
+        // the subject strips these from its own state; proposing them back adds leaves
+        // to the review that name a change nobody made
+        foreach (ImportConfigSubjectHandler::VOLATILE_GENERAL as $volatile) {
+            unset($state['general'][$volatile]);
+        }
+
+        return $state;
     }
 }

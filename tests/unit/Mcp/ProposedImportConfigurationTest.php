@@ -207,7 +207,11 @@ class ProposedImportConfigurationTest extends Unit
     /** an update inherits these from the stored document; a create has nowhere to inherit from */
     public function testACreateNamesWhatItStillLacks(): void
     {
-        $state = ['general' => ['name' => 'dealer-feed'], 'loaderConfig' => ['type' => 'asset'], 'resolverConfig' => ['dataObjectClassId' => '']];
+        $state = [
+            'general' => ['name' => 'dealer-feed'],
+            'loaderConfig' => ['type' => 'asset'],
+            'resolverConfig' => ['dataObjectClassId' => ''],
+        ];
 
         static::assertSame([
             'interpreterConfig.type',
@@ -228,7 +232,10 @@ class ProposedImportConfigurationTest extends Unit
         $problems = ProposedImportConfiguration::ineffectiveChanges($stored, $state);
 
         static::assertCount(1, $problems);
-        static::assertStringContainsString('processingConfig.cleanup.strategy has no effect while processingConfig.cleanup.doCleanup is off', $problems[0]);
+        static::assertStringContainsString(
+            'processingConfig.cleanup.strategy has no effect while processingConfig.cleanup.doCleanup is off',
+            $problems[0],
+        );
     }
 
     public function testTheSameChangeWithTheSwitchOnIsFine(): void
@@ -271,7 +278,12 @@ class ProposedImportConfigurationTest extends Unit
     private function stored(): array
     {
         return [
-            'general' => ['active' => true, 'type' => 'dataImporterDataObject', 'name' => 'car-import', 'description' => ''],
+            'general' => [
+                'active' => true,
+                'type' => 'dataImporterDataObject',
+                'name' => 'car-import',
+                'description' => '',
+            ],
             'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/import/cars.json']],
             'processingConfig' => ['executionType' => 'parallel', 'cleanup' => ['strategy' => 'unpublish']],
             'mappingConfig' => [

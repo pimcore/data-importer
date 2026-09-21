@@ -47,13 +47,14 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         $loader->load('services.yml');
         $loader->load('studio_backend.yaml');
 
+        $queue = $config['messenger_queue_processing'];
         $definition = $container->getDefinition(DataImporterHandler::class);
-        $definition->setArgument('$workerCountLifeTime', $config['messenger_queue_processing']['worker_count_lifetime']);
-        $definition->setArgument('$workerItemCount', $config['messenger_queue_processing']['worker_item_count']);
-        $definition->setArgument('$workerCountParallel', $config['messenger_queue_processing']['worker_count_parallel']);
+        $definition->setArgument('$workerCountLifeTime', $queue['worker_count_lifetime']);
+        $definition->setArgument('$workerItemCount', $queue['worker_item_count']);
+        $definition->setArgument('$workerCountParallel', $queue['worker_count_parallel']);
 
         $definition = $container->getDefinition(DataImporterListener::class);
-        $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+        $definition->setArgument('$messengerQueueActivated', $queue['activated']);
 
         // Change Control integration is optional: the subject handler and the review
         // hydrator implement its interfaces, so they can only be registered when it is

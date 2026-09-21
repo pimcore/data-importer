@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
 use function array_diff;
+use function array_filter;
 use function array_is_list;
 use function array_keys;
 use function array_map;
@@ -182,44 +183,79 @@ final class ProposedImportConfiguration
     public static function unknownValues(array $state, array $vocabulary): array
     {
         $problems = [];
-        $check = static function (string $path, mixed $value, string $family) use (&$problems, $vocabulary): void {
-            if ($value === null || $value === '' || !isset($vocabulary[$family])) {
-                return;
-            }
-            if (!is_string($value) || !in_array($value, $vocabulary[$family], true)) {
-                $problems[] = sprintf(
-                    '%s: "%s" is not a %s here; use one of %s',
-                    $path,
-                    is_string($value) ? $value : 'non-string',
-                    $family,
-                    implode(', ', $vocabulary[$family]),
-                );
-            }
-        };
 
         foreach (self::TYPED as $path => $family) {
-            $check($path, self::at($state, $path), $family);
+            $problem = self::typeProblem($path, self::at($state, $path), $family, $vocabulary);
+            if ($problem !== null) {
+                $problems[] = $problem;
+            }
         }
 
         $mappings = $state['mappingConfig'] ?? [];
-        if (!is_array($mappings)) {
-            return $problems;
-        }
+
+        return is_array($mappings)
+            ? [...$problems, ...self::mappingProblems($mappings, $vocabulary)]
+            : $problems;
+    }
+
+    /**
+     * @param array<string, list<string>> $vocabulary
+     *
+     * @return list<string>
+     */
+    private static function mappingProblems(array $mappings, array $vocabulary): array
+    {
+        $problems = [];
+
         foreach ($mappings as $index => $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $check(sprintf('mappingConfig[%s].dataTarget.type', $index), $row['dataTarget']['type'] ?? null, self::FAMILY_DATA_TARGET);
-            foreach (is_array($row['transformationPipeline'] ?? null) ? $row['transformationPipeline'] : [] as $step => $operator) {
-                $check(
+
+            $problems[] = self::typeProblem(
+                sprintf('mappingConfig[%s].dataTarget.type', $index),
+                $row['dataTarget']['type'] ?? null,
+                self::FAMILY_DATA_TARGET,
+                $vocabulary,
+            );
+
+            $pipeline = is_array($row['transformationPipeline'] ?? null) ? $row['transformationPipeline'] : [];
+            foreach ($pipeline as $step => $operator) {
+                $problems[] = self::typeProblem(
                     sprintf('mappingConfig[%s].transformationPipeline[%s].type', $index, $step),
                     is_array($operator) ? ($operator['type'] ?? null) : null,
                     self::FAMILY_OPERATOR,
+                    $vocabulary,
                 );
             }
         }
 
-        return $problems;
+        return array_values(array_filter($problems, static fn (?string $p): bool => $p !== null));
+    }
+
+    /**
+     * What to say about one typed leaf, or null when this installation accepts it. A family the
+     * installation does not know cannot be judged, so it passes.
+     *
+     * @param array<string, list<string>> $vocabulary
+     */
+    private static function typeProblem(string $path, mixed $value, string $family, array $vocabulary): ?string
+    {
+        if ($value === null || $value === '' || !isset($vocabulary[$family])) {
+            return null;
+        }
+
+        if (is_string($value) && in_array($value, $vocabulary[$family], true)) {
+            return null;
+        }
+
+        return sprintf(
+            '%s: "%s" is not a %s here; use one of %s',
+            $path,
+            is_string($value) ? $value : 'non-string',
+            $family,
+            implode(', ', $vocabulary[$family]),
+        );
     }
 
     /**

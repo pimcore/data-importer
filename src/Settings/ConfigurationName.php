@@ -28,6 +28,7 @@ final class ConfigurationName
 
     private function __construct()
     {
+        // static-only: there is nothing to construct
     }
 
     public static function isValid(string $name): bool

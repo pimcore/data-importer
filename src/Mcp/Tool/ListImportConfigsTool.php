@@ -47,7 +47,12 @@ final readonly class ListImportConfigsTool
         title: 'List Import Configurations',
         description: 'List the Data Importer configurations, with their group and whether they are '
             . 'active. Use this to find the exact name to pass to get_import_config.',
-        annotations: new ToolAnnotations(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false)
+        annotations: new ToolAnnotations(
+            readOnlyHint: true,
+            destructiveHint: false,
+            idempotentHint: true,
+            openWorldHint: false,
+        )
     )]
     public function execute(): CallToolResult
     {

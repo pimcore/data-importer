@@ -74,5 +74,9 @@ interface PreviewDataServiceInterface
      * @throws NotFoundHttpException
      * @throws ForbiddenException
      */
-    public function loadColumnHeaders(string $name, ?array $currentConfig, ?string $scope = null): ColumnHeadersResponse;
+    public function loadColumnHeaders(
+        string $name,
+        ?array $currentConfig,
+        ?string $scope = null,
+    ): ColumnHeadersResponse;
 }

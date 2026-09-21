@@ -76,7 +76,8 @@ final class UploadPreviewController extends AbstractApiController
             ),
             new Property(
                 property: 'previewScope',
-                description: 'A change set under review: its preview data is kept beside the live configuration\'s, and a configuration that is only proposed so far is accepted',
+                description: 'A change set under review: its preview data is kept beside the live '
+                    . 'configuration\'s, and a configuration that is only proposed so far is accepted',
                 type: 'string'
             ),
             new Property(

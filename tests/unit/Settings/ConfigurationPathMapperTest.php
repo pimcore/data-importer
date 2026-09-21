@@ -79,8 +79,14 @@ class ConfigurationPathMapperTest extends Unit
 
     public function testWholeMappingItemRoundTrips(): void
     {
-        static::assertSame('mappingConfig.0', $this->mapper->toFormPath('mappingConfig.' . self::ID_VIN, $this->configuration()));
-        static::assertSame('mappingConfig.' . self::ID_VIN, $this->mapper->toStoredPath('mappingConfig.0', $this->configuration()));
+        static::assertSame(
+            'mappingConfig.0',
+            $this->mapper->toFormPath('mappingConfig.' . self::ID_VIN, $this->configuration()),
+        );
+        static::assertSame(
+            'mappingConfig.' . self::ID_VIN,
+            $this->mapper->toStoredPath('mappingConfig.0', $this->configuration()),
+        );
     }
 
     /**
@@ -91,7 +97,10 @@ class ConfigurationPathMapperTest extends Unit
     public function testAddedMappingItemHasNoFormPathYet(): void
     {
         static::assertNull(
-            $this->mapper->toFormPath('mappingConfig.b1180000-0000-4000-8000-00000000009a.dataTarget', $this->configuration())
+            $this->mapper->toFormPath(
+                'mappingConfig.b1180000-0000-4000-8000-00000000009a.dataTarget',
+                $this->configuration(),
+            )
         );
     }
 
