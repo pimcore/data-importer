@@ -25,7 +25,7 @@ import { DND_TYPE } from '../sources-panel/sources-panel'
 import { findMappingIndexById } from '../utils/mapping-identity'
 import { MappingItemContent } from './mapping-item-content'
 import { useFormItemAnnotation } from '../../../../../change-control/studio-form-annotations'
-import { StatusTag } from '@pimcore/data-hub'
+import { ChangeTag } from '@pimcore/change-control-bundle/sdk'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -151,7 +151,7 @@ const MappingItemComponent = ({
     : (
       <span className={ styles.annotatedTitle }>
         <span className={ annotation.status === 'removed' ? styles.removedTitle : undefined }>{ label }</span>
-        <StatusTag status={ annotation.status } />
+        <ChangeTag status={ annotation.status } />
       </span>
       )
 

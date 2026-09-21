@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { ConfigSummary, type ConfigSummaryFoot, type ConfigSummarySection } from '@pimcore/data-hub'
+import { ConfigSummary, type ConfigSummaryFoot, type ConfigSummarySection } from '@pimcore/change-control-bundle/sdk'
 import { type ConfigBrief } from './config-outline'
 
 const T = 'data-importer.review.outline'

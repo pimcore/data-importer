@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { ConfigSummary, type ConfigSummarySection } from '@pimcore/data-hub'
+import { ConfigSummary, type ConfigSummarySection } from '@pimcore/change-control-bundle/sdk'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import type { BackendConfiguration } from '../utils/transformers'
 import { type ChangeGroup, type ConfigChange } from './config-review-model'
