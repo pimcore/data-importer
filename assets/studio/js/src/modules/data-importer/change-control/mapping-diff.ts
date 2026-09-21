@@ -45,7 +45,10 @@ const targetKey = (row: MappingRow): string | undefined => {
   const settings = row.dataTarget?.settings ?? {}
   const field = settings.fieldName
   if (typeof field !== 'string' || field === '') return undefined
-  return `${JSON.stringify(row.dataSourceIndex ?? null)}|${row.dataTarget?.type ?? ''}:${field}:${String(settings.language ?? '')}`
+  // a non-string language is not an identity we can key on, so it keys as absent
+  const language = typeof settings.language === 'string' ? settings.language : ''
+  const source = JSON.stringify(row.dataSourceIndex ?? null)
+  return `${source}|${row.dataTarget?.type ?? ''}:${field}:${language}`
 }
 
 const rowLabel = (row: MappingRow): string => {

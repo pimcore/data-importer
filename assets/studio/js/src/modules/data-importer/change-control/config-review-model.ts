@@ -30,7 +30,7 @@ export interface ConfigChange {
 }
 
 /** the general.* keys the editor's form lifts to its root; see ConfigurationPathMapper */
-const FLATTENED = ['active', 'description', 'group', 'name']
+const FLATTENED = new Set(['active', 'description', 'group', 'name'])
 
 /** identity and bookkeeping: the subject's, never a change a reviewer weighs */
 const NOT_A_CHANGE = new Set(['general.name', 'general.type', 'general.path'])
@@ -42,7 +42,7 @@ const NOT_A_CHANGE = new Set(['general.name', 'general.type', 'general.path'])
 export function toFormPath (address: string): string | undefined {
   const segments = address.split('.')
   if (segments[0] === 'general') {
-    return segments.length > 1 && FLATTENED.includes(segments[1])
+    return segments.length > 1 && FLATTENED.has(segments[1])
       ? segments.slice(1).join('.')
       : undefined
   }
