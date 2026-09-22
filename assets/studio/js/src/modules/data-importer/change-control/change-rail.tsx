@@ -49,8 +49,9 @@ export const ChangeList: React.FC<ListProps> = ({
     rows: group.changes.map((change) => ({
       key: change.address,
       label: labelFor(change),
-      // an unbound change has no field to jump to, so the hint is the only place it can say so
-      hint: change.unbound ? t(`${T}.unbound`, { address: change.address }) : change.address,
+      hint: change.address,
+      // the editor shows nothing for an unbound change, so the rail has to say it outright
+      note: change.unbound ? t(`${T}.unbound`, { address: change.address }) : undefined,
       status: change.status
     }))
   }))
@@ -78,7 +79,6 @@ export const ChangeList: React.FC<ListProps> = ({
   return (
     <ConfigSummary
       activeKey={ activeSection }
-      description={ text(configuration.general?.description) }
       name={ text(configuration.general?.name) ?? '' }
       onOpenSection={ onJump }
       sections={ ordered }

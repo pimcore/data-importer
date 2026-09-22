@@ -26,9 +26,15 @@ export const useStyles = createStyles(({ token, css }) => ({
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 0 ${token.paddingLG}px;
+    /* the modal body already provides the left gutter; only the divider needs clearing */
+    padding-right: ${token.paddingLG}px;
     border-right: 1px solid ${token.colorSplit};
   `,
+  /*
+   * The summary's spine markers hang to the left of its text so the entries line up with the
+   * configuration's name. This reaches out into the modal body's gutter to make room for
+   * them: without it the overflow rule below clips them away. Matches ConfigSummary's hang.
+   */
   list: css`
     flex: 1;
     min-height: 0;
@@ -36,6 +42,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
+    margin-inline-start: -${7 + token.marginXS}px;
+    padding-inline-start: ${7 + token.marginXS}px;
   `,
   summary: css`
     padding: ${token.paddingXS}px 0 ${token.paddingXXS}px;
