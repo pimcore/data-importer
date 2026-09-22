@@ -344,12 +344,6 @@ data-importer.review.outline.write: Skriv
 data-importer.review.outline.run: Kjør
 data-importer.review.outline.data-objects: '{{class}}-objekter'
 data-importer.review.outline.new: Ny
-data-importer.review.state.merged: Tatt i bruk
-data-importer.review.state.discarded: Avvist
-data-importer.review.state.refined: Justert
-data-importer.review.resolved-at: 'Avgjort {{when}}'
-data-importer.review.history-notice: Verdier slik de var da endringen ble foreslått.
-data-importer.review.snapshot: Skrivebeskyttet øyeblikksbilde
 data-importer.review.load-failed: De foreslåtte endringene kunne ikke lastes.
 data-importer.review.section.general: Generelt
 data-importer.review.section.data-source: Datakilde

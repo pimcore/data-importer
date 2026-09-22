@@ -10,11 +10,11 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Content } from '@pimcore/studio-ui-bundle/components'
+import { Content, Flex } from '@pimcore/studio-ui-bundle/components'
 import { DataImporterConfigEditor } from '../components/data-importer-config-editor'
 import { PreviewScopeProvider } from '../components/preview-scope'
 import { api, useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
-import type { ReviewDiffViewProps } from '@pimcore/change-control-bundle/sdk'
+import { ReviewOutcomeHeader, type ReviewDiffViewProps } from '@pimcore/change-control-bundle/sdk'
 import type { BackendConfiguration } from '../utils/transformers'
 import { FormAnnotationsProvider, type FormAnnotations } from './studio-form-annotations'
 import {
@@ -26,7 +26,6 @@ import { mappingDiff } from './mapping-diff'
 import { ChangeList } from './change-rail'
 import { configBrief } from './config-outline'
 import { ConfigBriefCard } from './config-outline-rail'
-import { HistoryHead } from './history-head'
 import { useStyles } from './import-config-review-surface.styles'
 import { useChangeSetReview } from './use-change-set-review'
 
@@ -186,12 +185,14 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
   )
 
   return (
-    <>
+    <Flex
+      gap="small"
+      vertical
+    >
       { history && state !== undefined && (
-        <HistoryHead
+        <ReviewOutcomeHeader
           resolvedAt={ resolvedAt }
           state={ state }
-          styles={ styles }
         />
       ) }
       <div className={ styles.layout }>
@@ -229,6 +230,6 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
             : editor }
         </div>
       </div>
-    </>
+    </Flex>
   )
 }

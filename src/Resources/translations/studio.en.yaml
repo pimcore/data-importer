@@ -344,12 +344,6 @@ data-importer.review.outline.write: Write
 data-importer.review.outline.run: Run
 data-importer.review.outline.data-objects: '{{class}} data objects'
 data-importer.review.outline.new: New
-data-importer.review.state.merged: Applied
-data-importer.review.state.discarded: Rejected
-data-importer.review.state.refined: Refined
-data-importer.review.resolved-at: 'Resolved at {{when}}'
-data-importer.review.history-notice: Values as they were when the change was proposed.
-data-importer.review.snapshot: Read-only snapshot
 data-importer.review.load-failed: The proposed changes could not be loaded.
 data-importer.review.section.general: General
 data-importer.review.section.data-source: Data source

@@ -45,33 +45,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     text-transform: uppercase;
     color: ${token.colorTextTertiary};
   `,
-  /* the twin of the change-control review header: one quiet line, the notice in a tooltip */
-  history: css`
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 0 ${token.paddingLG}px;
-    margin-bottom: ${token.marginSM}px;
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextSecondary};
-  `,
-  historyMeta: css`
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  `,
-  historyDivider: css`
-    color: ${token.colorTextQuaternary};
-  `,
-  historySnapshot: css`
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: ${token.colorTextTertiary};
-    border-bottom: 1px dashed ${token.colorBorder};
-    cursor: help;
-  `,
   group: css`
     display: flex;
     flex-direction: column;

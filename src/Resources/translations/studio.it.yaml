@@ -344,12 +344,6 @@ data-importer.review.outline.write: Scrivi
 data-importer.review.outline.run: Esegui
 data-importer.review.outline.data-objects: 'Oggetti {{class}}'
 data-importer.review.outline.new: Nuova
-data-importer.review.state.merged: Applicato
-data-importer.review.state.discarded: Rifiutato
-data-importer.review.state.refined: Rivisto
-data-importer.review.resolved-at: 'Risolto il {{when}}'
-data-importer.review.history-notice: Valori così com’erano quando la modifica è stata proposta.
-data-importer.review.snapshot: Istantanea in sola lettura
 data-importer.review.load-failed: Impossibile caricare le modifiche proposte.
 data-importer.review.section.general: Generale
 data-importer.review.section.data-source: Origine dati
