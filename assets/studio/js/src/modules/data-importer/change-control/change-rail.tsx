@@ -49,7 +49,8 @@ export const ChangeList: React.FC<ListProps> = ({
     rows: group.changes.map((change) => ({
       key: change.address,
       label: labelFor(change),
-      hint: change.address,
+      // an unbound change has no field to jump to, so the hint is the only place it can say so
+      hint: change.unbound ? t(`${T}.unbound`, { address: change.address }) : change.address,
       status: change.status
     }))
   }))

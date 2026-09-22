@@ -229,6 +229,17 @@ final readonly class ProposeImportConfigTool
             ));
         }
 
+        // a field the editor binds nothing to reviews as a change and applies as nothing
+        $invented = ProposedImportConfiguration::unknownPaths($proposed, $stored);
+        if ($invented !== []) {
+            throw new ProposalRefusedException(sprintf(
+                '%s is not a field of an import configuration. Read the current document with '
+                . 'get_import_config and change the keys it already has, rather than spelling '
+                . 'one from memory.',
+                implode(', ', $invented),
+            ));
+        }
+
         if (array_key_exists('mappingConfig', $proposed)) {
             $mappings = ProposedImportConfiguration::mappingList($proposed['mappingConfig']);
             if ($mappings === null) {

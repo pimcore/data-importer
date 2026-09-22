@@ -17,6 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 use function array_diff;
 use function array_filter;
 use function array_is_list;
+use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function array_values;
@@ -91,8 +92,49 @@ final class ProposedImportConfiguration
         'processingConfig.cleanup.strategy' => 'processingConfig.cleanup.doCleanup',
         'processingConfig.cleanup.doCleanup' => 'processingConfig.idDataIndex',
         'processingConfig.doDeltaCheck' => 'processingConfig.idDataIndex',
-        'processingConfig.doDeltaCheckCheck' => 'processingConfig.idDataIndex',
     ];
+
+    /**
+     * Every field the document fixes the spelling of. A path outside this list is either one
+     * the installation already stores or a key nobody can act on: the editor binds no field
+     * to it and the import never reads it, so a proposal carrying it would review as a change
+     * and apply as nothing.
+     */
+    private const array KNOWN_PATHS = [
+        'general.active', 'general.description', 'general.group',
+        'general.name', 'general.path', 'general.type',
+        // the Data Hub's own bookkeeping: stripped before recording, but a document read
+        // with get_import_config carries it, and a copy made for a create carries it too
+        'general.modificationDate', 'general.createDate', 'general.creationDate', 'general.writeable',
+        'loaderConfig.type',
+        'interpreterConfig.type',
+        'resolverConfig.dataObjectClassId',
+        'resolverConfig.elementType',
+        'resolverConfig.loadingStrategy.type',
+        'resolverConfig.createLocationStrategy.type',
+        'resolverConfig.locationUpdateStrategy.type',
+        'resolverConfig.publishingStrategy.type',
+        'processingConfig.executionType',
+        'processingConfig.idDataIndex',
+        'processingConfig.doDeltaCheck',
+        'processingConfig.doArchiveImportFile',
+        'processingConfig.disableVersioning',
+        'processingConfig.cleanup.doCleanup',
+        'processingConfig.cleanup.strategy',
+        'processingConfig.logging.disableInfoLogs',
+        'processingConfig.logging.disableInfoFileObjects',
+        'processingConfig.logging.disableErrorLogs',
+        'processingConfig.logging.disableErrorFileObjects',
+        'executionConfig.scheduleType',
+        'executionConfig.cronDefinition',
+        'executionConfig.scheduledAt',
+    ];
+
+    /** a node whose keys belong to the type it configures, not to the document */
+    private const string OPEN_NODE = 'settings';
+
+    /** sections with no fixed leaves: a list checked whole, and an ACL the editor writes */
+    private const array OPEN_SECTIONS = ['mappingConfig', 'permissions'];
 
     /** where a document names a type, and which family it must come from */
     private const array TYPED = [
@@ -118,6 +160,83 @@ final class ProposedImportConfiguration
     public static function unknownSections(array $proposed, array $stored): array
     {
         return array_values(array_diff(array_keys($proposed), self::SECTIONS, self::ENVELOPE, array_keys($stored)));
+    }
+
+    /**
+     * Every leaf the proposal invents: one the document does not name and the stored
+     * configuration does not already carry.
+     *
+     * Only the sections whose shape is fixed are walked. A top-level key that is not a
+     * section is unknownSections' to judge, so an installation that keeps more than the
+     * editor shows still passes here.
+     *
+     * @param array<string, mixed> $proposed as the agent sent it, before it is folded —
+     *                                       afterwards a stored leaf and a proposed one
+     *                                       are no longer distinguishable
+     * @param array<string, mixed> $stored
+     *
+     * @return list<string>
+     */
+    public static function unknownPaths(array $proposed, array $stored): array
+    {
+        $unknown = [];
+
+        foreach (self::SECTIONS as $section) {
+            $node = $proposed[$section] ?? null;
+            if (in_array($section, self::OPEN_SECTIONS, true) || !is_array($node)) {
+                continue;
+            }
+
+            self::collectUnknown($node, $stored, $section, $unknown);
+        }
+
+        return $unknown;
+    }
+
+    /**
+     * @param array<string, mixed> $node
+     * @param array<string, mixed> $stored
+     * @param list<string>         $unknown
+     */
+    private static function collectUnknown(array $node, array $stored, string $prefix, array &$unknown): void
+    {
+        foreach ($node as $key => $value) {
+            if ($key === self::OPEN_NODE) {
+                continue;
+            }
+
+            $path = $prefix . '.' . $key;
+
+            // a list is a value here; only objects carry further leaves to name
+            if (is_array($value) && !array_is_list($value)) {
+                self::collectUnknown($value, $stored, $path, $unknown);
+
+                continue;
+            }
+
+            if (!in_array($path, self::KNOWN_PATHS, true) && !self::has($stored, $path)) {
+                $unknown[] = $path;
+            }
+        }
+    }
+
+    /**
+     * Whether the document carries the path at all — a stored null is still a field the
+     * installation has, which `at()` cannot tell from a missing one.
+     *
+     * @param array<string, mixed> $state
+     */
+    private static function has(array $state, string $path): bool
+    {
+        $node = $state;
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($node) || !array_key_exists($segment, $node)) {
+                return false;
+            }
+            $node = $node[$segment];
+        }
+
+        return true;
     }
 
     /**

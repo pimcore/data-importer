@@ -137,9 +137,7 @@ function runStop (
   const value = named(t, 'data-importer.processing.execution-type', processing?.executionType) ?? when
   if (value === '') return undefined
 
-  // the editor has two spellings for the delta switch; either means it is on
-  const delta = processing?.doDeltaCheck === true ||
-    (processing as { doDeltaCheckCheck?: boolean } | undefined)?.doDeltaCheckCheck === true
+  const delta = processing?.doDeltaCheck === true
   const cleanup = processing?.cleanup?.doCleanup === true
     ? present([
         translated(t, 'data-importer.processing.cleanup.title') ?? humanize('cleanup'),

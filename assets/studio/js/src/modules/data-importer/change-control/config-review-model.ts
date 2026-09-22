@@ -21,6 +21,8 @@ export interface ConfigChange {
   readonly address: string
   /** the same field as the editor's form binds it, when it binds it at all */
   readonly formPath?: string
+  /** the document names no such field: nothing shows this change, and approving applies nothing */
+  readonly unbound: boolean
   /** the field's own name, which is what a reader recognises */
   readonly label: string
   readonly section: string
@@ -36,10 +38,55 @@ const FLATTENED = new Set(['active', 'description', 'group', 'name'])
 const NOT_A_CHANGE = new Set(['general.name', 'general.type', 'general.path'])
 
 /**
+ * Every leaf the document names, by document path. The twin of the propose tool's own list
+ * (ProposedImportConfiguration::KNOWN_PATHS) — change them together.
+ */
+const KNOWN_PATHS = new Set([
+  'general.active', 'general.description', 'general.group',
+  'general.name', 'general.path', 'general.type',
+  'general.modificationDate', 'general.createDate', 'general.creationDate', 'general.writeable',
+  'loaderConfig.type',
+  'interpreterConfig.type',
+  'resolverConfig.dataObjectClassId',
+  'resolverConfig.elementType',
+  'resolverConfig.loadingStrategy.type',
+  'resolverConfig.createLocationStrategy.type',
+  'resolverConfig.locationUpdateStrategy.type',
+  'resolverConfig.publishingStrategy.type',
+  'processingConfig.executionType',
+  'processingConfig.idDataIndex',
+  'processingConfig.doDeltaCheck',
+  'processingConfig.doArchiveImportFile',
+  'processingConfig.disableVersioning',
+  'processingConfig.cleanup.doCleanup',
+  'processingConfig.cleanup.strategy',
+  'processingConfig.logging.disableInfoLogs',
+  'processingConfig.logging.disableInfoFileObjects',
+  'processingConfig.logging.disableErrorLogs',
+  'processingConfig.logging.disableErrorFileObjects',
+  'executionConfig.scheduleType',
+  'executionConfig.cronDefinition',
+  'executionConfig.scheduledAt'
+])
+
+/**
+ * Whether the document names this path at all. A `settings` node is open — its keys belong to
+ * the loader or strategy they configure, and the editor binds them per type — so anything
+ * under one counts. A path that is neither is one nothing acts on: no field carries it and
+ * the import never reads it, so a change to it would apply as nothing.
+ */
+export function isDocumentField (address: string): boolean {
+  return KNOWN_PATHS.has(address) || address.split('.').includes('settings')
+}
+
+/**
  * A document path as the editor's form binds it, or undefined when the form has no field for
- * it — bookkeeping under `general`, most of all, which a reviewer must not be offered.
+ * it — bookkeeping under `general`, most of all, which a reviewer must not be offered, and
+ * any path the document does not name, which would otherwise file a mark no field reads.
  */
 export function toFormPath (address: string): string | undefined {
+  if (!isDocumentField(address)) return undefined
+
   const segments = address.split('.')
   if (segments[0] === 'general') {
     return segments.length > 1 && FLATTENED.has(segments[1])
@@ -194,6 +241,7 @@ export function configChanges (payload: ReviewPayload | undefined, mode: ReviewM
       changes.push({
         address,
         formPath: toFormPath(address),
+        unbound: !isDocumentField(address),
         label: address.split('.').pop() ?? address,
         section: slotKey,
         status: before === undefined ? 'added' : 'changed',

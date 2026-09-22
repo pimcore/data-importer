@@ -330,6 +330,7 @@ data-importer.review.status.changed: modifié
 data-importer.review.status.removed: supprimé
 data-importer.review.status.moved: déplacé
 data-importer.review.mappings: Mappings
+data-importer.review.unbound: '{{address}} — cette configuration n''a pas ce champ, l''approbation ne change rien'
 data-importer.review.outline.active: Active
 data-importer.review.outline.inactive: Inactive
 data-importer.review.outline.mappings: '{{count}} mappages de champs'

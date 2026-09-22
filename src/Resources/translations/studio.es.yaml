@@ -330,6 +330,7 @@ data-importer.review.status.changed: modificado
 data-importer.review.status.removed: eliminado
 data-importer.review.status.moved: movido
 data-importer.review.mappings: Mapeos
+data-importer.review.unbound: '{{address}} — esta configuración no tiene ese campo, aprobarla no cambia nada'
 data-importer.review.outline.active: Activa
 data-importer.review.outline.inactive: Inactiva
 data-importer.review.outline.mappings: '{{count}} asignaciones de campos'

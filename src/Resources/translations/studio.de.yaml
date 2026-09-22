@@ -330,6 +330,7 @@ data-importer.review.status.changed: geändert
 data-importer.review.status.removed: entfernt
 data-importer.review.status.moved: verschoben
 data-importer.review.mappings: Mappings
+data-importer.review.unbound: '{{address}} — diese Konfiguration hat kein solches Feld; eine Freigabe ändert nichts'
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} Feldzuordnungen'

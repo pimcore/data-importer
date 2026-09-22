@@ -275,6 +275,95 @@ class ProposedImportConfigurationTest extends Unit
     /**
      * @return array<string, mixed>
      */
+    /** the case this guard exists for: a switch spelt with one word too many */
+    public function testAnInventedLeafIsUnknown(): void
+    {
+        static::assertSame(
+            ['processingConfig.doDeltaCheckCheck'],
+            ProposedImportConfiguration::unknownPaths(
+                ['processingConfig' => ['doDeltaCheckCheck' => false]],
+                $this->stored()
+            )
+        );
+    }
+
+    public function testAFieldTheDocumentNamesIsKnown(): void
+    {
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['processingConfig' => ['doDeltaCheck' => true, 'logging' => ['disableInfoLogs' => true]]],
+                $this->stored()
+            )
+        );
+    }
+
+    /** the editor shows these per loader type; the document does not fix their spelling */
+    public function testSettingsKeysAreNotTheDocumentsToFix(): void
+    {
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['loaderConfig' => ['type' => 'sftp', 'settings' => ['host' => 'x', 'anythingAtAll' => 1]]],
+                $this->stored()
+            )
+        );
+    }
+
+    /** an installation may store more than the editor shows; that is not an invention */
+    public function testALeafTheStoredDocumentCarriesIsKnown(): void
+    {
+        $stored = $this->stored();
+        $stored['processingConfig']['somethingThisInstallKeeps'] = true;
+
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['processingConfig' => ['somethingThisInstallKeeps' => false]],
+                $stored
+            )
+        );
+    }
+
+    /** a stored null is still a field the installation has */
+    public function testAStoredNullIsStillAField(): void
+    {
+        $stored = $this->stored();
+        $stored['processingConfig']['idDataIndexOverride'] = null;
+
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['processingConfig' => ['idDataIndexOverride' => 'sku']],
+                $stored
+            )
+        );
+    }
+
+    /** the mapping list has its own check, and rows carry operator keys nothing fixes */
+    public function testTheMappingListIsNotWalked(): void
+    {
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['mappingConfig' => [['label' => 'a', 'whateverAnOperatorNeeds' => 1]]],
+                $this->stored()
+            )
+        );
+    }
+
+    /** a top-level key that is no section is unknownSections' to judge, not this one's */
+    public function testASectionThisGuardDoesNotOwnIsLeftAlone(): void
+    {
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['schema' => ['queryEntities' => ['whatever' => 1]]],
+                $this->stored()
+            )
+        );
+    }
+
     private function stored(): array
     {
         return [

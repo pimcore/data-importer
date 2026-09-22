@@ -330,6 +330,7 @@ data-importer.review.status.changed: changed
 data-importer.review.status.removed: removed
 data-importer.review.status.moved: moved
 data-importer.review.mappings: Mappings
+data-importer.review.unbound: '{{address}} — this configuration has no such field, so approving changes nothing'
 data-importer.review.outline.active: Active
 data-importer.review.outline.inactive: Inactive
 data-importer.review.outline.mappings: '{{count}} field mappings'

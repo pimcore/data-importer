@@ -330,6 +330,7 @@ data-importer.review.status.changed: endret
 data-importer.review.status.removed: fjernet
 data-importer.review.status.moved: flyttet
 data-importer.review.mappings: Mappinger
+data-importer.review.unbound: '{{address}} — dette oppsettet har ikke et slikt felt, så godkjenning endrer ingenting'
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} felttilordninger'
