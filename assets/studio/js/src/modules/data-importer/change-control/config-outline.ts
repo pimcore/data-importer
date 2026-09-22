@@ -19,41 +19,33 @@ const T = 'data-importer.review.outline'
 
 const SEP = ' · '
 
-export interface BriefStop {
-  readonly key: string
-  /** a Studio icon name */
-  readonly icon: string
-  /** translation key for the part this stop plays in the pipeline */
-  readonly role: string
+/** what a section is worth saying in one line, and how much of it that line accounts for */
+interface Told {
   readonly value: string
-  /** the particulars, when the document carries any */
+  readonly note?: string
+  /** document paths the line already names, so the tail does not count them twice */
+  readonly covers: string[]
+}
+
+export interface BriefSection {
+  /** the editor section this is about; the same key the change rail navigates by */
+  readonly key: string
+  /** translation key */
+  readonly label: string
+  /** the setting that says most about the section, when it has one */
+  readonly value?: string
+  /** its particulars, and how many settings the line did not get to */
   readonly note?: string
 }
 
-export interface BriefGroup {
-  readonly section: string
-  /** translation key */
-  readonly label: string
-  readonly count: number
-}
-
-/** A configuration that does not exist yet, in one card: what it is, what it does, how much of it there is. */
+/** A configuration that does not exist yet, told section by section rather than field by field. */
 export interface ConfigBrief {
   readonly name: string
   readonly active: boolean
   readonly description?: string
-  readonly stops: BriefStop[]
-  readonly groups: BriefGroup[]
+  readonly sections: BriefSection[]
   readonly total: number
-}
-
-/** the file format decides the Read mark; the loader only says where the file comes from */
-const INTERPRETER_ICON: Record<string, string> = {
-  csv: 'import-csv',
-  json: 'json',
-  xml: 'code',
-  xlsx: 'table',
-  sql: 'table'
+  readonly filled: number
 }
 
 /** an adapter's or strategy's name as the editor shows it in its select, else its key spelt out */
@@ -66,21 +58,32 @@ const present = (parts: Array<string | undefined>): string[] =>
 const text = (value: unknown): string | undefined =>
   typeof value === 'string' && value !== '' ? value : undefined
 
-/** the one loader setting that says where the data comes from */
-function origin (type: string | undefined, settings: Record<string, unknown> | undefined): string | undefined {
-  if (settings === undefined) return undefined
-  const s = (key: string): string | undefined => text(settings[key])
-  switch (type) {
-    case 'asset': return s('assetPath')
-    case 'http': return s('url')
-    case 'sftp': return present([s('host'), s('remotePath')]).join(':')
-    case 'sql': return s('from')
-    case 'push': return s('endpoint')
-    default: return undefined
+/** the loader setting that says where the data comes from, and the path it lives at */
+const ORIGIN_KEY: Record<string, string[]> = {
+  asset: ['assetPath'],
+  http: ['url'],
+  sftp: ['host', 'remotePath'],
+  sql: ['from'],
+  push: ['endpoint']
+}
+
+function origin (
+  type: string | undefined,
+  settings: Record<string, unknown> | undefined
+): { note?: string, covers: string[] } {
+  const keys = ORIGIN_KEY[type ?? ''] ?? []
+  if (settings === undefined || keys.length === 0) return { covers: [] }
+
+  const parts = present(keys.map((key) => text(settings[key])))
+
+  return {
+    note: parts.length === 0 ? undefined : parts.join(type === 'sftp' ? ':' : SEP),
+    covers: keys.map((key) => `loaderConfig.settings.${key}`)
   }
 }
 
-function readStop (configuration: BackendConfiguration, t: Translate): BriefStop | undefined {
+/** where the data comes from and how it is read */
+function dataSourceTold (configuration: BackendConfiguration, t: Translate): Told | undefined {
   const loader = configuration.loaderConfig
   const interpreter = configuration.interpreterConfig
   const value = present([
@@ -89,24 +92,25 @@ function readStop (configuration: BackendConfiguration, t: Translate): BriefStop
   ]).join(SEP)
   if (value === '') return undefined
 
+  const from = origin(loader?.type, loader?.settings)
+
   return {
-    key: 'read',
-    icon: INTERPRETER_ICON[interpreter?.type ?? ''] ?? 'import',
-    role: `${T}.read`,
     value,
-    note: origin(loader?.type, loader?.settings)
+    note: from.note,
+    covers: ['loaderConfig.type', 'interpreterConfig.type', ...from.covers]
   }
 }
 
-function mapStop (configuration: BackendConfiguration, t: Translate): BriefStop | undefined {
+function mappingTold (configuration: BackendConfiguration, t: Translate): Told | undefined {
   const rows = configuration.mappingConfig?.length ?? 0
   if (rows === 0) return undefined
 
-  return { key: 'map', icon: 'many-to-many-relation', role: `${T}.map`, value: t(`${T}.mappings`, { count: rows }) }
+  // the list is the whole of this section, so the line leaves nothing to count
+  return { value: t(`${T}.mappings`, { count: rows }), covers: ['mappingConfig'] }
 }
 
-/** what the import writes, and — as the note — where new elements land and whether they go live */
-function writeStop (config: ResolverConfig | undefined, t: Translate): BriefStop | undefined {
+/** what the import writes, where new elements land and whether they go live */
+function resolverTold (config: ResolverConfig | undefined, t: Translate): Told | undefined {
   if (config === undefined) return undefined
   const target = text(config.dataObjectClassId)
   const value = config.elementType === 'dataObject' && target !== undefined
@@ -122,22 +126,24 @@ function writeStop (config: ResolverConfig | undefined, t: Translate): BriefStop
     named(t, 'data-importer.resolver.publishing-strategy', config.publishingStrategy?.type)
   ]).join(SEP)
 
-  return { key: 'write', icon: 'data-object', role: `${T}.write`, value, note: note === '' ? undefined : note }
+  return {
+    value,
+    note: note === '' ? undefined : note,
+    covers: [
+      'resolverConfig.dataObjectClassId',
+      'resolverConfig.elementType',
+      'resolverConfig.createLocationStrategy.type',
+      'resolverConfig.createLocationStrategy.settings.path',
+      'resolverConfig.publishingStrategy.type'
+    ]
+  }
 }
 
-/** when it runs, and the switches that decide what happens to what the feed stops carrying */
-function runStop (
-  processing: ProcessingConfig | undefined,
-  execution: ExecutionConfig | undefined,
-  t: Translate
-): BriefStop | undefined {
-  const schedule = text(execution?.cronDefinition) ??
-    (execution?.scheduleType === 'job' ? text(execution.scheduledAt) : undefined)
-  const when = schedule ?? translated(t, 'data-importer.execution.manual-execution') ?? humanize('manualExecution')
-  const value = named(t, 'data-importer.processing.execution-type', processing?.executionType) ?? when
-  if (value === '') return undefined
+/** how it runs, and the switches that decide what happens to what the feed stops carrying */
+function processingTold (processing: ProcessingConfig | undefined, t: Translate): Told | undefined {
+  const value = named(t, 'data-importer.processing.execution-type', processing?.executionType)
+  if (value === undefined || value === '') return undefined
 
-  const delta = processing?.doDeltaCheck === true
   const cleanup = processing?.cleanup?.doCleanup === true
     ? present([
         translated(t, 'data-importer.processing.cleanup.title') ?? humanize('cleanup'),
@@ -145,12 +151,33 @@ function runStop (
       ]).join(': ')
     : undefined
   const note = present([
-    value === when ? undefined : when,
-    delta ? translated(t, 'data-importer.processing.delta-check') ?? humanize('deltaCheck') : undefined,
+    processing?.doDeltaCheck === true
+      ? translated(t, 'data-importer.processing.delta-check') ?? humanize('deltaCheck')
+      : undefined,
     cleanup
   ]).join(SEP)
 
-  return { key: 'run', icon: 'play', role: `${T}.run`, value, note: note === '' ? undefined : note }
+  return {
+    value,
+    note: note === '' ? undefined : note,
+    covers: [
+      'processingConfig.executionType',
+      'processingConfig.doDeltaCheck',
+      'processingConfig.cleanup.doCleanup',
+      'processingConfig.cleanup.strategy'
+    ]
+  }
+}
+
+/** when it runs: a cron line, a one-off date, or nothing and somebody presses the button */
+function executionTold (execution: ExecutionConfig | undefined, t: Translate): Told | undefined {
+  const schedule = text(execution?.cronDefinition) ??
+    (execution?.scheduleType === 'job' ? text(execution.scheduledAt) : undefined)
+
+  return {
+    value: schedule ?? translated(t, 'data-importer.execution.manual-execution') ?? humanize('manualExecution'),
+    covers: ['executionConfig.scheduleType', 'executionConfig.cronDefinition', 'executionConfig.scheduledAt']
+  }
 }
 
 /** the subject's own identity and the Data Hub's bookkeeping, never a setting somebody chose */
@@ -172,47 +199,74 @@ function settingsIn (node: unknown, skip?: ReadonlySet<string>): number {
     .reduce((sum, [, value]) => sum + settingsIn(value), 0)
 }
 
-/** the editor's sections in the order it lays them out; mappings are the Map stop's business */
-const GROUPS: Array<{ section: string, keys: Array<keyof BackendConfiguration>, skip?: ReadonlySet<string> }> = [
-  { section: 'general', keys: ['general'], skip: NOT_A_SETTING },
-  { section: 'dataSource', keys: ['loaderConfig', 'interpreterConfig'] },
-  { section: 'resolver', keys: ['resolverConfig'] },
-  { section: 'processing', keys: ['processingConfig'] },
-  { section: 'execution', keys: ['executionConfig'] },
-  { section: 'permissions', keys: ['permissions'] }
-]
+/** whether the document holds a value at a path, so a covered leaf is only discounted once */
+function filledAt (configuration: BackendConfiguration, path: string): number {
+  let node: unknown = configuration
+  for (const segment of path.split('.')) {
+    if (typeof node !== 'object' || node === null) return 0
+    node = (node as Record<string, unknown>)[segment]
+  }
 
-function groupsOf (configuration: BackendConfiguration): BriefGroup[] {
-  return GROUPS
-    .map(({ section, keys, skip }) => ({
-      section,
-      label: SECTION_LABELS[section] ?? section,
-      count: keys.reduce<number>((sum, key) => sum + settingsIn(configuration[key], skip), 0)
-    }))
-    .filter((group) => group.count > 0)
+  return settingsIn(node)
 }
 
+/** the editor's sections, in the order it lays them out */
+const SECTIONS: Array<{
+  key: string
+  keys: Array<keyof BackendConfiguration>
+  skip?: ReadonlySet<string>
+  tell?: (configuration: BackendConfiguration, t: Translate) => Told | undefined
+}> = [
+  { key: 'general', keys: ['general'], skip: NOT_A_SETTING },
+  { key: 'dataSource', keys: ['loaderConfig', 'interpreterConfig'], tell: dataSourceTold },
+  { key: 'resolver', keys: ['resolverConfig'], tell: (c, t) => resolverTold(c.resolverConfig, t) },
+  { key: 'mapping', keys: ['mappingConfig'], tell: mappingTold },
+  { key: 'processing', keys: ['processingConfig'], tell: (c, t) => processingTold(c.processingConfig, t) },
+  { key: 'execution', keys: ['executionConfig'], tell: (c, t) => executionTold(c.executionConfig, t) },
+  { key: 'permissions', keys: ['permissions'] }
+]
+
 /**
- * A configuration that does not exist yet, told once: every leaf of it is "added", so listing
- * them says only "all of it" at great length. The pipeline says what the thing does; the foot
- * says how much of it is waiting in the editor beside it.
+ * A configuration that does not exist yet, told once. Every leaf of it is "added", so marking
+ * them one by one says only "all of it" at great length: each section says instead what it is
+ * set to, and how much of it the line did not get to.
  */
 export function configBrief (configuration: BackendConfiguration, t: Translate): ConfigBrief {
-  const stops = [
-    readStop(configuration, t),
-    mapStop(configuration, t),
-    writeStop(configuration.resolverConfig, t),
-    runStop(configuration.processingConfig, configuration.executionConfig, t)
-  ].filter((stop): stop is BriefStop => stop !== undefined)
+  const sections: BriefSection[] = []
+  let filled = 0
 
-  const groups = groupsOf(configuration)
+  for (const { key, keys, skip, tell } of SECTIONS) {
+    const count = keys.reduce<number>((sum, k) => sum + settingsIn(configuration[k], skip), 0)
+    if (count === 0) continue
+    filled += count
+
+    const told = tell?.(configuration, t)
+    const covered = told?.covers.reduce((sum, path) => sum + filledAt(configuration, path), 0) ?? 0
+    const rest = Math.max(0, count - covered)
+
+    if (told === undefined) {
+      // nothing worth a line of its own: the count is the line, not a note under one
+      sections.push({ key, label: SECTION_LABELS[key] ?? key, value: t(`${T}.settings-count`, { count }) })
+
+      continue
+    }
+
+    const note = present([told.note, rest === 0 ? undefined : t(`${T}.more-settings`, { count: rest })]).join(SEP)
+
+    sections.push({
+      key,
+      label: SECTION_LABELS[key] ?? key,
+      value: told.value,
+      ...note === '' ? {} : { note }
+    })
+  }
 
   return {
     name: text(configuration.general?.name) ?? '',
     active: configuration.general?.active === true,
     description: text(configuration.general?.description),
-    stops,
-    groups,
-    total: groups.reduce((sum, group) => sum + group.count, 0)
+    sections,
+    total: sections.length,
+    filled
   }
 }

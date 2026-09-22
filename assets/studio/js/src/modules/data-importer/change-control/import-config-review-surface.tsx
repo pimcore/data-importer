@@ -199,7 +199,11 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
           { brief !== undefined
             ? (
               <div className={ styles.list }>
-                <ConfigBriefCard brief={ brief } />
+                <ConfigBriefCard
+                  activeSection={ activeSection }
+                  brief={ brief }
+                  onJump={ jumpToSection }
+                />
               </div>
               )
             : (

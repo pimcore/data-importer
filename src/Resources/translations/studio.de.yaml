@@ -334,6 +334,8 @@ data-importer.review.unbound: '{{address}} — diese Konfiguration hat kein solc
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} Feldzuordnungen'
+data-importer.review.outline.more-settings: '{{count}} weitere Einstellungen'
+data-importer.review.outline.settings-count: '{{count}} Einstellungen'
 data-importer.review.outline.read: Lesen
 data-importer.review.outline.map: Zuordnen
 data-importer.review.outline.write: Schreiben

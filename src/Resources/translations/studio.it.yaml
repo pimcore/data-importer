@@ -334,6 +334,8 @@ data-importer.review.unbound: '{{address}} — questa configurazione non ha tale
 data-importer.review.outline.active: Attiva
 data-importer.review.outline.inactive: Inattiva
 data-importer.review.outline.mappings: '{{count}} mappature di campi'
+data-importer.review.outline.more-settings: 'altre {{count}} impostazioni'
+data-importer.review.outline.settings-count: '{{count}} impostazioni'
 data-importer.review.outline.read: Leggi
 data-importer.review.outline.map: Mappa
 data-importer.review.outline.write: Scrivi

@@ -17,36 +17,41 @@ const T = 'data-importer.review.outline'
 
 interface Props {
   readonly brief: ConfigBrief
+  /** the section the editor is showing, so the reader knows where they are */
+  readonly activeSection: string | undefined
+  readonly onJump: (section: string) => void
 }
 
 /**
- * The rail for a configuration that does not exist yet. Every leaf of it is "added", so a list
- * of changes would say only "all of it" at great length: the summary tells what the pipeline
- * does instead, one stop per section, and the foot how much is waiting in the editor.
+ * The rail for a configuration that does not exist yet. It reads as the change rail does —
+ * the same sections, in the same order, opening the same steps — but a section that is all
+ * new has nothing to mark field by field, so it says what it is set to instead.
  */
-export const ConfigBriefCard: React.FC<Props> = ({ brief }) => {
+export const ConfigBriefCard: React.FC<Props> = ({ brief, activeSection, onJump }) => {
   const { t } = useTranslation()
 
-  const stops: ConfigSummarySection[] = brief.stops.map((stop) => ({
-    key: stop.key,
-    label: t(stop.role),
-    rows: [{ key: stop.key, label: stop.value, note: stop.note }]
+  const sections: ConfigSummarySection[] = brief.sections.map((section) => ({
+    key: section.key,
+    label: t(section.label),
+    rows: section.value === undefined
+      ? []
+      : [{ key: section.key, label: section.value, note: section.note }]
   }))
 
-  const foot: ConfigSummaryFoot | undefined = brief.groups.length === 0
+  // the sections each say how much they hold; the foot says how much that comes to
+  const foot: ConfigSummaryFoot | undefined = brief.total === 0
     ? undefined
-    : {
-        lead: t(`${T}.settings`, { count: brief.total, sections: brief.groups.length }),
-        detail: brief.groups.map((group) => `${t(group.label)} ${group.count}`).join(' · ')
-      }
+    : { lead: t(`${T}.settings`, { count: brief.filled, sections: brief.total }) }
 
   return (
     <ConfigSummary
       active={ brief.active }
+      activeKey={ activeSection }
       description={ brief.description }
       foot={ foot }
       name={ brief.name }
-      sections={ stops }
+      onOpenSection={ onJump }
+      sections={ sections }
       variant="description"
     />
   )

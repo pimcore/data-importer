@@ -334,6 +334,8 @@ data-importer.review.unbound: '{{address}} — dette oppsettet har ikke et slikt
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} felttilordninger'
+data-importer.review.outline.more-settings: '{{count}} innstillinger til'
+data-importer.review.outline.settings-count: '{{count}} innstillinger'
 data-importer.review.outline.read: Les
 data-importer.review.outline.map: Tilordne
 data-importer.review.outline.write: Skriv
