@@ -10,9 +10,6 @@
 
 import { createStyles } from 'antd-style'
 
-/** ConfigSummary's spine node; with the gap beside it, this is what the rail leaves room for */
-const NODE = 7
-
 export const useStyles = createStyles(({ token, css }) => ({
   /* the modal's body already reaches the modal's edges and rules itself off from the title
      above and the actions below; the review only has to fill it */
@@ -23,23 +20,14 @@ export const useStyles = createStyles(({ token, css }) => ({
     height: 70vh;
     min-height: 420px;
   `,
-  /*
-   * The summary's spine markers hang to the left of its text, so the entries line up with the
-   * configuration's name above them. Rail and scroller each borrow that much of the modal
-   * body's gutter and give it straight back as padding: the head stays where it was, the
-   * markers have somewhere to hang, and neither box clips them. Matches ConfigSummary's hang.
-   */
+  /* the summary draws itself as a card, so the rail only has to place it */
   rail: css`
     width: 320px;
     flex: 0 0 320px;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    margin-inline-start: -${NODE + token.marginXS}px;
-    padding-inline-start: ${NODE + token.marginXS}px;
-    /* the modal body already provides the left gutter; only the divider needs clearing */
     padding-right: ${token.paddingLG}px;
-    border-right: 1px solid ${token.colorSplit};
   `,
   list: css`
     flex: 1;
@@ -48,8 +36,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    margin-inline-start: -${NODE + token.marginXS}px;
-    padding-inline-start: ${NODE + token.marginXS}px;
   `,
   summary: css`
     padding: ${token.paddingXS}px 0 ${token.paddingXXS}px;
@@ -149,69 +135,6 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  `,
-  /* a new configuration in one glance: source above target on a connector, a card apart
-     from the editor, and how it runs as tags beneath */
-  brief: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${token.marginSM}px;
-    margin-right: ${token.margin}px;
-  `,
-  briefFlow: css`
-    display: flex;
-    flex-direction: column;
-    padding: ${token.paddingSM}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusLG}px;
-    background: ${token.colorFillQuaternary};
-  `,
-  briefStop: css`
-    display: flex;
-    align-items: center;
-    gap: ${token.marginSM}px;
-    min-width: 0;
-  `,
-  briefIcon: css`
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorderSecondary};
-    color: ${token.colorPrimary};
-  `,
-  briefText: css`
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: ${token.lineHeightSM};
-  `,
-  briefLabel: css`
-    font-weight: ${token.fontWeightStrong};
-    color: ${token.colorText};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  briefNote: css`
-    font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextSecondary};
-  `,
-  /* the line from source to target, hung under the icon's centre */
-  briefConnector: css`
-    width: 1px;
-    height: ${token.marginSM}px;
-    margin: ${token.marginXXS}px 0 ${token.marginXXS}px 14px;
-    background: ${token.colorBorder};
-  `,
-  briefTags: css`
-    display: flex;
-    flex-wrap: wrap;
-    gap: ${token.marginXXS}px;
   `,
   state: css`
     padding: ${token.paddingLG}px;
