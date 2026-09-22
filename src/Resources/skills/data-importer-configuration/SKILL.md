@@ -40,6 +40,31 @@ unless the user asked for it to run; say so.
 | `processingConfig` | `executionType`, `idDataIndex`, `doDeltaCheck`, `cleanup: {doCleanup, strategy}`. Delta check and cleanup only work with an `idDataIndex`; `cleanup.strategy` only while `cleanup.doCleanup` is true — change the switch together with the setting. |
 | `mappingConfig` | a **list**, one entry per column mapping (below). |
 | `executionConfig` | `scheduleType` and `cronDefinition`. |
+| `permissions` | who may use the configuration — `{user: [...], role: [...]}` (below). |
+
+## Permissions
+
+`permissions` holds two lists, one of users and one of roles. Each entry names a principal and
+what it may do:
+
+```yaml
+permissions:
+  role:
+    - name: editor                   # matched by name, not by id
+      read: true
+      update: true
+      delete: false
+  user: []
+```
+
+Two rules, and neither bends:
+
+- **Take names from `list_config_principals`.** An entry is matched by name against the
+  logged-in user's own, so a name this installation does not have grants nothing and reads to a
+  steward as though it does. Never invent one, and never guess an id.
+- **Empty means open.** With both lists empty, everyone holding the Data Importer permission may
+  use the configuration. Adding a single entry restricts it to what the lists name, so read the
+  current document first — dropping an entry takes access away from somebody.
 
 ## Mappings
 

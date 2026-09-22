@@ -14,6 +14,10 @@ services:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
 
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListConfigPrincipalsTool:
+        tags:
+            - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read', description: 'List role and user names for configuration permissions' }
+
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary:
         arguments:
             # keys are ProposedImportConfiguration::FAMILY_*, which the refusals print

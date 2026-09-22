@@ -70,13 +70,24 @@ const KNOWN_PATHS = new Set([
 ])
 
 /**
+ * Sections with no fixed leaves, the twin of ProposedImportConfiguration::OPEN_SECTIONS: a
+ * list checked whole, and an access list whose entries are named by whoever is granted.
+ */
+const OPEN_SECTIONS = new Set(['mappingConfig', 'permissions'])
+
+/**
  * Whether the document names this path at all. A `settings` node is open — its keys belong to
  * the loader or strategy they configure, and the editor binds them per type — so anything
- * under one counts. A path that is neither is one nothing acts on: no field carries it and
- * the import never reads it, so a change to it would apply as nothing.
+ * under one counts, as does anything in an open section. A path that is neither is one nothing
+ * acts on: no field carries it and the import never reads it, so a change to it would apply
+ * as nothing.
  */
 export function isDocumentField (address: string): boolean {
-  return KNOWN_PATHS.has(address) || address.split('.').includes('settings')
+  const segments = address.split('.')
+
+  return KNOWN_PATHS.has(address) ||
+    segments.includes('settings') ||
+    OPEN_SECTIONS.has(segments[0])
 }
 
 /**

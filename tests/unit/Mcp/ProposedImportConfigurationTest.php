@@ -352,6 +352,18 @@ class ProposedImportConfigurationTest extends Unit
         );
     }
 
+    /** an access list is named by whoever is granted, so its entries are nobody's to fix */
+    public function testPermissionEntriesAreNotTheDocumentsToFix(): void
+    {
+        static::assertSame(
+            [],
+            ProposedImportConfiguration::unknownPaths(
+                ['permissions' => ['role' => [['name' => 'editor', 'read' => true, 'update' => true]]]],
+                $this->stored()
+            )
+        );
+    }
+
     /** a top-level key that is no section is unknownSections' to judge, not this one's */
     public function testASectionThisGuardDoesNotOwnIsLeftAlone(): void
     {

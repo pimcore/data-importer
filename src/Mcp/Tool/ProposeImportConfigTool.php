@@ -96,8 +96,13 @@ final readonly class ProposeImportConfigTool
         #[Schema(
             type: 'string',
             description: 'The configuration as JSON or YAML — the general, loaderConfig, '
-                . 'interpreterConfig, resolverConfig, processingConfig, mappingConfig and '
-                . 'executionConfig sections, with your changes applied.'
+                . 'interpreterConfig, resolverConfig, processingConfig, mappingConfig, '
+                . 'executionConfig and permissions sections, with your changes applied. '
+                . 'permissions holds {"user": [...], "role": [...]}, each entry '
+                . '{"name": "...", "read": bool, "update": bool, "delete": bool}; an entry is '
+                . 'matched by name, so take names from list_config_principals and never invent '
+                . 'one. Leaving permissions empty means everyone with the Data Importer '
+                . 'permission may use the configuration.'
         )]
         array|string $configuration,
         #[Schema(type: 'string', description: 'One sentence saying what the change does, shown on the review card.')]
