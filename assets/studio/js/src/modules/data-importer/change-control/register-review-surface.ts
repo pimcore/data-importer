@@ -43,6 +43,7 @@ export function registerChangeControlReviewSurface (): void {
 
     // a dynamic type is read for its id and its component, so the entry is the pair itself;
     // ReviewSurfaceType is a value, and constructing it would pull the remote in
-    registry.registerDynamicType({ id: SUBJECT_TYPE, component: ImportConfigReviewSurface })
+    // the editor needs room for its three mapping columns, but not the whole screen
+    registry.registerDynamicType({ id: SUBJECT_TYPE, component: ImportConfigReviewSurface, layout: { width: 1440 } })
   }, 0)
 }
