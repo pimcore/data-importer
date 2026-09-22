@@ -10,6 +10,9 @@
 
 import { createStyles } from 'antd-style'
 
+/** ConfigSummary's spine node; with the gap beside it, this is what the rail leaves room for */
+const NODE = 7
+
 export const useStyles = createStyles(({ token, css }) => ({
   /* the modal's body already reaches the modal's edges and rules itself off from the title
      above and the actions below; the review only has to fill it */
@@ -20,21 +23,24 @@ export const useStyles = createStyles(({ token, css }) => ({
     height: 70vh;
     min-height: 420px;
   `,
+  /*
+   * The summary's spine markers hang to the left of its text, so the entries line up with the
+   * configuration's name above them. Rail and scroller each borrow that much of the modal
+   * body's gutter and give it straight back as padding: the head stays where it was, the
+   * markers have somewhere to hang, and neither box clips them. Matches ConfigSummary's hang.
+   */
   rail: css`
     width: 320px;
     flex: 0 0 320px;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    margin-inline-start: -${NODE + token.marginXS}px;
+    padding-inline-start: ${NODE + token.marginXS}px;
     /* the modal body already provides the left gutter; only the divider needs clearing */
     padding-right: ${token.paddingLG}px;
     border-right: 1px solid ${token.colorSplit};
   `,
-  /*
-   * The summary's spine markers hang to the left of its text so the entries line up with the
-   * configuration's name. This reaches out into the modal body's gutter to make room for
-   * them: without it the overflow rule below clips them away. Matches ConfigSummary's hang.
-   */
   list: css`
     flex: 1;
     min-height: 0;
@@ -42,8 +48,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    margin-inline-start: -${7 + token.marginXS}px;
-    padding-inline-start: ${7 + token.marginXS}px;
+    margin-inline-start: -${NODE + token.marginXS}px;
+    padding-inline-start: ${NODE + token.marginXS}px;
   `,
   summary: css`
     padding: ${token.paddingXS}px 0 ${token.paddingXXS}px;
