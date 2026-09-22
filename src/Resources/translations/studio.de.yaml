@@ -334,14 +334,15 @@ data-importer.review.unbound: '{{address}} — diese Konfiguration hat kein solc
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} Feldzuordnungen'
+data-importer.review.outline.more-settings-one: '1 weitere Einstellung'
 data-importer.review.outline.more-settings: '{{count}} weitere Einstellungen'
+data-importer.review.outline.settings-count-one: '1 Einstellung'
 data-importer.review.outline.settings-count: '{{count}} Einstellungen'
 data-importer.review.outline.read: Lesen
 data-importer.review.outline.map: Zuordnen
 data-importer.review.outline.write: Schreiben
 data-importer.review.outline.run: Ausführen
 data-importer.review.outline.data-objects: '{{class}}-Objekte'
-data-importer.review.outline.settings: '**{{count}} Einstellungen** in {{sections}} Bereichen'
 data-importer.review.outline.new: Neu
 data-importer.review.state.merged: Übernommen
 data-importer.review.state.discarded: Abgelehnt

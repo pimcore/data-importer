@@ -334,14 +334,15 @@ data-importer.review.unbound: '{{address}} — den här konfigurationen har inge
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} fältmappningar'
+data-importer.review.outline.more-settings-one: '1 inställning till'
 data-importer.review.outline.more-settings: '{{count}} inställningar till'
+data-importer.review.outline.settings-count-one: '1 inställning'
 data-importer.review.outline.settings-count: '{{count}} inställningar'
 data-importer.review.outline.read: Läs
 data-importer.review.outline.map: Mappa
 data-importer.review.outline.write: Skriv
 data-importer.review.outline.run: Kör
 data-importer.review.outline.data-objects: '{{class}}-objekt'
-data-importer.review.outline.settings: '**{{count}} inställningar** i {{sections}} sektioner'
 data-importer.review.outline.new: Ny
 data-importer.review.state.merged: Tillämpad
 data-importer.review.state.discarded: Avvisad

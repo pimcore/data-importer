@@ -44,8 +44,6 @@ export interface ConfigBrief {
   readonly active: boolean
   readonly description?: string
   readonly sections: BriefSection[]
-  readonly total: number
-  readonly filled: number
 }
 
 /** an adapter's or strategy's name as the editor shows it in its select, else its key spelt out */
@@ -57,6 +55,10 @@ const present = (parts: Array<string | undefined>): string[] =>
 
 const text = (value: unknown): string | undefined =>
   typeof value === 'string' && value !== '' ? value : undefined
+
+/** one key for one, another for the rest — the catalogue has no plural forms of its own */
+const plural = (t: Translate, key: string, count: number): string =>
+  t(`${T}.${key}${count === 1 ? '-one' : ''}`, { count })
 
 /** the loader setting that says where the data comes from, and the path it lives at */
 const ORIGIN_KEY: Record<string, string[]> = {
@@ -180,8 +182,22 @@ function executionTold (execution: ExecutionConfig | undefined, t: Translate): T
   }
 }
 
-/** the subject's own identity and the Data Hub's bookkeeping, never a setting somebody chose */
-const NOT_A_SETTING = new Set(['name', 'type', 'path', 'modificationDate', 'createDate', 'writeable'])
+/**
+ * What the General tab holds that the identity header above the sections does not already
+ * show: the name, the description and the on/off state are all up there, and the rest is the
+ * subject's own identity or the Data Hub's bookkeeping. Only the group is left, so General
+ * appears as a section when one is set and is otherwise the header itself.
+ */
+const NOT_A_SETTING = new Set([
+  'name', 'type', 'path', 'modificationDate', 'createDate', 'writeable', 'description', 'active'
+])
+
+/** the one General setting the header does not carry */
+function generalTold (configuration: BackendConfiguration): Told | undefined {
+  const group = text((configuration.general as { group?: unknown } | undefined)?.group)
+
+  return group === undefined ? undefined : { value: group, covers: ['general.group'] }
+}
 
 /**
  * Leaves under a section that actually hold a value — an unset field is not a setting. The
@@ -217,7 +233,7 @@ const SECTIONS: Array<{
   skip?: ReadonlySet<string>
   tell?: (configuration: BackendConfiguration, t: Translate) => Told | undefined
 }> = [
-  { key: 'general', keys: ['general'], skip: NOT_A_SETTING },
+  { key: 'general', keys: ['general'], skip: NOT_A_SETTING, tell: generalTold },
   { key: 'dataSource', keys: ['loaderConfig', 'interpreterConfig'], tell: dataSourceTold },
   { key: 'resolver', keys: ['resolverConfig'], tell: (c, t) => resolverTold(c.resolverConfig, t) },
   { key: 'mapping', keys: ['mappingConfig'], tell: mappingTold },
@@ -233,40 +249,32 @@ const SECTIONS: Array<{
  */
 export function configBrief (configuration: BackendConfiguration, t: Translate): ConfigBrief {
   const sections: BriefSection[] = []
-  let filled = 0
 
   for (const { key, keys, skip, tell } of SECTIONS) {
     const count = keys.reduce<number>((sum, k) => sum + settingsIn(configuration[k], skip), 0)
     if (count === 0) continue
-    filled += count
 
     const told = tell?.(configuration, t)
     const covered = told?.covers.reduce((sum, path) => sum + filledAt(configuration, path), 0) ?? 0
     const rest = Math.max(0, count - covered)
+    const label = SECTION_LABELS[key] ?? key
 
     if (told === undefined) {
       // nothing worth a line of its own: the count is the line, not a note under one
-      sections.push({ key, label: SECTION_LABELS[key] ?? key, value: t(`${T}.settings-count`, { count }) })
+      sections.push({ key, label, value: plural(t, 'settings-count', count) })
 
       continue
     }
 
-    const note = present([told.note, rest === 0 ? undefined : t(`${T}.more-settings`, { count: rest })]).join(SEP)
+    const note = present([told.note, rest === 0 ? undefined : plural(t, 'more-settings', rest)]).join(SEP)
 
-    sections.push({
-      key,
-      label: SECTION_LABELS[key] ?? key,
-      value: told.value,
-      ...note === '' ? {} : { note }
-    })
+    sections.push({ key, label, value: told.value, ...note === '' ? {} : { note } })
   }
 
   return {
     name: text(configuration.general?.name) ?? '',
     active: configuration.general?.active === true,
     description: text(configuration.general?.description),
-    sections,
-    total: sections.length,
-    filled
+    sections
   }
 }

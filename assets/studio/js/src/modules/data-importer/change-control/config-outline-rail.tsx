@@ -10,10 +10,8 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { ConfigSummary, type ConfigSummaryFoot, type ConfigSummarySection } from '@pimcore/change-control-bundle/sdk'
+import { ConfigSummary, type ConfigSummarySection } from '@pimcore/change-control-bundle/sdk'
 import { type ConfigBrief } from './config-outline'
-
-const T = 'data-importer.review.outline'
 
 interface Props {
   readonly brief: ConfigBrief
@@ -38,17 +36,11 @@ export const ConfigBriefCard: React.FC<Props> = ({ brief, activeSection, onJump 
       : [{ key: section.key, label: section.value, note: section.note }]
   }))
 
-  // the sections each say how much they hold; the foot says how much that comes to
-  const foot: ConfigSummaryFoot | undefined = brief.total === 0
-    ? undefined
-    : { lead: t(`${T}.settings`, { count: brief.filled, sections: brief.total }) }
-
   return (
     <ConfigSummary
       active={ brief.active }
       activeKey={ activeSection }
       description={ brief.description }
-      foot={ foot }
       name={ brief.name }
       onOpenSection={ onJump }
       sections={ sections }

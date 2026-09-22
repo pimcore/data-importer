@@ -334,14 +334,15 @@ data-importer.review.unbound: '{{address}} — dette oppsettet har ikke et slikt
 data-importer.review.outline.active: Aktiv
 data-importer.review.outline.inactive: Inaktiv
 data-importer.review.outline.mappings: '{{count}} felttilordninger'
+data-importer.review.outline.more-settings-one: '1 innstilling til'
 data-importer.review.outline.more-settings: '{{count}} innstillinger til'
+data-importer.review.outline.settings-count-one: '1 innstilling'
 data-importer.review.outline.settings-count: '{{count}} innstillinger'
 data-importer.review.outline.read: Les
 data-importer.review.outline.map: Tilordne
 data-importer.review.outline.write: Skriv
 data-importer.review.outline.run: Kjør
 data-importer.review.outline.data-objects: '{{class}}-objekter'
-data-importer.review.outline.settings: '**{{count}} innstillinger** i {{sections}} seksjoner'
 data-importer.review.outline.new: Ny
 data-importer.review.state.merged: Tatt i bruk
 data-importer.review.state.discarded: Avvist

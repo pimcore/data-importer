@@ -334,14 +334,15 @@ data-importer.review.unbound: '{{address}} — this configuration has no such fi
 data-importer.review.outline.active: Active
 data-importer.review.outline.inactive: Inactive
 data-importer.review.outline.mappings: '{{count}} field mappings'
+data-importer.review.outline.more-settings-one: '1 more setting'
 data-importer.review.outline.more-settings: '{{count}} more settings'
+data-importer.review.outline.settings-count-one: '1 setting'
 data-importer.review.outline.settings-count: '{{count}} settings'
 data-importer.review.outline.read: Read
 data-importer.review.outline.map: Map
 data-importer.review.outline.write: Write
 data-importer.review.outline.run: Run
 data-importer.review.outline.data-objects: '{{class}} data objects'
-data-importer.review.outline.settings: '**{{count}} settings** across {{sections}} sections'
 data-importer.review.outline.new: New
 data-importer.review.state.merged: Applied
 data-importer.review.state.discarded: Rejected

@@ -334,14 +334,15 @@ data-importer.review.unbound: '{{address}} — esta configuración no tiene ese 
 data-importer.review.outline.active: Activa
 data-importer.review.outline.inactive: Inactiva
 data-importer.review.outline.mappings: '{{count}} asignaciones de campos'
+data-importer.review.outline.more-settings-one: '1 ajuste más'
 data-importer.review.outline.more-settings: '{{count}} ajustes más'
+data-importer.review.outline.settings-count-one: '1 ajuste'
 data-importer.review.outline.settings-count: '{{count}} ajustes'
 data-importer.review.outline.read: Leer
 data-importer.review.outline.map: Asignar
 data-importer.review.outline.write: Escribir
 data-importer.review.outline.run: Ejecutar
 data-importer.review.outline.data-objects: 'Objetos {{class}}'
-data-importer.review.outline.settings: '**{{count}} ajustes** en {{sections}} secciones'
 data-importer.review.outline.new: Nueva
 data-importer.review.state.merged: Aplicado
 data-importer.review.state.discarded: Rechazado
