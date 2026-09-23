@@ -23,12 +23,20 @@ import { Box } from '@pimcore/studio-ui-bundle/components'
 
 export interface DataSetupTabProps {
   configName: string
+  /** drive the step from outside; omit to keep the tab's own state */
+  activeStep?: number
+  onStepChange?: (step: number) => void
 }
 
-export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Element => {
+export const DataSetupTab = ({ configName, activeStep, onStepChange }: DataSetupTabProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const [currentStep, setCurrentStep] = useState(0)
+  const [ownStep, setOwnStep] = useState(0)
+  const currentStep = activeStep ?? ownStep
+  const setCurrentStep = (step: number): void => {
+    setOwnStep(step)
+    onStepChange?.(step)
+  }
   // Bumped on preview-data change so dependent steps refresh their column lists.
   const [previewVersion, setPreviewVersion] = useState(0)
 

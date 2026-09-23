@@ -323,3 +323,31 @@ data-importer.execution.status.cancel: 'Annuler l''exécution et vider la file d
 data-importer.execution.cron-validating: 'Validation de l''expression Cron...'
 data-importer.validation.required: '{{field}} est requis'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Importateur d'objets de données
+
+# Change Control review
+data-importer.review.status.added: ajouté
+data-importer.review.status.changed: modifié
+data-importer.review.status.removed: supprimé
+data-importer.review.status.moved: déplacé
+data-importer.review.mappings: Mappings
+data-importer.review.unbound: '{{address}} — cette configuration n''a pas ce champ, l''approbation ne change rien'
+data-importer.review.outline.active: Active
+data-importer.review.outline.inactive: Inactive
+data-importer.review.outline.mappings: '{{count}} mappages de champs'
+data-importer.review.outline.more-settings-one: '1 autre réglage'
+data-importer.review.outline.more-settings: '{{count}} autres réglages'
+data-importer.review.outline.settings-count-one: '1 réglage'
+data-importer.review.outline.settings-count: '{{count}} réglages'
+data-importer.review.outline.read: Lire
+data-importer.review.outline.map: Mapper
+data-importer.review.outline.write: Écrire
+data-importer.review.outline.run: Exécuter
+data-importer.review.outline.data-objects: 'Objets {{class}}'
+data-importer.review.outline.new: Nouvelle
+data-importer.review.load-failed: Les modifications proposées n’ont pas pu être chargées.
+data-importer.review.section.general: Général
+data-importer.review.section.data-source: Source de données
+data-importer.review.section.resolver: Resolver
+data-importer.review.section.processing: Traitement
+data-importer.review.section.execution: Exécution
+data-importer.review.section.permissions: Permissions

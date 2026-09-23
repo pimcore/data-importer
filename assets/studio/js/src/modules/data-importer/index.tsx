@@ -9,6 +9,7 @@
  */
 
 import { container, type AbstractModule } from '@pimcore/studio-ui-bundle'
+import { registerChangeControlReviewSurface } from './change-control/register-review-surface'
 import { type DynamicTypeDataHubAdapterRegistry, bundleServiceIds as dataHubServiceIds } from '@pimcore/data-hub'
 import { bundleServiceIds } from '../../config/service-ids'
 import {
@@ -267,5 +268,9 @@ export const DataImporterModule: AbstractModule = {
     targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Classificationstore']))
     targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch']))
     targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ManyToManyRelation']))
+
+    // Change Control binds its registries in its own onInit, so this defers to after the
+    // whole init pass rather than racing it; a module has no later hook.
+    registerChangeControlReviewSurface()
   }
 }
