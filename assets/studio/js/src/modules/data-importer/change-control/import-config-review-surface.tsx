@@ -186,6 +186,7 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
 
   return (
     <Flex
+      className={ styles.surface }
       gap="small"
       vertical
     >

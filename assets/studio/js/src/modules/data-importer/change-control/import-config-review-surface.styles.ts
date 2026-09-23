@@ -11,6 +11,13 @@
 import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ token, css }) => ({
+  /* the modal body already gives the surface its gutter, so the outcome band's own would put
+     its tag a gutter in from the title; the band takes no other hook than its test id */
+  surface: css`
+    & > [data-testid='review-outcome-header'] {
+      padding-inline: 0;
+    }
+  `,
   /* the modal's body already reaches the modal's edges and rules itself off from the title
      above and the actions below; the review only has to fill it */
   layout: css`
@@ -20,7 +27,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     height: 70vh;
     min-height: 420px;
   `,
-  /* the summary draws itself as a card, so the rail only has to place it */
+  /* the summary is flat and flush, so the rail only has to place it */
   rail: css`
     width: 320px;
     flex: 0 0 320px;
