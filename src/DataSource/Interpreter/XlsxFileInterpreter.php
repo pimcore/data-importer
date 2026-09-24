@@ -12,6 +12,11 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use OpenSpout\Common\Entity\Cell\EmptyCell;
+use OpenSpout\Common\Entity\Cell\FormulaCell;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Reader\XLSX\Options;
+use OpenSpout\Reader\XLSX\Reader;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
@@ -26,11 +31,42 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
  */
 final class XlsxFileInterpreter extends AbstractInterpreter
 {
+    /**
+     * Above this estimated cell count the workbook is streamed instead of fully loaded;
+     * PhpSpreadsheet needs roughly 1KB per instantiated cell, so full loads of larger
+     * files would exhaust typical memory limits.
+     */
+    private const STREAMING_CELL_THRESHOLD = 500000;
+
     private bool $skipFirstRow;
 
     private string $sheetName;
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
+    {
+        $worksheetInfo = $this->getWorksheetInfo($path);
+
+        if ($worksheetInfo === null) {
+            throw new InvalidConfigurationException(sprintf('Sheet "%s" not found in file.', $this->sheetName));
+        }
+
+        if ($worksheetInfo['totalRows'] * $worksheetInfo['totalColumns'] <= self::STREAMING_CELL_THRESHOLD) {
+            $this->interpretWithFullLoad($path);
+
+            return;
+        }
+
+        foreach ($this->streamSheetRows($path, $worksheetInfo['totalColumns']) as $rowData) {
+            $this->processImportRow($rowData);
+        }
+    }
+
+    /**
+     * Loads the whole workbook at once, keeping the exact pre-streaming semantics
+     * (formulas are evaluated with the complete workbook available). Only used for
+     * workbooks small enough to fit into memory.
+     */
+    private function interpretWithFullLoad(string $path): void
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
@@ -47,6 +83,73 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         foreach ($data as $rowData) {
             $this->processImportRow($rowData);
         }
+    }
+
+    /**
+     * Streams the sheet row by row in a single pass with bounded memory. Formula cells
+     * resolve to the calculation result cached in the file (spreadsheet applications
+     * always store one when saving); a formula without a cached result yields null,
+     * as cross-sheet recalculation is not possible while streaming.
+     *
+     * @return \Generator<array>
+     */
+    private function streamSheetRows(string $path, int $totalColumns): \Generator
+    {
+        $options = new Options();
+        $options->SHOULD_PRESERVE_EMPTY_ROWS = true;
+
+        $reader = new Reader($options);
+        $reader->open($path);
+
+        try {
+            foreach ($reader->getSheetIterator() as $sheet) {
+                if ($sheet->getName() !== $this->sheetName) {
+                    continue;
+                }
+
+                $rowNumber = 0;
+                foreach ($sheet->getRowIterator() as $row) {
+                    $rowNumber++;
+                    if ($rowNumber === 1 && $this->skipFirstRow) {
+                        continue;
+                    }
+
+                    yield $this->normalizeStreamedRow($row, $totalColumns);
+                }
+            }
+        } finally {
+            $reader->close();
+        }
+    }
+
+    /**
+     * Pads the row to the sheet width so column indexes stay stable across rows,
+     * matching the toArray() behavior of the full-load code path.
+     */
+    private function normalizeStreamedRow(Row $row, int $totalColumns): array
+    {
+        $rowData = [];
+
+        foreach ($row->getCells() as $cell) {
+            if ($cell instanceof EmptyCell) {
+                // empty cells resolve to null like in the full-load toArray() path
+                $rowData[] = null;
+
+                continue;
+            }
+
+            $value = $cell instanceof FormulaCell ? $cell->getComputedValue() : $cell->getValue();
+
+            if ($value instanceof \DateTimeInterface) {
+                $value = $value->format('Y-m-d H:i:s');
+            } elseif ($value instanceof \DateInterval) {
+                $value = $value->format('%H:%I:%S');
+            }
+
+            $rowData[] = $value;
+        }
+
+        return array_pad($rowData, $totalColumns, null);
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -181,7 +284,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
      * Reads the worksheet dimensions without loading any cells.
      * Returns null when the configured sheet does not exist in the file.
      *
-     * @return array{totalRows: int, lastColumnLetter: string}|null
+     * @return array{totalRows: int, totalColumns: int, lastColumnLetter: string}|null
      */
     private function getWorksheetInfo(string $path): ?array
     {
@@ -191,6 +294,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             if ($worksheetInfo['worksheetName'] === $this->sheetName) {
                 return [
                     'totalRows' => $worksheetInfo['totalRows'],
+                    'totalColumns' => $worksheetInfo['totalColumns'],
                     'lastColumnLetter' => $worksheetInfo['lastColumnLetter'],
                 ];
             }
