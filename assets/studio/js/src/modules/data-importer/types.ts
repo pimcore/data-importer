@@ -105,8 +105,8 @@ export const DEFAULT_ATTR_MAP_KEY = '__default__'
 // Data targets that write into advanced relation fields. For these the backend only offers
 // advancedManyToMany(Object)Relation fields when the attributes are requested with
 // loadAdvancedRelations, so their attributes are kept under a separate map key.
-const ADVANCED_RELATION_DATA_TARGET_TYPES = ['manyToManyRelation']
-const ADVANCED_RELATION_RESULT_TYPES = ['dataObjectArray', 'assetArray']
+const ADVANCED_RELATION_DATA_TARGET_TYPES = new Set(['manyToManyRelation'])
+const ADVANCED_RELATION_RESULT_TYPES = new Set(['dataObjectArray', 'assetArray'])
 const ADVANCED_RELATIONS_ATTR_MAP_KEY_PREFIX = 'advancedRelations:'
 
 export function resolveAttrMapKey (transformationResultType: string | undefined, dataTargetType?: string): string {
@@ -119,8 +119,8 @@ export function resolveAttrMapKey (transformationResultType: string | undefined,
   }
 
   if (
-    ADVANCED_RELATION_DATA_TARGET_TYPES.includes(dataTargetType ?? '') &&
-    ADVANCED_RELATION_RESULT_TYPES.includes(transformationResultType)
+    ADVANCED_RELATION_DATA_TARGET_TYPES.has(dataTargetType ?? '') &&
+    ADVANCED_RELATION_RESULT_TYPES.has(transformationResultType)
   ) {
     return ADVANCED_RELATIONS_ATTR_MAP_KEY_PREFIX + transformationResultType
   }
