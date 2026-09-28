@@ -39,6 +39,19 @@ export const SUGGESTION_TRANSFORMATION_RESULT_TYPES: string[] = [
   'dataObjectArray'
 ]
 
+// every attributes map key the mapping step needs for the given mapping items
+function collectAttrMapKeys (items: MappingConfigItem[]): string[] {
+  const mapKeys = new Set<string>([DEFAULT_ATTR_MAP_KEY])
+  // the default request only returns DEFAULT+NUMERIC typed attributes — without
+  // the other result types the autofill suggestions would miss e.g. select,
+  // relation or asset fields on configs that have no mapping rows yet (#622)
+  SUGGESTION_TRANSFORMATION_RESULT_TYPES.forEach((trt) => mapKeys.add(resolveAttrMapKey(trt)))
+  items.forEach((item) => {
+    mapKeys.add(resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type))
+  })
+  return Array.from(mapKeys)
+}
+
 export function useMappingStepLoader (configName: string, isActive: boolean): UseMappingStepLoaderResult {
   const form = Form.useFormInstance()
   const dispatch = useAppDispatch()
@@ -49,6 +62,9 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
   const [sourceRows, setSourceRows] = useState<SourceRow[]>([])
   const [hasPreviewError, setHasPreviewError] = useState(false)
   const [attributesMap, setAttributesMap] = useState<Record<string, ClassAttribute[]>>({})
+  // The class the attributesMap entries belong to. The class can be changed in the resolver
+  // step without saving, so entries loaded for another class must never be reused.
+  const attributesMapClassIdRef = useRef<string | undefined>(undefined)
   const [headersRequest, setHeadersRequest] = useState<{
     name: string
     bundleDataImporterCopyPreviewParameters: {
@@ -257,19 +273,9 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
         const backendConfig = (configData?.configuration ?? {}) as BackendConfiguration
         const items: MappingConfigItem[] = (backendConfig.mappingConfig) ?? []
 
-        const uniqueMapKeys = new Set<string>()
-        if (effectiveClassId !== undefined && effectiveClassId !== '') {
-          uniqueMapKeys.add(DEFAULT_ATTR_MAP_KEY)
-          // the default request only returns DEFAULT+NUMERIC typed attributes — without
-          // the other result types the autofill suggestions would miss e.g. select,
-          // relation or asset fields on configs that have no mapping rows yet (#622)
-          SUGGESTION_TRANSFORMATION_RESULT_TYPES.forEach((trt) => uniqueMapKeys.add(resolveAttrMapKey(trt)))
-          items.forEach((item) => {
-            uniqueMapKeys.add(resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type))
-          })
-        }
-
-        const mapKeysArray = Array.from(uniqueMapKeys)
+        const mapKeysArray = (effectiveClassId !== undefined && effectiveClassId !== '')
+          ? collectAttrMapKeys(items)
+          : []
         if (debugEnabled) {
           console.debug('[DI][Loader] class attributes load start', {
             cycleId,
@@ -291,6 +297,9 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
         const attrResults = await Promise.all(attrPromises)
 
+        const classChanged = attributesMapClassIdRef.current !== effectiveClassId
+        attributesMapClassIdRef.current = effectiveClassId
+
         if (mapKeysArray.length > 0) {
           const newEntries: Record<string, ClassAttribute[]> = {}
           attrResults.forEach((result, i) => {
@@ -300,6 +309,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
           // changed so consumers with referential equality checks (React.memo,
           // useMemo) don't re-render when their own TRT's attrs are unchanged.
           setAttributesMap((prev) => {
+            if (classChanged) return newEntries
             let changed = false
             for (const key of Object.keys(newEntries)) {
               if (prev[key] !== newEntries[key]) {
@@ -387,17 +397,22 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     if (effectiveClassId === undefined || effectiveClassId === '' || !initialLoadDone) return
 
     const items = getMappingConfig()
-    const missingTypes = new Set<string>()
-    items.forEach((item) => {
-      const mapKey = resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type)
-      if (attributesMap[mapKey] === undefined) {
-        missingTypes.add(mapKey)
-      }
-    })
+    let missingArray: string[]
+    if (attributesMapClassIdRef.current !== effectiveClassId) {
+      // the class was changed (unsaved) in the resolver step: drop the other class's entries
+      attributesMapClassIdRef.current = effectiveClassId
+      setAttributesMap({})
+      missingArray = collectAttrMapKeys(items)
+    } else {
+      missingArray = Array.from(new Set(
+        items
+          .map((item) => resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type))
+          .filter((mapKey) => attributesMap[mapKey] === undefined)
+      ))
+    }
 
-    if (missingTypes.size === 0) return
+    if (missingArray.length === 0) return
 
-    const missingArray = Array.from(missingTypes)
     const promises = missingArray.map(async (mapKey) => {
       return await dispatch(
         api.endpoints.bundleDataImporterDataTypeLoadClassAttributes.initiate({
@@ -409,6 +424,9 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     })
 
     void Promise.all(promises).then((results) => {
+      // the class changed again while loading
+      if (attributesMapClassIdRef.current !== effectiveClassId) return
+
       setAttributesMap((prev) => {
         const next: Record<string, ClassAttribute[]> = {}
         results.forEach((result, i) => {
