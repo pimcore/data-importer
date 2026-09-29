@@ -13,14 +13,20 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScopeAwareTrait;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Asset;
 
 /**
  * @internal
  */
-final class LoadAsset extends ImportAsset
+final class LoadAsset extends AbstractAssetOperator
 {
+    use MappingApplicationScopeAwareTrait;
+
     private const LOAD_STRATEGY_ID = 'id';
 
     private const LOAD_STRATEGY_PATH = 'path';
@@ -53,6 +59,14 @@ final class LoadAsset extends ImportAsset
         foreach ($inputData as $data) {
             $asset = null;
             $cleanData = trim($data);
+
+            $referencedAsset = $this->lookupAsset($cleanData);
+            if ($referencedAsset !== null) {
+                $assets[] = $referencedAsset;
+
+                continue;
+            }
+
             if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
                 $asset = Asset::getByPath($cleanData);
             } elseif ($this->loadStrategy === self::LOAD_STRATEGY_ID) {
@@ -65,7 +79,7 @@ final class LoadAsset extends ImportAsset
 
             if ($asset instanceof Asset) {
                 $assets[] = $asset;
-            } elseif (!$dryRun && !empty($data)) {
+            } elseif (!$dryRun && !empty($data) && !$this->isAppliedWithoutSaving()) {
                 $this->applicationLogger->warning("Could not load asset from `$data` ", [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
                 ]);
@@ -81,5 +95,15 @@ final class LoadAsset extends ImportAsset
         } else {
             return $assets;
         }
+    }
+
+    private function lookupAsset(string $key): ?Asset
+    {
+        $loadStrategy = ReferenceLoadStrategy::tryFrom($this->loadStrategy);
+        if ($key === '' || $loadStrategy === null || !$this->hasReferenceLookup()) {
+            return null;
+        }
+
+        return $this->lookupReference(new ReferenceQuery(ReferenceType::Asset, $loadStrategy, $key), Asset::class);
     }
 }

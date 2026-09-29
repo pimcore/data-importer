@@ -1,0 +1,138 @@
+---
+title: Apply a Mapping Without Saving
+description: Apply a mapping configuration to an element in memory, e.g. to preview it or to record the result elsewhere.
+---
+
+# Apply a Mapping Without Saving
+
+`Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier` applies the mapping of an import configuration to an
+element you pass in, for one import row at a time. Use it when you want the result of a mapping but not an import, for
+example to preview it or to record the changes somewhere other than the element itself.
+
+Compared to an import, applying a mapping:
+
+- takes the mapping as an array, so no stored configuration is needed,
+- uses no queue and no resolver: loading, creating and placing the element is up to you, so location strategies (including
+  the ones that create folders) do not apply,
+- does not save the element and dispatches no `PreSaveEvent` or `PostSaveEvent`,
+- writes nothing to the application logger. A reference an operator cannot resolve results in `null`, as it does during
+  an import, but without a log entry.
+
+## Usage
+
+`prepare()` builds the mapping once. The returned `PreparedMapping` can be applied to any number of elements and rows.
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
+use Pimcore\Model\DataObject;
+
+final class ProductPreview
+{
+    public function __construct(private readonly MappingApplier $mappingApplier)
+    {
+    }
+
+    public function preview(array $mappingConfig, int $productId, array $row): DataObject\Concrete
+    {
+        // throws an InvalidConfigurationException listing every issue lint() reports
+        $mapping = $this->mappingApplier->prepare($mappingConfig);
+
+        $product = DataObject\Concrete::getById($productId, ['force' => true]);
+        $mapping->apply($product, $row);
+
+        return $product;
+    }
+}
+```
+
+`$mappingConfig` has the shape of the `mappingConfig` of a stored import configuration: a list of items with
+`dataSourceIndex`, `transformationPipeline` and `dataTarget`. `$row` is keyed like the rows the Data Importer reads from
+the source, so `dataSourceIndex` refers to the same columns.
+
+When an item fails, `apply()` throws a `MappingApplicationException`. `getItemIndex()` and `getItemLabel()` name the
+failing item, `getPrevious()` holds the original exception. Items before it have already been applied to the element.
+
+### Which element to pass
+
+The element is changed in memory only. The data targets read its current values, so the result depends on the element
+you pass:
+
+- the **Direct** data target keeps a value when `writeIfTargetIsNotEmpty` is disabled and the field is not empty, and when
+  `writeIfSourceIsEmpty` is disabled and the source is empty,
+- the **Many-to-Many Relation** data target in merge mode adds to the relations the element already has,
+- the classification store data targets add to the active groups the element already has.
+
+Pass the element whose current state the result should build on. If other code in the same process must not see the
+changes, pass a copy you own rather than the instance Pimcore keeps in its runtime cache.
+
+## Check a Mapping Up Front
+
+`lint()` returns a list of `MappingIssue` objects (`itemIndex`, `itemLabel`, `message`) without applying anything. An
+empty list means `prepare()` accepts the mapping. It reports:
+
+- items that cannot be built, for example an unknown operator or data target type, or invalid settings,
+- operators and data targets that write elements while processing a row.
+
+```php
+foreach ($mappingApplier->lint($mappingConfig) as $issue) {
+    echo $issue, PHP_EOL; // Mapping item 2 (`Image`): Operator `importAsset` writes elements and cannot be applied without saving.
+}
+```
+
+The shipped **Import Asset** operator saves assets and creates folders, so a mapping using it cannot be applied without
+saving. Use **Load Asset** instead. A custom operator or data target that saves, creates or deletes elements has to
+implement `Pimcore\Bundle\DataImporterBundle\Mapping\WritesElementsInterface`, so that `lint()` and `prepare()` reject
+it.
+
+## Resolve References Yourself
+
+The **Load Data Object** and **Load Asset** operators look up elements with their configured load strategy. Pass a
+`ReferenceLookupInterface` to `apply()` to resolve these references first, for example to point them to elements that are
+not saved yet:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLookupInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
+use Pimcore\Model\Element\ElementInterface;
+
+final class PendingProductLookup implements ReferenceLookupInterface
+{
+    /**
+     * @param array<string, ElementInterface> $pendingByPath
+     */
+    public function __construct(private readonly array $pendingByPath)
+    {
+    }
+
+    public function find(ReferenceQuery $query): ?ElementInterface
+    {
+        if ($query->type !== ReferenceType::DataObject || $query->loadStrategy !== ReferenceLoadStrategy::Path) {
+            return null;
+        }
+
+        return $this->pendingByPath[$query->key] ?? null;
+    }
+}
+
+$mapping->apply($product, $row, new PendingProductLookup($pendingByPath));
+```
+
+The operator asks the lookup once per value, before its own load strategy. When the lookup returns `null`, the operator
+falls back to its own strategy. The returned element is used as is, so it may be unsaved. It has to be a data object for
+`ReferenceType::DataObject` and an asset for `ReferenceType::Asset`. Give unsaved elements distinct ids (e.g. negative
+ones): the **Many-to-Many Relation** data target in merge mode tells relations apart by id.
+
+`ReferenceQuery` describes what the operator is looking for:
+
+| Property | Content |
+|---|---|
+| `type` | `ReferenceType::DataObject` or `ReferenceType::Asset` |
+| `loadStrategy` | `ReferenceLoadStrategy::Id`, `Path` or `Attribute`, as configured on the operator |
+| `key` | The value the operator would look up: trimmed for `Id` and `Path`, unchanged for `Attribute` |
+| `classId`, `attributeName`, `attributeLanguage`, `partialMatch` | The attribute settings of **Load Data Object**, set for `Attribute` only |
+| `includeUnpublished` | The **Load unpublished** setting of **Load Data Object** |
+
+The lookup only applies during the `apply()` call it is passed to. It is removed when the call returns or throws, and
+imports never use it.

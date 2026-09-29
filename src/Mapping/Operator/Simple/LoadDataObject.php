@@ -13,6 +13,10 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScopeAwareTrait;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
@@ -26,6 +30,8 @@ use Symfony\Contracts\Service\Attribute\Required;
  */
 final class LoadDataObject extends AbstractOperator
 {
+    use MappingApplicationScopeAwareTrait;
+
     private const LOAD_STRATEGY_ID = 'id';
 
     private const LOAD_STRATEGY_PATH = 'path';
@@ -92,6 +98,13 @@ final class LoadDataObject extends AbstractOperator
             $object = null;
             $logMessage = '';
             if (empty($data) === false || $data === '0') {
+                $referencedObject = $this->lookupDataObject($data);
+                if ($referencedObject !== null) {
+                    $objects[] = $referencedObject;
+
+                    continue;
+                }
+
                 if ($this->loadStrategy === self::LOAD_STRATEGY_PATH) {
                     $object = $this->dataObjectLoader->loadByPath(trim($data));
                     $logMessage = 'by path `' . trim($data) . '`';
@@ -140,7 +153,7 @@ final class LoadDataObject extends AbstractOperator
 
                 if ($object instanceof DataObject) {
                     $objects[] = $object;
-                } elseif (!$dryRun && !empty($data)) {
+                } elseif (!$dryRun && !empty($data) && !$this->isAppliedWithoutSaving()) {
                     if (empty($logMessage)) {
                         $logMessage = "Could not load data object from `$data`";
                     } else {
@@ -165,6 +178,38 @@ final class LoadDataObject extends AbstractOperator
         } else {
             return $objects;
         }
+    }
+
+    private function lookupDataObject(mixed $data): ?DataObject
+    {
+        $loadStrategy = ReferenceLoadStrategy::tryFrom($this->loadStrategy);
+        if ($loadStrategy === null || !$this->hasReferenceLookup()) {
+            return null;
+        }
+
+        if ($loadStrategy !== ReferenceLoadStrategy::Attribute) {
+            $query = new ReferenceQuery(
+                ReferenceType::DataObject,
+                $loadStrategy,
+                trim((string) $data),
+                includeUnpublished: $this->loadUnpublished
+            );
+        } elseif ($this->attributeName !== '') {
+            $query = new ReferenceQuery(
+                ReferenceType::DataObject,
+                $loadStrategy,
+                (string) $data,
+                $this->attributeDataObjectClassId,
+                $this->attributeName,
+                $this->attributeLanguage,
+                $this->partialMatch,
+                $this->loadUnpublished
+            );
+        } else {
+            return null;
+        }
+
+        return $this->lookupReference($query, DataObject::class);
     }
 
     /**
