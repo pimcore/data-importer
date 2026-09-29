@@ -13,6 +13,8 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier:
         public: true
+    Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader:
+        public: true
 
     # -------------------
     # simple operators

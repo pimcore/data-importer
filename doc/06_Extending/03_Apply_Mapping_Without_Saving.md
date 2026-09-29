@@ -136,3 +136,48 @@ ones): the **Many-to-Many Relation** data target in merge mode tells relations a
 
 The lookup only applies during the `apply()` call it is passed to. It is removed when the call returns or throws, and
 imports never use it.
+
+## Read the Rows of a File
+
+`Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader` reads a source file with the file format of an import
+configuration and returns the rows an import would queue, without queueing them. Use it to check a file before
+importing it, or to pass its rows to `apply()`:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
+
+$interpreterConfig = ['type' => 'xlsx', 'settings' => ['sheetName' => 'Sheet1', 'skipFirstRow' => true]];
+
+foreach ($sourceFileReader->readRows($interpreterConfig, $path) as $row) {
+    $mapping->apply($product, $row);
+}
+```
+
+`$interpreterConfig` has the shape of the `interpreterConfig` of a stored import configuration. The rows are keyed like
+the rows of an import, so the `dataSourceIndex` of a mapping refers to the same columns, and they follow the same
+settings: with `skipFirstRow` the header row is left out, without it the header row is the first row. Unlike an import,
+reading rows skips no unchanged rows (delta check), cleans up no elements and writes nothing to the application logger.
+A file that is not valid for the format, or a row that is not UTF-8 encoded, throws an `InvalidInputException`.
+
+The **CSV** and **XLSX** file formats support reading rows. Other formats throw an `InvalidConfigurationException`; a
+custom file format can support it by implementing
+`Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\RowReaderInterface`.
+
+### Typed Values
+
+An import receives every XLSX cell as text, so the number `123` arrives as `'123'` and `TRUE` as `'TRUE'`, and a number
+cannot be told apart from text. Pass `true` as the third argument to get the stored values instead:
+
+| Cell | Default | Typed |
+|---|---|---|
+| Number `123` | `'123'` | `123` |
+| Text `00123` | `'00123'` | `'00123'` |
+| Number `12.5` | `'12.5'` | `12.5` |
+| Boolean `TRUE` | `'TRUE'` | `true` |
+| Date `2026-03-01` | `'46082'` | `46082` |
+| Empty | `null` | `null` |
+| Formula `=1+1` | `'2'` | `2` |
+
+Number formats are not read, so a number displayed as `00123` is `'123'` or `123`, and dates are Excel serial numbers;
+convert them with `PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject()`. Imports always use the default. CSV
+values are strings either way, the option changes nothing for them.
