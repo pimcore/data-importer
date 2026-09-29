@@ -55,7 +55,8 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
      */
     private function loadRows(string $path): \Generator
     {
-        if (($handle = fopen($path, 'r')) === false) {
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
             return;
         }
 

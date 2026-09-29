@@ -31,6 +31,8 @@ class SourceFileReaderTest extends Unit
 
     private const HEADER = ['number', 'text', 'decimal', 'flag', 'date', 'empty', 'formula'];
 
+    private const LEADING_ZEROS = '00123';
+
     private const CSV = "sku,price\r\n00123,12.5\r\nB-2,\r\n";
 
     protected $tester;
@@ -61,21 +63,21 @@ class SourceFileReaderTest extends Unit
         $rows = iterator_to_array($this->reader()->readRows($config, $path), false);
 
         $this->assertSame($this->interpretAndReadQueue($config, $path), $rows);
-        $this->assertSame([['123', '00123', '12.5', 'TRUE', (string) $this->dateSerial(), null, '2']], $rows);
+        $this->assertSame([['123', self::LEADING_ZEROS, '12.5', 'TRUE', (string) $this->dateSerial(), null, '2']], $rows);
     }
 
     public function testImportStillQueuesXlsxValuesAsText(): void
     {
         $queued = $this->interpretAndReadQueue($this->xlsxConfig(true), $this->writeXlsx());
 
-        $this->assertSame([['123', '00123', '12.5', 'TRUE', (string) $this->dateSerial(), null, '2']], $queued);
+        $this->assertSame([['123', self::LEADING_ZEROS, '12.5', 'TRUE', (string) $this->dateSerial(), null, '2']], $queued);
     }
 
     public function testXlsxTypedValues(): void
     {
         $rows = iterator_to_array($this->reader()->readRows($this->xlsxConfig(true), $this->writeXlsx(), true), false);
 
-        $this->assertSame([[123, '00123', 12.5, true, $this->dateSerial(), null, 2]], $rows);
+        $this->assertSame([[123, self::LEADING_ZEROS, 12.5, true, $this->dateSerial(), null, 2]], $rows);
     }
 
     public function testXlsxHeaderRowIsReadUnlessSkipped(): void
@@ -94,7 +96,7 @@ class SourceFileReaderTest extends Unit
         $rows = iterator_to_array($this->reader()->readRows($config, $path), false);
 
         $this->assertSame($this->interpretAndReadQueue($config, $path), $rows);
-        $this->assertSame([['sku' => '00123', 'price' => '12.5'], ['sku' => 'B-2', 'price' => '']], $rows);
+        $this->assertSame([['sku' => self::LEADING_ZEROS, 'price' => '12.5'], ['sku' => 'B-2', 'price' => '']], $rows);
         $this->assertSame($rows, iterator_to_array($this->reader()->readRows($config, $path, true), false));
     }
 
@@ -102,7 +104,7 @@ class SourceFileReaderTest extends Unit
     {
         $queued = $this->interpretAndReadQueue($this->csvConfig(), $this->writeFile(self::CSV, 'csv'));
 
-        $this->assertSame([['sku' => '00123', 'price' => '12.5'], ['sku' => 'B-2', 'price' => '']], $queued);
+        $this->assertSame([['sku' => self::LEADING_ZEROS, 'price' => '12.5'], ['sku' => 'B-2', 'price' => '']], $queued);
     }
 
     public function testCsvRowWithInvalidEncodingFailsLikeAnImport(): void
@@ -207,7 +209,7 @@ class SourceFileReaderTest extends Unit
         $sheet->setTitle(self::SHEET_NAME);
         $sheet->fromArray([self::HEADER]);
         $sheet->setCellValue('A2', 123);
-        $sheet->setCellValueExplicit('B2', '00123', DataType::TYPE_STRING);
+        $sheet->setCellValueExplicit('B2', self::LEADING_ZEROS, DataType::TYPE_STRING);
         $sheet->setCellValue('C2', 12.5);
         $sheet->setCellValue('D2', true);
         $sheet->setCellValue('E2', $this->dateSerial());
