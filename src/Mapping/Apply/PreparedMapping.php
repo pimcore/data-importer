@@ -46,8 +46,11 @@ final class PreparedMapping
      *
      * @throws MappingApplicationException
      */
-    public function apply(ElementInterface $element, array $row, ?ReferenceLookupInterface $referenceLookup = null): void
-    {
+    public function apply(
+        ElementInterface $element,
+        array $row,
+        ?ReferenceLookupInterface $referenceLookup = null
+    ): void {
         $this->scope->run($referenceLookup, function () use ($element, $row): void {
             foreach ($this->items as $index => $item) {
                 try {

@@ -28,6 +28,8 @@ final class MappingApplier
     // operators log under this configuration name; nothing is logged while a mapping is applied
     private const CONFIG_NAME = '';
 
+    private const WRITES_ELEMENTS_MESSAGE = '%s `%s` writes elements and cannot be applied without saving.';
+
     public function __construct(
         private readonly MappingConfigurationFactory $mappingConfigurationFactory,
         private readonly ImportProcessingService $importProcessingService,
@@ -94,18 +96,16 @@ final class MappingApplier
             $operatorConfigs = array_values($entry['transformationPipeline'] ?? []);
             foreach ($item->getTransformationPipeline() as $position => $operator) {
                 if ($operator instanceof WritesElementsInterface) {
-                    $issues[] = new MappingIssue($index, $label, sprintf(
-                        'Operator `%s` writes elements and cannot be applied without saving.',
-                        $operatorConfigs[$position]['type'] ?? $operator::class
-                    ));
+                    $type = $operatorConfigs[$position]['type'] ?? $operator::class;
+                    $message = sprintf(self::WRITES_ELEMENTS_MESSAGE, 'Operator', $type);
+                    $issues[] = new MappingIssue($index, $label, $message);
                 }
             }
 
             if ($item->getDataTarget() instanceof WritesElementsInterface) {
-                $issues[] = new MappingIssue($index, $label, sprintf(
-                    'Data target `%s` writes elements and cannot be applied without saving.',
-                    $entry['dataTarget']['type'] ?? $item->getDataTarget()::class
-                ));
+                $type = $entry['dataTarget']['type'] ?? $item->getDataTarget()::class;
+                $message = sprintf(self::WRITES_ELEMENTS_MESSAGE, 'Data target', $type);
+                $issues[] = new MappingIssue($index, $label, $message);
             }
 
             $items[$index] = $item;

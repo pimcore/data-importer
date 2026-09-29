@@ -37,7 +37,11 @@ abstract class AbstractAssetOperator extends AbstractOperator
         } elseif ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::ASSET_ARRAY;
         } else {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for import/load asset operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for import/load asset operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
     }
 

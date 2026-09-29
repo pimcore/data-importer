@@ -37,6 +37,10 @@ class MappingApplierTest extends Unit
 
     private const DATA_HUB_SCOPE = 'pimcore_data_hub';
 
+    private const NEW_TITLE = 'new title';
+
+    private const ASSET_FOLDER = '/apply-mapping-assets';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -71,16 +75,21 @@ class MappingApplierTest extends Unit
         $modificationDate = $object->getModificationDate();
         $versionCount = $this->countVersions($object);
 
-        $events = $this->recordEvents([PreSaveEvent::class, PostSaveEvent::class, DataObjectEvents::PRE_UPDATE, DataObjectEvents::POST_UPDATE]);
+        $events = $this->recordEvents([
+            PreSaveEvent::class,
+            PostSaveEvent::class,
+            DataObjectEvents::PRE_UPDATE,
+            DataObjectEvents::POST_UPDATE,
+        ]);
 
         $copy = $this->loadDetached($object);
         $this->applier()->prepare([
             $this->directItem('name', 'name', [['type' => 'trim', 'settings' => ['mode' => 'both']]]),
             $this->directItem('title', 'title'),
-        ])->apply($copy, ['name' => '  new name  ', 'title' => 'new title']);
+        ])->apply($copy, ['name' => '  new name  ', 'title' => self::NEW_TITLE]);
 
         $this->assertSame('new name', $copy->get('name'));
-        $this->assertSame('new title', $copy->get('title'));
+        $this->assertSame(self::NEW_TITLE, $copy->get('title'));
 
         $stored = $this->loadDetached($object);
         $this->assertSame('old name', $stored->get('name'));
@@ -104,7 +113,7 @@ class MappingApplierTest extends Unit
             $this->directItem('description', 'description', [], ['writeIfSourceIsEmpty' => false]),
             $this->directItem('title', 'title'),
         ];
-        $row = ['name' => 'new name', 'description' => '', 'title' => 'new title'];
+        $row = ['name' => 'new name', 'description' => '', 'title' => self::NEW_TITLE];
 
         $this->import($mapping, $imported, $row);
 
@@ -112,7 +121,8 @@ class MappingApplierTest extends Unit
         $this->applier()->prepare($mapping)->apply($copy, $row);
 
         $imported = $this->loadDetached($imported);
-        foreach (['name' => 'kept name', 'description' => 'kept description', 'title' => 'new title'] as $field => $expected) {
+        $expectedValues = ['name' => 'kept name', 'description' => 'kept description', 'title' => self::NEW_TITLE];
+        foreach ($expectedValues as $field => $expected) {
             $this->assertSame($expected, $imported->get($field), 'import: ' . $field);
             $this->assertSame($imported->get($field), $copy->get($field), 'applied: ' . $field);
         }
@@ -123,10 +133,11 @@ class MappingApplierTest extends Unit
         $existing = $this->createObject('referenced');
         $placeholder = $this->newObject('placeholder');
         $placeholder->setId(-1);
-        $lookup = $this->lookup(fn (ReferenceQuery $query): ?ElementInterface => $placeholder);
+        $lookup = $this->lookup(fn (): ?ElementInterface => $placeholder);
 
         $copy = $this->newObject('target');
-        $this->applier()->prepare([$this->loadDataObjectItem()])->apply($copy, ['ref' => ' ' . $existing->getFullPath() . ' '], $lookup);
+        $row = ['ref' => ' ' . $existing->getFullPath() . ' '];
+        $this->applier()->prepare([$this->loadDataObjectItem()])->apply($copy, $row, $lookup);
 
         $this->assertSame($placeholder, $copy->get('related'));
         $this->assertCount(1, $lookup->queries);
@@ -146,7 +157,7 @@ class MappingApplierTest extends Unit
         $prepared->apply($withoutHook, $row);
         $this->assertSame($existing->getId(), $withoutHook->get('related')?->getId());
 
-        $lookup = $this->lookup(fn (ReferenceQuery $query): ?ElementInterface => null);
+        $lookup = $this->lookup(fn (): ?ElementInterface => null);
         $hookFindsNothing = $this->newObject('hook-finds-nothing');
         $prepared->apply($hookFindsNothing, $row, $lookup);
         $this->assertSame($existing->getId(), $hookFindsNothing->get('related')?->getId());
@@ -157,7 +168,7 @@ class MappingApplierTest extends Unit
     {
         $placeholder = new Asset\Image();
         $placeholder->setId(-2);
-        $lookup = $this->lookup(fn (ReferenceQuery $query): ?ElementInterface => $placeholder);
+        $lookup = $this->lookup(fn (): ?ElementInterface => $placeholder);
 
         $copy = $this->newObject('target');
         $this->applier()->prepare([[
@@ -176,8 +187,8 @@ class MappingApplierTest extends Unit
     public function testReferenceLookupIsClearedAfterARunThatThrows(): void
     {
         $existing = $this->createObject('referenced');
-        $failing = $this->lookup(function (ReferenceQuery $query): ?ElementInterface {
-            throw new \RuntimeException('lookup failed');
+        $failing = $this->lookup(function (): ?ElementInterface {
+            throw new \UnexpectedValueException('lookup failed');
         });
         $prepared = $this->applier()->prepare([$this->loadDataObjectItem()]);
 
@@ -188,7 +199,7 @@ class MappingApplierTest extends Unit
             $this->assertSame(0, $exception->getItemIndex());
             $this->assertSame('related', $exception->getItemLabel());
             $this->assertStringContainsString('lookup failed', $exception->getMessage());
-            $this->assertInstanceOf(\RuntimeException::class, $exception->getPrevious());
+            $this->assertInstanceOf(\UnexpectedValueException::class, $exception->getPrevious());
         }
 
         $scope = $this->tester->grabService(MappingApplicationScope::class);
@@ -243,7 +254,12 @@ class MappingApplierTest extends Unit
     public function testLintListsInvalidItems(): void
     {
         $issues = $this->applier()->lint([
-            ['label' => 'unknown', 'dataSourceIndex' => ['a'], 'transformationPipeline' => [['type' => 'doesNotExist']], 'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name']]],
+            [
+                'label' => 'unknown',
+                'dataSourceIndex' => ['a'],
+                'transformationPipeline' => [['type' => 'doesNotExist']],
+                'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name']],
+            ],
             ['label' => 'no target', 'dataSourceIndex' => ['a']],
         ]);
 
@@ -263,7 +279,7 @@ class MappingApplierTest extends Unit
         $asset = $this->loadDetached($object)->get('file');
         $this->assertInstanceOf(Asset::class, $asset);
         $this->assertGreaterThan(0, $asset->getId());
-        $this->assertSame('/apply-mapping-assets', $asset->getParent()?->getFullPath());
+        $this->assertSame(self::ASSET_FOLDER, $asset->getParent()?->getFullPath());
         $this->assertSame('asset content', Asset::getById($asset->getId(), ['force' => true])?->getData());
     }
 
@@ -277,7 +293,12 @@ class MappingApplierTest extends Unit
         $this->configName = uniqid('apply-mapping-test-');
         // seeded like Data Hub stores it; saving a Configuration needs the Data Hub workspace tables
         $configuration = [
-            'general' => ['active' => true, 'type' => 'dataImporterDataObject', 'name' => $this->configName, 'path' => ''],
+            'general' => [
+                'active' => true,
+                'type' => 'dataImporterDataObject',
+                'name' => $this->configName,
+                'path' => '',
+            ],
             'resolverConfig' => [
                 'elementType' => 'dataObject',
                 'dataObjectClassId' => $this->class->getId(),
@@ -353,7 +374,13 @@ class MappingApplierTest extends Unit
         }
     }
 
-    private function directItem(string $source, string $field, array $pipeline = [], array $targetSettings = [], ?string $label = null): array
+    private function directItem(
+        string $source,
+        string $field,
+        array $pipeline = [],
+        array $targetSettings = [],
+        ?string $label = null
+    ): array
     {
         return [
             'label' => $label ?? $field,
@@ -378,7 +405,9 @@ class MappingApplierTest extends Unit
         return [
             'label' => 'file',
             'dataSourceIndex' => ['file'],
-            'transformationPipeline' => [['type' => 'importAsset', 'settings' => ['parentFolder' => '/apply-mapping-assets']]],
+            'transformationPipeline' => [
+                ['type' => 'importAsset', 'settings' => ['parentFolder' => self::ASSET_FOLDER]],
+            ],
             'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'file']],
         ];
     }
