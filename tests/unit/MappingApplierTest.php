@@ -322,8 +322,35 @@ class MappingApplierTest extends Unit
             $this->tester->grabService('event_dispatcher'),
         );
         $processingService->setLogger(new NullLogger());
-        $processingService->processQueueItem((int) $entryIds[0]);
+
+        $this->withoutSearchIndexUpdates(fn () => $processingService->processQueueItem((int) $entryIds[0]));
         $this->assertSame([], $errors, 'import errors');
+    }
+
+    /**
+     * Updating a data object makes the search index look up its siblings, and the test environment has no search
+     * index to answer.
+     */
+    private function withoutSearchIndexUpdates(callable $callback): void
+    {
+        /** @var EventDispatcherInterface $dispatcher */
+        $dispatcher = $this->tester->grabService('event_dispatcher');
+        $detached = [];
+        foreach ($dispatcher->getListeners(DataObjectEvents::POST_UPDATE) as $listener) {
+            $owner = is_array($listener) ? $listener[0] : $listener;
+            if (is_object($owner) && str_starts_with($owner::class, 'Pimcore\\Bundle\\GenericDataIndexBundle\\')) {
+                $detached[] = [$listener, $dispatcher->getListenerPriority(DataObjectEvents::POST_UPDATE, $listener)];
+                $dispatcher->removeListener(DataObjectEvents::POST_UPDATE, $listener);
+            }
+        }
+
+        try {
+            $callback();
+        } finally {
+            foreach ($detached as [$listener, $priority]) {
+                $dispatcher->addListener(DataObjectEvents::POST_UPDATE, $listener, $priority ?? 0);
+            }
+        }
     }
 
     private function directItem(string $source, string $field, array $pipeline = [], array $targetSettings = [], ?string $label = null): array
