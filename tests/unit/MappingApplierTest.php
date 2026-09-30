@@ -42,6 +42,10 @@ class MappingApplierTest extends Unit
 {
     private const CLASS_NAME = 'ApplyMappingTarget';
 
+    private const NEW_NAME = 'new name';
+
+    private const LOOKUP_FAILED = 'lookup failed';
+
     private const DATA_HUB_SCOPE = 'pimcore_data_hub';
 
     private const NEW_TITLE = 'new title';
@@ -99,7 +103,7 @@ class MappingApplierTest extends Unit
             $this->directItem('title', 'title'),
         ])->apply($copy, ['name' => '  new name  ', 'title' => self::NEW_TITLE]);
 
-        $this->assertSame('new name', $copy->get('name'));
+        $this->assertSame(self::NEW_NAME, $copy->get('name'));
         $this->assertSame(self::NEW_TITLE, $copy->get('title'));
 
         $stored = $this->loadDetached($object);
@@ -124,7 +128,7 @@ class MappingApplierTest extends Unit
             $this->directItem('description', 'description', [], ['writeIfSourceIsEmpty' => false]),
             $this->directItem('title', 'title'),
         ];
-        $row = ['name' => 'new name', 'description' => '', 'title' => self::NEW_TITLE];
+        $row = ['name' => self::NEW_NAME, 'description' => '', 'title' => self::NEW_TITLE];
 
         $this->import($mapping, $imported, $row);
 
@@ -199,7 +203,7 @@ class MappingApplierTest extends Unit
     {
         $existing = $this->createObject('referenced');
         $failing = $this->lookup(function (): ?ElementInterface {
-            throw new \UnexpectedValueException('lookup failed');
+            throw new \UnexpectedValueException(self::LOOKUP_FAILED);
         });
         $prepared = $this->applier()->prepare([$this->loadDataObjectItem()]);
 
@@ -209,7 +213,7 @@ class MappingApplierTest extends Unit
         } catch (MappingApplicationException $exception) {
             $this->assertSame(0, $exception->getItemIndex());
             $this->assertSame('related', $exception->getItemLabel());
-            $this->assertStringContainsString('lookup failed', $exception->getMessage());
+            $this->assertStringContainsString(self::LOOKUP_FAILED, $exception->getMessage());
             $this->assertInstanceOf(\UnexpectedValueException::class, $exception->getPrevious());
         }
 
@@ -300,7 +304,7 @@ class MappingApplierTest extends Unit
         $copy = $this->loadDetached($object);
         $logged = $this->recordApplicationLog();
 
-        $issues = $this->applier()->prepare([
+        $mapping = $this->applier()->prepare([
             $this->directItem('name', 'name'),
             $this->loadDataObjectItem(),
             $this->loadAssetItem(),
@@ -313,7 +317,8 @@ class MappingApplierTest extends Unit
                 ],
                 'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'title']],
             ],
-        ])->apply($copy, ['name' => 'new name', 'ref' => self::MISSING_PATH, 'file' => self::MISSING_PATH]);
+        ]);
+        $issues = $mapping->apply($copy, ['name' => self::NEW_NAME, 'ref' => self::MISSING_PATH, 'file' => self::MISSING_PATH]);
 
         $this->assertSame([
             [1, 'related', self::MISSING_OBJECT],
@@ -363,7 +368,7 @@ class MappingApplierTest extends Unit
         $previous = DataObject::getHideUnpublished();
         DataObject::setHideUnpublished(true);
         $failing = $this->lookup(function (): ?ElementInterface {
-            throw new \UnexpectedValueException('lookup failed');
+            throw new \UnexpectedValueException(self::LOOKUP_FAILED);
         });
 
         try {
@@ -420,14 +425,13 @@ class MappingApplierTest extends Unit
         $this->applier()->prepare([$this->relationItem('plainLinks', 'merge')])
             ->apply($copy, ['ref' => $existing->getFullPath() . ',/first,/second'], $lookup);
 
-        $this->assertSame([$existing->getId()], array_map(
+        $linkIds = array_map(
             static fn (DataObject\Data\ObjectMetadata $link): ?int => $link->getObject()?->getId(),
             $copy->get('links')
-        ));
-        $this->assertSame([$existing->getId(), -1, -2], array_map(
-            static fn (Concrete $link): ?int => $link->getId(),
-            $copy->get('plainLinks')
-        ));
+        );
+        $plainLinkIds = array_map(static fn (Concrete $link): ?int => $link->getId(), $copy->get('plainLinks'));
+        $this->assertSame([$existing->getId()], $linkIds);
+        $this->assertSame([$existing->getId(), -1, -2], $plainLinkIds);
     }
 
     private function applier(): MappingApplier
