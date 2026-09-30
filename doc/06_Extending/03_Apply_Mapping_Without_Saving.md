@@ -25,6 +25,8 @@ Compared to an import, applying a mapping:
 ```php
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\Element\Service;
 
 final class ProductPreview
 {
@@ -32,15 +34,20 @@ final class ProductPreview
     {
     }
 
-    public function preview(array $mappingConfig, int $productId, array $row): DataObject\Concrete
+    public function preview(array $mappingConfig, int $productId, array $row): ElementInterface
     {
         // throws an InvalidConfigurationException listing every issue lint() reports
         $mapping = $this->mappingApplier->prepare($mappingConfig);
 
-        $product = DataObject\Concrete::getById($productId, ['force' => true]);
-        $mapping->apply($product, $row);
+        // a copy of its own, so the instance other code gets from getById() stays unchanged
+        $product = DataObject\Concrete::getById($productId);
+        $copy = Service::cloneMe($product);
+        $copy->setId($product->getId());
+        $copy->setParentId($product->getParentId());
 
-        return $product;
+        $warnings = $mapping->apply($copy, $row); // see Warnings below
+
+        return $copy;
     }
 }
 ```
@@ -72,7 +79,8 @@ you pass:
 - the classification store data targets add to the active groups the element already has.
 
 Pass the element whose current state the result should build on. If other code in the same process must not see the
-changes, pass a copy you own rather than the instance Pimcore keeps in its runtime cache.
+changes, pass a copy you own, as in the example above: `getById()` returns the instance Pimcore keeps in its runtime
+cache, and loading with `force` puts the new instance there as well.
 
 ## Check a Mapping Up Front
 
