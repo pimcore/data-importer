@@ -178,18 +178,18 @@ final class LoadDataObject extends AbstractOperator
         if (empty($class)) {
             throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
         }
-        $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
+        $classFqcn = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
         $how = 'by attribute';
         if ($this->partialMatch) {
             $data = "%$data%";
             $operator = 'LIKE';
             $how = 'by attribute partially';
         }
-        $logMessage = $this->attributeLanguage
-            ? sprintf('%s `%s` (class `%s`, value `%s`, language `%s`)', $how, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage)
-            : sprintf('%s `%s` (class `%s`, value `%s`)', $how, $this->attributeName, ucfirst($class->getName()), $data);
+        $className = ucfirst($class->getName());
+        $logMessage = sprintf('%s `%s` (class `%s`, value `%s`', $how, $this->attributeName, $className, $data)
+            . ($this->attributeLanguage ? sprintf(', language `%s`)', $this->attributeLanguage) : ')');
 
-        $object = $this->dataObjectLoader->loadByAttribute($className,
+        $object = $this->dataObjectLoader->loadByAttribute($classFqcn,
             $this->attributeName,
             $data,
             $this->attributeLanguage,

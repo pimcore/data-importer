@@ -318,17 +318,20 @@ class MappingApplierTest extends Unit
                 'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'title']],
             ],
         ]);
-        $issues = $mapping->apply($copy, ['name' => self::NEW_NAME, 'ref' => self::MISSING_PATH, 'file' => self::MISSING_PATH]);
+        $row = ['name' => self::NEW_NAME, 'ref' => self::MISSING_PATH, 'file' => self::MISSING_PATH];
+        $issues = $mapping->apply($copy, $row);
 
-        $this->assertSame([
+        $expected = [
             [1, 'related', self::MISSING_OBJECT],
             [2, 'file', 'Could not load asset from `' . self::MISSING_PATH . '`'],
             [3, 'title', self::MISSING_OBJECT],
             [3, 'title', 'Receveid a non ElementInterface to process.'],
-        ], array_map(
+        ];
+        $actual = array_map(
             static fn (MappingIssue $issue): array => [$issue->itemIndex, $issue->itemLabel, $issue->message],
             $issues
-        ));
+        );
+        $this->assertSame($expected, $actual);
         // the default writeIfSourceIsEmpty writes the miss
         $this->assertNull($copy->get('related'));
         $this->assertSame([], $logged->getArrayCopy());
