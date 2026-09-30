@@ -46,4 +46,18 @@ trait ConfigurationPermissionTrait
 
         return $config;
     }
+
+    /**
+     * The gate for a preview. A stored configuration is gated as always; a name nothing is
+     * stored under is a proposal under review, which the route's own permission covers — but
+     * only while a scope says so, so a plain typo still reads as not found.
+     */
+    private function loadConfigurationForPreview(string $name, string $permission, ?string $scope): ?Configuration
+    {
+        if ($scope !== null && Configuration::getByName($name) === null) {
+            return null;
+        }
+
+        return $this->loadConfigurationWithPermission($name, $permission);
+    }
 }

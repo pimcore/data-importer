@@ -8,6 +8,19 @@ parameters:
     excludePaths:
         - src/Command/DummyDataCommand.php
         - src/Command/ParallelizationAbstractCommand.php
+        # the Change Control bundle is an optional integration this repository cannot install;
+        # these implement its contracts and are registered only when it is present
+        - src/ChangeControl/ImportConfigDetailHydrator.php
+        - src/ChangeControl/ImportConfigShape.php
+        - src/ChangeControl/ImportConfigSubjectHandler.php
+    ignoreErrors:
+        # the same optional integration, the Agent bundle it proposes through, and Studio's MCP
+        # plumbing, which the platform version this constraint admits does not ship yet
+        -
+            message: '#Pimcore\\Bundle\\(ChangeControlBundle|PimcoreAgentBundle|StudioBackendBundle\\Mcp)\\#'
+            paths:
+                - src/Mcp/*
+                - src/DependencyInjection/PimcoreDataImporterExtension.php
 
 includes:
     - phpstan-baseline.neon

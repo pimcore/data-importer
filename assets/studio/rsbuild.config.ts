@@ -84,6 +84,7 @@ export default defineConfig({
       remotes: {
         '@pimcore/studio-ui-bundle': createDynamicRemote('pimcore_studio_ui_bundle'),
         '@pimcore/data-hub': createDynamicRemote('pimcore_datahub_bundle'),
+        '@pimcore/change-control-bundle': createDynamicRemote('pimcore_change_control_bundle'),
       },
       shared: {
         ...packages.dependencies,

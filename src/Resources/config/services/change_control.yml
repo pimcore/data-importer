@@ -1,0 +1,14 @@
+# Loaded only when the Change Control bundle is installed - see PimcoreDataImporterExtension.
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: false
+        public: false
+
+    Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigSubjectHandler:
+        tags:
+            - { name: change_control.subject_handler, index: 'data-importer-config' }
+
+    Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigDetailHydrator:
+        tags:
+            - { name: change_control.detail_hydrator, index: 'data-importer-config' }

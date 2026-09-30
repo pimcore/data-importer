@@ -323,3 +323,31 @@ data-importer.execution.status.cancel: Cancelar ejecución y limpiar cola
 data-importer.execution.cron-validating: Validando expresión Cron...
 data-importer.validation.required: '{{field}} es obligatorio'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Importador de objetos de datos
+
+# Change Control review
+data-importer.review.status.added: añadido
+data-importer.review.status.changed: modificado
+data-importer.review.status.removed: eliminado
+data-importer.review.status.moved: movido
+data-importer.review.mappings: Mapeos
+data-importer.review.unbound: '{{address}} — esta configuración no tiene ese campo, aprobarla no cambia nada'
+data-importer.review.outline.active: Activa
+data-importer.review.outline.inactive: Inactiva
+data-importer.review.outline.mappings: '{{count}} asignaciones de campos'
+data-importer.review.outline.more-settings-one: '1 ajuste más'
+data-importer.review.outline.more-settings: '{{count}} ajustes más'
+data-importer.review.outline.settings-count-one: '1 ajuste'
+data-importer.review.outline.settings-count: '{{count}} ajustes'
+data-importer.review.outline.read: Leer
+data-importer.review.outline.map: Asignar
+data-importer.review.outline.write: Escribir
+data-importer.review.outline.run: Ejecutar
+data-importer.review.outline.data-objects: 'Objetos {{class}}'
+data-importer.review.outline.new: Nueva
+data-importer.review.load-failed: No se pudieron cargar los cambios propuestos.
+data-importer.review.section.general: General
+data-importer.review.section.data-source: Fuente de datos
+data-importer.review.section.resolver: Resolver
+data-importer.review.section.processing: Procesamiento
+data-importer.review.section.execution: Ejecución
+data-importer.review.section.permissions: Permisos
