@@ -14,7 +14,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Apply;
 
 /**
- * A reason why a mapping item cannot be applied without saving.
+ * A message about a mapping item: why it cannot be applied without saving (MappingApplier::lint()), or what an
+ * operator would have logged during an import (PreparedMapping::apply()).
  */
 final readonly class MappingIssue
 {

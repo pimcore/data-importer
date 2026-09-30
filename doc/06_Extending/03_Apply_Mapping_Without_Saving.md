@@ -15,8 +15,8 @@ Compared to an import, applying a mapping:
 - uses no queue and no resolver: loading, creating and placing the element is up to you, so location strategies (including
   the ones that create folders) do not apply,
 - does not save the element and dispatches no `PreSaveEvent` or `PostSaveEvent`,
-- writes nothing to the application logger. A reference an operator cannot resolve results in `null`, as it does during
-  an import, but without a log entry.
+- writes nothing to the application logger. `apply()` returns what the operators would have logged instead, see
+  [Warnings](#warnings).
 
 ## Usage
 
@@ -51,6 +51,15 @@ the source, so `dataSourceIndex` refers to the same columns.
 
 When an item fails, `apply()` throws a `MappingApplicationException`. `getItemIndex()` and `getItemLabel()` name the
 failing item, `getPrevious()` holds the original exception. Items before it have already been applied to the element.
+
+### Warnings
+
+`apply()` returns a list of `MappingIssue` objects (`itemIndex`, `itemLabel`, `message`) with what the operators would
+have written to the application logger during an import, in the order of the items, for example that a reference could
+not be resolved. An empty list means nothing was reported.
+
+An item with a warning is still applied. An operator that cannot resolve a reference returns `null`, and the **Direct**
+data target writes it unless `writeIfSourceIsEmpty` is disabled, which clears a relation the element already has.
 
 ### Which element to pass
 

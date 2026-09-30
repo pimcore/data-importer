@@ -13,14 +13,19 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Exception\MappingApplicationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingIssue;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLookupInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Event\DataObjectEvents;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject;
@@ -29,6 +34,7 @@ use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Tool\SettingsStore;
 use Pimcore\Tests\Support\Util\TestHelper;
+use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -41,6 +47,10 @@ class MappingApplierTest extends Unit
     private const NEW_TITLE = 'new title';
 
     private const ASSET_FOLDER = '/apply-mapping-assets';
+
+    private const MISSING_PATH = '/does-not-exist';
+
+    private const MISSING_OBJECT = 'Could not load data object by path `' . self::MISSING_PATH . '`';
 
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
@@ -284,6 +294,70 @@ class MappingApplierTest extends Unit
         $this->assertSame('asset content', Asset::getById($asset->getId(), ['force' => true])?->getData());
     }
 
+    public function testMissesAreReportedToTheCallerInsteadOfLogged(): void
+    {
+        $object = $this->createObject('existing', ['related' => $this->createObject('referenced')]);
+        $copy = $this->loadDetached($object);
+        $logged = $this->recordApplicationLog();
+
+        $issues = $this->applier()->prepare([
+            $this->directItem('name', 'name'),
+            $this->loadDataObjectItem(),
+            $this->loadAssetItem(),
+            [
+                'label' => 'title',
+                'dataSourceIndex' => ['ref'],
+                'transformationPipeline' => [
+                    ['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']],
+                    ['type' => 'objectField', 'settings' => ['attribute' => 'name']],
+                ],
+                'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'title']],
+            ],
+        ])->apply($copy, ['name' => 'new name', 'ref' => self::MISSING_PATH, 'file' => self::MISSING_PATH]);
+
+        $this->assertSame([
+            [1, 'related', self::MISSING_OBJECT],
+            [2, 'file', 'Could not load asset from `' . self::MISSING_PATH . '`'],
+            [3, 'title', self::MISSING_OBJECT],
+            [3, 'title', 'Receveid a non ElementInterface to process.'],
+        ], array_map(
+            static fn (MappingIssue $issue): array => [$issue->itemIndex, $issue->itemLabel, $issue->message],
+            $issues
+        ));
+        // the default writeIfSourceIsEmpty writes the miss
+        $this->assertNull($copy->get('related'));
+        $this->assertSame([], $logged->getArrayCopy());
+    }
+
+    /**
+     * Imports run the operators outside of apply(), so they keep logging.
+     */
+    public function testOperatorsStillLogOutsideOfApply(): void
+    {
+        $messages = [];
+        $applicationLogger = $this->createMock(ApplicationLogger::class);
+        $applicationLogger->method('warning')->willReturnCallback(static function ($message) use (&$messages): void {
+            $messages[] = (string) $message;
+        });
+        $scope = $this->tester->grabService(MappingApplicationScope::class);
+
+        $loadDataObject = new LoadDataObject($applicationLogger);
+        $loadDataObject->setDataObjectLoader($this->tester->grabService(DataObjectLoader::class));
+        $loadAsset = new LoadAsset($applicationLogger);
+        $objectField = new ObjectField($applicationLogger);
+        foreach ([$loadDataObject, $loadAsset, $objectField] as $operator) {
+            $operator->setMappingApplicationScope($scope);
+            $operator->setSettings(['loadStrategy' => 'path']);
+            $operator->process(self::MISSING_PATH);
+        }
+
+        $this->assertSame([
+            self::MISSING_OBJECT . ' ',
+            'Could not load asset from `' . self::MISSING_PATH . '` ',
+            'Receveid a non ElementInterface to process. ',
+        ], $messages);
+    }
+
     public function testUnpublishedSettingIsRestoredWhenTheLookupThrows(): void
     {
         $previous = DataObject::getHideUnpublished();
@@ -475,6 +549,16 @@ class MappingApplierTest extends Unit
         ];
     }
 
+    private function loadAssetItem(): array
+    {
+        return [
+            'label' => 'file',
+            'dataSourceIndex' => ['file'],
+            'transformationPipeline' => [['type' => 'loadAsset', 'settings' => ['loadStrategy' => 'path']]],
+            'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'file']],
+        ];
+    }
+
     private function relationItem(string $field, string $overwriteMode): array
     {
         return [
@@ -527,6 +611,28 @@ class MappingApplierTest extends Unit
                 return ($this->find)($query);
             }
         };
+    }
+
+    /**
+     * Records what the operators write to the application logger.
+     */
+    private function recordApplicationLog(): \ArrayObject
+    {
+        $records = new \ArrayObject();
+        /** @var ApplicationLogger $applicationLogger */
+        $applicationLogger = $this->tester->grabService(ApplicationLogger::class);
+        $applicationLogger->addWriter(new class($records) extends AbstractLogger {
+            public function __construct(private readonly \ArrayObject $records)
+            {
+            }
+
+            public function log($level, string|\Stringable $message, array $context = []): void
+            {
+                $this->records[] = [$level, (string) $message];
+            }
+        });
+
+        return $records;
     }
 
     /**

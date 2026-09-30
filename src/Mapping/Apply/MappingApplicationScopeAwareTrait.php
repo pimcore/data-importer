@@ -34,6 +34,22 @@ trait MappingApplicationScopeAwareTrait
         return $this->mappingApplicationScope?->isActive() ?? false;
     }
 
+    /**
+     * Nothing is logged while a mapping is applied without saving; the caller gets the warning from apply() instead.
+     *
+     * @return bool false if the warning still has to be logged
+     */
+    private function reportWarningIfAppliedWithoutSaving(string $message): bool
+    {
+        if (!$this->isAppliedWithoutSaving()) {
+            return false;
+        }
+
+        $this->mappingApplicationScope?->addWarning($message);
+
+        return true;
+    }
+
     private function hasReferenceLookup(): bool
     {
         return $this->mappingApplicationScope?->getReferenceLookup() !== null;

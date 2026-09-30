@@ -79,10 +79,13 @@ final class LoadAsset extends AbstractAssetOperator
 
             if ($asset instanceof Asset) {
                 $assets[] = $asset;
-            } elseif (!$dryRun && !empty($data) && !$this->isAppliedWithoutSaving()) {
-                $this->applicationLogger->warning("Could not load asset from `$data` ", [
-                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                ]);
+            } elseif (!$dryRun && !empty($data)) {
+                $logMessage = "Could not load asset from `$data`";
+                if (!$this->reportWarningIfAppliedWithoutSaving($logMessage)) {
+                    $this->applicationLogger->warning($logMessage . ' ', [
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                    ]);
+                }
             }
         }
 

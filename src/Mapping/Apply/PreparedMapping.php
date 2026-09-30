@@ -37,12 +37,16 @@ final class PreparedMapping
 
     /**
      * Applies the mapping to the element in memory. The element is not saved, no Data Importer event is dispatched and
-     * the shipped operators write nothing to the application logger.
+     * the shipped operators write nothing to the application logger: what they would log during an import is returned
+     * instead, e.g. a reference they could not resolve. The value of such an item is null, which the Direct data target
+     * writes unless `writeIfSourceIsEmpty` is disabled.
      *
      * The data targets read the current values of the element (e.g. `writeIfTargetIsNotEmpty`, the merge mode of
      * many-to-many relations, active classification store groups), so pass the element the result should build on.
      *
      * @param array<int|string, mixed> $row import data row, keyed like the rows of the Data Importer
+     *
+     * @return list<MappingIssue> the warnings, in the order of the items
      *
      * @throws MappingApplicationException
      */
@@ -50,8 +54,9 @@ final class PreparedMapping
         ElementInterface $element,
         array $row,
         ?ReferenceLookupInterface $referenceLookup = null
-    ): void {
-        $this->scope->run($referenceLookup, function () use ($element, $row): void {
+    ): array {
+        return $this->scope->run($referenceLookup, function () use ($element, $row): array {
+            $warnings = [];
             foreach ($this->items as $index => $item) {
                 try {
                     $this->importProcessingService->processElementTransformations($element, $row, [$item]);
@@ -59,7 +64,13 @@ final class PreparedMapping
                     // operators report invalid input as \TypeError as well
                     throw new MappingApplicationException($index, $item->getLabel(), $exception);
                 }
+
+                foreach ($this->scope->takeWarnings() as $message) {
+                    $warnings[] = new MappingIssue($index, $item->getLabel(), $message);
+                }
             }
+
+            return $warnings;
         });
     }
 }

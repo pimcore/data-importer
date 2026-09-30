@@ -39,7 +39,7 @@ final class ObjectField extends AbstractOperator
 
     private function logWarning(string $logMessage): void
     {
-        if ($this->isAppliedWithoutSaving()) {
+        if ($this->reportWarningIfAppliedWithoutSaving($logMessage)) {
             return;
         }
 

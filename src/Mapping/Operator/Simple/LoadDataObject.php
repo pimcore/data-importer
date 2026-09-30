@@ -181,15 +181,17 @@ final class LoadDataObject extends AbstractOperator
 
                 if ($object instanceof DataObject) {
                     $objects[] = $object;
-                } elseif (!$dryRun && !empty($data) && !$this->isAppliedWithoutSaving()) {
+                } elseif (!$dryRun && !empty($data)) {
                     if (empty($logMessage)) {
                         $logMessage = "Could not load data object from `$data`";
                     } else {
                         $logMessage = 'Could not load data object ' . $logMessage;
                     }
-                    $this->applicationLogger->warning($logMessage . ' ', [
-                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                    ]);
+                    if (!$this->reportWarningIfAppliedWithoutSaving($logMessage)) {
+                        $this->applicationLogger->warning($logMessage . ' ', [
+                            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                        ]);
+                    }
                 }
             }
         }
