@@ -284,6 +284,25 @@ class MappingApplierTest extends Unit
         $this->assertSame('asset content', Asset::getById($asset->getId(), ['force' => true])?->getData());
     }
 
+    public function testUnpublishedSettingIsRestoredWhenTheLookupThrows(): void
+    {
+        $previous = DataObject::getHideUnpublished();
+        DataObject::setHideUnpublished(true);
+        $failing = $this->lookup(function (): ?ElementInterface {
+            throw new \UnexpectedValueException('lookup failed');
+        });
+
+        try {
+            $this->applier()->prepare([$this->loadDataObjectItem(['loadUnpublished' => true])])
+                ->apply($this->newObject('target'), ['ref' => '/pending'], $failing);
+            $this->fail('The lookup exception was swallowed.');
+        } catch (MappingApplicationException) {
+            $this->assertTrue(DataObject::getHideUnpublished());
+        } finally {
+            DataObject::setHideUnpublished($previous);
+        }
+    }
+
     /**
      * Advanced relations keep only the id of a related element and load it again.
      */
@@ -444,12 +463,14 @@ class MappingApplierTest extends Unit
         ];
     }
 
-    private function loadDataObjectItem(): array
+    private function loadDataObjectItem(array $settings = []): array
     {
         return [
             'label' => 'related',
             'dataSourceIndex' => ['ref'],
-            'transformationPipeline' => [['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']]],
+            'transformationPipeline' => [
+                ['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path'] + $settings],
+            ],
             'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'related']],
         ];
     }

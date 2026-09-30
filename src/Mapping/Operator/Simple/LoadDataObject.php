@@ -87,13 +87,41 @@ final class LoadDataObject extends AbstractOperator
             $inputData = [$inputData];
         }
 
-        $objects = [];
         $prevHideUnpublished = DataObject::getHideUnpublished();
-
         if ($this->loadUnpublished) {
             DataObject::setHideUnpublished(false);
         }
 
+        try {
+            $objects = $this->loadDataObjects($inputData, $dryRun);
+        } finally {
+            // the flag is global and a reference lookup may throw
+            if ($this->loadUnpublished) {
+                DataObject::setHideUnpublished($prevHideUnpublished);
+            }
+        }
+
+        if ($returnScalar) {
+            if (!empty($objects)) {
+                return reset($objects);
+            }
+
+            return null;
+        } else {
+            return $objects;
+        }
+    }
+
+    /**
+     * @param array<mixed> $inputData
+     *
+     * @return DataObject[]
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function loadDataObjects(array $inputData, bool $dryRun): array
+    {
+        $objects = [];
         foreach ($inputData as $data) {
             $object = null;
             $logMessage = '';
@@ -165,19 +193,8 @@ final class LoadDataObject extends AbstractOperator
                 }
             }
         }
-        if ($this->loadUnpublished) {
-            DataObject::setHideUnpublished($prevHideUnpublished);
-        }
 
-        if ($returnScalar) {
-            if (!empty($objects)) {
-                return reset($objects);
-            }
-
-            return null;
-        } else {
-            return $objects;
-        }
+        return $objects;
     }
 
     private function lookupDataObject(mixed $data): ?DataObject
