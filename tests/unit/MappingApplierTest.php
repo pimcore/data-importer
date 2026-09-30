@@ -9,6 +9,7 @@ use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Exception\MappingApplicationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
@@ -283,6 +284,59 @@ class MappingApplierTest extends Unit
         $this->assertSame('asset content', Asset::getById($asset->getId(), ['force' => true])?->getData());
     }
 
+    /**
+     * Advanced relations keep only the id of a related element and load it again.
+     */
+    public function testAdvancedRelationRefusesAnElementItCannotLoad(): void
+    {
+        $placeholder = $this->newObject('placeholder');
+        $placeholder->setId(-1);
+        $lookup = $this->lookup(fn (): ?ElementInterface => $placeholder);
+
+        foreach (['links', 'elements'] as $field) {
+            foreach (['replace', 'merge'] as $mode) {
+                try {
+                    $this->applier()->prepare([$this->relationItem($field, $mode)])
+                        ->apply($this->newObject('target'), ['ref' => '/pending'], $lookup);
+                    $this->fail(sprintf('%s (%s) accepted an unsaved element.', $field, $mode));
+                } catch (MappingApplicationException $exception) {
+                    $this->assertInstanceOf(InvalidInputException::class, $exception->getPrevious(), $field);
+                    $this->assertStringContainsString($placeholder->getKey(), $exception->getMessage());
+                    $this->assertStringContainsString('saved', $exception->getMessage());
+                }
+            }
+        }
+    }
+
+    public function testRelationsTakeSavedElementsAndPlaceholdersWithDistinctIds(): void
+    {
+        $existing = $this->createObject('referenced');
+        $first = $this->newObject('first');
+        $first->setId(-1);
+        $second = $this->newObject('second');
+        $second->setId(-2);
+        $lookup = $this->lookup(fn (ReferenceQuery $query): ?ElementInterface => match ($query->key) {
+            '/first' => $first,
+            '/second' => $second,
+            default => null,
+        });
+
+        $copy = $this->newObject('target');
+        $this->applier()->prepare([$this->relationItem('links', 'merge')])
+            ->apply($copy, ['ref' => $existing->getFullPath()], $lookup);
+        $this->applier()->prepare([$this->relationItem('plainLinks', 'merge')])
+            ->apply($copy, ['ref' => $existing->getFullPath() . ',/first,/second'], $lookup);
+
+        $this->assertSame([$existing->getId()], array_map(
+            static fn (DataObject\Data\ObjectMetadata $link): ?int => $link->getObject()?->getId(),
+            $copy->get('links')
+        ));
+        $this->assertSame([$existing->getId(), -1, -2], array_map(
+            static fn (Concrete $link): ?int => $link->getId(),
+            $copy->get('plainLinks')
+        ));
+    }
+
     private function applier(): MappingApplier
     {
         return $this->tester->grabService(MappingApplier::class);
@@ -397,6 +451,22 @@ class MappingApplierTest extends Unit
             'dataSourceIndex' => ['ref'],
             'transformationPipeline' => [['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']]],
             'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'related']],
+        ];
+    }
+
+    private function relationItem(string $field, string $overwriteMode): array
+    {
+        return [
+            'label' => $field,
+            'dataSourceIndex' => ['ref'],
+            'transformationPipeline' => [
+                ['type' => 'explode', 'settings' => ['delimiter' => ',']],
+                ['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']],
+            ],
+            'dataTarget' => [
+                'type' => 'manyToManyRelation',
+                'settings' => ['fieldName' => $field, 'overwriteMode' => $overwriteMode],
+            ],
         ];
     }
 
@@ -515,6 +585,24 @@ class MappingApplierTest extends Unit
         $file->setTitle('file');
         $file->setAssetsAllowed(true);
         $fields[] = $file;
+
+        $links = new ClassDefinition\Data\AdvancedManyToManyObjectRelation();
+        $links->setName('links');
+        $links->setTitle('links');
+        $links->setAllowedClassId(self::CLASS_NAME);
+        $fields[] = $links;
+
+        $elements = new ClassDefinition\Data\AdvancedManyToManyRelation();
+        $elements->setName('elements');
+        $elements->setTitle('elements');
+        $elements->setObjectsAllowed(true);
+        $fields[] = $elements;
+
+        $plainLinks = new ClassDefinition\Data\ManyToManyObjectRelation();
+        $plainLinks->setName('plainLinks');
+        $plainLinks->setTitle('plainLinks');
+        $plainLinks->setClasses([['classes' => self::CLASS_NAME]]);
+        $fields[] = $plainLinks;
 
         $panel = new ClassDefinition\Layout\Panel();
         $panel->setName('pimcore_root');

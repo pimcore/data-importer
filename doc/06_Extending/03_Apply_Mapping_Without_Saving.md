@@ -121,8 +121,12 @@ $mapping->apply($product, $row, new PendingProductLookup($pendingByPath));
 
 The operator asks the lookup once per value, before its own load strategy. When the lookup returns `null`, the operator
 falls back to its own strategy. The returned element is used as is, so it may be unsaved. It has to be a data object for
-`ReferenceType::DataObject` and an asset for `ReferenceType::Asset`. Give unsaved elements distinct ids (e.g. negative
-ones): the **Many-to-Many Relation** data target in merge mode tells relations apart by id.
+`ReferenceType::DataObject` and an asset for `ReferenceType::Asset`.
+
+Unsaved elements work for fields that keep the element itself: many-to-one relations and many-to-many relations. The
+**Many-to-Many Relation** data target in merge mode tells relations apart by id, so give unsaved elements distinct ids.
+Advanced many-to-many relations keep only the id of a related element and load it again, so they need saved elements:
+`apply()` throws a `MappingApplicationException` for an element that cannot be loaded by its id.
 
 `ReferenceQuery` describes what the operator is looking for:
 
