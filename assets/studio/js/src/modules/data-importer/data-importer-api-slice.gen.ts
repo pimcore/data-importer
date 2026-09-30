@@ -562,7 +562,7 @@ export type BundleDataImporterDataPreviewResponse = {
         dataIndex?: string;
         /** Column label */
         label?: string;
-        /** Cell data value. May be any JSON value (string, number, boolean, array, object or null) depending on the source data type. */
+        /** Cell data value; may be any JSON type, depending on the source data type */
         data?: any;
         /** Whether this column is mapped */
         mapped?: boolean;
