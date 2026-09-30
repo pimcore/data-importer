@@ -238,6 +238,34 @@ abstract class AbstractInterpreter implements InterpreterInterface
         }
     }
 
+    /**
+     * @throws InvalidInputException
+     */
+    protected function assertFileValid(string $path): void
+    {
+        if (!$this->fileValid($path)) {
+            throw new InvalidInputException(sprintf('File `%s` is not valid for this file format.', basename($path)));
+        }
+    }
+
+    /**
+     * Passes the rows on with the encoding check an import runs before queueing them.
+     *
+     * @param iterable<int, array<int|string, mixed>> $rows
+     *
+     * @return \Generator<int, array<int|string, mixed>>
+     *
+     * @throws InvalidInputException
+     */
+    protected function checkRowEncoding(iterable $rows): \Generator
+    {
+        foreach ($rows as $row) {
+            $this->assertValidRowEncoding($row);
+
+            yield $row;
+        }
+    }
+
     protected function resetIdentifierCache(): void
     {
         $this->identifierCache = [];

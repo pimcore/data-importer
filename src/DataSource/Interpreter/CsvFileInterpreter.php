@@ -19,7 +19,7 @@ use Symfony\Component\Mime\MimeTypes;
 /**
  * @internal
  */
-final class CsvFileInterpreter extends AbstractInterpreter
+final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderInterface
 {
     private const UTF8_BOM = "\xEF\xBB\xBF";
 
@@ -35,7 +35,32 @@ final class CsvFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        if (($handle = fopen($path, 'r')) !== false) {
+        foreach ($this->loadRows($path) as $data) {
+            $this->processImportRow($data);
+        }
+    }
+
+    /**
+     * CSV has no value types: every value is a string, so `$typedValues` changes nothing.
+     */
+    public function readRows(string $path, bool $typedValues = false): iterable
+    {
+        $this->assertFileValid($path);
+
+        return $this->checkRowEncoding($this->loadRows($path));
+    }
+
+    /**
+     * @return \Generator<int, array<int|string, string|null>>
+     */
+    private function loadRows(string $path): \Generator
+    {
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            return;
+        }
+
+        try {
             $this->skipByteOrderMark($handle);
 
             $header = null;
@@ -51,8 +76,10 @@ final class CsvFileInterpreter extends AbstractInterpreter
                 if ($header !== null) {
                     $data = array_combine($header, $data);
                 }
-                $this->processImportRow($data);
+
+                yield $data;
             }
+        } finally {
             fclose($handle);
         }
     }

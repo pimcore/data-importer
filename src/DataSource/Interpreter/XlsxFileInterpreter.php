@@ -24,7 +24,7 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 /**
  * @internal
  */
-final class XlsxFileInterpreter extends AbstractInterpreter
+final class XlsxFileInterpreter extends AbstractInterpreter implements RowReaderInterface
 {
     private bool $skipFirstRow;
 
@@ -32,21 +32,42 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
+        foreach ($this->loadRows($path, false) as $rowData) {
+            $this->processImportRow($rowData);
+        }
+    }
+
+    /**
+     * By default every value is the text an import receives (e.g. `'123'`, `'TRUE'`). With `$typedValues` numbers are
+     * int or float, booleans bool, empty cells null and text stays text, so `'00123'` stored as text is kept apart from
+     * the number 123. Formulas are calculated either way; dates are Excel serial numbers either way.
+     */
+    public function readRows(string $path, bool $typedValues = false): iterable
+    {
+        $this->assertFileValid($path);
+
+        return $this->checkRowEncoding($this->loadRows($path, $typedValues));
+    }
+
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function loadRows(string $path, bool $typedValues): array
+    {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $spreadSheet = $reader->load($path);
 
         $spreadSheet->setActiveSheetIndexByName($this->sheetName);
 
-        $data = $spreadSheet->getActiveSheet()->toArray();
+        // imports receive formatted text; changing that would alter what existing mappings and delta checks see
+        $data = $spreadSheet->getActiveSheet()->toArray(null, true, !$typedValues);
 
         if ($this->skipFirstRow) {
             array_shift($data);
         }
 
-        foreach ($data as $rowData) {
-            $this->processImportRow($rowData);
-        }
+        return $data;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
