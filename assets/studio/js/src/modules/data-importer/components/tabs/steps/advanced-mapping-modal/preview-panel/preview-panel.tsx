@@ -13,17 +13,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
-import {
-  useBundleDataImporterConfigLoadTransformationResultQuery
-} from '../../../../../data-importer-api-slice.gen'
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './preview-panel.styles'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
+import { type TransformationResultRequest, useMappingSource } from '../../mapping-source/mapping-source'
 
 interface ImportModeProps {
   mode: 'import'
-  configName: string
   selectedDataSourceIndex: string[]
   forceRefreshToken?: number
   refreshToken?: never
@@ -33,7 +30,6 @@ interface ImportModeProps {
 
 interface ResultModeProps {
   mode: 'result'
-  configName: string
   forceRefreshToken?: number
   refreshToken?: number
   currentMappingItem?: MappingConfigItem
@@ -59,30 +55,24 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     isError: isImportError,
     load: fetchImportPreview
   } = usePreviewRecordQuery({
-    configName: props.configName,
     enabled: props.mode === 'import',
     forceRefreshToken: props.forceRefreshToken
   })
 
   const [previews, setPreviews] = useState<string[]>([])
   const [resultRecordNumber, setResultRecordNumber] = useState(0)
-  const [resultRequest, setResultRequest] = useState<{
-    name: string
-    bundleDataImporterLoadPreviewParameters: {
-      recordNumber: number
-      currentConfig?: Record<string, object>
-    }
-  } | undefined>(undefined)
+  const source = useMappingSource()
+  const [resultRequest, setResultRequest] = useState<TransformationResultRequest | undefined>(undefined)
   const {
     data: resultPreviewResponse,
     isLoading: isResultLoading,
     isFetching: isResultFetching,
     isError: isResultError,
     refetch: refetchResultPreview
-  } = useBundleDataImporterConfigLoadTransformationResultQuery(
-    resultRequest!,
+  } = source.useTransformationResultQuery(
+    resultRequest,
     {
-      skip: props.mode !== 'result' || resultRequest === undefined,
+      skip: props.mode !== 'result',
       refetchOnMountOrArgChange: false
     }
   )
@@ -112,11 +102,8 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
         }
 
     setResultRequest({
-      name: props.configName,
-      bundleDataImporterLoadPreviewParameters: {
-        recordNumber: record,
-        ...(currentConfig !== undefined && { currentConfig })
-      }
+      recordNumber: record,
+      ...(currentConfig !== undefined && { currentConfig })
     })
   }
 

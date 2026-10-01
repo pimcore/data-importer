@@ -106,5 +106,14 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/DataTarget/Direct': 'DataImporter/DynamicTypes/DataTarget/Direct',
   'DataImporter/DynamicTypes/DataTarget/Classificationstore': 'DataImporter/DynamicTypes/DataTarget/Classificationstore',
   'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch': 'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch',
-  'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation': 'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation'
+  'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation': 'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation',
+
+  // Configuration steps other bundles can host inside their own form
+  'DataImporter/Components/ResolverStep': 'DataImporter/Components/ResolverStep',
+  'DataImporter/Components/MappingStep': 'DataImporter/Components/MappingStep',
+  'DataImporter/Components/PostedMappingSource': 'DataImporter/Components/PostedMappingSource',
+
+  // Converters between the stored configuration and the steps' form values
+  'DataImporter/Utils/TransformBackendToForm': 'DataImporter/Utils/TransformBackendToForm',
+  'DataImporter/Utils/TransformFormToBackend': 'DataImporter/Utils/TransformFormToBackend'
 } as const

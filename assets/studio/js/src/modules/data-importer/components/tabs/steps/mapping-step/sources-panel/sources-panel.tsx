@@ -36,7 +36,6 @@ export interface SourceRow {
 }
 
 export interface SourcesPanelProps {
-  configName: string
   sourceRows: SourceRow[]
   hasPreviewError: boolean
   activeFilter: string | null
@@ -45,7 +44,6 @@ export interface SourcesPanelProps {
 }
 
 export const SourcesPanel = ({
-  configName,
   sourceRows,
   hasPreviewError,
   activeFilter,

@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\TransformationResultPreviewsEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\TransformationResultTypeEvent;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
@@ -36,6 +37,9 @@ final readonly class TransformationService implements TransformationServiceInter
 {
     use ConfigurationPermissionTrait;
     use CurrentUserResolverTrait;
+
+    // operators log under their configuration's name; a posted configuration has none
+    private const string POSTED_CONFIG_NAME = '';
 
     public function __construct(
         private TransformationHydratorInterface $transformationHydrator,
@@ -80,11 +84,42 @@ final readonly class TransformationService implements TransformationServiceInter
             $importDataRow = $dataPreview->getRawData();
         }
 
-        $mapping = $this->mappingConfigurationFactory->loadMappingConfiguration(
+        return $this->previewTransformationResults($name, $preparedConfig['mappingConfig'], $importDataRow);
+    }
+
+    public function loadTransformationResultPreviewsFor(
+        array $mappingConfig,
+        array $dataRow
+    ): TransformationResultPreviewsResponse {
+        return $this->previewTransformationResults(self::POSTED_CONFIG_NAME, $mappingConfig, $dataRow);
+    }
+
+    public function calculateTransformationResultType(
+        string $name,
+        array $currentConfig
+    ): TransformationResultTypeResponse {
+        $this->loadConfigurationWithPermission(
             $name,
-            $preparedConfig['mappingConfig'],
-            true
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
         );
+
+        return $this->evaluateTransformationResultType($name, $currentConfig);
+    }
+
+    public function calculateTransformationResultTypeOf(array $mappingEntry): TransformationResultTypeResponse
+    {
+        return $this->evaluateTransformationResultType(self::POSTED_CONFIG_NAME, $mappingEntry);
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    private function previewTransformationResults(
+        string $name,
+        array $mappingConfig,
+        array $importDataRow
+    ): TransformationResultPreviewsResponse {
+        $mapping = $this->mappingConfigurationFactory->loadMappingConfiguration($name, $mappingConfig, true);
 
         $transformationResults = [];
         foreach ($mapping as $mappingConfiguration) {
@@ -105,18 +140,14 @@ final readonly class TransformationService implements TransformationServiceInter
         return $response;
     }
 
-    public function calculateTransformationResultType(
-        string $name,
-        array $currentConfig
-    ): TransformationResultTypeResponse {
-        $this->loadConfigurationWithPermission(
-            $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
-        );
-
+    /**
+     * @throws InvalidConfigurationException
+     */
+    private function evaluateTransformationResultType(string $name, array $mappingEntry): TransformationResultTypeResponse
+    {
         $mappingConfiguration = $this->mappingConfigurationFactory->loadMappingConfigurationItem(
             $name,
-            $currentConfig,
+            $mappingEntry,
             true
         );
 

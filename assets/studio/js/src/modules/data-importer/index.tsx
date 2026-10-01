@@ -78,9 +78,20 @@ import { DynamicTypeResolverNoChangeUnpublishNew } from './dynamic-types/resolve
 import { DynamicTypeResolverNoChangePublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-publish-new/dynamic-type-resolver-no-change-publish-new'
 import { DynamicTypeResolverAlwaysPublish } from './dynamic-types/resolver/publishing-strategy/always-publish/dynamic-type-resolver-always-publish'
 import { DynamicTypeResolverAttributeBasedPublishing } from './dynamic-types/resolver/publishing-strategy/attribute-based/dynamic-type-resolver-attribute-based-publishing'
+import { ResolverStep } from './components/tabs/steps/resolver-step'
+import { MappingStep } from './components/tabs/steps/mapping-step'
+import { PostedMappingSource } from './components/tabs/steps/mapping-source/posted-mapping-source'
+import { transformBackendToForm, transformFormToBackend } from './utils/transformers'
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
+    // ── Steps and converters for other bundles ──────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/Components/ResolverStep']).toConstantValue(ResolverStep)
+    container.bind(bundleServiceIds['DataImporter/Components/MappingStep']).toConstantValue(MappingStep)
+    container.bind(bundleServiceIds['DataImporter/Components/PostedMappingSource']).toConstantValue(PostedMappingSource)
+    container.bind(bundleServiceIds['DataImporter/Utils/TransformBackendToForm']).toConstantValue(transformBackendToForm)
+    container.bind(bundleServiceIds['DataImporter/Utils/TransformFormToBackend']).toConstantValue(transformFormToBackend)
+
     // ── Data Hub adapter ────────────────────────────────────────────────────
     const adapterRegistry = container.get<DynamicTypeDataHubAdapterRegistry>(dataHubServiceIds['DataHub/DynamicTypes/Adapter/Registry'])
     adapterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Adapter/DataImporterDataObject']))
