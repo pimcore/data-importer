@@ -143,8 +143,10 @@ final readonly class TransformationService implements TransformationServiceInter
     /**
      * @throws InvalidConfigurationException
      */
-    private function evaluateTransformationResultType(string $name, array $mappingEntry): TransformationResultTypeResponse
-    {
+    private function evaluateTransformationResultType(
+        string $name,
+        array $mappingEntry
+    ): TransformationResultTypeResponse {
         $mappingConfiguration = $this->mappingConfigurationFactory->loadMappingConfigurationItem(
             $name,
             $mappingEntry,

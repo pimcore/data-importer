@@ -10,6 +10,8 @@
 
 import React, { useMemo } from 'react'
 import {
+  type BundleDataImporterColumnHeadersResponse,
+  type BundleDataImporterDataPreviewResponse,
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery,
   useBundleDataImporterMappingLoadTransformationResultQuery
 } from '../../../../data-importer-api-slice.gen'
@@ -51,15 +53,29 @@ const recordAt = (records: PostedMappingSourceRecord[], recordNumber: number | u
   return { index, record: records[index] ?? {} }
 }
 
+const columnHeadersOf = (columns: PostedMappingSourceColumn[]): BundleDataImporterColumnHeadersResponse => ({
+  columnHeaders: columns.map(column => ({ id: column.dataIndex, dataIndex: column.dataIndex, label: column.label ?? column.dataIndex }))
+})
+
+const previewOf = (
+  columns: PostedMappingSourceColumn[],
+  records: PostedMappingSourceRecord[],
+  recordNumber: number | undefined
+): BundleDataImporterDataPreviewResponse => {
+  const { index, record } = recordAt(records, recordNumber)
+
+  return {
+    previewRecordIndex: index,
+    dataPreview: columns.map(column => ({ dataIndex: column.dataIndex, label: column.label ?? column.dataIndex, data: record[column.dataIndex] ?? '' }))
+  }
+}
+
 /**
  * A mapping source for a configuration that is not stored: the caller hands in the columns and
  * the records, and the transformation previews run on what is posted.
  */
 export const PostedMappingSource = ({ id, configuration, revision, columns, records, children }: PostedMappingSourceProps): React.JSX.Element => {
-  const columnHeaders = useMemo(
-    () => ({ columnHeaders: columns.map(column => ({ id: column.dataIndex, dataIndex: column.dataIndex, label: column.label ?? column.dataIndex })) }),
-    [columns]
-  )
+  const columnHeaders = useMemo(() => columnHeadersOf(columns), [columns])
 
   // a new source whenever the columns or records change, so the steps reading it render again
   const source = useMemo((): MappingSource => ({
@@ -70,14 +86,8 @@ export const PostedMappingSource = ({ id, configuration, revision, columns, reco
     useColumnHeadersQuery: (request, options) => settled(options?.skip === true || request === undefined ? undefined : columnHeaders),
     usePreviewQuery: (request, options) => {
       const recordNumber = request?.recordNumber
-      const data = useMemo(() => {
-        const { index, record } = recordAt(records, recordNumber)
-        return {
-          previewRecordIndex: index,
-          dataPreview: columns.map(column => ({ dataIndex: column.dataIndex, label: column.label ?? column.dataIndex, data: record[column.dataIndex] ?? '' }))
-        }
-        // a new source keeps its hook slots, so the records belong in the deps
-      }, [recordNumber, records, columns])
+      // a new source keeps its hook slots, so the records belong in the deps
+      const data = useMemo(() => previewOf(columns, records, recordNumber), [recordNumber, records, columns])
 
       return settled(options?.skip === true || request === undefined ? undefined : data)
     },

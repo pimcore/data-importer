@@ -30,8 +30,14 @@ class PostedMappingTransformationTest extends Unit
     {
         $response = $this->preview(
             [
-                ['dataSourceIndex' => ['sku'], 'transformationPipeline' => [['type' => 'trim', 'settings' => ['mode' => 'both']]]],
-                ['dataSourceIndex' => ['name', 'color'], 'transformationPipeline' => [['type' => 'combine', 'settings' => ['glue' => ' / ']]]],
+                [
+                    'dataSourceIndex' => ['sku'],
+                    'transformationPipeline' => [['type' => 'trim', 'settings' => ['mode' => 'both']]],
+                ],
+                [
+                    'dataSourceIndex' => ['name', 'color'],
+                    'transformationPipeline' => [['type' => 'combine', 'settings' => ['glue' => ' / ']]],
+                ],
                 ['dataSourceIndex' => ['missing']],
             ],
             ['sku' => '  A-100 ', 'name' => 'Chair', 'color' => 'red']
@@ -44,10 +50,8 @@ class PostedMappingTransformationTest extends Unit
     {
         $this->assertSame('default', $this->type(['dataSourceIndex' => ['sku']]));
         $this->assertSame('array', $this->type(['dataSourceIndex' => ['a', 'b']]));
-        $this->assertSame('numeric', $this->type([
-            'dataSourceIndex' => ['price'],
-            'transformationPipeline' => [['type' => 'numeric']],
-        ]));
+        $numeric = ['dataSourceIndex' => ['price'], 'transformationPipeline' => [['type' => 'numeric']]];
+        $this->assertSame('numeric', $this->type($numeric));
     }
 
     public function testAnUnknownOperatorIsRefused(): void
@@ -63,7 +67,9 @@ class PostedMappingTransformationTest extends Unit
     private function preview(array $mappingConfig, array $dataRow): array
     {
         $controller = $this->tester->grabService(LoadTransformationResultController::class);
-        $response = $controller->loadTransformationResult(new TransformationResultParameters($mappingConfig, $dataRow));
+        $response = $controller->loadTransformationResult(
+            new TransformationResultParameters($mappingConfig, $dataRow)
+        );
 
         return json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
     }
@@ -71,7 +77,9 @@ class PostedMappingTransformationTest extends Unit
     private function type(array $mappingEntry): string
     {
         $controller = $this->tester->grabService(CalculateTransformationResultTypeController::class);
-        $response = $controller->calculateTransformationResultType(new CalculateTransformationResultTypeParameters($mappingEntry));
+        $response = $controller->calculateTransformationResultType(
+            new CalculateTransformationResultTypeParameters($mappingEntry)
+        );
 
         return json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR)['type'];
     }
