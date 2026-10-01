@@ -12,25 +12,15 @@ import { useEffect, useMemo, useRef } from 'react'
 import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../../data-importer-api-slice.gen'
 import { parseClassAttribute } from '../../mapping-step/hooks/use-mapping-step-loader.types'
+import { type TransformationResultTypeRequest } from '../../mapping-source/mapping-source'
 
 interface UseAutoRecalculateTypeArgs {
   open: boolean
-  configName: string
   classId?: string
   localItem: MappingConfigItem
   localItemRef: React.RefObject<MappingConfigItem>
   attributesMap: Record<string, ClassAttribute[]>
-  setCalculateTypeRequest: (request: {
-    name: string
-    bundleDataImporterCalculateTransformationResultTypeParameters: {
-      currentConfig: {
-        label?: string
-        dataSourceIndex?: string[]
-        transformationPipeline?: object[]
-        dataTarget?: object
-      }
-    }
-  }) => void
+  setCalculateTypeRequest: (request: TransformationResultTypeRequest) => void
 }
 
 interface UseAutoRecalculateTypeResult {
@@ -40,7 +30,6 @@ interface UseAutoRecalculateTypeResult {
 
 export function useAutoRecalculateType ({
   open,
-  configName,
   classId,
   localItem,
   localItemRef,
@@ -63,24 +52,22 @@ export function useAutoRecalculateType ({
 
     const current = localItemRef.current ?? {}
     setCalculateTypeRequest({
-      name: configName,
-      bundleDataImporterCalculateTransformationResultTypeParameters: {
-        currentConfig: {
-          label: current.label,
-          dataSourceIndex: current.dataSourceIndex,
-          transformationPipeline: current.transformationPipeline as object[] | undefined,
-          dataTarget: current.dataTarget as object | undefined
-        }
+      currentConfig: {
+        label: current.label,
+        dataSourceIndex: current.dataSourceIndex,
+        transformationPipeline: current.transformationPipeline as object[] | undefined,
+        dataTarget: current.dataTarget as object | undefined
       }
     })
-  }, [pipelineKey, dataSourceKey, open, configName, localItemRef, setCalculateTypeRequest])
+  }, [pipelineKey, dataSourceKey, open, localItemRef, setCalculateTypeRequest])
 
   const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType)
-  const needsAttrFetch = currentAttrMapKey !== DEFAULT_ATTR_MAP_KEY && attributesMap[currentAttrMapKey] === undefined
+  // a host without the mapping step's attribute map gets the default attributes here too
+  const needsAttrFetch = attributesMap[currentAttrMapKey] === undefined
   const { data: extraAttrData, isFetching: isFetchingExtraAttributes } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     {
       classId: classId ?? '',
-      transformationResultType: localItem.transformationResultType,
+      transformationResultType: currentAttrMapKey === DEFAULT_ATTR_MAP_KEY ? undefined : localItem.transformationResultType,
       systemWrite: true
     },
     { skip: !needsAttrFetch || classId === undefined || classId === '' }

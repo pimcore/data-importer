@@ -16,6 +16,7 @@ import { DataSourceStep } from './steps/data-source-step'
 import { PreviewImportStep } from './steps/preview-import-step'
 import { ResolverStep } from './steps/resolver-step'
 import { MappingStep } from './steps/mapping-step'
+import { StoredConfigMappingSource } from './steps/mapping-source/stored-config-mapping-source'
 import { ProcessingSettingsStep } from './steps/processing-settings-step'
 import { useStyles } from './data-setup-tab.styles'
 import { useColumnHeaderOptions } from '../../hooks/use-column-header-options'
@@ -54,50 +55,48 @@ export const DataSetupTab = ({ configName }: DataSetupTabProps): React.JSX.Eleme
   const isMappingStep = currentStep === MAPPING_STEP_INDEX
 
   return (
-    <Flex
-      className={ styles.tabLayout }
-      vertical
-    >
-      <Box margin={ { x: 'small' } }>
-        <Steps
-          current={ currentStep }
-          items={ steps }
-          onChange={ setCurrentStep }
-          size="small"
-          type="navigation"
-        />
-      </Box>
+    <StoredConfigMappingSource configName={ configName }>
+      <Flex
+        className={ styles.tabLayout }
+        vertical
+      >
+        <Box margin={ { x: 'small' } }>
+          <Steps
+            current={ currentStep }
+            items={ steps }
+            onChange={ setCurrentStep }
+            size="small"
+            type="navigation"
+          />
+        </Box>
 
-      <div className={ cn(styles.stepContentMapping, !isMappingStep && styles.stepContentMappingHidden) }>
-        <MappingStep
-          configName={ configName }
-          isActive={ isMappingStep }
-        />
-      </div>
+        <div className={ cn(styles.stepContentMapping, !isMappingStep && styles.stepContentMappingHidden) }>
+          <MappingStep isActive={ isMappingStep } />
+        </div>
 
-      <div className={ cn(styles.stepContent, currentStep !== 0 && styles.stepContentHidden) }>
-        <DataSourceStep configName={ configName } />
-      </div>
+        <div className={ cn(styles.stepContent, currentStep !== 0 && styles.stepContentHidden) }>
+          <DataSourceStep configName={ configName } />
+        </div>
 
-      <div className={ cn(styles.stepContent, currentStep !== 1 && styles.stepContentHidden) }>
-        <PreviewImportStep
-          configName={ configName }
-          isActive={ currentStep === 1 }
-          onPreviewDataChange={ () => { setPreviewVersion((v) => v + 1) } }
-        />
-      </div>
+        <div className={ cn(styles.stepContent, currentStep !== 1 && styles.stepContentHidden) }>
+          <PreviewImportStep
+            configName={ configName }
+            isActive={ currentStep === 1 }
+            onPreviewDataChange={ () => { setPreviewVersion((v) => v + 1) } }
+          />
+        </div>
 
-      <div className={ cn(styles.stepContent, currentStep !== 2 && styles.stepContentHidden) }>
-        <ResolverStep
-          columnHeaderOptions={ columnHeaderOptions }
-          configName={ configName }
-          isActive={ currentStep === 2 }
-        />
-      </div>
+        <div className={ cn(styles.stepContent, currentStep !== 2 && styles.stepContentHidden) }>
+          <ResolverStep
+            columnHeaderOptions={ columnHeaderOptions }
+            isActive={ currentStep === 2 }
+          />
+        </div>
 
-      <div className={ cn(styles.stepContent, currentStep !== 4 && styles.stepContentHidden) }>
-        <ProcessingSettingsStep columnHeaderOptions={ columnHeaderOptions } />
-      </div>
-    </Flex>
+        <div className={ cn(styles.stepContent, currentStep !== 4 && styles.stepContentHidden) }>
+          <ProcessingSettingsStep columnHeaderOptions={ columnHeaderOptions } />
+        </div>
+      </Flex>
+    </StoredConfigMappingSource>
   )
 }

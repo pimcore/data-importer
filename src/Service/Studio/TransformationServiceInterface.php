@@ -48,4 +48,21 @@ interface TransformationServiceInterface
         string $name,
         array $currentConfig
     ): TransformationResultTypeResponse;
+
+    /**
+     * Previews the mapping entries for one source record without a stored configuration.
+     *
+     * @throws InvalidConfigurationException
+     */
+    public function loadTransformationResultPreviewsFor(
+        array $mappingConfig,
+        array $dataRow
+    ): TransformationResultPreviewsResponse;
+
+    /**
+     * The result type of one mapping entry without a stored configuration.
+     *
+     * @throws InvalidConfigurationException
+     */
+    public function calculateTransformationResultTypeOf(array $mappingEntry): TransformationResultTypeResponse;
 }
