@@ -62,11 +62,12 @@ export function useAutoRecalculateType ({
   }, [pipelineKey, dataSourceKey, open, localItemRef, setCalculateTypeRequest])
 
   const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType)
-  const needsAttrFetch = currentAttrMapKey !== DEFAULT_ATTR_MAP_KEY && attributesMap[currentAttrMapKey] === undefined
+  // a host without the mapping step's attribute map gets the default attributes here too
+  const needsAttrFetch = attributesMap[currentAttrMapKey] === undefined
   const { data: extraAttrData, isFetching: isFetchingExtraAttributes } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     {
       classId: classId ?? '',
-      transformationResultType: localItem.transformationResultType,
+      transformationResultType: currentAttrMapKey === DEFAULT_ATTR_MAP_KEY ? undefined : localItem.transformationResultType,
       systemWrite: true
     },
     { skip: !needsAttrFetch || classId === undefined || classId === '' }

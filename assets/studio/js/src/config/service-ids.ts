@@ -108,9 +108,9 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch': 'DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch',
   'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation': 'DataImporter/DynamicTypes/DataTarget/ManyToManyRelation',
 
-  // Configuration steps other bundles can host inside their own form
+  // The resolver step, the mapping dialog and the source it reads, for other bundles to host in their own form
   'DataImporter/Components/ResolverStep': 'DataImporter/Components/ResolverStep',
-  'DataImporter/Components/MappingStep': 'DataImporter/Components/MappingStep',
+  'DataImporter/Components/AdvancedMappingModal': 'DataImporter/Components/AdvancedMappingModal',
   'DataImporter/Components/PostedMappingSource': 'DataImporter/Components/PostedMappingSource',
 
   // Converters between the stored configuration and the steps' form values
