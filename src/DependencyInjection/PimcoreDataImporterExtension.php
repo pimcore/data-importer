@@ -18,9 +18,12 @@ use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
+use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader;
@@ -67,7 +70,7 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
             // plumbing to answer through; the propose tool also needs this review lane
             $container->addResource(new ClassExistenceResource(McpTool::class));
             $container->addResource(new ClassExistenceResource(McpToolErrorHandlerInterface::class));
-            if (class_exists(McpTool::class) && interface_exists(McpToolErrorHandlerInterface::class)) {
+            if (self::hasProposalTools()) {
                 $loader->load('services/mcp.yml');
             }
         }
@@ -91,12 +94,44 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         // Contributing the path here, guarded on the extension being registered, keeps the
         // integration optional: this bundle must not depend on the agent bundle.
         if ($container->hasExtension('pimcore_agent')) {
-            $container->prependExtensionConfig('pimcore_agent', [
-                'skills' => ['paths' => [__DIR__ . '/../Resources/skills']],
-            ]);
+            $agentConfig = ['skills' => ['paths' => [__DIR__ . '/../Resources/skills']]];
+
+            // the Configuration agent takes its configuration kinds from the bundles that own them
+            if (self::hasProposalTools() && self::takesAgentContributions($container)) {
+                $agentConfig['agents'] = ['contributions' => ['configuration' => [
+                    'pimcoreMcpServers' => ['pimcore-data-importer-read', 'pimcore-data-importer-propose'],
+                    'skills' => ['data-importer-configuration'],
+                ]]];
+            }
+
+            $container->prependExtensionConfig('pimcore_agent', $agentConfig);
         }
 
         $loader->load('studio_ui.yaml');
         $loader->load('pimcore/studio_backend.yaml');
+    }
+
+    private static function hasProposalTools(): bool
+    {
+        return interface_exists(SubjectHandlerInterface::class)
+            && class_exists(McpTool::class)
+            && interface_exists(McpToolErrorHandlerInterface::class);
+    }
+
+    /** an agent bundle released before the contributions node rejects the key */
+    private static function takesAgentContributions(ContainerBuilder $container): bool
+    {
+        $extension = $container->getExtension('pimcore_agent');
+        $configuration = $extension instanceof ConfigurationExtensionInterface
+            ? $extension->getConfiguration([], $container)
+            : null;
+        if (!$configuration instanceof ConfigurationInterface) {
+            return false;
+        }
+
+        $root = $configuration->getConfigTreeBuilder()->buildTree();
+        $agents = $root instanceof ArrayNode ? ($root->getChildren()['agents'] ?? null) : null;
+
+        return $agents instanceof ArrayNode && isset($agents->getChildren()['contributions']);
     }
 }
