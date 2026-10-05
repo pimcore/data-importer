@@ -141,9 +141,10 @@ falls back to its own strategy. The returned element is used as is, so it may be
 `ReferenceType::DataObject` and an asset for `ReferenceType::Asset`.
 
 Unsaved elements work for fields that keep the element itself: many-to-one relations and many-to-many relations. The
-**Many-to-Many Relation** data target in merge mode tells relations apart by id, so give unsaved elements distinct ids.
-Advanced many-to-many relations keep only the id of a related element and load it again, so they need saved elements:
-`apply()` throws a `MappingApplicationException` for an element that cannot be loaded by its id.
+**Many-to-Many Relation** data target in merge mode tells saved elements apart by id and elements without an id by
+instance, so the same unsaved instance is added once. Advanced many-to-many relations keep only the id of a related
+element and load it again, so they need saved elements: `apply()` throws a `MappingApplicationException` for an element
+that cannot be loaded by its id.
 
 `ReferenceQuery` describes what the operator is looking for:
 

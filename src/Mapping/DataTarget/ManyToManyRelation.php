@@ -105,12 +105,12 @@ final class ManyToManyRelation extends Direct
             case 'manyToManyObjectRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
                     foreach ($currentData as $dataObject) {
-                        $newData[$dataObject->getId()] = $dataObject;
+                        $newData[$this->mergeKey($dataObject)] = $dataObject;
                     }
 
                     foreach ($data as $dataObject) {
-                        if (!isset($newData[$dataObject->getId()])) {
-                            $newData[$dataObject->getId()] = $dataObject;
+                        if (!isset($newData[$this->mergeKey($dataObject)])) {
+                            $newData[$this->mergeKey($dataObject)] = $dataObject;
                         }
                     }
                 } else {
@@ -138,11 +138,11 @@ final class ManyToManyRelation extends Direct
             case 'manyToManyRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
                     foreach ($currentData as $element) {
-                        $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
+                        $newData[Service::getElementType($element) . '_' . $this->mergeKey($element)] = $element;
                     }
                     foreach ($data as $element) {
-                        if (!isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
-                            $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
+                        if (!isset($newData[Service::getElementType($element) . '_' . $this->mergeKey($element)])) {
+                            $newData[Service::getElementType($element) . '_' . $this->mergeKey($element)] = $element;
                         }
                     }
                 } else {
@@ -172,6 +172,14 @@ final class ManyToManyRelation extends Direct
         }
 
         return array_values($newData);
+    }
+
+    /**
+     * Unsaved elements, e.g. from a reference lookup, have no id yet: each instance counts as a relation of its own.
+     */
+    private function mergeKey(ElementInterface $element): int|string
+    {
+        return $element->getId() ?? 'unsaved_' . spl_object_id($element);
     }
 
     /**
