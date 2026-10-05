@@ -179,7 +179,9 @@ foreach ($sourceFileReader->readRows($interpreterConfig, $path) as $row) {
 the rows of an import, so the `dataSourceIndex` of a mapping refers to the same columns, and they follow the same
 settings: with `skipFirstRow` the header row is left out, without it the header row is the first row. Unlike an import,
 reading rows skips no unchanged rows (delta check), cleans up no elements and writes nothing to the application logger.
-A file that is not valid for the format, or a row that is not UTF-8 encoded, throws an `InvalidInputException`.
+A file that is not valid for the format or lacks the configured sheet throws an `InvalidInputException`, and so does a
+row that is not UTF-8 encoded or, with `saveHeaderName`, has not as many columns as the CSV header row. The message
+names the row, counted from 1 with the header row.
 
 The **CSV** and **XLSX** file formats support reading rows. Other formats throw an `InvalidConfigurationException`; a
 custom file format can support it by implementing

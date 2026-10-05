@@ -213,7 +213,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
      *
      * @throws InvalidInputException
      */
-    protected function assertValidRowEncoding(array $data): void
+    protected function assertValidRowEncoding(array $data, ?string $source = null): void
     {
         $invalidColumns = [];
         $position = 0;
@@ -230,9 +230,9 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
         if ($invalidColumns !== []) {
             throw new InvalidInputException(sprintf(
-                'Encoding error in `%s`: invalid UTF-8 characters in column(s) %s. '
+                'Encoding error in %s: invalid UTF-8 characters in column(s) %s. '
                 . 'Please make sure the source file is UTF-8 encoded.',
-                $this->configName,
+                $source ?? '`' . $this->configName . '`',
                 implode(', ', $invalidColumns)
             ));
         }
@@ -252,18 +252,25 @@ abstract class AbstractInterpreter implements InterpreterInterface
      * Passes the rows on with the encoding check an import runs before queueing them.
      *
      * @param iterable<int, array<int|string, mixed>> $rows
+     * @param int $rowNumber 1-based row of the file the first of the rows comes from
      *
      * @return \Generator<int, array<int|string, mixed>>
      *
      * @throws InvalidInputException
      */
-    protected function checkRowEncoding(iterable $rows): \Generator
+    protected function checkRowEncoding(iterable $rows, string $path, int $rowNumber): \Generator
     {
         foreach ($rows as $row) {
-            $this->assertValidRowEncoding($row);
+            $this->assertValidRowEncoding($row, $this->describeRow($path, $rowNumber));
 
             yield $row;
+            ++$rowNumber;
         }
+    }
+
+    protected function describeRow(string $path, int $rowNumber): string
+    {
+        return sprintf('row %d of `%s`', $rowNumber, basename($path));
     }
 
     protected function resetIdentifierCache(): void

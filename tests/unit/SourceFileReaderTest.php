@@ -18,7 +18,9 @@ use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
@@ -143,9 +145,93 @@ class SourceFileReaderTest extends Unit
         $this->reader()->readRows(['type' => 'json', 'settings' => []], $this->writeFile('[]', 'json'));
     }
 
+    public function testCsvBlankLineNamesTheRow(): void
+    {
+        $path = $this->writeFile("sku,price\r\nA-1,1\r\n\r\nB-2,2\r\n", 'csv');
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf('Row 3 of `%s` has 0 column(s), the header row has 2.', basename($path)));
+
+        iterator_to_array($this->readerWithoutDatabase()->readRows($this->csvConfig(), $path));
+    }
+
+    public function testCsvRaggedRowNamesTheRow(): void
+    {
+        $path = $this->writeFile("sku,price\r\nA-1,1,extra\r\n", 'csv');
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf('Row 2 of `%s` has 3 column(s), the header row has 2.', basename($path)));
+
+        iterator_to_array($this->readerWithoutDatabase()->readRows($this->csvConfig(), $path));
+    }
+
+    public function testImportStillFailsOnARaggedCsvRowAsBefore(): void
+    {
+        $interpreter = $this->interpreterWithoutDatabase(CsvFileInterpreter::class);
+        $interpreter->setSettings($this->csvConfig()['settings']);
+
+        $this->expectException(\ValueError::class);
+
+        $interpreter->interpretFile($this->writeFile("sku,price\r\nA-1,1,extra\r\n", 'csv'));
+    }
+
+    public function testInvalidEncodingNamesTheRow(): void
+    {
+        $path = $this->writeFile("sku,name\r\nA-1,ok\r\nA-2,M\xB2\r\n", 'csv');
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf('Encoding error in row 3 of `%s`: invalid UTF-8', basename($path)));
+
+        iterator_to_array($this->readerWithoutDatabase()->readRows($this->csvConfig(), $path));
+    }
+
+    public function testMissingXlsxSheetIsRejected(): void
+    {
+        $path = $this->writeXlsx();
+        $config = ['type' => 'xlsx', 'settings' => ['skipFirstRow' => true, 'sheetName' => 'Missing']];
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf('Sheet `Missing` not found in `%s`.', basename($path)));
+
+        $this->readerWithoutDatabase()->readRows($config, $path);
+    }
+
+    public function testUnreadableXlsxIsRejected(): void
+    {
+        $path = $this->writeFile("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n1 0 obj\n<<>>\nendobj\n", 'xlsx');
+
+        $this->expectException(InvalidInputException::class);
+
+        $this->readerWithoutDatabase()->readRows($this->xlsxConfig(true), $path);
+    }
+
     private function reader(): SourceFileReader
     {
         return $this->tester->grabService(SourceFileReader::class);
+    }
+
+    /**
+     * Reading rows touches neither the queue nor the delta checker, which need the database.
+     */
+    private function readerWithoutDatabase(): SourceFileReader
+    {
+        return new SourceFileReader(new InterpreterFactory([
+            'csv' => $this->interpreterWithoutDatabase(CsvFileInterpreter::class),
+            'xlsx' => $this->interpreterWithoutDatabase(XlsxFileInterpreter::class),
+        ]));
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     *
+     * @return T
+     */
+    private function interpreterWithoutDatabase(string $class): object
+    {
+        // QueueService and DeltaChecker are final and cannot be doubled
+        return (new \ReflectionClass($class))->newInstanceWithoutConstructor();
     }
 
     private function queueService(): QueueService

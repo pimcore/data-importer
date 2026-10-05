@@ -40,7 +40,8 @@ final class SourceFileReader
      * @return iterable<int, array<int|string, mixed>> the rows an import of the file would queue, keyed the same way
      *
      * @throws InvalidConfigurationException if the file format is unknown or cannot read rows
-     * @throws InvalidInputException if the file is not valid for the format or a row is not UTF-8 encoded
+     * @throws InvalidInputException if the file is not valid for the format or cannot be read, or a row is not UTF-8
+     *                               encoded or does not match the CSV header row (the message names the row)
      */
     public function readRows(array $interpreterConfig, string $path, bool $typedValues = false): iterable
     {

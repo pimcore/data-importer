@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Version;
 use Symfony\Component\Mime\MimeTypes;
@@ -47,13 +48,17 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
     {
         $this->assertFileValid($path);
 
-        return $this->checkRowEncoding($this->loadRows($path));
+        return $this->checkRowEncoding($this->loadRows($path, true), $path, $this->skipFirstRow ? 2 : 1);
     }
 
     /**
+     * @param bool $checkColumnCount false for imports: they keep array_combine()'s \ValueError (not an \Exception)
+     *
      * @return \Generator<int, array<int|string, string|null>>
+     *
+     * @throws InvalidInputException if $checkColumnCount and a row has not as many columns as the header row
      */
-    private function loadRows(string $path): \Generator
+    private function loadRows(string $path, bool $checkColumnCount = false): \Generator
     {
         $handle = fopen($path, 'r');
         if ($handle === false) {
@@ -64,16 +69,22 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
             $this->skipByteOrderMark($handle);
 
             $header = null;
+            $rowNumber = 0;
             if ($this->skipFirstRow) {
                 //load first row and ignore it
                 $data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape);
+                ++$rowNumber;
                 if ($this->saveHeaderName) {
                     $header = $data;
                 }
             }
 
             while (($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false) {
+                ++$rowNumber;
                 if ($header !== null) {
+                    if ($checkColumnCount) {
+                        $this->assertColumnCount($header, $data, $path, $rowNumber);
+                    }
                     $data = array_combine($header, $data);
                 }
 
@@ -81,6 +92,23 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
             }
         } finally {
             fclose($handle);
+        }
+    }
+
+    /**
+     * @throws InvalidInputException
+     */
+    private function assertColumnCount(array|false $header, array $data, string $path, int $rowNumber): void
+    {
+        // fgetcsv() returns [null] for a blank line
+        $columns = $data === [null] ? 0 : count($data);
+        if ($header !== false && $columns !== count($header)) {
+            throw new InvalidInputException(sprintf(
+                '%s has %d column(s), the header row has %d.',
+                ucfirst($this->describeRow($path, $rowNumber)),
+                $columns,
+                count($header)
+            ));
         }
     }
 

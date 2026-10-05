@@ -15,10 +15,12 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 /**
@@ -44,9 +46,24 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
      */
     public function readRows(string $path, bool $typedValues = false): iterable
     {
-        $this->assertFileValid($path);
+        try {
+            $this->assertFileValid($path);
+            $worksheetInfo = $this->getWorksheetInfo($path);
+        } catch (SpreadsheetException $exception) {
+            // e.g. no reader recognises the file
+            throw new InvalidInputException(
+                sprintf('File `%s` cannot be read: %s', basename($path), $exception->getMessage()),
+                0,
+                $exception
+            );
+        }
+        if ($worksheetInfo === null) {
+            throw new InvalidInputException(
+                sprintf('Sheet `%s` not found in `%s`.', $this->sheetName, basename($path))
+            );
+        }
 
-        return $this->checkRowEncoding($this->loadRows($path, $typedValues));
+        return $this->checkRowEncoding($this->loadRows($path, $typedValues), $path, $this->skipFirstRow ? 2 : 1);
     }
 
     /**
