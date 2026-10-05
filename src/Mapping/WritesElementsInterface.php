@@ -19,6 +19,9 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
  * Marks an operator or data target that saves, creates or deletes elements (including folders) while a mapping is
  * processed. A mapping containing one cannot be applied without saving, see MappingApplier.
  *
+ * Operators and data targets without this marker are assumed not to write elements: MappingApplier applies them, and
+ * whatever they save is saved.
+ *
  * @see MappingApplier::lint()
  */
 interface WritesElementsInterface
