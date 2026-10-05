@@ -89,6 +89,7 @@ final class TransformationDataTypeService
             'lastname',
             'email',
             'gender',
+            'time'
         ],
         self::NUMERIC => [
             'numeric',

@@ -39,8 +39,8 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
     return (
       <div className={ cn(styles.arrowCol, styles.arrowColAdvanced) }>
         { isAdvanced && !isWarningState && !isInProgressState && (
-          <span className={ styles.arrowGearIcon }>
-            <Icon value="settings" />
+          <span className={ styles.arrowAdvancedIcon }>
+            <Icon value="transformation" />
           </span>
         ) }
         { (isWarningState || isInProgressState) && (
