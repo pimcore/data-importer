@@ -1,5 +1,4 @@
-# Loaded only when an MCP host is installed AND Change Control is - see
-# PimcoreDataImporterExtension. Without the review lane there is nothing to propose onto.
+# Loaded only when an agent can author proposals - see PimcoreDataImporterExtension.
 services:
     _defaults:
         autowire: true

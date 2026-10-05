@@ -40,8 +40,6 @@ trait DataImporterToolHelper
 
     private const string CODE_INTERNAL_ERROR = 'internal_error';
 
-    private const string CODE_NOT_FOUND = 'not_found';
-
     private const string CODE_PERMISSION_DENIED = 'permission_denied';
 
     /**
@@ -87,12 +85,6 @@ trait DataImporterToolHelper
                 ? self::CODE_INVALID_REQUEST
                 : self::CODE_INTERNAL_ERROR,
         );
-    }
-
-    /** the one error an agent can act on by re-reading the name it was given */
-    private function notFoundResult(string $message): CallToolResult
-    {
-        return $this->errorResult($message, self::CODE_NOT_FOUND);
     }
 
     private function errorResult(string $message, string $code = self::CODE_INVALID_REQUEST): CallToolResult

@@ -43,16 +43,6 @@ use Pimcore\Model\UserInterface;
  */
 final readonly class ImportConfigDetailHydrator implements DetailHydratorInterface
 {
-    /** slot key => the stored sections it carries, in the order the editor shows them */
-    private const array SLOTS = [
-        'general' => ['general'],
-        'dataSource' => ['loaderConfig', 'interpreterConfig'],
-        'resolver' => ['resolverConfig'],
-        'processing' => ['processingConfig'],
-        'execution' => ['executionConfig'],
-        'permissions' => ['permissions'],
-    ];
-
     /** the mapping list is one address, carrying the rows as they are stored */
     private const string MAPPING_SECTION = 'mappingConfig';
 
@@ -65,7 +55,7 @@ final readonly class ImportConfigDetailHydrator implements DetailHydratorInterfa
     {
         $slots = [];
 
-        foreach (self::SLOTS as $slot => $sections) {
+        foreach (ImportConfigPolicy::SLOTS as $slot => $sections) {
             $values = [];
             foreach ($sections as $section) {
                 if (!array_key_exists($section, $tree)) {
@@ -140,7 +130,7 @@ final readonly class ImportConfigDetailHydrator implements DetailHydratorInterfa
             return true;
         }
 
-        foreach (self::SLOTS as $sections) {
+        foreach (ImportConfigPolicy::SLOTS as $sections) {
             if (in_array($section, $sections, true)) {
                 return true;
             }

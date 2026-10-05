@@ -14,16 +14,12 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
-use function is_array;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ToolAnnotations;
-use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
-use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
-use function sprintf;
-use Throwable;
+use Pimcore\Bundle\DataHubBundle\Proposal\Mcp\ConfigProposalTools;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
 
 /**
  * One import configuration as it is stored — the document propose_import_config expects back
@@ -33,13 +29,11 @@ use Throwable;
  */
 final readonly class GetImportConfigTool
 {
-    use DataImporterToolHelper;
-
     private const string TOOL_NAME = 'get_import_config';
 
     public function __construct(
-        private SecurityServiceInterface $securityService,
-        private McpToolErrorHandlerInterface $errorHandler,
+        private ConfigProposalTools $tools,
+        private ImportConfigPolicy $policy,
     ) {
     }
 
@@ -61,24 +55,6 @@ final readonly class GetImportConfigTool
         #[Schema(type: 'string', description: 'Name of the configuration, as list_import_configs reports it.')]
         string $name,
     ): CallToolResult {
-        $denied = $this->denyIfNotAllowed($this->securityService);
-        if ($denied !== null) {
-            return $denied;
-        }
-
-        try {
-            $configuration = Configuration::getByName($name);
-            $document = $configuration?->getConfiguration();
-            if (!is_array($document)) {
-                return $this->notFoundResult(sprintf(
-                    'No import configuration named "%s". List them with list_import_configs.',
-                    $name,
-                ));
-            }
-        } catch (Throwable $e) {
-            return $this->handledError($this->errorHandler, $e, self::TOOL_NAME, ['name' => $name]);
-        }
-
-        return $this->successResult(['name' => $name, 'configuration' => $document]);
+        return $this->tools->get($this->policy, self::TOOL_NAME, $name);
     }
 }

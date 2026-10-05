@@ -1,11 +1,16 @@
-# Loaded only when the Change Control bundle is installed - see PimcoreDataImporterExtension.
+# Loaded only when the Data Hub's proposal lane and Change Control are installed - see PimcoreDataImporterExtension.
 services:
     _defaults:
         autowire: true
         autoconfigure: false
         public: false
 
-    Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigSubjectHandler:
+    Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy: ~
+
+    pimcore.data_importer.proposal.subject_handler:
+        class: Pimcore\Bundle\DataHubBundle\Proposal\ChangeControl\ConfigSubjectHandler
+        arguments:
+            $policy: '@Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy'
         tags:
             - { name: change_control.subject_handler, index: 'data-importer-config' }
 

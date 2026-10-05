@@ -25,7 +25,8 @@ use Mcp\Capability\Attribute\Schema;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\ToolAnnotations;
 use Pimcore\Bundle\DataHubBundle\Configuration;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigSubjectHandler;
+use Pimcore\Bundle\DataHubBundle\Proposal\ConfigDocument;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalWidgetEmitter;
 use Pimcore\Bundle\PimcoreAgentBundle\Security\BoundSessionReferenceResolver;
 use Pimcore\Bundle\PimcoreAgentBundle\Service\AgentSessionServiceInterface;
@@ -53,9 +54,6 @@ final readonly class ProposeImportConfigTool
     private const string TOOL_NAME = 'propose_import_config';
 
     private const string PROPOSAL_TYPE = 'subject-update';
-
-    /** the adapter type this bundle registers with the Data Hub */
-    private const string CONFIG_TYPE = 'dataImporterDataObject';
 
     public function __construct(
         private AgentSessionServiceInterface $sessionService,
@@ -129,7 +127,7 @@ final readonly class ProposeImportConfigTool
 
             $this->sessionService->setProposalData($sessionId, $proposalId, [
                 'proposalType' => self::PROPOSAL_TYPE,
-                'subjectType' => ImportConfigSubjectHandler::TYPE,
+                'subjectType' => ImportConfigPolicy::SUBJECT_TYPE,
                 'subjectRef' => $name,
                 'subjectState' => $state,
                 'label' => $label,
@@ -288,7 +286,7 @@ final readonly class ProposeImportConfigTool
     {
         // identity and adapter type belong to the subject, never to a proposal
         $state['general']['name'] = $name;
-        $state['general']['type'] = $existing?->getType() ?? self::CONFIG_TYPE;
+        $state['general']['type'] = $existing?->getType() ?? ImportConfigPolicy::CONFIG_TYPE;
 
         if ($existing === null) {
             $missing = ProposedImportConfiguration::missingForCreate($state);
@@ -306,7 +304,7 @@ final readonly class ProposeImportConfigTool
 
         // the subject strips these from its own state; proposing them back adds leaves
         // to the review that name a change nobody made
-        foreach (ImportConfigSubjectHandler::VOLATILE_GENERAL as $volatile) {
+        foreach (ConfigDocument::VOLATILE_GENERAL as $volatile) {
             unset($state['general'][$volatile]);
         }
 

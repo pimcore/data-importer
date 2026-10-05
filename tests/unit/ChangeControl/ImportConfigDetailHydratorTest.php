@@ -17,8 +17,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ChangeControl;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\ChangeControlBundle\Hydrator\SlotDetail;
 use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectRef;
+use Pimcore\Bundle\DataHubBundle\Proposal\ConfigProposalPolicyInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigDetailHydrator;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigSubjectHandler;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
 use Symfony\Component\Uid\Uuid;
 
 class ImportConfigDetailHydratorTest extends Unit
@@ -29,13 +30,14 @@ class ImportConfigDetailHydratorTest extends Unit
 
     protected function _before(): void
     {
-        // the Change Control bundle is an optional integration this repository cannot install
-        if (!class_exists(SlotDetail::class)) {
-            static::markTestSkipped('Change Control bundle not installed');
+        // Change Control is an optional integration this repository cannot install, and the
+        // slots come from a Data Hub proposal policy the data-hub constraint admits no release of yet
+        if (!class_exists(SlotDetail::class) || !interface_exists(ConfigProposalPolicyInterface::class)) {
+            static::markTestSkipped('Change Control bundle or Data Hub proposal lane not installed');
         }
 
         $this->hydrator = new ImportConfigDetailHydrator();
-        $this->subject = new SubjectRef(ImportConfigSubjectHandler::TYPE, Uuid::v4(), 'car-import');
+        $this->subject = new SubjectRef(ImportConfigPolicy::SUBJECT_TYPE, Uuid::v4(), 'car-import');
     }
 
     public function testSectionsBecomeTheEditorsOwnSlots(): void

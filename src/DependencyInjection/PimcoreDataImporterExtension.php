@@ -12,16 +12,13 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
-use Mcp\Capability\Attribute\McpTool;
-use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectHandlerInterface;
+use Pimcore\Bundle\DataHubBundle\DependencyInjection\ConfigProposalLane;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
-use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Symfony\Component\Config\Definition\ArrayNode;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
-use Symfony\Component\Config\Resource\ClassExistenceResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -59,20 +56,13 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         $definition = $container->getDefinition(DataImporterListener::class);
         $definition->setArgument('$messengerQueueActivated', $queue['activated']);
 
-        // Change Control integration is optional: the subject handler and the review
-        // hydrator implement its interfaces, so they can only be registered when it is
-        // installed. The resource makes that part of what the container is invalidated on.
-        $container->addResource(new ClassExistenceResource(SubjectHandlerInterface::class));
-        if (interface_exists(SubjectHandlerInterface::class)) {
+        // proposals ride Change Control and are authored by an agent, both optional peers; the
+        // lane itself only ships with a Data Hub recent enough to have it
+        if (class_exists(ConfigProposalLane::class) && ConfigProposalLane::canReview($container)) {
             $loader->load('services/change_control.yml');
-
-            // the tools need an MCP host to be called through (mcp/sdk) and Studio's tool
-            // plumbing to answer through; the propose tool also needs this review lane
-            $container->addResource(new ClassExistenceResource(McpTool::class));
-            $container->addResource(new ClassExistenceResource(McpToolErrorHandlerInterface::class));
-            if (self::hasProposalTools()) {
-                $loader->load('services/mcp.yml');
-            }
+        }
+        if (self::canPropose($container)) {
+            $loader->load('services/mcp.yml');
         }
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
@@ -97,7 +87,7 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
             $agentConfig = ['skills' => ['paths' => [__DIR__ . '/../Resources/skills']]];
 
             // the Configuration agent takes its configuration kinds from the bundles that own them
-            if (self::hasProposalTools() && self::takesAgentContributions($container)) {
+            if (self::canPropose($container) && self::takesAgentContributions($container)) {
                 $agentConfig['agents'] = ['contributions' => ['configuration' => [
                     'pimcoreMcpServers' => ['pimcore-data-importer-read', 'pimcore-data-importer-propose'],
                     'skills' => ['data-importer-configuration'],
@@ -111,11 +101,9 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         $loader->load('pimcore/studio_backend.yaml');
     }
 
-    private static function hasProposalTools(): bool
+    private static function canPropose(ContainerBuilder $container): bool
     {
-        return interface_exists(SubjectHandlerInterface::class)
-            && class_exists(McpTool::class)
-            && interface_exists(McpToolErrorHandlerInterface::class);
+        return class_exists(ConfigProposalLane::class) && ConfigProposalLane::canPropose($container);
     }
 
     /** an agent bundle released before the contributions node rejects the key */
