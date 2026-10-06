@@ -51,7 +51,7 @@ final readonly class ImportConfigDetailHydrator implements DetailHydratorInterfa
     /** additive shape: a list of mapping rows, rendered by the importer's own surface */
     private const string SHAPE_MAPPING_LIST = 'import-mapping-list';
 
-    public function hydrate(SubjectRef $subject, array $tree): array
+    public function hydrate(SubjectRef $subject, array $tree, array $provisional = []): array
     {
         $slots = [];
 
