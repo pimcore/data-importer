@@ -217,6 +217,18 @@ class SourceFileReaderTest extends Unit
         iterator_to_array($this->readerWithoutDatabase()->readRows($this->csvConfig(), $path));
     }
 
+    public function testCsvGoneBeforeTheRowsAreReadIsRejected(): void
+    {
+        $path = $this->writeFile(self::CSV, 'csv');
+        $rows = $this->readerWithoutDatabase()->readRows($this->csvConfig(), $path);
+        unlink($path);
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf('File `%s` cannot be read.', basename($path)));
+
+        iterator_to_array($rows);
+    }
+
     private function reader(): SourceFileReader
     {
         return $this->tester->grabService(SourceFileReader::class);

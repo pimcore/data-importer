@@ -52,16 +52,23 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
     }
 
     /**
-     * @param bool $checkColumnCount false for imports: they keep array_combine()'s \ValueError (not an \Exception)
+     * @param bool $strict false for imports: they keep skipping a file that cannot be opened and array_combine()'s
+     *                     \ValueError (not an \Exception)
      *
      * @return \Generator<int, array<int|string, string|null>>
      *
-     * @throws InvalidInputException if $checkColumnCount and a row has not as many columns as the header row
+     * @throws InvalidInputException if $strict and the file cannot be opened or a row has not as many columns as the
+     *                               header row
      */
-    private function loadRows(string $path, bool $checkColumnCount = false): \Generator
+    private function loadRows(string $path, bool $strict = false): \Generator
     {
-        $handle = fopen($path, 'r');
+        // opened only once iterated: the file may be gone since readRows() checked it
+        $handle = $strict ? @fopen($path, 'r') : fopen($path, 'r');
         if ($handle === false) {
+            if ($strict) {
+                throw new InvalidInputException(sprintf('File `%s` cannot be read.', basename($path)));
+            }
+
             return;
         }
 
@@ -82,7 +89,7 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
             while (($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false) {
                 ++$rowNumber;
                 if ($header !== null) {
-                    if ($checkColumnCount) {
+                    if ($strict) {
                         $this->assertColumnCount($header, $data, $path, $rowNumber);
                     }
                     $data = array_combine($header, $data);
