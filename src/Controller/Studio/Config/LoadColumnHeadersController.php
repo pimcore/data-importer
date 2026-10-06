@@ -83,7 +83,8 @@ final class LoadColumnHeadersController extends AbstractApiController
         return $this->jsonResponse(
             $this->previewDataService->loadColumnHeaders(
                 $name,
-                $parameters->getCurrentConfig()
+                $parameters->getCurrentConfig(),
+                $parameters->getPreviewScope()
             )
         );
     }
