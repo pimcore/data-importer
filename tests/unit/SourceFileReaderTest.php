@@ -212,7 +212,10 @@ class SourceFileReaderTest extends Unit
 
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
-            sprintf('Encoding error in row 2 of `%s`: invalid UTF-8 characters in column(s) #1 (header).', basename($path))
+            sprintf(
+                'Encoding error in row 2 of `%s`: invalid UTF-8 characters in column(s) #1 (header).',
+                basename($path),
+            )
         );
 
         iterator_to_array($this->readerWithoutDatabase()->readRows($this->csvConfig(), $path));
@@ -243,7 +246,10 @@ class SourceFileReaderTest extends Unit
             $this->readerWithoutDatabase()->readRows($this->xlsxConfig(true), $path);
             $this->fail('No exception thrown.');
         } catch (InvalidInputException $exception) {
-            $this->assertStringStartsWith(sprintf('File `%s` cannot be read: ', basename($path)), $exception->getMessage());
+            $this->assertStringStartsWith(
+                sprintf('File `%s` cannot be read: ', basename($path)),
+                $exception->getMessage(),
+            );
             $this->assertInstanceOf(SpreadsheetException::class, $exception->getPrevious());
         }
     }
