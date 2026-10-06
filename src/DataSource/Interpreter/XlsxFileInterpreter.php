@@ -48,22 +48,22 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
     {
         try {
             $this->assertFileValid($path);
-            $worksheetInfo = $this->getWorksheetInfo($path);
+            if ($this->getWorksheetInfo($path) === null) {
+                throw new InvalidInputException(
+                    sprintf('Sheet `%s` not found in `%s`.', $this->sheetName, basename($path))
+                );
+            }
+            $rows = $this->loadRows($path, $typedValues);
         } catch (SpreadsheetException $exception) {
-            // e.g. no reader recognises the file
+            // e.g. no reader recognises the file, or a part only the full load reads is broken
             throw new InvalidInputException(
                 sprintf('File `%s` cannot be read: %s', basename($path), $exception->getMessage()),
                 0,
                 $exception
             );
         }
-        if ($worksheetInfo === null) {
-            throw new InvalidInputException(
-                sprintf('Sheet `%s` not found in `%s`.', $this->sheetName, basename($path))
-            );
-        }
 
-        return $this->checkRowEncoding($this->loadRows($path, $typedValues), $path, $this->skipFirstRow ? 2 : 1);
+        return $this->checkRowEncoding($rows, $path, $this->skipFirstRow ? 2 : 1);
     }
 
     /**

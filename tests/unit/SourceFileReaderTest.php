@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -227,6 +228,24 @@ class SourceFileReaderTest extends Unit
         $this->expectExceptionMessage(sprintf('File `%s` cannot be read.', basename($path)));
 
         iterator_to_array($rows);
+    }
+
+    public function testXlsxThatCannotBeLoadedIsRejected(): void
+    {
+        $path = $this->writeXlsx();
+        // only the full load reads the styles, and it refuses XML entities
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->addFromString('xl/styles.xml', '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "b">]><styleSheet/>');
+        $zip->close();
+
+        try {
+            $this->readerWithoutDatabase()->readRows($this->xlsxConfig(true), $path);
+            $this->fail('No exception thrown.');
+        } catch (InvalidInputException $exception) {
+            $this->assertStringStartsWith(sprintf('File `%s` cannot be read: ', basename($path)), $exception->getMessage());
+            $this->assertInstanceOf(SpreadsheetException::class, $exception->getPrevious());
+        }
     }
 
     private function reader(): SourceFileReader
