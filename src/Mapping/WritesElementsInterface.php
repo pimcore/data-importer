@@ -20,7 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
  * processed. A mapping containing one cannot be applied without saving, see MappingApplier.
  *
  * Operators and data targets without this marker are assumed not to write elements: MappingApplier applies them, and
- * whatever they save is saved.
+ * a save or delete they attempt fails while the mapping is applied.
  *
  * @see MappingApplier::lint()
  */

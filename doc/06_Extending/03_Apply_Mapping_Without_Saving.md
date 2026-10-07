@@ -14,7 +14,8 @@ Compared to an import, applying a mapping:
 - takes the mapping as an array, so no stored configuration is needed,
 - uses no queue and no resolver: loading, creating and placing the element is up to you, so location strategies (including
   the ones that create folders) do not apply,
-- does not save the element and dispatches no `PreSaveEvent` or `PostSaveEvent`,
+- does not save the element, refuses to save or delete any element while it runs, and dispatches no `PreSaveEvent` or
+  `PostSaveEvent`,
 - writes nothing to the application logger. `apply()` returns what the operators would have logged instead, see
   [Warnings](#warnings).
 
@@ -99,7 +100,8 @@ foreach ($mappingApplier->lint($mappingConfig) as $issue) {
 The shipped **Import Asset** operator saves assets and creates folders, so a mapping using it cannot be applied without
 saving. Use **Load Asset** instead. A custom operator or data target that saves, creates or deletes elements has to
 implement `Pimcore\Bundle\DataImporterBundle\Mapping\WritesElementsInterface`, so that `lint()` and `prepare()` reject
-it.
+it. Without it, `apply()` throws a `MappingApplicationException` when the operator or data target saves or deletes an
+element. This holds for a [reference lookup](#resolve-references-yourself) as well: it runs during `apply()`.
 
 ## Resolve References Yourself
 

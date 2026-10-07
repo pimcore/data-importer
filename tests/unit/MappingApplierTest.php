@@ -24,14 +24,18 @@ use Pimcore\Bundle\DataImporterBundle\Exception\MappingApplicationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingIssue;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLookupInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField;
+use Pimcore\Bundle\DataImporterBundle\Mapping\WritesElementsInterface;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
@@ -276,6 +280,41 @@ class MappingApplierTest extends Unit
         $this->applier()->prepare($mapping);
     }
 
+    public function testWriteByAnUnmarkedDataTargetIsRefused(): void
+    {
+        $object = $this->createObject('existing', ['name' => 'stored name']);
+        $item = new MappingConfiguration();
+        $item->setLabel('saving target');
+        $item->setDataSourceIndex(['name']);
+        $item->setTransformationPipeline([]);
+        $item->setDataTarget(new class() implements DataTargetInterface {
+            public function setSettings(array $settings): void
+            {
+            }
+
+            public function assignData(ElementInterface $element, $data): void
+            {
+                $element->set('name', $data);
+                $element->save();
+            }
+        });
+        $mapping = new PreparedMapping(
+            [$item],
+            $this->processingService($this->createMock(ApplicationLogger::class)),
+            $this->tester->grabService(MappingApplicationScope::class)
+        );
+
+        try {
+            $mapping->apply($this->loadDetached($object), ['name' => self::NEW_NAME]);
+            $this->fail('apply() did not throw');
+        } catch (MappingApplicationException $exception) {
+            $this->assertInstanceOf(\LogicException::class, $exception->getPrevious());
+            $this->assertStringContainsString(WritesElementsInterface::class, $exception->getMessage());
+        }
+
+        $this->assertSame('stored name', $this->loadDetached($object)->get('name'));
+    }
+
     public function testLintListsInvalidItems(): void
     {
         $issues = $this->applier()->lint([
@@ -498,15 +537,7 @@ class MappingApplierTest extends Unit
         $applicationLogger->method('error')->willReturnCallback(static function ($message) use (&$errors): void {
             $errors[] = (string) $message;
         });
-        $processingService = new ImportProcessingService(
-            $queueService,
-            $this->tester->grabService(MappingConfigurationFactory::class),
-            $this->tester->grabService(ResolverFactory::class),
-            $this->tester->grabService(CleanupStrategyFactory::class),
-            $applicationLogger,
-            $this->tester->grabService('event_dispatcher'),
-        );
-        $processingService->setLogger(new NullLogger());
+        $processingService = $this->processingService($applicationLogger);
 
         $this->withoutSearchIndexUpdates(fn () => $processingService->processQueueItem((int) $entryIds[0]));
         $this->assertSame([], $errors, 'import errors');
@@ -516,6 +547,21 @@ class MappingApplierTest extends Unit
      * Updating a data object makes the search index look up its siblings, and the test environment has no search
      * index to answer.
      */
+    private function processingService(ApplicationLogger $applicationLogger): ImportProcessingService
+    {
+        $processingService = new ImportProcessingService(
+            $this->tester->grabService(QueueService::class),
+            $this->tester->grabService(MappingConfigurationFactory::class),
+            $this->tester->grabService(ResolverFactory::class),
+            $this->tester->grabService(CleanupStrategyFactory::class),
+            $applicationLogger,
+            $this->tester->grabService('event_dispatcher'),
+        );
+        $processingService->setLogger(new NullLogger());
+
+        return $processingService;
+    }
+
     private function withoutSearchIndexUpdates(callable $callback): void
     {
         /** @var EventDispatcherInterface $dispatcher */
