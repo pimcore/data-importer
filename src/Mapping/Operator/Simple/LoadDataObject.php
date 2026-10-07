@@ -189,13 +189,15 @@ final class LoadDataObject extends AbstractOperator
         $logMessage = sprintf('%s `%s` (class `%s`, value `%s`', $how, $this->attributeName, $className, $data)
             . ($this->attributeLanguage ? sprintf(', language `%s`)', $this->attributeLanguage) : ')');
 
-        $object = $this->dataObjectLoader->loadByAttribute($classFqcn,
+        $object = $this->dataObjectLoader->loadByAttribute(
+            $classFqcn,
             $this->attributeName,
             $data,
             $this->attributeLanguage,
             $this->loadUnpublished,
             1,
-            $operator);
+            $operator
+        );
 
         return [$object, $logMessage, $data];
     }
