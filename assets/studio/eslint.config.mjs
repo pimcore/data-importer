@@ -455,5 +455,13 @@ export default tseslint.config(
     languageOptions: {
       globals: { ...globals.node }
     }
+  },
+
+  // 4. Jest environment for test files
+  {
+    files: ['**/*.{spec,test}.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      globals: { ...globals.jest }
+    }
   }
 )

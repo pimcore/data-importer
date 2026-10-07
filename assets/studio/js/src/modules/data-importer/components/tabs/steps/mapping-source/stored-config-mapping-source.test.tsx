@@ -9,21 +9,23 @@
  */
 
 import React from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { storedConfigQueries } from './stored-config-mapping-source'
+import { DataSetupTab } from '../../data-setup-tab'
+import type * as MappingSourceModule from './mapping-source'
 
-const getQuery = vi.fn()
-const headersQuery = vi.fn()
-const previewQuery = vi.fn()
-const typeQuery = vi.fn()
-const resultQuery = vi.fn()
-const columnHeaderOptions = vi.fn((..._args: unknown[]) => [])
+const getQuery = jest.fn()
+const headersQuery = jest.fn()
+const previewQuery = jest.fn()
+const typeQuery = jest.fn()
+const resultQuery = jest.fn()
+const columnHeaderOptions = jest.fn((..._args: unknown[]) => [])
 
-vi.mock('../src/modules/data-importer/data-importer-api-slice-enhanced', () => ({
+jest.mock('../../../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterConfigGetQuery: (...args: unknown[]) => getQuery(...args)
 }))
 
-vi.mock('../src/modules/data-importer/data-importer-api-slice.gen', () => ({
+jest.mock('../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterConfigLoadColumnHeadersQuery: (...args: unknown[]) => headersQuery(...args),
   useBundleDataImporterConfigLoadPreviewQuery: (...args: unknown[]) => previewQuery(...args),
   useBundleDataImporterConfigCalculateTransformationResultTypeQuery: (...args: unknown[]) => typeQuery(...args),
@@ -31,8 +33,8 @@ vi.mock('../src/modules/data-importer/data-importer-api-slice.gen', () => ({
 }))
 
 // the data setup tab's own steps are out of scope here; the mapping step stand-in reports its source
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step', async () => {
-  const { useMappingSource } = await import('../src/modules/data-importer/components/tabs/steps/mapping-source/mapping-source')
+jest.mock('../mapping-step', () => {
+  const { useMappingSource } = jest.requireActual<typeof MappingSourceModule>('./mapping-source')
   return {
     MappingStep: () => {
       const source = useMappingSource()
@@ -40,8 +42,8 @@ vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step', async
     }
   }
 })
-vi.mock('../src/modules/data-importer/components/tabs/steps/data-source-step', () => ({ DataSourceStep: () => null }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/preview-import-step', () => ({
+jest.mock('../data-source-step', () => ({ DataSourceStep: () => null }))
+jest.mock('../preview-import-step', () => ({
   PreviewImportStep: ({ onPreviewDataChange }: { onPreviewDataChange: () => void }) => (
     <button
       onClick={ onPreviewDataChange }
@@ -51,23 +53,20 @@ vi.mock('../src/modules/data-importer/components/tabs/steps/preview-import-step'
     </button>
   )
 }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/resolver-step', () => ({ ResolverStep: () => null }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/processing-settings-step', () => ({ ProcessingSettingsStep: () => null }))
-vi.mock('../src/modules/data-importer/hooks/use-column-header-options', () => ({ useColumnHeaderOptions: (...args: unknown[]) => columnHeaderOptions(...args) }))
-vi.mock('../src/modules/data-importer/components/tabs/data-setup-tab.styles', () => ({ useStyles: () => ({ styles: {} }) }))
-vi.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
-vi.mock('@pimcore/studio-ui-bundle/components', () => ({
+jest.mock('../resolver-step', () => ({ ResolverStep: () => null }))
+jest.mock('../processing-settings-step', () => ({ ProcessingSettingsStep: () => null }))
+jest.mock('../../../../hooks/use-column-header-options', () => ({ useColumnHeaderOptions: (...args: unknown[]) => columnHeaderOptions(...args) }))
+jest.mock('../../data-setup-tab.styles', () => ({ useStyles: () => ({ styles: {} }) }))
+jest.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+jest.mock('@pimcore/studio-ui-bundle/components', () => ({
   Steps: () => null,
   Box: ({ children }: { children: React.ReactNode }) => <>{ children }</>,
   Flex: ({ children }: { children: React.ReactNode }) => <>{ children }</>
 }))
 
-const { storedConfigQueries } = await import('../src/modules/data-importer/components/tabs/steps/mapping-source/stored-config-mapping-source')
-const { DataSetupTab } = await import('../src/modules/data-importer/components/tabs/data-setup-tab')
-
 afterEach(() => {
   cleanup()
-  vi.clearAllMocks()
+  jest.clearAllMocks()
 })
 
 describe('storedConfigQueries', () => {

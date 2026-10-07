@@ -10,40 +10,41 @@
 
 import React from 'react'
 import { Form } from 'antd'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { type SourceRow } from '../src/modules/data-importer/components/tabs/steps/mapping-step/sources-panel/sources-panel'
+import { type SourceRow } from './sources-panel/sources-panel'
+import { PostedMappingSource } from '../mapping-source/posted-mapping-source'
+import { MappingStep } from '.'
 
-const dispatch = vi.fn(async (_action: unknown) => await Promise.resolve({ data: { attributes: [{ key: 'sku', title: 'SKU' }] } }))
-const initiate = vi.fn((request: unknown, options?: unknown) => ({ request, options }))
+const dispatch = jest.fn(async (_action: unknown) => await Promise.resolve({ data: { attributes: [{ key: 'sku', title: 'SKU' }] } }))
+const initiate = jest.fn((request: unknown, options?: unknown) => ({ request, options }))
 
-vi.mock('@pimcore/studio-ui-bundle/app', () => ({
+jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
   useAppDispatch: () => dispatch
 }))
-vi.mock('@pimcore/studio-ui-bundle/components', async () => await import('./support/studio-components'))
-vi.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en'] }) }))
-vi.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
+jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en'] }) }))
+jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
   FieldWidthProvider: ({ children }: { children: React.ReactNode }) => <>{ children }</>
 }))
-vi.mock('@pimcore/studio-ui-bundle/utils', () => ({ uuid: () => crypto.randomUUID() }))
-vi.mock('../src/modules/data-importer/data-importer-api-slice-enhanced', () => ({
-  api: { endpoints: { bundleDataImporterDataTypeLoadClassAttributes: { initiate } } }
+jest.mock('@pimcore/studio-ui-bundle/utils', () => ({ uuid: () => crypto.randomUUID() }))
+// the factory runs before this file's constants exist, so it reaches initiate lazily
+jest.mock('../../../../data-importer-api-slice-enhanced', () => ({
+  api: { endpoints: { bundleDataImporterDataTypeLoadClassAttributes: { initiate: (...args: Parameters<typeof initiate>) => initiate(...args) } } }
 }))
-vi.mock('../src/modules/data-importer/data-importer-api-slice.gen', () => ({
-  useBundleDataImporterMappingCalculateTransformationResultTypeQuery: vi.fn(),
-  useBundleDataImporterMappingLoadTransformationResultQuery: vi.fn()
+jest.mock('../../../../data-importer-api-slice.gen', () => ({
+  useBundleDataImporterMappingCalculateTransformationResultTypeQuery: jest.fn(),
+  useBundleDataImporterMappingLoadTransformationResultQuery: jest.fn()
 }))
 
 // the panels are out of scope; their stand-ins show what the step hands them
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/sources-panel/sources-panel', () => ({
+jest.mock('./sources-panel/sources-panel', () => ({
   SourcesPanel: ({ sourceRows }: { sourceRows: SourceRow[] }) => (
     <ul>
       { sourceRows.map(row => <li key={ row.dataIndex }>{ `${row.dataIndex}=${row.value}` }</li>) }
     </ul>
   )
 }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/mappings-panel/mappings-panel', () => ({
+jest.mock('./mappings-panel/mappings-panel', () => ({
   MappingsPanel: ({ onOpenAutofillSuggestions }: { onOpenAutofillSuggestions: () => void }) => (
     <button
       onClick={ onOpenAutofillSuggestions }
@@ -53,18 +54,15 @@ vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/mapping
     </button>
   )
 }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/source-picker-content/source-picker-content', () => ({
+jest.mock('./source-picker-content/source-picker-content', () => ({
   SourcePickerContent: () => null
 }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/autofill-suggestions-panel', () => ({
+jest.mock('./autofill-suggestions-panel', () => ({
   AutofillSuggestionsPanel: ({ previewRow }: { previewRow: Record<string, string | null> }) => (
     <span data-testid="autofill-record">{ JSON.stringify(previewRow) }</span>
   ),
   applySelectedSuggestions: () => []
 }))
-
-const { PostedMappingSource } = await import('../src/modules/data-importer/components/tabs/steps/mapping-source/posted-mapping-source')
-const { MappingStep } = await import('../src/modules/data-importer/components/tabs/steps/mapping-step')
 
 const columns = [{ dataIndex: 'sku', label: 'SKU' }, { dataIndex: 'name [de]' }]
 const records = [{ sku: 'A-1', 'name [de]': 'Stuhl' }, { sku: 'A-2', 'name [de]': 'Tisch' }]
@@ -92,7 +90,7 @@ const Host = (): React.JSX.Element => {
 
 afterEach(() => {
   cleanup()
-  vi.clearAllMocks()
+  jest.clearAllMocks()
 })
 
 describe('MappingStep on a posted mapping source', () => {

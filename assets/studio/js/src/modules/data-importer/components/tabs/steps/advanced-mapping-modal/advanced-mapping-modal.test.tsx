@@ -9,29 +9,30 @@
  */
 
 import React from 'react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { type ClassAttribute, type MappingConfigItem } from '../src/modules/data-importer/types'
+import { type ClassAttribute, type MappingConfigItem } from '../../../../types'
+import { PostedMappingSource } from '../mapping-source/posted-mapping-source'
+import { AdvancedMappingModal } from '.'
+import type * as ResultPreviewModule from './result-preview/result-preview'
 
-const typeQuery = vi.fn()
-const resultQuery = vi.fn()
-const attributesQuery = vi.fn()
-const refetch = vi.fn(async () => { await Promise.resolve() })
+const typeQuery = jest.fn()
+const resultQuery = jest.fn()
+const attributesQuery = jest.fn()
+const refetch = jest.fn(async () => { await Promise.resolve() })
 
-vi.mock('../src/modules/data-importer/data-importer-api-slice.gen', () => ({
+jest.mock('../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery: (...args: unknown[]) => typeQuery(...args),
   useBundleDataImporterMappingLoadTransformationResultQuery: (...args: unknown[]) => resultQuery(...args),
   useBundleDataImporterDataTypeLoadClassAttributesQuery: (...args: unknown[]) => attributesQuery(...args)
 }))
-vi.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
-vi.mock('@pimcore/studio-ui-bundle/components', async () => await import('./support/studio-components'))
+jest.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
 
 // the pipeline editor is out of scope; the target step stand-in shows what the dialog hands it, next to the real result preview
-vi.mock('../src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-transformations/step-transformations', () => ({
+jest.mock('./step-transformations/step-transformations', () => ({
   StepTransformations: () => null
 }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/step-target/step-target', async () => {
-  const { ResultPreview } = await import('../src/modules/data-importer/components/tabs/steps/advanced-mapping-modal/result-preview/result-preview')
+jest.mock('./step-target/step-target', () => {
+  const { ResultPreview } = jest.requireActual<typeof ResultPreviewModule>('./result-preview/result-preview')
   return {
     StepTarget: ({ attributesMap, transformationResultType }: { attributesMap: Record<string, ClassAttribute[]>, transformationResultType?: string }) => (
       <div data-testid="target">
@@ -44,9 +45,6 @@ vi.mock('../src/modules/data-importer/components/tabs/steps/advanced-mapping-mod
     )
   }
 })
-
-const { PostedMappingSource } = await import('../src/modules/data-importer/components/tabs/steps/mapping-source/posted-mapping-source')
-const { AdvancedMappingModal } = await import('../src/modules/data-importer/components/tabs/steps/advanced-mapping-modal')
 
 const columns = [{ dataIndex: 'sku', label: 'SKU' }, { dataIndex: 'name' }]
 const records = [{ sku: 'A-1', name: 'Chair' }, { sku: 'A-2', name: 'Table' }]
@@ -93,7 +91,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
-  vi.clearAllMocks()
+  jest.clearAllMocks()
 })
 
 describe('AdvancedMappingModal on a posted mapping source', () => {

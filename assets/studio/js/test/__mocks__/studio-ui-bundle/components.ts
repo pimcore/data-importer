@@ -8,4 +8,4 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-export {}
+export * from '../../support/studio-components'

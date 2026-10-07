@@ -9,15 +9,14 @@
  */
 
 import React from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
-import { PostedMappingSource } from '../src/modules/data-importer/components/tabs/steps/mapping-source/posted-mapping-source'
-import { type MappingSource, useMappingSource } from '../src/modules/data-importer/components/tabs/steps/mapping-source/mapping-source'
+import { PostedMappingSource } from './posted-mapping-source'
+import { type MappingSource, useMappingSource } from './mapping-source'
 
-const typeQuery = vi.fn()
-const resultQuery = vi.fn()
+const typeQuery = jest.fn()
+const resultQuery = jest.fn()
 
-vi.mock('../src/modules/data-importer/data-importer-api-slice.gen', () => ({
+jest.mock('../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery: (...args: unknown[]) => typeQuery(...args),
   useBundleDataImporterMappingLoadTransformationResultQuery: (...args: unknown[]) => resultQuery(...args)
 }))
@@ -26,7 +25,7 @@ afterEach(() => {
   cleanup()
   typeQuery.mockReset()
   resultQuery.mockReset()
-  vi.restoreAllMocks()
+  jest.restoreAllMocks()
 })
 
 const columns = [{ dataIndex: 'sku', label: 'SKU' }, { dataIndex: 'name [de]' }]
@@ -93,7 +92,7 @@ describe('PostedMappingSource', () => {
       return null
     }
     // React and jsdom report the render error on their own; it is the expected outcome here
-    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    jest.spyOn(console, 'error').mockImplementation(() => undefined)
     const silence = (event: ErrorEvent): void => { event.preventDefault() }
     window.addEventListener('error', silence)
 

@@ -10,22 +10,19 @@
 
 import React from 'react'
 import { Form } from 'antd'
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
+import { MappingItemContextProvider } from '../mapping-item-context'
+import { MappingItemWithFilter } from './mapping-item-with-filter'
 
-vi.mock('@pimcore/studio-ui-bundle/components', async () => await import('./support/studio-components'))
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-drop-zone', () => ({
+jest.mock('./mapping-drop-zone', () => ({
   MappingDropZone: () => null
 }))
 // the row's editor is out of scope; its stand-in shows what the row hands it
-vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item', () => ({
+jest.mock('./mapping-item', () => ({
   MappingItem: ({ classId, columnHeaderOptions, itemLabel }: { classId?: string, columnHeaderOptions: Array<{ value: string }>, itemLabel?: string }) => (
     <span data-testid="item">{ `${itemLabel}@${classId}:${columnHeaderOptions.map(o => o.value).join(',')}` }</span>
   )
 }))
-
-const { MappingItemContextProvider } = await import('../src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item-context')
-const { MappingItemWithFilter } = await import('../src/modules/data-importer/components/tabs/steps/mapping-step/mapping-item/mapping-item-with-filter')
 
 afterEach(cleanup)
 

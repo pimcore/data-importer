@@ -8,9 +8,16 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { describe, expect, it, vi } from 'vitest'
 
-const { bindings, container } = vi.hoisted(() => {
+import { DataImporterModule } from '.'
+import { ResolverStep } from './components/tabs/steps/resolver-step'
+import { AdvancedMappingModal } from './components/tabs/steps/advanced-mapping-modal'
+import { PostedMappingSource } from './components/tabs/steps/mapping-source/posted-mapping-source'
+import { transformBackendToForm, transformFormToBackend } from './utils/transformers'
+import type * as RtkQuery from '@reduxjs/toolkit/query/react'
+
+// the container records what the module binds; it is read back through the mocked module
+jest.mock('@pimcore/studio-ui-bundle', () => {
   const bindings = new Map<string, unknown>()
   const registry = { registerDynamicType: () => undefined }
 
@@ -28,28 +35,22 @@ const { bindings, container } = vi.hoisted(() => {
     }
   }
 })
-
-vi.mock('@pimcore/studio-ui-bundle', () => ({ container }))
-vi.mock('@pimcore/studio-ui-bundle/app', () => ({ injectable: () => <T>(target: T): T => target }))
+jest.mock('@pimcore/studio-ui-bundle/app', () => ({ injectable: () => <T>(target: T): T => target }))
 // the bases the bundle's dynamic types extend
-vi.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
+jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
   DynamicTypeAbstract: class { id?: string },
   DynamicTypeRegistryAbstract: class { id?: string }
 }))
-vi.mock('@pimcore/data-hub', () => ({
+jest.mock('@pimcore/data-hub', () => ({
   DynamicTypeDataHubAdapterAbstract: class { id?: string },
   bundleServiceIds: { 'DataHub/DynamicTypes/Adapter/Registry': 'DataHub/DynamicTypes/Adapter/Registry' }
 }))
-vi.mock('@pimcore/studio-ui-bundle/api', async () => {
-  const { createApi } = await import('@reduxjs/toolkit/query/react')
+jest.mock('@pimcore/studio-ui-bundle/api', () => {
+  const { createApi } = jest.requireActual<typeof RtkQuery>('@reduxjs/toolkit/query/react')
   return { api: createApi({ baseQuery: async () => await Promise.resolve({ data: {} }), endpoints: () => ({}) }) }
 })
 
-const { DataImporterModule } = await import('../src/modules/data-importer')
-const { ResolverStep } = await import('../src/modules/data-importer/components/tabs/steps/resolver-step')
-const { AdvancedMappingModal } = await import('../src/modules/data-importer/components/tabs/steps/advanced-mapping-modal')
-const { PostedMappingSource } = await import('../src/modules/data-importer/components/tabs/steps/mapping-source/posted-mapping-source')
-const { transformBackendToForm, transformFormToBackend } = await import('../src/modules/data-importer/utils/transformers')
+const { bindings } = jest.requireMock<{ bindings: Map<string, unknown> }>('@pimcore/studio-ui-bundle')
 
 describe('DataImporterModule', () => {
   it('binds the resolver step, the mapping dialog, its source and the converters for other bundles', () => {

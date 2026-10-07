@@ -9,13 +9,18 @@
  */
 
 import { configureStore } from '@reduxjs/toolkit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  api,
+  useBundleDataImporterMappingCalculateTransformationResultTypeQuery,
+  useBundleDataImporterMappingLoadTransformationResultQuery
+} from './data-importer-api-slice.gen'
+import type * as RtkQuery from '@reduxjs/toolkit/query/react'
 
-const sent = vi.hoisted(() => [] as unknown[])
+const sent: unknown[] = []
 
 // Studio's base api, with a base query that records the request instead of sending it
-vi.mock('@pimcore/studio-ui-bundle/api', async () => {
-  const { createApi } = await import('@reduxjs/toolkit/query/react')
+jest.mock('@pimcore/studio-ui-bundle/api', () => {
+  const { createApi } = jest.requireActual<typeof RtkQuery>('@reduxjs/toolkit/query/react')
 
   return {
     api: createApi({
@@ -27,8 +32,6 @@ vi.mock('@pimcore/studio-ui-bundle/api', async () => {
     })
   }
 })
-
-const { api } = await import('../src/modules/data-importer/data-importer-api-slice.gen')
 
 const store = configureStore({
   reducer: { [api.reducerPath]: api.reducer },
@@ -58,5 +61,10 @@ describe('the posted mapping endpoints', () => {
     }))
 
     expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/mapping/transformation-result-type', method: 'POST', body: parameters }])
+  })
+
+  it('are exported as the hooks the posted mapping source uses', () => {
+    expect(useBundleDataImporterMappingLoadTransformationResultQuery).toBe(api.endpoints.bundleDataImporterMappingLoadTransformationResult.useQuery)
+    expect(useBundleDataImporterMappingCalculateTransformationResultTypeQuery).toBe(api.endpoints.bundleDataImporterMappingCalculateTransformationResultType.useQuery)
   })
 })
