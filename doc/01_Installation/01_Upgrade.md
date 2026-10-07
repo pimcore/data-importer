@@ -5,6 +5,11 @@ description: Breaking changes and migration steps per release.
 
 # Upgrade Notes
 
+## Upgrade to 2026.4.0
+
+- `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
+  `instanceof ImportAsset` no longer matches the **Load Asset** operator.
+
 ## Upgrade to 2026.3.0
 
 ### Skipping Element Persistence From a `PreSaveEvent` Listener

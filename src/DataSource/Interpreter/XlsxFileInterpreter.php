@@ -15,16 +15,18 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 /**
  * @internal
  */
-final class XlsxFileInterpreter extends AbstractInterpreter
+final class XlsxFileInterpreter extends AbstractInterpreter implements RowReaderInterface
 {
     private bool $skipFirstRow;
 
@@ -32,21 +34,57 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
+        foreach ($this->loadRows($path, false) as $rowData) {
+            $this->processImportRow($rowData);
+        }
+    }
+
+    /**
+     * By default every value is the text an import receives (e.g. `'123'`, `'TRUE'`). With `$typedValues` numbers are
+     * int or float, booleans bool, empty cells null and text stays text, so `'00123'` stored as text is kept apart from
+     * the number 123. Formulas are calculated either way; dates are Excel serial numbers either way.
+     */
+    public function readRows(string $path, bool $typedValues = false): iterable
+    {
+        try {
+            $this->assertFileValid($path);
+            if ($this->getWorksheetInfo($path) === null) {
+                throw new InvalidInputException(
+                    sprintf('Sheet `%s` not found in `%s`.', $this->sheetName, basename($path))
+                );
+            }
+            $rows = $this->loadRows($path, $typedValues);
+        } catch (SpreadsheetException $exception) {
+            // e.g. no reader recognises the file, or a part only the full load reads is broken
+            throw new InvalidInputException(
+                sprintf('File `%s` cannot be read: %s', basename($path), $exception->getMessage()),
+                0,
+                $exception
+            );
+        }
+
+        return $this->checkRowEncoding($rows, $path, $this->skipFirstRow ? 2 : 1);
+    }
+
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function loadRows(string $path, bool $typedValues): array
+    {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $spreadSheet = $reader->load($path);
 
         $spreadSheet->setActiveSheetIndexByName($this->sheetName);
 
-        $data = $spreadSheet->getActiveSheet()->toArray();
+        // imports receive formatted text; changing that would alter what existing mappings and delta checks see
+        $data = $spreadSheet->getActiveSheet()->toArray(null, true, !$typedValues);
 
         if ($this->skipFirstRow) {
             array_shift($data);
         }
 
-        foreach ($data as $rowData) {
-            $this->processImportRow($rowData);
-        }
+        return $data;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool

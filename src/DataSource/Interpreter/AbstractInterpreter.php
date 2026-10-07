@@ -215,27 +215,77 @@ abstract class AbstractInterpreter implements InterpreterInterface
      */
     protected function assertValidRowEncoding(array $data): void
     {
+        $this->assertRowEncoding($data, '`' . $this->configName . '`');
+    }
+
+    /**
+     * @param string $source what the message names, e.g. the configuration or the row of a file
+     *
+     * @throws InvalidInputException
+     */
+    private function assertRowEncoding(array $data, string $source): void
+    {
         $invalidColumns = [];
         $position = 0;
         foreach ($data as $key => $value) {
-            if (is_string($value) && !mb_check_encoding($value, 'UTF-8')) {
-                // Only keep the column label if it is itself safe to log (the header row may be
-                // broken too); otherwise fall back to the numeric column position. Never put the
-                // raw invalid bytes into the message: the application logger persists it into a
-                // utf8mb4 column and would fail on malformed UTF-8.
-                $invalidColumns[] = (is_string($key) && mb_check_encoding($key, 'UTF-8')) ? $key : ('#' . $position);
+            if (is_string($key) && !mb_check_encoding($key, 'UTF-8')) {
+                // header names become the keys and break json_encode() just like values do
+                $invalidColumns[] = '#' . $position . ' (header)';
+            } elseif (is_string($value) && !mb_check_encoding($value, 'UTF-8')) {
+                // Never put the raw invalid bytes into the message: the application logger persists
+                // it into a utf8mb4 column and would fail on malformed UTF-8.
+                $invalidColumns[] = is_string($key) ? $key : ('#' . $position);
             }
             ++$position;
         }
 
         if ($invalidColumns !== []) {
             throw new InvalidInputException(sprintf(
-                'Encoding error in `%s`: invalid UTF-8 characters in column(s) %s. '
+                'Encoding error in %s: invalid UTF-8 characters in column(s) %s. '
                 . 'Please make sure the source file is UTF-8 encoded.',
-                $this->configName,
+                $source,
                 implode(', ', $invalidColumns)
             ));
         }
+    }
+
+    /**
+     * @throws InvalidInputException
+     */
+    protected function assertFileValid(string $path): void
+    {
+        // fileValid() lets the MIME type guesser throw for a missing file
+        if (!is_file($path) || !is_readable($path)) {
+            throw new InvalidInputException(sprintf('File `%s` cannot be read.', basename($path)));
+        }
+        if (!$this->fileValid($path)) {
+            throw new InvalidInputException(sprintf('File `%s` is not valid for this file format.', basename($path)));
+        }
+    }
+
+    /**
+     * Passes the rows on with the encoding check an import runs before queueing them.
+     *
+     * @param iterable<int, array<int|string, mixed>> $rows
+     * @param int $rowNumber 1-based row of the file the first of the rows comes from
+     *
+     * @return \Generator<int, array<int|string, mixed>>
+     *
+     * @throws InvalidInputException
+     */
+    protected function checkRowEncoding(iterable $rows, string $path, int $rowNumber): \Generator
+    {
+        foreach ($rows as $row) {
+            $this->assertRowEncoding($row, $this->describeRow($path, $rowNumber));
+
+            yield $row;
+            ++$rowNumber;
+        }
+    }
+
+    protected function describeRow(string $path, int $rowNumber): string
+    {
+        return sprintf('row %d of `%s`', $rowNumber, basename($path));
     }
 
     protected function resetIdentifierCache(): void

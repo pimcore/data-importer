@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Version;
 use Symfony\Component\Mime\MimeTypes;
@@ -19,7 +20,7 @@ use Symfony\Component\Mime\MimeTypes;
 /**
  * @internal
  */
-final class CsvFileInterpreter extends AbstractInterpreter
+final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderInterface
 {
     private const UTF8_BOM = "\xEF\xBB\xBF";
 
@@ -35,25 +36,88 @@ final class CsvFileInterpreter extends AbstractInterpreter
 
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        if (($handle = fopen($path, 'r')) !== false) {
+        foreach ($this->loadRows($path) as $data) {
+            $this->processImportRow($data);
+        }
+    }
+
+    /**
+     * CSV has no value types: every value is a string, so `$typedValues` changes nothing.
+     */
+    public function readRows(string $path, bool $typedValues = false): iterable
+    {
+        $this->assertFileValid($path);
+
+        return $this->checkRowEncoding($this->loadRows($path, true), $path, $this->skipFirstRow ? 2 : 1);
+    }
+
+    /**
+     * @param bool $strict false for imports: they keep skipping a file that cannot be opened and array_combine()'s
+     *                     \ValueError (not an \Exception)
+     *
+     * @return \Generator<int, array<int|string, string|null>>
+     *
+     * @throws InvalidInputException if $strict and the file cannot be opened or a row has not as many columns as the
+     *                               header row
+     */
+    private function loadRows(string $path, bool $strict = false): \Generator
+    {
+        // opened only once iterated: the file may be gone since readRows() checked it
+        $handle = $strict ? @fopen($path, 'r') : fopen($path, 'r');
+        if ($handle === false) {
+            if ($strict) {
+                throw new InvalidInputException(sprintf('File `%s` cannot be read.', basename($path)));
+            }
+
+            return;
+        }
+
+        try {
             $this->skipByteOrderMark($handle);
 
             $header = null;
+            $rowNumber = 0;
             if ($this->skipFirstRow) {
                 //load first row and ignore it
                 $data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape);
+                ++$rowNumber;
                 if ($this->saveHeaderName) {
                     $header = $data;
                 }
             }
 
             while (($data = fgetcsv($handle, 0, $this->delimiter, $this->enclosure, $this->escape)) !== false) {
+                ++$rowNumber;
                 if ($header !== null) {
+                    if ($strict) {
+                        $this->assertColumnCount($header, $data, $path, $rowNumber);
+                    }
                     $data = array_combine($header, $data);
                 }
-                $this->processImportRow($data);
+
+                yield $data;
             }
+        } finally {
             fclose($handle);
+        }
+    }
+
+    /**
+     * @throws InvalidInputException
+     */
+    private function assertColumnCount(array|false $header, array $data, string $path, int $rowNumber): void
+    {
+        // array_combine()'s rule: a blank line still passes under a one-column header, as in imports
+        if ($header !== false && count($data) !== count($header)) {
+            // fgetcsv() returns [null] for a blank line
+            $columns = $data === [null] ? 0 : count($data);
+
+            throw new InvalidInputException(sprintf(
+                '%s has %d column(s), the header row has %d.',
+                ucfirst($this->describeRow($path, $rowNumber)),
+                $columns,
+                count($header)
+            ));
         }
     }
 
