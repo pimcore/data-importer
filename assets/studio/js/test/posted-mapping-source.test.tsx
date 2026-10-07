@@ -26,6 +26,7 @@ afterEach(() => {
   cleanup()
   typeQuery.mockReset()
   resultQuery.mockReset()
+  vi.restoreAllMocks()
 })
 
 const columns = [{ dataIndex: 'sku', label: 'SKU' }, { dataIndex: 'name [de]' }]
@@ -75,6 +76,32 @@ describe('PostedMappingSource', () => {
       expect(source.usePreviewQuery({ recordNumber: 7 }).data?.previewRecordIndex).toBe(1)
       expect(source.usePreviewQuery({ recordNumber: 0 }, { skip: true }).isSuccess).toBe(false)
     })
+  })
+
+  it('settles its previews at once, so a refetch has nothing to request', async () => {
+    let refetch: (() => Promise<unknown>) | undefined
+    renderWith((source) => {
+      refetch = source.usePreviewQuery({ recordNumber: 0 }).refetch
+    })
+
+    await expect(refetch?.()).resolves.toBeUndefined()
+  })
+
+  it('is required around the mapping step', () => {
+    const Consumer = (): null => {
+      useMappingSource()
+      return null
+    }
+    // React and jsdom report the render error on their own; it is the expected outcome here
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const silence = (event: ErrorEvent): void => { event.preventDefault() }
+    window.addEventListener('error', silence)
+
+    try {
+      expect(() => render(<Consumer />)).toThrow('The mapping step needs a mapping source around it')
+    } finally {
+      window.removeEventListener('error', silence)
+    }
   })
 
   it('previews edited records', () => {

@@ -10,13 +10,14 @@
 
 import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 
 const getQuery = vi.fn()
 const headersQuery = vi.fn()
 const previewQuery = vi.fn()
 const typeQuery = vi.fn()
 const resultQuery = vi.fn()
+const columnHeaderOptions = vi.fn((..._args: unknown[]) => [])
 
 vi.mock('../src/modules/data-importer/data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterConfigGetQuery: (...args: unknown[]) => getQuery(...args)
@@ -40,10 +41,19 @@ vi.mock('../src/modules/data-importer/components/tabs/steps/mapping-step', async
   }
 })
 vi.mock('../src/modules/data-importer/components/tabs/steps/data-source-step', () => ({ DataSourceStep: () => null }))
-vi.mock('../src/modules/data-importer/components/tabs/steps/preview-import-step', () => ({ PreviewImportStep: () => null }))
+vi.mock('../src/modules/data-importer/components/tabs/steps/preview-import-step', () => ({
+  PreviewImportStep: ({ onPreviewDataChange }: { onPreviewDataChange: () => void }) => (
+    <button
+      onClick={ onPreviewDataChange }
+      type="button"
+    >
+      preview data changed
+    </button>
+  )
+}))
 vi.mock('../src/modules/data-importer/components/tabs/steps/resolver-step', () => ({ ResolverStep: () => null }))
 vi.mock('../src/modules/data-importer/components/tabs/steps/processing-settings-step', () => ({ ProcessingSettingsStep: () => null }))
-vi.mock('../src/modules/data-importer/hooks/use-column-header-options', () => ({ useColumnHeaderOptions: () => [] }))
+vi.mock('../src/modules/data-importer/hooks/use-column-header-options', () => ({ useColumnHeaderOptions: (...args: unknown[]) => columnHeaderOptions(...args) }))
 vi.mock('../src/modules/data-importer/components/tabs/data-setup-tab.styles', () => ({ useStyles: () => ({ styles: {} }) }))
 vi.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
 vi.mock('@pimcore/studio-ui-bundle/components', () => ({
@@ -90,5 +100,15 @@ describe('DataSetupTab', () => {
 
     expect(getQuery).toHaveBeenCalledWith({ name: 'products' })
     expect(screen.getByTestId('mapping-source').textContent).toBe('products:r1')
+  })
+
+  it('reloads the column lists once the preview data changed', () => {
+    getQuery.mockReturnValue({ data: { configuration: { general: {} } }, isSuccess: true, requestId: 'r1' })
+    render(<DataSetupTab configName="products" />)
+    expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'preview data changed' }))
+
+    expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 1)
   })
 })
