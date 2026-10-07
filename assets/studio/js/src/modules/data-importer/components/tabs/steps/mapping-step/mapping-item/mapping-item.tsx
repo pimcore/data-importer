@@ -45,6 +45,7 @@ export interface MappingItemProps {
   itemLabel: string | undefined
   dataSourceIndex: string[] | undefined
   transformationResultType: string | undefined
+  dataTargetType: string | undefined
   selectedFieldName: string | undefined
   language: string | undefined
   attributesMap: Record<string, ClassAttribute[]>
@@ -63,6 +64,7 @@ const MappingItemComponent = ({
   itemLabel,
   dataSourceIndex,
   transformationResultType,
+  dataTargetType,
   selectedFieldName,
   language,
   attributesMap
@@ -123,7 +125,7 @@ const MappingItemComponent = ({
     }
   }, [expanded, columnHeaderOptions, form, getCurrentIndexByMappingId])
 
-  const attrMapKey = resolveAttrMapKey(transformationResultType)
+  const attrMapKey = resolveAttrMapKey(transformationResultType, dataTargetType)
   const attributes: ClassAttribute[] = attributesMap[attrMapKey] ?? []
 
   // Only compute props needed by MappingItemContent when the panel is expanded.
@@ -275,6 +277,7 @@ function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProp
     prev.itemLabel === next.itemLabel &&
     dataSourceIndexEqual &&
     prev.transformationResultType === next.transformationResultType &&
+    prev.dataTargetType === next.dataTargetType &&
     prev.selectedFieldName === next.selectedFieldName &&
     prev.language === next.language &&
     prev.attributesMap === next.attributesMap
