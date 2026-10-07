@@ -184,7 +184,8 @@ settings: with `skipFirstRow` the header row is left out, without it the header 
 reading rows skips no unchanged rows (delta check), cleans up no elements and writes nothing to the application logger.
 A file that is not valid for the format or lacks the configured sheet throws an `InvalidInputException`, and so does a
 row that is not UTF-8 encoded or, with `saveHeaderName`, has not as many columns as the CSV header row. The message
-names the row, counted from 1 with the header row.
+names the row, counted from 1 with the header row. Rows are read while you iterate them, so the exception can come from
+the loop as well as from the call: wrap both.
 
 The **CSV** and **XLSX** file formats support reading rows. Other formats throw an `InvalidConfigurationException`; a
 custom file format can support it by implementing

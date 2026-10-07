@@ -41,7 +41,8 @@ final class SourceFileReader
      *
      * @throws InvalidConfigurationException if the file format is unknown or cannot read rows
      * @throws InvalidInputException if the file is not valid for the format or cannot be read, or a row is not UTF-8
-     *                               encoded or does not match the CSV header row (the message names the row)
+     *                               encoded or does not match the CSV header row (the message names the row);
+     *                               thrown by this call or while the rows are iterated
      */
     public function readRows(array $interpreterConfig, string $path, bool $typedValues = false): iterable
     {

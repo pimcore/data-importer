@@ -33,7 +33,8 @@ interface RowReaderInterface
      * @return iterable<int, array<int|string, mixed>>
      *
      * @throws InvalidInputException if the file is not valid for the format or cannot be read, or a row is not UTF-8
-     *                               encoded or does not match the CSV header row (the message names the row)
+     *                               encoded or does not match the CSV header row (the message names the row);
+     *                               thrown by this call or while the rows are iterated
      */
     public function readRows(string $path, bool $typedValues = false): iterable;
 }
