@@ -357,6 +357,73 @@ class MappingApplierTest extends Unit
         }
     }
 
+    public function testAttributeStrategyLoadsByExactAndPartialMatch(): void
+    {
+        $name = uniqid('attribute-');
+        $referenced = $this->createObject('referenced', ['name' => $name]);
+
+        foreach ([[$name, []], [substr($name, 2), ['partialMatch' => true]]] as [$value, $settings]) {
+            $copy = $this->newObject('target');
+            $issues = $this->applier()
+                ->prepare([$this->loadDataObjectItem($settings + $this->attributeSettings())])
+                ->apply($copy, ['ref' => $value]);
+
+            $this->assertSame([], $issues);
+            $this->assertSame($referenced->getId(), $copy->get('related')?->getId());
+        }
+    }
+
+    public function testAttributeStrategyMissNamesTheSearch(): void
+    {
+        $issues = $this->applier()
+            ->prepare([$this->loadDataObjectItem(['partialMatch' => true] + $this->attributeSettings())])
+            ->apply($this->newObject('target'), ['ref' => 'nothing-like-this']);
+
+        $this->assertSame(
+            ['Could not load data object by attribute partially `name` (class `' . self::CLASS_NAME
+                . '`, value `%nothing-like-this%`)'],
+            array_map(static fn (MappingIssue $issue): string => $issue->message, $issues)
+        );
+    }
+
+    public function testAttributeStrategyWithAnUnknownClassIsRefused(): void
+    {
+        $prepared = $this->applier()->prepare([
+            $this->loadDataObjectItem(['attributeDataObjectClassId' => 'does-not-exist'] + $this->attributeSettings()),
+        ]);
+
+        $this->expectException(MappingApplicationException::class);
+        $this->expectExceptionMessage('Class `does-not-exist` not found.');
+
+        $prepared->apply($this->newObject('target'), ['ref' => 'anything']);
+    }
+
+    public function testIdStrategyLoadsTheObjectAndEmptyValuesAreSkipped(): void
+    {
+        $referenced = $this->createObject('referenced');
+        $byId = $this->applier()->prepare([
+            $this->loadDataObjectItem(['loadStrategy' => ReferenceLoadStrategy::Id->value]),
+        ]);
+
+        $copy = $this->newObject('target');
+        $this->assertSame([], $byId->apply($copy, ['ref' => ' ' . $referenced->getId() . ' ']));
+        $this->assertSame($referenced->getId(), $copy->get('related')?->getId());
+
+        $empty = $this->newObject('target');
+        $this->assertSame([], $byId->apply($empty, ['ref' => '']));
+        $this->assertNull($empty->get('related'));
+    }
+
+    public function testUnknownLoadStrategyIsRefused(): void
+    {
+        $prepared = $this->applier()->prepare([$this->loadDataObjectItem(['loadStrategy' => 'byMagic'])]);
+
+        $this->expectException(MappingApplicationException::class);
+        $this->expectExceptionMessage('Unknown load strategy');
+
+        $prepared->apply($this->newObject('target'), ['ref' => 'anything']);
+    }
+
     public function testLintListsInvalidItems(): void
     {
         $issues = $this->applier()->lint([
@@ -641,9 +708,18 @@ class MappingApplierTest extends Unit
             'label' => 'related',
             'dataSourceIndex' => ['ref'],
             'transformationPipeline' => [
-                ['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path'] + $settings],
+                ['type' => 'loadDataObject', 'settings' => $settings + ['loadStrategy' => 'path']],
             ],
             'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'related']],
+        ];
+    }
+
+    private function attributeSettings(): array
+    {
+        return [
+            'loadStrategy' => ReferenceLoadStrategy::Attribute->value,
+            'attributeDataObjectClassId' => $this->class->getId(),
+            'attributeName' => 'name',
         ];
     }
 
