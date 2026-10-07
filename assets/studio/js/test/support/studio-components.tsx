@@ -21,7 +21,7 @@ export const Flex = ({ children }: WithChildren): React.JSX.Element => <div>{ ch
 export const Space = Flex
 export const Box = Flex
 export const Text = ({ children }: WithChildren): React.JSX.Element => <span>{ children }</span>
-export const Spin = (): React.JSX.Element => <span role="progressbar" />
+export const Spin = (): React.JSX.Element => <progress />
 export const Checkbox = (): null => null
 export const Select = (): null => null
 
@@ -45,13 +45,13 @@ export const Modal = ({ children, footer, open, title }: WithChildren & { footer
   if (open !== true) return null
 
   return (
-    <div
+    <dialog
       aria-label={ title }
-      role="dialog"
+      open
     >
       { children }
       { footer }
-    </div>
+    </dialog>
   )
 }
 
