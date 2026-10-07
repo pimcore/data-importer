@@ -24,13 +24,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\MappingApplicationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingIssue;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLookupInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
-use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject;
@@ -67,6 +64,8 @@ class MappingApplierTest extends Unit
     private const ASSET_FOLDER = '/apply-mapping-assets';
 
     private const MISSING_PATH = '/does-not-exist';
+
+    private const BROKEN_ITEM = 'Broken item';
 
     private const MISSING_OBJECT = 'Could not load data object by path `' . self::MISSING_PATH . '`';
 
@@ -245,7 +244,7 @@ class MappingApplierTest extends Unit
     {
         $prepared = $this->applier()->prepare([
             $this->directItem('name', 'name'),
-            $this->directItem('missing', 'doesNotExist', [], ['writeIfTargetIsNotEmpty' => false], 'Broken item'),
+            $this->directItem('missing', 'doesNotExist', [], ['writeIfTargetIsNotEmpty' => false], self::BROKEN_ITEM),
         ]);
 
         $this->expectException(MappingApplicationException::class);
@@ -259,7 +258,13 @@ class MappingApplierTest extends Unit
         $loadByPath = [['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']]];
         $prepared = $this->applier()->prepare([
             $this->loadDataObjectItem(),
-            $this->directItem('ref', 'doesNotExist', $loadByPath, ['writeIfTargetIsNotEmpty' => false], 'Broken item'),
+            $this->directItem(
+                'ref',
+                'doesNotExist',
+                $loadByPath,
+                ['writeIfTargetIsNotEmpty' => false],
+                self::BROKEN_ITEM
+            ),
         ]);
 
         try {
@@ -271,7 +276,7 @@ class MappingApplierTest extends Unit
                 $exception->getWarnings()
             );
             $this->assertSame(
-                [[0, 'related', self::MISSING_OBJECT], [1, 'Broken item', self::MISSING_OBJECT]],
+                [[0, 'related', self::MISSING_OBJECT], [1, self::BROKEN_ITEM, self::MISSING_OBJECT]],
                 $warnings
             );
         }
@@ -303,39 +308,53 @@ class MappingApplierTest extends Unit
         $this->applier()->prepare($mapping);
     }
 
-    public function testWriteByAnUnmarkedDataTargetIsRefused(): void
+    public function testWritesWhileApplyingAreRefused(): void
     {
         $object = $this->createObject('existing', ['name' => 'stored name']);
-        $item = new MappingConfiguration();
-        $item->setLabel('saving target');
-        $item->setDataSourceIndex(['name']);
-        $item->setTransformationPipeline([]);
-        $item->setDataTarget(new class() implements DataTargetInterface {
-            public function setSettings(array $settings): void
-            {
-            }
+        $refusedFolder = self::ASSET_FOLDER . '/refused';
+        // stand in for any code without WritesElementsInterface that writes while the mapping runs
+        $writes = [
+            'update' => static fn (Concrete $copy) => $copy->save(),
+            'add' => static fn () => Asset\Service::createFolderByPath($refusedFolder),
+            'delete' => static fn (Concrete $copy) => $copy->delete(),
+        ];
 
-            public function assignData(ElementInterface $element, $data): void
-            {
-                $element->set('name', $data);
-                $element->save();
-            }
-        });
-        $mapping = new PreparedMapping(
-            [$item],
-            $this->processingService($this->createMock(ApplicationLogger::class)),
-            $this->tester->grabService(MappingApplicationScope::class)
-        );
+        foreach ($writes as $write => $callback) {
+            $copy = $this->loadDetached($object);
+            $writingLookup = $this->lookup(static function () use ($callback, $copy): ?ElementInterface {
+                $callback($copy);
 
-        try {
-            $mapping->apply($this->loadDetached($object), ['name' => self::NEW_NAME]);
-            $this->fail('apply() did not throw');
-        } catch (MappingApplicationException $exception) {
-            $this->assertInstanceOf(\LogicException::class, $exception->getPrevious());
-            $this->assertStringContainsString(WritesElementsInterface::class, $exception->getMessage());
+                return null;
+            });
+
+            try {
+                $this->applier()
+                    ->prepare([$this->directItem('name', 'name'), $this->loadDataObjectItem()])
+                    ->apply($copy, ['name' => self::NEW_NAME, 'ref' => self::MISSING_PATH], $writingLookup);
+                $this->fail($write . ' was not refused');
+            } catch (MappingApplicationException $exception) {
+                $this->assertInstanceOf(\LogicException::class, $exception->getPrevious(), $write);
+                $this->assertStringContainsString(WritesElementsInterface::class, $exception->getMessage());
+            }
         }
 
         $this->assertSame('stored name', $this->loadDetached($object)->get('name'));
+        $this->assertNull(Asset::getByPath($refusedFolder));
+    }
+
+    public function testLookupResultOfTheWrongTypeIsRefused(): void
+    {
+        $lookup = $this->lookup(static fn (): ElementInterface => new Asset());
+
+        try {
+            $this->applier()
+                ->prepare([$this->loadDataObjectItem()])
+                ->apply($this->newObject('target'), ['ref' => self::MISSING_PATH], $lookup);
+            $this->fail('apply() accepted an asset for a data object reference');
+        } catch (MappingApplicationException $exception) {
+            $this->assertInstanceOf(\UnexpectedValueException::class, $exception->getPrevious());
+            $this->assertStringContainsString('returned ' . Asset::class, $exception->getMessage());
+        }
     }
 
     public function testLintListsInvalidItems(): void
@@ -560,7 +579,15 @@ class MappingApplierTest extends Unit
         $applicationLogger->method('error')->willReturnCallback(static function ($message) use (&$errors): void {
             $errors[] = (string) $message;
         });
-        $processingService = $this->processingService($applicationLogger);
+        $processingService = new ImportProcessingService(
+            $queueService,
+            $this->tester->grabService(MappingConfigurationFactory::class),
+            $this->tester->grabService(ResolverFactory::class),
+            $this->tester->grabService(CleanupStrategyFactory::class),
+            $applicationLogger,
+            $this->tester->grabService('event_dispatcher'),
+        );
+        $processingService->setLogger(new NullLogger());
 
         $this->withoutSearchIndexUpdates(fn () => $processingService->processQueueItem((int) $entryIds[0]));
         $this->assertSame([], $errors, 'import errors');
@@ -570,21 +597,6 @@ class MappingApplierTest extends Unit
      * Updating a data object makes the search index look up its siblings, and the test environment has no search
      * index to answer.
      */
-    private function processingService(ApplicationLogger $applicationLogger): ImportProcessingService
-    {
-        $processingService = new ImportProcessingService(
-            $this->tester->grabService(QueueService::class),
-            $this->tester->grabService(MappingConfigurationFactory::class),
-            $this->tester->grabService(ResolverFactory::class),
-            $this->tester->grabService(CleanupStrategyFactory::class),
-            $applicationLogger,
-            $this->tester->grabService('event_dispatcher'),
-        );
-        $processingService->setLogger(new NullLogger());
-
-        return $processingService;
-    }
-
     private function withoutSearchIndexUpdates(callable $callback): void
     {
         /** @var EventDispatcherInterface $dispatcher */
