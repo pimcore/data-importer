@@ -7,26 +7,8 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.4.0
 
-### Applying a Mapping Without Saving
-
-- Added `MappingApplier` and `SourceFileReader` to apply a mapping to an element without saving it and to read the rows
-  of a file without importing them, see
-  [Apply a Mapping Without Saving](../06_Extending/03_Apply_Mapping_Without_Saving.md). Imports do not use them.
-- `MappingApplier` rejects a mapping with an operator or data target that implements `WritesElementsInterface`. The
-  **Import Asset** operator implements it, so subclasses of `ImportAsset` inherit it. Operators and data targets that
-  do not implement it are assumed not to write elements: implement it in custom ones that save, create or delete
-  elements.
-
-### Changed Import Behavior
-
 - `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
   `instanceof ImportAsset` no longer matches the **Load Asset** operator.
-- **Load Data Object** with **Load unpublished** restores the previous `DataObject::getHideUnpublished()` value when
-  loading throws, e.g. for a class that does not exist. Before, unpublished objects stayed visible for the rest of the
-  process.
-- The **Many-to-Many Relation** data target throws an `InvalidInputException` naming the field and the element when an
-  advanced many-to-many relation cannot load a related element by its id. Before, it failed with an `\Error`
-  (`Call to a member function getId() on null`). The import logs the row as failed either way.
 
 ## Upgrade to 2026.3.0
 
