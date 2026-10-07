@@ -244,6 +244,10 @@ abstract class AbstractInterpreter implements InterpreterInterface
      */
     protected function assertFileValid(string $path): void
     {
+        // fileValid() lets the MIME type guesser throw for a missing file
+        if (!is_file($path) || !is_readable($path)) {
+            throw new InvalidInputException(sprintf('File `%s` cannot be read.', basename($path)));
+        }
         if (!$this->fileValid($path)) {
             throw new InvalidInputException(sprintf('File `%s` is not valid for this file format.', basename($path)));
         }

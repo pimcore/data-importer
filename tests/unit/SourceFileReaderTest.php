@@ -138,6 +138,29 @@ class SourceFileReaderTest extends Unit
         $this->reader()->readRows($this->csvConfig(), $path);
     }
 
+    public function testMissingFileIsRejected(): void
+    {
+        foreach ([$this->csvConfig(), $this->xlsxConfig(true)] as $config) {
+            $path = sys_get_temp_dir() . '/' . uniqid('di_rows_missing_') . '.' . $config['type'];
+            try {
+                $this->readerWithoutDatabase()->readRows($config, $path);
+                $this->fail('readRows() accepted a missing ' . $config['type'] . ' file');
+            } catch (InvalidInputException $exception) {
+                $this->assertSame(sprintf('File `%s` cannot be read.', basename($path)), $exception->getMessage());
+            }
+        }
+    }
+
+    public function testImportRejectsAnInvalidHeaderName(): void
+    {
+        $path = $this->writeFile("sku,n\xB2me\r\nA-1,x\r\n", 'csv');
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage('column(s) #1 (header)');
+
+        $this->interpretAndReadQueue($this->csvConfig(), $path);
+    }
+
     public function testFormatWithoutRowReaderIsRejected(): void
     {
         $this->expectException(InvalidConfigurationException::class);
