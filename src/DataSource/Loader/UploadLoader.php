@@ -14,12 +14,14 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Helper\TemporaryFileHelperTrait;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class UploadLoader implements DataLoaderInterface
+final class UploadLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     use TemporaryFileHelperTrait;
 
@@ -52,5 +54,29 @@ final class UploadLoader implements DataLoaderInterface
     public function cleanup(): void
     {
         unlink($this->temporaryFile);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from manually uploaded file';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('uploadFilePath')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Path to the uploaded file in the upload storage')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

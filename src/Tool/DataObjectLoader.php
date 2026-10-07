@@ -12,14 +12,25 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tool;
 
+use function implode;
+use function in_array;
+use function mb_strtolower;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Db;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
+use Pimcore\Model\DataObject\Objectbrick\Definition;
 use Pimcore\Model\Element\ElementInterface;
+use function sort;
+use function sprintf;
 
 /**
  * @internal
  */
-final class DataObjectLoader
+final class DataObjectLoader implements LoadableAttributesInterface
 {
     private const CLASS_FIELD_NAME = 'classFieldName';
 
@@ -28,6 +39,14 @@ final class DataObjectLoader
     private const BRICK_ATTRIBUTE_NAME = 'brickFieldName';
 
     private const BRICK_ATTRIBUTE_SEPARATOR = '.';
+
+    /**
+     * Object columns that getBy<Field>() resolves without a class field definition. Mirrors
+     * AbstractObject::$objectColumns, which is matched case-insensitively there.
+     *
+     * @var list<string>
+     */
+    private const array SYSTEM_COLUMNS = ['id', 'parentid', 'type', 'key', 'classid', 'classname', 'path'];
 
     private function isObjectBrickAttribute(string $attributeName): bool
     {
@@ -59,6 +78,206 @@ final class DataObjectLoader
         }
 
         return $fullAttributeName;
+    }
+
+    /**
+     * Asserts that an attribute can actually be used to look an object up.
+     *
+     * This mirrors what loadByAttribute() does rather than what a field can hold: a dotted
+     * object brick path is resolved through a listing condition, everything else goes through
+     * Pimcore's getBy<Field>() static getter, which refuses a field whose type is not
+     * filterable. Gating on the transformation data type instead rejected perfectly loadable
+     * fields (dates, relations, checkboxes, multiselects) while accepting `password`, whose
+     * getter throws.
+     *
+     * @throws InvalidConfigurationException
+     */
+    public function assertAttributeLoadable(string $classId, string $attributeName): void
+    {
+        if ($attributeName === '') {
+            throw new InvalidConfigurationException('The attributeName attribute is required.');
+        }
+
+        // System columns are not class field definitions but are loadable: getDataObject()
+        // special-cases `id`, and AbstractObject exposes the rest as query columns. This is
+        // what makes loading by SYSTEM ID / SYSTEM Key / SYSTEM Fullpath work.
+        if (in_array(mb_strtolower($attributeName), self::SYSTEM_COLUMNS, true)) {
+            return;
+        }
+
+        $classDefinition = ClassDefinition::getById($classId);
+        if (!$classDefinition instanceof ClassDefinition) {
+            throw new InvalidConfigurationException(
+                sprintf('Class `%s` not found. Make sure to use an existing data object class ID.', $classId)
+            );
+        }
+
+        if ($this->isObjectBrickAttribute($attributeName)) {
+            $this->assertObjectBrickAttributeExists($classDefinition, $attributeName);
+
+            return;
+        }
+
+        $fieldDefinition = $this->resolveFieldDefinition($classDefinition, $attributeName);
+        if (!$fieldDefinition instanceof Data) {
+            throw new InvalidConfigurationException(sprintf(
+                'Attribute `%s` does not exist in class `%s`. %s',
+                $attributeName,
+                $classDefinition->getName(),
+                $this->describeLoadableAttributes($classDefinition)
+            ));
+        }
+
+        if (!$fieldDefinition->isFilterable()) {
+            throw new InvalidConfigurationException(sprintf(
+                'Attribute `%s` cannot be used to load an object: field type `%s` is not '
+                . 'filterable. %s',
+                $attributeName,
+                $fieldDefinition->getFieldType(),
+                $this->describeLoadableAttributes($classDefinition)
+            ));
+        }
+    }
+
+    /**
+     * The caller's next question is always "then what may I use?", and the answer is already
+     * computed. Spelling it out here saves a round trip through listLoadableAttributes().
+     */
+    private function describeLoadableAttributes(ClassDefinition $classDefinition): string
+    {
+        return sprintf(
+            'Loadable attributes: %s. Object brick paths (classField.brickName.brickField) are '
+            . 'also accepted.',
+            implode(', ', $this->loadableAttributesOf($classDefinition))
+        );
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    private function assertObjectBrickAttributeExists(
+        ClassDefinition $classDefinition,
+        string $attributeName
+    ): void {
+        $parts = $this->getObjectBrickParts($attributeName);
+        if ($parts === []) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick attribute `%s` must be given as `classField.brickName.brickField`.',
+                $attributeName
+            ));
+        }
+
+        $brick = Definition::getByKey($parts[self::BRICK_NAME]);
+        if (!$brick instanceof Definition) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick `%s` does not exist.',
+                $parts[self::BRICK_NAME]
+            ));
+        }
+
+        $classField = $classDefinition->getFieldDefinition($parts[self::CLASS_FIELD_NAME]);
+        if (!$classField instanceof Data) {
+            throw new InvalidConfigurationException(sprintf(
+                'Field `%s` does not exist in class `%s`.',
+                $parts[self::CLASS_FIELD_NAME],
+                $classDefinition->getName()
+            ));
+        }
+
+        // Existing is not enough: the first part has to be the brick container the brick is
+        // stored in. Any other field type produces a listing condition against a table that
+        // does not hold the brick, which fails only once the import runs.
+        if (!$classField instanceof Objectbricks) {
+            throw new InvalidConfigurationException(sprintf(
+                'Field `%s` in class `%s` is not an object brick container but `%s`.',
+                $parts[self::CLASS_FIELD_NAME],
+                $classDefinition->getName(),
+                $classField->getFieldType()
+            ));
+        }
+
+        $brickField = $brick->getFieldDefinition($parts[self::BRICK_ATTRIBUTE_NAME]);
+        if (!$brickField instanceof Data) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick `%s` has no field `%s`.',
+                $parts[self::BRICK_NAME],
+                $parts[self::BRICK_ATTRIBUTE_NAME]
+            ));
+        }
+
+        // Same rule as the non-brick path: loading filters on the column, so a field type that
+        // cannot be filtered cannot be loaded by.
+        if (!$brickField->isFilterable()) {
+            throw new InvalidConfigurationException(sprintf(
+                'Object brick attribute `%s` cannot be used to load an object: '
+                . 'field type `%s` is not filterable.',
+                $attributeName,
+                $brickField->getFieldType()
+            ));
+        }
+    }
+
+    /**
+     * Every attribute this class can be looked up by, for callers that need to offer a choice
+     * rather than check one. Same rule as assertAttributeLoadable().
+     *
+     * @return list<string>
+     */
+    public function listLoadableAttributes(string $classId): array
+    {
+        $classDefinition = ClassDefinition::getById($classId);
+        if (!$classDefinition instanceof ClassDefinition) {
+            return [];
+        }
+
+        return $this->loadableAttributesOf($classDefinition);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function loadableAttributesOf(ClassDefinition $classDefinition): array
+    {
+        $attributes = self::SYSTEM_COLUMNS;
+        foreach ($classDefinition->getFieldDefinitions() as $fieldDefinition) {
+            if ($fieldDefinition instanceof Localizedfields) {
+                foreach ($fieldDefinition->getFieldDefinitions() as $localized) {
+                    if ($localized->isFilterable()) {
+                        $attributes[] = $localized->getName();
+                    }
+                }
+
+                continue;
+            }
+
+            if ($fieldDefinition->isFilterable()) {
+                $attributes[] = $fieldDefinition->getName();
+            }
+        }
+
+        sort($attributes);
+
+        return $attributes;
+    }
+
+    private function resolveFieldDefinition(ClassDefinition $classDefinition, string $attributeName): ?Data
+    {
+        $fieldDefinition = $classDefinition->getFieldDefinition($attributeName);
+        if ($fieldDefinition instanceof Data) {
+            return $fieldDefinition;
+        }
+
+        // getBy<Field>() falls back to the localized fields container, so a localized child is
+        // just as loadable as a top level field.
+        $localizedFields = $classDefinition->getFieldDefinition('localizedfields');
+        if ($localizedFields instanceof Localizedfields) {
+            $localizedDefinition = $localizedFields->getFieldDefinition($attributeName);
+            if ($localizedDefinition instanceof Data) {
+                return $localizedDefinition;
+            }
+        }
+
+        return null;
     }
 
     public function loadByAttribute(string $className,
@@ -141,6 +360,10 @@ final class DataObjectLoader
         array $objectTypes
     ): ?ElementInterface {
         $getter = 'getBy' . $attributeName;
+
+        if ($attributeName === 'id') {
+            return $className::getById((int) $identifier);
+        }
 
         if (empty($attributeLanguage) === false) {
             return $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);

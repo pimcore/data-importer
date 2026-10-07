@@ -16,15 +16,18 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Contracts\Service\Attribute\Required;
 
 /**
  * @internal
  */
-final class LoadDataObject extends AbstractOperator
+final class LoadDataObject extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     private const LOAD_STRATEGY_ID = 'id';
 
@@ -46,6 +49,8 @@ final class LoadDataObject extends AbstractOperator
 
     private DataObjectLoader $dataObjectLoader;
 
+    protected TransformationDataTypeService $transformationDataTypeService;
+
     /**
      * @param DataObjectLoader $dataObjectLoader
      */
@@ -53,6 +58,14 @@ final class LoadDataObject extends AbstractOperator
     public function setDataObjectLoader(DataObjectLoader $dataObjectLoader)
     {
         $this->dataObjectLoader = $dataObjectLoader;
+    }
+
+    #[Required]
+    public function setTransformationDataTypeService(
+        TransformationDataTypeService $transformationDataTypeService
+    ): void {
+        $this->transformationDataTypeService =
+            $transformationDataTypeService;
     }
 
     public function setSettings(array $settings): void
@@ -63,6 +76,25 @@ final class LoadDataObject extends AbstractOperator
         $this->attributeDataObjectClassId = $settings['attributeDataObjectClassId'] ?? '';
         $this->partialMatch = $settings['partialMatch'] ?? false;
         $this->loadUnpublished = $settings['loadUnpublished'] ?? false;
+
+        if ($this->loadStrategy === self::LOAD_STRATEGY_ATTRIBUTE) {
+            if (empty($this->attributeDataObjectClassId)) {
+                throw new InvalidConfigurationException('The attributeDataObjectClassId attribute is required');
+            }
+
+            $attributeClass = ClassDefinition::getById($this->attributeDataObjectClassId);
+            if (empty($attributeClass)) {
+                throw new InvalidConfigurationException(
+                    "Class `{$this->attributeDataObjectClassId}` not found. " .
+                    'Make sure to use an existing data object class ID.'
+                );
+            }
+
+            $this->dataObjectLoader->assertAttributeLoadable(
+                $this->attributeDataObjectClassId,
+                $this->attributeName
+            );
+        }
     }
 
     /**
@@ -103,7 +135,9 @@ final class LoadDataObject extends AbstractOperator
                         $operator = '=';
                         $class = ClassDefinition::getById($this->attributeDataObjectClassId);
                         if (empty($class)) {
-                            throw new InvalidConfigurationException("Class `{$this->attributeDataObjectClassId}` not found.");
+                            throw new InvalidConfigurationException(
+                                "Class `{$this->attributeDataObjectClassId}` not found."
+                            );
                         }
                         $className = '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName());
                         if ($this->partialMatch) {
@@ -112,18 +146,40 @@ final class LoadDataObject extends AbstractOperator
 
                             if ($this->attributeLanguage) {
                                 $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`, language `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data,
+                                    $this->attributeLanguage
+                                );
                             } else {
                                 $logMessage = 'by attribute partially `%s` (class `%s`, value `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data
+                                );
                             }
                         } else {
                             if ($this->attributeLanguage) {
                                 $logMessage = 'by attribute `%s` (class `%s`, value `%s`, language `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data, $this->attributeLanguage);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data,
+                                    $this->attributeLanguage
+                                );
                             } else {
                                 $logMessage = 'by attribute `%s` (class `%s`, value `%s`)';
-                                $logMessage = sprintf($logMessage, $this->attributeName, ucfirst($class->getName()), $data);
+                                $logMessage = sprintf(
+                                    $logMessage,
+                                    $this->attributeName,
+                                    ucfirst($class->getName()),
+                                    $data
+                                );
                             }
                         }
                         $object = $this->dataObjectLoader->loadByAttribute($className,
@@ -182,7 +238,11 @@ final class LoadDataObject extends AbstractOperator
         } elseif ($inputType === TransformationDataTypeService::DEFAULT_ARRAY) {
             return TransformationDataTypeService::DATA_OBJECT_ARRAY;
         } else {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for load data object operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for load data object operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
     }
 
@@ -210,5 +270,78 @@ final class LoadDataObject extends AbstractOperator
         } else {
             return $inputData;
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Loads existing Pimcore data objects by ID, path, or attribute value. '
+            . 'Supports partial matching and loading unpublished objects.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DATA_OBJECT,
+            TransformationDataTypeService::DATA_OBJECT_ARRAY
+        ];
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->enumNode('loadStrategy')
+                    ->defaultValue(self::LOAD_STRATEGY_ID)
+                    ->info(
+                        'Strategy for loading objects: "id" (by numeric ID), '
+                        . '"path" (by full path), or "attribute" (by field value)'
+                    )
+                    ->values([self::LOAD_STRATEGY_ID, self::LOAD_STRATEGY_PATH, self::LOAD_STRATEGY_ATTRIBUTE])
+                ->end()
+                ->scalarNode('attributeLanguage')
+                    ->info('Language for localized attribute lookup (only for "attribute" load strategy)')
+                ->end()
+                ->scalarNode('attributeName')
+                    ->info('Field name to search by (only for "attribute" load strategy)')
+                ->end()
+                ->scalarNode('attributeDataObjectClassId')
+                    ->info('Data object class ID to limit search scope (only for "attribute" load strategy)')
+                ->end()
+                ->booleanNode('partialMatch')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
+                    ->info('If true, uses LIKE matching for attribute values (only for "attribute" load strategy)')
+                ->end()
+                ->booleanNode('loadUnpublished')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
+                    ->info('If true, also loads unpublished objects')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

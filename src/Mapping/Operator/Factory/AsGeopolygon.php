@@ -15,11 +15,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\GeopolyAbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class AsGeopolygon extends GeopolyAbstractOperator
+final class AsGeopolygon extends GeopolyAbstractOperator implements
+    SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     /**
      * @param string $inputType
@@ -32,9 +37,39 @@ final class AsGeopolygon extends GeopolyAbstractOperator
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for geoPolygon operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for geoPolygon operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GEOPOLYGON_VALUE;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of coordinates into a geopolygon. '
+            . 'Accepts an array of coordinate pairs that define the polygon vertices.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::GEOPOLYGON_VALUE
+        ];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

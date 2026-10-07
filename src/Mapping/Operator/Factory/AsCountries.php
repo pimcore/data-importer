@@ -16,12 +16,15 @@ use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Localization\LocaleServiceInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class AsCountries extends AbstractOperator
+final class AsCountries extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     public function __construct(
         ApplicationLogger $applicationLogger,
@@ -58,9 +61,39 @@ final class AsCountries extends AbstractOperator
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType != TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for as countries operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for as countries operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::COUNTRY_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts country names to country codes. '
+            . 'Takes an array of country display names and converts them to their corresponding ISO country codes.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::COUNTRY_ARRAY
+        ];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

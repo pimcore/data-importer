@@ -13,12 +13,14 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class IdStrategy extends AbstractLoad
+final class IdStrategy extends AbstractLoad implements SchemaAwareInterface
 {
     /**
      * @param string $identifier
@@ -41,5 +43,15 @@ final class IdStrategy extends AbstractLoad
         );
 
         return $this->db->fetchFirstColumn($sql);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Loads data objects by their numeric ID';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        return $this->getBaseConfigTreeBuilder();
     }
 }

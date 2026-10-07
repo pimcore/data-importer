@@ -1,0 +1,58 @@
+general:
+    type: dataImporterDataObject
+    name: import-sample-1
+    description: 'Import data from a CSV file with simplest mapping'
+    group: ''
+    active: true
+    path: null
+    modificationDate: 1769026708
+    createDate: 1769026497
+loaderConfig:
+    type: push
+    settings:
+        apiKey: 65d2a64460d01a3157659cf1a2fac165
+interpreterConfig:
+    type: csv
+    settings:
+        skipFirstRow: true
+        delimiter: ','
+        enclosure: '"'
+        escape: \
+resolverConfig:
+    elementType: dataObject
+    dataObjectClassId: '6'
+    loadingStrategy:
+        type: path
+        settings:
+            dataSourceIndex: '0'
+    createLocationStrategy:
+        type: staticPath
+        settings:
+            path: /import
+    locationUpdateStrategy:
+        type: noChange
+    publishingStrategy:
+        type: noChangePublishNew
+processingConfig:
+    executionType: parallel
+    idDataIndex: ''
+mappingConfig:
+    -   label: Name
+        dataSourceIndex:
+            - '1'
+        transformationResultType: default
+        dataTarget:
+            type: direct
+            settings:
+                fieldName: name
+                language: ''
+                writeIfTargetIsNotEmpty: true
+                writeIfSourceIsEmpty: true
+        transformationPipeline: { }
+executionConfig:
+    scheduleType: recurring
+    cronDefinition: '0 2 * * *'
+permissions:
+    user: { }
+    role: { }
+workspaces: { }

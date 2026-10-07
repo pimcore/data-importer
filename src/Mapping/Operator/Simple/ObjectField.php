@@ -16,12 +16,15 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class ObjectField extends AbstractOperator
+final class ObjectField extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     private string $attribute;
 
@@ -96,5 +99,47 @@ final class ObjectField extends AbstractOperator
                 )
             );
         }
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Extracts a specific field value from a Pimcore data object or element. '
+            . 'Converts element references to full paths.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DATA_OBJECT
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE
+        ];
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('attribute')
+                    ->info('Field name to extract from the object (used to build getter method like "getAttribute")')
+                    ->defaultValue('')
+                ->end()
+                ->scalarNode('forwardParameter')
+                    ->info('Optional parameter to pass to the getter method (e.g., language code for localized fields)')
+                    ->defaultValue('')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

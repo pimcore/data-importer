@@ -15,14 +15,17 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class Gallery extends AbstractOperator
+final class Gallery extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -58,8 +61,15 @@ final class Gallery extends AbstractOperator
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::ASSET, TransformationDataTypeService::ASSET_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for gallery operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::ASSET,
+            TransformationDataTypeService::ASSET_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for gallery operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::GALLERY;
@@ -83,5 +93,32 @@ final class Gallery extends AbstractOperator
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts image assets into an ImageGallery object. '
+            . 'Takes single or multiple asset images and creates a gallery with hotspot image items.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::ASSET,
+            TransformationDataTypeService::ASSET_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::GALLERY
+        ];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

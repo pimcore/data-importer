@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection\CompilerPass;
 
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\ServiceTags;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -22,9 +24,9 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 final class MappingConfigurationFactoryPass implements CompilerPassInterface
 {
-    private const OPERATOR_TAG = 'pimcore.datahub.data_importer.operator';
+    private const OPERATOR_TAG = ServiceTags::OPERATOR;
 
-    private const DATA_TARGET_TAG = 'pimcore.datahub.data_importer.data_target';
+    private const DATA_TARGET_TAG = ServiceTags::DATA_TARGET;
 
     public function process(ContainerBuilder $container): void
     {

@@ -21,12 +21,14 @@ use League\Flysystem\FilesystemException;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use Pimcore;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Symfony\Component;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class SqlLoader implements DataLoaderInterface
+final class SqlLoader implements DataLoaderInterface, SchemaAwareInterface
 {
     private string $connection;
 
@@ -109,8 +111,52 @@ final class SqlLoader implements DataLoaderInterface
         }
         $this->from = $settings['from'];
 
-        $this->where = $settings['where'];
-        $this->groupBy = $settings['groupBy'];
+        // Both are optional in the schema with a '' default, so a configuration that omits
+        // them must not reach an undefined key here.
+        $this->where = $settings['where'] ?? '';
+        $this->groupBy = $settings['groupBy'] ?? '';
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from SQL database query';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('connection')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Database connection name from Doctrine configuration')
+                ->end()
+                ->scalarNode('select')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('SELECT clause (columns to retrieve)')
+                ->end()
+                ->scalarNode('from')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('FROM clause (table name)')
+                ->end()
+                ->scalarNode('where')
+                    ->defaultValue('')
+                    ->info('WHERE clause (optional filter conditions)')
+                ->end()
+                ->scalarNode('groupBy')
+                    ->defaultValue('')
+                    ->info('GROUP BY clause (optional grouping)')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 
     /**

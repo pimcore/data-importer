@@ -15,11 +15,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-class QuantityValueArray extends AbstractOperator
+class QuantityValueArray extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     /**
      * @param mixed $inputData
@@ -63,7 +66,11 @@ class QuantityValueArray extends AbstractOperator
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for quantity value operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for quantity value operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::QUANTITY_VALUE_ARRAY;
@@ -81,7 +88,8 @@ class QuantityValueArray extends AbstractOperator
 
             foreach ($inputData as $key => $data) {
                 if ($data instanceof \Pimcore\Model\DataObject\Data\QuantityValue) {
-                    $preview[$key] = 'QuantityValue: ' . $data->getValue() . ' ' . ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
+                    $preview[$key] = 'QuantityValue: ' . $data->getValue() . ' ' .
+                        ($data->getUnit() ? $data->getUnit()->getAbbreviation() : '');
                 } else {
                     $preview[$key] = $data;
                 }
@@ -91,5 +99,31 @@ class QuantityValueArray extends AbstractOperator
         }
 
         return $inputData;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts an array of value-unit pairs into an array of QuantityValue objects. '
+            . 'Each item should be [value, unitId].';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::QUANTITY_VALUE_ARRAY
+        ];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

@@ -38,11 +38,13 @@ final class Configuration implements ConfigurationInterface
                 ->children()
                     ->booleanNode('activated')
                         ->defaultFalse()
-                        ->info('Activate dispatching messages after import was prepared. Will start import as soon as messages are processed via symfony messenger.')
+                        ->info('Activate dispatching messages after import was prepared. Will start import as ' .
+                               'soon as messages are processed via symfony messenger.')
                     ->end()
                     ->integerNode('worker_count_lifetime')
                         ->defaultValue(60 * 30) //30 minutes
-                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the value will be cleared. Default to 30 minutes.')
+                        ->info('Lifetime of tmp store entry for current worker count entry. After lifetime, the ' .
+                               'value will be cleared. Default to 30 minutes.')
                     ->end()
                     ->integerNode('worker_count_parallel')
                         ->defaultValue(3)

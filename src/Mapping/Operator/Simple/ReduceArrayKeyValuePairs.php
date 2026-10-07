@@ -15,11 +15,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class ReduceArrayKeyValuePairs extends AbstractOperator
+final class ReduceArrayKeyValuePairs extends AbstractOperator implements
+    SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     public function setSettings(array $settings): void
     {
@@ -57,9 +62,38 @@ final class ReduceArrayKeyValuePairs extends AbstractOperator
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for reduce array key value pairs operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for reduce array key value pairs operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts a flat array into an associative array by treating alternating elements as keys and values. '
+            . 'Example: ["key1", "value1", "key2", "value2"] becomes ["key1" => "value1", "key2" => "value2"].';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        // Derived rather than restated, so it cannot drift from what the operator produces.
+        return [$this->evaluateReturnType(TransformationDataTypeService::DEFAULT_ARRAY)];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

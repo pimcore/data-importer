@@ -40,7 +40,56 @@ extends the JSON one.
 Study the shipped implementations before writing your own. They are the reference for the contract each interface
 expects.
 
-## 2. Register the Service
+## 2. Declare a Settings Schema
+
+Three optional interfaces describe an implementation's settings to the rest of the bundle. They are not required to make
+a strategy work, but without them its settings are neither validated nor visible to the
+[configuration validation](./03_Configuration_Validation.md) or to the MCP tools.
+
+`SchemaAwareInterface` describes the `settings` block of an implementation as a Symfony config tree. The bundle uses it
+to validate a stored configuration and to tell a caller which options exist:
+
+```php
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+
+final class CustomLoader implements DataLoaderInterface, SchemaAwareInterface
+{
+    public function getSchemaDescription(): string
+    {
+        return 'Load data from a custom source';
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        $treeBuilder->getRootNode()
+            ->children()
+                ->scalarNode('endpoint')->info('URL to read from')->isRequired()->end()
+                ->integerNode('timeout')->info('Request timeout in seconds')->defaultValue(30)->end()
+            ->end();
+
+        return $treeBuilder;
+    }
+}
+```
+
+Write an `info()` on every node. It is the only description a caller gets, and the MCP tools surface it verbatim.
+
+`TransformationTypeAwareInterface` declares which transformation data types an operator accepts and produces, so that a
+mapping can be checked before it runs:
+
+```php
+public function getAcceptedInputTypes(): array
+{
+    return [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC];
+}
+```
+
+`DataTargetFieldValidatorInterface` lets a data target reject a transformation result that its target field cannot
+store, and throw `InvalidConfigurationException` with a message naming the field.
+
+## 3. Register the Service
 
 Register the class as a Symfony service and tag it. The tag `name` selects the extension point. The tag `type` is the
 identifier of your implementation: it has to be unique, it is stored in the saved import configuration, and it links the
@@ -55,7 +104,7 @@ services:
 
 At this point the import runs with your implementation, but nobody can select it in Pimcore Studio yet.
 
-## 3. Add the Studio Settings Form
+## 4. Add the Studio Settings Form
 
 This step applies to the extension points marked selectable above. The configuration panel is a Pimcore Studio plugin.
 Those extension points have a registry in the Studio dependency injection container, and each selectable option is a

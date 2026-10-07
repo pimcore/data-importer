@@ -15,11 +15,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class FlattenArray extends AbstractOperator
+final class FlattenArray extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     public function setSettings(array $settings): void
     {
@@ -57,9 +60,38 @@ final class FlattenArray extends AbstractOperator
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
         if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for flatten array operator at transformation position %s", $inputType, $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for flatten array operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Flattens a multi-dimensional array into a single-level array '
+            . 'by recursively extracting all leaf values.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        // Derived rather than restated, so it cannot drift from what the operator produces.
+        return [$this->evaluateReturnType(TransformationDataTypeService::DEFAULT_ARRAY)];
+    }
+
+    public function getConfigTreeBuilder(): ?TreeBuilder
+    {
+        // No configuration options - return null for better performance
+        return null;
     }
 }

@@ -15,11 +15,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class ConditionalConversion extends AbstractOperator
+final class ConditionalConversion extends AbstractOperator implements
+    SchemaAwareInterface,
+    TransformationTypeAwareInterface
 {
     private string $original;
 
@@ -72,10 +77,62 @@ final class ConditionalConversion extends AbstractOperator
 
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (!in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for simple test operator at transformation position %s", $inputType, $index));
+        if (!in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for simple test operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return $inputType;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Converts input values based on conditional mapping. '
+            . 'Maps original values to converted values using pipe-separated lists. '
+            . 'Supports wildcard (*) for default conversions.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return $this->getAcceptedInputTypes();
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('original')
+                    ->info(
+                        'Pipe-separated list of original values to match (e.g., "yes|true|1"). '
+                        . 'Use "*" as wildcard for any unmatched value.'
+                    )
+                    ->defaultValue('')
+                ->end()
+                ->scalarNode('converted')
+                    ->info('Pipe-separated list of converted values corresponding to original values (e.g., "1|1|1")')
+                    ->defaultValue('')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

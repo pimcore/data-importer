@@ -13,12 +13,14 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class AttributeBasedStrategy implements PublishStrategyInterface
+final class AttributeBasedStrategy implements PublishStrategyInterface, SchemaAwareInterface
 {
     private mixed $dataSourceIndex;
 
@@ -38,5 +40,29 @@ final class AttributeBasedStrategy implements PublishStrategyInterface
         }
 
         return $element;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Sets publish state based on a boolean value from input data';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('dataSourceIndex')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                    ->info('Index in input data array containing the publish state (boolean)')
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

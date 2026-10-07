@@ -13,15 +13,17 @@
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class FindOrCreateFolderStrategy implements LocationStrategyInterface
+final class FindOrCreateFolderStrategy implements LocationStrategyInterface, SchemaAwareInterface
 {
     private mixed $dataSourceIndex;
 
@@ -33,7 +35,11 @@ final class FindOrCreateFolderStrategy implements LocationStrategyInterface
 
     public function setSettings(array $settings): void
     {
-        if ($settings['dataSourceIndex'] !== 0 && $settings['dataSourceIndex'] !== '0' && empty($settings['dataSourceIndex'])) {
+        if (
+            $settings['dataSourceIndex'] !== 0 &&
+            $settings['dataSourceIndex'] !== '0' &&
+            empty($settings['dataSourceIndex'])
+        ) {
             throw new InvalidConfigurationException('Empty data source index.');
         }
 
@@ -64,5 +70,33 @@ final class FindOrCreateFolderStrategy implements LocationStrategyInterface
         }
 
         return $element->setParent($newParent);
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Finds existing folder by path or creates it if it does not exist';
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('dataSourceIndex')
+                    ->info('Index in input data array containing the folder path')
+                    ->isRequired()
+                    ->cannotBeEmpty()
+                ->end()
+                ->scalarNode('fallbackPath')
+                    ->info('Fallback path if folder path is not provided in data')
+                    ->defaultValue(null)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }

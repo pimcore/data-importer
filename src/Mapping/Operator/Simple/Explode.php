@@ -15,11 +15,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Settings\SchemaAwareInterface;
+use Pimcore\Bundle\DataImporterBundle\Settings\TransformationTypeAwareInterface;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * @internal
  */
-final class Explode extends AbstractOperator
+final class Explode extends AbstractOperator implements SchemaAwareInterface, TransformationTypeAwareInterface
 {
     private string $delimiter;
 
@@ -72,10 +75,73 @@ final class Explode extends AbstractOperator
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if (! in_array($inputType, [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::DEFAULT_ARRAY])) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for explode operator at transformation position %s", $inputType, $index));
+        if (! in_array($inputType, [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ])) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for explode operator at transformation position %s",
+                $inputType,
+                $index
+            ));
         }
 
         return TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    public function getSchemaDescription(): string
+    {
+        return 'Splits strings into arrays using a delimiter. '
+            . 'Can optionally preserve sub-arrays when processing nested arrays.';
+    }
+
+    public function getAcceptedInputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_TYPE,
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getOutputTypes(): array
+    {
+        return [
+            TransformationDataTypeService::DEFAULT_ARRAY
+        ];
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('settings');
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $treeBuilder->getRootNode();
+
+        /** @phpstan-ignore-next-line */
+        $rootNode
+            ->children()
+                ->scalarNode('delimiter')
+                    ->info('The delimiter string used to split the input, must not be empty')
+                    ->defaultValue(' ')
+                    // explode() throws a ValueError on an empty separator, so an empty
+                    // delimiter fails the import rather than leaving the value unsplit.
+                    ->validate()
+                        ->ifTrue(static fn (mixed $value): bool => (string) $value === '')
+                        ->thenInvalid('The explode delimiter must not be empty.')
+                    ->end()
+                ->end()
+                ->booleanNode('keepSubArrays')
+                    // Configurations written by the previous UI store checkboxes as the
+                    // string "on", and an unchecked box as "". The runtime reads them as
+                    // truthy, so the schema has to accept what is already stored.
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static fn (string $value): bool => $value !== '' && $value !== '0')
+                    ->end()
+                    ->info('If true, preserves sub-array structure when exploding arrays; if false, merges all results')
+                    ->defaultValue(false)
+                ->end()
+            ->end();
+
+        return $treeBuilder;
     }
 }
