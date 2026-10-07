@@ -58,7 +58,8 @@ final class ProductPreview
 the source, so `dataSourceIndex` refers to the same columns.
 
 When an item fails, `apply()` throws a `MappingApplicationException`. `getItemIndex()` and `getItemLabel()` name the
-failing item, `getPrevious()` holds the original exception. Items before it have already been applied to the element.
+failing item, `getPrevious()` holds the original exception and `getWarnings()` the [warnings](#warnings) up to and
+including the failing item. Items before it have already been applied to the element.
 
 ### Warnings
 

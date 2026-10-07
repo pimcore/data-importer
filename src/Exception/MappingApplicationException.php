@@ -13,15 +13,21 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingIssue;
+
 /**
  * Thrown when a mapping item fails while a mapping is applied without saving.
  */
 final class MappingApplicationException extends \Exception
 {
+    /**
+     * @param list<MappingIssue> $warnings
+     */
     public function __construct(
         private readonly int|string $itemIndex,
         private readonly string $itemLabel,
         \Throwable $previous,
+        private readonly array $warnings = [],
     ) {
         parent::__construct(
             sprintf('Mapping item %s (`%s`) failed: %s', $itemIndex, $itemLabel, $previous->getMessage()),
@@ -38,5 +44,15 @@ final class MappingApplicationException extends \Exception
     public function getItemLabel(): string
     {
         return $this->itemLabel;
+    }
+
+    /**
+     * The warnings of the items applied so far, including the failing one, as apply() would have returned them.
+     *
+     * @return list<MappingIssue>
+     */
+    public function getWarnings(): array
+    {
+        return $this->warnings;
     }
 }

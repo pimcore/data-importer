@@ -48,7 +48,7 @@ final class PreparedMapping
      *
      * @return list<MappingIssue> the warnings, in the order of the items
      *
-     * @throws MappingApplicationException
+     * @throws MappingApplicationException with the warnings up to and including the failing item
      */
     public function apply(
         ElementInterface $element,
@@ -62,15 +62,29 @@ final class PreparedMapping
                     $this->importProcessingService->processElementTransformations($element, $row, [$item]);
                 } catch (\Throwable $exception) {
                     // operators report invalid input as \TypeError as well
-                    throw new MappingApplicationException($index, $item->getLabel(), $exception);
+                    throw new MappingApplicationException(
+                        $index,
+                        $item->getLabel(),
+                        $exception,
+                        [...$warnings, ...$this->takeWarnings($index, $item)]
+                    );
                 }
 
-                foreach ($this->scope->takeWarnings() as $message) {
-                    $warnings[] = new MappingIssue($index, $item->getLabel(), $message);
-                }
+                array_push($warnings, ...$this->takeWarnings($index, $item));
             }
 
             return $warnings;
         });
+    }
+
+    /**
+     * @return list<MappingIssue>
+     */
+    private function takeWarnings(int|string $index, MappingConfiguration $item): array
+    {
+        return array_map(
+            static fn (string $message): MappingIssue => new MappingIssue($index, $item->getLabel(), $message),
+            $this->scope->takeWarnings()
+        );
     }
 }

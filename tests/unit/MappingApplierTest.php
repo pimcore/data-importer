@@ -254,6 +254,29 @@ class MappingApplierTest extends Unit
         $prepared->apply($this->newObject('target'), ['name' => 'a', 'missing' => 'b']);
     }
 
+    public function testFailureKeepsTheWarningsUpToTheFailingItem(): void
+    {
+        $loadByPath = [['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']]];
+        $prepared = $this->applier()->prepare([
+            $this->loadDataObjectItem(),
+            $this->directItem('ref', 'doesNotExist', $loadByPath, ['writeIfTargetIsNotEmpty' => false], 'Broken item'),
+        ]);
+
+        try {
+            $prepared->apply($this->newObject('target'), ['ref' => self::MISSING_PATH]);
+            $this->fail('apply() did not throw');
+        } catch (MappingApplicationException $exception) {
+            $warnings = array_map(
+                static fn (MappingIssue $issue): array => [$issue->itemIndex, $issue->itemLabel, $issue->message],
+                $exception->getWarnings()
+            );
+            $this->assertSame(
+                [[0, 'related', self::MISSING_OBJECT], [1, 'Broken item', self::MISSING_OBJECT]],
+                $warnings
+            );
+        }
+    }
+
     public function testWritingOperatorIsListedAndRefused(): void
     {
         $mapping = [
