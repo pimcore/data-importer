@@ -107,9 +107,11 @@ final class CsvFileInterpreter extends AbstractInterpreter implements RowReaderI
      */
     private function assertColumnCount(array|false $header, array $data, string $path, int $rowNumber): void
     {
-        // fgetcsv() returns [null] for a blank line
-        $columns = $data === [null] ? 0 : count($data);
-        if ($header !== false && $columns !== count($header)) {
+        // array_combine()'s rule: a blank line still passes under a one-column header, as in imports
+        if ($header !== false && count($data) !== count($header)) {
+            // fgetcsv() returns [null] for a blank line
+            $columns = $data === [null] ? 0 : count($data);
+
             throw new InvalidInputException(sprintf(
                 '%s has %d column(s), the header row has %d.',
                 ucfirst($this->describeRow($path, $rowNumber)),

@@ -156,6 +156,17 @@ class SourceFileReaderTest extends Unit
         iterator_to_array($this->readerWithoutDatabase()->readRows($this->csvConfig(), $path));
     }
 
+    public function testCsvBlankLineUnderOneColumnHeaderIsReadLikeAnImport(): void
+    {
+        $path = $this->writeFile("sku\r\nA-1\r\n\r\nB-2\r\n", 'csv');
+        $config = $this->csvConfig();
+
+        $rows = iterator_to_array($this->reader()->readRows($config, $path), false);
+
+        $this->assertSame($this->interpretAndReadQueue($config, $path), $rows);
+        $this->assertSame([['sku' => 'A-1'], ['sku' => null], ['sku' => 'B-2']], $rows);
+    }
+
     public function testCsvRaggedRowNamesTheRow(): void
     {
         $path = $this->writeFile("sku,price\r\nA-1,1,extra\r\n", 'csv');
