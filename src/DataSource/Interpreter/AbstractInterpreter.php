@@ -213,7 +213,17 @@ abstract class AbstractInterpreter implements InterpreterInterface
      *
      * @throws InvalidInputException
      */
-    protected function assertValidRowEncoding(array $data, ?string $source = null): void
+    protected function assertValidRowEncoding(array $data): void
+    {
+        $this->assertRowEncoding($data, '`' . $this->configName . '`');
+    }
+
+    /**
+     * @param string $source what the message names, e.g. the configuration or the row of a file
+     *
+     * @throws InvalidInputException
+     */
+    private function assertRowEncoding(array $data, string $source): void
     {
         $invalidColumns = [];
         $position = 0;
@@ -233,7 +243,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
             throw new InvalidInputException(sprintf(
                 'Encoding error in %s: invalid UTF-8 characters in column(s) %s. '
                 . 'Please make sure the source file is UTF-8 encoded.',
-                $source ?? '`' . $this->configName . '`',
+                $source,
                 implode(', ', $invalidColumns)
             ));
         }
@@ -266,7 +276,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
     protected function checkRowEncoding(iterable $rows, string $path, int $rowNumber): \Generator
     {
         foreach ($rows as $row) {
-            $this->assertValidRowEncoding($row, $this->describeRow($path, $rowNumber));
+            $this->assertRowEncoding($row, $this->describeRow($path, $rowNumber));
 
             yield $row;
             ++$rowNumber;
