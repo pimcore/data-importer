@@ -34,14 +34,14 @@ final readonly class TransformationResultParameters
             type: 'array',
             items: new Items(type: 'object', additionalProperties: true)
         )]
-        private array $mappingConfig = [],
+        private array $mappingConfig,
         #[Property(
             description: 'The source record to transform: column => value',
             type: 'object',
             example: ['sku' => 'A-100'],
             additionalProperties: true
         )]
-        private array $dataRow = [],
+        private array $dataRow,
     ) {
     }
 

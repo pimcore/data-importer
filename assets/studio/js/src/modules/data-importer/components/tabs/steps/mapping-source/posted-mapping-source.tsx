@@ -66,7 +66,7 @@ const previewOf = (
 
   return {
     previewRecordIndex: index,
-    dataPreview: columns.map(column => ({ dataIndex: column.dataIndex, label: column.label ?? column.dataIndex, data: record[column.dataIndex] ?? '' }))
+    dataPreview: columns.map(column => ({ dataIndex: column.dataIndex, label: column.label ?? column.dataIndex, data: record[column.dataIndex] === undefined ? '' : record[column.dataIndex] }))
   }
 }
 

@@ -32,7 +32,7 @@ const columns = [{ dataIndex: 'sku', label: 'SKU' }, { dataIndex: 'name [de]' }]
 const records = [{ sku: 'A-1', 'name [de]': 'Stuhl' }, { sku: 'A-2' }]
 const configuration = { mappingConfig: [{ label: 'stored' }] }
 
-const renderWith = (consume: (source: MappingSource) => void): void => {
+const renderWith = (consume: (source: MappingSource) => void, given: Array<Record<string, unknown>> = records): void => {
   const Consumer = (): null => {
     consume(useMappingSource())
     return null
@@ -43,7 +43,7 @@ const renderWith = (consume: (source: MappingSource) => void): void => {
       columns={ columns }
       configuration={ configuration }
       id="format"
-      records={ records }
+      records={ given }
     >
       <Consumer />
     </PostedMappingSource>
@@ -75,6 +75,13 @@ describe('PostedMappingSource', () => {
       expect(source.usePreviewQuery({ recordNumber: 7 }).data?.previewRecordIndex).toBe(1)
       expect(source.usePreviewQuery({ recordNumber: 0 }, { skip: true }).isSuccess).toBe(false)
     })
+  })
+
+  it('keeps a posted null as the value, as a stored preview does, and leaves only a missing column empty', () => {
+    renderWith((source) => {
+      const values = source.usePreviewQuery({ recordNumber: 0 }).data?.dataPreview.map((row): unknown => row.data)
+      expect(values).toEqual([null, ''])
+    }, [{ sku: null }])
   })
 
   it('settles its previews at once, so a refetch has nothing to request', async () => {

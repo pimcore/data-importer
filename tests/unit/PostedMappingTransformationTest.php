@@ -27,6 +27,8 @@ use Pimcore\Model\User;
 use Pimcore\Security\User\User as SecurityUser;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 class PostedMappingTransformationTest extends Unit
 {
@@ -70,6 +72,20 @@ class PostedMappingTransformationTest extends Unit
         $this->assertSame('array', $this->type(['dataSourceIndex' => ['a', 'b']]));
         $numeric = ['dataSourceIndex' => ['price'], 'transformationPipeline' => [['type' => 'numeric']]];
         $this->assertSame('numeric', $this->type($numeric));
+    }
+
+    public function testAPreviewRequestNeedsItsMappingAndItsRow(): void
+    {
+        $serializer = $this->tester->grabService('serializer');
+        $this->assertInstanceOf(DenormalizerInterface::class, $serializer);
+
+        foreach ([['dataRow' => ['sku' => 'A-100']], ['mappingConfig' => []]] as $payload) {
+            try {
+                $serializer->denormalize($payload, TransformationResultParameters::class);
+                $this->fail('a request without ' . (isset($payload['dataRow']) ? 'mappingConfig' : 'dataRow') . ' must be refused');
+            } catch (MissingConstructorArgumentsException) {
+            }
+        }
     }
 
     public function testAnUnknownOperatorIsRefused(): void
