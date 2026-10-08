@@ -79,12 +79,16 @@ class PostedMappingTransformationTest extends Unit
         $serializer = $this->tester->grabService('serializer');
         $this->assertInstanceOf(DenormalizerInterface::class, $serializer);
 
-        foreach ([['dataRow' => ['sku' => 'A-100']], ['mappingConfig' => []]] as $payload) {
+        $payloads = ['mappingConfig' => ['dataRow' => ['sku' => 'A-100']], 'dataRow' => ['mappingConfig' => []]];
+        foreach ($payloads as $missing => $payload) {
+            $refused = false;
+
             try {
                 $serializer->denormalize($payload, TransformationResultParameters::class);
-                $this->fail('a request without ' . (isset($payload['dataRow']) ? 'mappingConfig' : 'dataRow') . ' must be refused');
             } catch (MissingConstructorArgumentsException) {
+                $refused = true;
             }
+            $this->assertTrue($refused, sprintf('a request without %s is refused', $missing));
         }
     }
 
