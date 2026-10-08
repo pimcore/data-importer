@@ -43,6 +43,9 @@ final readonly class TransformationService implements TransformationServiceInter
     // operators log under their configuration's name; a posted configuration has none
     private const string POSTED_CONFIG_NAME = '';
 
+    // a preview runs operators with dryRun, but these still write or fetch: importAsset creates folders and loads URLs
+    private const array OPERATORS_WITH_SIDE_EFFECTS = ['importAsset'];
+
     public function __construct(
         private TransformationHydratorInterface $transformationHydrator,
         private PreviewService $previewService,
@@ -94,6 +97,7 @@ final readonly class TransformationService implements TransformationServiceInter
         array $dataRow
     ): TransformationResultPreviewsResponse {
         $this->assertImporterPermission();
+        $this->assertNoSideEffects($mappingConfig);
 
         return $this->previewTransformationResults(self::POSTED_CONFIG_NAME, $mappingConfig, $dataRow);
     }
@@ -115,6 +119,24 @@ final readonly class TransformationService implements TransformationServiceInter
         $this->assertImporterPermission();
 
         return $this->evaluateTransformationResultType(self::POSTED_CONFIG_NAME, $mappingEntry);
+    }
+
+    /**
+     * @throws InvalidConfigurationException
+     */
+    private function assertNoSideEffects(array $mappingConfig): void
+    {
+        foreach ($mappingConfig as $entry) {
+            foreach ((array) ($entry['transformationPipeline'] ?? []) as $operator) {
+                $type = is_array($operator) ? ($operator['type'] ?? null) : null;
+                if (in_array($type, self::OPERATORS_WITH_SIDE_EFFECTS, true)) {
+                    throw new InvalidConfigurationException(sprintf(
+                        'The operator "%s" writes or fetches data, so a posted mapping cannot preview it.',
+                        $type
+                    ));
+                }
+            }
+        }
     }
 
     /**

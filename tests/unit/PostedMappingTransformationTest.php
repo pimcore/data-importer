@@ -102,6 +102,19 @@ class PostedMappingTransformationTest extends Unit
         ]);
     }
 
+    public function testAPreviewRefusesAnOperatorThatWritesOrFetches(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->preview(
+            [[
+                'dataSourceIndex' => ['image'],
+                'transformationPipeline' => [['type' => 'importAsset', 'settings' => ['parentFolder' => '/preview']]],
+            ]],
+            ['image' => 'https://example.com/image.png']
+        );
+    }
+
     public function testTheDataHubAdminMayPreview(): void
     {
         $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_ADMIN]);
