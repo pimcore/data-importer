@@ -21,10 +21,28 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Schema\CalculateTransformationResultTypeParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultParameters;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Model\User;
+use Pimcore\Security\User\User as SecurityUser;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 class PostedMappingTransformationTest extends Unit
 {
+    private const USER_ID = 4712;
+
     protected UnitTester $tester;
+
+    protected function _before(): void
+    {
+        $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_ADAPTER]);
+    }
+
+    protected function _after(): void
+    {
+        $this->tokenStorage()->setToken(null);
+    }
 
     public function testThePreviewTransformsTheGivenRecord(): void
     {
@@ -62,6 +80,49 @@ class PostedMappingTransformationTest extends Unit
             'dataSourceIndex' => ['sku'],
             'transformationPipeline' => [['type' => 'no-such-operator']],
         ]);
+    }
+
+    public function testTheDataHubAdminMayPreview(): void
+    {
+        $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_ADMIN]);
+
+        $this->assertSame('default', $this->type(['dataSourceIndex' => ['sku']]));
+    }
+
+    public function testThePreviewIsRefusedWithoutTheImporterPermission(): void
+    {
+        $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG]);
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->preview([['dataSourceIndex' => ['sku']]], ['sku' => 'A-100']);
+    }
+
+    public function testTheTypeIsRefusedWithoutTheImporterPermission(): void
+    {
+        $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG]);
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->type(['dataSourceIndex' => ['sku']]);
+    }
+
+    private function logInWith(array $permissions): void
+    {
+        $user = new User();
+        $user->setId(self::USER_ID);
+        $user->setName('posted-mapping-preview');
+        $user->setPermissions($permissions);
+        $securityUser = new SecurityUser($user);
+
+        $this->tokenStorage()->setToken(
+            new UsernamePasswordToken($securityUser, 'pimcore_studio', $securityUser->getRoles())
+        );
+    }
+
+    private function tokenStorage(): TokenStorageInterface
+    {
+        return $this->tester->grabService('security.token_storage');
     }
 
     private function preview(array $mappingConfig, array $dataRow): array

@@ -52,6 +52,8 @@ interface TransformationServiceInterface
     /**
      * Previews the mapping entries for one source record without a stored configuration.
      *
+     * @throws ForbiddenException
+     * @throws EnvironmentException
      * @throws InvalidConfigurationException
      */
     public function loadTransformationResultPreviewsFor(
@@ -62,6 +64,8 @@ interface TransformationServiceInterface
     /**
      * The result type of one mapping entry without a stored configuration.
      *
+     * @throws ForbiddenException
+     * @throws EnvironmentException
      * @throws InvalidConfigurationException
      */
     public function calculateTransformationResultTypeOf(array $mappingEntry): TransformationResultTypeResponse;

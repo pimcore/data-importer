@@ -27,6 +27,8 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\ConfigurationPermiss
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -91,6 +93,8 @@ final readonly class TransformationService implements TransformationServiceInter
         array $mappingConfig,
         array $dataRow
     ): TransformationResultPreviewsResponse {
+        $this->assertImporterPermission();
+
         return $this->previewTransformationResults(self::POSTED_CONFIG_NAME, $mappingConfig, $dataRow);
     }
 
@@ -108,7 +112,28 @@ final readonly class TransformationService implements TransformationServiceInter
 
     public function calculateTransformationResultTypeOf(array $mappingEntry): TransformationResultTypeResponse
     {
+        $this->assertImporterPermission();
+
         return $this->evaluateTransformationResultType(self::POSTED_CONFIG_NAME, $mappingEntry);
+    }
+
+    /**
+     * A posted pipeline has no permission grid, so it needs the rule
+     * Configuration::isAllowed() falls back to for an importer without one.
+     *
+     * @throws EnvironmentException
+     * @throws ForbiddenException
+     */
+    private function assertImporterPermission(): void
+    {
+        $user = $this->resolveCurrentUser();
+
+        // isAllowed() is true for admins
+        if (!$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_ADMIN) &&
+            !$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_ADAPTER)
+        ) {
+            throw new ForbiddenException('Access denied to the data importer');
+        }
     }
 
     /**
