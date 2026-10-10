@@ -127,6 +127,30 @@ class PostedMappingTransformationTest extends Unit
         $this->assertStringContainsString('"importAsset"', $body['message']);
     }
 
+    public function testAPreviewRefusesAnOperatorThatWritesOrFetchesAfterAnotherOneInALaterEntry(): void
+    {
+        $trim = ['type' => 'trim', 'settings' => ['mode' => 'both']];
+        $refusal = $this->refusalOf(fn () => $this->preview(
+            [
+                ['dataSourceIndex' => ['sku'], 'transformationPipeline' => [$trim]],
+                [
+                    'dataSourceIndex' => ['image'],
+                    'transformationPipeline' => [
+                        $trim,
+                        ['type' => 'importAsset', 'settings' => ['parentFolder' => '/preview']],
+                    ],
+                ],
+            ],
+            ['sku' => ' A-100 ', 'image' => 'https://example.com/image.png']
+        ));
+
+        $response = $this->asStudioApiError($refusal, '/bundle/data-importer/mapping/transformation-result');
+
+        $this->assertSame(500, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertStringContainsString('"importAsset"', $body['message']);
+    }
+
     public function testTheDataHubAdminMayPreview(): void
     {
         $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_ADMIN]);
