@@ -18,6 +18,7 @@ import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type Pr
 import { useStyles } from './preview-panel.styles'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
 import { type TransformationResultRequest, useMappingSource } from '../../mapping-source/mapping-source'
+import { ErrorBox } from '../error-box/error-box'
 
 interface ImportModeProps {
   mode: 'import'
@@ -38,6 +39,15 @@ interface ResultModeProps {
 }
 
 export type PreviewPanelProps = ImportModeProps | ResultModeProps
+
+// Studio API errors carry a message, Symfony's problem responses a detail
+const errorTextOf = (error: unknown): string | undefined => {
+  const data = (error as { data?: unknown } | undefined)?.data
+  if (typeof data !== 'object' || data === null) return undefined
+  const { detail, message } = data as { detail?: unknown, message?: unknown }
+  if (typeof detail === 'string' && detail !== '') return detail
+  return typeof message === 'string' && message !== '' ? message : undefined
+}
 
 export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
@@ -68,6 +78,7 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     isLoading: isResultLoading,
     isFetching: isResultFetching,
     isError: isResultError,
+    error: resultError,
     refetch: refetchResultPreview
   } = source.useTransformationResultQuery(
     resultRequest,
@@ -288,7 +299,10 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
             <Spin type="classic" />
           </div>
         ) }
-        { !(isResultLoading || isResultFetching) && previews.length === 0 && (
+        { !(isResultLoading || isResultFetching) && isResultError && (
+          <ErrorBox>{ errorTextOf(resultError) ?? t('data-importer.mapping.advanced-modal.preview-error') }</ErrorBox>
+        ) }
+        { !(isResultLoading || isResultFetching) && !isResultError && previews.length === 0 && (
           <div className={ styles.muted }>{ t('data-importer.mapping.advanced-modal.no-preview') }</div>
         ) }
         { !(isResultLoading || isResultFetching) && previews.map((line, i) => (

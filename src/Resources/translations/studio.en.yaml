@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Data
 data-importer.mapping.advanced-modal.loading: Loading…
 data-importer.mapping.advanced-modal.no-data: No data
 data-importer.mapping.advanced-modal.no-preview: No preview available
+data-importer.mapping.advanced-modal.preview-error: The preview could not be created
 data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Field name
 data-importer.mapping.advanced-modal.step-target.overwrite: Overwrite

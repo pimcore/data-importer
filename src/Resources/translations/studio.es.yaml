@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Datos
 data-importer.mapping.advanced-modal.loading: Cargando…
 data-importer.mapping.advanced-modal.no-data: Sin datos
 data-importer.mapping.advanced-modal.no-preview: Vista previa no disponible
+data-importer.mapping.advanced-modal.preview-error: No se pudo crear la vista previa
 data-importer.mapping.advanced-modal.step-target.type: Tipo
 data-importer.mapping.advanced-modal.step-target.field-name: Nombre de campo
 data-importer.mapping.advanced-modal.step-target.overwrite: Sobrescribir

@@ -62,7 +62,7 @@ const typeResult = settled({ type: 'numeric' })
 const previewResult = settled({ transformationResultPreviews: ['trimmed A-1'] })
 const attributesResult = settled({ attributes: [{ key: 'sku', title: 'SKU' }] })
 
-const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}): void => {
+const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}, onSave: (updated: MappingConfigItem) => void = () => undefined): void => {
   render(
     <PostedMappingSource
       columns={ columns }
@@ -76,7 +76,7 @@ const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}): voi
         columnHeaderOptions={ [{ value: 'sku', label: 'SKU' }] }
         item={ item }
         onClose={ () => undefined }
-        onSave={ () => undefined }
+        onSave={ onSave }
         open
       />
     </PostedMappingSource>
@@ -139,5 +139,52 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
       { refetchOnMountOrArgChange: false, skip: false }
     )
     expect(screen.getByTestId('target-type').textContent).toBe('numeric')
+  })
+
+  describe('when the result endpoint fails', () => {
+    // a posted pipeline the backend refuses answers 500
+    const failedWith = (data: unknown, status = 500): Record<string, unknown> => ({ data: undefined, error: { status, data }, isLoading: false, isFetching: false, isError: true, isSuccess: false, refetch })
+    const onFirstRecord = (request: { bundleDataImporterTransformationResultParameters: { dataRow: unknown } }): boolean =>
+      request.bundleDataImporterTransformationResultParameters.dataRow === records[0]
+
+    it('shows the error the backend reports and stays usable', () => {
+      const refused = failedWith({ detail: 'The operator "importAsset" writes or fetches data, so a posted mapping cannot preview it.' })
+      resultQuery.mockImplementation((request: Parameters<typeof onFirstRecord>[0], options: { skip: boolean }) => {
+        if (options.skip) return idle
+        return onFirstRecord(request) ? refused : previewResult
+      })
+      const onSave = jest.fn()
+      renderDialog({}, onSave)
+
+      const target = within(screen.getByTestId('target'))
+      expect(target.getByText('The operator "importAsset" writes or fetches data, so a posted mapping cannot preview it.')).toBeTruthy()
+      expect(target.queryByText('data-importer.mapping.advanced-modal.no-preview')).toBeNull()
+
+      fireEvent.click(target.getByRole('button', { name: 'chevron-right' }))
+      expect(resultQuery).toHaveBeenLastCalledWith(
+        { bundleDataImporterTransformationResultParameters: { mappingConfig: [item], dataRow: records[1] } },
+        { refetchOnMountOrArgChange: false, skip: false }
+      )
+      expect(target.getByText('trimmed A-1')).toBeTruthy()
+
+      fireEvent.click(screen.getByRole('button', { name: 'data-importer.mapping.advanced-modal.save' }))
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1', dataSourceIndex: ['sku'] }))
+    })
+
+    it('shows the message of a refused request', () => {
+      resultQuery.mockImplementation((_request: unknown, options: { skip: boolean }) => options.skip ? idle : failedWith({ message: 'Access denied to the data importer' }, 403))
+      renderDialog()
+
+      expect(within(screen.getByTestId('target')).getByText('Access denied to the data importer')).toBeTruthy()
+    })
+
+    it('shows a general error when the response has no detail', () => {
+      resultQuery.mockImplementation((_request: unknown, options: { skip: boolean }) => options.skip ? idle : failedWith('<html>Internal Server Error</html>'))
+      renderDialog()
+
+      const target = within(screen.getByTestId('target'))
+      expect(target.getByText('data-importer.mapping.advanced-modal.preview-error')).toBeTruthy()
+      expect(target.queryByText('data-importer.mapping.advanced-modal.no-preview')).toBeNull()
+    })
   })
 })
