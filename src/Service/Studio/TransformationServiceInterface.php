@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultPreviewsRespons
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultTypeResponse;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -48,4 +49,25 @@ interface TransformationServiceInterface
         string $name,
         array $currentConfig
     ): TransformationResultTypeResponse;
+
+    /**
+     * Previews the mapping entries for one source record without a stored configuration.
+     *
+     * @throws ForbiddenException
+     * @throws EnvironmentException
+     * @throws InvalidArgumentException
+     */
+    public function loadTransformationResultPreviewsFor(
+        array $mappingConfig,
+        array $dataRow
+    ): TransformationResultPreviewsResponse;
+
+    /**
+     * The result type of one mapping entry without a stored configuration.
+     *
+     * @throws ForbiddenException
+     * @throws EnvironmentException
+     * @throws InvalidArgumentException
+     */
+    public function calculateTransformationResultTypeOf(array $mappingEntry): TransformationResultTypeResponse;
 }

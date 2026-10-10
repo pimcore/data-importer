@@ -12,7 +12,6 @@ import React, { createContext, useContext, useMemo } from 'react'
 import { type InterpreterConfig, type LoaderConfig, type MappingConfigItem, type ProcessingConfig, type ResolverConfig } from '../../../../../types'
 
 export interface ResultPreviewContextValue {
-  configName: string
   previewRefreshToken: number
   forceRefreshToken: number
   currentMappingItem?: MappingConfigItem
@@ -36,7 +35,6 @@ export const ResultPreviewProvider = ({
   ...value
 }: ResultPreviewContextValue & { children: React.ReactNode }): React.JSX.Element => {
   const memoized = useMemo(() => value, [
-    value.configName,
     value.previewRefreshToken,
     value.forceRefreshToken,
     value.currentMappingItem,

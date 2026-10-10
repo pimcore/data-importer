@@ -12,7 +12,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Modal, Button, IconButton, Panel, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem, type TransformationPipelineItem, type ClassAttribute } from '../../../../types'
-import { useBundleDataImporterConfigCalculateTransformationResultTypeQuery } from '../../../../data-importer-api-slice.gen'
+import { type TransformationResultTypeRequest, useMappingSource } from '../mapping-source/mapping-source'
 import { StepSource } from './step-source/step-source'
 import { StepTransformations } from './step-transformations/step-transformations'
 import { StepTarget } from './step-target/step-target'
@@ -25,7 +25,6 @@ export interface AdvancedMappingModalProps {
   open: boolean
   onClose: () => void
   onSave: (updated: MappingConfigItem) => void
-  configName: string
   classId?: string
   item: MappingConfigItem
   columnHeaderOptions: Array<{ value: string, label: string }>
@@ -37,7 +36,6 @@ export const AdvancedMappingModal = ({
   open,
   onClose,
   onSave,
-  configName,
   classId,
   item,
   columnHeaderOptions,
@@ -60,28 +58,16 @@ export const AdvancedMappingModal = ({
       debounceRef.current = null
     }, 800)
   }, [])
-  const [calculateTypeRequest, setCalculateTypeRequest] = useState<{
-    name: string
-    bundleDataImporterCalculateTransformationResultTypeParameters: {
-      currentConfig: {
-        label?: string
-        dataSourceIndex?: string[]
-        transformationPipeline?: object[]
-        dataTarget?: object
-      }
-    }
-  } | undefined>(undefined)
+  const source = useMappingSource()
+  const [calculateTypeRequest, setCalculateTypeRequest] = useState<TransformationResultTypeRequest | undefined>(undefined)
   const {
     data: calculateTypeResult,
     isFetching: isCalculating,
     error: calculateTypeError,
     refetch: refetchCalculateType
-  } = useBundleDataImporterConfigCalculateTransformationResultTypeQuery(
-    calculateTypeRequest!,
-    {
-      skip: calculateTypeRequest === undefined,
-      refetchOnMountOrArgChange: false
-    }
+  } = source.useTransformationResultTypeQuery(
+    calculateTypeRequest,
+    { refetchOnMountOrArgChange: false }
   )
 
   useEffect(() => {
@@ -124,7 +110,6 @@ export const AdvancedMappingModal = ({
 
   const { mergedAttributesMap, isFetchingExtraAttributes } = useAutoRecalculateType({
     open,
-    configName,
     classId,
     localItem,
     localItemRef,
@@ -134,15 +119,12 @@ export const AdvancedMappingModal = ({
 
   const recalculateType = useCallback(async (): Promise<void> => {
     const current = localItemRef.current
-    const nextRequest = {
-      name: configName,
-      bundleDataImporterCalculateTransformationResultTypeParameters: {
-        currentConfig: {
-          label: current.label,
-          dataSourceIndex: current.dataSourceIndex,
-          transformationPipeline: current.transformationPipeline as object[] | undefined,
-          dataTarget: current.dataTarget as object | undefined
-        }
+    const nextRequest: TransformationResultTypeRequest = {
+      currentConfig: {
+        label: current.label,
+        dataSourceIndex: current.dataSourceIndex,
+        transformationPipeline: current.transformationPipeline as object[] | undefined,
+        dataTarget: current.dataTarget as object | undefined
       }
     }
 
@@ -156,7 +138,7 @@ export const AdvancedMappingModal = ({
         // ignore
       }
     }
-  }, [configName, calculateTypeRequest, refetchCalculateType])
+  }, [calculateTypeRequest, refetchCalculateType])
 
   const handleRefreshAll = useCallback((): void => {
     void recalculateType()
@@ -199,7 +181,6 @@ export const AdvancedMappingModal = ({
       <ResultPreviewProvider
         baseConfig={ baseConfig }
         calculateTypeError={ calculateTypeErrorDetail }
-        configName={ configName }
         currentMappingItem={ localItem }
         forceRefreshToken={ forceRefreshToken }
         isFetchingAttributes={ isFetchingExtraAttributes || isCalculating }
@@ -224,7 +205,6 @@ export const AdvancedMappingModal = ({
             >
               <StepSource
                 columnHeaderOptions={ columnHeaderOptions }
-                configName={ configName }
                 dataSourceIndex={ localItem.dataSourceIndex ?? [] }
                 forceRefreshToken={ forceRefreshToken }
                 onDataSourceIndexChange={ updateDataSourceIndex }
