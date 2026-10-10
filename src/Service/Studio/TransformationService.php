@@ -122,7 +122,9 @@ final readonly class TransformationService implements TransformationServiceInter
     }
 
     /**
-     * @throws InvalidConfigurationException
+     * Studio renders only its API exceptions as JSON, so only these carry the reason to the client.
+     *
+     * @throws EnvironmentException
      */
     private function assertNoSideEffects(array $mappingConfig): void
     {
@@ -130,7 +132,7 @@ final readonly class TransformationService implements TransformationServiceInter
             foreach ((array) ($entry['transformationPipeline'] ?? []) as $operator) {
                 $type = is_array($operator) ? ($operator['type'] ?? null) : null;
                 if (in_array($type, self::OPERATORS_WITH_SIDE_EFFECTS, true)) {
-                    throw new InvalidConfigurationException(sprintf(
+                    throw new EnvironmentException(sprintf(
                         'The operator "%s" writes or fetches data, so a posted mapping cannot preview it.',
                         $type
                     ));

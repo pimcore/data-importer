@@ -22,17 +22,25 @@ use Pimcore\Bundle\DataImporterBundle\Schema\CalculateTransformationResultTypePa
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultParameters;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\StudioBackendBundle\EventSubscriber\ApiExceptionSubscriber;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Model\User;
 use Pimcore\Security\User\User as SecurityUser;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Throwable;
 
 class PostedMappingTransformationTest extends Unit
 {
     private const USER_ID = 4712;
+
+    private const STUDIO_API = '/pimcore-studio/api';
 
     protected UnitTester $tester;
 
@@ -104,15 +112,19 @@ class PostedMappingTransformationTest extends Unit
 
     public function testAPreviewRefusesAnOperatorThatWritesOrFetches(): void
     {
-        $this->expectException(InvalidConfigurationException::class);
-
-        $this->preview(
+        $refusal = $this->refusalOf(fn () => $this->preview(
             [[
                 'dataSourceIndex' => ['image'],
                 'transformationPipeline' => [['type' => 'importAsset', 'settings' => ['parentFolder' => '/preview']]],
             ]],
             ['image' => 'https://example.com/image.png']
-        );
+        ));
+
+        $response = $this->asStudioApiError($refusal, '/bundle/data-importer/mapping/transformation-result');
+
+        $this->assertSame(500, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertStringContainsString('"importAsset"', $body['message']);
     }
 
     public function testTheDataHubAdminMayPreview(): void
@@ -156,6 +168,36 @@ class PostedMappingTransformationTest extends Unit
     private function tokenStorage(): TokenStorageInterface
     {
         return $this->tester->grabService('security.token_storage');
+    }
+
+    private function refusalOf(callable $request): Throwable
+    {
+        try {
+            $request();
+        } catch (Throwable $refusal) {
+            return $refusal;
+        }
+
+        $this->fail('the request is refused');
+    }
+
+    /**
+     * What a Studio client receives for an exception; dev adds the stack trace as detail.
+     */
+    private function asStudioApiError(Throwable $exception, string $route): Response
+    {
+        $event = new ExceptionEvent(
+            $this->createStub(HttpKernelInterface::class),
+            Request::create(self::STUDIO_API . $route, 'POST'),
+            HttpKernelInterface::MAIN_REQUEST,
+            $exception
+        );
+        (new ApiExceptionSubscriber('dev', self::STUDIO_API))->onKernelException($event);
+
+        $response = $event->getResponse();
+        $this->assertNotNull($response, 'Studio answers with its JSON error, not the framework error page');
+
+        return $response;
     }
 
     private function preview(array $mappingConfig, array $dataRow): array
