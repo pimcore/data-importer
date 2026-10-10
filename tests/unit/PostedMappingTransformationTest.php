@@ -17,7 +17,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\Mapping\CalculateTransformationResultTypeController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\Mapping\LoadTransformationResultController;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Schema\CalculateTransformationResultTypeParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultParameters;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
@@ -41,6 +40,10 @@ class PostedMappingTransformationTest extends Unit
     private const USER_ID = 4712;
 
     private const STUDIO_API = '/pimcore-studio/api';
+
+    private const PREVIEW_ROUTE = '/bundle/data-importer/mapping/transformation-result';
+
+    private const TYPE_ROUTE = '/bundle/data-importer/mapping/transformation-result-type';
 
     protected UnitTester $tester;
 
@@ -100,14 +103,34 @@ class PostedMappingTransformationTest extends Unit
         }
     }
 
-    public function testAnUnknownOperatorIsRefused(): void
+    public function testAnUnknownOperatorInThePreviewIsUnprocessable(): void
     {
-        $this->expectException(InvalidConfigurationException::class);
+        $refusal = $this->refusalOf(fn () => $this->preview(
+            [['dataSourceIndex' => ['sku'], 'transformationPipeline' => [['type' => 'no-such-operator']]]],
+            ['sku' => 'A-100']
+        ));
 
-        $this->type([
+        $this->assertUnprocessable($refusal, self::PREVIEW_ROUTE, '`no-such-operator`');
+    }
+
+    public function testAnUnknownOperatorInTheTypeIsUnprocessable(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->type([
             'dataSourceIndex' => ['sku'],
             'transformationPipeline' => [['type' => 'no-such-operator']],
-        ]);
+        ]));
+
+        $this->assertUnprocessable($refusal, self::TYPE_ROUTE, '`no-such-operator`');
+    }
+
+    public function testAnOperatorThatCannotTakeItsInputTypeIsUnprocessable(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->type([
+            'dataSourceIndex' => ['price', 'currency'],
+            'transformationPipeline' => [['type' => 'numeric']],
+        ]));
+
+        $this->assertUnprocessable($refusal, self::TYPE_ROUTE, "Unsupported input type 'array' for numeric operator");
     }
 
     public function testAPreviewRefusesAnOperatorThatWritesOrFetches(): void
@@ -120,11 +143,7 @@ class PostedMappingTransformationTest extends Unit
             ['image' => 'https://example.com/image.png']
         ));
 
-        $response = $this->asStudioApiError($refusal, '/bundle/data-importer/mapping/transformation-result');
-
-        $this->assertSame(500, $response->getStatusCode());
-        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
-        $this->assertStringContainsString('"importAsset"', $body['message']);
+        $this->assertUnprocessable($refusal, self::PREVIEW_ROUTE, '"importAsset"');
     }
 
     public function testAPreviewRefusesAnOperatorThatWritesOrFetchesAfterAnotherOneInALaterEntry(): void
@@ -144,11 +163,7 @@ class PostedMappingTransformationTest extends Unit
             ['sku' => ' A-100 ', 'image' => 'https://example.com/image.png']
         ));
 
-        $response = $this->asStudioApiError($refusal, '/bundle/data-importer/mapping/transformation-result');
-
-        $this->assertSame(500, $response->getStatusCode());
-        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
-        $this->assertStringContainsString('"importAsset"', $body['message']);
+        $this->assertUnprocessable($refusal, self::PREVIEW_ROUTE, '"importAsset"');
     }
 
     public function testTheDataHubAdminMayPreview(): void
@@ -203,6 +218,15 @@ class PostedMappingTransformationTest extends Unit
         }
 
         $this->fail('the request is refused');
+    }
+
+    private function assertUnprocessable(Throwable $refusal, string $route, string $reason): void
+    {
+        $response = $this->asStudioApiError($refusal, $route);
+
+        $this->assertSame(422, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertStringContainsString($reason, $body['message']);
     }
 
     /**

@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use League\Flysystem\FilesystemOperator;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\TransformationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
@@ -114,6 +115,16 @@ class StoredMappingTransformationTest extends Unit
         );
 
         $this->assertSame('numeric', $response->getType());
+    }
+
+    public function testAnUnknownOperatorInAStoredConfigurationStaysAConfigurationError(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->transformationService()->calculateTransformationResultType(
+            $this->name,
+            ['dataSourceIndex' => ['sku'], 'transformationPipeline' => [['type' => 'no-such-operator']]]
+        );
     }
 
     public function testAnUnknownConfigurationIsNotFound(): void

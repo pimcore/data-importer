@@ -29,6 +29,7 @@ use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -99,7 +100,11 @@ final readonly class TransformationService implements TransformationServiceInter
         $this->assertImporterPermission();
         $this->assertNoSideEffects($mappingConfig);
 
-        return $this->previewTransformationResults(self::POSTED_CONFIG_NAME, $mappingConfig, $dataRow);
+        try {
+            return $this->previewTransformationResults(self::POSTED_CONFIG_NAME, $mappingConfig, $dataRow);
+        } catch (InvalidConfigurationException $exception) {
+            throw new InvalidArgumentException($exception->getMessage(), $exception);
+        }
     }
 
     public function calculateTransformationResultType(
@@ -118,13 +123,17 @@ final readonly class TransformationService implements TransformationServiceInter
     {
         $this->assertImporterPermission();
 
-        return $this->evaluateTransformationResultType(self::POSTED_CONFIG_NAME, $mappingEntry);
+        try {
+            return $this->evaluateTransformationResultType(self::POSTED_CONFIG_NAME, $mappingEntry);
+        } catch (InvalidConfigurationException $exception) {
+            throw new InvalidArgumentException($exception->getMessage(), $exception);
+        }
     }
 
     /**
      * Studio renders only its API exceptions as JSON, so only these carry the reason to the client.
      *
-     * @throws EnvironmentException
+     * @throws InvalidArgumentException
      */
     private function assertNoSideEffects(array $mappingConfig): void
     {
@@ -132,7 +141,7 @@ final readonly class TransformationService implements TransformationServiceInter
             foreach ((array) ($entry['transformationPipeline'] ?? []) as $operator) {
                 $type = is_array($operator) ? ($operator['type'] ?? null) : null;
                 if (in_array($type, self::OPERATORS_WITH_SIDE_EFFECTS, true)) {
-                    throw new EnvironmentException(sprintf(
+                    throw new InvalidArgumentException(sprintf(
                         'The operator "%s" writes or fetches data, so a posted mapping cannot preview it.',
                         $type
                     ));
