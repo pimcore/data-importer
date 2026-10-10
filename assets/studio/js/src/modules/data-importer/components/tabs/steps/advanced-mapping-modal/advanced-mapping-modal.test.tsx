@@ -142,13 +142,14 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
   })
 
   describe('when the result endpoint fails', () => {
-    // a posted pipeline the backend refuses answers 500
+    // Studio's API error body; in dev, detail carries the stack trace
+    const trace = '#0 /var/www/src/Service/Studio/TransformationService.php(150): ...'
     const failedWith = (data: unknown, status = 500): Record<string, unknown> => ({ data: undefined, error: { status, data }, isLoading: false, isFetching: false, isError: true, isSuccess: false, refetch })
     const onFirstRecord = (request: { bundleDataImporterTransformationResultParameters: { dataRow: unknown } }): boolean =>
       request.bundleDataImporterTransformationResultParameters.dataRow === records[0]
 
     it('shows the error the backend reports and stays usable', () => {
-      const refused = failedWith({ detail: 'The operator "importAsset" writes or fetches data, so a posted mapping cannot preview it.' })
+      const refused = failedWith({ message: 'The operator "importAsset" writes or fetches data, so a posted mapping cannot preview it.', errorKey: 'error_environment', detail: trace })
       resultQuery.mockImplementation((request: Parameters<typeof onFirstRecord>[0], options: { skip: boolean }) => {
         if (options.skip) return idle
         return onFirstRecord(request) ? refused : previewResult
@@ -172,13 +173,15 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
     })
 
     it('shows the message of a refused request', () => {
-      resultQuery.mockImplementation((_request: unknown, options: { skip: boolean }) => options.skip ? idle : failedWith({ message: 'Access denied to the data importer' }, 403))
+      resultQuery.mockImplementation((_request: unknown, options: { skip: boolean }) => options.skip ? idle : failedWith({ message: 'Access denied to the data importer', errorKey: 'error_something_generic_went_wrong', detail: trace }, 403))
       renderDialog()
 
-      expect(within(screen.getByTestId('target')).getByText('Access denied to the data importer')).toBeTruthy()
+      const target = within(screen.getByTestId('target'))
+      expect(target.getByText('Access denied to the data importer')).toBeTruthy()
+      expect(target.queryByText(trace)).toBeNull()
     })
 
-    it('shows a general error when the response has no detail', () => {
+    it('shows a general error when the response has no message', () => {
       resultQuery.mockImplementation((_request: unknown, options: { skip: boolean }) => options.skip ? idle : failedWith('<html>Internal Server Error</html>'))
       renderDialog()
 

@@ -40,12 +40,11 @@ interface ResultModeProps {
 
 export type PreviewPanelProps = ImportModeProps | ResultModeProps
 
-// Studio API errors carry a message, Symfony's problem responses a detail
+// Studio API errors carry the reason in message; in dev, detail holds the stack trace
 const errorTextOf = (error: unknown): string | undefined => {
   const data = (error as { data?: unknown } | undefined)?.data
   if (typeof data !== 'object' || data === null) return undefined
-  const { detail, message } = data as { detail?: unknown, message?: unknown }
-  if (typeof detail === 'string' && detail !== '') return detail
+  const { message } = data as { message?: unknown }
   return typeof message === 'string' && message !== '' ? message : undefined
 }
 
