@@ -13,9 +13,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
+use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Element\Service;
 
 /**
@@ -103,12 +105,12 @@ final class ManyToManyRelation extends Direct
             case 'manyToManyObjectRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
                     foreach ($currentData as $dataObject) {
-                        $newData[$dataObject->getId()] = $dataObject;
+                        $newData[$this->mergeKey($dataObject)] = $dataObject;
                     }
 
                     foreach ($data as $dataObject) {
-                        if (!isset($newData[$dataObject->getId()])) {
-                            $newData[$dataObject->getId()] = $dataObject;
+                        if (!isset($newData[$this->mergeKey($dataObject)])) {
+                            $newData[$this->mergeKey($dataObject)] = $dataObject;
                         }
                     }
                 } else {
@@ -126,7 +128,8 @@ final class ManyToManyRelation extends Direct
                 foreach ($data as $dataObject) {
                     if ($this->overwriteMode == self::OVERWRITE_MODE_REPLACE || !isset($newData[$dataObject->getId()])) {
                         $metaDataObject = new ObjectMetadata($this->fieldName, [], $dataObject);
-                        $newData[$metaDataObject->getObject()->getId()] = $metaDataObject;
+                        $newData[$this->assertLoaded($metaDataObject->getObject(), $dataObject)->getId()] =
+                            $metaDataObject;
                     }
                 }
 
@@ -135,11 +138,11 @@ final class ManyToManyRelation extends Direct
             case 'manyToManyRelation':
                 if ($this->overwriteMode == self::OVERWRITE_MODE_MERGE) {
                     foreach ($currentData as $element) {
-                        $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
+                        $newData[Service::getElementType($element) . '_' . $this->mergeKey($element)] = $element;
                     }
                     foreach ($data as $element) {
-                        if (!isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
-                            $newData[Service::getElementType($element) . '_' . $element->getId()] = $element;
+                        if (!isset($newData[Service::getElementType($element) . '_' . $this->mergeKey($element)])) {
+                            $newData[Service::getElementType($element) . '_' . $this->mergeKey($element)] = $element;
                         }
                     }
                 } else {
@@ -159,8 +162,8 @@ final class ManyToManyRelation extends Direct
                     if ($this->overwriteMode == self::OVERWRITE_MODE_REPLACE ||
                         !isset($newData[Service::getElementType($element) . '_' . $element->getId()])) {
                         $metaDataElement = new ElementMetadata($this->fieldName, [], $element);
-                        $newData[Service::getElementType($metaDataElement->getElement()) . '_' . $element->getId()] =
-                            $metaDataElement;
+                        $loaded = $this->assertLoaded($metaDataElement->getElement(), $element);
+                        $newData[Service::getElementType($loaded) . '_' . $element->getId()] = $metaDataElement;
                     }
                 }
 
@@ -169,5 +172,32 @@ final class ManyToManyRelation extends Direct
         }
 
         return array_values($newData);
+    }
+
+    /**
+     * Unsaved elements, e.g. from a reference lookup, have no id yet: each instance counts as a relation of its own.
+     */
+    private function mergeKey(ElementInterface $element): int|string
+    {
+        return $element->getId() ?? 'unsaved_' . spl_object_id($element);
+    }
+
+    /**
+     * Advanced relations keep only the id of a related element and load it again, so it has to be saved.
+     *
+     * @throws InvalidInputException
+     */
+    private function assertLoaded(?ElementInterface $loaded, ElementInterface $related): ElementInterface
+    {
+        if ($loaded === null) {
+            throw new InvalidInputException(sprintf(
+                'Field `%s` keeps only the ids of related elements, so `%s` (id %s) has to be a saved element.',
+                $this->fieldName,
+                $related->getFullPath(),
+                $related->getId() ?? 'none'
+            ));
+        }
+
+        return $loaded;
     }
 }
