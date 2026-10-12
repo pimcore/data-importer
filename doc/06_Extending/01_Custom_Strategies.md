@@ -107,25 +107,44 @@ To replace a shipped type with your own, call `overrideDynamicType()` instead of
 
 ### Resolver Strategies
 
-All resolver strategies share one registry and one abstract class, `DynamicTypeResolverAbstract`. It differs from the
-other extension points in three properties:
+All resolver strategies share one registry. A resolver type differs from the other extension points in three
+properties:
 
 - `group` selects the panel: `loading`, `createLocation`, `updateLocation` or `publishing`.
 - `type` has to match the `type` of the service tag. It is written into the configuration.
 - `id` is `<group>.<type>`, so the same `type` can be registered in more than one group.
 
 `renderSettings()` receives the column headers, languages and classes of the current configuration. Bind the settings
-form to `resolverConfig.<group>Strategy.settings`:
+form to the `settings` of the configuration key of the group:
+
+| Group | Configuration key |
+|---|---|
+| `loading` | `resolverConfig.loadingStrategy` |
+| `createLocation` | `resolverConfig.createLocationStrategy` |
+| `updateLocation` | `resolverConfig.locationUpdateStrategy` |
+| `publishing` | `resolverConfig.publishingStrategy` |
 
 ```tsx
+import React from 'react'
+import { injectable } from '@pimcore/studio-ui-bundle/app'
+import { Form, Input } from '@pimcore/studio-ui-bundle/components'
+import { DynamicTypeAbstract } from '@pimcore/studio-ui-bundle/modules/element'
+
+interface ResolverRenderProps {
+  columnHeaderOptions: Array<{ value: string, label: string }>
+  languageOptions?: Array<{ value: string, label: string }>
+  classOptions?: Array<{ value: string, label: string }>
+  isLoadingClasses?: boolean
+}
+
 @injectable()
-export class DynamicTypeResolverMyStrategyCreation extends DynamicTypeResolverAbstract {
+export class DynamicTypeResolverMyStrategyCreation extends DynamicTypeAbstract {
   readonly id = 'createLocation.myStrategy'
   readonly type = 'myStrategy'
   readonly label = 'app.resolver.location-strategy.myStrategy'
   readonly group = 'createLocation'
 
-  renderSettings (props: DynamicTypeResolverRenderProps): React.JSX.Element | null {
+  renderSettings (props: ResolverRenderProps): React.JSX.Element | null {
     return (
       <Form.Item name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'rootPath'] }>
         <Input />
@@ -136,7 +155,8 @@ export class DynamicTypeResolverMyStrategyCreation extends DynamicTypeResolverAb
 ```
 
 A location strategy that should also be offered for existing elements needs a second type with
-`group = 'updateLocation'`, `id = 'updateLocation.myStrategy'` and a form bound to `updateLocationStrategy`.
+`group = 'updateLocation'`, `id = 'updateLocation.myStrategy'` and a form bound to
+`resolverConfig.locationUpdateStrategy.settings`.
 
 For the plugin scaffolding itself, see the
 [Studio UI Bundle extension documentation](https://github.com/pimcore/studio-ui-bundle/blob/2026.x/doc/04_Extending/README.md).
