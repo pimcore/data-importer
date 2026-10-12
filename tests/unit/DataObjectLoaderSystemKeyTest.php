@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
+use Pimcore\Tests\Support\Util\TestHelper;
 
 /**
  * @see https://github.com/pimcore/data-importer/issues/446
@@ -27,6 +28,8 @@ class DataObjectLoaderSystemKeyTest extends Unit
 
     private const CLASS_B = 'DiSystemKeyClassB';
 
+    private const CLASS_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
+
     protected $tester;
 
     protected function _before(): void
@@ -35,12 +38,17 @@ class DataObjectLoaderSystemKeyTest extends Unit
         $this->createClass(self::CLASS_B);
     }
 
+    protected function _after(): void
+    {
+        TestHelper::cleanUp();
+    }
+
     public function testLoadByKeyIgnoresObjectsOfOtherClasses(): void
     {
         $this->createObject(self::CLASS_B, 'only-in-b');
 
         $element = (new DataObjectLoader())->loadByAttribute(
-            '\\Pimcore\\Model\\DataObject\\' . self::CLASS_A,
+            self::CLASS_NAMESPACE . self::CLASS_A,
             'key',
             'only-in-b',
             '',
@@ -57,7 +65,7 @@ class DataObjectLoaderSystemKeyTest extends Unit
         $objectA = $this->createObject(self::CLASS_A, 'shared-key');
 
         $element = (new DataObjectLoader())->loadByAttribute(
-            '\\Pimcore\\Model\\DataObject\\' . self::CLASS_A,
+            self::CLASS_NAMESPACE . self::CLASS_A,
             'key',
             'shared-key',
             '',
@@ -91,7 +99,7 @@ class DataObjectLoaderSystemKeyTest extends Unit
 
     private function createObject(string $className, string $key): Concrete
     {
-        $fqcn = '\\Pimcore\\Model\\DataObject\\' . $className;
+        $fqcn = self::CLASS_NAMESPACE . $className;
         $parent = Service::createFolderByPath('/di-system-key-test/' . $className . '/' . uniqid('', true));
 
         /** @var Concrete $object */
