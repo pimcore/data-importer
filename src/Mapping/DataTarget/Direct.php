@@ -98,6 +98,7 @@ class Direct implements DataTargetInterface
             if (empty($brick)) {
                 $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
                 $brick = new $brickClassName($element);
+                $brick->setFieldname($setterParts[0]);
                 $brickSetter = 'set' . ucfirst($setterParts[1]);
                 $brickContainer->$brickSetter($brick);
             }
