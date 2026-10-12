@@ -29,6 +29,8 @@ final class DataObjectLoader
 
     private const BRICK_ATTRIBUTE_SEPARATOR = '.';
 
+    private const SYSTEM_KEY_ATTRIBUTE = 'key';
+
     private function isObjectBrickAttribute(string $attributeName): bool
     {
         return str_contains($attributeName, self::BRICK_ATTRIBUTE_SEPARATOR);
@@ -140,6 +142,10 @@ final class DataObjectLoader
         int $limit,
         array $objectTypes
     ): ?ElementInterface {
+        if ($attributeName === self::SYSTEM_KEY_ATTRIBUTE) {
+            return $this->loadBySystemKey($className, $identifier, $limit, $objectTypes);
+        }
+
         $getter = 'getBy' . $attributeName;
 
         if (empty($attributeLanguage) === false) {
@@ -151,5 +157,30 @@ final class DataObjectLoader
         }
 
         return $className::$getter($identifier, $limit, 0, $objectTypes);
+    }
+
+    /**
+     * `key` is a system column, not a field definition, so `$className::getByKey()` ends up in
+     * AbstractObject::__callStatic() through a non-forwarding parent:: call and queries objects
+     * of all classes. Query the class listing directly so the configured class is respected.
+     */
+    private function loadBySystemKey(
+        string $className,
+        string $identifier,
+        int $limit,
+        array $objectTypes
+    ): ?ElementInterface {
+        $db = Db::get();
+        $conditions = [
+            'condition' => $db->quoteIdentifier(self::SYSTEM_KEY_ATTRIBUTE) . ' = ' . $db->quote($identifier),
+            'objectTypes' => $objectTypes,
+        ];
+        if ($limit > 0) {
+            $conditions['limit'] = $limit;
+        }
+
+        $dataObjects = $className::getList($conditions)->load();
+
+        return $dataObjects[0] ?? null;
     }
 }
