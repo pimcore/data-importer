@@ -13,11 +13,11 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Model\Asset;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
-use Pimcore\Model\Document;
 use Pimcore\Model\Element\ElementInterface;
 
 /**
@@ -82,7 +82,10 @@ class Direct implements DataTargetInterface
             }
             $this->doAssignData($element, $this->fieldName, $data);
         } elseif ($this->fieldName === 'path') {
-            if (!$this->checkAssignData($data, $element, 'getPath')) {
+            // An element always has a path once it has a parent (which the resolver sets
+            // for new elements too), so the target counts as "not empty" only for elements
+            // that already exist, i.e. have an ID.
+            if (!$this->checkAssignData($data, $element, 'getId')) {
                 return;
             }
             $this->doAssignPath($element, $data);
@@ -138,22 +141,37 @@ class Direct implements DataTargetInterface
      * structure if it does not exist yet.
      *
      * @throws InvalidConfigurationException
+     * @throws InvalidInputException
      */
     protected function doAssignPath(ElementInterface $element, mixed $data): void
     {
+        if (!$element instanceof DataObject) {
+            throw new InvalidConfigurationException(
+                sprintf('Cannot set path for element of type "%s".', $element::class)
+            );
+        }
+
         $path = (string) $data;
         if ($path === '') {
             return;
         }
 
-        $parent = match (true) {
-            $element instanceof DataObject => DataObject\Service::createFolderByPath($path),
-            $element instanceof Asset => Asset\Service::createFolderByPath($path),
-            $element instanceof Document => Document\Service::createFolderByPath($path),
-            default => throw new InvalidConfigurationException(
-                sprintf('Cannot set path for element of type "%s".', $element::class)
-            ),
-        };
+        // Like the find or create folder location strategy, an existing object at the path can be the parent as well.
+        $parent = DataObject::getByPath($path) ?? DataObject\Service::createFolderByPath($path);
+        if (!$parent instanceof DataObject) {
+            throw new InvalidInputException(sprintf('Could not find or create parent for path "%s".', $path));
+        }
+
+        // Same restriction as in the resolver: the parent of an existing variant cannot be changed anymore.
+        if (
+            $element->getId()
+            && $element->getType() === AbstractObject::OBJECT_TYPE_VARIANT
+            && $parent->getId() !== $element->getParentId()
+        ) {
+            throw new InvalidInputException(
+                "Element with id `{$element->getId()}` is a variant and cannot change its parent anymore"
+            );
+        }
 
         $element->setParent($parent);
     }
