@@ -30,6 +30,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
@@ -136,7 +137,11 @@ final class ImportProcessingService
         } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
-            if ($queueItem) {
+            if (
+                $queueItem
+                && !($this->loggingConfigCache[$configName ?? '']['disableErrorLogs'] ?? false)
+                && !($this->loggingConfigCache[$configName ?? '']['disableErrorFileObjects'] ?? false)
+            ) {
                 $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
             }
             $this->logError($configName, $e->getMessage(), $context);
@@ -237,6 +242,16 @@ final class ImportProcessingService
                     $event = new PreSaveEvent($configName, $importDataRow, $element);
                     $this->eventDispatcher->dispatch($event);
 
+                    if ($event->shouldSkipSave()) {
+                        $this->logInfo($configName, 'Saving of element skipped by PreSaveEvent listener.', [
+                            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                            'relatedObject' => $element
+                        ]);
+                        $this->discardUnsavedChanges($element);
+
+                        return;
+                    }
+
                     $this->checkKey($element);
                     $element
                         ->setUserModification($userOwner)
@@ -251,18 +266,28 @@ final class ImportProcessingService
                 }
 
                 $message = "Element {$element->getId()} imported successfully.";
-                $this->logInfo($configName, $message, [
+                $successContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => json_encode($importDataRow),
                     'relatedObject' => $element
-                ]);
+                ];
+
+                if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+                    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+                    $successContext['fileObject'] = new FileObject(json_encode($importDataRow));
+                }
+
+                $this->logInfo($configName, $message, $successContext);
             } else {
                 $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
                 $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
-                $this->logInfo($configName, $message, [
+                $noMatchContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => json_encode($importDataRow)
-                ]);
+                ];
+                if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+                    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+                    $noMatchContext['fileObject'] = new FileObject(json_encode($importDataRow));
+                }
+                $this->logInfo($configName, $message, $noMatchContext);
             }
         } catch (\Throwable $e) {
             $message = "Error processing element: {$importDataRowString}";
@@ -288,12 +313,34 @@ final class ImportProcessingService
                 $message .= "\nProcessElementExceptionEvent skipped as the element was not found.";
             }
 
-            $this->logError($configName, $message, [
+            $errorContext = [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                'fileObject' => json_encode($importDataRow),
                 'relatedObject' => $element,
-            ]);
+            ];
+
+            if (!($this->loggingConfigCache[$configName]['disableErrorLogs'] ?? false)
+                && !($this->loggingConfigCache[$configName]['disableErrorFileObjects'] ?? false)) {
+                $errorContext['fileObject'] = new FileObject(json_encode($importDataRow));
+            }
+
+            $this->logError($configName, $message, $errorContext);
         }
+    }
+
+    /**
+     * A skipped element keeps the changes the mapping applied to it in memory. Pimcore hands out
+     * runtime-cached instances, so a later row resolving the same element would otherwise inherit -
+     * and save - the values of the skipped row. Reloading it registers a clean instance instead.
+     */
+    private function discardUnsavedChanges(ElementInterface $element): void
+    {
+        $type = ElementService::getElementType($element);
+
+        if ($type === null || !$element->getId()) {
+            return;
+        }
+
+        ElementService::getElementById($type, $element->getId(), ['force' => true]);
     }
 
     /**

@@ -8,9 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { useSettings } from '@pimcore/studio-ui-bundle/modules/app'
 import { Modal, Button, IconButton, Panel, Flex } from '@pimcore/studio-ui-bundle/components'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem, type TransformationPipelineItem, type ClassAttribute } from '../../../../types'
 import { useBundleDataImporterConfigCalculateTransformationResultTypeQuery } from '../../../../data-importer-api-slice.gen'
@@ -47,11 +46,6 @@ export const AdvancedMappingModal = ({
 }: AdvancedMappingModalProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const settings = useSettings()
-  const languageOptions = useMemo(
-    () => (settings.validLanguages ?? []).map((locale: string) => ({ value: locale, label: locale })),
-    [settings.validLanguages]
-  )
 
   const [localItem, setLocalItem] = useState<MappingConfigItem>(() => structuredClone(item))
   const [expanded, setExpanded] = useState({ source: true, transformations: false, target: false })
@@ -278,7 +272,6 @@ export const AdvancedMappingModal = ({
                 attributesMap={ mergedAttributesMap }
                 classId={ classId }
                 dataTarget={ localItem.dataTarget }
-                languageOptions={ languageOptions }
                 onDataTargetChange={ (dataTarget) => { setLocalItem(prev => ({ ...prev, dataTarget })) } }
                 transformationResultType={ localItem.transformationResultType }
               />

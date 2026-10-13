@@ -1,36 +1,64 @@
+---
+title: Execution Configuration
+description: Start an import manually, on a schedule, or from the command line.
+---
+
 # Execution Configuration
 
-Depending on the configuration there are different options to start an actual import. 
+An import needs a trigger. Which triggers are available depends on the data source.
 
-When data source is `push`, the import process starts every time data is pushed to the corresponding
-endpoint. There is no further configuration possible or needed. 
+With the `Push` data source, the import starts every time data is pushed to the endpoint. There is nothing to configure,
+and the triggers below do not apply.
 
-For all the other data sources, Pimcore needs a trigger to start the import process. Following triggers
-are available. 
+For every other data source, configure a trigger in the **Execution** tab.
 
-### Manual Execution
-Clicking on the `Manual Execution Start` button in the configuration editor manually starts the import.
+## Manual Execution
+
+**Start Import** in the **Manual Execution** panel starts the import immediately.
 
 ![Manual Execution Start](../img/execution_manual.png)
 
-### Cron-based Execution
-Besides the `Manual Execution Start` button there is also the possibility to configure a cron definition 
-based on which the import starts on a regular basis, e.g. every 10 minutes, once a day, etc.
+Save the configuration first. The button stays disabled while there are unsaved changes.
+
+Manual execution is the only trigger that ignores the **Active** flag on the **General** tab, so an inactive
+configuration can still be started by hand for testing.
+
+## Scheduled Execution
+
+Set **Schedule Type** to run the import automatically.
+
+### Recurring / Cron
+
+Runs the import on a cron expression, for example every 10 minutes or once a day. The **Cron Generator** helps build the
+expression, and [Crontab Guru](https://crontab.guru/) explains the syntax.
 
 ![Cron Definition](../img/execution_cron.png)
 
-See for example [Crontab Guru](https://crontab.guru/) for possibilities and a generator for generating
-cron definitions. 
+### One-time Job
 
-> Make sure `datahub:data-importer:execute-cron` command is setup properly during installation. 
+Runs the import once, at the date and time given in **Scheduled At**.
 
-### Command-based Execution
-It is also possible to start imports by executing the `datahub:data-importer:prepare-import` command on the commandline. 
+The job is skipped if the configuration was modified after the scheduled time, and it never runs twice.
 
+:::warning
 
+Both schedule types depend on the `datahub:data-importer:execute-cron` command running regularly. Without it, no
+scheduled import ever starts. See [Installation](../01_Installation/README.md#scheduled-imports).
 
-For further details on import execution also see [Import Execution Details](../04_Import_Execution_Details.md).  
-   
-   
-   
-   
+:::
+
+## Command-based Execution
+
+Start an import from the command line for one or more configurations:
+
+```bash
+bin/console datahub:data-importer:prepare-import <config_name> [<config_name> ...]
+```
+
+This ignores the configured schedule and prepares the import right away. Use it from deployment scripts and from
+external schedulers. Like the scheduled triggers, it skips configurations that are not active.
+
+## What Happens Next
+
+Every trigger only *prepares* the import: the source data is loaded, split into records, and queued. A separate queue
+worker imports the records. See [Import Execution Details](../04_Import_Execution_Details.md).

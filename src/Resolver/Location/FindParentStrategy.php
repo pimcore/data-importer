@@ -36,7 +36,7 @@ final class FindParentStrategy implements LocationStrategyInterface
 
     private string $findStrategy;
 
-    private string $fallbackPath;
+    private ?string $fallbackPath = null;
 
     private mixed $attributeDataObjectClassId;
 
@@ -80,7 +80,7 @@ final class FindParentStrategy implements LocationStrategyInterface
             }
 
             $this->attributeName = $settings['attributeName'];
-            $this->attributeLanguage = $settings['attributeLanguage'] ?? null;
+            $this->attributeLanguage = $settings['attributeLanguage'] ?? '';
         }
     }
 

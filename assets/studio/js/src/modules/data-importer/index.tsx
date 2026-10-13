@@ -43,12 +43,138 @@ import {
   DynamicTypeTransformerLoadDataObject,
   DynamicTypeTransformerImportAsset
 } from './dynamic-types/transformer'
+import { DynamicTypeInterpreterRegistry } from './dynamic-types/interpreter/dynamic-type-interpreter-registry'
+import { DynamicTypeInterpreterCsv } from './dynamic-types/interpreter/csv/dynamic-type-interpreter-csv'
+import { DynamicTypeInterpreterJson } from './dynamic-types/interpreter/json/dynamic-type-interpreter-json'
+import { DynamicTypeInterpreterSql } from './dynamic-types/interpreter/sql/dynamic-type-interpreter-sql'
+import { DynamicTypeInterpreterXml } from './dynamic-types/interpreter/xml/dynamic-type-interpreter-xml'
+import { DynamicTypeInterpreterXlsx } from './dynamic-types/interpreter/xlsx/dynamic-type-interpreter-xlsx'
+import { DynamicTypeLoaderRegistry } from './dynamic-types/loader/dynamic-type-loader-registry'
+import { DynamicTypeLoaderAsset } from './dynamic-types/loader/asset/dynamic-type-loader-asset'
+import { DynamicTypeLoaderUpload } from './dynamic-types/loader/upload/dynamic-type-loader-upload'
+import { DynamicTypeLoaderHttp } from './dynamic-types/loader/http/dynamic-type-loader-http'
+import { DynamicTypeLoaderSftp } from './dynamic-types/loader/sftp/dynamic-type-loader-sftp'
+import { DynamicTypeLoaderPush } from './dynamic-types/loader/push/dynamic-type-loader-push'
+import { DynamicTypeLoaderSql } from './dynamic-types/loader/sql/dynamic-type-loader-sql'
+import { DynamicTypeDataTargetRegistry } from './dynamic-types/data-target/dynamic-type-data-target-registry'
+import { DynamicTypeDataTargetDirect } from './dynamic-types/data-target/direct/dynamic-type-data-target-direct'
+import { DynamicTypeDataTargetClassificationstore } from './dynamic-types/data-target/classificationstore/dynamic-type-data-target-classificationstore'
+import { DynamicTypeDataTargetClassificationstoreBatch } from './dynamic-types/data-target/classificationstore/dynamic-type-data-target-classificationstore-batch'
+import { DynamicTypeDataTargetManyToManyRelation } from './dynamic-types/data-target/many-to-many-relation/dynamic-type-data-target-many-to-many-relation'
+import { DynamicTypeResolverRegistry } from './dynamic-types/resolver/dynamic-type-resolver-registry'
+import { DynamicTypeResolverNotLoad } from './dynamic-types/resolver/loading-strategy/not-load/dynamic-type-resolver-not-load'
+import { DynamicTypeResolverId } from './dynamic-types/resolver/loading-strategy/id/dynamic-type-resolver-id'
+import { DynamicTypeResolverPath } from './dynamic-types/resolver/loading-strategy/path/dynamic-type-resolver-path'
+import { DynamicTypeResolverAttribute } from './dynamic-types/resolver/loading-strategy/attribute/dynamic-type-resolver-attribute'
+import { DynamicTypeResolverStaticPathLocationCreation } from './dynamic-types/resolver/create-location-strategy/static-path/dynamic-type-resolver-static-path-location-creation'
+import { DynamicTypeResolverFindOrCreateFolderLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-creation'
+import { DynamicTypeResolverFindParentLocationCreation } from './dynamic-types/resolver/create-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-creation'
+import { DynamicTypeResolverDoNotCreateLocation } from './dynamic-types/resolver/create-location-strategy/do-not-create/dynamic-type-resolver-do-not-create-location'
+import { DynamicTypeResolverNoChangeLocationUpdate } from './dynamic-types/resolver/update-location-strategy/no-change/dynamic-type-resolver-no-change-location-update'
+import { DynamicTypeResolverStaticPathLocationUpdate } from './dynamic-types/resolver/update-location-strategy/static-path/dynamic-type-resolver-static-path-location-update'
+import { DynamicTypeResolverFindOrCreateFolderLocationUpdate } from './dynamic-types/resolver/update-location-strategy/find-or-create-folder/dynamic-type-resolver-find-or-create-folder-location-update'
+import { DynamicTypeResolverFindParentLocationUpdate } from './dynamic-types/resolver/update-location-strategy/find-parent/dynamic-type-resolver-find-parent-location-update'
+import { DynamicTypeResolverNoChangeUnpublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-unpublish-new/dynamic-type-resolver-no-change-unpublish-new'
+import { DynamicTypeResolverNoChangePublishNew } from './dynamic-types/resolver/publishing-strategy/no-change-publish-new/dynamic-type-resolver-no-change-publish-new'
+import { DynamicTypeResolverAlwaysPublish } from './dynamic-types/resolver/publishing-strategy/always-publish/dynamic-type-resolver-always-publish'
+import { DynamicTypeResolverAttributeBasedPublishing } from './dynamic-types/resolver/publishing-strategy/attribute-based/dynamic-type-resolver-attribute-based-publishing'
 
 export const DataImporterModule: AbstractModule = {
   onInit: (): void => {
     // ── Data Hub adapter ────────────────────────────────────────────────────
     const adapterRegistry = container.get<DynamicTypeDataHubAdapterRegistry>(dataHubServiceIds['DataHub/DynamicTypes/Adapter/Registry'])
     adapterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Adapter/DataImporterDataObject']))
+
+    // ── Interpreter registry ────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry']).to(DynamicTypeInterpreterRegistry).inSingletonScope()
+
+    // Bind types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']).to(DynamicTypeInterpreterCsv).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']).to(DynamicTypeInterpreterJson).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']).to(DynamicTypeInterpreterXml).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']).to(DynamicTypeInterpreterXlsx).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']).to(DynamicTypeInterpreterSql).inSingletonScope()
+
+    // Register types to registry — order here determines the dropdown/panel order in the UI
+    const interpreterRegistry = container.get<DynamicTypeInterpreterRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Registry'])
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Csv']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Json']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xml']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Xlsx']))
+    interpreterRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Interpreter/Sql']))
+
+    // ── Loader registry ─────────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry']).to(DynamicTypeLoaderRegistry).inSingletonScope()
+
+    // Bind types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Asset']).to(DynamicTypeLoaderAsset).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Upload']).to(DynamicTypeLoaderUpload).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Http']).to(DynamicTypeLoaderHttp).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sftp']).to(DynamicTypeLoaderSftp).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Push']).to(DynamicTypeLoaderPush).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sql']).to(DynamicTypeLoaderSql).inSingletonScope()
+
+    // Register types to registry
+    const loaderRegistry = container.get<DynamicTypeLoaderRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry'])
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Asset']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Upload']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Http']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sftp']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Push']))
+    loaderRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/Loader/Sql']))
+
+    // ── Resolver registry ───────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Registry']).to(DynamicTypeResolverRegistry).inSingletonScope()
+
+    // Bind loading types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/NotLoad']).to(DynamicTypeResolverNotLoad).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Id']).to(DynamicTypeResolverId).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Path']).to(DynamicTypeResolverPath).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute']).to(DynamicTypeResolverAttribute).inSingletonScope()
+
+    // Bind create location types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath']).to(DynamicTypeResolverStaticPathLocationCreation).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder']).to(DynamicTypeResolverFindOrCreateFolderLocationCreation).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent']).to(DynamicTypeResolverFindParentLocationCreation).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate']).to(DynamicTypeResolverDoNotCreateLocation).inSingletonScope()
+
+    // Bind update location types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/NoChange']).to(DynamicTypeResolverNoChangeLocationUpdate).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath']).to(DynamicTypeResolverStaticPathLocationUpdate).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder']).to(DynamicTypeResolverFindOrCreateFolderLocationUpdate).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindParent']).to(DynamicTypeResolverFindParentLocationUpdate).inSingletonScope()
+
+    // Bind publishing types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew']).to(DynamicTypeResolverNoChangeUnpublishNew).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew']).to(DynamicTypeResolverNoChangePublishNew).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish']).to(DynamicTypeResolverAlwaysPublish).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased']).to(DynamicTypeResolverAttributeBasedPublishing).inSingletonScope()
+
+    // Register all types into the registry — order here determines the dropdown order in the UI
+    const resolverRegistry = container.get<DynamicTypeResolverRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Resolver/Registry'])
+
+    const allResolverServiceIds = [
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/NotLoad'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Id'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Path'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Loading/Attribute'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/StaticPath'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindOrCreateFolder'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/FindParent'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Creation/DoNotCreate'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/NoChange'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/StaticPath'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindOrCreateFolder'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Location/Update/FindParent'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangeUnpublishNew'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/NoChangePublishNew'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AlwaysPublish'],
+      bundleServiceIds['DataImporter/DynamicTypes/Resolver/Publishing/AttributeBased']
+    ] as const
+
+    for (const serviceId of allResolverServiceIds) {
+      resolverRegistry.registerDynamicType(container.get(serviceId))
+    }
 
     // ── Transformer registry ────────────────────────────────────────────────
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Registry']).to(DynamicTypeTransformerRegistry).inSingletonScope()
@@ -124,5 +250,22 @@ export const DataImporterModule: AbstractModule = {
     for (const serviceId of allTransformerServiceIds) {
       transformerRegistry.registerDynamicType(container.get(serviceId))
     }
+
+    // ── Data Target registry ────────────────────────────────────────────────
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Registry']).to(DynamicTypeDataTargetRegistry).inSingletonScope()
+
+    // Data Target types
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Direct']).to(DynamicTypeDataTargetDirect).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Classificationstore']).to(DynamicTypeDataTargetClassificationstore).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch']).to(DynamicTypeDataTargetClassificationstoreBatch).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ManyToManyRelation']).to(DynamicTypeDataTargetManyToManyRelation).inSingletonScope()
+
+    // Register all types into the registry
+    const targetRegistry = container.get<DynamicTypeDataTargetRegistry>(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Registry'])
+
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Direct']))
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/Classificationstore']))
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ClassificationStoreBatch']))
+    targetRegistry.registerDynamicType(container.get(bundleServiceIds['DataImporter/DynamicTypes/DataTarget/ManyToManyRelation']))
   }
 }

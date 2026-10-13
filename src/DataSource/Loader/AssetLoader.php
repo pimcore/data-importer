@@ -47,6 +47,10 @@ final class AssetLoader implements DataLoaderInterface
 
     public function cleanup(): void
     {
-        unlink($this->temporaryFile);
+        if ($this->temporaryFile !== null && is_file($this->temporaryFile)) {
+            unlink($this->temporaryFile);
+        }
+
+        $this->temporaryFile = null;
     }
 }

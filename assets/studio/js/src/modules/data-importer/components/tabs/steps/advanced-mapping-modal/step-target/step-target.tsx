@@ -8,186 +8,34 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Text } from '@pimcore/studio-ui-bundle/components'
-import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey } from '../../../../../types'
-import { useResultPreviewContext } from '../result-preview/result-preview-context'
-import {
-  useBundleDataImporterClassificationstoreLoadAttributesQuery,
-  useBundleDataImporterClassificationstoreLoadKeyNameQuery
-} from '../../../../../data-importer-api-slice.gen'
+import { type ClassAttribute, type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './step-target.styles'
-import { ClassificationStoreKeyModal } from './classification-store-key-modal/classification-store-key-modal'
 import { StepTargetPreviewActions } from './step-target-preview-actions'
 import { StepTargetFields } from './step-target-fields'
+import { useClassAttributes } from './useClassAttributes'
 
 export interface StepTargetProps {
   attributesMap: Record<string, ClassAttribute[]>
   transformationResultType?: string
   dataTarget?: MappingConfigItem['dataTarget']
-  languageOptions: Array<{ value: string, label: string }>
   classId?: string
   onDataTargetChange: (dataTarget: MappingConfigItem['dataTarget']) => void
 }
 
-export const StepTarget = ({
-  attributesMap,
-  transformationResultType,
-  dataTarget,
-  languageOptions,
-  classId,
-  onDataTargetChange
-}: StepTargetProps): React.JSX.Element => {
+export const StepTarget = (props: StepTargetProps): React.JSX.Element => {
+  const { classId, transformationResultType, dataTarget, onDataTargetChange } = props
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { isFetchingAttributes, calculateTypeError } = useResultPreviewContext()
-  const [keyModalOpen, setKeyModalOpen] = useState(false)
-
-  const prevTransformationResultTypeRef = useRef<string | undefined>(transformationResultType)
-
-  const isDirect = dataTarget?.type === 'direct'
-  const isClassificationStore = dataTarget?.type === 'classificationstore'
-  const isClassificationStoreBatch = dataTarget?.type === 'classificationstoreBatch'
-  const isManyToMany = dataTarget?.type === 'manyToManyRelation'
-
-  const validBatchTypes = useMemo(
-    () => new Set(['array', 'quantityValueArray', 'inputQuantityValueArray', 'dateArray']),
-    []
-  )
-  const validManyToManyTypes = useMemo(
-    () => new Set(['advancedDataObjectArray', 'dataObjectArray', 'assetArray', 'advancedAssetArray']),
-    []
-  )
-
-  const isBatchTypeValid = !isClassificationStoreBatch || validBatchTypes.has(transformationResultType ?? '')
-  const isManyToManyTypeValid = !isManyToMany || validManyToManyTypes.has(transformationResultType ?? '')
-  const hasTypeError = !isBatchTypeValid || !isManyToManyTypeValid
-
-  const attrMapKey = resolveAttrMapKey(transformationResultType)
-  const defaultAttributes: ClassAttribute[] = attributesMap[attrMapKey] ?? []
-
-  const {
-    data: classificationStoreAttributesResponse,
-    isFetching: isFetchingClassificationStoreAttributes
-  } = useBundleDataImporterClassificationstoreLoadAttributesQuery(
-    { classId: classId ?? '' },
-    {
-      skip: classId === undefined || (!isClassificationStore && !isClassificationStoreBatch)
-    }
-  )
-
-  const classificationStoreAttributes: ClassAttribute[] = useMemo(() => {
-    const rawAttributes = classificationStoreAttributesResponse?.attributes ?? []
-    return (rawAttributes as Array<{ key?: string, title?: string, name?: string, localized?: boolean }>)
-      .filter((attribute) => attribute.key !== undefined)
-      .map((attribute) => ({
-        key: attribute.key ?? '',
-        title: attribute.title ?? attribute.name ?? attribute.key ?? '',
-        localized: attribute.localized ?? false
-      }))
-  }, [classificationStoreAttributesResponse?.attributes])
-
-  const attributes = isClassificationStore || isClassificationStoreBatch
-    ? classificationStoreAttributes
-    : defaultAttributes
-
-  const attributeOptions = calculateTypeError !== undefined ? [] : attributes.map(a => ({ value: a.key, label: a.title }))
-  const isLocalized = attributes.find(a => a.key === dataTarget?.settings?.fieldName)?.localized ?? false
-
-  const writeIfNotEmpty = dataTarget?.settings?.writeIfTargetIsNotEmpty ?? false
-  const showOverwriteMode = isManyToMany && writeIfNotEmpty
-  const showWriteSettings = isDirect || isManyToMany
-
-  const keyId = dataTarget?.settings?.keyId as string | undefined
-  const canOpenKeyModal =
-    classId !== undefined &&
-    dataTarget?.settings?.fieldName !== undefined &&
-    transformationResultType !== undefined &&
-    transformationResultType !== '' &&
-    !hasTypeError
-
-  const { data: keyNameResponse } = useBundleDataImporterClassificationstoreLoadKeyNameQuery(
-    { keyId: keyId ?? '' },
-    { skip: keyId === undefined || keyId === '' }
-  )
-
-  const keyLabel = useMemo(() => {
-    if (keyId === undefined || keyId === '') {
-      return t('data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder')
-    }
-
-    if (keyNameResponse?.groupName !== undefined && keyNameResponse?.keyName !== undefined) {
-      return t('data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group', {
-        key: keyNameResponse.keyName,
-        group: keyNameResponse.groupName
-      })
-    }
-
-    return keyId
-  }, [keyId, keyNameResponse?.groupName, keyNameResponse?.keyName, t])
-
-  const typeErrorMessage = useMemo(() => {
-    if (!isBatchTypeValid) {
-      return t('data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch')
-    }
-    if (!isManyToManyTypeValid) {
-      return t('data-importer.mapping.advanced-modal.step-target.type-error.manyToManyRelation')
-    }
-    return undefined
-  }, [isBatchTypeValid, isManyToManyTypeValid, t])
-
-  // When writeIfTargetIsNotEmpty is turned off, clear overwriteMode
-  useEffect(() => {
-    if (!showWriteSettings) return
-
-    if (!writeIfNotEmpty && (dataTarget?.settings?.overwriteMode !== undefined || dataTarget?.settings?.writeIfSourceIsEmpty === true)) {
-      onDataTargetChange({
-        ...dataTarget,
-        settings: {
-          ...dataTarget.settings,
-          overwriteMode: undefined,
-          writeIfSourceIsEmpty: false
-        }
-      })
-    }
-  }, [writeIfNotEmpty, showWriteSettings])
-
-  // Match ExtJS behavior: changing transformation result type invalidates previously selected classification store key.
-  useEffect(() => {
-    if (prevTransformationResultTypeRef.current === transformationResultType) return
-    prevTransformationResultTypeRef.current = transformationResultType
-
-    if ((isClassificationStore || isClassificationStoreBatch) && dataTarget?.settings?.keyId !== undefined) {
-      onDataTargetChange({
-        ...dataTarget,
-        settings: {
-          ...dataTarget.settings,
-          keyId: undefined
-        }
-      })
-    }
-  }, [transformationResultType, isClassificationStore, isClassificationStoreBatch])
-
-  // Reset fieldName when it no longer exists in the loaded attributes or when type calculation failed
-  useEffect(() => {
-    if (isFetchingAttributes) return
-    const currentFieldName = dataTarget?.settings?.fieldName
-    if (currentFieldName === undefined) return
-    if (!attributeOptions.some(a => a.value === currentFieldName)) {
-      onDataTargetChange({
-        ...dataTarget,
-        settings: { ...dataTarget?.settings, fieldName: undefined, language: undefined }
-      })
-    }
-  }, [attributeOptions, isFetchingAttributes])
+  const { classFieldOptions, isLocalized } = useClassAttributes(props)
 
   return (
     <Flex
       className={ styles.twoColumnLayout }
       gap="extra-small"
     >
-
       <Flex
         className={ styles.leftColumn }
         vertical
@@ -200,51 +48,21 @@ export const StepTarget = ({
             className={ styles.leftHeaderTitle }
             strong
           >
-            { t('data-importer.mapping.advanced-modal.step-target') }
+            {t('data-importer.mapping.advanced-modal.step-target')}
           </Text>
         </Flex>
 
         <StepTargetFields
-          attributeOptions={ attributeOptions }
-          canOpenKeyModal={ canOpenKeyModal }
+          classFieldOptions={ classFieldOptions }
+          classId={ classId }
           dataTarget={ dataTarget }
-          hasTypeError={ hasTypeError }
-          isClassificationStore={ isClassificationStore }
-          isClassificationStoreBatch={ isClassificationStoreBatch }
-          isFetchingClassificationStoreAttributes={ isFetchingClassificationStoreAttributes || isFetchingAttributes }
           isLocalized={ isLocalized }
-          keyLabel={ keyLabel }
-          languageOptions={ languageOptions }
           onDataTargetChange={ onDataTargetChange }
-          setKeyModalOpen={ setKeyModalOpen }
-          showOverwriteMode={ showOverwriteMode }
-          showWriteSettings={ showWriteSettings }
-          typeErrorMessage={ typeErrorMessage }
+          transformationResultType={ transformationResultType }
         />
       </Flex>
 
       <StepTargetPreviewActions />
-
-      { isClassificationStore && classId !== undefined && dataTarget?.settings?.fieldName !== undefined && transformationResultType !== undefined && (
-        <ClassificationStoreKeyModal
-          classId={ classId }
-          fieldName={ dataTarget.settings.fieldName }
-          onClose={ () => { setKeyModalOpen(false) } }
-          onSelect={ (selectedKeyId) => {
-            onDataTargetChange({
-              ...dataTarget,
-              settings: {
-                ...dataTarget?.settings,
-                keyId: selectedKeyId
-              }
-            })
-            setKeyModalOpen(false)
-          } }
-          open={ keyModalOpen }
-          transformationResultType={ transformationResultType }
-        />
-      ) }
-
     </Flex>
   )
 }

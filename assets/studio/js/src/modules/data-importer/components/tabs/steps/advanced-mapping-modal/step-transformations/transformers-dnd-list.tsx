@@ -58,7 +58,7 @@ export const TransformersDndList = ({
       >
         { items.map((item, index) => {
           const itemType = typeof item.type === 'string' ? item.type : ''
-          const transformerType = transformerRegistry.getDynamicType(itemType)
+          const transformerType = transformerRegistry.getDynamicType(itemType, false)
           const itemSettings = (item.settings ?? {})
 
           return (
@@ -83,7 +83,7 @@ export const TransformersDndList = ({
           if (activeIndex === -1) return null
           const activeItem = items[activeIndex]
           const activeItemType = typeof activeItem.type === 'string' ? activeItem.type : ''
-          const transformerType = transformerRegistry.getDynamicType(activeItemType)
+          const transformerType = transformerRegistry.getDynamicType(activeItemType, false)
           const activeItemSettings = (activeItem.settings ?? {})
           return (
             <div className={ styles.transformerCardOverlay }>

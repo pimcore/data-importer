@@ -105,7 +105,7 @@ export const StepTransformations = ({
   )
 
   const transformerDropdownItems = useMemo((): Array<{ key: string, label: string, children: Array<{ key: string, label: string }> }> => {
-    const allTypes = transformerRegistry.getAllTypes()
+    const allTypes = transformerRegistry.getDynamicTypes()
     const byGroup = (group: string): Array<{ key: string, label: string }> => allTypes
       .filter(t => t.group === group)
       .map(t => ({ key: t.id, label: t.label }))

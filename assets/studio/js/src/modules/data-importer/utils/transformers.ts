@@ -64,8 +64,8 @@ export interface BackendConfiguration {
   processingConfig?: ProcessingConfig
   executionConfig?: ExecutionConfig
   permissions?: {
-    roles?: BackendPermission[]
-    users?: BackendPermission[]
+    role?: BackendPermission[]
+    user?: BackendPermission[]
   }
   [key: string]: any
 }
@@ -92,15 +92,15 @@ export function transformPermissionFromBackend (backendPermission: BackendPermis
 
 export function transformPermissionsToBackend (permissions: DataImporterFormValues['permissions'] | undefined): BackendConfiguration['permissions'] {
   return {
-    roles: (permissions?.roles ?? []).map(transformPermissionToBackend),
-    users: (permissions?.users ?? []).map(transformPermissionToBackend)
+    role: (permissions?.roles ?? []).map(transformPermissionToBackend),
+    user: (permissions?.users ?? []).map(transformPermissionToBackend)
   }
 }
 
 export function transformPermissionsFromBackend (backendPermissions: BackendConfiguration['permissions']): DataImporterFormValues['permissions'] {
   return {
-    roles: (backendPermissions?.roles ?? []).map(transformPermissionFromBackend),
-    users: (backendPermissions?.users ?? []).map(transformPermissionFromBackend)
+    roles: (backendPermissions?.role ?? []).map(transformPermissionFromBackend),
+    users: (backendPermissions?.user ?? []).map(transformPermissionFromBackend)
   }
 }
 

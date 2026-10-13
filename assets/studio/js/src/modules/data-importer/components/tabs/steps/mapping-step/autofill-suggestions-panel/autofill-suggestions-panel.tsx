@@ -192,6 +192,7 @@ export function applySelectedSuggestions (
       s.sourceLabel,
       'autofill',
       s.targetFieldName,
-      s.language ?? undefined
+      s.language ?? undefined,
+      s.transformationResultType
     ))
 }

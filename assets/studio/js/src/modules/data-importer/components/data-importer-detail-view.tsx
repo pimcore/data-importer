@@ -10,12 +10,14 @@
 
 import React, { useEffect, useMemo } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, ConfigToolbar, useDetailView } from '@pimcore/data-hub'
+import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, BaseDetailView, type TabItem, ConfigToolbar, useDetailView, trackConfigError } from '@pimcore/data-hub'
 import { useBundleDataImporterConfigGetQuery, useBundleDataImporterConfigSaveMutation } from '../data-importer-api-slice-enhanced'
-import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
+import { ApiError, isBundleActive } from '@pimcore/studio-ui-bundle/modules/app'
 import { isNil } from 'lodash'
 import { type DataImporterFormValues } from '../types'
 import { transformBackendToForm, transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
+import { resolveConfigCapabilities, type ConfigGeneralSettings, type ConfigUserPermissions } from '../utils/config-capabilities'
+import { ConfigCapabilitiesProvider } from './config-capabilities-context'
 import { DataSetupTab } from './tabs/data-setup-tab'
 import { ExecutionTab } from './tabs/execution-tab'
 import { ImportLogsTab } from './tabs/import-logs-tab'
@@ -28,20 +30,14 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     { name: configName },
     { refetchOnMountOrArgChange: true }
   )
-  const [updateConfig, { error: updateError, isLoading: isSaving }] = useBundleDataImporterConfigSaveMutation()
+  const [updateConfig, { isLoading: isSaving }] = useBundleDataImporterConfigSaveMutation()
 
-  // Error tracking
+  // Save errors are surfaced centrally by useDetailView; only the fetch error is reported here.
   useEffect(() => {
     if (!isNil(fetchError)) {
-      trackError(new ApiError(fetchError))
+      trackConfigError(fetchError)
     }
   }, [fetchError])
-
-  useEffect(() => {
-    if (!isNil(updateError)) {
-      trackError(new ApiError(updateError))
-    }
-  }, [updateError])
 
   const loading = isLoading || isFetching
 
@@ -49,7 +45,14 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     () => (configData?.configuration ?? {}) as BackendConfiguration,
     [configData?.configuration]
   )
-  const isWriteable = configData?.userPermissions?.update ?? true
+  const capabilities = useMemo(
+    () => resolveConfigCapabilities(
+      configData?.userPermissions as ConfigUserPermissions | undefined,
+      backendConfig?.general as ConfigGeneralSettings | undefined
+    ),
+    [configData?.userPermissions, backendConfig?.general]
+  )
+  const { canSaveConfig, canDeleteConfig, saveDisabledTooltipKey } = capabilities
 
   const handleSaveToApi = async (updatedConfig: BackendConfiguration, modificationDate: number): Promise<{ modificationDate?: number }> => {
     const response = await updateConfig({
@@ -74,6 +77,7 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     modificationDate: configData?.modificationDate,
     isLoading: loading,
     requestId,
+    isWriteable: canSaveConfig,
     transformToForm: transformBackendToForm,
     transformToBackend: transformFormToBackend,
     onSave: handleSaveToApi,
@@ -102,42 +106,50 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
         isDirty={ isDirty }
                 />
     },
-    {
-      key: 'import-logs',
-      label: t('data-importer.tabs.import-logs'),
-      fullHeight: true,
-      children: <ImportLogsTab configName={ configName } />
-    },
+    // Import logs are read through the application logger, so the tab is only
+    // available when that bundle is enabled and installed.
+    ...(isBundleActive('PimcoreApplicationLoggerBundle')
+      ? [{
+          key: 'import-logs',
+          label: t('data-importer.tabs.import-logs'),
+          fullHeight: true,
+          children: <ImportLogsTab configName={ configName } />
+        }]
+      : []),
     {
       key: 'permissions',
       label: t('data-importer.tabs.permissions'),
-      children: <PermissionsTab isWriteable={ isWriteable } />
+      children: <PermissionsTab isWriteable={ canSaveConfig } />
     }
   ]
 
   const toolbar = (
     <ConfigToolbar
+      canDelete={ canDeleteConfig }
       configName={ configName }
       isDirty={ isDirty }
       isLoading={ loading }
       isSaving={ isSaving }
-      isWriteable={ isWriteable }
+      isWriteable={ canSaveConfig }
       onDelete={ onDelete }
       onRefresh={ refetch }
       onSave={ handleSave }
+      saveDisabledTooltipKey={ saveDisabledTooltipKey }
     />
   )
 
   return (
-    <BaseDetailView
-      disabled={ !isWriteable }
-      form={ form }
-      initialValues={ initialValues }
-      isLoading={ loading }
-      onValuesChange={ handleValuesChange }
-      requestId={ requestId ?? '' }
-      tabs={ tabs }
-      toolbar={ toolbar }
-    />
+    <ConfigCapabilitiesProvider capabilities={ capabilities }>
+      <BaseDetailView
+        disabled={ !canSaveConfig }
+        form={ form }
+        initialValues={ initialValues }
+        isLoading={ loading }
+        onValuesChange={ handleValuesChange }
+        requestId={ requestId ?? '' }
+        tabs={ tabs }
+        toolbar={ toolbar }
+      />
+    </ConfigCapabilitiesProvider>
   )
 }

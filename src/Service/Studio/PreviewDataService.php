@@ -41,7 +41,13 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
     use ConfigurationPermissionTrait;
     use CurrentUserResolverTrait;
 
-    private const int MAX_FILE_SIZE = 10485760; // 10MB
+    private const int MAX_FILE_SIZE = 52428800; // 50MB
+
+    private const int MAX_FULL_LOAD_FILE_SIZE = 10485760; // 10MB
+
+    // interpreters that still load the entire preview file into memory,
+    // so they keep the lower file size limit
+    private const array FULL_LOAD_INTERPRETERS = ['json', 'xml', 'sql'];
 
     public function __construct(
         private PreviewHydratorInterface $previewHydrator,
@@ -66,8 +72,12 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
                 throw new EnvironmentException('Uploaded file is empty');
             }
 
-            if ($file->getSize() > self::MAX_FILE_SIZE) {
-                throw new MaxFileSizeExceededException(self::MAX_FILE_SIZE);
+            $maxFileSize = $this->getMaxPreviewFileSize(
+                $this->configurationPreparationService->prepareConfiguration($name, null)
+            );
+
+            if ($file->getSize() > $maxFileSize) {
+                throw new MaxFileSizeExceededException($maxFileSize);
             }
 
             $user = $this->resolveCurrentUser();
@@ -110,8 +120,10 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
                 throw new EnvironmentException('File is empty');
             }
 
-            if (filesize($sourcePath) > self::MAX_FILE_SIZE) {
-                throw new MaxFileSizeExceededException(self::MAX_FILE_SIZE);
+            $maxFileSize = $this->getMaxPreviewFileSize($preparedConfig);
+
+            if (filesize($sourcePath) > $maxFileSize) {
+                throw new MaxFileSizeExceededException($maxFileSize);
             }
 
             $user = $this->resolveCurrentUser();
@@ -120,6 +132,17 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         } finally {
             $loader->cleanup();
         }
+    }
+
+    private function getMaxPreviewFileSize(array $preparedConfig): int
+    {
+        $interpreterType = $preparedConfig['interpreterConfig']['type'] ?? null;
+
+        if (in_array($interpreterType, self::FULL_LOAD_INTERPRETERS, true)) {
+            return self::MAX_FULL_LOAD_FILE_SIZE;
+        }
+
+        return self::MAX_FILE_SIZE;
     }
 
     public function loadPreviewData(

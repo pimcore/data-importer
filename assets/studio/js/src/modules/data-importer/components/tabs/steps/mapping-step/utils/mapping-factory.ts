@@ -18,14 +18,15 @@ export function createMappingItem (
   label: string,
   mode: MappingCreateMode = 'manual',
   targetFieldName?: string,
-  language?: string
+  language?: string,
+  transformationResultType?: string
 ): MappingConfigItem {
   const resolvedFieldName = targetFieldName ?? dataIndex
   return {
     mappingId: uuid(),
     label,
     dataSourceIndex: [dataIndex],
-    transformationResultType: mode === 'autofill' ? 'default' : undefined,
+    transformationResultType: mode === 'autofill' ? (transformationResultType ?? 'default') : undefined,
     dataTarget: {
       type: 'direct',
       settings: {

@@ -1,0 +1,86 @@
+<?php
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\Controller;
+
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
+use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Logger;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\Routing\Attribute\Route;
+
+class PushImportController
+{
+    protected function validateAuthorization(Request $request, PushLoader $loader)
+    {
+        if ($request->headers->has('authorization') === false) {
+            throw new AccessDeniedHttpException('Missing authorization');
+        }
+
+        $header = $request->headers->get('authorization');
+
+        $token = trim((string) preg_replace('/^(?:\s+)?Bearer\s/', '', $header));
+
+        if (trim($token) !== trim($loader->getApiKey())) {
+            throw new AccessDeniedHttpException('Invalid token');
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param ConfigurationPreparationService $configurationLoaderService
+     * @param DataLoaderFactory $dataLoaderFactory
+     * @param ImportPreparationService $importPreparationService
+     *
+     * @return JsonResponse
+     */
+    #[Route(
+        '/pimcore-datahub-import/{config}/push',
+        name: 'data_hub_data_importer_push',
+        methods: ['POST'],
+        requirements: ['config' => '[\w-]+'],
+        options: ['expose' => true]
+    )]
+    public function pushAction(
+        string $config,
+        Request $request,
+        ConfigurationPreparationService $configurationLoaderService,
+        DataLoaderFactory $dataLoaderFactory,
+        ImportPreparationService $importPreparationService
+    ) {
+        try {
+            $configuration = $configurationLoaderService->prepareConfiguration($config, null, true);
+            $loader = $dataLoaderFactory->loadDataLoader($configuration['loaderConfig']);
+
+            if (!$loader instanceof PushLoader) {
+                return new JsonResponse(['success' => false, 'message' => 'Endpoint not has no Push data source configured.'], 405);
+            }
+
+            $this->validateAuthorization($request, $loader);
+            $success = $importPreparationService->prepareImport($config, false, $loader->isIgnoreNotEmptyQueue());
+
+            if ($success) {
+                return new JsonResponse(['success' => $success]);
+            } else {
+                return new JsonResponse(['success' => false, 'message' => 'Import not prepared, see application log for details.'], 405);
+            }
+        } catch (\Exception $e) {
+            Logger::error($e);
+
+            return new JsonResponse(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+}
