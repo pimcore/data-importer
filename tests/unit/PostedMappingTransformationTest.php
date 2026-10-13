@@ -25,12 +25,14 @@ use Pimcore\Bundle\StudioBackendBundle\EventSubscriber\ApiExceptionSubscriber;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Model\User;
 use Pimcore\Security\User\User as SecurityUser;
+use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Exception\MissingConstructorArgumentsException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Throwable;
@@ -49,7 +51,10 @@ class PostedMappingTransformationTest extends Unit
 
     protected function _before(): void
     {
-        $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_ADAPTER]);
+        $this->logInWith([
+            PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG,
+            PermissionConstants::PLUGIN_DATA_IMPORTER_ADAPTER,
+        ]);
     }
 
     protected function _after(): void
@@ -168,7 +173,10 @@ class PostedMappingTransformationTest extends Unit
 
     public function testTheDataHubAdminMayPreview(): void
     {
-        $this->logInWith([PermissionConstants::PLUGIN_DATA_IMPORTER_ADMIN]);
+        $this->logInWith([
+            PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG,
+            PermissionConstants::PLUGIN_DATA_IMPORTER_ADMIN,
+        ]);
 
         $this->assertSame('default', $this->type(['dataSourceIndex' => ['sku']]));
     }
@@ -189,6 +197,26 @@ class PostedMappingTransformationTest extends Unit
         $this->expectException(ForbiddenException::class);
 
         $this->type(['dataSourceIndex' => ['sku']]);
+    }
+
+    /**
+     * Calling the controllers directly skips the route's guard, so its rule is checked here.
+     */
+    public function testBothRoutesNeedDataHubAccessLikeEveryImporterRoute(): void
+    {
+        $actions = [
+            [LoadTransformationResultController::class, 'loadTransformationResult'],
+            [CalculateTransformationResultTypeController::class, 'calculateTransformationResultType'],
+        ];
+
+        foreach ($actions as [$controller, $action]) {
+            $guards = array_map(
+                static fn ($attribute) => $attribute->newInstance()->attribute,
+                (new ReflectionMethod($controller, $action))->getAttributes(IsGranted::class)
+            );
+
+            $this->assertSame([PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG], $guards, $controller);
+        }
     }
 
     private function logInWith(array $permissions): void
