@@ -64,6 +64,59 @@ class DirectBrickFieldnameTest extends Unit
         static::assertSame('imported', $brick->getTitle());
     }
 
+    public function testSkippedEmptySourceDoesNotAttachNewBrick(): void
+    {
+        $element = $this->createObject(null);
+
+        $direct = new Direct();
+        $direct->setSettings([
+            'fieldName' => 'myBricks.inheritableBrick.title',
+            'writeIfSourceIsEmpty' => false,
+        ]);
+
+        $direct->assignData($element, '');
+
+        static::assertNull($element->getMyBricks()->getInheritableBrick());
+    }
+
+    public function testSkippedInheritedTargetDoesNotAttachNewBrick(): void
+    {
+        $parent = $this->createObject(null);
+        $parentBrick = new InheritableBrick($parent);
+        $parentBrick->setFieldname('myBricks');
+        $parentBrick->setTitle('inherited');
+        $parent->getMyBricks()->setInheritableBrick($parentBrick);
+        $element = $this->createObject($parent);
+
+        $direct = new Direct();
+        $direct->setSettings([
+            'fieldName' => 'myBricks.inheritableBrick.title',
+            'writeIfTargetIsNotEmpty' => false,
+        ]);
+
+        $direct->assignData($element, 'imported');
+
+        static::assertNull($element->getMyBricks()->getInheritableBrick());
+    }
+
+    public function testNonEmptySourceAttachesNewBrickAndWritesValue(): void
+    {
+        $element = $this->createObject(null);
+
+        $direct = new Direct();
+        $direct->setSettings([
+            'fieldName' => 'myBricks.inheritableBrick.title',
+            'writeIfSourceIsEmpty' => false,
+        ]);
+
+        $direct->assignData($element, 'imported');
+
+        $brick = $element->getMyBricks()->getInheritableBrick();
+        static::assertInstanceOf(InheritableBrick::class, $brick);
+        static::assertSame('myBricks', $brick->getFieldname());
+        static::assertSame('imported', $brick->getTitle());
+    }
+
     private function createObject(?Concrete $parent): Concrete
     {
         $classDefinition = new ClassDefinition();
