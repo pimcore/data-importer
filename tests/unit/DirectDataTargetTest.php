@@ -102,8 +102,31 @@ class DirectDataTargetTest extends Unit
         $variant = $this->createConcrete(AbstractObject::OBJECT_TYPE_VARIANT);
         $variant->setId(PHP_INT_MAX);
 
-        $this->expectException(InvalidInputException::class);
-        $this->createPathTarget()->assignData($variant, '/' . $this->rootFolderName . '/variants');
+        $path = '/' . $this->rootFolderName . '/variants';
+
+        try {
+            $this->createPathTarget()->assignData($variant, $path);
+            static::fail('Expected InvalidInputException');
+        } catch (InvalidInputException) {
+        }
+
+        // The rejected move must not leave the folder structure behind.
+        static::assertNull(DataObject::getByPath('/' . $this->rootFolderName));
+        static::assertSame(1, $variant->getParentId());
+    }
+
+    public function testExistingVariantKeepsCurrentParent(): void
+    {
+        $path = '/' . $this->rootFolderName . '/variants';
+        $parent = DataObject\Service::createFolderByPath($path);
+
+        $variant = $this->createConcrete(AbstractObject::OBJECT_TYPE_VARIANT);
+        $variant->setId(PHP_INT_MAX);
+        $variant->setParentId($parent->getId());
+
+        $this->createPathTarget()->assignData($variant, $path);
+
+        static::assertSame($parent->getId(), $variant->getParentId());
     }
 
     public function testParentOfNewVariantCanBeSet(): void

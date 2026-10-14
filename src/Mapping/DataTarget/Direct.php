@@ -19,6 +19,7 @@ use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\Element\Service as ElementService;
 
 /**
  * @internal
@@ -157,23 +158,46 @@ class Direct implements DataTargetInterface
         }
 
         // Like the find or create folder location strategy, an existing object at the path can be the parent as well.
-        $parent = DataObject::getByPath($path) ?? DataObject\Service::createFolderByPath($path);
-        if (!$parent instanceof DataObject) {
-            throw new InvalidInputException(sprintf('Could not find or create parent for path "%s".', $path));
-        }
+        // Folders are only created once the move is known to be allowed, so a rejected row leaves nothing behind.
+        $parent = $this->findParentByPath($path);
 
         // Same restriction as in the resolver: the parent of an existing variant cannot be changed anymore.
         if (
             $element->getId()
             && $element->getType() === AbstractObject::OBJECT_TYPE_VARIANT
-            && $parent->getId() !== $element->getParentId()
+            && $parent?->getId() !== $element->getParentId()
         ) {
             throw new InvalidInputException(
                 "Element with id `{$element->getId()}` is a variant and cannot change its parent anymore"
             );
         }
 
+        $parent ??= DataObject\Service::createFolderByPath($path);
+        if (!$parent instanceof DataObject) {
+            throw new InvalidInputException(sprintf('Could not find or create parent for path "%s".', $path));
+        }
+
         $element->setParent($parent);
+    }
+
+    /**
+     * Looks up an existing parent by the path as given, and by the path with sanitized keys as
+     * DataObject\Service::createFolderByPath() would create it, without creating anything.
+     */
+    private function findParentByPath(string $path): ?DataObject
+    {
+        $parent = DataObject::getByPath($path);
+        if ($parent instanceof DataObject) {
+            return $parent;
+        }
+
+        $keys = array_filter(explode('/', $path), static fn (string $key) => $key !== '');
+        $sanitizedPath = '/' . implode('/', array_map(
+            static fn (string $key) => ElementService::getValidKey($key, 'object'),
+            $keys
+        ));
+
+        return DataObject::getByPath($sanitizedPath);
     }
 
     /**
