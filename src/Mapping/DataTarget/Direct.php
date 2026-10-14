@@ -95,17 +95,23 @@ class Direct implements DataTargetInterface
             $brickGetter = 'get' . ucfirst($setterParts[1]);
             $brick = $brickContainer->$brickGetter();
 
-            if (empty($brick)) {
+            $isNewBrick = empty($brick);
+            if ($isNewBrick) {
+                // keep the new brick detached until the overwrite checks pass, so skipped writes
+                // do not leave an empty brick in the container
                 $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
                 $brick = new $brickClassName($element);
                 $brick->setFieldname($setterParts[0]);
-                $brickSetter = 'set' . ucfirst($setterParts[1]);
-                $brickContainer->$brickSetter($brick);
             }
 
             $getter = 'get' . ucfirst($setterParts[2]);
             if (!$this->checkAssignData($data, $brick, $getter)) {
                 return;
+            }
+
+            if ($isNewBrick) {
+                $brickSetter = 'set' . ucfirst($setterParts[1]);
+                $brickContainer->$brickSetter($brick);
             }
             $this->doAssignData($brick, $setterParts[2], $data);
         } else {
