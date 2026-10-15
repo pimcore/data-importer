@@ -15,6 +15,8 @@ import { ApiError } from '@pimcore/studio-ui-bundle/modules/app'
 import { withApiMessage } from '../utils/api-error-message'
 import { isNil } from 'lodash'
 import { type BackendConfiguration } from '../utils/transformers'
+import { resolveConfigCapabilities, type ConfigGeneralSettings, type ConfigUserPermissions } from '../utils/config-capabilities'
+import { ConfigCapabilitiesProvider } from './config-capabilities-context'
 import { DataImporterConfigEditor } from './data-importer-config-editor'
 
 export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataHubAdapterDetailViewProps): React.JSX.Element => {
@@ -38,11 +40,14 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
     () => (configData?.configuration ?? {}) as BackendConfiguration,
     [configData?.configuration]
   )
-  const userPermissions = (configData?.userPermissions ?? {}) as { update?: boolean, delete?: boolean }
-  const generalConfig = (backendConfig?.general ?? {}) as { writeable?: boolean }
-  const isWriteable = userPermissions.update === true && generalConfig.writeable !== false
-  const canDelete = userPermissions.delete === true && generalConfig.writeable !== false
-  const saveDisabledTooltipKey = generalConfig.writeable !== false && userPermissions.update !== true ? 'data-hub.config.no-update-permission' : 'config_not_writeable'
+  const capabilities = useMemo(
+    () => resolveConfigCapabilities(
+      configData?.userPermissions as ConfigUserPermissions | undefined,
+      backendConfig?.general as ConfigGeneralSettings | undefined
+    ),
+    [configData?.userPermissions, backendConfig?.general]
+  )
+  const { canSaveConfig, canDeleteConfig, saveDisabledTooltipKey } = capabilities
 
   const handleSaveToApi = async (updatedConfig: BackendConfiguration, modificationDate: number): Promise<{ modificationDate?: number }> => {
     const response = await updateConfig({
@@ -61,29 +66,31 @@ export const DataImporterDetailView = ({ configName, onChange, onDelete }: DataH
   }
 
   return (
-    <DataImporterConfigEditor
-      configName={ configName }
-      configuration={ backendConfig }
-      isLoading={ loading }
-      isWriteable={ isWriteable }
-      modificationDate={ configData?.modificationDate }
-      onChange={ onChange }
-      onSave={ handleSaveToApi }
-      renderToolbar={ ({ isDirty, onSave }) => (
-        <ConfigToolbar
-          canDelete={ canDelete }
-          configName={ configName }
-          isDirty={ isDirty }
-          isLoading={ loading }
-          isSaving={ isSaving }
-          isWriteable={ isWriteable }
-          onDelete={ onDelete }
-          onRefresh={ refetch }
-          onSave={ onSave }
-          saveDisabledTooltipKey={ saveDisabledTooltipKey }
-        />
-      ) }
-      requestId={ requestId }
-    />
+    <ConfigCapabilitiesProvider capabilities={ capabilities }>
+      <DataImporterConfigEditor
+        configName={ configName }
+        configuration={ backendConfig }
+        isLoading={ loading }
+        isWriteable={ canSaveConfig }
+        modificationDate={ configData?.modificationDate }
+        onChange={ onChange }
+        onSave={ handleSaveToApi }
+        renderToolbar={ ({ isDirty, onSave }) => (
+          <ConfigToolbar
+            canDelete={ canDeleteConfig }
+            configName={ configName }
+            isDirty={ isDirty }
+            isLoading={ loading }
+            isSaving={ isSaving }
+            isWriteable={ canSaveConfig }
+            onDelete={ onDelete }
+            onRefresh={ refetch }
+            onSave={ onSave }
+            saveDisabledTooltipKey={ saveDisabledTooltipKey }
+          />
+        ) }
+        requestId={ requestId }
+      />
+    </ConfigCapabilitiesProvider>
   )
 }

@@ -52,8 +52,7 @@ final class DataPreviewResponse implements AdditionalAttributesInterface
                     ),
                     new Property(
                         property: 'data',
-                        description: 'Cell data value. May be any JSON value (string, number, boolean, ' .
-                            'array, object or null) depending on the source data type.',
+                        description: 'Cell data value; may be any JSON type, depending on the source data type',
                         example: 'Example Product'
                     ),
                     new Property(

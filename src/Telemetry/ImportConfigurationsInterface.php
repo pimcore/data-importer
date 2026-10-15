@@ -24,4 +24,12 @@ interface ImportConfigurationsInterface
      * @return bool|null null when the configuration store could not be read - unknown, not unused
      */
     public function hasActive(): ?bool;
+
+    /**
+     * The execution configurations (schedule type, cron definition, scheduled date) of the active import
+     * configurations, as the store holds them.
+     *
+     * @return list<array<string, mixed>>|null null when the configuration store could not be read
+     */
+    public function activeExecutionConfigs(): ?array;
 }
