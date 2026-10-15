@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ColumnHeadersEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\DataPreviewEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
@@ -56,7 +57,8 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         private ConfigurationPreparationService $configurationPreparationService,
         private DataLoaderFactory $dataLoaderFactory,
         private InterpreterFactory $interpreterFactory,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private PreviewEventApplier $previewEventApplier
     ) {
     }
 
@@ -184,6 +186,12 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
             $preparedConfig['processingConfig']
         );
 
+        $previewFilePath = $this->previewEventApplier->applyToPath(
+            $name,
+            $preparedConfig['processingConfig'],
+            $previewFilePath
+        );
+
         if (!$interpreter->fileValid($previewFilePath)) {
             throw new EnvironmentException(
                 'Preview file is not valid for the configured interpreter. '
@@ -192,6 +200,12 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         }
 
         $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
+        $dataPreview = $this->previewEventApplier->applyToPreviewData(
+            $name,
+            $preparedConfig['processingConfig'],
+            $dataPreview,
+            $mappedColumns
+        );
 
         $preview = $dataPreview->getDataPreview();
         if (!$this->previewHydrator->isValidJson($preview)) {
