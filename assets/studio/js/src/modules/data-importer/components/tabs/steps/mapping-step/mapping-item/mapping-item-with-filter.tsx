@@ -106,6 +106,7 @@ export const MappingItemWithFilter = React.memo(({
           columnHeaderOptions={ columnHeaderOptions }
           configName={ configName }
           dataSourceIndex={ dataSourceIndex }
+          dataTargetType={ item.dataTarget?.type }
           expanded={ expanded }
           fieldIndex={ fieldIndex }
           itemLabel={ item.label }
