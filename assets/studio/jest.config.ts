@@ -10,16 +10,35 @@
 
 import { type Config } from 'jest'
 
+const transform: Config['transform'] = {
+  '^.+\\.(t|j)sx?$': ['@swc/jest', {
+    jsc: {
+      parser: { syntax: 'typescript', tsx: true, decorators: true },
+      transform: { react: { runtime: 'automatic' } }
+    }
+  }]
+}
+
+// Studio and Data Hub are federated remotes at runtime; tests mock what they use from them, one stub per entry
+const moduleNameMapper: Config['moduleNameMapper'] = {
+  '^@pimcore/studio-ui-bundle$': '<rootDir>/js/test/__mocks__/studio-ui-bundle/index',
+  '^@pimcore/studio-ui-bundle/(.+)$': '<rootDir>/js/test/__mocks__/studio-ui-bundle/$1',
+  '^@pimcore/data-hub$': '<rootDir>/js/test/__mocks__/data-hub/index'
+}
+
 const config: Config = {
-  testEnvironment: 'node',
-  transform: {
-    '^.+\\.(t|j)sx?$': ['@swc/jest', {
-      jsc: {
-        parser: { syntax: 'typescript', tsx: true, decorators: true },
-        transform: { react: { runtime: 'automatic' } }
-      }
-    }]
-  }
+  collectCoverageFrom: ['js/src/**/*.{ts,tsx}', '!js/src/**/*.test.{ts,tsx}'],
+  projects: [
+    { displayName: 'node', testEnvironment: 'node', testMatch: ['<rootDir>/js/**/*.test.ts'], transform, moduleNameMapper },
+    // components render into a DOM
+    {
+      displayName: 'dom',
+      testEnvironment: '<rootDir>/js/test/support/dom-environment.ts',
+      testMatch: ['<rootDir>/js/**/*.test.tsx'],
+      transform,
+      moduleNameMapper
+    }
+  ]
 }
 
 export default config

@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Données
 data-importer.mapping.advanced-modal.loading: Chargement…
 data-importer.mapping.advanced-modal.no-data: Aucune donnée
 data-importer.mapping.advanced-modal.no-preview: Aucun aperçu disponible
+data-importer.mapping.advanced-modal.preview-error: "L'aperçu n'a pas pu être créé"
 data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Nom du champ
 data-importer.mapping.advanced-modal.step-target.overwrite: Écraser

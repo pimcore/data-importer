@@ -40,6 +40,14 @@ const config: ConfigFile = {
     {
       pattern: 'bundleDataImporterConfigCalculateTransformationResultType',
       type: 'query'
+    },
+    {
+      pattern: 'bundleDataImporterMappingLoadTransformationResult',
+      type: 'query'
+    },
+    {
+      pattern: 'bundleDataImporterMappingCalculateTransformationResultType',
+      type: 'query'
     }
   ],
   outputFiles: {

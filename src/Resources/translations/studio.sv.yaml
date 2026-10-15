@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Data
 data-importer.mapping.advanced-modal.loading: Laddar…
 data-importer.mapping.advanced-modal.no-data: Inga data
 data-importer.mapping.advanced-modal.no-preview: Ingen förhandsvisning tillgänglig
+data-importer.mapping.advanced-modal.preview-error: Förhandsvisningen kunde inte skapas
 data-importer.mapping.advanced-modal.step-target.type: Typ
 data-importer.mapping.advanced-modal.step-target.field-name: Fältnamn
 data-importer.mapping.advanced-modal.step-target.overwrite: Skriv över

@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Dati
 data-importer.mapping.advanced-modal.loading: Caricamento…
 data-importer.mapping.advanced-modal.no-data: Nessun dato
 data-importer.mapping.advanced-modal.no-preview: Nessuna anteprima disponibile
+data-importer.mapping.advanced-modal.preview-error: "Impossibile creare l'anteprima"
 data-importer.mapping.advanced-modal.step-target.type: Tipo
 data-importer.mapping.advanced-modal.step-target.field-name: Nome campo
 data-importer.mapping.advanced-modal.step-target.overwrite: Sovrascrittura

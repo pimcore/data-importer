@@ -12,6 +12,8 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Utils\Constants;
 
+use Pimcore\Bundle\DataImporterBundle\Installer;
+
 /**
  * @internal
  */
@@ -28,4 +30,6 @@ final class PermissionConstants
     public const string PLUGIN_DATA_IMPORTER_PERMISSION_DELETE = 'delete';
 
     public const string PLUGIN_DATA_IMPORTER_ADMIN = 'plugin_datahub_admin';
+
+    public const string PLUGIN_DATA_IMPORTER_ADAPTER = Installer::DATAHUB_ADAPTER_PERMISSION;
 }

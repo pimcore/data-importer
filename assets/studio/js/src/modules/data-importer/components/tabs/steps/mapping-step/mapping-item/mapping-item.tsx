@@ -34,7 +34,6 @@ export interface MappingItemProps {
   mappingId: string
   remove: (index: number) => void
   onRemoveItem: (index: number) => void
-  configName: string
   columnHeaderOptions: Array<{ value: string, label: string }>
   classId: string | undefined
   /** Whether the panel is expanded (controlled) */
@@ -55,7 +54,6 @@ const MappingItemComponent = ({
   mappingId,
   remove,
   onRemoveItem,
-  configName,
   columnHeaderOptions,
   classId,
   expanded,
@@ -215,7 +213,6 @@ const MappingItemComponent = ({
           } }
           classId={ classId }
           columnHeaderOptions={ columnHeaderOptions }
-          configName={ configName }
           item={ (() => {
             const index = getCurrentIndexByMappingId()
             if (index < 0) return {}
@@ -267,7 +264,6 @@ function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProp
     prev.mappingId === next.mappingId &&
     prev.remove === next.remove &&
     prev.onRemoveItem === next.onRemoveItem &&
-    prev.configName === next.configName &&
     prev.columnHeaderOptions === next.columnHeaderOptions &&
     prev.classId === next.classId &&
     prev.expanded === next.expanded &&

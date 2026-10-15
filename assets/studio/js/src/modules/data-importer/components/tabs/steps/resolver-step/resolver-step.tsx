@@ -26,12 +26,11 @@ import { bundleServiceIds } from '../../../../../../config/service-ids'
 import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry'
 
 export interface ResolverStepProps {
-  configName: string
   columnHeaderOptions: Array<{ value: string, label: string }>
   isActive: boolean
 }
 
-export const ResolverStep = ({ configName: _configName, columnHeaderOptions, isActive }: ResolverStepProps): React.JSX.Element => {
+export const ResolverStep = ({ columnHeaderOptions, isActive }: ResolverStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const settings = useSettings()
 

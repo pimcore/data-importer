@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Dane
 data-importer.mapping.advanced-modal.loading: Ładowanie…
 data-importer.mapping.advanced-modal.no-data: Brak danych
 data-importer.mapping.advanced-modal.no-preview: Brak dostępnego podglądu
+data-importer.mapping.advanced-modal.preview-error: Nie można utworzyć podglądu
 data-importer.mapping.advanced-modal.step-target.type: Typ
 data-importer.mapping.advanced-modal.step-target.field-name: Nazwa pola
 data-importer.mapping.advanced-modal.step-target.overwrite: Nadpisz

@@ -58,6 +58,29 @@ const injectedRtkApi = api
                     }),
                     providesTags: ["Bundle Data Importer"],
                 }),
+            bundleDataImporterMappingCalculateTransformationResultType:
+                build.query<
+                    BundleDataImporterMappingCalculateTransformationResultTypeApiResponse,
+                    BundleDataImporterMappingCalculateTransformationResultTypeApiArg
+                >({
+                    query: (queryArg) => ({
+                        url: `/pimcore-studio/api/bundle/data-importer/mapping/transformation-result-type`,
+                        method: "POST",
+                        body: queryArg.bundleDataImporterCalculateTransformationResultTypeParameters,
+                    }),
+                    providesTags: ["Bundle Data Importer"],
+                }),
+            bundleDataImporterMappingLoadTransformationResult: build.query<
+                BundleDataImporterMappingLoadTransformationResultApiResponse,
+                BundleDataImporterMappingLoadTransformationResultApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/mapping/transformation-result`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterTransformationResultParameters,
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
             bundleDataImporterConfigCancelExecution: build.mutation<
                 BundleDataImporterConfigCancelExecutionApiResponse,
                 BundleDataImporterConfigCancelExecutionApiArg
@@ -270,6 +293,16 @@ export type BundleDataImporterConfigCalculateTransformationResultTypeApiArg = {
     name: string;
     bundleDataImporterCalculateTransformationResultTypeParameters: BundleDataImporterCalculateTransformationResultTypeParameters;
 };
+export type BundleDataImporterMappingCalculateTransformationResultTypeApiResponse =
+    /** status 200 The evaluated transformation result data type */ BundleDataImporterTransformationResultTypeResponse;
+export type BundleDataImporterMappingCalculateTransformationResultTypeApiArg = {
+    bundleDataImporterCalculateTransformationResultTypeParameters: BundleDataImporterCalculateTransformationResultTypeParameters;
+};
+export type BundleDataImporterMappingLoadTransformationResultApiResponse =
+    /** status 200 Transformation result preview strings for each mapping entry */ BundleDataImporterTransformationResultPreviewsResponse;
+export type BundleDataImporterMappingLoadTransformationResultApiArg = {
+    bundleDataImporterTransformationResultParameters: BundleDataImporterTransformationResultParameters;
+};
 export type BundleDataImporterConfigCancelExecutionApiResponse =
     /** status 200 Import execution cancelled and queue cleaned up successfully */ void;
 export type BundleDataImporterConfigCancelExecutionApiArg = {
@@ -455,6 +488,24 @@ export type BundleDataImporterCalculateTransformationResultTypeParameters = {
         dataTarget?: object;
     };
 };
+export type BundleDataImporterTransformationResultPreviewsResponse = {
+    /** AdditionalAttributes */
+    additionalAttributes?: {
+        [key: string]: string | number | boolean | object;
+    };
+    /** Transformation result preview strings for each mapping entry */
+    transformationResultPreviews: string[];
+};
+export type BundleDataImporterTransformationResultParameters = {
+    /** Mapping configuration entries to preview */
+    mappingConfig: {
+        [key: string]: any;
+    }[];
+    /** The source record to transform: column => value */
+    dataRow: {
+        [key: string]: any;
+    };
+};
 export type BundleDataImporterImportProgressResponse = {
     /** AdditionalAttributes */
     additionalAttributes?: {
@@ -562,7 +613,7 @@ export type BundleDataImporterDataPreviewResponse = {
         dataIndex?: string;
         /** Column label */
         label?: string;
-        /** Cell data value; may be any JSON type, depending on the source data type */
+        /** Cell data value. May be any JSON value (string, number, boolean, array, object or null) depending on the source data type. */
         data?: any;
         /** Whether this column is mapped */
         mapped?: boolean;
@@ -583,14 +634,6 @@ export type BundleDataImporterLoadPreviewParameters = {
     };
     /** Zero-based record number to preview from the data source */
     recordNumber?: number;
-};
-export type BundleDataImporterTransformationResultPreviewsResponse = {
-    /** AdditionalAttributes */
-    additionalAttributes?: {
-        [key: string]: string | number | boolean | object;
-    };
-    /** Transformation result preview strings for each mapping entry */
-    transformationResultPreviews: string[];
 };
 export type BundleDataImporterImportStartResponse = {
     /** AdditionalAttributes */
@@ -641,6 +684,8 @@ export const {
     useBundleDataImporterClassificationstoreLoadKeyNameQuery,
     useBundleDataImporterClassificationstoreLoadKeysQuery,
     useBundleDataImporterConfigCalculateTransformationResultTypeQuery,
+    useBundleDataImporterMappingCalculateTransformationResultTypeQuery,
+    useBundleDataImporterMappingLoadTransformationResultQuery,
     useBundleDataImporterConfigCancelExecutionMutation,
     useBundleDataImporterConfigCheckImportProgressQuery,
     useBundleDataImporterConfigCopyPreviewMutation,

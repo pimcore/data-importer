@@ -279,6 +279,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Gegevens
 data-importer.mapping.advanced-modal.loading: Laden…
 data-importer.mapping.advanced-modal.no-data: Geen gegevens
 data-importer.mapping.advanced-modal.no-preview: Geen voorbeeld beschikbaar
+data-importer.mapping.advanced-modal.preview-error: Het voorbeeld kon niet worden gemaakt
 data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Veldnaam
 data-importer.mapping.advanced-modal.step-target.overwrite: Overschrijven

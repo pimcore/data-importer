@@ -13,17 +13,15 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
-import {
-  useBundleDataImporterConfigLoadTransformationResultQuery
-} from '../../../../../data-importer-api-slice.gen'
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
 import { type InterpreterConfig, type LoaderConfig, type ResolverConfig, type ProcessingConfig, type MappingConfigItem } from '../../../../../types'
 import { useStyles } from './preview-panel.styles'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
+import { type TransformationResultRequest, useMappingSource } from '../../mapping-source/mapping-source'
+import { ErrorBox } from '../error-box/error-box'
 
 interface ImportModeProps {
   mode: 'import'
-  configName: string
   selectedDataSourceIndex: string[]
   forceRefreshToken?: number
   refreshToken?: never
@@ -33,7 +31,6 @@ interface ImportModeProps {
 
 interface ResultModeProps {
   mode: 'result'
-  configName: string
   forceRefreshToken?: number
   refreshToken?: number
   currentMappingItem?: MappingConfigItem
@@ -42,6 +39,14 @@ interface ResultModeProps {
 }
 
 export type PreviewPanelProps = ImportModeProps | ResultModeProps
+
+// Studio API errors carry the reason in message; in dev, detail holds the stack trace
+const errorTextOf = (error: unknown): string | undefined => {
+  const data = (error as { data?: unknown } | undefined)?.data
+  if (typeof data !== 'object' || data === null) return undefined
+  const { message } = data as { message?: unknown }
+  return typeof message === 'string' && message !== '' ? message : undefined
+}
 
 export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
@@ -59,30 +64,25 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
     isError: isImportError,
     load: fetchImportPreview
   } = usePreviewRecordQuery({
-    configName: props.configName,
     enabled: props.mode === 'import',
     forceRefreshToken: props.forceRefreshToken
   })
 
   const [previews, setPreviews] = useState<string[]>([])
   const [resultRecordNumber, setResultRecordNumber] = useState(0)
-  const [resultRequest, setResultRequest] = useState<{
-    name: string
-    bundleDataImporterLoadPreviewParameters: {
-      recordNumber: number
-      currentConfig?: Record<string, object>
-    }
-  } | undefined>(undefined)
+  const source = useMappingSource()
+  const [resultRequest, setResultRequest] = useState<TransformationResultRequest | undefined>(undefined)
   const {
     data: resultPreviewResponse,
     isLoading: isResultLoading,
     isFetching: isResultFetching,
     isError: isResultError,
+    error: resultError,
     refetch: refetchResultPreview
-  } = useBundleDataImporterConfigLoadTransformationResultQuery(
-    resultRequest!,
+  } = source.useTransformationResultQuery(
+    resultRequest,
     {
-      skip: props.mode !== 'result' || resultRequest === undefined,
+      skip: props.mode !== 'result',
       refetchOnMountOrArgChange: false
     }
   )
@@ -112,11 +112,8 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
         }
 
     setResultRequest({
-      name: props.configName,
-      bundleDataImporterLoadPreviewParameters: {
-        recordNumber: record,
-        ...(currentConfig !== undefined && { currentConfig })
-      }
+      recordNumber: record,
+      ...(currentConfig !== undefined && { currentConfig })
     })
   }
 
@@ -301,7 +298,10 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
             <Spin type="classic" />
           </div>
         ) }
-        { !(isResultLoading || isResultFetching) && previews.length === 0 && (
+        { !(isResultLoading || isResultFetching) && isResultError && (
+          <ErrorBox>{ errorTextOf(resultError) ?? t('data-importer.mapping.advanced-modal.preview-error') }</ErrorBox>
+        ) }
+        { !(isResultLoading || isResultFetching) && !isResultError && previews.length === 0 && (
           <div className={ styles.muted }>{ t('data-importer.mapping.advanced-modal.no-preview') }</div>
         ) }
         { !(isResultLoading || isResultFetching) && previews.map((line, i) => (
