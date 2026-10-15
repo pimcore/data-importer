@@ -34,7 +34,8 @@
     "phpunit/phpunit": "^12.5.23 || ^13.1.7",
     "codeception/codeception": "^5.3.5",
     "codeception/module-asserts": "^3.0",
-    "codeception/module-symfony": "^3.8"
+    "codeception/module-symfony": "^3.8",
+    "mcp/sdk": "^0.7"
   },
   "autoload": {
     "psr-4": {

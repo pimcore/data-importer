@@ -12,11 +12,15 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
+use Pimcore\Bundle\DataHubBundle\DependencyInjection\ConfigProposalLane;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
+use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader;
@@ -41,17 +45,25 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-        // usage.* telemetry provider; core extension point guaranteed by the composer constraint
-        $loader->load('telemetry.yaml');
         $loader->load('studio_backend.yaml');
 
+        $queue = $config['messenger_queue_processing'];
         $definition = $container->getDefinition(DataImporterHandler::class);
-        $definition->setArgument('$workerCountLifeTime', $config['messenger_queue_processing']['worker_count_lifetime']);
-        $definition->setArgument('$workerItemCount', $config['messenger_queue_processing']['worker_item_count']);
-        $definition->setArgument('$workerCountParallel', $config['messenger_queue_processing']['worker_count_parallel']);
+        $definition->setArgument('$workerCountLifeTime', $queue['worker_count_lifetime']);
+        $definition->setArgument('$workerItemCount', $queue['worker_item_count']);
+        $definition->setArgument('$workerCountParallel', $queue['worker_count_parallel']);
 
         $definition = $container->getDefinition(DataImporterListener::class);
-        $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+        $definition->setArgument('$messengerQueueActivated', $queue['activated']);
+
+        // proposals ride Change Control and are authored by an agent, both optional peers; the
+        // lane itself only ships with a Data Hub recent enough to have it
+        if (class_exists(ConfigProposalLane::class) && ConfigProposalLane::canReview($container)) {
+            $loader->load('services/change_control.yml');
+        }
+        if (self::canPropose($container)) {
+            $loader->load('services/mcp.yml');
+        }
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
@@ -68,7 +80,46 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
             $loader->load('doctrine_migrations.yml');
         }
 
+        // The Pimcore Agent Bundle reads agent skills from pimcore_agent.skills.paths.
+        // Contributing the path here, guarded on the extension being registered, keeps the
+        // integration optional: this bundle must not depend on the agent bundle.
+        if ($container->hasExtension('pimcore_agent')) {
+            $agentConfig = ['skills' => ['paths' => [__DIR__ . '/../Resources/skills']]];
+
+            // the Configuration agent takes its configuration kinds from the bundles that own them
+            if (self::canPropose($container) && self::takesAgentContributions($container)) {
+                $agentConfig['agents'] = ['contributions' => ['configuration' => [
+                    'pimcoreMcpServers' => ['pimcore-data-importer-read', 'pimcore-data-importer-propose'],
+                    'skills' => ['data-importer-configuration'],
+                ]]];
+            }
+
+            $container->prependExtensionConfig('pimcore_agent', $agentConfig);
+        }
+
         $loader->load('studio_ui.yaml');
         $loader->load('pimcore/studio_backend.yaml');
+    }
+
+    private static function canPropose(ContainerBuilder $container): bool
+    {
+        return class_exists(ConfigProposalLane::class) && ConfigProposalLane::canPropose($container);
+    }
+
+    /** an agent bundle released before the contributions node rejects the key */
+    private static function takesAgentContributions(ContainerBuilder $container): bool
+    {
+        $extension = $container->getExtension('pimcore_agent');
+        $configuration = $extension instanceof ConfigurationExtensionInterface
+            ? $extension->getConfiguration([], $container)
+            : null;
+        if (!$configuration instanceof ConfigurationInterface) {
+            return false;
+        }
+
+        $root = $configuration->getConfigTreeBuilder()->buildTree();
+        $agents = $root instanceof ArrayNode ? ($root->getChildren()['agents'] ?? null) : null;
+
+        return $agents instanceof ArrayNode && isset($agents->getChildren()['contributions']);
     }
 }
