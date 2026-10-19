@@ -107,7 +107,7 @@ export const MappingItemContent = React.memo(({
         </div>
 
         <IconTextButton
-          icon={ { value: 'settings' } }
+          icon={ { value: 'transformation' } }
           onClick={ onOpenAdvanced }
           type="default"
         >
