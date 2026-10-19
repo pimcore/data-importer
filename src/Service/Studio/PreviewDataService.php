@@ -186,20 +186,22 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
             $preparedConfig['processingConfig']
         );
 
-        $previewFilePath = $this->previewEventApplier->applyToPath(
+        // a listener may replace the path with a file it owns - only the local preview
+        // copy ($previewFilePath) is ever deleted below
+        $interpretedFilePath = $this->previewEventApplier->applyToPath(
             $name,
             $preparedConfig['processingConfig'],
             $previewFilePath
         );
 
-        if (!$interpreter->fileValid($previewFilePath)) {
+        if (!$interpreter->fileValid($interpretedFilePath)) {
             throw new EnvironmentException(
                 'Preview file is not valid for the configured interpreter. '
                 . 'Please re-upload or re-copy the preview data.'
             );
         }
 
-        $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
+        $dataPreview = $interpreter->previewData($interpretedFilePath, $recordNumber, $mappedColumns);
         $dataPreview = $this->previewEventApplier->applyToPreviewData(
             $name,
             $preparedConfig['processingConfig'],
