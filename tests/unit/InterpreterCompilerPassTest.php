@@ -78,7 +78,8 @@ class InterpreterCompilerPassTest extends Unit
     public function testClassInheritedFromAnUntaggedParentIsResolved(): void
     {
         $container = $this->emptyContainer();
-        $container->setDefinition('test.interpreter_parent', (new Definition(CsvFileInterpreter::class))->setAbstract(true));
+        $parent = (new Definition(CsvFileInterpreter::class))->setAbstract(true);
+        $container->setDefinition('test.interpreter_parent', $parent);
         $child = new ChildDefinition('test.interpreter_parent');
         $child->addTag(self::INTERPRETER_TAG, ['type' => 'child']);
         $container->setDefinition('test.child_interpreter', $child);
