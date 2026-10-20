@@ -14,6 +14,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XmlFileInterpreter;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Psr\Log\NullLogger;
 
 /**
  * Regression coverage for https://github.com/pimcore/data-importer/issues/524
@@ -26,7 +29,19 @@ class XmlFileInterpreterTypingTest extends Unit
 {
     private const KEY = 'Code';
 
+    use NoCurrentUserKernelTrait;
+
     protected $tester;
+
+    protected function _before(): void
+    {
+        $this->installNoCurrentUserKernel();
+    }
+
+    protected function _after(): void
+    {
+        $this->removeKernel();
+    }
 
     private function previewRaw(string $xml): array
     {
@@ -99,5 +114,57 @@ class XmlFileInterpreterTypingTest extends Unit
         $raw = $this->previewRaw('<Items><Item><Code>' . $value . '</Code></Item></Items>');
 
         $this->assertSame($expected, $raw[self::KEY]);
+    }
+
+    /**
+     * The import path (doInterpretFileAndCallProcessRow) converts rows separately from the preview. QueueService,
+     * DeltaChecker and Resolver are final and cannot be doubled, so the spy is the resolver's load strategy:
+     * with cleanup enabled processImportRow hands it the row first, before anything that needs a booted kernel.
+     *
+     * @dataProvider lossyValues
+     */
+    public function testImportPathKeepsLossyValuesAsText(string $value): void
+    {
+        $rows = [];
+        $strategy = $this->createStub(LoadStrategyInterface::class);
+        $strategy->method('extractIdentifierFromData')->willReturnCallback(
+            static function (array $row) use (&$rows) {
+                $rows[] = $row;
+
+                return $row[self::KEY];
+            }
+        );
+
+        $resolver = (new \ReflectionClass(Resolver::class))->newInstanceWithoutConstructor();
+        $resolver->setLoadingStrategy($strategy);
+
+        $base = tempnam(sys_get_temp_dir(), 'di_xml_');
+        $path = $base . '.xml';
+        file_put_contents($path, '<Items><Item><Code>' . $value . '</Code></Item></Items>');
+
+        try {
+            $interpreter = (new \ReflectionClass(XmlFileInterpreter::class))->newInstanceWithoutConstructor();
+            $interpreter->setLogger(new NullLogger());
+            $interpreter->setConfigName('test_xml_typing');
+            $interpreter->setDoDeltaCheck(false);
+            $interpreter->setDoCleanup(true);
+            $interpreter->setResolver($resolver);
+            $interpreter->setSettings(['xpath' => '/Items/Item', 'schema' => null]);
+
+            $reset = new \ReflectionMethod($interpreter, 'resetIdentifierCache');
+            $reset->invoke($interpreter);
+            $import = new \ReflectionMethod($interpreter, 'doInterpretFileAndCallProcessRow');
+
+            try {
+                $import->invoke($interpreter, $path);
+            } catch (\Error) {
+                // expected: after the spy, processImportRow needs the booted kernel (current admin user)
+            }
+        } finally {
+            unlink($path);
+            unlink($base);
+        }
+
+        $this->assertSame([[self::KEY => $value]], $rows);
     }
 }
