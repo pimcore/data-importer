@@ -183,9 +183,10 @@ abstract class AbstractInterpreter implements InterpreterInterface
                 // Backstop for data that mb_check_encoding() cannot reach (e.g. invalid bytes nested
                 // deeper than the top-level columns). Fail loud instead of queueing an empty payload.
                 throw new InvalidInputException(sprintf(
-                    'Encoding error in `%s`: %s. Please make sure the source file is UTF-8 encoded.',
+                    'Encoding error in `%s`: %s.%s',
                     $this->configName,
-                    json_last_error_msg()
+                    json_last_error_msg(),
+                    json_last_error() === JSON_ERROR_UTF8 ? ' Please make sure the source file is UTF-8 encoded.' : ''
                 ));
             }
 
