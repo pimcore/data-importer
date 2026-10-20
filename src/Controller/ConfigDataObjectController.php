@@ -118,7 +118,7 @@ class ConfigDataObjectController extends UserAwareController
         InterpreterFactory $interpreterFactory
     ) {
         $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
-        if (is_file($previewFilePath)) {
+        if ($previewFilePath && is_file($previewFilePath)) {
             try {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
                 $dataPreview = $interpreter->previewData($previewFilePath);
@@ -301,7 +301,7 @@ class ConfigDataObjectController extends UserAwareController
         $errorMessage = '';
         $previewFilePath = $this->previewService->getLocalPreviewFile($configName, $this->getPimcoreUser());
         $dataPreviewData = [];
-        if (is_file($previewFilePath)) {
+        if ($previewFilePath && is_file($previewFilePath)) {
             $config = $configurationPreparationService->prepareConfiguration($configName, $currentConfig);
 
             $mappedColumns = [];
@@ -399,7 +399,7 @@ class ConfigDataObjectController extends UserAwareController
         $errorMessage = '';
 
         try {
-            if (is_file($previewFilePath)) {
+            if ($previewFilePath && is_file($previewFilePath)) {
                 $interpreter = $interpreterFactory->loadInterpreter($configName, $config['interpreterConfig'], $config['processingConfig']);
 
                 $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber);
@@ -516,15 +516,15 @@ class ConfigDataObjectController extends UserAwareController
         $sortParams = QueryParams::extractSortingSettings(['sort' => $request->query->get('sort')]);
 
         $list = $classificationStoreDataTypeService->listClassificationStoreKeyList(
-            strip_tags($request->query->get('class_id')),
-            strip_tags($request->query->get('field_name')),
-            strip_tags($request->query->get('transformation_result_type')),
+            strip_tags((string)$request->query->get('class_id')),
+            strip_tags((string)$request->query->get('field_name')),
+            strip_tags((string)$request->query->get('transformation_result_type')),
             $sortParams['orderKey'] ?? 'name',
             $sortParams['order'] ?? 'ASC',
             $request->query->getInt('start'),
             $request->query->getInt('limit'),
-            strip_tags($request->query->get('searchfilter')),
-            strip_tags($request->query->get('filter'))
+            strip_tags((string)$request->query->get('searchfilter')),
+            strip_tags((string)$request->query->get('filter'))
         );
 
         $data = [];
