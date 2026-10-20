@@ -18,11 +18,13 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
  * AbstractInterpreter::processImportRow asks Admin::getCurrentUser() for the queue item owner, which needs a booted
- * kernel. This gives a unit test a kernel whose container reports "nobody logged in" (the CLI case) and removes it
- * again afterwards.
+ * kernel. This gives a unit test a kernel whose container reports "nobody logged in" (the CLI case) and puts the
+ * previous kernel back afterwards (the Codeception Pimcore module needs it for the following tests).
  */
 trait NoCurrentUserKernelTrait
 {
+    private ?KernelInterface $previousKernel = null;
+
     private function installNoCurrentUserKernel(): void
     {
         $resolver = $this->createStub(TokenStorageUserResolver::class);
@@ -34,11 +36,13 @@ trait NoCurrentUserKernelTrait
         $kernel = $this->createStub(KernelInterface::class);
         $kernel->method('getContainer')->willReturn($container);
 
+        $this->previousKernel = (new \ReflectionProperty(\Pimcore::class, 'kernel'))->getValue();
         \Pimcore::setKernel($kernel);
     }
 
     private function removeKernel(): void
     {
-        (new \ReflectionProperty(\Pimcore::class, 'kernel'))->setValue(null, null);
+        (new \ReflectionProperty(\Pimcore::class, 'kernel'))->setValue(null, $this->previousKernel);
+        $this->previousKernel = null;
     }
 }
