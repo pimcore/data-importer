@@ -30,7 +30,8 @@ class XmlFileInterpreterTypingTest extends Unit
 
     private function previewRaw(string $xml): array
     {
-        $path = tempnam(sys_get_temp_dir(), 'di_xml_') . '.xml';
+        $base = tempnam(sys_get_temp_dir(), 'di_xml_');
+        $path = $base . '.xml';
         file_put_contents($path, $xml);
 
         try {
@@ -40,6 +41,7 @@ class XmlFileInterpreterTypingTest extends Unit
             return $interpreter->previewData($path)->getRawData();
         } finally {
             unlink($path);
+            unlink($base);
         }
     }
 

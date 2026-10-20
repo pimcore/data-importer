@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /**
  * This source file is available under the terms of the
@@ -17,7 +17,8 @@ use Symfony\Component\Config\Util\XmlUtils;
 /**
  * Symfony's XmlUtils types every numeric looking text, which changes values such as `0123` (octal 83),
  * `1E5` (float 100000) or `603E709` (INF, which cannot be JSON encoded). This variant keeps the original text
- * whenever the typed value would not print as exactly the same text.
+ * whenever the typed value would not print as exactly the same text. Only numbers are affected: the boolean and
+ * null typing of `XmlUtils` (`true`, `FALSE`, `null`, ...) is unchanged.
  *
  * @internal
  */
