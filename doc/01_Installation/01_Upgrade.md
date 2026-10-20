@@ -5,6 +5,20 @@ description: Breaking changes and migration steps per release.
 
 # Upgrade Notes
 
+## Upgrade to 2026.3.3
+
+### XML Values Keep Their Text When Typing Would Change Them
+
+- The XML interpreter no longer converts a numeric looking value to a number when that would change it. `603E709`
+  used to become `INF` and aborted the import, `0123` was stored as `83`. Such values now stay text.
+- Values that stay text now: `0123` (was `83`), `12.50` (was `12.5`), `1.0`, `+5`, `1E5`, `0x1F`, `0b101`.
+  Plain values such as `42`, `-7`, `1.5`, `true`, `false` and `null` are converted as before.
+- If a column with such values is used as identifier (resolver, cleanup) or in a delta check, review it before the
+  first import after the upgrade: the resolver may not find objects stored under the old value (duplicates), cleanup
+  may unpublish or remove them, and the affected rows are imported again once.
+- Operators that rely on a typed value answer differently for these inputs: the Boolean operator gave `true` for
+  `1.0` and now gives `false`, the Numeric operator returns `0.0` for `0x1F` (was `31`).
+
 ## Upgrade to 2026.3.0
 
 ### Skipping Element Persistence From a `PreSaveEvent` Listener
