@@ -38,7 +38,9 @@ class PreviewServiceTest extends Unit
 
     private const SCOPED_PREFIX = 'car-import/_cs-';
 
-    private const SCOPED_PATH = self::SCOPED_PREFIX . self::CHANGE_SET . '-22.import';
+    private const USER_SUFFIX = '-22.import';
+
+    private const SCOPED_PATH = self::SCOPED_PREFIX . self::CHANGE_SET . self::USER_SUFFIX;
 
     private PreviewService $service;
 
@@ -75,7 +77,7 @@ class PreviewServiceTest extends Unit
         );
 
         static::assertSame(
-            self::SCOPED_PREFIX . self::CHANGE_SET . '.' . bin2hex(self::CONTEXT) . '-22.import',
+            self::SCOPED_PREFIX . self::CHANGE_SET . '.' . bin2hex(self::CONTEXT) . self::USER_SUFFIX,
             $path
         );
         static::assertEquals(
@@ -98,7 +100,7 @@ class PreviewServiceTest extends Unit
     public function testClosedScopesAreRemovedAndTheRestIsKept(): void
     {
         $open = self::SCOPED_PATH;
-        $closed = self::SCOPED_PREFIX . self::OTHER_CHANGE_SET . '-22.import';
+        $closed = self::SCOPED_PREFIX . self::OTHER_CHANGE_SET . self::USER_SUFFIX;
         $closedOtherUser = self::SCOPED_PREFIX . self::OTHER_CHANGE_SET . '-23.import';
         $storage = $this->createMock(FilesystemOperator::class);
         $storage->expects($this->once())->method('listContents')->with('', true)->willReturn(new DirectoryListing([
