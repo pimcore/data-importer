@@ -239,8 +239,11 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         return $response;
     }
 
-    public function loadColumnHeaders(string $name, ?array $currentConfig, ?PreviewScope $scope = null): ColumnHeadersResponse
-    {
+    public function loadColumnHeaders(
+        string $name,
+        ?array $currentConfig,
+        ?PreviewScope $scope = null
+    ): ColumnHeadersResponse {
         $this->previewAccess->authorize(
             $name,
             PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,

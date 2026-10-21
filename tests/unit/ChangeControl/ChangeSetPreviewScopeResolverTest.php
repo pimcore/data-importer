@@ -43,7 +43,8 @@ class ChangeSetPreviewScopeResolverTest extends Unit
         $changeSets = $this->createMock(ChangeSetServiceInterface::class);
         $changeSets->expects($this->once())
             ->method('list')
-            ->with($this->callback(static fn (ListChangeSetsParameters $p): bool => $p->getSubjectType() === ImportConfigPolicy::SUBJECT_TYPE
+            ->with($this->callback(static fn (ListChangeSetsParameters $p): bool => $p->getSubjectType()
+                    === ImportConfigPolicy::SUBJECT_TYPE
                 && $p->getSubjectRef() === 'car-import'
                 && $p->getContextRef() === 'agent-session:7'))
             ->willReturn([$this->item(self::CHANGE_SET)]);
@@ -53,7 +54,11 @@ class ChangeSetPreviewScopeResolverTest extends Unit
             $subject,
         ]);
         $authoring->method('subjectStatesOf')->willReturn([
-            $subject->key() => ['subject' => $subject, 'proposed' => ['interpreterConfig' => ['type' => 'csv']], 'base' => []],
+            $subject->key() => [
+                'subject' => $subject,
+                'proposed' => ['interpreterConfig' => ['type' => 'csv']],
+                'base' => [],
+            ],
         ]);
 
         static::assertSame(
@@ -90,11 +95,14 @@ class ChangeSetPreviewScopeResolverTest extends Unit
 
     public function testTheListingIsReadPastAFullPage(): void
     {
-        $full = array_fill(0, ListChangeSetsParameters::MAX_PAGE_SIZE, $this->item('0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f'));
+        $other = $this->item('0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f');
+        $full = array_fill(0, ListChangeSetsParameters::MAX_PAGE_SIZE, $other);
         $changeSets = $this->createMock(ChangeSetServiceInterface::class);
         $changeSets->expects($this->exactly(2))
             ->method('list')
-            ->willReturnCallback(fn (ListChangeSetsParameters $p): array => $p->getPage() === 1 ? $full : [$this->item(self::CHANGE_SET)]);
+            ->willReturnCallback(
+                fn (ListChangeSetsParameters $p): array => $p->getPage() === 1 ? $full : [$this->item(self::CHANGE_SET)]
+            );
         $authoring = $this->createStub(ChangeControlAuthoringInterface::class);
         $authoring->method('subjectsOf')->willReturn([]);
 
@@ -107,6 +115,16 @@ class ChangeSetPreviewScopeResolverTest extends Unit
 
     private function item(string $id): ChangeSetItem
     {
-        return new ChangeSetItem($id, ImportConfigPolicy::SUBJECT_TYPE, 'car-import', [], 'label', 'open', 0, [], 'agent');
+        return new ChangeSetItem(
+            $id,
+            ImportConfigPolicy::SUBJECT_TYPE,
+            'car-import',
+            [],
+            'label',
+            'open',
+            0,
+            [],
+            'agent'
+        );
     }
 }

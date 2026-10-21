@@ -45,8 +45,11 @@ class PimcoreDataImporterExtensionTest extends Unit
 
         (new PimcoreDataImporterExtension())->load([], $container);
 
+        $expected = ConfigProposalLane::canReview($container)
+            ? ChangeSetPreviewScopeResolver::class
+            : NoPreviewScopeResolver::class;
         $this->assertSame(
-            ConfigProposalLane::canReview($container) ? ChangeSetPreviewScopeResolver::class : NoPreviewScopeResolver::class,
+            $expected,
             $container->getDefinition(PreviewScopeResolverInterface::class)->getClass()
         );
     }

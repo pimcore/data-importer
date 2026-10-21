@@ -37,8 +37,10 @@ class PreviewScopeTest extends Unit
     {
         $expected = new PreviewScope('cs-1', 'agent-session:7');
 
-        static::assertEquals($expected, (new LoadPreviewParameters(null, 0, 'cs-1', 'agent-session:7'))->getPreviewScope());
-        static::assertEquals($expected, (new CopyPreviewParameters(null, 'cs-1', 'agent-session:7'))->getPreviewScope());
+        $load = new LoadPreviewParameters(null, 0, 'cs-1', 'agent-session:7');
+        $copy = new CopyPreviewParameters(null, 'cs-1', 'agent-session:7');
+        static::assertEquals($expected, $load->getPreviewScope());
+        static::assertEquals($expected, $copy->getPreviewScope());
         static::assertEquals(
             $expected,
             (new CalculateTransformationResultTypeParameters([], 'cs-1', 'agent-session:7'))->getPreviewScope()
