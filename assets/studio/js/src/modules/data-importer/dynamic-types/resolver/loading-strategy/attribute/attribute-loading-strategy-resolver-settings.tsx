@@ -19,7 +19,8 @@ import { parseClassAttribute } from '../../../../components/tabs/steps/mapping-s
 
 export function AttributeLoadingStrategyResolverSettings ({
   columnHeaderOptions,
-  languageOptions = []
+  languageOptions = [],
+  disabled
 }: DynamicTypeResolverRenderProps): React.JSX.Element {
   const { t } = useTranslation()
 
@@ -50,6 +51,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           options={ columnHeaderOptions }
           placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
@@ -61,6 +63,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'attributeName'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           loadingSkeleton={ isLoading }
           options={ loadingAttributeOptions }
@@ -74,6 +77,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'language'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           options={ languageOptions }
           placeholder={ t('data-importer.resolver.loading-strategy.language-placeholder') }
@@ -86,6 +90,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         valuePropName="checked"
       >
         <Switch
+          disabled={ disabled }
           labelRight={ t('data-importer.resolver.loading-strategy.include-unpublished') }
           size="small"
         />
