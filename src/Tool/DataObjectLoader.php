@@ -64,7 +64,7 @@ final class DataObjectLoader
     }
 
     // $path extends a public signature, a parameter object would break callers
-    public function loadByAttribute( // NOSONAR php:S107
+    public function loadByAttribute(// NOSONAR php:S107
         string $className,
         string $attributeName,
         string $identifier,
