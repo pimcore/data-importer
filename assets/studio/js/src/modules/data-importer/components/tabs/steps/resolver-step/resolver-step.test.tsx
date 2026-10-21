@@ -9,8 +9,8 @@
  */
 
 import React from 'react'
-import { Form } from 'antd'
-import { cleanup, render, screen } from '@testing-library/react'
+import { Form, type FormInstance } from 'antd'
+import { cleanup, render, renderHook, screen } from '@testing-library/react'
 import { type DynamicTypeResolverRenderProps } from '../../../../dynamic-types/resolver/common/dynamic-type-resolver-abstract'
 import { IdLoadingStrategyResolverSettings } from '../../../../dynamic-types/resolver/loading-strategy/id/id-loading-strategy-resolver-settings'
 import { PathLoadingStrategyResolverSettings } from '../../../../dynamic-types/resolver/loading-strategy/path/path-loading-strategy-resolver-settings'
@@ -100,12 +100,15 @@ const attributeFields = [
   'data-importer.resolver.loading-strategy.include-unpublished'
 ]
 
-const Host = ({ loadingStrategy, locked }: { loadingStrategy: string, locked?: boolean }): React.JSX.Element => (
+const loadingSettings = { dataSourceIndex: 'sku', attributeName: 'name' }
+
+const Host = ({ loadingStrategy, locked, form }: { loadingStrategy: string, locked?: boolean, form?: FormInstance }): React.JSX.Element => (
   <Form
+    form={ form }
     initialValues={ {
       resolverConfig: {
         dataObjectClassId: 'Product',
-        loadingStrategy: { type: loadingStrategy, settings: { dataSourceIndex: 'sku', attributeName: 'name' } }
+        loadingStrategy: { type: loadingStrategy, settings: loadingSettings }
       }
     } }
   >
@@ -154,6 +157,18 @@ describe('ResolverStep', () => {
 
     expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
     expect(attributeFields.map(name => field(name).disabled)).toEqual([false, false, false, false, false])
+  })
+
+  it('keeps the stored loading strategy and its settings in the form values under the lock', async () => {
+    const { result } = renderHook(() => Form.useForm()[0])
+    render(<Host
+      form={ result.current }
+      loadingStrategy="attribute"
+      locked
+           />)
+
+    expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
+    expect(result.current.getFieldsValue(true).resolverConfig.loadingStrategy).toEqual({ type: 'attribute', settings: loadingSettings })
   })
 
   it('leaves the class editable under the lock', async () => {
