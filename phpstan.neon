@@ -8,16 +8,13 @@ parameters:
     excludePaths:
         - src/Command/DummyDataCommand.php
         - src/Command/ParallelizationAbstractCommand.php
-        # these implement contracts of Change Control, an optional integration this repository
-        # cannot install, and of the Data Hub's proposal lane, which the data-hub constraint
-        # admits no release of yet; they are registered only when both are present
+        # implements a contract of Change Control, an optional integration this repository
+        # cannot install yet; registered only when it is present
         - src/ChangeControl/ImportConfigDetailHydrator.php
-        - src/ChangeControl/ImportConfigPolicy.php
     ignoreErrors:
-        # the same integrations, the Agent bundle it proposes through, and Studio's MCP
-        # plumbing, which the platform version this constraint admits does not ship yet
+        # the same integration, and the Agent bundle it proposes through
         -
-            message: '#Pimcore\\Bundle\\(ChangeControlBundle|PimcoreAgentBundle|StudioBackendBundle\\Mcp|DataHubBundle\\(Proposal|DependencyInjection\\ConfigProposalLane))\\?#'
+            message: '#Pimcore\\Bundle\\(ChangeControlBundle|PimcoreAgentBundle)\\?#'
             paths:
                 - src/Mcp/*
                 - src/DependencyInjection/PimcoreDataImporterExtension.php
