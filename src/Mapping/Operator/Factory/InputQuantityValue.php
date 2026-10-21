@@ -25,6 +25,11 @@ final class InputQuantityValue extends QuantityValue
         return 'abbr';
     }
 
+    protected function getOperatorLabel(): string
+    {
+        return 'input quantity value';
+    }
+
     /**
      * @param mixed $inputData
      * @param bool $dryRun

@@ -26,6 +26,7 @@ use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\DataObject\Data\InputQuantityValue as ModelInputQuantityValue;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
+use Pimcore\Model\Exception\NotFoundException;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Codeception\Test;
 
@@ -469,6 +470,7 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertNull($operator->process(['']));
         $this->assertEquals('0', $operator->process(['0'])->getValue());
 
+        $operator->setSettings([]);
         $unit->delete();
     }
 
@@ -507,15 +509,13 @@ class FactoryOperatorTest extends Test\Unit
 
         // by id is not looked up in the Array variants, the model rejects an unknown id
         $operator->setSettings([]);
-        $rejected = false;
         try {
+            $this->expectException(NotFoundException::class);
             $operator->process([['5', 'unknown']]);
-        } catch (\Exception) {
-            $rejected = true;
         } finally {
+            $operator->setSettings([]);
             $unit->delete();
         }
-        $this->assertTrue($rejected, 'An unknown unit id must be rejected');
     }
 
     public function testInputQuantityValueArrayUnitSource()
@@ -551,6 +551,7 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals('3', $result[1]->getValue());
         $this->assertEquals('pme_m', $result[1]->getUnitId());
 
+        $operator->setSettings([]);
         $unit->delete();
     }
 
