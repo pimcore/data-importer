@@ -13,10 +13,13 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\Element\Service as ElementService;
 
 /**
  * @internal
@@ -79,6 +82,14 @@ class Direct implements DataTargetInterface
                 return;
             }
             $this->doAssignData($element, $this->fieldName, $data);
+        } elseif ($this->fieldName === 'path') {
+            // An element always has a path once it has a parent (which the resolver sets
+            // for new elements too), so the target counts as "not empty" only for elements
+            // that already exist, i.e. have an ID.
+            if (!$this->checkAssignData($data, $element, 'getId')) {
+                return;
+            }
+            $this->doAssignPath($element, $data);
         } elseif (count($setterParts) === 1) {
             //direct class attribute
             $getter = 'get' . ucfirst($this->fieldName);
@@ -133,6 +144,69 @@ class Direct implements DataTargetInterface
     }
 
     /**
+     * Sets the element's parent based on a path, creating the necessary folder
+     * structure if it does not exist yet.
+     *
+     * @throws InvalidConfigurationException
+     * @throws InvalidInputException
+     */
+    protected function doAssignPath(ElementInterface $element, mixed $data): void
+    {
+        if (!$element instanceof DataObject) {
+            throw new InvalidConfigurationException(
+                sprintf('Cannot set path for element of type "%s".', $element::class)
+            );
+        }
+
+        $path = (string) $data;
+        if ($path === '') {
+            return;
+        }
+
+        // Like the find or create folder location strategy, an existing object at the path can be the parent as well.
+        // Folders are only created once the move is known to be allowed, so a rejected row leaves nothing behind.
+        $parent = $this->findParentByPath($path);
+
+        // Same restriction as in the resolver: the parent of an existing variant cannot be changed anymore.
+        if (
+            $element->getId()
+            && $element->getType() === AbstractObject::OBJECT_TYPE_VARIANT
+            && $parent?->getId() !== $element->getParentId()
+        ) {
+            throw new InvalidInputException(
+                "Element with id `{$element->getId()}` is a variant and cannot change its parent anymore"
+            );
+        }
+
+        $parent ??= DataObject\Service::createFolderByPath($path);
+        if (!$parent instanceof DataObject) {
+            throw new InvalidInputException(sprintf('Could not find or create parent for path "%s".', $path));
+        }
+
+        $element->setParent($parent);
+    }
+
+    /**
+     * Looks up an existing parent by the path as given, and by the path with sanitized keys as
+     * DataObject\Service::createFolderByPath() would create it, without creating anything.
+     */
+    private function findParentByPath(string $path): ?DataObject
+    {
+        $parent = DataObject::getByPath($path);
+        if ($parent instanceof DataObject) {
+            return $parent;
+        }
+
+        $keys = array_filter(explode('/', $path), static fn (string $key) => $key !== '');
+        $sanitizedPath = '/' . implode('/', array_map(
+            static fn (string $key) => ElementService::getValidKey($key, 'object'),
+            $keys
+        ));
+
+        return DataObject::getByPath($sanitizedPath);
+    }
+
+    /**
      * @param mixed $newData
      * @param object $valueContainer
      * @param string $getter
@@ -159,7 +233,7 @@ class Direct implements DataTargetInterface
             $fieldName = $fieldNameParts[2];
         }
 
-        if ($this->fieldName === 'key' || $this->fieldName === 'type') {
+        if ($this->fieldName === 'key' || $this->fieldName === 'type' || $this->fieldName === 'path') {
             $currentDataIsEmpty = empty($currentData);
             $newDataIsEmpty = empty($newData);
         } else {
