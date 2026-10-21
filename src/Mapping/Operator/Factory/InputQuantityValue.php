@@ -29,16 +29,17 @@ final class InputQuantityValue extends QuantityValue
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue
+     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue|null
      */
     public function process($inputData, bool $dryRun = false)
     {
         [$value, $unitId] = $this->extractValueAndUnitId($inputData);
 
-        return new \Pimcore\Model\DataObject\Data\InputQuantityValue(
-            $value,
-            $this->applyUnitNullIfNoValue($value, $unitId)
-        );
+        if ($this->unitNullIfNoValue && $this->isEmptyValue($value)) {
+            return null;
+        }
+
+        return new \Pimcore\Model\DataObject\Data\InputQuantityValue($value, $unitId);
     }
 
     /**

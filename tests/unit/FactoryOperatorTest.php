@@ -464,9 +464,10 @@ class FactoryOperatorTest extends Test\Unit
         );
 
         $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m', 'unitNullIfNoValueCheckbox' => true]);
-        $result = $operator->process([null]);
-        $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
-        $this->assertNull($result->getUnitId());
+        // same result as Quantity Value: no value, no object
+        $this->assertNull($operator->process([null]));
+        $this->assertNull($operator->process(['']));
+        $this->assertEquals('0', $operator->process(['0'])->getValue());
 
         $unit->delete();
     }
@@ -504,7 +505,17 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertNull($result[0]);
         $this->assertEquals('pme_m', $result[1]->getUnitId());
 
-        $unit->delete();
+        // by id is not looked up in the Array variants, the model rejects an unknown id
+        $operator->setSettings([]);
+        $rejected = false;
+        try {
+            $operator->process([['5', 'unknown']]);
+        } catch (\Exception) {
+            $rejected = true;
+        } finally {
+            $unit->delete();
+        }
+        $this->assertTrue($rejected, 'An unknown unit id must be rejected');
     }
 
     public function testInputQuantityValueArrayUnitSource()
@@ -532,6 +543,12 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals('12', $result[0]->getValue());
         $this->assertEquals('pme_m', $result[0]->getUnitId());
         $this->assertEquals('7', $result[1]->getValue());
+        $this->assertEquals('pme_m', $result[1]->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m', 'unitNullIfNoValueCheckbox' => true]);
+        $result = $operator->process([[null], ['3']]);
+        $this->assertNull($result[0]);
+        $this->assertEquals('3', $result[1]->getValue());
         $this->assertEquals('pme_m', $result[1]->getUnitId());
 
         $unit->delete();

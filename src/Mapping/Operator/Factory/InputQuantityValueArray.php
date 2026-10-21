@@ -36,10 +36,9 @@ final class InputQuantityValueArray extends QuantityValueArray
 
         foreach ($inputData as $key => $data) {
             [$value, $unitId] = $this->extractValueAndUnitId($data);
-            $result[$key] = new \Pimcore\Model\DataObject\Data\InputQuantityValue(
-                $value,
-                $this->applyUnitNullIfNoValue($value, $unitId)
-            );
+            $result[$key] = $this->unitNullIfNoValue && $this->isEmptyValue($value)
+                ? null
+                : new \Pimcore\Model\DataObject\Data\InputQuantityValue($value, $unitId);
         }
 
         return $result;

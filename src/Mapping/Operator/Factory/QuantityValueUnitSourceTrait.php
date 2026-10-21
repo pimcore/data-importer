@@ -36,7 +36,8 @@ trait QuantityValueUnitSourceTrait
     }
 
     /**
-     * Whether a unit id from the input is looked up (and dropped if unknown) or taken as is.
+     * Whether a unit id from the input is looked up (and dropped if unknown) or passed on unchecked.
+     * Passed on unchecked, an unknown id is still rejected by the quantity value model.
      */
     protected function verifiesUnitId(): bool
     {
@@ -51,7 +52,7 @@ trait QuantityValueUnitSourceTrait
     }
 
     /**
-     * @return array{0: mixed, 1: string|null} value and unit id according to the unit source
+     * @return array{0: mixed, 1: mixed} value and unit id according to the unit source
      */
     protected function extractValueAndUnitId(mixed $inputData): array
     {
@@ -87,9 +88,9 @@ trait QuantityValueUnitSourceTrait
     }
 
     /**
-     * @return string|null the unit id, or null if the "null if no value" setting drops it
+     * @return mixed the unit id, or null if the "null if no value" setting drops it
      */
-    protected function applyUnitNullIfNoValue(mixed $value, ?string $unitId): ?string
+    protected function applyUnitNullIfNoValue(mixed $value, mixed $unitId): mixed
     {
         return $this->unitNullIfNoValue && $this->isEmptyValue($value) ? null : $unitId;
     }
