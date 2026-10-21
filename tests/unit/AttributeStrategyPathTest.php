@@ -185,10 +185,12 @@ class AttributeStrategyPathTest extends Unit
 
         $settings = ['attributeName' => 'bricks.' . self::BRICK_NAME . '.code'];
 
-        $element = $this->createStrategy($settings + ['path' => self::VENDOR_B_PATH])->loadElementByIdentifier('Brick-1');
+        $strategy = $this->createStrategy($settings + ['path' => self::VENDOR_B_PATH]);
+        $element = $strategy->loadElementByIdentifier('Brick-1');
         static::assertSame($vendorB->getId(), $element?->getId());
 
-        $element = $this->createStrategy($settings + ['path' => self::ROOT . '/vendor-c'])->loadElementByIdentifier('Brick-1');
+        $strategy = $this->createStrategy($settings + ['path' => self::ROOT . '/vendor-c']);
+        $element = $strategy->loadElementByIdentifier('Brick-1');
         static::assertNull($element);
     }
 
