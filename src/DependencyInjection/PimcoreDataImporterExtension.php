@@ -45,6 +45,8 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
+        // usage.* telemetry provider; core extension point guaranteed by the composer constraint
+        $loader->load('telemetry.yaml');
         $loader->load('studio_backend.yaml');
 
         $queue = $config['messenger_queue_processing'];
