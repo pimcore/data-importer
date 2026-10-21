@@ -15,7 +15,11 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\DependencyInjection;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataHubBundle\DependencyInjection\ConfigProposalLane;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\ChangeSetPreviewScopeResolver;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\PimcoreDataImporterExtension;
+use Pimcore\Bundle\DataImporterBundle\Preview\NoPreviewScopeResolver;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface;
 use Pimcore\Bundle\DataImporterBundle\Telemetry\DataImporterSnapshotCollector;
 use Pimcore\Bundle\DataImporterBundle\Telemetry\DataImporterUsageProvider;
 use Pimcore\Bundle\DataImporterBundle\Telemetry\ImportStartTelemetrySubscriber;
@@ -32,5 +36,18 @@ class PimcoreDataImporterExtensionTest extends Unit
         $this->assertTrue($container->hasDefinition(DataImporterUsageProvider::class));
         $this->assertTrue($container->hasDefinition(DataImporterSnapshotCollector::class));
         $this->assertTrue($container->hasDefinition(ImportStartTelemetrySubscriber::class));
+    }
+
+    /** a scope binds to a change set only where Change Control can tell which ones the user may read */
+    public function testScopedPreviewsAreBoundByChangeControlOnlyWhereItIsInstalled(): void
+    {
+        $container = new ContainerBuilder();
+
+        (new PimcoreDataImporterExtension())->load([], $container);
+
+        $this->assertSame(
+            ConfigProposalLane::canReview($container) ? ChangeSetPreviewScopeResolver::class : NoPreviewScopeResolver::class,
+            $container->getDefinition(PreviewScopeResolverInterface::class)->getClass()
+        );
     }
 }

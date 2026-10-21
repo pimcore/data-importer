@@ -19,6 +19,7 @@ use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
@@ -81,8 +82,8 @@ final class UploadPreviewController extends AbstractApiController
                 type: 'string'
             ),
             new Property(
-                property: 'interpreterType',
-                description: 'The proposed interpreter, which sets the upload size limit',
+                property: 'previewContext',
+                description: 'The context the change set is kept in, when its author keeps it in one',
                 type: 'string'
             ),
         ],
@@ -107,14 +108,13 @@ final class UploadPreviewController extends AbstractApiController
             throw new EnvironmentException('Invalid file found in the request');
         }
 
-        // multipart: the review's scope and the proposed interpreter ride as form fields
+        // multipart: the review's scope rides as form fields
         $scope = $request->request->get('previewScope');
-        $interpreterType = $request->request->get('interpreterType');
+        $context = $request->request->get('previewContext');
         $this->previewDataService->uploadPreviewData(
             $name,
             $file,
-            is_string($scope) && $scope !== '' ? $scope : null,
-            is_string($interpreterType) && $interpreterType !== '' ? $interpreterType : null,
+            PreviewScope::fromRequest(is_string($scope) ? $scope : '', is_string($context) ? $context : ''),
         );
 
         return new Response();

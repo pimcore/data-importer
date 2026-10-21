@@ -23,7 +23,7 @@ import { transformFormToBackend, type BackendConfiguration } from '../../../../u
 import { type DataImporterFormValues } from '../../../../types'
 import { StepHeading } from '../step-heading/step-heading'
 import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
-import { usePreviewScope } from '../../../preview-scope'
+import { usePreviewContext, usePreviewScope } from '../../../preview-scope'
 import { ConfigProvider } from 'antd'
 
 export interface PreviewImportStepProps {
@@ -66,8 +66,7 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
 
   const [copyPreview, { isLoading: isCopying, error: copyPreviewError }] = useBundleDataImporterConfigCopyPreviewMutation()
   const previewScope = usePreviewScope()
-  // the upload's size limit follows the interpreter; a proposal's is in the form, not the store
-  const interpreterType = Form.useWatch(['interpreterConfig', 'type']) as string | undefined
+  const previewContext = usePreviewContext()
   const {
     dataPreview,
     currentRecordIndex,
@@ -111,7 +110,8 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
       name: configName,
       bundleDataImporterCopyPreviewParameters: {
         currentConfig: getBackendConfig(),
-        previewScope
+        previewScope,
+        previewContext
       }
     })
 
@@ -242,7 +242,7 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
         action={ `${getPrefix()}/bundle/data-importer/config/${configName}/upload-preview` }
         data={ {
           ...(previewScope !== undefined && { previewScope }),
-          ...(interpreterType !== undefined && { interpreterType })
+          ...(previewContext !== undefined && { previewContext })
         } }
         onOpenChange={ (nextOpen) => { setUploadModalOpen(nextOpen) } }
         onUploadSuccess={ () => {

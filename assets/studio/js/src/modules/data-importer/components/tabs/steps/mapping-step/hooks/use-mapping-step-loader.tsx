@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
 import { useAppDispatch } from '@pimcore/studio-ui-bundle/app'
-import { usePreviewScope } from '../../../../preview-scope'
+import { usePreviewContext, usePreviewScope } from '../../../../preview-scope'
 import { api, useBundleDataImporterConfigGetQuery } from '../../../../../data-importer-api-slice-enhanced'
 import { useBundleDataImporterConfigLoadColumnHeadersQuery, useBundleDataImporterConfigLoadPreviewQuery } from '../../../../../data-importer-api-slice.gen'
 import { transformFormToBackend, type BackendConfiguration } from '../../../../../utils/transformers'
@@ -64,6 +64,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
   const [hasPreviewError, setHasPreviewError] = useState(false)
   const [attributesMap, setAttributesMap] = useState<Record<string, ClassAttribute[]>>({})
   const previewScope = usePreviewScope()
+  const previewContext = usePreviewContext()
   // The class the attributesMap entries belong to. The class can be changed in the resolver
   // step without saving, so entries loaded for another class must never be reused.
   const attributesMapClassIdRef = useRef<string | undefined>(undefined)
@@ -72,6 +73,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     bundleDataImporterCopyPreviewParameters: {
       currentConfig: BackendConfiguration
       previewScope?: string
+      previewContext?: string
     }
   } | undefined>(undefined)
   const [previewRequest, setPreviewRequest] = useState<{
@@ -80,6 +82,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
       currentConfig: BackendConfiguration
       recordNumber: number
       previewScope?: string
+      previewContext?: string
     }
   } | undefined>(undefined)
   const [attrsDone, setAttrsDone] = useState(false)
@@ -248,7 +251,8 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
       name: configName,
       bundleDataImporterCopyPreviewParameters: {
         currentConfig: getSourcePreviewConfig(),
-        previewScope
+        previewScope,
+        previewContext
       }
     })
 
@@ -257,6 +261,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
       bundleDataImporterLoadPreviewParameters: {
         currentConfig: getSourcePreviewConfig(),
         previewScope,
+        previewContext,
         recordNumber: 0
       }
     })

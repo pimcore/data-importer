@@ -355,8 +355,8 @@ export type BundleDataImporterConfigUploadPreviewApiArg = {
         file: Blob;
         /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
         previewScope?: string;
-        /** The proposed interpreter, which sets the upload size limit */
-        interpreterType?: string;
+        /** The context the change set is kept in, when its author keeps it in one */
+        previewContext?: string;
     };
 };
 export type BundleDataImporterConnectionListApiResponse =
@@ -460,6 +460,8 @@ export type BundleDataImporterCalculateTransformationResultTypeParameters = {
     };
     /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
     previewScope?: string;
+    /** The context the change set is kept in, when its author keeps it in one */
+    previewContext?: string;
 };
 export type BundleDataImporterImportProgressResponse = {
     /** AdditionalAttributes */
@@ -488,6 +490,8 @@ export type BundleDataImporterCopyPreviewParameters = {
     };
     /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
     previewScope?: string;
+    /** The context the change set is kept in, when its author keeps it in one */
+    previewContext?: string;
 };
 export type BundleDataImporterConfigurationDetail = {
     /** AdditionalAttributes */
@@ -593,6 +597,8 @@ export type BundleDataImporterLoadPreviewParameters = {
     recordNumber?: number;
     /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
     previewScope?: string;
+    /** The context the change set is kept in, when its author keeps it in one */
+    previewContext?: string;
 };
 export type BundleDataImporterTransformationResultPreviewsResponse = {
     /** AdditionalAttributes */

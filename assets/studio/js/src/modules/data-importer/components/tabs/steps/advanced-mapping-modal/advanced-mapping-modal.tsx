@@ -20,7 +20,7 @@ import { useStyles } from './advanced-mapping-modal.styles'
 import { useAutoRecalculateType } from './hooks/use-auto-recalculate-type'
 import { ResultPreviewProvider } from './result-preview/result-preview-context'
 import { useConfigEditorReadOnly } from '../../../config-editor-mode'
-import { usePreviewScope } from '../../../preview-scope'
+import { usePreviewContext, usePreviewScope } from '../../../preview-scope'
 
 export { type ClassAttribute } from '../../../../types'
 export interface AdvancedMappingModalProps {
@@ -63,10 +63,12 @@ export const AdvancedMappingModal = ({
     }, 800)
   }, [])
   const previewScope = usePreviewScope()
+  const previewContext = usePreviewContext()
   const [calculateTypeRequest, setCalculateTypeRequest] = useState<{
     name: string
     bundleDataImporterCalculateTransformationResultTypeParameters: {
       previewScope?: string
+      previewContext?: string
       currentConfig: {
         label?: string
         dataSourceIndex?: string[]
@@ -142,6 +144,7 @@ export const AdvancedMappingModal = ({
       name: configName,
       bundleDataImporterCalculateTransformationResultTypeParameters: {
         previewScope,
+        previewContext,
         currentConfig: {
           label: current.label,
           dataSourceIndex: current.dataSourceIndex,
@@ -161,7 +164,7 @@ export const AdvancedMappingModal = ({
         // ignore
       }
     }
-  }, [configName, calculateTypeRequest, refetchCalculateType, previewScope])
+  }, [configName, calculateTypeRequest, refetchCalculateType, previewScope, previewContext])
 
   const handleRefreshAll = useCallback((): void => {
     void recalculateType()

@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
 import { useBundleDataImporterConfigGetQuery } from '../data-importer-api-slice-enhanced'
-import { usePreviewScope } from '../components/preview-scope'
+import { usePreviewContext, usePreviewScope } from '../components/preview-scope'
 import { useBundleDataImporterConfigLoadColumnHeadersQuery } from '../data-importer-api-slice.gen'
 import { transformFormToBackend, type BackendConfiguration } from '../utils/transformers'
 import { type DataImporterFormValues } from '../types'
@@ -36,6 +36,7 @@ export const useColumnHeaderOptions = (
   const form = Form.useFormInstance()
   const { data: configData } = useBundleDataImporterConfigGetQuery({ name: configName })
   const previewScope = usePreviewScope()
+  const previewContext = usePreviewContext()
 
   const loaderConfigType = Form.useWatch(['loaderConfig', 'type']) as string | undefined
   const interpreterConfigType = Form.useWatch(['interpreterConfig', 'type']) as string | undefined
@@ -49,13 +50,14 @@ export const useColumnHeaderOptions = (
       name: configName,
       bundleDataImporterCopyPreviewParameters: {
         previewScope,
+        previewContext,
         currentConfig: {
           loaderConfig: backendConfig.loaderConfig,
           interpreterConfig: backendConfig.interpreterConfig
         }
       }
     }
-  }, [configName, configData, form, loaderConfigType, interpreterConfigType, previewScope])
+  }, [configName, configData, form, loaderConfigType, interpreterConfigType, previewScope, previewContext])
 
   const { data: liveHeaders, refetch } = useBundleDataImporterConfigLoadColumnHeadersQuery(
     headersRequest!,

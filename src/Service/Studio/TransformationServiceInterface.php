@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultPreviewsResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultTypeResponse;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
@@ -37,7 +38,7 @@ interface TransformationServiceInterface
         string $name,
         ?array $currentConfig,
         int $recordNumber,
-        ?string $scope = null
+        ?PreviewScope $scope = null
     ): TransformationResultPreviewsResponse;
 
     /**
@@ -48,6 +49,6 @@ interface TransformationServiceInterface
     public function calculateTransformationResultType(
         string $name,
         array $currentConfig,
-        ?string $scope = null
+        ?PreviewScope $scope = null
     ): TransformationResultTypeResponse;
 }

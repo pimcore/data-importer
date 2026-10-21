@@ -172,7 +172,10 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
   }
 
   const editor = (
-    <PreviewScopeProvider scope={ changeSetId }>
+    <PreviewScopeProvider
+      context={ contextRef }
+      scope={ changeSetId }
+    >
       <DataImporterConfigEditor
         activeStep={ step }
         activeTab={ tab }

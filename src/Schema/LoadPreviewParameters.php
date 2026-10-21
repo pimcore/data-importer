@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Schema;
 
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 
 /**
  * @internal
@@ -56,6 +57,11 @@ final readonly class LoadPreviewParameters
         )]
         // a plain string, not ?string: the Studio codegen turns a nullable into `any`
         private string $previewScope = '',
+        #[Property(
+            description: 'The context the change set is kept in, when its author keeps it in one',
+            type: 'string',
+        )]
+        private string $previewContext = '',
     ) {
     }
 
@@ -69,8 +75,8 @@ final readonly class LoadPreviewParameters
         return $this->recordNumber;
     }
 
-    public function getPreviewScope(): ?string
+    public function getPreviewScope(): ?PreviewScope
     {
-        return $this->previewScope !== '' ? $this->previewScope : null;
+        return PreviewScope::fromRequest($this->previewScope, $this->previewContext);
     }
 }

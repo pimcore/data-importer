@@ -23,6 +23,10 @@ services:
     Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess: ~
+    # change_control.yml binds scopes to change sets when Change Control is installed
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Preview\NoPreviewScopeResolver
 
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
