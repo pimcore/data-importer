@@ -43,6 +43,9 @@ const ACTIVE_PANE_SELECTOR = '.ant-tabs-tabpane-active'
 const SCROLL_INTERVAL_MS = 250
 const SCROLL_ATTEMPTS = 24
 
+// the editor is mounted read-only: nothing it holds is saved from here
+const ignoreSave = async (): Promise<{ modificationDate?: number }> => await Promise.resolve({})
+
 /**
  * An import configuration reviews as the importer's own editor: the proposed configuration
  * mounted read-only, with every changed field marked where it sits.
@@ -176,7 +179,7 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
         configName={ subjectRef }
         configuration={ configuration }
         isWriteable={ false }
-        onSave={ async () => ({}) }
+        onSave={ ignoreSave }
         onStepChange={ setStep }
         onTabChange={ setTab }
         showRuntime={ false }
