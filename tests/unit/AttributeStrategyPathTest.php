@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Load\AttributeStrategy;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Db;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Objectbrick;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Tests\Support\Util\TestHelper;
@@ -30,6 +31,8 @@ class AttributeStrategyPathTest extends Unit
 
     private const CLASS_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
 
+    private const BRICK_NAME = 'DiAttributePathBrick';
+
     private const ROOT = '/di-attribute-path-test';
 
     private const VENDOR_B_PATH = self::ROOT . '/vendor-b';
@@ -41,12 +44,14 @@ class AttributeStrategyPathTest extends Unit
     protected function _before(): void
     {
         $this->class = $this->createClass(self::CLASS_NAME);
+        $this->createBrick(self::BRICK_NAME);
     }
 
     protected function _after(): void
     {
         TestHelper::cleanUp();
         $this->class->delete();
+        Objectbrick\Definition::getByKey(self::BRICK_NAME)?->delete();
     }
 
     public function testLoadWithoutPathReturnsFirstMatchOfWholeTree(): void
@@ -173,6 +178,20 @@ class AttributeStrategyPathTest extends Unit
         );
     }
 
+    public function testLoadByBrickAttributeWithPathIgnoresSameValueOutsideOfPath(): void
+    {
+        $this->createObject('vendor-a', 'SKU-12', null, null, 'Brick-1');
+        $vendorB = $this->createObject('vendor-b', 'SKU-13', null, null, 'Brick-1');
+
+        $settings = ['attributeName' => 'bricks.' . self::BRICK_NAME . '.code'];
+
+        $element = $this->createStrategy($settings + ['path' => self::VENDOR_B_PATH])->loadElementByIdentifier('Brick-1');
+        static::assertSame($vendorB->getId(), $element?->getId());
+
+        $element = $this->createStrategy($settings + ['path' => self::ROOT . '/vendor-c'])->loadElementByIdentifier('Brick-1');
+        static::assertNull($element);
+    }
+
     private function createStrategy(array $settings): AttributeStrategy
     {
         $strategy = new AttributeStrategy(Db::get(), new DataObjectLoader());
@@ -201,10 +220,15 @@ class AttributeStrategyPathTest extends Unit
         $localizedFields->setName('localizedfields');
         $localizedFields->addChild($title);
 
+        $bricks = new ClassDefinition\Data\Objectbricks();
+        $bricks->setName('bricks');
+        $bricks->setAllowedTypes([self::BRICK_NAME]);
+
         $panel = new ClassDefinition\Layout\Panel();
         $panel->setName('pimcore_root');
         $panel->addChild($input);
         $panel->addChild($localizedFields);
+        $panel->addChild($bricks);
 
         $definition = new ClassDefinition();
         $definition->setName($name);
@@ -214,7 +238,34 @@ class AttributeStrategyPathTest extends Unit
         return $definition;
     }
 
-    private function createObject(string $folder, ?string $sku, ?string $key = null, ?string $title = null): Concrete
+    private function createBrick(string $name): void
+    {
+        if (Objectbrick\Definition::getByKey($name) instanceof Objectbrick\Definition) {
+            return;
+        }
+
+        $code = new ClassDefinition\Data\Input();
+        $code->setName('code');
+        $code->setIndex(true);
+
+        $panel = new ClassDefinition\Layout\Panel();
+        $panel->setName('pimcore_root');
+        $panel->addChild($code);
+
+        $definition = new Objectbrick\Definition();
+        $definition->setKey($name);
+        $definition->setLayoutDefinitions($panel);
+        $definition->setClassDefinitions([['classname' => self::CLASS_NAME, 'fieldname' => 'bricks']]);
+        $definition->save();
+    }
+
+    private function createObject(
+        string $folder,
+        ?string $sku,
+        ?string $key = null,
+        ?string $title = null,
+        ?string $brickCode = null
+    ): Concrete
     {
         $fqcn = self::CLASS_NAMESPACE . self::CLASS_NAME;
         $parent = Service::createFolderByPath(self::ROOT . '/' . $folder);
@@ -227,6 +278,12 @@ class AttributeStrategyPathTest extends Unit
         $object->setSku($sku);
         if ($title !== null) {
             $object->setTitle($title, 'en');
+        }
+        if ($brickCode !== null) {
+            $brickClass = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\' . self::BRICK_NAME;
+            $brick = new $brickClass($object);
+            $brick->setCode($brickCode);
+            $object->getBricks()->setDiAttributePathBrick($brick);
         }
         $object->save();
 
