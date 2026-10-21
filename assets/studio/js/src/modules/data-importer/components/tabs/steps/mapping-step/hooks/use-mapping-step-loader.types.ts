@@ -26,7 +26,7 @@ export interface UseMappingStepLoaderResult {
   attributesMap: Record<string, ClassAttribute[]>
   setAttributesMap: React.Dispatch<React.SetStateAction<Record<string, ClassAttribute[]>>>
   classId: string | undefined
-  mappingTrtList: string[] | undefined
+  mappingAttrMapKeyList: string[] | undefined
   getMappingConfig: () => MappingConfigItem[]
   /** the form as the backend would store it — what a preview request should describe */
   getBackendConfig: () => BackendConfiguration
