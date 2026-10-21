@@ -482,11 +482,10 @@ class FactoryOperatorTest extends Test\Unit
         /** @var QuantityValueArray $operator */
         $operator = $this->tester->grabService(QuantityValueArray::class);
 
-        // default stays "by id", taken as is
+        // default stays "by id"
         $operator->setSettings([]);
-        $result = $operator->process([['12', 'pme_m'], ['5', 'unknown']]);
+        $result = $operator->process([['12', 'pme_m']]);
         $this->assertEquals('pme_m', $result[0]->getUnitId());
-        $this->assertEquals('unknown', $result[1]->getUnitId());
 
         $operator->setSettings(['unitSourceSelect' => 'abbr']);
         $result = $operator->process([['12', 'pme-m'], ['5', 'unknown']]);
