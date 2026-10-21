@@ -26,6 +26,18 @@ use Pimcore\Model\User;
 
 class PreviewServiceTest extends Unit
 {
+    private const CONFIG = 'car-import';
+
+    private const CHANGE_SET = '01a08c7b-de2d-717b-93de-8aaee94a65a9';
+
+    private const OTHER_CHANGE_SET = '0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f';
+
+    private const CONTEXT = 'agent-session:7/x';
+
+    private const LIVE_PATH = 'car-import/22.import';
+
+    private const SCOPED_PATH = 'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import';
+
     private PreviewService $service;
 
     protected function _before(): void
@@ -35,18 +47,18 @@ class PreviewServiceTest extends Unit
 
     public function testALivePreviewIsKeyedByConfigurationAndUser(): void
     {
-        static::assertSame('car-import/22.import', $this->service->getPreviewFilePath('car-import', $this->user(22)));
+        static::assertSame(self::LIVE_PATH, $this->service->getPreviewFilePath(self::CONFIG, $this->user(22)));
     }
 
     /** beside the live one, in the same directory — never over it, and gone with the configuration */
     public function testAScopedPreviewIsKeyedByChangeSetToo(): void
     {
         static::assertSame(
-            'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import',
+            self::SCOPED_PATH,
             $this->service->getPreviewFilePath(
-                'car-import',
+                self::CONFIG,
                 $this->user(22),
-                new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9')
+                new PreviewScope(self::CHANGE_SET)
             )
         );
     }
@@ -55,17 +67,17 @@ class PreviewServiceTest extends Unit
     public function testAScopedPreviewKeepsItsContextInTheName(): void
     {
         $path = $this->service->getPreviewFilePath(
-            'car-import',
+            self::CONFIG,
             $this->user(22),
-            new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9', 'agent-session:7/x')
+            new PreviewScope(self::CHANGE_SET, self::CONTEXT)
         );
 
         static::assertSame(
-            'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9.' . bin2hex('agent-session:7/x') . '-22.import',
+            'car-import/_cs-' . self::CHANGE_SET . '.' . bin2hex(self::CONTEXT) . '-22.import',
             $path
         );
         static::assertEquals(
-            new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9', 'agent-session:7/x'),
+            new PreviewScope(self::CHANGE_SET, self::CONTEXT),
             PreviewService::scopeOf($path)
         );
     }
@@ -73,23 +85,23 @@ class PreviewServiceTest extends Unit
     public function testAScopeIsReadBackFromItsFileName(): void
     {
         static::assertEquals(
-            new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9'),
-            PreviewService::scopeOf('car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import')
+            new PreviewScope(self::CHANGE_SET),
+            PreviewService::scopeOf(self::SCOPED_PATH)
         );
-        static::assertNull(PreviewService::scopeOf('car-import/22.import'));
+        static::assertNull(PreviewService::scopeOf(self::LIVE_PATH));
         static::assertNull(PreviewService::scopeOf('car-import/_cs-x.zz-22.import'));
         static::assertNull(PreviewService::scopeOf('car-import/notes.txt'));
     }
 
     public function testClosedScopesAreRemovedAndTheRestIsKept(): void
     {
-        $open = 'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import';
-        $closed = 'car-import/_cs-0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f-22.import';
-        $closedOtherUser = 'car-import/_cs-0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f-23.import';
+        $open = self::SCOPED_PATH;
+        $closed = 'car-import/_cs-' . self::OTHER_CHANGE_SET . '-22.import';
+        $closedOtherUser = 'car-import/_cs-' . self::OTHER_CHANGE_SET . '-23.import';
         $storage = $this->createMock(FilesystemOperator::class);
         $storage->expects($this->once())->method('listContents')->with('', true)->willReturn(new DirectoryListing([
-            new DirectoryAttributes('car-import'),
-            new FileAttributes('car-import/22.import'),
+            new DirectoryAttributes(self::CONFIG),
+            new FileAttributes(self::LIVE_PATH),
             new FileAttributes($open),
             new FileAttributes($closed),
             new FileAttributes($closedOtherUser),
@@ -104,14 +116,14 @@ class PreviewServiceTest extends Unit
             static function (PreviewScope $scope) use (&$asked): bool {
                 $asked[] = $scope->changeSetId;
 
-                return $scope->changeSetId === '01a08c7b-de2d-717b-93de-8aaee94a65a9';
+                return $scope->changeSetId === self::CHANGE_SET;
             }
         );
 
         static::assertSame(2, $removed);
         static::assertSame([$closed, $closedOtherUser], $deleted);
         // once per change set, however many reviewers previewed it
-        static::assertSame(['01a08c7b-de2d-717b-93de-8aaee94a65a9', '0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f'], $asked);
+        static::assertSame([self::CHANGE_SET, self::OTHER_CHANGE_SET], $asked);
     }
 
     /**
@@ -132,8 +144,8 @@ class PreviewServiceTest extends Unit
         yield 'parent directory in the name' => ['../etc', null];
         yield 'slash in the name' => ['car/import', null];
         yield 'empty name' => ['', null];
-        yield 'parent directory in the scope' => ['car-import', '../22'];
-        yield 'slash in the scope' => ['car-import', 'a/b'];
+        yield 'parent directory in the scope' => [self::CONFIG, '../22'];
+        yield 'slash in the scope' => [self::CONFIG, 'a/b'];
     }
 
     private function user(int $id): User

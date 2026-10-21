@@ -115,7 +115,9 @@ class ImportConfigProposalBuilderTest extends Unit
 
     public function testATypeTheInstallationLacksIsRefused(): void
     {
-        $builder = new ImportConfigProposalBuilder(new ImportConfigVocabulary(['interpreter' => ['csv' => new \stdClass()]]));
+        $builder = new ImportConfigProposalBuilder(
+            new ImportConfigVocabulary(['interpreter' => ['csv' => new \stdClass()]])
+        );
 
         $this->expectException(ProposalRefusedException::class);
         $builder->build('dealer-feed', ['interpreterConfig' => ['type' => 'xml']], $this->stored($this->complete()));
