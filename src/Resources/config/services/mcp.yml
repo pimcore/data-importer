@@ -30,6 +30,8 @@ services:
                 'data target': !tagged_iterator { tag: 'pimcore.datahub.data_importer.data_target', index_by: 'type' }
                 'transformation': !tagged_iterator { tag: 'pimcore.datahub.data_importer.operator', index_by: 'type' }
 
+    Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder: ~
+
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposeImportConfigTool:
         tags:
             - {
