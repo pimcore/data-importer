@@ -60,12 +60,20 @@ class QuantityValue extends AbstractOperator
     {
         if (($this->unitSource ?? $this->getDefaultUnitSource()) !== 'static') {
             if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-                throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for %s operator at transformation position %s",
-                    $inputType, $this->getOperatorLabel(), $index));
+                throw new InvalidConfigurationException(sprintf(
+                    "Unsupported input type '%s' for %s operator at transformation position %s",
+                    $inputType,
+                    $this->getOperatorLabel(),
+                    $index
+                ));
             }
         } elseif ($inputType !== TransformationDataTypeService::DEFAULT_TYPE) {
-            throw new InvalidConfigurationException(sprintf("Unsupported input type '%s' for %s operator with static unit at transformation position %s",
-                $inputType, $this->getOperatorLabel(), $index));
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for %s operator with static unit at transformation position %s",
+                $inputType,
+                $this->getOperatorLabel(),
+                $index
+            ));
         }
 
         return TransformationDataTypeService::QUANTITY_VALUE;

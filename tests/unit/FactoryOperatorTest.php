@@ -461,10 +461,16 @@ class FactoryOperatorTest extends Test\Unit
 
         $this->assertEquals(
             \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService::INPUT_QUANTITY_VALUE,
-            $operator->evaluateReturnType(\Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService::DEFAULT_TYPE)
+            $operator->evaluateReturnType(
+                \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService::DEFAULT_TYPE
+            )
         );
 
-        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m', 'unitNullIfNoValueCheckbox' => true]);
+        $operator->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => 'pme_m',
+            'unitNullIfNoValueCheckbox' => true,
+        ]);
         // same result as Quantity Value: no value, no object
         $this->assertNull($operator->process([null]));
         $this->assertNull($operator->process(['']));
@@ -502,7 +508,11 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals('pme_m', $result[0]->getUnitId());
         $this->assertEquals('pme_m', $result[1]->getUnitId());
 
-        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m', 'unitNullIfNoValueCheckbox' => true]);
+        $operator->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => 'pme_m',
+            'unitNullIfNoValueCheckbox' => true,
+        ]);
         $result = $operator->process([[null], ['3']]);
         $this->assertNull($result[0]);
         $this->assertEquals('pme_m', $result[1]->getUnitId());
@@ -545,7 +555,11 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals('7', $result[1]->getValue());
         $this->assertEquals('pme_m', $result[1]->getUnitId());
 
-        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m', 'unitNullIfNoValueCheckbox' => true]);
+        $operator->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => 'pme_m',
+            'unitNullIfNoValueCheckbox' => true,
+        ]);
         $result = $operator->process([[null], ['3']]);
         $this->assertNull($result[0]);
         $this->assertEquals('3', $result[1]->getValue());
