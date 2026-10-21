@@ -77,7 +77,7 @@ final class AttributeStrategy extends AbstractLoad
 
         if ($this->path !== '') {
             // restrict to the configured tree path, so objects outside of it are never offered for cleanup
-            $sql .= ' WHERE `path` LIKE ' . $this->db->quote(addcslashes($this->path, '\\%_') . '%');
+            $sql .= ' WHERE ' . $this->dataObjectLoader->getPathLikeCondition($this->path);
         }
 
         return $this->db->fetchFirstColumn($sql);

@@ -108,15 +108,7 @@ final class DataObjectLoader
 
             $conditions['condition'] = $queryFieldName . ' ' . $operator . ' ' . $identifierQuoted
                 . $this->getPathCondition($path);
-            if ($limit > 0) {
-                $conditions['limit'] = $limit;
-            }
-            $conditions['objectTypes'] = $objectTypes;
-            $list = $className::getList($conditions);
-            $dataObjects = $list->load();
-            if (empty($dataObjects) === false) {
-                $element = $dataObjects[0];
-            }
+            $element = $this->loadFirstFromList($className, $conditions, $limit, $objectTypes);
         }
 
         if ($element instanceof ElementInterface) {
@@ -153,8 +145,19 @@ final class DataObjectLoader
 
         $getter = 'getBy' . $attributeName;
 
+        if ($path !== '' && empty($attributeLanguage) && method_exists($className, $getter)) {
+            // a hand-written static getter takes no list options, so the path could not reach the query
+            $db = Db::get();
+
+            return $this->loadFirstFromList($className, [
+                'condition' => $db->quoteIdentifier($attributeName) . ' = ' . $db->quote($identifier)
+                    . $this->getPathCondition($path),
+            ], $limit, $objectTypes);
+        }
+
         if ($path !== '') {
-            // the static getters accept list options instead of a limit, whose condition is appended to the lookup
+            // the generated static getters accept list options instead of a limit, whose condition is appended to
+            // the lookup condition
             $listOptions = ['limit' => $limit > 0 ? $limit : 1, 'condition' => $this->getPathCondition($path)];
             if (empty($attributeLanguage) === false) {
                 return $className::$getter($identifier, $attributeLanguage, $listOptions, 0, $objectTypes);
@@ -187,14 +190,19 @@ final class DataObjectLoader
         string $path
     ): ?ElementInterface {
         $db = Db::get();
-        $conditions = [
+
+        return $this->loadFirstFromList($className, [
             'condition' => $db->quoteIdentifier(self::SYSTEM_KEY_ATTRIBUTE) . ' = ' . $db->quote($identifier)
                 . $this->getPathCondition($path),
-            'objectTypes' => $objectTypes,
-        ];
+        ], $limit, $objectTypes);
+    }
+
+    private function loadFirstFromList(string $className, array $conditions, int $limit, array $objectTypes): ?ElementInterface
+    {
         if ($limit > 0) {
             $conditions['limit'] = $limit;
         }
+        $conditions['objectTypes'] = $objectTypes;
 
         $dataObjects = $className::getList($conditions)->load();
 
@@ -225,9 +233,16 @@ final class DataObjectLoader
             return '';
         }
 
-        $db = Db::get();
-        $escaped = addcslashes($path, '\\%_');
+        return ' AND ' . $this->getPathLikeCondition($path);
+    }
 
-        return ' AND ' . $db->quoteIdentifier('path') . ' LIKE ' . $db->quote($escaped . '%');
+    /**
+     * The path condition without a leading `AND`, `$path` must be normalized and not empty.
+     */
+    public function getPathLikeCondition(string $path): string
+    {
+        $db = Db::get();
+
+        return $db->quoteIdentifier('path') . ' LIKE ' . $db->quote(addcslashes($path, '\\%_') . '%');
     }
 }

@@ -50,11 +50,12 @@ class AttributeStrategyPathTest extends Unit
     public function testLoadWithoutPathReturnsFirstMatchOfWholeTree(): void
     {
         $vendorA = $this->createObject('vendor-a', 'SKU-1');
-        $this->createObject('vendor-b', 'SKU-1');
+        $vendorB = $this->createObject('vendor-b', 'SKU-1');
 
         $element = $this->createStrategy([])->loadElementByIdentifier('SKU-1');
 
-        static::assertSame($vendorA->getId(), $element?->getId());
+        // without a path the first match of the whole tree wins, whichever vendor the database returns first
+        static::assertContains($element?->getId(), [$vendorA->getId(), $vendorB->getId()]);
     }
 
     public function testLoadWithPathIgnoresSameAttributeValueOutsideOfPath(): void
@@ -103,6 +104,27 @@ class AttributeStrategyPathTest extends Unit
             ->loadElementByIdentifier('same-key');
 
         static::assertSame($vendorB->getId(), $element?->getId());
+    }
+
+    public function testLoadWithPathAndEmptyIdentifierUsesListRoute(): void
+    {
+        $this->createObject('vendor-a', null);
+        $vendorB = $this->createObject('vendor-b', null);
+
+        $element = $this->createStrategy(['path' => self::ROOT . '/vendor-b'])->loadElementByIdentifier('');
+
+        static::assertSame($vendorB->getId(), $element?->getId());
+    }
+
+    public function testLoadWithPathByHandWrittenStaticGetterRespectsPath(): void
+    {
+        $vendorA = $this->createObject('vendor-a', 'SKU-11');
+
+        $strategy = $this->createStrategy(['attributeName' => 'id', 'path' => self::ROOT . '/vendor-b']);
+        static::assertNull($strategy->loadElementByIdentifier((string) $vendorA->getId()));
+
+        $strategy = $this->createStrategy(['attributeName' => 'id', 'path' => self::ROOT . '/vendor-a']);
+        static::assertSame($vendorA->getId(), $strategy->loadElementByIdentifier((string) $vendorA->getId())?->getId());
     }
 
     public function testFullIdentifierListIsLimitedToPath(): void
@@ -190,7 +212,7 @@ class AttributeStrategyPathTest extends Unit
         return $definition;
     }
 
-    private function createObject(string $folder, string $sku, ?string $key = null, ?string $title = null): Concrete
+    private function createObject(string $folder, ?string $sku, ?string $key = null, ?string $title = null): Concrete
     {
         $fqcn = self::CLASS_NAMESPACE . self::CLASS_NAME;
         $parent = Service::createFolderByPath(self::ROOT . '/' . $folder);
