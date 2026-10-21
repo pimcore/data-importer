@@ -69,9 +69,11 @@ final class DataObjectLoader
         string $attributeLanguage = '',
         bool $includeUnpublished = false,
         int $limit = 0,
-        string $operator = '='): ?ElementInterface
+        string $operator = '=',
+        string $path = ''): ?ElementInterface
     {
         $element = null;
+        $path = $this->normalizePath($path);
         $objectTypes = [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT];
 
         if ($includeUnpublished) {
@@ -85,7 +87,8 @@ final class DataObjectLoader
                 $identifier,
                 $attributeLanguage,
                 $limit,
-                $objectTypes
+                $objectTypes,
+                $path
             );
         } else {
             $queryFieldName = $attributeName;
@@ -103,7 +106,8 @@ final class DataObjectLoader
                 $identifierQuoted = Db::get()->quote($identifier);
             }
 
-            $conditions['condition'] = $queryFieldName . ' ' . $operator . ' ' . $identifierQuoted;
+            $conditions['condition'] = $queryFieldName . ' ' . $operator . ' ' . $identifierQuoted
+                . $this->getPathCondition($path);
             if ($limit > 0) {
                 $conditions['limit'] = $limit;
             }
@@ -140,13 +144,24 @@ final class DataObjectLoader
         string $identifier,
         string $attributeLanguage,
         int $limit,
-        array $objectTypes
+        array $objectTypes,
+        string $path
     ): ?ElementInterface {
         if ($attributeName === self::SYSTEM_KEY_ATTRIBUTE) {
-            return $this->loadBySystemKey($className, $identifier, $limit, $objectTypes);
+            return $this->loadBySystemKey($className, $identifier, $limit, $objectTypes, $path);
         }
 
         $getter = 'getBy' . $attributeName;
+
+        if ($path !== '') {
+            // the static getters accept list options instead of a limit, whose condition is appended to the lookup
+            $listOptions = ['limit' => $limit > 0 ? $limit : 1, 'condition' => $this->getPathCondition($path)];
+            if (empty($attributeLanguage) === false) {
+                return $className::$getter($identifier, $attributeLanguage, $listOptions, 0, $objectTypes);
+            }
+
+            return $className::$getter($identifier, $listOptions, 0, $objectTypes);
+        }
 
         if (empty($attributeLanguage) === false) {
             return $className::$getter($identifier, $attributeLanguage, $limit, 0, $objectTypes);
@@ -168,11 +183,13 @@ final class DataObjectLoader
         string $className,
         string $identifier,
         int $limit,
-        array $objectTypes
+        array $objectTypes,
+        string $path
     ): ?ElementInterface {
         $db = Db::get();
         $conditions = [
-            'condition' => $db->quoteIdentifier(self::SYSTEM_KEY_ATTRIBUTE) . ' = ' . $db->quote($identifier),
+            'condition' => $db->quoteIdentifier(self::SYSTEM_KEY_ATTRIBUTE) . ' = ' . $db->quote($identifier)
+                . $this->getPathCondition($path),
             'objectTypes' => $objectTypes,
         ];
         if ($limit > 0) {
@@ -182,5 +199,35 @@ final class DataObjectLoader
         $dataObjects = $className::getList($conditions)->load();
 
         return $dataObjects[0] ?? null;
+    }
+
+    /**
+     * Normalizes the configured tree path to `/folder/sub/` (leading and trailing slash), `''` for no restriction.
+     */
+    public function normalizePath(string $path): string
+    {
+        $path = trim($path);
+        if ($path === '' || $path === '/') {
+            return '';
+        }
+
+        return '/' . trim($path, '/') . '/';
+    }
+
+    /**
+     * SQL condition (with leading ` AND `) limiting a lookup to objects at or below the given normalized path.
+     * Objects store the path of their parent folder in `path`, so a prefix match covers the folder itself and
+     * all sub folders. LIKE wildcards in the path are escaped and the value is bound as a quoted literal.
+     */
+    public function getPathCondition(string $path): string
+    {
+        if ($path === '') {
+            return '';
+        }
+
+        $db = Db::get();
+        $escaped = addcslashes($path, '\\%_');
+
+        return ' AND ' . $db->quoteIdentifier('path') . ' LIKE ' . $db->quote($escaped . '%');
     }
 }

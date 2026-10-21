@@ -26,6 +26,8 @@ final class AttributeStrategy extends AbstractLoad
 
     private bool $includeUnpublished;
 
+    private string $path = '';
+
     /**
      * @param array $settings
      *
@@ -42,6 +44,7 @@ final class AttributeStrategy extends AbstractLoad
         $this->attributeName = $settings['attributeName'];
         $this->attributeLanguage = $settings['language'] ?? '';
         $this->includeUnpublished = $settings['includeUnpublished'] ?? false;
+        $this->path = $this->dataObjectLoader->normalizePath((string) ($settings['path'] ?? ''));
     }
 
     /**
@@ -58,7 +61,9 @@ final class AttributeStrategy extends AbstractLoad
             $identifier,
             $this->attributeLanguage,
             $this->includeUnpublished,
-            1);
+            1,
+            '=',
+            $this->path);
     }
 
     public function loadFullIdentifierList(): array
@@ -69,6 +74,11 @@ final class AttributeStrategy extends AbstractLoad
         }
 
         $sql = sprintf('SELECT `%s` FROM %s', $this->attributeName, $tableName);
+
+        if ($this->path !== '') {
+            // restrict to the configured tree path, so objects outside of it are never offered for cleanup
+            $sql .= ' WHERE `path` LIKE ' . $this->db->quote(addcslashes($this->path, '\\%_') . '%');
+        }
 
         return $this->db->fetchFirstColumn($sql);
     }
