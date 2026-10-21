@@ -59,6 +59,19 @@ final readonly class ChangeSetPreviewScopeResolver implements PreviewScopeResolv
         return null;
     }
 
+    public function isOpen(PreviewScope $scope): bool
+    {
+        if (!Uuid::isValid($scope->changeSetId)) {
+            return false;
+        }
+
+        // a change set that is gone, or invisible in the context it was made in, is no longer reviewed
+        $changeSet = Uuid::fromString($scope->changeSetId);
+        $summary = $this->authoring->summaries([$changeSet], $scope->contextRef)[$changeSet->toRfc4122()] ?? null;
+
+        return $summary?->isOpen() ?? false;
+    }
+
     private function isListed(string $configName, Uuid $changeSet, ?string $contextRef): bool
     {
         $page = 1;

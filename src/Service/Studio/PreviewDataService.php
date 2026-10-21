@@ -90,7 +90,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
             $user = $this->resolveCurrentUser();
 
-            $this->previewService->writePreviewFile($name, $file->getPathname(), $user, $scope?->changeSetId);
+            $this->previewService->writePreviewFile($name, $file->getPathname(), $user, $scope);
         } finally {
             @unlink($file->getPathname());
         }
@@ -134,7 +134,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
             $user = $this->resolveCurrentUser();
 
-            $this->previewService->writePreviewFile($name, $sourcePath, $user, $scope?->changeSetId);
+            $this->previewService->writePreviewFile($name, $sourcePath, $user, $scope);
         } finally {
             $loader->cleanup();
         }
@@ -165,7 +165,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
         $user = $this->resolveCurrentUser();
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope?->changeSetId);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope);
 
         if ($previewFilePath === null || !is_file($previewFilePath)) {
             throw new NotFoundHttpException(
@@ -254,7 +254,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         $columnHeaders = $this->previewHydrator->loadAvailableColumnHeaders(
             $name,
             $preparedConfig,
-            $scope?->changeSetId
+            $scope
         );
 
         $response = $this->previewHydrator->hydrateColumnHeaders($columnHeaders);

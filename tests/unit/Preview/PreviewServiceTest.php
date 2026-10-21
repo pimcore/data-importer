@@ -16,7 +16,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Preview;
 
 use Codeception\Test\Unit;
 use InvalidArgumentException;
+use League\Flysystem\DirectoryAttributes;
+use League\Flysystem\DirectoryListing;
+use League\Flysystem\FileAttributes;
 use League\Flysystem\FilesystemOperator;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Model\User;
 
@@ -39,8 +43,75 @@ class PreviewServiceTest extends Unit
     {
         static::assertSame(
             'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import',
-            $this->service->getPreviewFilePath('car-import', $this->user(22), '01a08c7b-de2d-717b-93de-8aaee94a65a9')
+            $this->service->getPreviewFilePath(
+                'car-import',
+                $this->user(22),
+                new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9')
+            )
         );
+    }
+
+    /** an agent's change set is visible only in its context, so the name keeps it for the sweep */
+    public function testAScopedPreviewKeepsItsContextInTheName(): void
+    {
+        $path = $this->service->getPreviewFilePath(
+            'car-import',
+            $this->user(22),
+            new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9', 'agent-session:7/x')
+        );
+
+        static::assertSame(
+            'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9.' . bin2hex('agent-session:7/x') . '-22.import',
+            $path
+        );
+        static::assertEquals(
+            new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9', 'agent-session:7/x'),
+            PreviewService::scopeOf($path)
+        );
+    }
+
+    public function testAScopeIsReadBackFromItsFileName(): void
+    {
+        static::assertEquals(
+            new PreviewScope('01a08c7b-de2d-717b-93de-8aaee94a65a9'),
+            PreviewService::scopeOf('car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import')
+        );
+        static::assertNull(PreviewService::scopeOf('car-import/22.import'));
+        static::assertNull(PreviewService::scopeOf('car-import/_cs-x.zz-22.import'));
+        static::assertNull(PreviewService::scopeOf('car-import/notes.txt'));
+    }
+
+    public function testClosedScopesAreRemovedAndTheRestIsKept(): void
+    {
+        $open = 'car-import/_cs-01a08c7b-de2d-717b-93de-8aaee94a65a9-22.import';
+        $closed = 'car-import/_cs-0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f-22.import';
+        $closedOtherUser = 'car-import/_cs-0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f-23.import';
+        $storage = $this->createMock(FilesystemOperator::class);
+        $storage->expects($this->once())->method('listContents')->with('', true)->willReturn(new DirectoryListing([
+            new DirectoryAttributes('car-import'),
+            new FileAttributes('car-import/22.import'),
+            new FileAttributes($open),
+            new FileAttributes($closed),
+            new FileAttributes($closedOtherUser),
+        ]));
+        $deleted = [];
+        $storage->method('delete')->willReturnCallback(static function (string $path) use (&$deleted): void {
+            $deleted[] = $path;
+        });
+        $asked = [];
+
+        $removed = (new PreviewService($storage))->removeClosedScopes(
+            static function (PreviewScope $scope) use (&$asked): bool {
+                $asked[] = $scope->changeSetId;
+
+                return $scope->changeSetId === '01a08c7b-de2d-717b-93de-8aaee94a65a9';
+            }
+        );
+
+        static::assertSame(2, $removed);
+        static::assertSame([$closed, $closedOtherUser], $deleted);
+        // once per change set, however many reviewers previewed it
+        static::assertSame(['01a08c7b-de2d-717b-93de-8aaee94a65a9', '0198f2c1-4b7a-7c3d-9e5f-1a2b3c4d5e6f'], $asked);
     }
 
     /**
@@ -50,7 +121,7 @@ class PreviewServiceTest extends Unit
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $this->service->getPreviewFilePath($name, $this->user(22), $scope);
+        $this->service->getPreviewFilePath($name, $this->user(22), $scope === null ? null : new PreviewScope($scope));
     }
 
     /**

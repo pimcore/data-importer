@@ -19,6 +19,8 @@ use Pimcore\Bundle\ChangeControlBundle\ChangeSet\MappedParameter\ListChangeSetsP
 use Pimcore\Bundle\ChangeControlBundle\ChangeSet\Schema\ChangeSetItem;
 use Pimcore\Bundle\ChangeControlBundle\ChangeSet\Service\ChangeSetServiceInterface;
 use Pimcore\Bundle\ChangeControlBundle\Contract\ChangeControlAuthoringInterface;
+use Pimcore\Bundle\ChangeControlBundle\Contract\ChangeSetSummary;
+use Pimcore\Bundle\ChangeControlBundle\Storage\Schema;
 use Pimcore\Bundle\ChangeControlBundle\Subject\SubjectRef;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ChangeSetPreviewScopeResolver;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
@@ -110,6 +112,49 @@ class ChangeSetPreviewScopeResolverTest extends Unit
         static::assertNull(
             (new ChangeSetPreviewScopeResolver($changeSets, $authoring))
                 ->proposal('car-import', new PreviewScope(self::CHANGE_SET))
+        );
+    }
+
+    public function testAnOpenChangeSetIsAskedInItsContext(): void
+    {
+        $authoring = $this->createMock(ChangeControlAuthoringInterface::class);
+        $authoring->expects($this->once())
+            ->method('summaries')
+            ->with([Uuid::fromString(self::CHANGE_SET)], 'agent-session:7')
+            ->willReturn([self::CHANGE_SET => $this->summary(Schema::STATE_DRAFT)]);
+
+        static::assertTrue(
+            (new ChangeSetPreviewScopeResolver($this->createStub(ChangeSetServiceInterface::class), $authoring))
+                ->isOpen(new PreviewScope(self::CHANGE_SET, 'agent-session:7'))
+        );
+    }
+
+    public function testADecidedOrMissingChangeSetIsNotOpen(): void
+    {
+        $authoring = $this->createStub(ChangeControlAuthoringInterface::class);
+        $authoring->method('summaries')->willReturnOnConsecutiveCalls(
+            [self::CHANGE_SET => $this->summary(Schema::STATE_DISCARDED)],
+            [],
+        );
+        $resolver = new ChangeSetPreviewScopeResolver($this->createStub(ChangeSetServiceInterface::class), $authoring);
+
+        static::assertFalse($resolver->isOpen(new PreviewScope(self::CHANGE_SET)));
+        static::assertFalse($resolver->isOpen(new PreviewScope(self::CHANGE_SET)));
+        static::assertFalse($resolver->isOpen(new PreviewScope('car-import')));
+    }
+
+    private function summary(int $state): ChangeSetSummary
+    {
+        return new ChangeSetSummary(
+            Uuid::fromString(self::CHANGE_SET),
+            ImportConfigPolicy::SUBJECT_TYPE,
+            'car-import',
+            'label',
+            $state,
+            0,
+            null,
+            'agent',
+            null,
         );
     }
 

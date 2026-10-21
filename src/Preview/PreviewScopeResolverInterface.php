@@ -28,4 +28,10 @@ interface PreviewScopeResolverInterface
      * @return array<string, mixed>|null
      */
     public function proposal(string $configName, PreviewScope $scope): ?array;
+
+    /**
+     * Whether the change set is still open, asked in the scope's context and for no user: a
+     * preview made for it may still be needed.
+     */
+    public function isOpen(PreviewScope $scope): bool;
 }

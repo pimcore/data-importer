@@ -71,7 +71,7 @@ final readonly class TransformationService implements TransformationServiceInter
             $currentConfig
         );
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope?->changeSetId);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope);
         $importDataRow = [];
 
         if ($previewFilePath !== null && is_file($previewFilePath)) {

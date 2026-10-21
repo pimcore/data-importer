@@ -25,4 +25,9 @@ final readonly class NoPreviewScopeResolver implements PreviewScopeResolverInter
     {
         return null;
     }
+
+    public function isOpen(PreviewScope $scope): bool
+    {
+        return false;
+    }
 }
