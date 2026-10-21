@@ -435,6 +435,16 @@ class FactoryOperatorTest extends Test\Unit
         $this->assertEquals($data->getLongitude(), "13.06517167884434");
     }
 
+    public function testAsGeopointPreviewLabelsLatitudeAndLongitude() {
+        $service = $this->tester->grabService(AsGeopoint::class);
+        $data = $service->process(["48.8566", "2.3522"]);
+
+        $this->assertEquals(
+            'Lat.: 48.8566  Long.: 2.3522',
+            $service->generateResultPreview($data)
+        );
+    }
+
     public function testAsGeobounds() {
         $service = $this->tester->grabService(AsGeobounds::class);
         $data = $service->process(["47.83595982332057", "13.06517167884434", "47.810540991091045", "13.073721286556358"]);
