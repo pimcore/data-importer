@@ -56,14 +56,16 @@ final class AttributeStrategy extends AbstractLoad
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
-        return $this->dataObjectLoader->loadByAttribute($this->getClassName(),
+        return $this->dataObjectLoader->loadByAttribute(
+            $this->getClassName(),
             $this->attributeName,
             $identifier,
             $this->attributeLanguage,
             $this->includeUnpublished,
             1,
             '=',
-            $this->path);
+            $this->path
+        );
     }
 
     public function loadFullIdentifierList(): array

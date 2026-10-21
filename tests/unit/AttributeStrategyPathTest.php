@@ -32,6 +32,8 @@ class AttributeStrategyPathTest extends Unit
 
     private const ROOT = '/di-attribute-path-test';
 
+    private const VENDOR_B_PATH = self::ROOT . '/vendor-b';
+
     protected $tester;
 
     private ClassDefinition $class;
@@ -63,7 +65,7 @@ class AttributeStrategyPathTest extends Unit
         $this->createObject('vendor-a', 'SKU-1');
         $vendorB = $this->createObject('vendor-b', 'SKU-1');
 
-        $element = $this->createStrategy(['path' => self::ROOT . '/vendor-b'])->loadElementByIdentifier('SKU-1');
+        $element = $this->createStrategy(['path' => self::VENDOR_B_PATH])->loadElementByIdentifier('SKU-1');
 
         static::assertSame($vendorB->getId(), $element?->getId());
     }
@@ -100,7 +102,7 @@ class AttributeStrategyPathTest extends Unit
         $this->createObject('vendor-a', 'SKU-5', 'same-key');
         $vendorB = $this->createObject('vendor-b', 'SKU-6', 'same-key');
 
-        $element = $this->createStrategy(['attributeName' => 'key', 'path' => self::ROOT . '/vendor-b'])
+        $element = $this->createStrategy(['attributeName' => 'key', 'path' => self::VENDOR_B_PATH])
             ->loadElementByIdentifier('same-key');
 
         static::assertSame($vendorB->getId(), $element?->getId());
@@ -111,7 +113,7 @@ class AttributeStrategyPathTest extends Unit
         $this->createObject('vendor-a', null);
         $vendorB = $this->createObject('vendor-b', null);
 
-        $element = $this->createStrategy(['path' => self::ROOT . '/vendor-b'])->loadElementByIdentifier('');
+        $element = $this->createStrategy(['path' => self::VENDOR_B_PATH])->loadElementByIdentifier('');
 
         static::assertSame($vendorB->getId(), $element?->getId());
     }
@@ -120,7 +122,7 @@ class AttributeStrategyPathTest extends Unit
     {
         $vendorA = $this->createObject('vendor-a', 'SKU-11');
 
-        $strategy = $this->createStrategy(['attributeName' => 'id', 'path' => self::ROOT . '/vendor-b']);
+        $strategy = $this->createStrategy(['attributeName' => 'id', 'path' => self::VENDOR_B_PATH]);
         static::assertNull($strategy->loadElementByIdentifier((string) $vendorA->getId()));
 
         $strategy = $this->createStrategy(['attributeName' => 'id', 'path' => self::ROOT . '/vendor-a']);
@@ -138,7 +140,7 @@ class AttributeStrategyPathTest extends Unit
         );
         static::assertSame(
             ['SKU-B'],
-            $this->createStrategy(['path' => self::ROOT . '/vendor-b'])->loadFullIdentifierList()
+            $this->createStrategy(['path' => self::VENDOR_B_PATH])->loadFullIdentifierList()
         );
     }
 
@@ -150,7 +152,7 @@ class AttributeStrategyPathTest extends Unit
         $element = $this->createStrategy([
             'attributeName' => 'title',
             'language' => 'en',
-            'path' => self::ROOT . '/vendor-b',
+            'path' => self::VENDOR_B_PATH,
         ])->loadElementByIdentifier('Title-1');
 
         static::assertSame($vendorB->getId(), $element?->getId());
@@ -166,7 +168,7 @@ class AttributeStrategyPathTest extends Unit
             $this->createStrategy([
                 'attributeName' => 'title',
                 'language' => 'en',
-                'path' => self::ROOT . '/vendor-b',
+                'path' => self::VENDOR_B_PATH,
             ])->loadFullIdentifierList()
         );
     }

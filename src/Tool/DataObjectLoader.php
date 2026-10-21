@@ -63,15 +63,17 @@ final class DataObjectLoader
         return $fullAttributeName;
     }
 
-    public function loadByAttribute(string $className,
+    // NOSONAR php:S107 - $path extends a public signature, a parameter object would break callers
+    public function loadByAttribute(
+        string $className,
         string $attributeName,
         string $identifier,
         string $attributeLanguage = '',
         bool $includeUnpublished = false,
         int $limit = 0,
         string $operator = '=',
-        string $path = ''): ?ElementInterface
-    {
+        string $path = ''
+    ): ?ElementInterface {
         $element = null;
         $path = $this->normalizePath($path);
         $objectTypes = [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT];
@@ -197,8 +199,12 @@ final class DataObjectLoader
         ], $limit, $objectTypes);
     }
 
-    private function loadFirstFromList(string $className, array $conditions, int $limit, array $objectTypes): ?ElementInterface
-    {
+    private function loadFirstFromList(
+        string $className,
+        array $conditions,
+        int $limit,
+        array $objectTypes
+    ): ?ElementInterface {
         if ($limit > 0) {
             $conditions['limit'] = $limit;
         }
