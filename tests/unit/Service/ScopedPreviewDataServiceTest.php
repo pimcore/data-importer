@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface;
+use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
@@ -29,6 +30,7 @@ use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\User;
@@ -90,6 +92,18 @@ class ScopedPreviewDataServiceTest extends Unit
         );
     }
 
+    public function testAScopedCopyThroughAProposedLoaderNeedsUpdateOnTheStoredConfiguration(): void
+    {
+        $this->storage->expects($this->never())->method('write');
+        $stored = $this->createStub(Configuration::class);
+        $stored->method('isAllowed')->willReturnCallback(static fn (string $p): bool => $p === 'read');
+        $stored->method('getConfiguration')->willReturn(['loaderConfig' => ['type' => 'sftp']]);
+        $service = $this->service($stored, ['loaderConfig' => ['type' => 'proposed-loader']]);
+
+        $this->expectException(ForbiddenException::class);
+        $service->copyPreviewData('car-import', null, new PreviewScope(self::CHANGE_SET));
+    }
+
     private function service(?Configuration $stored, ?array $proposal): PreviewDataService
     {
         $configurations = $this->createStub(StoredConfigurationsInterface::class);
@@ -99,6 +113,7 @@ class ScopedPreviewDataServiceTest extends Unit
 
         $user = new User();
         $user->setId(22);
+        $user->setPermissions([Installer::DATAHUB_ADAPTER_PERMISSION]);
         $security = $this->createStub(SecurityServiceInterface::class);
         $security->method('getCurrentUser')->willReturn($user);
 
@@ -111,7 +126,7 @@ class ScopedPreviewDataServiceTest extends Unit
             new InterpreterFactory([]),
             new EventDispatcher(),
             new PreviewEventApplier(new EventDispatcher()),
-            new PreviewAccess($configurations, $scopes),
+            new PreviewAccess($configurations, $scopes, $security),
         );
     }
 

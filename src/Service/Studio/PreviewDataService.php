@@ -98,11 +98,7 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
 
     public function copyPreviewData(string $name, ?array $currentConfig, ?PreviewScope $scope = null): void
     {
-        $proposal = $this->previewAccess->authorize(
-            $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_UPDATE,
-            $scope
-        );
+        $proposal = $this->previewAccess->authorizeFetch($name, $scope);
 
         // a scoped copy fetches through the proposal's loader, never one the request names
         $preparedConfig = $this->configurationPreparationService->prepareConfiguration(

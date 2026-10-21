@@ -17,11 +17,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Preview;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
+use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PreviewAccessTest extends Unit
@@ -113,9 +116,67 @@ class PreviewAccessTest extends Unit
             ->with('car-import', $scope)
             ->willReturn([]);
 
-        $access = new PreviewAccess($this->configurations(null), $resolver);
+        $access = new PreviewAccess($this->configurations(null), $resolver, $this->security([]));
 
         static::assertSame([], $access->authorize('car-import', self::READ, $scope));
+    }
+
+    public function testAnUnscopedFetchNeedsUpdate(): void
+    {
+        $access = $this->access($this->stored(['read' => true, 'update' => false]), null);
+
+        $this->expectException(ForbiddenException::class);
+        $access->authorizeFetch('car-import', null);
+    }
+
+    public function testAScopedFetchThroughTheStoredLoaderNeedsOnlyReading(): void
+    {
+        $stored = $this->stored(['read' => true, 'update' => false], ['loaderConfig' => ['type' => 'sftp']]);
+        $access = $this->access($stored, ['interpreterConfig' => ['type' => 'json']]);
+
+        static::assertSame(
+            ['interpreterConfig' => ['type' => 'json'], 'loaderConfig' => ['type' => 'sftp']],
+            $access->authorizeFetch('car-import', new PreviewScope(self::CHANGE_SET))
+        );
+    }
+
+    /** the proposed loader fetches only for someone who could approve it */
+    public function testAScopedFetchThroughAProposedLoaderNeedsUpdate(): void
+    {
+        $stored = $this->stored(['read' => true, 'update' => false], ['loaderConfig' => ['type' => 'sftp']]);
+        $access = $this->access($stored, ['loaderConfig' => ['type' => 'http', 'url' => 'https://example.com/a.csv']]);
+
+        $this->expectException(ForbiddenException::class);
+        $access->authorizeFetch('car-import', new PreviewScope(self::CHANGE_SET));
+    }
+
+    public function testAScopedFetchThroughAProposedLoaderWithUpdateIsAllowed(): void
+    {
+        $stored = $this->stored(['read' => true, 'update' => true], ['loaderConfig' => ['type' => 'sftp']]);
+        $access = $this->access($stored, ['loaderConfig' => ['type' => 'http']]);
+
+        static::assertSame(
+            ['loaderConfig' => ['type' => 'http']],
+            $access->authorizeFetch('car-import', new PreviewScope(self::CHANGE_SET))
+        );
+    }
+
+    public function testAFetchForAConfigurationOnlyProposedNeedsTheRightToCreateOne(): void
+    {
+        $access = $this->access(null, ['loaderConfig' => ['type' => 'http']], []);
+
+        $this->expectException(ForbiddenException::class);
+        $access->authorizeFetch('car-import', new PreviewScope(self::CHANGE_SET));
+    }
+
+    public function testAFetchForAConfigurationOnlyProposedIsAllowedToWhoMayCreateOne(): void
+    {
+        $access = $this->access(null, ['loaderConfig' => ['type' => 'http']], [Installer::DATAHUB_ADAPTER_PERMISSION]);
+
+        static::assertSame(
+            ['loaderConfig' => ['type' => 'http']],
+            $access->authorizeFetch('car-import', new PreviewScope(self::CHANGE_SET))
+        );
     }
 
     /**
@@ -140,11 +201,27 @@ class PreviewAccessTest extends Unit
         return $configurations;
     }
 
-    private function access(?Configuration $stored, ?array $proposal): PreviewAccess
+    /**
+     * @param list<string> $permissions the current user's
+     */
+    private function access(?Configuration $stored, ?array $proposal, array $permissions = []): PreviewAccess
     {
         $resolver = $this->createStub(PreviewScopeResolverInterface::class);
         $resolver->method('proposal')->willReturn($proposal);
 
-        return new PreviewAccess($this->configurations($stored), $resolver);
+        return new PreviewAccess($this->configurations($stored), $resolver, $this->security($permissions));
+    }
+
+    /**
+     * @param list<string> $permissions
+     */
+    private function security(array $permissions): SecurityServiceInterface
+    {
+        $user = new User();
+        $user->setPermissions($permissions);
+        $security = $this->createStub(SecurityServiceInterface::class);
+        $security->method('getCurrentUser')->willReturn($user);
+
+        return $security;
     }
 }
