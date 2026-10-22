@@ -124,10 +124,38 @@ class ProposeImportConfigToolTest extends Unit
         static::assertStringContainsString('A new configuration needs', $this->payload($result)['error']);
     }
 
-    private function tool(AgentSessionServiceInterface $sessions, Closure $find): ProposeImportConfigTool
+    public function testAUserWhoMayNotConfigureImportsIsRefused(): void
     {
+        $sessions = $this->createMock(AgentSessionServiceInterface::class);
+        $sessions->expects($this->never())->method('setProposalData');
+
+        $result = $this->tool($sessions, static fn (): null => null, allowed: false)
+            ->execute('dealer-feed', $this->complete());
+
+        static::assertTrue($result->isError);
+        static::assertSame('permission_denied', $this->payload($result)['code']);
+    }
+
+    public function testACallOutsideAChatSessionRecordsNothing(): void
+    {
+        $sessions = $this->createMock(AgentSessionServiceInterface::class);
+        $sessions->expects($this->never())->method('setProposalData');
+
+        $result = $this->tool($sessions, static fn (): null => null, session: null)
+            ->execute('dealer-feed', $this->complete());
+
+        static::assertTrue($result->isError);
+        static::assertSame('No chat session context.', $this->payload($result)['error']);
+    }
+
+    private function tool(
+        AgentSessionServiceInterface $sessions,
+        Closure $find,
+        bool $allowed = true,
+        ?string $session = self::SESSION,
+    ): ProposeImportConfigTool {
         $user = $this->createStub(UserInterface::class);
-        $user->method('isAllowed')->willReturn(true);
+        $user->method('isAllowed')->willReturn($allowed);
         $user->method('getId')->willReturn(42);
         $security = $this->createStub(SecurityServiceInterface::class);
         $security->method('getCurrentUser')->willReturn($user);
@@ -137,7 +165,7 @@ class ProposeImportConfigToolTest extends Unit
         $resolver->method('getWidgetType')->willReturn('proposal-subject');
 
         $request = new Request();
-        $request->attributes->set(McpAccessTokenAuthenticator::REQUEST_ATTR_REFERENCE, self::SESSION);
+        $request->attributes->set(McpAccessTokenAuthenticator::REQUEST_ATTR_REFERENCE, $session);
         $requests = new RequestStack();
         $requests->push($request);
 
