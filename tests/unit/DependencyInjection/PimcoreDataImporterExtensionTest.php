@@ -90,7 +90,10 @@ class PimcoreDataImporterExtensionTest extends Unit
             ['pimcore-data-importer-read', 'pimcore-data-importer-propose'],
             $config['agents']['contributions']['configuration']['pimcoreMcpServers']
         );
-        $this->assertSame(['data-importer-configuration'], $config['agents']['contributions']['configuration']['skills']);
+        $this->assertSame(
+            ['data-importer-configuration'],
+            $config['agents']['contributions']['configuration']['skills']
+        );
     }
 
     /** an agent bundle released before the contributions node would reject the key */
@@ -131,6 +134,7 @@ class PimcoreDataImporterExtensionTest extends Unit
 
             public function load(array $configs, ContainerBuilder $container): void
             {
+                // only its configuration tree matters to prepend()
             }
 
             public function getConfiguration(array $config, ContainerBuilder $container): ConfigurationInterface

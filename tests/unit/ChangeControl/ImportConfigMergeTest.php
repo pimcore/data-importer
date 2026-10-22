@@ -93,14 +93,21 @@ class ImportConfigMergeTest extends Unit
         $existing->method('getConfiguration')->willReturn($stored);
         $existing->method('getType')->willReturn(ImportConfigPolicy::CONFIG_TYPE);
 
-        return (new ImportConfigProposalBuilder(new ImportConfigVocabulary([])))->build('dealer-feed', $document, $existing);
+        $builder = new ImportConfigProposalBuilder(new ImportConfigVocabulary([]));
+
+        return $builder->build('dealer-feed', $document, $existing);
     }
 
     /** @return array<string, mixed> */
     private function stored(): array
     {
         return [
-            'general' => ['name' => 'dealer-feed', 'type' => ImportConfigPolicy::CONFIG_TYPE, 'active' => true, 'path' => ''],
+            'general' => [
+                'name' => 'dealer-feed',
+                'type' => ImportConfigPolicy::CONFIG_TYPE,
+                'active' => true,
+                'path' => '',
+            ],
             'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/feeds/cars.json']],
             'interpreterConfig' => ['type' => 'json'],
             'resolverConfig' => [
@@ -111,8 +118,16 @@ class ImportConfigMergeTest extends Unit
                 'publishingStrategy' => ['type' => 'noChangeUnpublishNew'],
             ],
             'mappingConfig' => [
-                ['label' => 'VIN', 'dataSourceIndex' => ['vin'], 'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'vin']]],
-                ['label' => 'Model', 'dataSourceIndex' => ['model'], 'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name']]],
+                [
+                    'label' => 'VIN',
+                    'dataSourceIndex' => ['vin'],
+                    'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'vin']],
+                ],
+                [
+                    'label' => 'Model',
+                    'dataSourceIndex' => ['model'],
+                    'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name']],
+                ],
             ],
         ];
     }

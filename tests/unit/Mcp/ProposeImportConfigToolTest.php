@@ -33,9 +33,9 @@ use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Authenticator\Mcp\McpAccessTokenAuthenticator;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\UserInterface;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use UnexpectedValueException;
 
 class ProposeImportConfigToolTest extends Unit
 {
@@ -55,9 +55,11 @@ class ProposeImportConfigToolTest extends Unit
         $sessions = $this->createMock(AgentSessionServiceInterface::class);
         $sessions->expects($this->once())
             ->method('setProposalData')
-            ->willReturnCallback(static function (string $session, string $id, array $data, int $user) use (&$recorded): void {
-                $recorded = [$session, $data, $user];
-            });
+            ->willReturnCallback(
+                static function (string $session, string $id, array $data, int $user) use (&$recorded): void {
+                    $recorded = [$session, $data, $user];
+                }
+            );
 
         $result = $this->tool($sessions, static fn (): null => null)
             ->execute('dealer-feed', $this->complete());
@@ -68,10 +70,8 @@ class ProposeImportConfigToolTest extends Unit
         static::assertTrue($recorded[1]['isNew']);
         static::assertSame('dealer-feed', $recorded[1]['subjectRef']);
         static::assertSame(ImportConfigPolicy::SUBJECT_TYPE, $recorded[1]['subjectType']);
-        static::assertSame(
-            (new ImportConfigProposalBuilder(new ImportConfigVocabulary([])))->build('dealer-feed', $this->complete(), null),
-            $recorded[1]['subjectState'],
-        );
+        $builder = new ImportConfigProposalBuilder(new ImportConfigVocabulary([]));
+        static::assertSame($builder->build('dealer-feed', $this->complete(), null), $recorded[1]['subjectState']);
         static::assertSame('dealer-feed', $this->payload($result)['name']);
     }
 
@@ -104,8 +104,8 @@ class ProposeImportConfigToolTest extends Unit
         $sessions = $this->createMock(AgentSessionServiceInterface::class);
         $sessions->expects($this->never())->method('setProposalData');
 
-        $result = $this->tool($sessions, static fn (): never => throw new RuntimeException('storage unavailable'))
-            ->execute('dealer-feed', $this->complete());
+        $failingRead = static fn (): never => throw new UnexpectedValueException('storage unavailable');
+        $result = $this->tool($sessions, $failingRead)->execute('dealer-feed', $this->complete());
 
         static::assertTrue($result->isError);
         static::assertSame('internal_error', $this->payload($result)['code']);
