@@ -80,6 +80,15 @@ describe('mappingDiff', () => {
     expect(diff.map((entry) => entry.status)).toEqual(['changed'])
   })
 
+  it('names a row without a label by the columns it reads', () => {
+    const diff = mappingDiff(payload(
+      [],
+      [row('a', '', 'vin', ['vin', 'chassis']), row('b', '', 'color', 'color'), row('c', '', 'price', null)]
+    ))
+
+    expect(diff.map((entry) => entry.label)).toEqual(['vin, chassis', 'color', '—'])
+  })
+
   it('is empty without a mapping slot', () => {
     expect(mappingDiff({ slots: {} })).toEqual([])
     expect(mappingDiff(undefined)).toEqual([])

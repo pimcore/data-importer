@@ -114,6 +114,18 @@ describe('config review model', () => {
     expect(live.loaderConfig.settings.host).toBe('old.example.com')
   })
 
+  it('builds the sections a new configuration has no live document for', () => {
+    const created: ReviewPayload = {
+      slots: {
+        processing: { shape: 'record', current: {}, proposed: { 'processingConfig.cleanup.strategy': 'delete' } }
+      }
+    }
+
+    const config = proposedConfiguration(created, undefined) as unknown as Record<string, any>
+
+    expect(config.processingConfig).toEqual({ cleanup: { strategy: 'delete' } })
+  })
+
   it('tells a new configuration from a changed one', () => {
     const created: ReviewPayload = {
       slots: { general: { shape: 'record', current: {}, proposed: { 'general.active': false } } }
