@@ -120,6 +120,7 @@ class PimcoreDataImporterExtensionTest extends Unit
 
             public function load(array $configs, ContainerBuilder $container): void
             {
+                // only its missing configuration tree matters to prepend()
             }
 
             public function getNamespace(): string

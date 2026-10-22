@@ -48,6 +48,8 @@ class ScopedPreviewDataServiceTest extends Unit
 {
     private const string CHANGE_SET = '01a08c7b-de2d-717b-93de-8aaee94a65a9';
 
+    private const string SCOPED_FILE = 'car-import/_cs-' . self::CHANGE_SET . '-22.import';
+
     /** above the 10 MB a fully loaded interpreter accepts, below the 50 MB of a streamed one */
     private const int ELEVEN_MB = 11 * 1024 * 1024;
 
@@ -72,7 +74,7 @@ class ScopedPreviewDataServiceTest extends Unit
     {
         $this->storage->expects($this->once())
             ->method('write')
-            ->with('car-import/_cs-' . self::CHANGE_SET . '-22.import', $this->anything());
+            ->with(self::SCOPED_FILE, $this->anything());
         $stored = $this->createStub(Configuration::class);
         $stored->method('isAllowed')->willReturnCallback(static fn (string $p): bool => $p === 'read');
         $stored->method('getConfiguration')->willReturn(['interpreterConfig' => ['type' => 'json']]);
@@ -113,7 +115,7 @@ class ScopedPreviewDataServiceTest extends Unit
         file_put_contents($fetched, "sku;name\n1;Car\n");
         $this->storage->expects($this->once())
             ->method('write')
-            ->with('car-import/_cs-' . self::CHANGE_SET . '-22.import', "sku;name\n1;Car\n");
+            ->with(self::SCOPED_FILE, "sku;name\n1;Car\n");
         $service = $this->service(
             null,
             ['loaderConfig' => ['type' => 'proposed-loader']],
@@ -127,7 +129,7 @@ class ScopedPreviewDataServiceTest extends Unit
     {
         $this->storage->expects($this->once())
             ->method('fileExists')
-            ->with('car-import/_cs-' . self::CHANGE_SET . '-22.import')
+            ->with(self::SCOPED_FILE)
             ->willReturn(false);
         $service = $this->service(null, ['interpreterConfig' => ['type' => 'csv']]);
 
@@ -192,6 +194,7 @@ class ScopedPreviewDataServiceTest extends Unit
 
             public function setSettings(array $settings): void
             {
+                // the stub loads from its fixed path
             }
 
             public function loadData(): string
