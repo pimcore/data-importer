@@ -230,13 +230,15 @@ function filledAt (configuration: BackendConfiguration, path: string): number {
 const SECTIONS: Array<{
   key: string
   keys: Array<keyof BackendConfiguration>
+  /** translation key, when the review model's section labels have none */
+  label?: string
   skip?: ReadonlySet<string>
   tell?: (configuration: BackendConfiguration, t: Translate) => Told | undefined
 }> = [
   { key: 'general', keys: ['general'], skip: NOT_A_SETTING, tell: generalTold },
   { key: 'dataSource', keys: ['loaderConfig', 'interpreterConfig'], tell: dataSourceTold },
   { key: 'resolver', keys: ['resolverConfig'], tell: (c, t) => resolverTold(c.resolverConfig, t) },
-  { key: 'mapping', keys: ['mappingConfig'], tell: mappingTold },
+  { key: 'mapping', keys: ['mappingConfig'], label: 'data-importer.mapping.title-short', tell: mappingTold },
   { key: 'processing', keys: ['processingConfig'], tell: (c, t) => processingTold(c.processingConfig, t) },
   { key: 'execution', keys: ['executionConfig'], tell: (c, t) => executionTold(c.executionConfig, t) },
   { key: 'permissions', keys: ['permissions'] }
@@ -250,14 +252,14 @@ const SECTIONS: Array<{
 export function configBrief (configuration: BackendConfiguration, t: Translate): ConfigBrief {
   const sections: BriefSection[] = []
 
-  for (const { key, keys, skip, tell } of SECTIONS) {
+  for (const { key, keys, label: ownLabel, skip, tell } of SECTIONS) {
     const count = keys.reduce<number>((sum, k) => sum + settingsIn(configuration[k], skip), 0)
     if (count === 0) continue
 
     const told = tell?.(configuration, t)
     const covered = told?.covers.reduce((sum, path) => sum + filledAt(configuration, path), 0) ?? 0
     const rest = Math.max(0, count - covered)
-    const label = SECTION_LABELS[key] ?? key
+    const label = ownLabel ?? SECTION_LABELS[key] ?? key
 
     if (told === undefined) {
       // nothing worth a line of its own: the count is the line, not a note under one
