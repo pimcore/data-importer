@@ -8,6 +8,17 @@ parameters:
     excludePaths:
         - src/Command/DummyDataCommand.php
         - src/Command/ParallelizationAbstractCommand.php
+        # these use Change Control, an optional integration this repository cannot install
+        # yet; registered only when it is present
+        - src/ChangeControl/ChangeSetPreviewScopeResolver.php
+        - src/ChangeControl/ImportConfigDetailHydrator.php
+    ignoreErrors:
+        # the same integration, and the Agent bundle it proposes through
+        -
+            message: '#Pimcore\\Bundle\\(ChangeControlBundle|PimcoreAgentBundle)\\?#'
+            paths:
+                - src/Mcp/*
+                - src/DependencyInjection/PimcoreDataImporterExtension.php
 
 includes:
     - phpstan-baseline.neon

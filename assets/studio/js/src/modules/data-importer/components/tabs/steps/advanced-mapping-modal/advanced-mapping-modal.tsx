@@ -19,6 +19,8 @@ import { StepTarget } from './step-target/step-target'
 import { useStyles } from './advanced-mapping-modal.styles'
 import { useAutoRecalculateType } from './hooks/use-auto-recalculate-type'
 import { ResultPreviewProvider } from './result-preview/result-preview-context'
+import { useConfigEditorReadOnly } from '../../../config-editor-mode'
+import { usePreviewContext, usePreviewScope } from '../../../preview-scope'
 
 export { type ClassAttribute } from '../../../../types'
 export interface AdvancedMappingModalProps {
@@ -60,9 +62,13 @@ export const AdvancedMappingModal = ({
       debounceRef.current = null
     }, 800)
   }, [])
+  const previewScope = usePreviewScope()
+  const previewContext = usePreviewContext()
   const [calculateTypeRequest, setCalculateTypeRequest] = useState<{
     name: string
     bundleDataImporterCalculateTransformationResultTypeParameters: {
+      previewScope?: string
+      previewContext?: string
       currentConfig: {
         label?: string
         dataSourceIndex?: string[]
@@ -137,6 +143,8 @@ export const AdvancedMappingModal = ({
     const nextRequest = {
       name: configName,
       bundleDataImporterCalculateTransformationResultTypeParameters: {
+        previewScope,
+        previewContext,
         currentConfig: {
           label: current.label,
           dataSourceIndex: current.dataSourceIndex,
@@ -156,12 +164,14 @@ export const AdvancedMappingModal = ({
         // ignore
       }
     }
-  }, [configName, calculateTypeRequest, refetchCalculateType])
+  }, [configName, calculateTypeRequest, refetchCalculateType, previewScope, previewContext])
 
   const handleRefreshAll = useCallback((): void => {
     void recalculateType()
     setForceRefreshToken(n => n + 1)
   }, [recalculateType])
+
+  const readOnly = useConfigEditorReadOnly()
 
   const handleSave = (): void => {
     onSave(localItem)
@@ -183,12 +193,14 @@ export const AdvancedMappingModal = ({
             onClick={ handleRefreshAll }
             tooltip={ { title: t('data-importer.mapping.advanced-modal.refresh-all-previews') } }
           />
-          <Button
-            onClick={ handleSave }
-            type="primary"
-          >
-            { t('data-importer.mapping.advanced-modal.save') }
-          </Button>
+          { !readOnly && (
+            <Button
+              onClick={ handleSave }
+              type="primary"
+            >
+              { t('data-importer.mapping.advanced-modal.save') }
+            </Button>
+          ) }
         </Flex>
       ) }
       onCancel={ onClose }

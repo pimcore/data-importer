@@ -23,6 +23,10 @@ services:
     Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess: ~
+    # change_control.yml binds scopes to change sets when Change Control is installed
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Preview\NoPreviewScopeResolver
 
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
@@ -33,6 +37,10 @@ services:
     Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask:
         tags:
             - { name: pimcore.maintenance.task, type: data_importer.restart_queue_workers }
+
+    Pimcore\Bundle\DataImporterBundle\Maintenance\ScopedPreviewCleanupTask:
+        tags:
+            - { name: pimcore.maintenance.task, type: data_importer.scoped_preview_cleanup }
 
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory: ~
 

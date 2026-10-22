@@ -24,6 +24,7 @@ import { DndClassDiv } from '../dnd-class-div/dnd-class-div'
 import { DND_TYPE } from '../sources-panel/sources-panel'
 import { findMappingIndexById } from '../utils/mapping-identity'
 import { MappingItemContent } from './mapping-item-content'
+import { MappingItemTitle } from './mapping-item-title'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -141,9 +142,15 @@ const MappingItemComponent = ({
   }, [expanded, attributes, selectedFieldName])
   const isLocalized = selectedAttr?.localized ?? false
 
-  const panelTitle = (itemLabel !== undefined && itemLabel !== '')
+  const label = (itemLabel !== undefined && itemLabel !== '')
     ? itemLabel
     : t('data-importer.mapping.item.new-label')
+  const panelTitle = (
+    <MappingItemTitle
+      fieldIndex={ fieldIndex }
+      label={ label }
+    />
+  )
 
   const handleDrop = useCallback((info: DragAndDropInfo): void => {
     const index = getCurrentIndexByMappingId()

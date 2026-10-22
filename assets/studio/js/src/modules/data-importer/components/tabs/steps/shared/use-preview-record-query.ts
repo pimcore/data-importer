@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+import { usePreviewContext, usePreviewScope } from '../../../preview-scope'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useBundleDataImporterConfigLoadPreviewQuery } from '../../../../data-importer-api-slice.gen'
 import { type BackendConfiguration } from '../../../../utils/transformers'
@@ -29,6 +30,8 @@ interface PreviewRequest {
   bundleDataImporterLoadPreviewParameters: {
     recordNumber: number
     currentConfig?: BackendConfiguration
+    previewScope?: string
+    previewContext?: string
   }
 }
 
@@ -48,6 +51,8 @@ export function usePreviewRecordQuery ({
   getCurrentConfig,
   forceRefreshToken
 }: UsePreviewRecordQueryParams): UsePreviewRecordQueryResult {
+  const previewScope = usePreviewScope()
+  const previewContext = usePreviewContext()
   const [request, setRequest] = useState<PreviewRequest | undefined>(undefined)
   const [requestedRecordIndex, setRequestedRecordIndex] = useState(0)
   const [shouldForceRefetch, setShouldForceRefetch] = useState(false)
@@ -75,14 +80,16 @@ export function usePreviewRecordQuery ({
       name: configName,
       bundleDataImporterLoadPreviewParameters: {
         recordNumber,
-        ...(currentConfig !== undefined && { currentConfig })
+        ...(currentConfig !== undefined && { currentConfig }),
+        ...(previewScope !== undefined && { previewScope }),
+        ...(previewContext !== undefined && { previewContext })
       }
     })
 
     if (options?.forceRefetch === true) {
       setShouldForceRefetch(true)
     }
-  }, [configName, getCurrentConfig])
+  }, [configName, getCurrentConfig, previewScope, previewContext])
 
   useEffect(() => {
     if (!enabled) return
