@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Mcp\Tool;
 
 use function bin2hex;
+use Closure;
 use function is_string;
 use Mcp\Capability\Attribute\McpTool;
 use Mcp\Capability\Attribute\Schema;
@@ -56,6 +57,8 @@ final readonly class ProposeImportConfigTool
         private SecurityServiceInterface $securityService,
         private McpToolErrorHandlerInterface $errorHandler,
         private ImportConfigProposalBuilder $proposals,
+        /** the configuration stored under a name, null when there is none */
+        private ?Closure $find = null,
     ) {
     }
 
@@ -148,11 +151,8 @@ final readonly class ProposeImportConfigTool
 
     private function load(string $name): ?Configuration
     {
-        try {
-            $configuration = Configuration::getByName($name);
-        } catch (Throwable) {
-            return null;
-        }
+        // only a name nothing is stored under creates: a failed read is an error, never "new"
+        $configuration = ($this->find ?? Configuration::getByName(...))($name);
 
         return is_string($configuration?->getName()) ? $configuration : null;
     }
