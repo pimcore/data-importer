@@ -129,6 +129,14 @@ class PreviewAccessTest extends Unit
         $access->authorizeFetch('car-import', null);
     }
 
+    /** unscoped, the request's own settings are fetched through: there is no proposal to return */
+    public function testAnUnscopedFetchWithUpdateIsAllowed(): void
+    {
+        $access = $this->access($this->stored(['read' => true, 'update' => true]), null);
+
+        static::assertNull($access->authorizeFetch('car-import', null));
+    }
+
     public function testAScopedFetchThroughTheStoredLoaderNeedsOnlyReading(): void
     {
         $stored = $this->stored(['read' => true, 'update' => false], ['loaderConfig' => ['type' => 'sftp']]);

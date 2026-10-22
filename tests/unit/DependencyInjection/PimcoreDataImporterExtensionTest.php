@@ -28,6 +28,7 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 
 class PimcoreDataImporterExtensionTest extends Unit
 {
@@ -101,6 +102,43 @@ class PimcoreDataImporterExtensionTest extends Unit
     {
         [$config] = $this->prepended(false)->getExtensionConfig('pimcore_agent');
 
+        $this->assertArrayHasKey('skills', $config);
+        $this->assertArrayNotHasKey('agents', $config);
+    }
+
+    public function testAnAgentBundleWithoutAConfigurationTreeGetsTheSkillPathOnly(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.project_dir', '/app');
+        $container->registerExtension($this->extension('pimcore_studio_backend', null));
+        // an extension that offers no configuration tree at all
+        $container->registerExtension(new class() implements ExtensionInterface {
+            public function getAlias(): string
+            {
+                return 'pimcore_agent';
+            }
+
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+            }
+
+            public function getNamespace(): string
+            {
+                return '';
+            }
+
+            public function getXsdValidationBasePath(): string|false
+            {
+                return false;
+            }
+        });
+        if (!ConfigProposalLane::canPropose($container)) {
+            static::markTestSkipped('Change Control, the MCP host or the Agent bundle not installed');
+        }
+
+        (new PimcoreDataImporterExtension())->prepend($container);
+
+        [$config] = $container->getExtensionConfig('pimcore_agent');
         $this->assertArrayHasKey('skills', $config);
         $this->assertArrayNotHasKey('agents', $config);
     }

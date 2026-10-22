@@ -146,6 +146,15 @@ class ProposedImportConfigurationTest extends Unit
         static::assertStringContainsString('alwaysPublish, noChangeUnpublishNew', $problems[0]);
     }
 
+    /** a row that is no object is the mapping list check's to refuse, not the vocabulary's */
+    public function testAMappingRowThatIsNoObjectNamesNoType(): void
+    {
+        $state = $this->stored();
+        $state['mappingConfig'] = ['vin'];
+
+        static::assertSame([], ProposedImportConfiguration::unknownValues($state, $this->vocabulary()));
+    }
+
     public function testMappingTargetsAndOperatorsAreCheckedRowByRow(): void
     {
         $state = $this->stored();

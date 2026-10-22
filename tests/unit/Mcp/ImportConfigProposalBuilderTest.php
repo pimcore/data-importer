@@ -123,6 +123,37 @@ class ImportConfigProposalBuilderTest extends Unit
         $builder->build('dealer-feed', ['interpreterConfig' => ['type' => 'xml']], $this->stored($this->complete()));
     }
 
+    public function testAnUnreadableYamlDocumentIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('The configuration must be an object');
+        $this->builder->build('dealer-feed', 'interpreterConfig: [json', $this->stored($this->complete()));
+    }
+
+    public function testAnInventedFieldIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('resolverConfig.flavour is not a field of an import configuration');
+        $this->builder->build(
+            'dealer-feed',
+            ['resolverConfig' => ['flavour' => 'x']],
+            $this->stored($this->complete())
+        );
+    }
+
+    public function testAChangeTheImportWouldIgnoreIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage(
+            'processingConfig.doDeltaCheck has no effect while processingConfig.idDataIndex is off'
+        );
+        $this->builder->build(
+            'dealer-feed',
+            ['processingConfig' => ['doDeltaCheck' => true]],
+            $this->stored($this->complete())
+        );
+    }
+
     /** @return array<string, mixed> */
     private function complete(): array
     {

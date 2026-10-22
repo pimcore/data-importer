@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderInterface;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Installer;
@@ -28,6 +29,7 @@ use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
+use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataService;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
@@ -36,6 +38,7 @@ use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface
 use Pimcore\Model\User;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * A preview made while reviewing a change set takes its settings from the change set, never
@@ -104,8 +107,58 @@ class ScopedPreviewDataServiceTest extends Unit
         $service->copyPreviewData('car-import', null, new PreviewScope(self::CHANGE_SET));
     }
 
-    private function service(?Configuration $stored, ?array $proposal): PreviewDataService
+    public function testAScopedCopyWritesTheFetchedDataToTheChangeSetsPreview(): void
     {
+        $fetched = tempnam(sys_get_temp_dir(), 'fetched');
+        file_put_contents($fetched, "sku;name\n1;Car\n");
+        $this->storage->expects($this->once())
+            ->method('write')
+            ->with('car-import/_cs-' . self::CHANGE_SET . '-22.import', "sku;name\n1;Car\n");
+        $service = $this->service(
+            null,
+            ['loaderConfig' => ['type' => 'proposed-loader']],
+            loaders: ['proposed-loader' => $this->loader($fetched)]
+        );
+
+        $service->copyPreviewData('car-import', null, new PreviewScope(self::CHANGE_SET));
+    }
+
+    public function testAScopedPreviewReadsOnlyTheChangeSetsUpload(): void
+    {
+        $this->storage->expects($this->once())
+            ->method('fileExists')
+            ->with('car-import/_cs-' . self::CHANGE_SET . '-22.import')
+            ->willReturn(false);
+        $service = $this->service(null, ['interpreterConfig' => ['type' => 'csv']]);
+
+        $this->expectException(NotFoundHttpException::class);
+        $service->loadPreviewData('car-import', null, 0, new PreviewScope(self::CHANGE_SET));
+    }
+
+    public function testScopedColumnHeadersComeFromTheChangeSetsPreview(): void
+    {
+        $this->storage->expects($this->never())->method('write');
+        $scope = new PreviewScope(self::CHANGE_SET);
+        $hydrator = $this->createMock(PreviewHydratorInterface::class);
+        $hydrator->expects($this->once())
+            ->method('loadAvailableColumnHeaders')
+            ->with('car-import', $this->isArray(), $scope)
+            ->willReturn([['id' => '0', 'dataIndex' => 'col_0', 'label' => 'sku']]);
+        $hydrator->method('hydrateColumnHeaders')->willReturn(new ColumnHeadersResponse([]));
+        $service = $this->service(null, ['interpreterConfig' => ['type' => 'csv']], $hydrator);
+
+        $service->loadColumnHeaders('car-import', ['interpreterConfig' => ['type' => 'csv']], $scope);
+    }
+
+    /**
+     * @param array<string, DataLoaderInterface> $loaders
+     */
+    private function service(
+        ?Configuration $stored,
+        ?array $proposal,
+        ?PreviewHydratorInterface $hydrator = null,
+        array $loaders = [],
+    ): PreviewDataService {
         $configurations = $this->createStub(StoredConfigurationsInterface::class);
         $configurations->method('find')->willReturn($stored);
         $scopes = $this->createStub(PreviewScopeResolverInterface::class);
@@ -118,16 +171,39 @@ class ScopedPreviewDataServiceTest extends Unit
         $security->method('getCurrentUser')->willReturn($user);
 
         return new PreviewDataService(
-            $this->createStub(PreviewHydratorInterface::class),
+            $hydrator ?? $this->createStub(PreviewHydratorInterface::class),
             new PreviewService($this->storage),
             $security,
             new ConfigurationPreparationService(),
-            new DataLoaderFactory([]),
+            new DataLoaderFactory($loaders),
             new InterpreterFactory([]),
             new EventDispatcher(),
             new PreviewEventApplier(new EventDispatcher()),
             new PreviewAccess($configurations, $scopes, $security),
         );
+    }
+
+    private function loader(string $path): DataLoaderInterface
+    {
+        return new class($path) implements DataLoaderInterface {
+            public function __construct(private readonly string $path)
+            {
+            }
+
+            public function setSettings(array $settings): void
+            {
+            }
+
+            public function loadData(): string
+            {
+                return $this->path;
+            }
+
+            public function cleanup(): void
+            {
+                @unlink($this->path);
+            }
+        };
     }
 
     private function upload(int $size): UploadedFile

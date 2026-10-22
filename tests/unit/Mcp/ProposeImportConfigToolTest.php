@@ -29,6 +29,7 @@ use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalWidgetEmitter;
 use Pimcore\Bundle\PimcoreAgentBundle\Security\BoundSessionReferenceResolver;
 use Pimcore\Bundle\PimcoreAgentBundle\Service\AgentSessionServiceInterface;
 use Pimcore\Bundle\PimcoreAgentBundle\Service\TaskContextResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Mcp\Exception\InvalidMcpToolArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Authenticator\Mcp\McpAccessTokenAuthenticator;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
@@ -109,6 +110,18 @@ class ProposeImportConfigToolTest extends Unit
 
         static::assertTrue($result->isError);
         static::assertSame('internal_error', $this->payload($result)['code']);
+    }
+
+    public function testAnArgumentErrorIsAnInvalidRequestNotAnInternalError(): void
+    {
+        $sessions = $this->createMock(AgentSessionServiceInterface::class);
+        $sessions->expects($this->never())->method('setProposalData');
+
+        $badArgument = static fn (): never => throw new InvalidMcpToolArgumentException('name must not be empty');
+        $result = $this->tool($sessions, $badArgument)->execute('dealer-feed', $this->complete());
+
+        static::assertTrue($result->isError);
+        static::assertSame('invalid_request', $this->payload($result)['code']);
     }
 
     public function testARefusalComesBackAsAnErrorAndRecordsNothing(): void

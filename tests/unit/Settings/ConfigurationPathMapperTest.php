@@ -123,6 +123,12 @@ class ConfigurationPathMapperTest extends Unit
         static::assertNull($this->mapper->toStoredPath('mappingConfig.0.dataTarget', $legacy));
     }
 
+    public function testAMappingThatIsNoListHasNoIndex(): void
+    {
+        static::assertSame([], $this->mapper->mappingIndex(['mappingConfig' => ['vin' => ['id' => 'a']]]));
+        static::assertSame([], $this->mapper->mappingIndex(['mappingConfig' => 'vin']));
+    }
+
     public function testMappingIndexSkipsOnlyTheItemsWithoutAnId(): void
     {
         $mixed = ['mappingConfig' => [
