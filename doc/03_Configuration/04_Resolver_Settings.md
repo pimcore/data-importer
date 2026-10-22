@@ -51,6 +51,11 @@ Looks up the object by one of its attributes, for example a remote ID or an EAN.
 - **Language**: for localized attributes, the language to search in.
 - **Include unpublished objects**: also match unpublished objects. Disabled by default, so an unpublished object is not
   found and the import creates a second one.
+- **Limit to path**: only match objects in this folder or below. Use it when the same attribute value can occur in
+  different parts of the tree, for example the same SKU for two vendors, so the import never loads or updates an
+  object from another folder. Empty by default, which searches the whole tree. With **Cleanup**, only objects inside
+  the path are considered for removal. Make sure **Element Creation** places new objects inside this path: objects
+  created elsewhere are never found again, so every run creates another copy and **Cleanup** never removes it.
 
 ## Element Creation
 

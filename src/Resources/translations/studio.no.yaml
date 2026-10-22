@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Velg kolo
 data-importer.resolver.loading-strategy.language: Språk
 data-importer.resolver.loading-strategy.language-placeholder: Velg språk
 data-importer.resolver.loading-strategy.include-unpublished: Inkluder upubliserte objekter
+data-importer.resolver.loading-strategy.attribute-path: Begrens til sti
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Match bare objekter i denne mappen eller under den. La stå tom for å søke i hele treet.
 data-importer.resolver.element-creation: Elementopprettelse
 data-importer.resolver.create-location-strategy: Plasseringsstrategi
 data-importer.resolver.create-location-strategy.tooltip: Styrer hvor nyopprettede elementer plasseres når ingen eksisterende elementer ble funnet.

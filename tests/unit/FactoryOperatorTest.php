@@ -26,6 +26,7 @@ use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\DataObject\Data\InputQuantityValue as ModelInputQuantityValue;
 use Pimcore\Model\DataObject\QuantityValue\Unit;
+use Pimcore\Model\Exception\NotFoundException;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Codeception\Test;
 
@@ -427,12 +428,163 @@ class FactoryOperatorTest extends Test\Unit
         $unit->delete();
     }
 
+    public function testInputQuantityValueUnitSource()
+    {
+        $unit = new Unit();
+        $unit->setId('pme_m');
+        $unit->setAbbreviation('pme-m');
+        $unit->setLongname('Meter');
+        $unit->save();
+
+        /** @var InputQuantityValue $operator */
+        $operator = $this->tester->grabService(InputQuantityValue::class);
+
+        // default stays "by abbreviation"
+        $operator->setSettings([]);
+        $result = $operator->process(['12', 'pme-m']);
+        $this->assertInstanceOf(ModelInputQuantityValue::class, $result);
+        $this->assertEquals('pme_m', $result->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'id']);
+        $result = $operator->process(['12', 'pme_m']);
+        $this->assertEquals('12', $result->getValue());
+        $this->assertEquals('pme_m', $result->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m']);
+        $result = $operator->process(['12', 'ignored']);
+        $this->assertEquals('12', $result->getValue());
+        $this->assertEquals('pme_m', $result->getUnitId());
+
+        $result = $operator->process('12');
+        $this->assertEquals('12', $result->getValue());
+        $this->assertEquals('pme_m', $result->getUnitId());
+
+        $this->assertEquals(
+            \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService::INPUT_QUANTITY_VALUE,
+            $operator->evaluateReturnType(
+                \Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService::DEFAULT_TYPE
+            )
+        );
+
+        $operator->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => 'pme_m',
+            'unitNullIfNoValueCheckbox' => true,
+        ]);
+        // same result as Quantity Value: no value, no object
+        $this->assertNull($operator->process([null]));
+        $this->assertNull($operator->process(['']));
+        $this->assertEquals('0', $operator->process(['0'])->getValue());
+
+        $operator->setSettings([]);
+        $unit->delete();
+    }
+
+    public function testQuantityValueArrayUnitSource()
+    {
+        $unit = new Unit();
+        $unit->setId('pme_m');
+        $unit->setAbbreviation('pme-m');
+        $unit->setLongname('Meter');
+        $unit->save();
+
+        /** @var QuantityValueArray $operator */
+        $operator = $this->tester->grabService(QuantityValueArray::class);
+
+        // default stays "by id"
+        $operator->setSettings([]);
+        $result = $operator->process([['12', 'pme_m']]);
+        $this->assertEquals('pme_m', $result[0]->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'abbr']);
+        $result = $operator->process([['12', 'pme-m'], ['5', 'unknown']]);
+        $this->assertInstanceOf(QuantityValue::class, $result[0]);
+        $this->assertEquals('pme_m', $result[0]->getUnitId());
+        $this->assertNull($result[1]->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m']);
+        $result = $operator->process([['12', 'ignored'], '7']);
+        $this->assertEquals('12', $result[0]->getValue());
+        $this->assertEquals('pme_m', $result[0]->getUnitId());
+        $this->assertEquals('pme_m', $result[1]->getUnitId());
+
+        $operator->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => 'pme_m',
+            'unitNullIfNoValueCheckbox' => true,
+        ]);
+        $result = $operator->process([[null], ['3']]);
+        $this->assertNull($result[0]);
+        $this->assertEquals('pme_m', $result[1]->getUnitId());
+
+        // by id is not looked up in the Array variants, the model rejects an unknown id
+        $operator->setSettings([]);
+        try {
+            $this->expectException(NotFoundException::class);
+            $operator->process([['5', 'unknown']]);
+        } finally {
+            $operator->setSettings([]);
+            $unit->delete();
+        }
+    }
+
+    public function testInputQuantityValueArrayUnitSource()
+    {
+        $unit = new Unit();
+        $unit->setId('pme_m');
+        $unit->setAbbreviation('pme-m');
+        $unit->setLongname('Meter');
+        $unit->save();
+
+        /** @var InputQuantityValueArray $operator */
+        $operator = $this->tester->grabService(InputQuantityValueArray::class);
+
+        $operator->setSettings([]);
+        $result = $operator->process([['12', 'pme_m']]);
+        $this->assertEquals('pme_m', $result[0]->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'abbr']);
+        $result = $operator->process([['12', 'pme-m']]);
+        $this->assertInstanceOf(ModelInputQuantityValue::class, $result[0]);
+        $this->assertEquals('pme_m', $result[0]->getUnitId());
+
+        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => 'pme_m']);
+        $result = $operator->process([['12', 'ignored'], '7']);
+        $this->assertEquals('12', $result[0]->getValue());
+        $this->assertEquals('pme_m', $result[0]->getUnitId());
+        $this->assertEquals('7', $result[1]->getValue());
+        $this->assertEquals('pme_m', $result[1]->getUnitId());
+
+        $operator->setSettings([
+            'unitSourceSelect' => 'static',
+            'staticUnitSelect' => 'pme_m',
+            'unitNullIfNoValueCheckbox' => true,
+        ]);
+        $result = $operator->process([[null], ['3']]);
+        $this->assertNull($result[0]);
+        $this->assertEquals('3', $result[1]->getValue());
+        $this->assertEquals('pme_m', $result[1]->getUnitId());
+
+        $operator->setSettings([]);
+        $unit->delete();
+    }
+
     public function testAsGeopoint() {
         $service = $this->tester->grabService(AsGeopoint::class);
         $data = $service->process(["47.83595982332057", "13.06517167884434"]);
         $this->assertInstanceOf(GeoCoordinates::class, $data);
         $this->assertEquals($data->getLatitude(), "47.83595982332057");
         $this->assertEquals($data->getLongitude(), "13.06517167884434");
+    }
+
+    public function testAsGeopointPreviewLabelsLatitudeAndLongitude() {
+        $service = $this->tester->grabService(AsGeopoint::class);
+        $data = $service->process(["48.8566", "2.3522"]);
+
+        $this->assertEquals(
+            'Lat.: 48.8566  Long.: 2.3522',
+            $service->generateResultPreview($data)
+        );
     }
 
     public function testAsGeobounds() {

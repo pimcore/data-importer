@@ -23,7 +23,12 @@ export { DynamicTypeTransformerConditionalConversion } from './conditional-conve
 export { DynamicTypeTransformerObjectField } from './object-field/dynamic-type-transformer-object-field'
 export { DynamicTypeTransformerLoadAsset } from './load-asset/dynamic-type-transformer-load-asset'
 export { DynamicTypeTransformerLoadDataObject } from './load-data-object/dynamic-type-transformer-load-data-object'
-export { DynamicTypeTransformerQuantityValue } from './quantity-value/dynamic-type-transformer-quantity-value'
+export {
+  DynamicTypeTransformerQuantityValue,
+  DynamicTypeTransformerQuantityValueArray,
+  DynamicTypeTransformerInputQuantityValue,
+  DynamicTypeTransformerInputQuantityValueArray
+} from './quantity-value/dynamic-type-transformer-quantity-value'
 export { DynamicTypeTransformerImportAsset } from './import-asset/dynamic-type-transformer-import-asset'
 
 // Types without settings
@@ -37,9 +42,6 @@ export {
   DynamicTypeTransformerAsCountries,
   DynamicTypeTransformerGallery,
   DynamicTypeTransformerImageAdvanced,
-  DynamicTypeTransformerQuantityValueArray,
-  DynamicTypeTransformerInputQuantityValue,
-  DynamicTypeTransformerInputQuantityValueArray,
   DynamicTypeTransformerAsGeobounds,
   DynamicTypeTransformerAsGeopoint,
   DynamicTypeTransformerAsGeopolygon,

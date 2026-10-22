@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Kolom sel
 data-importer.resolver.loading-strategy.language: Taal
 data-importer.resolver.loading-strategy.language-placeholder: Taal selecteren
 data-importer.resolver.loading-strategy.include-unpublished: Niet-gepubliceerde objecten opnemen
+data-importer.resolver.loading-strategy.attribute-path: Beperken tot pad
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Alleen objecten in deze map of daaronder meenemen. Leeg laten om de hele boom te doorzoeken.
 data-importer.resolver.element-creation: Elementen aanmaken
 data-importer.resolver.create-location-strategy: Locatiestrategie
 data-importer.resolver.create-location-strategy.tooltip: Bepaalt waar nieuw aangemaakte elementen worden geplaatst wanneer geen bestaand element is gevonden.
