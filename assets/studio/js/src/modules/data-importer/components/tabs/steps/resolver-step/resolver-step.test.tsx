@@ -17,9 +17,11 @@ import { PathLoadingStrategyResolverSettings } from '../../../../dynamic-types/r
 import { AttributeLoadingStrategyResolverSettings } from '../../../../dynamic-types/resolver/loading-strategy/attribute/attribute-loading-strategy-resolver-settings'
 import { ResolverStep } from '.'
 
-// the stand-ins render native fields named by their Form.Item label, so a test sees what is disabled
+// the stand-ins render native fields named by their Form.Item label, so a test sees what is disabled;
+// like antd's own fields, an explicit disabled prop wins over a disabled Form
 jest.mock('@pimcore/studio-ui-bundle/components', () => {
   const antd = jest.requireActual('antd')
+  const DisabledContext: React.Context<boolean> = jest.requireActual('antd/lib/config-provider/DisabledContext').default
   const LabelContext = React.createContext<string | undefined>(undefined)
   const Item = ({ label, ...props }: { label?: string }): React.JSX.Element => (
     <LabelContext.Provider value={ label }>
@@ -44,13 +46,13 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => {
     Select: ({ disabled }: { disabled?: boolean }) => (
       <select
         aria-label={ React.useContext(LabelContext) }
-        disabled={ disabled }
+        disabled={ disabled ?? React.useContext(DisabledContext) }
       />
     ),
     Switch: ({ disabled, labelRight }: { disabled?: boolean, labelRight?: string }) => (
       <input
         aria-label={ labelRight }
-        disabled={ disabled }
+        disabled={ disabled ?? React.useContext(DisabledContext) }
         type="checkbox"
       />
     )
@@ -102,8 +104,9 @@ const attributeFields = [
 
 const loadingSettings = { dataSourceIndex: 'sku', attributeName: 'name' }
 
-const Host = ({ loadingStrategy, locked, form }: { loadingStrategy: string, locked?: boolean, form?: FormInstance }): React.JSX.Element => (
+const Host = ({ loadingStrategy, locked, form, formDisabled }: { loadingStrategy: string, locked?: boolean, form?: FormInstance, formDisabled?: boolean }): React.JSX.Element => (
   <Form
+    disabled={ formDisabled }
     form={ form }
     initialValues={ {
       resolverConfig: {
@@ -157,6 +160,17 @@ describe('ResolverStep', () => {
 
     expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
     expect(attributeFields.map(name => field(name).disabled)).toEqual([false, false, false, false, false])
+  })
+
+  it.each(['id', 'path', 'attribute'])('keeps the loading fields read-only in a read-only form without the lock (%s)', async (strategy) => {
+    render(<Host
+      formDisabled
+      loadingStrategy={ strategy }
+           />)
+
+    const fields = strategy === 'attribute' ? attributeFields : loadingFields
+    expect(await screen.findByLabelText(loadingFields[1])).toBeTruthy()
+    expect(fields.map(name => field(name).disabled)).toEqual(fields.map(() => true))
   })
 
   it('keeps the stored loading strategy and its settings in the form values under the lock', async () => {
