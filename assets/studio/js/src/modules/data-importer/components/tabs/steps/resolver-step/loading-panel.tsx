@@ -20,9 +20,10 @@ export interface LoadingPanelProps {
   registry: DynamicTypeResolverRegistry
   columnHeaderOptions: Array<{ value: string, label: string }>
   languageOptions: Array<{ value: string, label: string }>
+  disabled?: boolean
 }
 
-export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.JSX.Element => {
+export const LoadingPanel = ({ registry, disabled, ...props }: LoadingPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
 
   const resolvers = useMemo(() => registry.getDynamicTypesForGroup('loading'), [registry])
@@ -39,6 +40,7 @@ export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.J
         tooltip={ t('data-importer.resolver.loading-strategy.tooltip') }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           options={ options }
           showSearch
@@ -51,7 +53,7 @@ export const LoadingPanel = ({ registry, ...props }: LoadingPanelProps): React.J
             (values as unknown as DataImporterFormValues).resolverConfig?.loadingStrategy?.type === resolver.type }
           key={ resolver.id }
         >
-          {resolver.renderSettings(props)}
+          {resolver.renderSettings({ ...props, disabled })}
         </Form.Conditional>
       ))}
     </DataImporterPanel>
