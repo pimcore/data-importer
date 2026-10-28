@@ -19,10 +19,10 @@ reasons are not the same, so the numbers below are three separate mechanisms rat
 
 | Format | Small (10,000 rows) | Large (100,000 rows) |
 |---|---|---|
-| CSV | 6 MB, 0.1 s | 6 MB, 0.3 s |
+| CSV | 6 MB, < 0.1 s | 6 MB, 0.3 s |
 | XML | 10 MB, 0.1 s | 30 MB, 1.0 s |
-| XLSX, whole-workbook read | 41 MB, 1.7 s | 306 MB, 10.6 s |
-| XLSX, windowed read | 45 MB, 1.7 s | 117 MB, 40.3 s |
+| XLSX, whole-workbook read | 41 MB, 0.7 s | 306 MB, 9.3 s |
+| XLSX, windowed read | 45 MB, 1.0 s | 117 MB, 37.7 s |
 
 - **CSV** streams: it reads one line at a time and never holds the file, so its memory is flat in the row count.
 - **XML** loads the document to walk the configured XPath, so its memory grows with the file, but one parsed
@@ -38,12 +38,13 @@ the whole-workbook read.
 
 A generated file of five columns per row (text, text, decimal, integer, text) per format and row count. Each
 number comes from its own PHP process, which interprets the file with a `PreQueueRowEvent` listener that skips
-every row - so no queue, database or kernel is involved - and reports `memory_get_peak_usage(true)` and the
-wall time of the interpretation step alone.
+every row - so no queue, database or kernel is involved - and reports `memory_get_peak_usage(true)` and the CPU
+time (`getrusage()`, user plus system) of the interpretation step alone.
 
-The memory figures are deterministic and reproduce to the decimal. The wall times are not: repeating the same
-measurement on the same machine varied by up to a factor of two, so read them as orders of magnitude and as
-ratios between the rows, not as a benchmark.
+The memory figures are deterministic and reproduce to the decimal. The times are CPU time rather than wall clock
+because the wall clock of the same measurement varied by up to a factor of two on one machine under other load,
+while its CPU time stayed within about a tenth. The figures above are the lower of two runs. Read them as orders
+of magnitude and as ratios between the rows, not as a benchmark.
 
 ## CSV
 
@@ -165,15 +166,24 @@ columns, interpreting it into queue items without processing them:
 
 | Rows (cells) | Whole-workbook read | Windowed read |
 |---|---|---|
-| 10,000 (50,005) | 41 MB, 1.7 s | 45 MB, 1.7 s |
-| 40,000 (200,005) | 132 MB, 4.9 s | 68 MB, 10.5 s |
-| 100,000 (500,005) | 306 MB, 10.6 s | 117 MB, 40.3 s |
+| 10,000 (50,005) | 41 MB, 0.7 s | 45 MB, 1.0 s |
+| 40,000 (200,005) | 132 MB, 4.1 s | 68 MB, 7.8 s |
+| 100,000 (500,005) | 306 MB, 9.3 s | 117 MB, 37.7 s |
 
 The windowed read trades roughly a third of the memory for several times the interpretation time, so it is worth
 having only for files that would otherwise run into the memory limit. Lower the threshold when large imports
-exhaust the limit, raise it to keep more imports on the faster read. The memory figures reproduce exactly; the wall
-times vary with the machine and with the run, see
-[what interpretation costs per format](#what-interpretation-costs-per-format) for the recipe behind them.
+exhaust the limit, raise it to keep more imports on the faster read. The memory figures reproduce exactly; the
+times are CPU time, see [what interpretation costs per format](#what-interpretation-costs-per-format) for the
+recipe behind them.
+
+The whole-workbook read itself costs slightly more than it did before the formula rule below was shared between
+the import and the preview, because the sheet is now read cell by cell rather than through a single
+`Worksheet::toArray()`. On the 100,000-row file that difference is about a tenth of the interpretation time, and
+almost all of it is one extra pass over the file to read the sheet dimensions: parsing the sheet costs 7.6 s of
+CPU time, the dimension pass 0.7 s, and reading the cells 1.35 s against 1.32 s for `toArray()`. Reading only the
+cells a row actually has, rather than probing every column position, is what keeps the per-cell read at parity: on
+a sparse sheet of 20 columns with four of them populated, probing every position costs 5.0 s where reading the
+existing cells costs 1.4 s.
 
 The threshold counts cells rather than bytes on disk because the memory a sheet needs follows its cell count, not
 its file size: phpspreadsheet builds one object per cell, which measured about 650 bytes per cell for the files

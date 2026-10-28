@@ -39,7 +39,7 @@ final class Configuration implements ConfigurationInterface
                     ->integerNode('windowed_read_cell_threshold')
                         ->defaultValue(200000)
                         ->min(0)
-                        ->info('Cell count above which the sheet is read in row windows instead of as a whole. The windowed read needs less memory but reads the file once per window.')
+                        ->info('Cell count above which the sheet is read in row windows, which needs less memory but reads the file once per window.')
                     ->end()
                 ->end()
             ->end()
