@@ -14,6 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Doctrine\DBAL\Connection;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
@@ -137,6 +138,14 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         (new ReflectionMethod($interpreter, 'doInterpretFileAndCallProcessRow'))->invoke($interpreter, $path);
     }
 
+    /**
+     * The coordinate the warning about a formula cell of column B names.
+     */
+    private function formulaCell(int $row): string
+    {
+        return self::SHEET_NAME . '!B' . $row;
+    }
+
     private function warningMessage(int $index): string
     {
         return $this->warnings[$index]['message'];
@@ -229,6 +238,24 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         for ($row = 1; $row <= $rowCount; $row++) {
             $sheet->setCellValue('A' . $row, $row);
             $sheet->setCellValue('B' . $row, '=A' . $row . '*2');
+        }
+
+        return $this->writeXlsx($spreadsheet, preCalculateFormulas: false);
+    }
+
+    /**
+     * A formula the calculation engine cannot parse, so evaluating it throws rather than
+     * returning an error string such as "#NAME?".
+     */
+    private function writeUncalculableFormulaRows(int $rowCount): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(self::SHEET_NAME);
+
+        for ($row = 1; $row <= $rowCount; $row++) {
+            $sheet->setCellValue('A' . $row, 'row ' . $row);
+            $sheet->getCell('B' . $row)->setValueExplicit('=1+', DataType::TYPE_FORMULA);
         }
 
         return $this->writeXlsx($spreadsheet, preCalculateFormulas: false);
@@ -359,7 +386,7 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
 
         $this->assertSame([['7', '42']], $this->capturedRows);
         $this->assertCount(1, $this->warnings);
-        $this->assertStringContainsString('Sheet1!B1', $this->warningMessage(0));
+        $this->assertStringContainsString($this->formulaCell(1), $this->warningMessage(0));
         $this->assertSame(
             PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
             $this->warningComponent(0),
@@ -377,8 +404,8 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $this->runImport($interpreter, $this->writeUncachedFormulaRows(130));
 
         $this->assertCount(51, $this->warnings, '50 cell warnings plus one closing line');
-        $this->assertStringContainsString('Sheet1!B1', $this->warningMessage(0));
-        $this->assertStringContainsString('Sheet1!B50', $this->warningMessage(49));
+        $this->assertStringContainsString($this->formulaCell(1), $this->warningMessage(0));
+        $this->assertStringContainsString($this->formulaCell(50), $this->warningMessage(49));
         $this->assertStringContainsString('80 further cells', $this->warningMessage(50));
 
         $this->warnings = [];
@@ -389,7 +416,46 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
             $this->warnings,
             'the counter resets per run, and 50 affected cells need no closing line'
         );
-        $this->assertStringContainsString('Sheet1!B50', $this->warningMessage(49));
+        $this->assertStringContainsString($this->formulaCell(50), $this->warningMessage(49));
+    }
+
+    /**
+     * A formula that throws instead of returning an error string empties its own cell and
+     * nothing else - every later row still reaches the queue.
+     *
+     * @dataProvider provideThresholds
+     */
+    public function testAFormulaThatCannotBeCalculatedIsImportedEmptyAndTheImportContinues(int $threshold): void
+    {
+        $this->runImport(
+            $this->createInterpreter(windowedReadCellThreshold: $threshold),
+            $this->writeUncalculableFormulaRows(2)
+        );
+
+        $this->assertSame([['row 1', null], ['row 2', null]], $this->capturedRows);
+        $this->assertCount(2, $this->warnings, 'a cell imported empty is never silent');
+        $this->assertStringContainsString($this->formulaCell(1), $this->warningMessage(0));
+        $this->assertStringContainsString('imported empty', $this->warningMessage(0));
+        $this->assertSame(
+            PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+            $this->warningComponent(0),
+            'the Import Logs tab filters on this component'
+        );
+    }
+
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testUncalculableFormulasCountTowardTheSameWarningCap(int $threshold): void
+    {
+        $this->runImport(
+            $this->createInterpreter(windowedReadCellThreshold: $threshold),
+            $this->writeUncalculableFormulaRows(60)
+        );
+
+        $this->assertCount(51, $this->warnings, '50 cell warnings plus one closing line');
+        $this->assertStringContainsString($this->formulaCell(50), $this->warningMessage(49));
+        $this->assertStringContainsString('10 further cells', $this->warningMessage(50));
     }
 
     /**

@@ -26,26 +26,36 @@ description: Breaking changes and migration steps per release.
   threshold, the rows of the current window above it - and logged as a warning naming the sheet and the cell,
   visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by one line stating
   how many further cells were affected.
+- **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate; it continues with the cell
+  empty.** Until now such a formula threw out of the interpreter and failed the whole import, so a file that used
+  to fail now imports. The cell arrives empty, is named in the warning described above and counts toward the same
+  50, so it is visible in the Import Logs tab rather than silent - but a row that previously stopped the run now
+  reaches the queue with a gap in it. If an import of yours relied on that failure to catch a broken source file,
+  check the import log for these warnings instead. Windowing is why this changed: a formula referencing rows
+  outside the current window is routine, so what used to be a rare abort would otherwise have become a likely one.
+  A formula that merely evaluates to `#NAME?` or `#VALUE!` is unaffected - those are values and were always
+  imported as that text.
 - Above `pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows times columns, `200000`
   by default) the XLSX interpreter no longer loads the whole workbook before creating queue items. It reads the
   sheet in row windows, which lowers peak memory: a generated 100,000-row file of five columns measured 334 MB
   before and 117 MB after. A file at or below the threshold is loaded as a whole as before, so imports that already
   fit in memory keep the faster read. See [Installation](./README.md) for the setting.
 - Interpreting an XLSX above the threshold takes several times longer, because each window reads the file again:
-  on the reference machine the same 100,000-row file went from 10.7 s to 78.5 s of interpretation time, and an
-  independent run on a second machine measured 8.0 s to 37.7 s of CPU time. Expect a factor of four to eight;
-  unlike the memory figures, which reproduce exactly, the time depends on the machine, and its wall clock varied by
-  up to a factor of two between runs on the same one under other load, which is why the second pair is CPU time
-  rather than wall clock. The interpretation step only creates the queue items, so this shows up as a slower start of
-  a large import, not as a slower import overall. Raise the threshold to keep a file on the faster read, lower it
-  when an import exhausts the memory limit.
+  interpreting the same 100,000-row file of five columns went from **9.3 s to 37.7 s of CPU time** (`getrusage()`,
+  user plus system), a factor of four. These are CPU figures rather than wall clock on purpose - the wall clock of
+  the same measurement varied by up to a factor of two between runs on one machine under other load, while its CPU
+  time stayed within about a tenth, so the wall clock is not reproducible enough to quote. Expect the factor rather
+  than the seconds, which depend on the machine; the memory figures, by contrast, reproduce exactly. The
+  interpretation step only creates the queue items, so this shows up as a slower start of a large import, not as a
+  slower import overall. Raise the threshold to keep a file on the faster read, lower it when an import exhausts
+  the memory limit.
 - Memory does not become flat above the threshold, it only drops: phpspreadsheet parses the whole sheet XML before
   a row window is applied to it, which for the 100,000-row file above costs 72 MB on its own.
-- Below the threshold the file is still read in one pass, and reading it cell by cell rather than through
-  `toArray()` costs about a tenth more CPU time on the same 100,000-row file, at 334 MB before and 306 MB after.
-  Almost all of that tenth is one extra pass over the file to read the sheet dimensions, not the per-cell formula
-  rule: parsing the sheet costs 7.6 s of CPU time, the dimension pass adds 0.7 s, and reading the cells costs
-  1.35 s against 1.32 s for `toArray()`.
+- Below the threshold the file is still read in one pass, and it needs slightly less memory than before: 41 MB
+  instead of 45 MB on a 10,000-row file, 306 MB instead of 334 MB on a 100,000-row one. What it costs instead is
+  one extra pass over the file to read the sheet dimensions, not the per-cell formula rule. That pass is a fixed
+  cost, so measured against the pre-change read it is no measurable extra time on a 100,000-row file and about a
+  third more on a 10,000-row one - a fraction of a second either way, since that file interprets in about one.
 - An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields. Such a file now
   creates no queue items at all.
 - An import whose configured sheet name is absent from the file now fails with the same

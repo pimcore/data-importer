@@ -27,6 +27,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Throwable;
 
 /**
  * @internal
@@ -205,7 +206,6 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $rowData = array_fill(0, $lastColumnIndex, null);
 
         foreach ($cells as $cell) {
-            $this->warnAboutUncachedFormula($cell);
             $rowData[$cells->getCurrentColumnIndex() - 1] = $this->getImportCellValue($spreadSheet, $cell);
         }
 
@@ -214,7 +214,9 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
     /**
      * Mirrors what the whole-workbook Worksheet::toArray() produced: an empty cell stays
-     * null, every other value goes through the number format of its cell.
+     * null, every other value goes through the number format of its cell. A formula that
+     * cannot be resolved stays null as well, rather than becoming the empty string the
+     * number format would make of it.
      */
     private function getImportCellValue(Spreadsheet $spreadSheet, Cell $cell): mixed
     {
@@ -222,12 +224,23 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             return null;
         }
 
+        $value = $this->getCellValue($cell);
+
+        $this->warnAboutUncachedFormula($cell, $value === null);
+
+        if ($value === null) {
+            return null;
+        }
+
         $formatCode = $spreadSheet->getCellXfByIndex($cell->getXfIndex())->getNumberFormat()->getFormatCode();
 
-        return NumberFormat::toFormattedString($this->getCellValue($cell), $formatCode ?? NumberFormat::FORMAT_GENERAL);
+        return NumberFormat::toFormattedString($value, $formatCode ?? NumberFormat::FORMAT_GENERAL);
     }
 
-    private function warnAboutUncachedFormula(Cell $cell): void
+    /**
+     * @param bool $importedEmpty the formula could not be resolved at all, so the cell was imported empty
+     */
+    private function warnAboutUncachedFormula(Cell $cell, bool $importedEmpty): void
     {
         if ($cell->getDataType() !== DataType::TYPE_FORMULA || $cell->getOldCalculatedValue() !== null) {
             return;
@@ -239,12 +252,13 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             return;
         }
 
-        $this->logUncachedFormulaWarning(sprintf(
-            'Formula in cell "%s!%s" has no result cached in the file and was calculated on the loaded rows only, '
-            . 'so the imported value can differ from the one the spreadsheet application shows.',
-            $this->sheetName,
-            $cell->getCoordinate()
-        ));
+        $message = $importedEmpty
+            ? 'Formula in cell "%s!%s" has no result cached in the file and could not be calculated, '
+                . 'so the cell was imported empty and the import continued.'
+            : 'Formula in cell "%s!%s" has no result cached in the file and was calculated on the loaded rows only, '
+                . 'so the imported value can differ from the one the spreadsheet application shows.';
+
+        $this->logUncachedFormulaWarning(sprintf($message, $this->sheetName, $cell->getCoordinate()));
     }
 
     private function logSuppressedUncachedFormulaWarnings(): void
@@ -254,8 +268,8 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         }
 
         $this->logUncachedFormulaWarning(sprintf(
-            '%d further cells with a formula without a cached result were calculated on the loaded rows only, '
-            . 'only the first %d of them are listed above.',
+            '%d further cells carry a formula without a cached result and were calculated on the loaded rows only '
+            . 'or imported empty, only the first %d of them are listed above.',
             $this->uncachedFormulaCellCount - self::MAX_UNCACHED_FORMULA_WARNINGS,
             self::MAX_UNCACHED_FORMULA_WARNINGS
         ));
@@ -285,6 +299,12 @@ final class XlsxFileInterpreter extends AbstractInterpreter
      * above its cell threshold, load only parts of the workbook, so recalculating formulas
      * with cross-row or cross-sheet references would silently produce wrong values
      * ("#REF!", zeros). Both paths apply this rule, so neither can drift from the other.
+     *
+     * Calculating can also throw rather than return an error string - an unparseable formula, or
+     * one the calculation engine does not implement. Throwable rather than Exception, and null
+     * rather than a re-throw: a single such cell must not abort an import of 100,000 rows, and
+     * windowing makes formulas reaching outside the loaded rows routine. The import names every
+     * such cell in the log, so the empty cell is never silent.
      */
     private function getCellValue(Cell $cell): mixed
     {
@@ -297,7 +317,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
         try {
             $value = $cell->getCalculatedValue();
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
 

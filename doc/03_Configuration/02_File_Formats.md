@@ -27,9 +27,19 @@ reasons are not the same, so the numbers below are three separate mechanisms rat
 - **CSV** streams: it reads one line at a time and never holds the file, so its memory is flat in the row count.
 - **XML** loads the document to walk the configured XPath, so its memory grows with the file, but one parsed
   element is far cheaper than one spreadsheet cell.
-- **XLSX** builds one object per cell, which measured about 650 bytes per cell for the files above - some 100 times
-  their size on disk, a factor that moves with how well the sheet compresses. This is what the windowed read
-  described under [XLSX](#xlsx-excel) exists for, and why its threshold counts cells rather than bytes.
+- **XLSX** builds one object per cell, which for the files above cost about 650 bytes each - some 100 times
+  their size on disk. This is what the windowed read described under [XLSX](#xlsx-excel) exists for, and why its
+  threshold counts cells rather than bytes.
+
+Neither of those two XLSX figures is a constant, and quoting them without a sheet size is what puts contradictory
+numbers into circulation. About 10 MB is spent before the first cell is read, so dividing peak memory by the cell
+count overstates the per-cell cost on a small sheet: the same five-column row measures 2.2 KB per cell and 309
+times file size at 7,500 cells, 900 bytes and 141 times at 50,000, and 650 bytes and 101 times at 500,000. Figures
+around 3.4 KB per cell and 645 times file size, which earlier measurements of this bundle reported, sit on that
+same curve at a sheet of a few thousand cells rather than contradicting the ones above. Sheet shape barely matters
+by comparison - long text cells cost 1.2 times what short scalars cost at the same cell count, and per-cell number
+formats cost nothing extra under `setReadDataOnly(true)`. What a threshold needs is the slope rather than the
+average, and that is 570 to 710 bytes per cell across the three largest sizes measured.
 
 Which XLSX row applies depends on the threshold described under [XLSX](#xlsx-excel); a file at or below it takes
 the whole-workbook read.
@@ -45,6 +55,11 @@ The memory figures are deterministic and reproduce to the decimal. The times are
 because the wall clock of the same measurement varied by up to a factor of two on one machine under other load,
 while its CPU time stayed within about a tenth. The figures above are the lower of two runs. Read them as orders
 of magnitude and as ratios between the rows, not as a benchmark.
+
+The per-cell figures come from the same fixture at six sheet sizes, each read whole with `setReadDataOnly(true)`
+as the interpreter does, reporting peak memory divided by the cell count and by the file size. The sheet-shape
+comparison repeats one of those sizes with long text cells, with per-cell number formats, and without
+`setReadDataOnly(true)`.
 
 ## CSV
 
@@ -185,10 +200,21 @@ cells a row actually has, rather than probing every column position, is what kee
 a sparse sheet of 20 columns with four of them populated, probing every position costs 5.0 s where reading the
 existing cells costs 1.4 s.
 
+That dimension pass is a fixed second read of the file, so on a small sheet it is a larger share of a much smaller
+total: measured in one batch against the pre-change read, a 10,000-row file took about a third more CPU time while
+a 100,000-row one took no measurable extra time at all. Peak memory moves the other way at both sizes, from 45 MB
+to 41 MB and from 334 MB to 306 MB, because the rows are no longer materialised into one array before being
+handed on. Memory reproduces exactly between runs; the CPU ratios above are quoted as ratios because the seconds
+behind them come from their own batch and are not comparable with the table's.
+
 The threshold counts cells rather than bytes on disk because the memory a sheet needs follows its cell count, not
-its file size: phpspreadsheet builds one object per cell, which measured about 650 bytes per cell for the files
-above. The same 100,000-row file is 3.0 MB on disk and needs 306 MB to read - a ratio that moves with the width and
-content of the rows and with how well they compress, so a threshold on file size would mispredict constantly.
+its file size: phpspreadsheet builds one object per cell, costing about 650 bytes each on the files above, with
+roughly 10 MB spent before the first cell. The same 100,000-row file is 3.0 MB on disk and needs 306 MB to read,
+but that multiple of file size is not a property of the format - it runs from 1709 times on a one-row file to 101
+times on this one, and moves again with how well the rows compress. A threshold on file size would therefore
+mispredict constantly, while the cell count tracks the cost directly. See
+[what interpretation costs per format](#what-interpretation-costs-per-format) for the full curve and for why a
+per-cell figure quoted without a sheet size is meaningless.
 
 The windowed read lowers peak memory but cannot make it flat: phpspreadsheet parses the whole sheet XML before a
 read filter is consulted, so the parse alone sets a floor. For the 100,000-row file above that floor is 72 MB -
@@ -202,6 +228,11 @@ A formula cell is imported as the result cached in the file by the application t
 cached result is the formula calculated, on the rows currently loaded, and the cell is reported as a warning in the
 [import log](../05_Import_Progress_and_Logging.md). At most 50 such cells are listed per import run, followed by one
 line stating how many further cells were affected.
+
+A formula that cannot be calculated at all - one phpspreadsheet cannot parse, or one it does not implement - is
+imported as an empty cell and the import continues with the next cell. Such a cell is named in the same warning and
+counts toward the same 50, so it is never dropped silently. A formula that merely evaluates to a spreadsheet error
+is not this case: `#NAME?` and `#VALUE!` are values, and are imported as that text.
 
 A calculated value can differ from the one a spreadsheet application shows, because references to another sheet are
 never available and, on the windowed read, references to rows outside the current window are not either. This is
