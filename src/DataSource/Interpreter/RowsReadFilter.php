@@ -15,12 +15,12 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 
 /**
- * Restricts spreadsheet reading to the given row numbers so previews do not
- * need to load the whole workbook into memory.
+ * Restricts spreadsheet reading to the given row numbers, so neither the preview
+ * nor the import has to load the whole workbook into memory.
  *
  * @internal
  */
-final class PreviewRowsReadFilter implements IReadFilter
+final class RowsReadFilter implements IReadFilter
 {
     /**
      * @var array<int, true>

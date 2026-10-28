@@ -119,7 +119,17 @@ For the full expression reference see [jmespath.org](https://jmespath.org) and t
   label the columns. Fields stay addressable by their numeric position.
 - **Sheet Name**: name of the sheet to import. Defaults to `Sheet1`.
 
-The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest).
+The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest). It reads the sheet in row
+windows instead of loading the whole workbook, which lowers the memory a large import needs. Memory still grows with
+the number of rows, because phpspreadsheet parses the whole sheet before a window is applied to it; the window only
+bounds how many cells are kept in memory at once. Each window reads the file again, so a large file also takes
+longer to interpret than a whole-workbook read would.
+
+A formula cell is imported as the result cached in the file by the application that wrote it, the same rule the
+[import preview](./03_Import_Preview.md) applies. Only when a cell carries no cached result is the formula
+calculated, on the rows currently loaded, and the cell is reported as a warning in the
+[import log](../05_Import_Progress_and_Logging.md). Such a value can differ from the one a spreadsheet application
+shows, because references to rows outside the loaded window are not available.
 
 ## XML
 

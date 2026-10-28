@@ -7,6 +7,30 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.3.3
 
+### XLSX Imports Read the Sheet in Row Windows and Prefer Cached Formula Results
+
+- The XLSX interpreter no longer loads the whole workbook before creating queue items. It reads the sheet in row
+  windows, which lowers peak memory: a generated 100,000-row file measured 334 MB before and 116 MB after. Memory
+  still grows with the number of rows, because phpspreadsheet parses the whole sheet for every window. Every XLSX
+  import takes this path; there is no size or row threshold and no fallback to the previous behaviour.
+- Interpreting a large XLSX takes longer, because each window reads the file again: interpreting the same
+  100,000-row file took about seven times as long. The interpretation step only creates the queue items, so this
+  shows up as a slower start of a large import, not as a slower import overall.
+- A formula cell now resolves to the result cached in the file, the same rule the import preview already applied.
+  Imports of workbooks whose cached results are stale, or whose formulas are volatile (`TODAY()`, `NOW()`, `RAND()`),
+  therefore import different values than before. Recalculate and save such files once before the next import if the
+  cached results must not be used.
+- A formula cell without a cached result is calculated on the loaded rows only and logged as a warning naming the
+  sheet and the cell, visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by
+  one line stating how many further cells were affected.
+- An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields. Such a file now
+  creates no queue items at all.
+- An import whose configured sheet name is absent from the file now fails with the same
+  `InvalidConfigurationException` the preview already raised, instead of the raw phpspreadsheet exception. The
+  import failed before as well, only the message differs.
+- `PreviewRowsReadFilter` was renamed to `RowsReadFilter`, because both the preview and the import use it now. The
+  class is `@internal` and `final`.
+
 ### XML Values Keep Their Text When Typing Would Change Them
 
 - The XML interpreter no longer converts a numeric looking value to a number when that would change it. `603E709`

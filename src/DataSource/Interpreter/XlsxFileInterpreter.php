@@ -17,8 +17,11 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
 /**
@@ -26,27 +29,57 @@ use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
  */
 final class XlsxFileInterpreter extends AbstractInterpreter
 {
+    // Rows per chunk: the sheet XML is parsed again per chunk, so a smaller one costs time without saving much memory.
+    private const IMPORT_CHUNK_ROWS = 10000;
+
+    // Cells that get their own warning per import run before the closing summary line.
+    private const MAX_UNCACHED_FORMULA_WARNINGS = 50;
+
     private bool $skipFirstRow;
 
     private string $sheetName;
 
+    private int $uncachedFormulaCellCount = 0;
+
+    /**
+     * @throws InvalidConfigurationException
+     */
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
-        $reader = IOFactory::createReaderForFile($path);
-        $reader->setReadDataOnly(true);
-        $spreadSheet = $reader->load($path);
+        $worksheetInfo = $this->getWorksheetInfo($path);
 
-        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
-
-        $data = $spreadSheet->getActiveSheet()->toArray();
-
-        if ($this->skipFirstRow) {
-            array_shift($data);
+        if ($worksheetInfo === null) {
+            throw new InvalidConfigurationException(sprintf('Sheet "%s" not found in file.', $this->sheetName));
         }
 
-        foreach ($data as $rowData) {
-            $this->processImportRow($rowData);
+        $totalRows = $worksheetInfo['totalRows'];
+        $lastColumnLetter = $worksheetInfo['lastColumnLetter'];
+        $firstDataRow = $this->skipFirstRow ? 2 : 1;
+        $this->uncachedFormulaCellCount = 0;
+
+        // a sheet without data rows or without a single cell has no window to read
+        if ($totalRows < $firstDataRow || $lastColumnLetter === '') {
+            return;
         }
+
+        $lastColumnIndex = Coordinate::columnIndexFromString($lastColumnLetter);
+
+        for ($firstRow = $firstDataRow; $firstRow <= $totalRows; $firstRow += self::IMPORT_CHUNK_ROWS) {
+            $lastRow = min($firstRow + self::IMPORT_CHUNK_ROWS - 1, $totalRows);
+
+            $spreadSheet = $this->loadRows($path, range($firstRow, $lastRow));
+            $sheet = $spreadSheet->getActiveSheet();
+
+            for ($rowNumber = $firstRow; $rowNumber <= $lastRow; $rowNumber++) {
+                $this->processImportRow($this->readImportRow($spreadSheet, $sheet, $rowNumber, $lastColumnIndex));
+            }
+
+            // without this the cyclic references inside PhpSpreadsheet keep the chunk alive
+            $spreadSheet->disconnectWorksheets();
+            unset($sheet, $spreadSheet);
+        }
+
+        $this->logSuppressedUncachedFormulaWarnings();
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -112,18 +145,108 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             $readRecordNumber = $totalDataRows - 1;
         }
 
-        $reader = IOFactory::createReaderForFile($path);
-        $reader->setReadDataOnly(true);
-        $reader->setLoadSheetsOnly($this->sheetName);
-        $reader->setReadFilter(new PreviewRowsReadFilter(array_filter([$headerRowNumber, $targetRowNumber])));
-        $spreadSheet = $reader->load($path);
-
-        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
-        $sheet = $spreadSheet->getActiveSheet();
+        $sheet = $this->loadRows($path, array_filter([$headerRowNumber, $targetRowNumber]))->getActiveSheet();
 
         $headerRow = $this->skipFirstRow ? $this->readRow($sheet, $headerRowNumber, $lastColumnLetter) : null;
 
         return [$headerRow, $this->readRow($sheet, $targetRowNumber, $lastColumnLetter), $readRecordNumber];
+    }
+
+    /**
+     * @param int[] $rows 1-based row numbers to read
+     */
+    private function loadRows(string $path, array $rows): Spreadsheet
+    {
+        $reader = IOFactory::createReaderForFile($path);
+        $reader->setReadDataOnly(true);
+        $reader->setLoadSheetsOnly($this->sheetName);
+        $reader->setReadFilter(new RowsReadFilter($rows));
+        $spreadSheet = $reader->load($path);
+
+        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
+
+        return $spreadSheet;
+    }
+
+    private function readImportRow(
+        Spreadsheet $spreadSheet,
+        Worksheet $sheet,
+        int $rowNumber,
+        int $lastColumnIndex
+    ): array {
+        $rowData = [];
+
+        for ($column = 1; $column <= $lastColumnIndex; $column++) {
+            $coordinate = [$column, $rowNumber];
+
+            if (!$sheet->cellExists($coordinate)) {
+                $rowData[] = null;
+
+                continue;
+            }
+
+            $cell = $sheet->getCell($coordinate);
+            $this->warnAboutUncachedFormula($cell);
+            $rowData[] = $this->getImportCellValue($spreadSheet, $cell);
+        }
+
+        return $rowData;
+    }
+
+    /**
+     * Mirrors what the whole-workbook Worksheet::toArray() produced: an empty cell stays
+     * null, every other value goes through the number format of its cell.
+     */
+    private function getImportCellValue(Spreadsheet $spreadSheet, Cell $cell): mixed
+    {
+        if ($cell->getValue() === null) {
+            return null;
+        }
+
+        $formatCode = $spreadSheet->getCellXfByIndex($cell->getXfIndex())->getNumberFormat()->getFormatCode();
+
+        return NumberFormat::toFormattedString($this->getCellValue($cell), $formatCode ?? NumberFormat::FORMAT_GENERAL);
+    }
+
+    private function warnAboutUncachedFormula(Cell $cell): void
+    {
+        if ($cell->getDataType() !== DataType::TYPE_FORMULA || $cell->getOldCalculatedValue() !== null) {
+            return;
+        }
+
+        $this->uncachedFormulaCellCount++;
+
+        if ($this->uncachedFormulaCellCount > self::MAX_UNCACHED_FORMULA_WARNINGS) {
+            return;
+        }
+
+        $this->logUncachedFormulaWarning(sprintf(
+            'Formula in cell "%s!%s" has no result cached in the file and was calculated on the loaded rows only, '
+            . 'so the imported value can differ from the one the spreadsheet application shows.',
+            $this->sheetName,
+            $cell->getCoordinate()
+        ));
+    }
+
+    private function logSuppressedUncachedFormulaWarnings(): void
+    {
+        if ($this->uncachedFormulaCellCount <= self::MAX_UNCACHED_FORMULA_WARNINGS) {
+            return;
+        }
+
+        $this->logUncachedFormulaWarning(sprintf(
+            '%d further cells with a formula without a cached result were calculated on the loaded rows only, '
+            . 'only the first %d of them are listed above.',
+            $this->uncachedFormulaCellCount - self::MAX_UNCACHED_FORMULA_WARNINGS,
+            self::MAX_UNCACHED_FORMULA_WARNINGS
+        ));
+    }
+
+    private function logUncachedFormulaWarning(string $message): void
+    {
+        $this->applicationLogger->warning($message, [
+            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+        ]);
     }
 
     private function readRow(Worksheet $sheet, int $rowNumber, string $lastColumnLetter): array
@@ -132,19 +255,19 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $rowData = [];
 
         for ($column = 1; $column <= $lastColumnIndex; $column++) {
-            $rowData[] = $this->getPreviewCellValue($sheet->getCell([$column, $rowNumber]));
+            $rowData[] = $this->getCellValue($sheet->getCell([$column, $rowNumber]));
         }
 
         return $rowData;
     }
 
     /**
-     * Formula cells prefer the result cached in the file: only parts of the
-     * workbook are loaded for previews, so recalculating formulas with
+     * Formula cells prefer the result cached in the file: both the preview and the
+     * import load only parts of the workbook, so recalculating formulas with
      * cross-row or cross-sheet references would silently produce wrong
      * values ("#REF!", zeros).
      */
-    private function getPreviewCellValue(Cell $cell): mixed
+    private function getCellValue(Cell $cell): mixed
     {
         if ($cell->getDataType() === DataType::TYPE_FORMULA) {
             $cachedValue = $cell->getOldCalculatedValue();
