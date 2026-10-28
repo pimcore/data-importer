@@ -20,9 +20,12 @@ use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 
 /**
  * @internal
@@ -40,6 +43,18 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     private string $sheetName;
 
     private int $uncachedFormulaCellCount = 0;
+
+    /**
+     * @param int $windowedReadCellThreshold cells above which the sheet is read in row windows
+     */
+    public function __construct(
+        DeltaChecker $deltaChecker,
+        QueueService $queueService,
+        ApplicationLogger $applicationLogger,
+        private readonly int $windowedReadCellThreshold,
+    ) {
+        parent::__construct($deltaChecker, $queueService, $applicationLogger);
+    }
 
     /**
      * @throws InvalidConfigurationException
@@ -63,11 +78,13 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         }
 
         $lastColumnIndex = Coordinate::columnIndexFromString($lastColumnLetter);
+        $readInWindows = $totalRows * $lastColumnIndex > $this->windowedReadCellThreshold;
+        $windowRows = $readInWindows ? self::IMPORT_CHUNK_ROWS : $totalRows;
 
-        for ($firstRow = $firstDataRow; $firstRow <= $totalRows; $firstRow += self::IMPORT_CHUNK_ROWS) {
-            $lastRow = min($firstRow + self::IMPORT_CHUNK_ROWS - 1, $totalRows);
+        for ($firstRow = $firstDataRow; $firstRow <= $totalRows; $firstRow += $windowRows) {
+            $lastRow = min($firstRow + $windowRows - 1, $totalRows);
 
-            $spreadSheet = $this->loadRows($path, range($firstRow, $lastRow));
+            $spreadSheet = $this->loadRows($path, $readInWindows ? range($firstRow, $lastRow) : null);
             $sheet = $spreadSheet->getActiveSheet();
 
             for ($rowNumber = $firstRow; $rowNumber <= $lastRow; $rowNumber++) {
@@ -153,14 +170,18 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     }
 
     /**
-     * @param int[] $rows 1-based row numbers to read
+     * @param int[]|null $rows 1-based row numbers to read, null for every row of the sheet
      */
-    private function loadRows(string $path, array $rows): Spreadsheet
+    private function loadRows(string $path, ?array $rows): Spreadsheet
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
         $reader->setLoadSheetsOnly($this->sheetName);
-        $reader->setReadFilter(new RowsReadFilter($rows));
+
+        if ($rows !== null) {
+            $reader->setReadFilter(new RowsReadFilter($rows));
+        }
+
         $spreadSheet = $reader->load($path);
 
         $spreadSheet->setActiveSheetIndexByName($this->sheetName);
@@ -262,10 +283,10 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     }
 
     /**
-     * Formula cells prefer the result cached in the file: both the preview and the
-     * import load only parts of the workbook, so recalculating formulas with
-     * cross-row or cross-sheet references would silently produce wrong
-     * values ("#REF!", zeros).
+     * Formula cells prefer the result cached in the file. The preview always, and the import
+     * above its cell threshold, load only parts of the workbook, so recalculating formulas
+     * with cross-row or cross-sheet references would silently produce wrong values
+     * ("#REF!", zeros). Both paths apply this rule, so neither can drift from the other.
      */
     private function getCellValue(Cell $cell): mixed
     {

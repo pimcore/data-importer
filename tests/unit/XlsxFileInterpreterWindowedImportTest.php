@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Doctrine\DBAL\Connection;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
@@ -26,16 +27,20 @@ use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Psr\Log\NullLogger;
 use ReflectionClassConstant;
+use ReflectionMethod;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use ZipArchive;
 
 /**
- * The XLSX import reads the sheet in row windows instead of loading the whole workbook.
- * These tests pin the rows that reach processImportRow() to what the whole-workbook
- * toArray() path produced, and cover the formula rule the windowed read needs.
+ * An XLSX sheet above the configured cell threshold is read in row windows, one below it is
+ * loaded as a whole as before. These tests pin the rows that reach processImportRow() to what
+ * the whole-workbook toArray() path produced, run every criterion on both sides of the
+ * threshold, and cover the formula rule the windowed read needs.
  *
  * A PreQueueRowEvent listener skips every row, so nothing is queued and the rows can be
- * asserted directly.
+ * asserted directly. The interpretation step is driven directly rather than through
+ * interpretFile(), whose tail writes the queue item count to the TmpStore: the rows are
+ * captured from the event, so the queue, the delta check and the database add nothing here.
  */
 class XlsxFileInterpreterWindowedImportTest extends Unit
 {
@@ -46,6 +51,14 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
     private const SECOND_SHEET_NAME = 'Second';
 
     private const SHEET_XML_ENTRY = 'xl/worksheets/sheet1.xml';
+
+    private const FIRST_CELL = 'A1';
+
+    // Every sheet counts as above the threshold, so the import reads it in row windows.
+    private const ALWAYS_WINDOWED = 0;
+
+    // No sheet reaches the threshold, so the import loads the whole workbook as it did before.
+    private const NEVER_WINDOWED = PHP_INT_MAX;
 
     private string $configName;
 
@@ -81,9 +94,10 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
 
     private function createInterpreter(
         bool $skipFirstRow = false,
-        string $sheetName = self::SHEET_NAME
+        string $sheetName = self::SHEET_NAME,
+        int $windowedReadCellThreshold = self::ALWAYS_WINDOWED
     ): XlsxFileInterpreter {
-        $applicationLogger = $this->createMock(ApplicationLogger::class);
+        $applicationLogger = $this->createStub(ApplicationLogger::class);
         $applicationLogger->method('warning')->willReturnCallback(
             function (string $message, array $context = []): void {
                 $this->warnings[] = ['message' => $message, 'component' => $context['component'] ?? null];
@@ -97,9 +111,10 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         });
 
         $interpreter = new XlsxFileInterpreter(
-            new DeltaChecker(\Pimcore\Db::get()),
+            new DeltaChecker($this->createStub(Connection::class)),
             new QueueService(),
-            $applicationLogger
+            $applicationLogger,
+            $windowedReadCellThreshold
         );
         $interpreter->setLogger(new NullLogger());
         $interpreter->setConfigName($this->configName);
@@ -112,6 +127,24 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $interpreter->setEventDispatcher($dispatcher);
 
         return $interpreter;
+    }
+
+    /**
+     * Runs the interpretation step the import performs, without the queue tail around it.
+     */
+    private function runImport(XlsxFileInterpreter $interpreter, string $path): void
+    {
+        (new ReflectionMethod($interpreter, 'doInterpretFileAndCallProcessRow'))->invoke($interpreter, $path);
+    }
+
+    private function warningMessage(int $index): string
+    {
+        return $this->warnings[$index]['message'];
+    }
+
+    private function warningComponent(int $index): ?string
+    {
+        return $this->warnings[$index]['component'];
     }
 
     private function writeXlsx(Spreadsheet $spreadsheet, bool $preCalculateFormulas = true): string
@@ -139,7 +172,7 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
                 ['A-1', 'First', 9.99, null, 'plain'],
             ],
             null,
-            'A1',
+            self::FIRST_CELL,
             true
         );
         $sheet->setCellValue('D2', ExcelDate::formattedPHPToExcel(2024, 3, 5));
@@ -156,7 +189,7 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(self::SHEET_NAME);
-        $sheet->setCellValue('A1', 7);
+        $sheet->setCellValue(self::FIRST_CELL, 7);
         $sheet->setCellValue('B1', '=A1*6');
 
         return $this->writeXlsx($spreadsheet, $preCalculateFormulas);
@@ -209,11 +242,25 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(self::SHEET_NAME);
-        $sheet->fromArray([['first', 1], ['second', 2]], null, 'A1', true);
+        $sheet->fromArray([['first', 1], ['second', 2]], null, self::FIRST_CELL, true);
         $sheet->setCellValue('A' . $lastRowNumber, 'last');
         $sheet->setCellValue('B' . $lastRowNumber, 3);
 
         return $this->writeXlsx($spreadsheet);
+    }
+
+    /**
+     * An uncached formula in row 1 whose only reference sits behind the given row number.
+     */
+    private function writeFormulaReferencingRow(int $referencedRow): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(self::SHEET_NAME);
+        $sheet->setCellValue(self::FIRST_CELL, '=B' . $referencedRow);
+        $sheet->setCellValue('B' . $referencedRow, 123);
+
+        return $this->writeXlsx($spreadsheet, preCalculateFormulas: false);
     }
 
     private function writeTwoSheetFixture(): string
@@ -221,17 +268,35 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(self::SHEET_NAME);
-        $sheet->fromArray([['h1', 'h2'], ['a', 'b'], ['c', 'd']], null, 'A1', true);
+        $sheet->fromArray([['h1', 'h2'], ['a', 'b'], ['c', 'd']], null, self::FIRST_CELL, true);
         $secondSheet = $spreadsheet->createSheet();
         $secondSheet->setTitle(self::SECOND_SHEET_NAME);
-        $secondSheet->fromArray([['x', 'y'], ['1', '2']], null, 'A1', true);
+        $secondSheet->fromArray([['x', 'y'], ['1', '2']], null, self::FIRST_CELL, true);
 
         return $this->writeXlsx($spreadsheet);
     }
 
-    public function testRowsMatchTheWholeWorkbookShape(): void
+    /**
+     * Both sides of the cell threshold: the windowed read and the whole-workbook load have to
+     * answer every criterion identically, so each case below runs twice.
+     */
+    public function provideThresholds(): array
     {
-        $this->createInterpreter()->interpretFile($this->writeShapeFixture());
+        return [
+            'read in row windows' => [self::ALWAYS_WINDOWED],
+            'whole workbook loaded at once' => [self::NEVER_WINDOWED],
+        ];
+    }
+
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testRowsMatchTheWholeWorkbookShape(int $threshold): void
+    {
+        $this->runImport(
+            $this->createInterpreter(windowedReadCellThreshold: $threshold),
+            $this->writeShapeFixture()
+        );
 
         $this->assertSame(
             [
@@ -241,16 +306,21 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
                 ['B-2', null, '1234.5', null, null],
             ],
             $this->capturedRows,
-            'the windowed read must hand over exactly what the whole-workbook toArray() produced'
+            'both reads must hand over exactly what the whole-workbook toArray() produced'
         );
     }
 
-    public function testRowsStayContinuousAcrossTheImportWindow(): void
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testRowsStayContinuousAcrossTheImportWindow(int $threshold): void
     {
-        $chunkRows = (new ReflectionClassConstant(XlsxFileInterpreter::class, 'IMPORT_CHUNK_ROWS'))->getValue();
-        $lastRowNumber = (int)$chunkRows + 1;
+        $lastRowNumber = $this->chunkRows() + 1;
 
-        $this->createInterpreter()->interpretFile($this->writeFixtureEndingAtRow($lastRowNumber));
+        $this->runImport(
+            $this->createInterpreter(windowedReadCellThreshold: $threshold),
+            $this->writeFixtureEndingAtRow($lastRowNumber)
+        );
 
         $this->assertCount($lastRowNumber, $this->capturedRows, 'no row is emitted twice and none is skipped');
         $this->assertSame(['first', '1'], $this->capturedRows[0]);
@@ -259,9 +329,15 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $this->assertSame(['last', '3'], $this->capturedRows[$lastRowNumber - 1], 'the row behind the window border');
     }
 
-    public function testCachedFormulaResultIsUsed(): void
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testCachedFormulaResultIsUsed(int $threshold): void
     {
-        $this->createInterpreter()->interpretFile($this->writeFormulaFixtureWithDivergingCachedResult());
+        $this->runImport(
+            $this->createInterpreter(windowedReadCellThreshold: $threshold),
+            $this->writeFormulaFixtureWithDivergingCachedResult()
+        );
 
         $this->assertSame(
             [['7', '999']],
@@ -271,59 +347,128 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $this->assertSame([], $this->warnings, 'a cached result is not worth a warning');
     }
 
-    public function testUncachedFormulaIsEvaluatedAndWarned(): void
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testUncachedFormulaIsEvaluatedAndWarned(int $threshold): void
     {
-        $this->createInterpreter()->interpretFile($this->writeFormulaFixture(preCalculateFormulas: false));
+        $this->runImport(
+            $this->createInterpreter(windowedReadCellThreshold: $threshold),
+            $this->writeFormulaFixture(preCalculateFormulas: false)
+        );
 
         $this->assertSame([['7', '42']], $this->capturedRows);
         $this->assertCount(1, $this->warnings);
-        $this->assertStringContainsString('Sheet1!B1', $this->warnings[0]['message']);
+        $this->assertStringContainsString('Sheet1!B1', $this->warningMessage(0));
         $this->assertSame(
             PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-            $this->warnings[0]['component'],
+            $this->warningComponent(0),
             'the Import Logs tab filters on this component'
         );
     }
 
-    public function testUncachedFormulaWarningsAreCapped(): void
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testUncachedFormulaWarningsAreCapped(int $threshold): void
     {
-        $interpreter = $this->createInterpreter();
+        $interpreter = $this->createInterpreter(windowedReadCellThreshold: $threshold);
 
-        $interpreter->interpretFile($this->writeUncachedFormulaRows(130));
+        $this->runImport($interpreter, $this->writeUncachedFormulaRows(130));
 
         $this->assertCount(51, $this->warnings, '50 cell warnings plus one closing line');
-        $this->assertStringContainsString('Sheet1!B1', $this->warnings[0]['message']);
-        $this->assertStringContainsString('Sheet1!B50', $this->warnings[49]['message']);
-        $this->assertStringContainsString('80 further cells', $this->warnings[50]['message']);
+        $this->assertStringContainsString('Sheet1!B1', $this->warningMessage(0));
+        $this->assertStringContainsString('Sheet1!B50', $this->warningMessage(49));
+        $this->assertStringContainsString('80 further cells', $this->warningMessage(50));
 
         $this->warnings = [];
-        $interpreter->interpretFile($this->writeUncachedFormulaRows(50));
+        $this->runImport($interpreter, $this->writeUncachedFormulaRows(50));
 
         $this->assertCount(
             50,
             $this->warnings,
             'the counter resets per run, and 50 affected cells need no closing line'
         );
-        $this->assertStringContainsString('Sheet1!B50', $this->warnings[49]['message']);
+        $this->assertStringContainsString('Sheet1!B50', $this->warningMessage(49));
     }
 
-    public function testSettingsAreHonoured(): void
+    /**
+     * @dataProvider provideThresholds
+     */
+    public function testSettingsAreHonoured(int $threshold): void
     {
         $path = $this->writeTwoSheetFixture();
 
-        $this->createInterpreter()->interpretFile($path);
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: $threshold), $path);
         $this->assertSame([['h1', 'h2'], ['a', 'b'], ['c', 'd']], $this->capturedRows);
 
         $this->capturedRows = [];
-        $this->createInterpreter(skipFirstRow: true)->interpretFile($path);
+        $this->runImport(
+            $this->createInterpreter(skipFirstRow: true, windowedReadCellThreshold: $threshold),
+            $path
+        );
         $this->assertSame([['a', 'b'], ['c', 'd']], $this->capturedRows);
 
         $this->capturedRows = [];
-        $this->createInterpreter(sheetName: self::SECOND_SHEET_NAME)->interpretFile($path);
+        $this->runImport(
+            $this->createInterpreter(sheetName: self::SECOND_SHEET_NAME, windowedReadCellThreshold: $threshold),
+            $path
+        );
         $this->assertSame([['x', 'y'], ['1', '2']], $this->capturedRows);
 
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Sheet "Absent" not found in file.');
-        $this->createInterpreter(sheetName: 'Absent')->interpretFile($path);
+        $this->runImport($this->createInterpreter(sheetName: 'Absent', windowedReadCellThreshold: $threshold), $path);
+    }
+
+    /**
+     * The threshold counts cells, not rows or bytes, and a sheet exactly on it still takes the
+     * whole-workbook read - only a sheet above it is read in windows.
+     */
+    public function testTheCellCountDecidesWhichReadIsUsed(): void
+    {
+        $lastRowNumber = $this->chunkRows() + 1;
+        $path = $this->writeFixtureEndingAtRow($lastRowNumber);
+        $cellCount = $lastRowNumber * 2;
+
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: $cellCount), $path);
+        $wholeWorkbookRows = $this->capturedRows;
+
+        $this->capturedRows = [];
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: $cellCount - 1), $path);
+
+        $this->assertSame(
+            $wholeWorkbookRows,
+            $this->capturedRows,
+            'the read picked on the threshold boundary must not change a single row'
+        );
+        $this->assertCount($lastRowNumber, $this->capturedRows);
+    }
+
+    /**
+     * The one cell of the decision matrix where the two reads genuinely differ, and the reason
+     * the uncached formula warning exists: a window cannot see the rows outside it.
+     */
+    public function testAnUncachedFormulaReachingOutsideTheWindowOnlyResolvesOnTheWholeWorkbook(): void
+    {
+        $referencedRow = $this->chunkRows() + 1;
+        $path = $this->writeFormulaReferencingRow($referencedRow);
+
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: self::NEVER_WINDOWED), $path);
+        $this->assertSame('123', $this->capturedRows[0][0], 'the whole-workbook read sees the referenced row');
+
+        $this->capturedRows = [];
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: self::ALWAYS_WINDOWED), $path);
+        $this->assertSame('0', $this->capturedRows[0][0], 'the window cannot reach the referenced row');
+        $this->assertStringContainsString(
+            'Sheet1!A1',
+            $this->warningMessage(0),
+            'and that is exactly what the warning announces'
+        );
+    }
+
+    private function chunkRows(): int
+    {
+        return (int)(new ReflectionClassConstant(XlsxFileInterpreter::class, 'IMPORT_CHUNK_ROWS'))->getValue();
     }
 }

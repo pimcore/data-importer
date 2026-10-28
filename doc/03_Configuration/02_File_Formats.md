@@ -11,6 +11,40 @@ next to the [data source](./01_Data_Sources.md).
 Each record becomes one queue item, and each field of that record can be addressed by a mapping entry through its
 **data source index**. Depending on the format, that index is either a numeric position or a field name.
 
+## What Interpretation Costs per Format
+
+The interpretation step reads the source file and creates the queue items; the processing step that follows is
+independent of the format. What that step costs differs sharply between the three row-oriented formats, and the
+reasons are not the same, so the numbers below are three separate mechanisms rather than one scale.
+
+| Format | Small (10,000 rows) | Large (100,000 rows) |
+|---|---|---|
+| CSV | 6 MB, 0.1 s | 6 MB, 0.3 s |
+| XML | 10 MB, 0.1 s | 30 MB, 1.0 s |
+| XLSX, whole-workbook read | 41 MB, 1.7 s | 306 MB, 10.6 s |
+| XLSX, windowed read | 45 MB, 1.7 s | 117 MB, 40.3 s |
+
+- **CSV** streams: it reads one line at a time and never holds the file, so its memory is flat in the row count.
+- **XML** loads the document to walk the configured XPath, so its memory grows with the file, but one parsed
+  element is far cheaper than one spreadsheet cell.
+- **XLSX** builds one object per cell, which measured about 650 bytes per cell for the files above - some 100 times
+  their size on disk, a factor that moves with how well the sheet compresses. This is what the windowed read
+  described under [XLSX](#xlsx-excel) exists for, and why its threshold counts cells rather than bytes.
+
+Which XLSX row applies depends on the threshold described under [XLSX](#xlsx-excel); a file at or below it takes
+the whole-workbook read.
+
+**How these were measured**
+
+A generated file of five columns per row (text, text, decimal, integer, text) per format and row count. Each
+number comes from its own PHP process, which interprets the file with a `PreQueueRowEvent` listener that skips
+every row - so no queue, database or kernel is involved - and reports `memory_get_peak_usage(true)` and the
+wall time of the interpretation step alone.
+
+The memory figures are deterministic and reproduce to the decimal. The wall times are not: repeating the same
+measurement on the same machine varied by up to a factor of two, so read them as orders of magnitude and as
+ratios between the rows, not as a benchmark.
+
 ## CSV
 
 **Configuration options**
@@ -119,17 +153,50 @@ For the full expression reference see [jmespath.org](https://jmespath.org) and t
   label the columns. Fields stay addressable by their numeric position.
 - **Sheet Name**: name of the sheet to import. Defaults to `Sheet1`.
 
-The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest). It reads the sheet in row
-windows instead of loading the whole workbook, which lowers the memory a large import needs. Memory still grows with
-the number of rows, because phpspreadsheet parses the whole sheet before a window is applied to it; the window only
-bounds how many cells are kept in memory at once. Each window reads the file again, so a large file also takes
-longer to interpret than a whole-workbook read would.
+The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest).
+
+**How the sheet is read**
+
+A sheet is loaded as a whole, which is the fastest way to read it. Above
+`pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows times columns, `200000` by
+default, see [Installation](../01_Installation/README.md)) the interpreter reads the sheet in row windows instead.
+Both reads produce exactly the same rows; they differ only in what they cost. Measured on a generated file of five
+columns, interpreting it into queue items without processing them:
+
+| Rows (cells) | Whole-workbook read | Windowed read |
+|---|---|---|
+| 10,000 (50,005) | 41 MB, 1.7 s | 45 MB, 1.7 s |
+| 40,000 (200,005) | 132 MB, 4.9 s | 68 MB, 10.5 s |
+| 100,000 (500,005) | 306 MB, 10.6 s | 117 MB, 40.3 s |
+
+The windowed read trades roughly a third of the memory for several times the interpretation time, so it is worth
+having only for files that would otherwise run into the memory limit. Lower the threshold when large imports
+exhaust the limit, raise it to keep more imports on the faster read. The memory figures reproduce exactly; the wall
+times vary with the machine and with the run, see
+[what interpretation costs per format](#what-interpretation-costs-per-format) for the recipe behind them.
+
+The threshold counts cells rather than bytes on disk because the memory a sheet needs follows its cell count, not
+its file size: phpspreadsheet builds one object per cell, which measured about 650 bytes per cell for the files
+above. The same 100,000-row file is 3.0 MB on disk and needs 306 MB to read - a ratio that moves with the width and
+content of the rows and with how well they compress, so a threshold on file size would mispredict constantly.
+
+The windowed read lowers peak memory but cannot make it flat: phpspreadsheet parses the whole sheet XML before a
+read filter is consulted, so the parse alone sets a floor. For the 100,000-row file above that floor is 72 MB -
+loading zero rows of it costs the same 72 MB as loading one row or a thousand. Shrinking the window below that
+point costs interpretation time without saving memory.
+
+**Formula cells**
 
 A formula cell is imported as the result cached in the file by the application that wrote it, the same rule the
-[import preview](./03_Import_Preview.md) applies. Only when a cell carries no cached result is the formula
-calculated, on the rows currently loaded, and the cell is reported as a warning in the
-[import log](../05_Import_Progress_and_Logging.md). Such a value can differ from the one a spreadsheet application
-shows, because references to rows outside the loaded window are not available.
+[import preview](./03_Import_Preview.md) applies, and the same rule on both reads. Only when a cell carries no
+cached result is the formula calculated, on the rows currently loaded, and the cell is reported as a warning in the
+[import log](../05_Import_Progress_and_Logging.md). At most 50 such cells are listed per import run, followed by one
+line stating how many further cells were affected.
+
+A calculated value can differ from the one a spreadsheet application shows, because references to another sheet are
+never available and, on the windowed read, references to rows outside the current window are not either. This is
+the only respect in which the two reads can answer differently, and it only concerns formula cells that carry no
+cached result.
 
 ## XML
 

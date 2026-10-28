@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
+use ReflectionClass;
 
 /**
  * The XLSX preview shares its cell-value rule with the import path. These tests pin the
@@ -53,7 +54,7 @@ class XlsxFileInterpreterPreviewTest extends Unit
      */
     private function createInterpreter(): XlsxFileInterpreter
     {
-        $interpreter = (new \ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor();
+        $interpreter = (new ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor();
         $interpreter->setSettings(['skipFirstRow' => true, 'sheetName' => self::SHEET_NAME]);
 
         return $interpreter;

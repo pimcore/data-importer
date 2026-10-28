@@ -7,22 +7,35 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.3.3
 
-### XLSX Imports Read the Sheet in Row Windows and Prefer Cached Formula Results
+### Large XLSX Imports Read the Sheet in Row Windows, and Formula Cells Prefer Cached Results
 
-- The XLSX interpreter no longer loads the whole workbook before creating queue items. It reads the sheet in row
-  windows, which lowers peak memory: a generated 100,000-row file measured 334 MB before and 116 MB after. Memory
-  still grows with the number of rows, because phpspreadsheet parses the whole sheet for every window. Every XLSX
-  import takes this path; there is no size or row threshold and no fallback to the previous behaviour.
-- Interpreting a large XLSX takes longer, because each window reads the file again: interpreting the same
-  100,000-row file took about seven times as long. The interpretation step only creates the queue items, so this
-  shows up as a slower start of a large import, not as a slower import overall.
-- A formula cell now resolves to the result cached in the file, the same rule the import preview already applied.
+- Above `pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows times columns, `200000`
+  by default) the XLSX interpreter no longer loads the whole workbook before creating queue items. It reads the
+  sheet in row windows, which lowers peak memory: a generated 100,000-row file of five columns measured 334 MB
+  before and 117 MB after. A file at or below the threshold is loaded as a whole as before, so imports that already
+  fit in memory keep the faster read. See [Installation](./README.md) for the setting.
+- Interpreting an XLSX above the threshold takes several times longer, because each window reads the file again:
+  on the reference machine the same 100,000-row file went from 10.7 s to 78.5 s of interpretation time, and an
+  independent run on a second machine measured 7.4 s to 40.3 s. Expect a factor of four to eight; unlike the memory
+  figures, which reproduce exactly, wall time depends on the machine and varied by up to a factor of two between
+  runs on the same one. The interpretation step only creates the queue items, so this shows up as a slower start of
+  a large import, not as a slower import overall. Raise the threshold to keep a file on the faster read, lower it
+  when an import exhausts the memory limit.
+- Memory does not become flat above the threshold, it only drops: phpspreadsheet parses the whole sheet XML before
+  a row window is applied to it, which for the 100,000-row file above costs 72 MB on its own.
+- Reading a sheet cell by cell costs more than the previous whole-sheet read even below the threshold: the same
+  100,000-row file needs about a third more interpretation time (7.4 s before and 10.6 s after in the run above),
+  at 334 MB before and 306 MB after. That is the price of the formula rule below, which has to look at each cell
+  individually.
+- A formula cell now resolves to the result cached in the file, the same rule the import preview already applied
+  and the same rule on both reads.
   Imports of workbooks whose cached results are stale, or whose formulas are volatile (`TODAY()`, `NOW()`, `RAND()`),
   therefore import different values than before. Recalculate and save such files once before the next import if the
   cached results must not be used.
-- A formula cell without a cached result is calculated on the loaded rows only and logged as a warning naming the
-  sheet and the cell, visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by
-  one line stating how many further cells were affected.
+- A formula cell without a cached result is calculated on the rows loaded at the time - every row below the
+  threshold, the rows of the current window above it - and logged as a warning naming the sheet and the cell,
+  visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by one line stating
+  how many further cells were affected.
 - An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields. Such a file now
   creates no queue items at all.
 - An import whose configured sheet name is absent from the file now fails with the same
