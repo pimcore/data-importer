@@ -13,7 +13,9 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
@@ -22,8 +24,9 @@ use Psr\Log\NullLogger;
 /**
  * Covers the streaming XLSX import path used for large workbooks: rows are read in a
  * single pass with bounded memory, formula cells resolve to the calculation result
- * cached in the file, and rows are padded to the sheet width so column indexes stay
- * stable like in the full-load code path.
+ * cached in the file, rows are padded to the sheet width so column indexes stay stable
+ * like in the full-load code path, and cell values are formatted exactly like the
+ * full-load toArray() output so delta checks do not depend on the file size.
  */
 class XlsxStreamingReadTest extends Unit
 {
@@ -52,6 +55,36 @@ class XlsxStreamingReadTest extends Unit
         $sheet->setTitle('Sheet1');
         $sheet->fromArray($rows);
 
+        return $this->saveSpreadsheet($spreadsheet);
+    }
+
+    private function writeMixedTypeXlsx(): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Sheet1');
+
+        $sheet->setCellValue('A1', 42);
+        $sheet->setCellValue('B1', 1.5);
+        $sheet->setCellValue('C1', true);
+        $sheet->setCellValue('D1', 45366);
+        $sheet->getStyle('D1')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_YYYYMMDD);
+        $sheet->setCellValue('E1', 45366.75);
+        $sheet->getStyle('E1')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
+        $sheet->setCellValue('F1', 0.5);
+        $sheet->getStyle('F1')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_TIME4);
+        $sheet->setCellValue('G1', 1.25);
+        $sheet->getStyle('G1')->getNumberFormat()->setFormatCode('[h]:mm:ss');
+        $sheet->setCellValue('H1', '=A1+B1');
+        $sheet->setCellValue('I1', 'text');
+        $sheet->setCellValueExplicit('J1', '0123', DataType::TYPE_STRING);
+        $sheet->setCellValue('L1', 'after gap');
+
+        return $this->saveSpreadsheet($spreadsheet);
+    }
+
+    private function saveSpreadsheet(Spreadsheet $spreadsheet): string
+    {
         $path = tempnam(sys_get_temp_dir(), 'di_xlsx_') . '.xlsx';
         // the writer pre-calculates formulas, so the file carries cached formula results
         (new XlsxWriter($spreadsheet))->save($path);
@@ -68,6 +101,16 @@ class XlsxStreamingReadTest extends Unit
         $method = new \ReflectionMethod($interpreter, 'streamSheetRows');
 
         return iterator_to_array($method->invoke($interpreter, $path, $totalColumns), false);
+    }
+
+    /**
+     * @return array[]
+     */
+    private function loadAll(XlsxFileInterpreter $interpreter, string $path): array
+    {
+        $method = new \ReflectionMethod($interpreter, 'loadSheetRows');
+
+        return $method->invoke($interpreter, $path);
     }
 
     public function testWorksheetInfoContainsDimensions(): void
@@ -132,7 +175,26 @@ class XlsxStreamingReadTest extends Unit
             $streamed = $this->streamAll($this->createInterpreter(), $path, 3);
 
             $this->assertCount(1, $streamed);
-            $this->assertEquals(5, $streamed[0][2]);
+            $this->assertSame('5', $streamed[0][2]);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function testStreamedValuesMatchFullLoadPath(): void
+    {
+        $path = $this->writeMixedTypeXlsx();
+        $interpreter = $this->createInterpreter();
+
+        try {
+            $fullLoad = $this->loadAll($interpreter, $path);
+            $streamed = $this->streamAll($interpreter, $path, 12);
+
+            $this->assertSame($fullLoad, $streamed);
+            $this->assertSame(
+                ['42', '1.5', 'TRUE', '45366', '45366.75', '0.5', '1.25', '43.5', 'text', '0123', null, 'after gap'],
+                $streamed[0]
+            );
         } finally {
             @unlink($path);
         }

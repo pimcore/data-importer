@@ -12,7 +12,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 
+use OpenSpout\Common\Entity\Cell as StreamedCell;
 use OpenSpout\Common\Entity\Cell\EmptyCell;
+use OpenSpout\Common\Entity\Cell\ErrorCell;
 use OpenSpout\Common\Entity\Cell\FormulaCell;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Reader\XLSX\Options;
@@ -22,6 +24,8 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
@@ -50,13 +54,11 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             throw new InvalidConfigurationException(sprintf('Sheet "%s" not found in file.', $this->sheetName));
         }
 
-        if ($worksheetInfo['totalRows'] * $worksheetInfo['totalColumns'] <= self::STREAMING_CELL_THRESHOLD) {
-            $this->interpretWithFullLoad($path);
+        $rows = $worksheetInfo['totalRows'] * $worksheetInfo['totalColumns'] <= self::STREAMING_CELL_THRESHOLD
+            ? $this->loadSheetRows($path)
+            : $this->streamSheetRows($path, $worksheetInfo['totalColumns']);
 
-            return;
-        }
-
-        foreach ($this->streamSheetRows($path, $worksheetInfo['totalColumns']) as $rowData) {
+        foreach ($rows as $rowData) {
             $this->processImportRow($rowData);
         }
     }
@@ -65,8 +67,10 @@ final class XlsxFileInterpreter extends AbstractInterpreter
      * Loads the whole workbook at once, keeping the exact pre-streaming semantics
      * (formulas are evaluated with the complete workbook available). Only used for
      * workbooks small enough to fit into memory.
+     *
+     * @return array[]
      */
-    private function interpretWithFullLoad(string $path): void
+    private function loadSheetRows(string $path): array
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
@@ -80,9 +84,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             array_shift($data);
         }
 
-        foreach ($data as $rowData) {
-            $this->processImportRow($rowData);
-        }
+        return $data;
     }
 
     /**
@@ -131,25 +133,49 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $rowData = [];
 
         foreach ($row->getCells() as $cell) {
-            if ($cell instanceof EmptyCell) {
-                // empty cells resolve to null like in the full-load toArray() path
-                $rowData[] = null;
-
-                continue;
-            }
-
-            $value = $cell instanceof FormulaCell ? $cell->getComputedValue() : $cell->getValue();
-
-            if ($value instanceof \DateTimeInterface) {
-                $value = $value->format('Y-m-d H:i:s');
-            } elseif ($value instanceof \DateInterval) {
-                $value = $value->format('%H:%I:%S');
-            }
-
-            $rowData[] = $value;
+            $rowData[] = $this->formatStreamedCellValue($cell);
         }
 
         return array_pad($rowData, $totalColumns, null);
+    }
+
+    /**
+     * Formats a streamed cell the way toArray() does on the full-load path, so a workbook
+     * imports identically on both sides of the streaming threshold: numbers become strings,
+     * booleans "TRUE"/"FALSE" and dates, times and durations their Excel serial number
+     * (the full-load path reads data only and never sees a cell's date format).
+     */
+    private function formatStreamedCellValue(StreamedCell $cell): ?string
+    {
+        if ($cell instanceof EmptyCell) {
+            return null;
+        }
+
+        if ($cell instanceof ErrorCell) {
+            return $cell->getRawValue();
+        }
+
+        $value = $cell instanceof FormulaCell ? $cell->getComputedValue() : $cell->getValue();
+
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            $value = ExcelDate::dateTimeToExcel($value);
+        } elseif ($value instanceof \DateInterval) {
+            $value = $this->dateIntervalToExcelSerial($value);
+        }
+
+        return NumberFormat::toFormattedString($value, NumberFormat::FORMAT_GENERAL);
+    }
+
+    private function dateIntervalToExcelSerial(\DateInterval $interval): float
+    {
+        $seconds = ($interval->d * 86400) + ($interval->h * 3600) + ($interval->i * 60) + $interval->s;
+        $serial = $seconds / 86400;
+
+        return $interval->invert === 1 ? -$serial : $serial;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
