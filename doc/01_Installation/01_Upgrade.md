@@ -22,10 +22,17 @@ description: Breaking changes and migration steps per release.
   Before the first import after the upgrade, open and save such files once in a spreadsheet application with
   automatic calculation on, so the cached results match the formulas. A file whose formula cells carry no cached
   result at all is unaffected: those are calculated, and each one is logged - see the next entry.
-- A formula cell without a cached result is calculated on the rows loaded at the time - every row below the
-  threshold, the rows of the current window above it - and logged as a warning naming the sheet and the cell,
-  visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by one line stating
-  how many further cells were affected.
+- A formula cell without a cached result is calculated on what is loaded at the time - the whole workbook below the
+  threshold, the configured sheet and the rows of the current window above it - and logged as a warning naming the
+  sheet and the cell, visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by
+  one line stating how many further cells were affected.
+- **An import run that calculated such a cell does not clean up, even with cleanup switched on.** Above the
+  threshold the window cannot reach another sheet or a row outside itself, so a formula reaching there answers
+  `#REF!` or a zero; below it such a formula resolves, but one phpspreadsheet cannot calculate at all leaves the
+  cell empty. Either way the row can reach the queue under an identifier the source does not hold, and cleanup
+  would read the element that identifier belongs to as removed from the source and delete or unpublish it. The run
+  therefore imports the rows as usual, logs an error naming the reason in the Import Logs tab, and leaves every
+  existing element alone. Fix the formula or give the file cached results, and the next run cleans up as before.
 - **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate; it continues with the cell
   empty.** Until now such a formula threw out of the interpreter and failed the whole import, so a file that used
   to fail now imports. The cell arrives empty, is named in the warning described above and counts toward the same

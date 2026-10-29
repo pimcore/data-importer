@@ -290,6 +290,23 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         return $this->writeXlsx($spreadsheet, preCalculateFormulas: false);
     }
 
+    /**
+     * An uncached formula in row 1 whose only reference sits on the second worksheet.
+     */
+    private function writeCrossSheetFormulaFixture(): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle(self::SHEET_NAME);
+        $sheet->setCellValue(self::FIRST_CELL, '=' . self::SECOND_SHEET_NAME . '!A1');
+        $sheet->setCellValue('B1', 'plain');
+        $secondSheet = $spreadsheet->createSheet();
+        $secondSheet->setTitle(self::SECOND_SHEET_NAME);
+        $secondSheet->setCellValue(self::FIRST_CELL, 'from second');
+
+        return $this->writeXlsx($spreadsheet, preCalculateFormulas: false);
+    }
+
     private function writeTwoSheetFixture(): string
     {
         $spreadsheet = new Spreadsheet();
@@ -530,6 +547,41 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
             'Sheet1!A1',
             $this->warningMessage(0),
             'and that is exactly what the warning announces'
+        );
+    }
+
+    /**
+     * Only a filtered read drops the other worksheets. A sheet below the threshold is loaded with
+     * the rest of its workbook, so an uncached "=Second!A1" still finds its dependency, which is
+     * what the whole-workbook read did before this interpreter learned to window at all.
+     */
+    public function testAnUncachedCrossSheetFormulaOnlyLosesItsDependencyOnTheWindowedRead(): void
+    {
+        $path = $this->writeCrossSheetFormulaFixture();
+
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: self::NEVER_WINDOWED), $path);
+        $this->assertSame(
+            [['from second', 'plain']],
+            $this->capturedRows,
+            'the whole-workbook read keeps the second worksheet and resolves the formula against it'
+        );
+        $this->assertCount(1, $this->warnings, 'a formula without a cached result is calculated, and said so');
+        $this->assertStringContainsString('calculated while reading', $this->warningMessage(0));
+
+        $this->capturedRows = [];
+        $this->warnings = [];
+        $this->runImport($this->createInterpreter(windowedReadCellThreshold: self::ALWAYS_WINDOWED), $path);
+
+        $this->assertSame(
+            [['#REF!', 'plain']],
+            $this->capturedRows,
+            'the windowed read loads the configured sheet alone, so the reference has nowhere to go'
+        );
+        $this->assertStringContainsString('Sheet1!A1', $this->warningMessage(0));
+        $this->assertStringContainsString(
+            'rows of the current window only',
+            $this->warningMessage(0),
+            'and the warning names the window as the reason'
         );
     }
 

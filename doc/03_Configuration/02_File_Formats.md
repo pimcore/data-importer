@@ -234,10 +234,18 @@ imported as an empty cell and the import continues with the next cell. Such a ce
 counts toward the same 50, so it is never dropped silently. A formula that merely evaluates to a spreadsheet error
 is not this case: `#NAME?` and `#VALUE!` are values, and are imported as that text.
 
-A calculated value can differ from the one a spreadsheet application shows, because references to another sheet are
-never available and, on the windowed read, references to rows outside the current window are not either. This is
-the only respect in which the two reads can answer differently, and it only concerns formula cells that carry no
-cached result.
+A calculated value can differ from the one a spreadsheet application shows, and this is the only respect in which
+the two reads can answer differently. The whole-workbook read has the entire file in front of it, so it resolves a
+formula reaching another sheet or another row exactly as the application would. The windowed read loads the
+configured sheet alone and only the rows of the current window, so a formula reaching beyond them answers `#REF!`
+or a zero instead. Both only concern formula cells that carry no cached result.
+
+A run that calculated such a cell does not clean up. The row may have reached the queue under an identifier the
+source does not hold - nothing at all, or `#REF!` - and the
+[cleanup](./06_Processing_Settings.md#cleanup) would then read the element that identifier belongs to as removed
+from the source and delete or unpublish it. The run says so with an error in the import log, imports the rows as
+usual and leaves every existing element alone. A whole-workbook read that resolved its formulas cleans up as
+before; only a cell imported empty stops it there.
 
 ## XML
 

@@ -46,6 +46,8 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
     private int $uncachedFormulaCellCount = 0;
 
+    private bool $readInWindows = false;
+
     /**
      * @param int $windowedReadCellThreshold cells above which the sheet is read in row windows
      */
@@ -73,6 +75,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         $lastColumnLetter = $worksheetInfo['lastColumnLetter'];
         $firstDataRow = $this->skipFirstRow ? 2 : 1;
         $this->uncachedFormulaCellCount = 0;
+        $this->readInWindows = false;
 
         // a sheet without data rows or without a single cell has no window to read
         if ($totalRows < $firstDataRow || $lastColumnLetter === '') {
@@ -81,13 +84,13 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
         $lastColumnIndex = Coordinate::columnIndexFromString($lastColumnLetter);
         // two reads rather than one: on 100k rows the windowed read saved 2.9x memory at 4x the interpretation time
-        $readInWindows = $totalRows * $lastColumnIndex > $this->windowedReadCellThreshold;
-        $windowRows = $readInWindows ? self::IMPORT_CHUNK_ROWS : $totalRows;
+        $this->readInWindows = $totalRows * $lastColumnIndex > $this->windowedReadCellThreshold;
+        $windowRows = $this->readInWindows ? self::IMPORT_CHUNK_ROWS : $totalRows;
 
         for ($firstRow = $firstDataRow; $firstRow <= $totalRows; $firstRow += $windowRows) {
             $lastRow = min($firstRow + $windowRows - 1, $totalRows);
 
-            $spreadSheet = $this->loadRows($path, $readInWindows ? range($firstRow, $lastRow) : null);
+            $spreadSheet = $this->loadRows($path, $this->readInWindows ? range($firstRow, $lastRow) : null);
             $sheet = $spreadSheet->getActiveSheet();
 
             for ($rowNumber = $firstRow; $rowNumber <= $lastRow; $rowNumber++) {
@@ -181,9 +184,12 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
-        $reader->setLoadSheetsOnly($this->sheetName);
 
         if ($rows !== null) {
+            // Only the filtered reads drop the other worksheets. A read that takes every row is the
+            // whole-workbook read the import used before windowing, and keeping its other sheets is
+            // what lets a formula without a cached result still resolve "=Second!A1" there.
+            $reader->setLoadSheetsOnly($this->sheetName);
             $reader->setReadFilter(new RowsReadFilter($rows));
         }
 
@@ -248,15 +254,29 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 
         $this->uncachedFormulaCellCount++;
 
+        if ($importedEmpty || $this->readInWindows) {
+            // The cell holds what the spreadsheet application does not show: nothing, or a value the window
+            // calculated without the sheets and rows outside it ("#REF!", zeros). Were it the resolver
+            // identifier, cleanup would read the element it belongs to as removed from the source. The
+            // whole-workbook read sees every row and sheet, so only an emptied cell is a gap there.
+            $this->markSourceIncomplete();
+        }
+
         if ($this->uncachedFormulaCellCount > self::MAX_UNCACHED_FORMULA_WARNINGS) {
             return;
         }
 
-        $message = $importedEmpty
-            ? 'Formula in cell "%s!%s" has no result cached in the file and could not be calculated, '
-                . 'so the cell was imported empty and the import continued.'
-            : 'Formula in cell "%s!%s" has no result cached in the file and was calculated on the loaded rows only, '
+        if ($importedEmpty) {
+            $message = 'Formula in cell "%s!%s" has no result cached in the file and could not be calculated, '
+                . 'so the cell was imported empty and the import continued.';
+        } elseif ($this->readInWindows) {
+            $message = 'Formula in cell "%s!%s" has no result cached in the file and was calculated on the rows '
+                . 'of the current window only, so the imported value can differ from the one the spreadsheet '
+                . 'application shows.';
+        } else {
+            $message = 'Formula in cell "%s!%s" has no result cached in the file and was calculated while reading, '
                 . 'so the imported value can differ from the one the spreadsheet application shows.';
+        }
 
         $this->logUncachedFormulaWarning(sprintf($message, $this->sheetName, $cell->getCoordinate()));
     }
@@ -268,7 +288,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         }
 
         $this->logUncachedFormulaWarning(sprintf(
-            '%d further cells carry a formula without a cached result and were calculated on the loaded rows only '
+            '%d further cells carry a formula without a cached result and were calculated while reading '
             . 'or imported empty, only the first %d of them are listed above.',
             $this->uncachedFormulaCellCount - self::MAX_UNCACHED_FORMULA_WARNINGS,
             self::MAX_UNCACHED_FORMULA_WARNINGS
