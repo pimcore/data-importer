@@ -37,10 +37,10 @@ final class XlsxFileInterpreter extends AbstractInterpreter
 {
     /**
      * Above this estimated cell count the workbook is streamed instead of fully loaded;
-     * PhpSpreadsheet needs roughly 1KB per instantiated cell, so full loads of larger
-     * files would exhaust typical memory limits.
+     * PhpSpreadsheet needs roughly 1KB per instantiated cell, so a full load stays well
+     * below a 256M memory limit only up to about this size.
      */
-    private const STREAMING_CELL_THRESHOLD = 500000;
+    private const STREAMING_CELL_THRESHOLD = 100000;
 
     private bool $skipFirstRow;
 
