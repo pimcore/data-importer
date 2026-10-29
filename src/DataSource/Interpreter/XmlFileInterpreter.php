@@ -54,7 +54,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
      */
     private function loadData(string $path)
     {
-        if ($this->cachedFilePath !== $path || empty($this->cachedContent)) {
+        if ($this->cachedFilePath !== $path || !empty($this->cachedContent)) {
             $dom = $this->loadDataRaw($path);
         } else {
             $dom = $this->cachedContent;
