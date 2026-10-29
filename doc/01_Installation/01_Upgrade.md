@@ -7,6 +7,73 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.3.3
 
+### Large XLSX Imports Read the Sheet in Row Windows, and Formula Cells Prefer Cached Results
+
+- **A formula cell can now import a different value, on every XLSX import, including files below the threshold.**
+  This is a change of value, not only of speed, and nothing in the import log announces it. Until now the
+  interpreter read the sheet with `Worksheet::toArray()`, which **recalculates** every formula while reading. It
+  now reads cell by cell and prefers the result **cached in the file** (`Cell::getOldCalculatedValue()`), which is
+  the rule the import preview has always applied and is now the rule on both reads.
+  Where the cached result is stale, the old import brought in the freshly recalculated value and the new one brings
+  in the stale cached value instead. A file carries a stale cached result when its formulas were written
+  programmatically, when the spreadsheet application had calculation set to manual, or when a generator wrote the
+  formulas together with results it did not recompute. Volatile formulas (`TODAY()`, `NOW()`, `RAND()`) are stale by
+  definition from the moment the file was saved.
+  Before the first import after the upgrade, open and save such files once in a spreadsheet application with
+  automatic calculation on, so the cached results match the formulas. A file whose formula cells carry no cached
+  result at all is unaffected: those are calculated, and each one is logged - see the next entry.
+- A formula cell without a cached result is calculated on what is loaded at the time - the whole workbook below the
+  threshold, the configured sheet and the rows of the current window above it - and logged as a warning naming the
+  sheet and the cell, visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by
+  one line stating how many further cells were affected.
+- **An import run does not clean up when it imported such a cell empty, and a run above the threshold does not
+  clean up when it had to calculate such a cell at all - even with cleanup switched on.** Above the threshold the
+  window cannot reach another sheet or a row outside itself, so a formula reaching there answers `#REF!` or a
+  zero; below it such a formula resolves against the whole workbook, and only one phpspreadsheet cannot calculate
+  at all leaves the cell empty. In those cases the row can reach the queue under an identifier the source does not
+  hold, and cleanup would read the element that identifier belongs to as removed from the source and delete or
+  unpublish it. Such a run therefore imports the rows as usual, logs an error naming the reason in the Import Logs
+  tab, and leaves every existing element alone. **A run below the threshold whose formulas all resolved cleans up
+  as before** - an uncached formula on its own does not switch cleanup off, so do not rely on one to protect
+  existing elements. Fix the formula or give the file cached results, and the next run cleans up again.
+- **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate; it continues with the cell
+  empty.** Until now such a formula threw out of the interpreter and failed the whole import, so a file that used
+  to fail now imports. The cell arrives empty, is named in the warning described above and counts toward the same
+  50, so it is visible in the Import Logs tab rather than silent - but a row that previously stopped the run now
+  reaches the queue with a gap in it. If an import of yours relied on that failure to catch a broken source file,
+  check the import log for these warnings instead. Windowing is why this changed: a formula referencing rows
+  outside the current window is routine, so what used to be a rare abort would otherwise have become a likely one.
+  A formula that merely evaluates to `#NAME?` or `#VALUE!` is unaffected - those are values and were always
+  imported as that text.
+- Above `pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows times columns, `200000`
+  by default) the XLSX interpreter no longer loads the whole workbook before creating queue items. It reads the
+  sheet in row windows, which lowers peak memory: a generated 100,000-row file of five columns measured 334 MB
+  before and 117 MB after. A file at or below the threshold is loaded as a whole as before, so imports that already
+  fit in memory keep the faster read. See [Installation](./README.md) for the setting.
+- Interpreting an XLSX above the threshold takes several times longer, because each window reads the file again:
+  interpreting the same 100,000-row file of five columns went from **9.3 s to 37.7 s of CPU time** (`getrusage()`,
+  user plus system), a factor of four. These are CPU figures rather than wall clock on purpose - the wall clock of
+  the same measurement varied by up to a factor of two between runs on one machine under other load, while its CPU
+  time stayed within about a tenth, so the wall clock is not reproducible enough to quote. Expect the factor rather
+  than the seconds, which depend on the machine; the memory figures, by contrast, reproduce exactly. The
+  interpretation step only creates the queue items, so this shows up as a slower start of a large import, not as a
+  slower import overall. Raise the threshold to keep a file on the faster read, lower it when an import exhausts
+  the memory limit.
+- Memory does not become flat above the threshold, it only drops: phpspreadsheet parses the whole sheet XML before
+  a row window is applied to it, which for the 100,000-row file above costs 72 MB on its own.
+- Below the threshold the file is still read in one pass, and it needs slightly less memory than before: 41 MB
+  instead of 45 MB on a 10,000-row file, 306 MB instead of 334 MB on a 100,000-row one. What it costs instead is
+  one extra pass over the file to read the sheet dimensions, not the per-cell formula rule. That pass is a fixed
+  cost, so measured against the pre-change read it is no measurable extra time on a 100,000-row file and about a
+  third more on a 10,000-row one - a fraction of a second either way, since that file interprets in about one.
+- An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields. Such a file now
+  creates no queue items at all.
+- An import whose configured sheet name is absent from the file now fails with the same
+  `InvalidConfigurationException` the preview already raised, instead of the raw phpspreadsheet exception. The
+  import failed before as well, only the message differs.
+- `PreviewRowsReadFilter` was renamed to `RowsReadFilter`, because both the preview and the import use it now. The
+  class is `@internal` and `final`.
+
 ### XML Values Keep Their Text When Typing Would Change Them
 
 - The XML interpreter no longer converts a numeric looking value to a number when that would change it. `603E709`

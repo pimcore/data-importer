@@ -32,6 +32,20 @@ final class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder('pimcore_data_importer');
 
         $treeBuilder->getRootNode()->children() // @phpstan-ignore-line
+            ->arrayNode('xlsx_interpreter')
+                ->addDefaultsIfNotSet()
+                ->info('Configure how the XLSX interpreter reads a sheet')
+                ->children()
+                    ->integerNode('windowed_read_cell_threshold')
+                        ->defaultValue(200000)
+                        ->min(0)
+                        ->info(
+                            'Cell count above which the sheet is read in row windows, ' .
+                            'which needs less memory but reads the file once per window.'
+                        )
+                    ->end()
+                ->end()
+            ->end()
             ->arrayNode('messenger_queue_processing')
                 ->addDefaultsIfNotSet()
                 ->info('Configure import queue processing via symfony messenger')

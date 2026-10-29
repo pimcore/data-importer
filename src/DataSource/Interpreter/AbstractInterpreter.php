@@ -55,6 +55,13 @@ abstract class AbstractInterpreter implements InterpreterInterface
      */
     protected array $identifierCache;
 
+    /**
+     * Set by an interpreter that could not read part of its source. The identifier cache is then
+     * incomplete or carries identifiers the source does not hold, and cleanup cannot tell an
+     * element that was removed from the source apart from one whose row was read wrongly.
+     */
+    private bool $sourceIncomplete = false;
+
     public function __construct(
         protected readonly DeltaChecker $deltaChecker,
         protected readonly QueueService $queueService,
@@ -142,6 +149,7 @@ abstract class AbstractInterpreter implements InterpreterInterface
     {
         $success = false;
         $this->resetIdentifierCache();
+        $this->sourceIncomplete = false;
 
         if ($this->eventDispatcher !== null) {
             $event = new PreInterpretFileEvent($this->configName, $this->executionType, $path);
@@ -291,6 +299,15 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->identifierCache = [];
     }
 
+    /**
+     * Called by an interpreter for a source it could only read in part, so that the cleanup
+     * below removes nothing. The interpreter names what it could not read in the import log.
+     */
+    protected function markSourceIncomplete(): void
+    {
+        $this->sourceIncomplete = true;
+    }
+
     protected function addToIdentifierCache(array $data): void
     {
         if ($this->doCleanup) {
@@ -301,6 +318,19 @@ abstract class AbstractInterpreter implements InterpreterInterface
     protected function cleanupElements(): void
     {
         if (!$this->doCleanup) {
+            return;
+        }
+
+        if ($this->sourceIncomplete) {
+            // An element missing from the identifier list would be deleted or unpublished here.
+            // Parts of this source could not be read, so that absence is not evidence of removal.
+            $this->applicationLogger->error(
+                'Not cleaning up: parts of the source file could not be read, so an element missing from the '
+                . 'imported identifiers cannot be told apart from one whose row was read incompletely. '
+                . 'See the warnings of this run, fix the source file and import it again.',
+                ['component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName]
+            );
+
             return;
         }
 
