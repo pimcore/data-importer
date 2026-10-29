@@ -26,13 +26,16 @@ description: Breaking changes and migration steps per release.
   threshold, the configured sheet and the rows of the current window above it - and logged as a warning naming the
   sheet and the cell, visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by
   one line stating how many further cells were affected.
-- **An import run that calculated such a cell does not clean up, even with cleanup switched on.** Above the
-  threshold the window cannot reach another sheet or a row outside itself, so a formula reaching there answers
-  `#REF!` or a zero; below it such a formula resolves, but one phpspreadsheet cannot calculate at all leaves the
-  cell empty. Either way the row can reach the queue under an identifier the source does not hold, and cleanup
-  would read the element that identifier belongs to as removed from the source and delete or unpublish it. The run
-  therefore imports the rows as usual, logs an error naming the reason in the Import Logs tab, and leaves every
-  existing element alone. Fix the formula or give the file cached results, and the next run cleans up as before.
+- **An import run does not clean up when it imported such a cell empty, and a run above the threshold does not
+  clean up when it had to calculate such a cell at all - even with cleanup switched on.** Above the threshold the
+  window cannot reach another sheet or a row outside itself, so a formula reaching there answers `#REF!` or a
+  zero; below it such a formula resolves against the whole workbook, and only one phpspreadsheet cannot calculate
+  at all leaves the cell empty. In those cases the row can reach the queue under an identifier the source does not
+  hold, and cleanup would read the element that identifier belongs to as removed from the source and delete or
+  unpublish it. Such a run therefore imports the rows as usual, logs an error naming the reason in the Import Logs
+  tab, and leaves every existing element alone. **A run below the threshold whose formulas all resolved cleans up
+  as before** - an uncached formula on its own does not switch cleanup off, so do not rely on one to protect
+  existing elements. Fix the formula or give the file cached results, and the next run cleans up again.
 - **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate; it continues with the cell
   empty.** Until now such a formula threw out of the interpreter and failed the whole import, so a file that used
   to fail now imports. The cell arrives empty, is named in the warning described above and counts toward the same

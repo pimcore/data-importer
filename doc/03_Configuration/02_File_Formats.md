@@ -240,10 +240,11 @@ formula reaching another sheet or another row exactly as the application would. 
 configured sheet alone and only the rows of the current window, so a formula reaching beyond them answers `#REF!`
 or a zero instead. Both only concern formula cells that carry no cached result.
 
-A run that calculated such a cell does not clean up. The row may have reached the queue under an identifier the
-source does not hold - nothing at all, or `#REF!` - and the
+A run does not clean up when it imported such a cell empty, and a windowed run does not clean up when it had to
+calculate such a cell at all. The row may have reached the queue under an identifier the source does not hold -
+nothing at all, or `#REF!` - and the
 [cleanup](./06_Processing_Settings.md#cleanup) would then read the element that identifier belongs to as removed
-from the source and delete or unpublish it. The run says so with an error in the import log, imports the rows as
+from the source and delete or unpublish it. Such a run says so with an error in the import log, imports the rows as
 usual and leaves every existing element alone. A whole-workbook read that resolved its formulas cleans up as
 before; only a cell imported empty stops it there.
 
