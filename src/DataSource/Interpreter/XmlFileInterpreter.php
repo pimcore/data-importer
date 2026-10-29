@@ -84,7 +84,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
 
         /** @var \DOMElement $item */
         foreach ($records as $item) {
-            $this->processImportRow(XmlUtils::convertDomElementToArray($item));
+            $this->processImportRow(LosslessXmlUtils::convertDomElementToArray($item));
         }
     }
 
@@ -148,7 +148,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
                 }
 
                 if (!empty($previewDataItem) && $previewDataItem instanceof \DOMElement) {
-                    $previewData = XmlUtils::convertDomElementToArray($previewDataItem);
+                    $previewData = LosslessXmlUtils::convertDomElementToArray($previewDataItem);
                 }
             }
 
@@ -297,7 +297,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
             throw new XmlParsingException($this->buildLibXmlErrorMessage('Could not expand XML record.'));
         }
 
-        return XmlUtils::convertDomElementToArray($node);
+        return LosslessXmlUtils::convertDomElementToArray($node);
     }
 
     /**

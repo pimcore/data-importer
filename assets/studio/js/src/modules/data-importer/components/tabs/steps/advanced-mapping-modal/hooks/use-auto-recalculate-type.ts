@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react'
-import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
+import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, parseAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../../data-importer-api-slice.gen'
 import { parseClassAttribute } from '../../mapping-step/hooks/use-mapping-step-loader.types'
 
@@ -75,12 +75,12 @@ export function useAutoRecalculateType ({
     })
   }, [pipelineKey, dataSourceKey, open, configName, localItemRef, setCalculateTypeRequest])
 
-  const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType)
+  const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType, localItem.dataTarget?.type)
   const needsAttrFetch = currentAttrMapKey !== DEFAULT_ATTR_MAP_KEY && attributesMap[currentAttrMapKey] === undefined
   const { data: extraAttrData, isFetching: isFetchingExtraAttributes } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     {
       classId: classId ?? '',
-      transformationResultType: localItem.transformationResultType,
+      ...parseAttrMapKey(currentAttrMapKey),
       systemWrite: true
     },
     { skip: !needsAttrFetch || classId === undefined || classId === '' }
