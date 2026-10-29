@@ -275,6 +275,11 @@ final class TransformationDataTypeService
                     'title' => 'SYSTEM Key',
                     'localized' => false
                 ];
+                $attributes['path'] = [
+                    'key' => 'path',
+                    'title' => 'SYSTEM Path',
+                    'localized' => false
+                ];
             }
         }
 
