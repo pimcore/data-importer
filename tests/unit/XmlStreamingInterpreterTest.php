@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\AbstractInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XmlFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Psr\Log\NullLogger;
@@ -41,6 +43,7 @@ class XmlStreamingInterpreterTest extends Unit
         // the constructor collaborators are final and cannot be doubled; none of the code
         // paths exercised here touch them
         $interpreter = (new \ReflectionClass(XmlFileInterpreter::class))->newInstanceWithoutConstructor(); // NOSONAR
+        (new \ReflectionProperty(AbstractInterpreter::class, 'applicationLogger'))->setValue($interpreter, new ApplicationLogger());
         $interpreter->setLogger(new NullLogger());
         $interpreter->setConfigName('test_xml_streaming');
         $interpreter->setExecutionType(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
@@ -148,6 +151,45 @@ class XmlStreamingInterpreterTest extends Unit
         $path = $this->writeXml('<catalog><product><sku>A</sku></product>');
 
         try {
+            $this->expectException(XmlParsingException::class);
+            $this->streamAll($this->createInterpreter(), $path);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function testStreamingRejectsDocumentType(): void
+    {
+        $xml = '<?xml version="1.0"?>
+<!DOCTYPE catalog SYSTEM "http://example.com/catalog.dtd">
+<catalog>
+    <product><sku>A</sku></product>
+</catalog>';
+        $path = $this->writeXml($xml);
+
+        try {
+            $this->assertFalse($this->createInterpreter()->fileValid($path));
+
+            $this->expectException(XmlParsingException::class);
+            $this->expectExceptionMessage('Document types are not allowed.');
+            $this->streamAll($this->createInterpreter(), $path);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function testStreamingRejectsEntityReferencesAsValidationError(): void
+    {
+        $xml = '<?xml version="1.0"?>
+<!DOCTYPE catalog [<!ENTITY sku "A">]>
+<catalog>
+    <product><sku>&sku;</sku></product>
+</catalog>';
+        $path = $this->writeXml($xml);
+
+        try {
+            $this->assertFalse($this->createInterpreter()->fileValid($path));
+
             $this->expectException(XmlParsingException::class);
             $this->streamAll($this->createInterpreter(), $path);
         } finally {

@@ -192,7 +192,8 @@ final class XmlFileInterpreter extends AbstractInterpreter
     /**
      * Streams the records matching the configured element path one by one with XMLReader,
      * so the whole document never has to be loaded into memory. The configured XSD schema
-     * (if any) is validated incrementally during the same pass.
+     * (if any) is validated incrementally during the same pass. Documents with a DOCTYPE
+     * are rejected like in XmlUtils::loadFile().
      *
      * @return \Generator<array>
      *
@@ -263,6 +264,10 @@ final class XmlFileInterpreter extends AbstractInterpreter
         $keepReading = @$reader->read();
 
         while ($keepReading) {
+            if ($reader->nodeType === \XMLReader::DOC_TYPE) {
+                throw new XmlParsingException('Document types are not allowed.');
+            }
+
             if ($reader->nodeType !== \XMLReader::ELEMENT) {
                 $keepReading = @$reader->read();
 
