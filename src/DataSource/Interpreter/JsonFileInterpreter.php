@@ -193,7 +193,7 @@ class JsonFileInterpreter extends AbstractInterpreter
 
         // any expression reaching this point already passed the JMESPath parser, so a
         // loose word-character check is enough to recognize a plain dotted field path
-        if (preg_match('/^\w+(\.\w+)*$/', $this->path) === 1) {
+        if (preg_match('/^\w+(\.\w+)*$/u', $this->path) === 1) {
             return '/' . str_replace('.', '/', $this->path);
         }
 

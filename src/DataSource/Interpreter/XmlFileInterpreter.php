@@ -182,7 +182,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
     {
         // element names: a word character or underscore start (no digit), then word
         // characters, dots or hyphens - anything else needs the full-DOM XPath engine
-        if (preg_match('#^(/[^\W\d][\w.\-]*)+$#', $this->xpath) !== 1) {
+        if (preg_match('#^(/[^\W\d][\w.\-]*)+$#u', $this->xpath) !== 1) {
             return null;
         }
 

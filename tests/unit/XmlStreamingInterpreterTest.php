@@ -43,7 +43,8 @@ class XmlStreamingInterpreterTest extends Unit
         // the constructor collaborators are final and cannot be doubled; none of the code
         // paths exercised here touch them
         $interpreter = (new \ReflectionClass(XmlFileInterpreter::class))->newInstanceWithoutConstructor(); // NOSONAR
-        (new \ReflectionProperty(AbstractInterpreter::class, 'applicationLogger'))->setValue($interpreter, new ApplicationLogger());
+        $applicationLogger = new \ReflectionProperty(AbstractInterpreter::class, 'applicationLogger');
+        $applicationLogger->setValue($interpreter, new ApplicationLogger());
         $interpreter->setLogger(new NullLogger());
         $interpreter->setConfigName('test_xml_streaming');
         $interpreter->setExecutionType(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
