@@ -16,25 +16,20 @@ use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 
-class UploadLoader implements DataLoaderInterface
+/**
+ * @internal
+ */
+final class UploadLoader implements DataLoaderInterface
 {
     use TemporaryFileHelperTrait;
 
-    /**
-     * @var string
-     */
-    protected $uploadFilePath;
+    private string $uploadFilePath;
 
-    /**
-     * @var string
-     */
-    protected $temporaryFile = null;
+    private ?string $temporaryFile = null;
 
-    protected FilesystemOperator $pimcoreDataImporterUploadStorage;
-
-    public function __construct(FilesystemOperator $pimcoreDataImporterUploadStorage)
-    {
-        $this->pimcoreDataImporterUploadStorage = $pimcoreDataImporterUploadStorage;
+    public function __construct(
+        private readonly FilesystemOperator $pimcoreDataImporterUploadStorage,
+    ) {
     }
 
     public function loadData(): string

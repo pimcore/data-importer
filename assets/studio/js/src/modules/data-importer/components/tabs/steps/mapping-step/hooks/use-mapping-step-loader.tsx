@@ -1,0 +1,454 @@
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+/* eslint-disable max-lines */
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Form } from '@pimcore/studio-ui-bundle/components'
+import { useAppDispatch } from '@pimcore/studio-ui-bundle/app'
+import { api, useBundleDataImporterConfigGetQuery } from '../../../../../data-importer-api-slice-enhanced'
+import { useBundleDataImporterConfigLoadColumnHeadersQuery, useBundleDataImporterConfigLoadPreviewQuery } from '../../../../../data-importer-api-slice.gen'
+import { transformFormToBackend, type BackendConfiguration } from '../../../../../utils/transformers'
+import { normalizeDataRow } from '../../../../../utils/normalize-data-row'
+import { type DataImporterFormValues, type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, parseAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
+import { type SourceRow } from '../sources-panel/sources-panel'
+import { parseClassAttribute, type ColumnHeaderEntry, type UseMappingStepLoaderResult } from './use-mapping-step-loader.types'
+
+function isMappingDebugEnabled (): boolean {
+  return (globalThis as any).__DI_MAPPING_DEBUG__ === true
+}
+
+// the transformation result types the autofill suggestion pool covers besides the
+// default request (which the backend resolves to the DEFAULT and NUMERIC types)
+export const SUGGESTION_TRANSFORMATION_RESULT_TYPES: string[] = [
+  'array',
+  'boolean',
+  'date',
+  'quantityValue',
+  'asset',
+  'assetArray',
+  'gallery',
+  'dataObject',
+  'dataObjectArray'
+]
+
+// every attributes map key the mapping step needs for the given mapping items
+function collectAttrMapKeys (items: MappingConfigItem[]): string[] {
+  const mapKeys = new Set<string>([DEFAULT_ATTR_MAP_KEY])
+  // the default request only returns DEFAULT+NUMERIC typed attributes — without
+  // the other result types the autofill suggestions would miss e.g. select,
+  // relation or asset fields on configs that have no mapping rows yet (#622)
+  SUGGESTION_TRANSFORMATION_RESULT_TYPES.forEach((trt) => mapKeys.add(resolveAttrMapKey(trt)))
+  items.forEach((item) => {
+    mapKeys.add(resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type))
+  })
+  return Array.from(mapKeys)
+}
+
+export function useMappingStepLoader (configName: string, isActive: boolean): UseMappingStepLoaderResult {
+  const form = Form.useFormInstance()
+  const dispatch = useAppDispatch()
+  const { data: configData, isSuccess: isConfigLoaded, requestId } = useBundleDataImporterConfigGetQuery({ name: configName })
+
+  const [columnHeaderOptions, setColumnHeaderOptions] = useState<Array<{ value: string, label: string }>>([])
+  const [initialLoadDone, setInitialLoadDone] = useState(false)
+  const [sourceRows, setSourceRows] = useState<SourceRow[]>([])
+  const [hasPreviewError, setHasPreviewError] = useState(false)
+  const [attributesMap, setAttributesMap] = useState<Record<string, ClassAttribute[]>>({})
+  // The class the attributesMap entries belong to. The class can be changed in the resolver
+  // step without saving, so entries loaded for another class must never be reused.
+  const attributesMapClassIdRef = useRef<string | undefined>(undefined)
+  const [headersRequest, setHeadersRequest] = useState<{
+    name: string
+    bundleDataImporterCopyPreviewParameters: {
+      currentConfig: BackendConfiguration
+    }
+  } | undefined>(undefined)
+  const [previewRequest, setPreviewRequest] = useState<{
+    name: string
+    bundleDataImporterLoadPreviewParameters: {
+      currentConfig: BackendConfiguration
+      recordNumber: number
+    }
+  } | undefined>(undefined)
+  const [attrsDone, setAttrsDone] = useState(false)
+
+  const {
+    data: headersResult,
+    refetch: refetchHeaders,
+    isFetching: isHeadersFetching,
+    isError: isHeadersError,
+    isSuccess: isHeadersSuccess
+  } = useBundleDataImporterConfigLoadColumnHeadersQuery(
+    headersRequest!,
+    {
+      skip: headersRequest === undefined,
+      refetchOnMountOrArgChange: false
+    }
+  )
+
+  const {
+    data: previewResult,
+    refetch: refetchPreview,
+    isFetching: isPreviewFetching,
+    isError: isPreviewError,
+    isSuccess: isPreviewSuccess
+  } = useBundleDataImporterConfigLoadPreviewQuery(
+    previewRequest!,
+    {
+      skip: previewRequest === undefined,
+      refetchOnMountOrArgChange: false
+    }
+  )
+
+  const classIdFromConfig = (configData?.configuration as BackendConfiguration | undefined)?.resolverConfig?.dataObjectClassId
+  const classIdFromForm = Form.useWatch(['resolverConfig', 'dataObjectClassId']) as string | undefined
+  const classId = classIdFromForm ?? classIdFromConfig
+
+  // Serialize to a string so useWatch only triggers a re-render when the TRT
+  // list actually changes, not on every unrelated form field update (returning a
+  // new array reference on every call would always be referentially unequal).
+  const mappingAttrMapKeyListJson = Form.useWatch(
+    (values: { mappingConfig?: MappingConfigItem[] }) =>
+      JSON.stringify((values.mappingConfig ?? []).map((item) =>
+        resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type)
+      ))
+  ) as string | undefined
+  const mappingAttrMapKeyList = useMemo(
+    () => (mappingAttrMapKeyListJson !== undefined ? JSON.parse(mappingAttrMapKeyListJson) as string[] : undefined),
+    [mappingAttrMapKeyListJson]
+  )
+
+  const getMappingConfig = useCallback(
+    (): MappingConfigItem[] =>
+      ((form.getFieldValue('mappingConfig') as MappingConfigItem[] | undefined) ?? []),
+    [form]
+  )
+
+  const getBackendConfig = useCallback((): BackendConfiguration => {
+    const formValues = form.getFieldsValue(true) as DataImporterFormValues
+    const existingConfig = (configData?.configuration ?? {}) as BackendConfiguration
+    return transformFormToBackend(formValues, existingConfig)
+  }, [form, configData])
+
+  const getSourcePreviewConfig = useCallback((): BackendConfiguration => {
+    const backendConfig = getBackendConfig()
+    const sourcePreviewConfig: BackendConfiguration = {
+      loaderConfig: backendConfig.loaderConfig,
+      interpreterConfig: backendConfig.interpreterConfig
+    }
+    return sourcePreviewConfig
+  }, [getBackendConfig])
+
+  useEffect(() => {
+    if (!isHeadersSuccess || headersResult === undefined) return
+    const columnHeaders = headersResult.columnHeaders ?? []
+    const headers = columnHeaders.map((h: ColumnHeaderEntry) => ({
+      value: String(h.dataIndex ?? h.id ?? ''),
+      label: String(h.label ?? h.dataIndex ?? h.id ?? '')
+    }))
+    setColumnHeaderOptions(headers)
+  }, [isHeadersSuccess, headersResult])
+
+  useEffect(() => {
+    if (!isHeadersError) return
+    setColumnHeaderOptions([])
+  }, [isHeadersError])
+
+  useEffect(() => {
+    if (!isPreviewSuccess || previewResult === undefined) return
+
+    const dataPreview = (previewResult).dataPreview ?? []
+    const rows = dataPreview.map((row: Record<string, any>) => normalizeDataRow(row))
+    setSourceRows(rows)
+    setHasPreviewError(rows.length === 0)
+  }, [isPreviewSuccess, previewResult])
+
+  useEffect(() => {
+    if (!isPreviewError) return
+    setSourceRows([])
+    setHasPreviewError(true)
+  }, [isPreviewError])
+
+  useEffect(() => {
+    const headersDone = headersRequest !== undefined && !isHeadersFetching
+    const previewDone = previewRequest !== undefined && !isPreviewFetching
+    setInitialLoadDone(headersDone && attrsDone && previewDone)
+  }, [headersRequest, previewRequest, isHeadersFetching, isPreviewFetching, attrsDone])
+
+  const loaderConfigType = Form.useWatch(['loaderConfig', 'type']) as string | undefined
+  const interpreterConfigType = Form.useWatch(['interpreterConfig', 'type']) as string | undefined
+  // Memoized so JSON.stringify + full form serialisation only runs when the
+  // fields that actually affect the source preview config change, not on every render.
+  const currentConfigFingerprint = useMemo(
+    () => JSON.stringify(getSourcePreviewConfig()),
+    [loaderConfigType, interpreterConfigType, configData]
+  )
+  const [lastLoadedFingerprint, setLastLoadedFingerprint] = useState<string>('')
+  const [lastLoadedRequestId, setLastLoadedRequestId] = useState<string | undefined>(undefined)
+  const loadCycleRef = useRef(0)
+  const prevIsActiveRef = useRef(false)
+
+  useEffect(() => {
+    if (!isConfigLoaded || !isActive) {
+      prevIsActiveRef.current = isActive
+      return
+    }
+
+    const nextFingerprint = currentConfigFingerprint
+    const argsChanged = nextFingerprint !== lastLoadedFingerprint
+    const requestChanged = requestId !== undefined && requestId !== lastLoadedRequestId
+    // Detect tab re-visit: isActive just became true and a previous load exists.
+    // Re-fetch so fresh server-side preview data (e.g. after "Copy from source") is picked up.
+    const becameActive = !prevIsActiveRef.current && isActive
+    prevIsActiveRef.current = isActive
+
+    if (!argsChanged && !requestChanged) {
+      if (becameActive && headersRequest !== undefined && previewRequest !== undefined) {
+        void Promise.all([
+          refetchHeaders().catch(() => undefined),
+          refetchPreview().catch(() => undefined)
+        ])
+      }
+      return
+    }
+
+    const debugEnabled = isMappingDebugEnabled()
+    const cycleId = ++loadCycleRef.current
+    const cycleStartedAt = debugEnabled ? performance.now() : 0
+
+    if (debugEnabled) {
+      console.debug('[DI][Loader] source config refresh start', {
+        cycleId,
+        configName,
+        argsChanged,
+        requestChanged,
+        loaderConfigType,
+        interpreterConfigType,
+        classId: classIdFromConfig
+      })
+    }
+
+    setInitialLoadDone(false)
+    setAttrsDone(false)
+    setHasPreviewError(false)
+
+    setHeadersRequest({
+      name: configName,
+      bundleDataImporterCopyPreviewParameters: {
+        currentConfig: getSourcePreviewConfig()
+      }
+    })
+
+    setPreviewRequest({
+      name: configName,
+      bundleDataImporterLoadPreviewParameters: {
+        currentConfig: getSourcePreviewConfig(),
+        recordNumber: 0
+      }
+    })
+
+    if (requestChanged && !argsChanged && headersRequest !== undefined && previewRequest !== undefined) {
+      if (debugEnabled) {
+        console.debug('[DI][Loader] refetch headers+preview', { cycleId })
+      }
+      void Promise.all([
+        refetchHeaders().catch(() => undefined),
+        refetchPreview().catch(() => undefined)
+      ])
+    }
+
+    void (async () => {
+      const attrsStartedAt = debugEnabled ? performance.now() : 0
+      try {
+        const classIdFromFormSync = form.getFieldValue(['resolverConfig', 'dataObjectClassId']) as string | undefined
+        const effectiveClassId = classIdFromFormSync ?? classIdFromConfig
+        const backendConfig = (configData?.configuration ?? {}) as BackendConfiguration
+        const items: MappingConfigItem[] = (backendConfig.mappingConfig) ?? []
+
+        const mapKeysArray = (effectiveClassId !== undefined && effectiveClassId !== '')
+          ? collectAttrMapKeys(items)
+          : []
+        if (debugEnabled) {
+          console.debug('[DI][Loader] class attributes load start', {
+            cycleId,
+            effectiveClassId,
+            types: mapKeysArray
+          })
+        }
+        const attrPromises = mapKeysArray.map(async (mapKey) =>
+          await dispatch(
+            api.endpoints.bundleDataImporterDataTypeLoadClassAttributes.initiate({
+              classId: effectiveClassId!,
+              ...parseAttrMapKey(mapKey),
+              systemWrite: true
+            }, {
+              forceRefetch: requestChanged
+            })
+          )
+        )
+
+        const attrResults = await Promise.all(attrPromises)
+
+        const classChanged = attributesMapClassIdRef.current !== effectiveClassId
+        attributesMapClassIdRef.current = effectiveClassId
+
+        if (mapKeysArray.length > 0) {
+          const newEntries: Record<string, ClassAttribute[]> = {}
+          attrResults.forEach((result, i) => {
+            newEntries[mapKeysArray[i]] = (result.data?.attributes ?? []).map(parseClassAttribute)
+          })
+          // Merge new entries — only update the map object when content actually
+          // changed so consumers with referential equality checks (React.memo,
+          // useMemo) don't re-render when their own TRT's attrs are unchanged.
+          setAttributesMap((prev) => {
+            if (classChanged) return newEntries
+            let changed = false
+            for (const key of Object.keys(newEntries)) {
+              if (prev[key] !== newEntries[key]) {
+                changed = true
+                break
+              }
+            }
+            if (!changed) return prev
+            return { ...prev, ...newEntries }
+          })
+        }
+      } finally {
+        if (debugEnabled) {
+          console.debug('[DI][Loader] class attributes load done', {
+            cycleId,
+            durationMs: Number((performance.now() - attrsStartedAt).toFixed(2))
+          })
+        }
+        setAttrsDone(true)
+      }
+    })()
+
+    if (debugEnabled) {
+      console.debug('[DI][Loader] source config refresh queued', {
+        cycleId,
+        durationMs: Number((performance.now() - cycleStartedAt).toFixed(2))
+      })
+    }
+
+    setLastLoadedFingerprint(nextFingerprint)
+    setLastLoadedRequestId(requestId)
+  }, [
+    isConfigLoaded,
+    isActive,
+    configName,
+    currentConfigFingerprint,
+    lastLoadedFingerprint,
+    requestId,
+    lastLoadedRequestId,
+    getSourcePreviewConfig,
+    headersRequest,
+    previewRequest,
+    refetchHeaders,
+    refetchPreview,
+    dispatch,
+    form,
+    configData,
+    classIdFromConfig
+  ])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isHeadersSuccess) return
+
+    console.debug('[DI][Loader] headers load success', {
+      count: headersResult?.columnHeaders?.length ?? 0
+    })
+  }, [isHeadersSuccess, headersResult])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isHeadersError) return
+
+    console.debug('[DI][Loader] headers load error')
+  }, [isHeadersError])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isPreviewSuccess) return
+
+    console.debug('[DI][Loader] preview load success', {
+      rowCount: (previewResult?.dataPreview ?? []).length
+    })
+  }, [isPreviewSuccess, previewResult])
+
+  useEffect(() => {
+    if (!isMappingDebugEnabled()) return
+    if (!isPreviewError) return
+
+    console.debug('[DI][Loader] preview load error')
+  }, [isPreviewError])
+
+  useEffect(() => {
+    const effectiveClassId = classId
+    if (effectiveClassId === undefined || effectiveClassId === '' || !initialLoadDone) return
+
+    const items = getMappingConfig()
+    let missingArray: string[]
+    if (attributesMapClassIdRef.current !== effectiveClassId) {
+      // the class was changed (unsaved) in the resolver step: drop the other class's entries
+      attributesMapClassIdRef.current = effectiveClassId
+      setAttributesMap({})
+      missingArray = collectAttrMapKeys(items)
+    } else {
+      missingArray = Array.from(new Set(
+        items
+          .map((item) => resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type))
+          .filter((mapKey) => attributesMap[mapKey] === undefined)
+      ))
+    }
+
+    if (missingArray.length === 0) return
+
+    const promises = missingArray.map(async (mapKey) => {
+      return await dispatch(
+        api.endpoints.bundleDataImporterDataTypeLoadClassAttributes.initiate({
+          classId: effectiveClassId,
+          ...parseAttrMapKey(mapKey),
+          systemWrite: true
+        })
+      )
+    })
+
+    void Promise.all(promises).then((results) => {
+      // the class changed again while loading
+      if (attributesMapClassIdRef.current !== effectiveClassId) return
+
+      setAttributesMap((prev) => {
+        const next: Record<string, ClassAttribute[]> = {}
+        results.forEach((result, i) => {
+          next[missingArray[i]] = (result.data?.attributes ?? []).map(parseClassAttribute)
+        })
+        // Only produce a new object if something actually changed.
+        const hasChanges = missingArray.some((key) => prev[key] !== next[key])
+        if (!hasChanges) return prev
+        return { ...prev, ...next }
+      })
+    })
+  }, [mappingAttrMapKeyList, initialLoadDone, classId])
+
+  return {
+    columnHeaderOptions,
+    initialLoadDone,
+    sourceRows,
+    hasPreviewError,
+    attributesMap,
+    setAttributesMap,
+    classId,
+    mappingAttrMapKeyList,
+    getMappingConfig
+  }
+}

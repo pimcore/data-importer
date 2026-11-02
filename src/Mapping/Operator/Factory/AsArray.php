@@ -15,7 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class AsArray extends AbstractOperator
+/**
+ * @internal
+ */
+final class AsArray extends AbstractOperator
 {
     /**
      * @param mixed $inputData

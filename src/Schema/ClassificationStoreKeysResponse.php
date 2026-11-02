@@ -38,13 +38,28 @@ final class ClassificationStoreKeysResponse implements AdditionalAttributesInter
             type: 'array',
             items: new Items(
                 properties: [
-                    new Property(property: 'keyId', description: 'Key ID', type: 'integer'),
-                    new Property(property: 'groupId', description: 'Group ID', type: 'integer'),
-                    new Property(property: 'keyName', description: 'Key name', type: 'string'),
-                    new Property(property: 'keyDescription', description: 'Key description', type: 'string'),
-                    new Property(property: 'id', description: 'Combined group-key ID', type: 'string'),
-                    new Property(property: 'sorter', description: 'Sort order', type: 'integer'),
-                    new Property(property: 'groupName', description: 'Group name', type: 'string'),
+                    new Property(property: 'keyId', description: 'Key ID', type: 'integer', example: 5),
+                    new Property(property: 'groupId', description: 'Group ID', type: 'integer', example: 1),
+                    new Property(property: 'keyName', description: 'Key name', type: 'string', example: 'Width'),
+                    new Property(
+                        property: 'keyDescription',
+                        description: 'Key description',
+                        type: 'string',
+                        example: 'Width of the product'
+                    ),
+                    new Property(
+                        property: 'id',
+                        description: 'Combined group-key ID',
+                        type: 'string',
+                        example: '1-5'
+                    ),
+                    new Property(property: 'sorter', description: 'Sort order', type: 'integer', example: 0),
+                    new Property(
+                        property: 'groupName',
+                        description: 'Group name',
+                        type: 'string',
+                        example: 'Dimensions'
+                    ),
                 ],
                 type: 'object'
             )

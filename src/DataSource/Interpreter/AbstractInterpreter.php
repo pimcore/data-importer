@@ -15,6 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
+use Pimcore\Bundle\DataImporterBundle\Event\PreInterpretFileEvent;
+use Pimcore\Bundle\DataImporterBundle\Event\PreQueueRowEvent;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
@@ -22,78 +25,41 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Tool\Admin;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+/**
+ * @internal
+ */
 abstract class AbstractInterpreter implements InterpreterInterface
 {
     use LoggerAwareTrait;
 
-    /**
-     * @var DeltaChecker
-     */
-    protected $deltaChecker;
+    protected string $configName;
 
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
+    protected bool $doDeltaCheck;
 
-    /**
-     * @var ApplicationLogger
-     */
-    protected $applicationLogger;
+    protected mixed $idDataIndex;
 
-    /**
-     * @var string
-     */
-    protected $configName;
+    protected string $executionType;
 
-    /**
-     * @var bool
-     */
-    protected $doDeltaCheck;
+    protected bool $doCleanup;
 
-    /**
-     * @var mixed
-     */
-    protected $idDataIndex;
+    protected bool $doArchiveImportFile;
 
-    /**
-     * @var string
-     */
-    protected $executionType;
+    protected Resolver $resolver;
 
-    /**
-     * @var bool
-     */
-    protected $doCleanup;
-
-    /**
-     * @var bool
-     */
-    protected $doArchiveImportFile;
-
-    /**
-     * @var Resolver
-     */
-    protected $resolver;
+    protected ?EventDispatcherInterface $eventDispatcher = null;
 
     /**
      * @var string[]
      */
-    protected $identifierCache;
+    protected array $identifierCache;
 
-    /**
-     * AbstractInterpreter constructor.
-     *
-     * @param DeltaChecker $deltaChecker
-     * @param QueueService $queueService
-     * @param ApplicationLogger $applicationLogger
-     */
-    public function __construct(DeltaChecker $deltaChecker, QueueService $queueService, ApplicationLogger $applicationLogger)
-    {
-        $this->deltaChecker = $deltaChecker;
-        $this->queueService = $queueService;
-        $this->applicationLogger = $applicationLogger;
+    public function __construct(
+        protected readonly DeltaChecker $deltaChecker,
+        protected readonly QueueService $queueService,
+        protected readonly ApplicationLogger $applicationLogger,
+    ) {
     }
 
     public function getConfigName(): string
@@ -167,10 +133,21 @@ abstract class AbstractInterpreter implements InterpreterInterface
         $this->resolver = $resolver;
     }
 
+    public function setEventDispatcher(?EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
     public function interpretFile(string $path): bool
     {
         $success = false;
         $this->resetIdentifierCache();
+
+        if ($this->eventDispatcher !== null) {
+            $event = new PreInterpretFileEvent($this->configName, $this->executionType, $path);
+            $this->eventDispatcher->dispatch($event);
+            $path = $event->getPath();
+        }
 
         if ($this->fileValid($path)) {
             $archiveLogMessage = 'Interpreted source file and created queue items.';
@@ -201,6 +178,39 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
     protected function processImportRow(array $data)
     {
+        foreach ($this->applyPreQueueRowEvent($data) as $row) {
+            $this->addRowToQueue($row);
+        }
+    }
+
+    /**
+     * Lets PreQueueRowEvent listeners modify, skip, or fan out the row the interpreter
+     * extracted. Without a dispatcher or listeners the row passes through unchanged.
+     *
+     * @return array<int, array> the rows to queue
+     */
+    private function applyPreQueueRowEvent(array $data): array
+    {
+        if ($this->eventDispatcher === null) {
+            return [$data];
+        }
+
+        $event = new PreQueueRowEvent($this->configName, $this->executionType, $data);
+        $this->eventDispatcher->dispatch($event);
+
+        if ($event->isRowSkipped() && $event->shouldKeepSkippedRowInIdentifierCache()) {
+            // Register the skipped row's identifier so an active cleanup strategy does not
+            // treat its existing element as removed from the source.
+            $this->addToIdentifierCache($event->getOriginalRow());
+        }
+
+        return $event->getRows();
+    }
+
+    private function addRowToQueue(array $data): void
+    {
+        $this->assertValidRowEncoding($data);
+
         $createQueueItem = true;
 
         $this->addToIdentifierCache($data);
@@ -215,14 +225,64 @@ abstract class AbstractInterpreter implements InterpreterInterface
 
         //create queue item
         if ($createQueueItem) {
+            $encodedData = json_encode($data);
+            if ($encodedData === false) {
+                // Backstop for data that mb_check_encoding() cannot reach (e.g. invalid bytes nested
+                // deeper than the top-level columns). Fail loud instead of queueing an empty payload.
+                throw new InvalidInputException(sprintf(
+                    'Encoding error in `%s`: %s.%s',
+                    $this->configName,
+                    json_last_error_msg(),
+                    json_last_error() === JSON_ERROR_UTF8 ? ' Please make sure the source file is UTF-8 encoded.' : ''
+                ));
+            }
+
             $this->logger->debug(sprintf('Adding item `%s` of `%s` to processing queue.', ($data[$this->idDataIndex] ?? null), $this->configName));
-            $this->queueService->addItemToQueue($this->configName, $this->executionType, ImportProcessingService::JOB_TYPE_PROCESS, json_encode($data), $userOwner);
+            $this->queueService->addItemToQueue(
+                $this->configName,
+                $this->executionType,
+                ImportProcessingService::JOB_TYPE_PROCESS,
+                $encodedData,
+                $userOwner
+            );
         } else {
             $message = sprintf("Import data of item `%s` of `%s` didn't change, not adding to queue.", ($data[$this->idDataIndex] ?? null), $this->configName);
             $this->logger->debug($message);
             $this->applicationLogger->debug($message, [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
             ]);
+        }
+    }
+
+    /**
+     * Detects character encoding problems (e.g. non-UTF-8 bytes) in a data row and fails loud
+     * instead of silently dropping the row. This is detection only - no conversion is attempted,
+     * as the importer cannot reliably guess the source encoding.
+     *
+     * @throws InvalidInputException
+     */
+    protected function assertValidRowEncoding(array $data): void
+    {
+        $invalidColumns = [];
+        $position = 0;
+        foreach ($data as $key => $value) {
+            if (is_string($value) && !mb_check_encoding($value, 'UTF-8')) {
+                // Only keep the column label if it is itself safe to log (the header row may be
+                // broken too); otherwise fall back to the numeric column position. Never put the
+                // raw invalid bytes into the message: the application logger persists it into a
+                // utf8mb4 column and would fail on malformed UTF-8.
+                $invalidColumns[] = (is_string($key) && mb_check_encoding($key, 'UTF-8')) ? $key : ('#' . $position);
+            }
+            ++$position;
+        }
+
+        if ($invalidColumns !== []) {
+            throw new InvalidInputException(sprintf(
+                'Encoding error in `%s`: invalid UTF-8 characters in column(s) %s. '
+                . 'Please make sure the source file is UTF-8 encoded.',
+                $this->configName,
+                implode(', ', $invalidColumns)
+            ));
         }
     }
 

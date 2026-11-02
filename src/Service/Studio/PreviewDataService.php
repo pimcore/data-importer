@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\PushLoader;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ColumnHeadersEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\DataPreviewEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\PreviewHydratorInterface;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
@@ -41,7 +42,13 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
     use ConfigurationPermissionTrait;
     use CurrentUserResolverTrait;
 
-    private const int MAX_FILE_SIZE = 10485760; // 10MB
+    private const int MAX_FILE_SIZE = 52428800; // 50MB
+
+    private const int MAX_FULL_LOAD_FILE_SIZE = 10485760; // 10MB
+
+    // interpreters that still load the entire preview file into memory,
+    // so they keep the lower file size limit
+    private const array FULL_LOAD_INTERPRETERS = ['json', 'xml', 'sql'];
 
     public function __construct(
         private PreviewHydratorInterface $previewHydrator,
@@ -50,7 +57,8 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         private ConfigurationPreparationService $configurationPreparationService,
         private DataLoaderFactory $dataLoaderFactory,
         private InterpreterFactory $interpreterFactory,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private PreviewEventApplier $previewEventApplier
     ) {
     }
 
@@ -66,8 +74,12 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
                 throw new EnvironmentException('Uploaded file is empty');
             }
 
-            if ($file->getSize() > self::MAX_FILE_SIZE) {
-                throw new MaxFileSizeExceededException(self::MAX_FILE_SIZE);
+            $maxFileSize = $this->getMaxPreviewFileSize(
+                $this->configurationPreparationService->prepareConfiguration($name, null)
+            );
+
+            if ($file->getSize() > $maxFileSize) {
+                throw new MaxFileSizeExceededException($maxFileSize);
             }
 
             $user = $this->resolveCurrentUser();
@@ -110,8 +122,10 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
                 throw new EnvironmentException('File is empty');
             }
 
-            if (filesize($sourcePath) > self::MAX_FILE_SIZE) {
-                throw new MaxFileSizeExceededException(self::MAX_FILE_SIZE);
+            $maxFileSize = $this->getMaxPreviewFileSize($preparedConfig);
+
+            if (filesize($sourcePath) > $maxFileSize) {
+                throw new MaxFileSizeExceededException($maxFileSize);
             }
 
             $user = $this->resolveCurrentUser();
@@ -120,6 +134,17 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
         } finally {
             $loader->cleanup();
         }
+    }
+
+    private function getMaxPreviewFileSize(array $preparedConfig): int
+    {
+        $interpreterType = $preparedConfig['interpreterConfig']['type'] ?? null;
+
+        if (in_array($interpreterType, self::FULL_LOAD_INTERPRETERS, true)) {
+            return self::MAX_FULL_LOAD_FILE_SIZE;
+        }
+
+        return self::MAX_FILE_SIZE;
     }
 
     public function loadPreviewData(
@@ -161,14 +186,28 @@ final readonly class PreviewDataService implements PreviewDataServiceInterface
             $preparedConfig['processingConfig']
         );
 
-        if (!$interpreter->fileValid($previewFilePath)) {
+        // a listener may replace the path with a file it owns - only the local preview
+        // copy ($previewFilePath) is ever deleted below
+        $interpretedFilePath = $this->previewEventApplier->applyToPath(
+            $name,
+            $preparedConfig['processingConfig'],
+            $previewFilePath
+        );
+
+        if (!$interpreter->fileValid($interpretedFilePath)) {
             throw new EnvironmentException(
                 'Preview file is not valid for the configured interpreter. '
                 . 'Please re-upload or re-copy the preview data.'
             );
         }
 
-        $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber, $mappedColumns);
+        $dataPreview = $interpreter->previewData($interpretedFilePath, $recordNumber, $mappedColumns);
+        $dataPreview = $this->previewEventApplier->applyToPreviewData(
+            $name,
+            $preparedConfig['processingConfig'],
+            $dataPreview,
+            $mappedColumns
+        );
 
         $preview = $dataPreview->getDataPreview();
         if (!$this->previewHydrator->isValidJson($preview)) {

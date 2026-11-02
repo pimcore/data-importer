@@ -16,25 +16,19 @@ use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 
-class HttpLoader implements DataLoaderInterface
+/**
+ * @internal
+ */
+final class HttpLoader implements DataLoaderInterface
 {
-    /**
-     * @var string
-     */
-    protected $url;
+    private string $url;
 
-    /**
-     * @var string
-     */
-    protected $schema;
+    private string $schema;
 
-    /**
-     * @var string
-     */
-    protected $importFilePath;
+    private string $importFilePath;
 
     public function __construct(
-        protected Filesystem $filesystem
+        private readonly Filesystem $filesystem,
     ) {
     }
 

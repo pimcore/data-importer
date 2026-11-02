@@ -12,6 +12,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
-class ElementNotFoundException extends \Exception
+final class ElementNotFoundException extends \Exception
 {
 }

@@ -1,73 +1,111 @@
+---
+title: Data Sources
+description: The six data sources an import configuration can read from.
+---
+
 # Data Sources
 
-Every data importer configuration needs a data source. Following data sources are available and can 
-be configured. 
+Every import configuration reads from exactly one data source. Pick it in the **Data Source** step of the **Data Setup**
+tab, together with a matching [file format](./02_File_Formats.md).
 
-### Asset
+Five of the six data sources pull data: the importer fetches the file when the import starts. `Push` is the exception,
+it waits for data to be sent to it.
+
+## Asset
 
 <div class="image-as-lightbox"></div>
 
 ![Data Source Asset](../img/datasource_asset.png)
 
-Loads data from an asset stored within the Pimcore instance. 
+Loads data from an asset stored in Pimcore. Use it when another process drops the file into the asset tree.
 
-##### Configuration Options: 
-- **Path to asset** 
+**Configuration options**
 
+- **Asset Path**: path of the asset to read.
 
-### SFTP
-Loads data from a (remote) sftp location.
-  
-##### Configuration Options: 
+## Upload
+
+Loads data from a file uploaded directly to the import configuration. Use it for one-off imports and to test a
+configuration before automating it.
+
+Upload the file in the **Data Source** step. The panel shows whether a file is currently uploaded. Uploaded files are
+stored outside the asset tree, under `var/tmp/datahub/dataimporter/upload`.
+
+**Configuration options**
+
+- **Upload File**: opens the upload dialog.
+
+## HTTP
+
+Loads data from a remote HTTP location.
+
+**Configuration options**
+
+- **Schema**: `http://` or `https://`, prepended to the URL.
+- **URL**: URL without the schema. The schema is kept separate for security reasons.
+
+The loader uses [PHP HTTP wrappers](https://www.php.net/manual/en/wrappers.http.php) internally.
+
+:::warning
+
+Do not put credentials into the URL. `HttpLoader` includes the full URL in the exception message it throws when a fetch
+fails, so a `user:password@example.com` URL leaks the password into application logs and error reporting. For
+authenticated endpoints, either expose the file through a mechanism that does not carry the secret in the URL, or
+implement a [custom loader](../06_Extending/01_Custom_Strategies.md) that sends the credentials in a request header.
+
+:::
+
+## SFTP
+
+Loads data from a remote SFTP location.
+
+**Configuration options**
+
 - **Host**
 - **Port**
 - **Username**
 - **Password**
-- **Remote Path**: Absolute path on remote location.
+- **Remote Path**: absolute path on the remote location.
 
-### HTTP
-Loads data from a (remote) http location.
+## Push
 
-##### Configuration Options: 
-- **Schema**: one of `http://` or `https://` which is prepened to the URL.
-- **Url**: Url to file without schema definition (which is added based on schema configuration due 
-to security reasons).
+Does not fetch anything. It exposes an HTTP endpoint that data is pushed to with a POST request, and every push starts
+an import.
 
-This implementation uses [php wrappers](https://www.php.net/manual/en/wrappers.http.php) internally, so
-encoding username and password is supported as follows: `user:password@example.com`. 
+Send the data in the configured file format as the raw body of the POST request. The loader reads it via `php://input`.
 
+The endpoint is:
 
-### Push
-The `push` data source does not download the data from a remote location, it provides a http endpoint
-where data can be pushed to via a POST request. 
+```
+http(s)://<YOUR_DOMAIN>/pimcore-datahub-import/<IMPORT_CONFIGURATION_NAME>/push
+```
 
-The data needs to be in the configured file format and provided as raw content of the POST request. The 
-`push` data source internally uses `php://input` to read the content. 
+**Configuration options**
 
-The URL for the endpoint is: `http(s)://<YOUR_DOMAIN>>/pimcore-datahub-import/<IMPORT_CONFIGURATION_NAME>/push`
+- **API Key**: must be sent as the `authorization` header on every push request. It has to be at least 16 characters
+  long.
+- **Ignore Not Empty Queue**: by default an import only starts when the import queue of this configuration is empty, so
+  pushing data while the queue still holds items returns an error. Enable this flag to queue the pushed data regardless.
+  See [Import Execution Details](../04_Import_Execution_Details.md).
 
-##### Configuration Options: 
-- **API Key**: API Key that needs to be set as `authorization` header for every push request. 
-- **Ignore not empty queue**: By default, imports are only started when import queue is empty 
-(see also [Import Execution Details](../04_Import_Execution_Details.md)). Thus pushing data to the 
-endpoint when import queue is not empty would result in an error. Activating this flag will ignore 
-existing items in the queue and always adds items to the queue when data is pushed to the endpoint.
+:::note
 
+The `Push` data source cannot be started manually. An import is triggered only by a request to the endpoint.
 
-### SQL
+:::
+
+## SQL
 
 <div class="image-as-lightbox"></div>
 
 ![Data Source SQL](../img/datasource_sql.png)
 
-Loads data from a defined doctrine connection.
-
-The SQL Data Loader uses [DBAL](https://www.doctrine-project.org/projects/dbal.html) to allow data to be 
-loaded from a SQL source. Connections to any database supported by DBAL will work provided they are 
-configured correctly inside of `database.yaml`. (Database configuration can be placed in any valid 
-Symfony config file, provided its in the correct format as can be seen in `database.yaml`).
+Loads data from a configured Doctrine connection. It uses
+[DBAL](https://www.doctrine-project.org/projects/dbal.html), so every database DBAL supports works, provided the
+connection is declared in the Symfony configuration (conventionally `database.yaml`).
 
 Example connection:
+
 ```yaml
 doctrine:
     dbal:
@@ -81,13 +119,22 @@ doctrine:
                 driver: any_supported_by_doctrine
 ```
 
-For different drivers some additional configuration could be needed.
+Some drivers need additional configuration.
 
-##### Configuration Options: 
-- **Connection**: Connection from which data will be loaded
-- **SELECT**: Valid SQL `SELECT`
-- **FROM**: Valid SQL `FROM`
-- **WHERE**: Valid SQL `WHERE`
-- **GROUP BY**: Valid SQL `GROUP BY`
+**Configuration options**
 
-Ensure to select **SQL** under File Format! 
+- **Database Connection**: the connection to read from.
+- **SELECT**: a valid SQL `SELECT` clause.
+- **FROM**: a valid SQL `FROM` clause.
+- **WHERE**: a valid SQL `WHERE` clause.
+- **GROUP BY**: a valid SQL `GROUP BY` clause.
+
+:::warning
+
+Select **SQL** as the file format as well. The SQL file format reads the query result of this data source.
+
+:::
+
+## Custom Data Sources
+
+Add a data source of your own with a custom loader. See [Custom Strategies](../06_Extending/01_Custom_Strategies.md).

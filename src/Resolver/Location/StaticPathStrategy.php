@@ -16,12 +16,12 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ElementInterface;
 
-class StaticPathStrategy implements LocationStrategyInterface
+/**
+ * @internal
+ */
+final class StaticPathStrategy implements LocationStrategyInterface
 {
-    /**
-     * @var string
-     */
-    protected $path;
+    private string $path;
 
     public function setSettings(array $settings): void
     {

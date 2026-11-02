@@ -30,99 +30,62 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-class ImportProcessingService
+/**
+ * @internal
+ */
+final class ImportProcessingService
 {
     use LoggerAwareTrait;
 
-    const JOB_TYPE_PROCESS = 'process';
+    public const JOB_TYPE_PROCESS = 'process';
 
-    const JOB_TYPE_CLEANUP = 'cleanup';
+    public const JOB_TYPE_CLEANUP = 'cleanup';
 
-    const EXECUTION_TYPE_SEQUENTIAL = 'sequential';
+    public const EXECUTION_TYPE_SEQUENTIAL = 'sequential';
 
-    const EXECUTION_TYPE_PARALLEL = 'parallel';
+    public const EXECUTION_TYPE_PARALLEL = 'parallel';
 
-    const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
+    public const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
 
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
-
-    /**
-     * @var ConfigurationPreparationService
-     */
-    protected $configLoader;
-
-    /**
-     * @var MappingConfigurationFactory
-     */
-    protected $mappingConfigurationFactory;
-
-    /**
-     * @var ResolverFactory
-     */
-    protected $resolverFactory;
-
-    /**
-     * @var CleanupStrategyFactory
-     */
-    protected $cleanupStrategyFactory;
-
-    /**
-     * @var ApplicationLogger
-     */
-    protected $applicationLogger;
+    private ConfigurationPreparationService $configLoader;
 
     /**
      * @var Resolver[]
      */
-    protected $resolverCache = [];
+    private array $resolverCache = [];
 
     /**
      * @var MappingConfiguration[][]
      */
-    protected $mappingConfigurationCache = [];
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    protected $eventDispatcher;
+    private array $mappingConfigurationCache = [];
 
     /**
      * @var array
      */
-    protected $loggingConfigCache = [];
+    private array $loggingConfigCache = [];
 
     /**
      * @var array<string, bool>
      */
-    protected $versioningConfigCache = [];
+    private array $versioningConfigCache = [];
 
     /**
      * ImportProcessingService constructor.
-     *
-     * @param QueueService $queueService
-     * @param MappingConfigurationFactory $mappingConfigurationFactory
-     * @param ResolverFactory $resolverFactory
-     * @param CleanupStrategyFactory $cleanupStrategyFactory
-     * @param ApplicationLogger $applicationLogger
-     * @param EventDispatcherInterface $eventDispatcher
      */
-    public function __construct(QueueService $queueService, MappingConfigurationFactory $mappingConfigurationFactory, ResolverFactory $resolverFactory, CleanupStrategyFactory $cleanupStrategyFactory, ApplicationLogger $applicationLogger, EventDispatcherInterface $eventDispatcher)
-    {
-        $this->queueService = $queueService;
-        $this->mappingConfigurationFactory = $mappingConfigurationFactory;
-        $this->resolverFactory = $resolverFactory;
-        $this->cleanupStrategyFactory = $cleanupStrategyFactory;
-        $this->applicationLogger = $applicationLogger;
-        $this->eventDispatcher = $eventDispatcher;
-
+    public function __construct(
+        private readonly QueueService $queueService,
+        private readonly MappingConfigurationFactory $mappingConfigurationFactory,
+        private readonly ResolverFactory $resolverFactory,
+        private readonly CleanupStrategyFactory $cleanupStrategyFactory,
+        private readonly ApplicationLogger $applicationLogger,
+        private readonly EventDispatcherInterface $eventDispatcher,
+    ) {
         $this->configLoader = new ConfigurationPreparationService();
     }
 
@@ -174,7 +137,11 @@ class ImportProcessingService
         } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
-            if ($queueItem) {
+            if (
+                $queueItem
+                && !($this->loggingConfigCache[$configName ?? '']['disableErrorLogs'] ?? false)
+                && !($this->loggingConfigCache[$configName ?? '']['disableErrorFileObjects'] ?? false)
+            ) {
                 $context['fileObject'] = new FileObject(json_encode($queueItem['data']));
             }
             $this->logError($configName, $e->getMessage(), $context);
@@ -237,8 +204,13 @@ class ImportProcessingService
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      */
-    protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping, int $userOwner)
-    {
+    private function processElement(
+        string $configName,
+        array $importDataRow,
+        Resolver $resolver,
+        array $mapping,
+        int $userOwner,
+    ) {
         $element = null;
         $currentMapping = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
@@ -270,6 +242,16 @@ class ImportProcessingService
                     $event = new PreSaveEvent($configName, $importDataRow, $element);
                     $this->eventDispatcher->dispatch($event);
 
+                    if ($event->shouldSkipSave()) {
+                        $this->logInfo($configName, 'Saving of element skipped by PreSaveEvent listener.', [
+                            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                            'relatedObject' => $element
+                        ]);
+                        $this->discardUnsavedChanges($element);
+
+                        return;
+                    }
+
                     $this->checkKey($element);
                     $element
                         ->setUserModification($userOwner)
@@ -284,18 +266,28 @@ class ImportProcessingService
                 }
 
                 $message = "Element {$element->getId()} imported successfully.";
-                $this->logInfo($configName, $message, [
+                $successContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => json_encode($importDataRow),
                     'relatedObject' => $element
-                ]);
+                ];
+
+                if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+                    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+                    $successContext['fileObject'] = new FileObject(json_encode($importDataRow));
+                }
+
+                $this->logInfo($configName, $message, $successContext);
             } else {
                 $reflection = new \ReflectionClass($resolver->getLoadingStrategy());
                 $message = "No match by {$reflection->getShortName()} with 'Do not create' location strategy";
-                $this->logInfo($configName, $message, [
+                $noMatchContext = [
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                    'fileObject' => json_encode($importDataRow)
-                ]);
+                ];
+                if (!($this->loggingConfigCache[$configName]['disableInfoLogs'] ?? false)
+                    && !($this->loggingConfigCache[$configName]['disableInfoFileObjects'] ?? false)) {
+                    $noMatchContext['fileObject'] = new FileObject(json_encode($importDataRow));
+                }
+                $this->logInfo($configName, $message, $noMatchContext);
             }
         } catch (\Throwable $e) {
             $message = "Error processing element: {$importDataRowString}";
@@ -307,22 +299,48 @@ class ImportProcessingService
                 $message .= "\nMapping Configuration: " . $currentMapping->getLabel();
             }
 
-            $event = new ProcessElementExceptionEvent(
-                $configName,
-                $importDataRow,
-                $element,
-                $message,
-                $e,
-                $currentMapping
-            );
-            $this->eventDispatcher->dispatch($event);
+            if ($element instanceof ElementInterface) {
+                $event = new ProcessElementExceptionEvent(
+                    $configName,
+                    $importDataRow,
+                    $element,
+                    $message,
+                    $e,
+                    $currentMapping
+                );
+                $this->eventDispatcher->dispatch($event);
+            } else {
+                $message .= "\nProcessElementExceptionEvent skipped as the element was not found.";
+            }
 
-            $this->logError($configName, $message, [
+            $errorContext = [
                 'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
-                'fileObject' => json_encode($importDataRow),
                 'relatedObject' => $element,
-            ]);
+            ];
+
+            if (!($this->loggingConfigCache[$configName]['disableErrorLogs'] ?? false)
+                && !($this->loggingConfigCache[$configName]['disableErrorFileObjects'] ?? false)) {
+                $errorContext['fileObject'] = new FileObject(json_encode($importDataRow));
+            }
+
+            $this->logError($configName, $message, $errorContext);
         }
+    }
+
+    /**
+     * A skipped element keeps the changes the mapping applied to it in memory. Pimcore hands out
+     * runtime-cached instances, so a later row resolving the same element would otherwise inherit -
+     * and save - the values of the skipped row. Reloading it registers a clean instance instead.
+     */
+    private function discardUnsavedChanges(ElementInterface $element): void
+    {
+        $type = ElementService::getElementType($element);
+
+        if ($type === null || !$element->getId()) {
+            return;
+        }
+
+        ElementService::getElementById($type, $element->getId(), ['force' => true]);
     }
 
     /**
@@ -370,7 +388,7 @@ class ImportProcessingService
         $currentMapping = null; // Success - clear current mapping
     }
 
-    protected function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
+    private function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
     {
         if ($cleanupConfig['doCleanup'] ?? false) {
             $element = null;

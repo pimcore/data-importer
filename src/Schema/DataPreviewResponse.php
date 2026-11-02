@@ -38,10 +38,29 @@ final class DataPreviewResponse implements AdditionalAttributesInterface
             type: 'array',
             items: new Items(
                 properties: [
-                    new Property(property: 'dataIndex', description: 'Column index', type: 'string'),
-                    new Property(property: 'label', description: 'Column label', type: 'string'),
-                    new Property(property: 'data', description: 'Cell data value'),
-                    new Property(property: 'mapped', description: 'Whether this column is mapped', type: 'boolean'),
+                    new Property(
+                        property: 'dataIndex',
+                        description: 'Column index',
+                        type: 'string',
+                        example: 'col_0'
+                    ),
+                    new Property(
+                        property: 'label',
+                        description: 'Column label',
+                        type: 'string',
+                        example: 'Product Name'
+                    ),
+                    new Property(
+                        property: 'data',
+                        description: 'Cell data value; may be any JSON type, depending on the source data type',
+                        example: 'Example Product'
+                    ),
+                    new Property(
+                        property: 'mapped',
+                        description: 'Whether this column is mapped',
+                        type: 'boolean',
+                        example: false
+                    ),
                 ],
                 type: 'object'
             )

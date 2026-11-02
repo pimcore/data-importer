@@ -19,19 +19,16 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 
+/**
+ * @internal
+ */
 class JsonFileInterpreter extends AbstractInterpreter
 {
     protected string $path;
 
-    /**
-     * @var array|null
-     */
-    protected $cachedContent = null;
+    protected ?array $cachedContent = null;
 
-    /**
-     * @var string|null
-     */
-    protected $cachedFilePath = null;
+    protected ?string $cachedFilePath = null;
 
     protected function loadDataRaw(string $path): array
     {

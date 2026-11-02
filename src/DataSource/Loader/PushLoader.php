@@ -15,25 +15,19 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Symfony\Component\Filesystem\Filesystem;
 
-class PushLoader implements DataLoaderInterface
+/**
+ * @internal
+ */
+final class PushLoader implements DataLoaderInterface
 {
-    /**
-     * @var string
-     */
-    protected $apiKey;
+    private string $apiKey;
 
-    /**
-     * @var bool
-     */
-    protected $ignoreNotEmptyQueue = false;
+    private bool $ignoreNotEmptyQueue = false;
 
-    /**
-     * @var string
-     */
-    protected $importFilePath;
+    private string $importFilePath;
 
     public function __construct(
-        protected Filesystem $filesystem
+        private readonly Filesystem $filesystem,
     ) {
     }
 

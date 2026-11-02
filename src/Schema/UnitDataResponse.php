@@ -25,7 +25,7 @@ use Pimcore\Bundle\StudioBackendBundle\Util\Trait\AdditionalAttributesTrait;
 #[Schema(
     schema: 'BundleDataImporterUnitDataResponse',
     title: 'Bundle Data Importer Unit Data Response',
-    required: ['UnitList'],
+    required: ['unitList'],
     type: 'object'
 )]
 final class UnitDataResponse implements AdditionalAttributesInterface
@@ -37,7 +37,7 @@ final class UnitDataResponse implements AdditionalAttributesInterface
      */
     public function __construct(
         #[Property(
-            property: 'UnitList',
+            property: 'unitList',
             description: 'List of quantity value units',
             type: 'array',
             items: new Items(

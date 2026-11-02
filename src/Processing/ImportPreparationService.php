@@ -27,84 +27,26 @@ use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-class ImportPreparationService
+/**
+ * @internal
+ */
+final class ImportPreparationService
 {
-    const SCHEDULE_TYPE_CRON = 'cron';
-
-    const SCHEDULE_TYPE_JOB = 'job';
-
     use LoggerAwareTrait;
 
     /**
-     * @var ConfigurationPreparationService
-     */
-    protected $configLoader;
-
-    /**
-     * @var ResolverFactory
-     */
-    protected $resolverFactory;
-
-    /**
-     * @var InterpreterFactory
-     */
-    protected $interpreterFactory;
-
-    /**
-     * @var DataLoaderFactory
-     */
-    protected $dataLoaderFactory;
-
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
-
-    /**
-     * @var ApplicationLogger
-     */
-    protected $applicationLogger;
-
-    /**
-     * @var ExecutionService
-     */
-    protected $executionService;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    protected $eventDispatcher;
-
-    /**
      * ImportPreparationService constructor.
-     *
-     * @param ResolverFactory $resolverFactory
-     * @param InterpreterFactory $interpreterFactory
-     * @param DataLoaderFactory $dataLoaderFactory
-     * @param QueueService $queueService
-     * @param ApplicationLogger $applicationLogger
-     * @param ConfigurationPreparationService $configurationPreparationService
-     * @param ExecutionService $executionService
-     * @param EventDispatcherInterface $eventDispatcher
      */
     public function __construct(
-        ResolverFactory $resolverFactory,
-        InterpreterFactory $interpreterFactory,
-        DataLoaderFactory $dataLoaderFactory,
-        QueueService $queueService,
-        ApplicationLogger $applicationLogger,
-        ConfigurationPreparationService $configurationPreparationService,
-        ExecutionService $executionService,
-        EventDispatcherInterface $eventDispatcher
+        private readonly ResolverFactory $resolverFactory,
+        private readonly InterpreterFactory $interpreterFactory,
+        private readonly DataLoaderFactory $dataLoaderFactory,
+        private readonly QueueService $queueService,
+        private readonly ApplicationLogger $applicationLogger,
+        private readonly ConfigurationPreparationService $configLoader,
+        private readonly ExecutionService $executionService,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
-        $this->resolverFactory = $resolverFactory;
-        $this->interpreterFactory = $interpreterFactory;
-        $this->dataLoaderFactory = $dataLoaderFactory;
-        $this->queueService = $queueService;
-        $this->applicationLogger = $applicationLogger;
-        $this->configLoader = $configurationPreparationService;
-        $this->executionService = $executionService;
-        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function prepareImport(

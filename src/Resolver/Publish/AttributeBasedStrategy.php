@@ -15,12 +15,12 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
-class AttributeBasedStrategy implements PublishStrategyInterface
+/**
+ * @internal
+ */
+final class AttributeBasedStrategy implements PublishStrategyInterface
 {
-    /**
-     * @var mixed
-     */
-    protected $dataSourceIndex;
+    private mixed $dataSourceIndex;
 
     public function setSettings(array $settings): void
     {

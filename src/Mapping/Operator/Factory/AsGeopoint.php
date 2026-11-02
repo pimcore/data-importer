@@ -17,7 +17,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
-class AsGeopoint extends AbstractOperator
+/**
+ * @internal
+ */
+final class AsGeopoint extends AbstractOperator
 {
     /**
      * @param mixed $inputData
@@ -38,7 +41,7 @@ class AsGeopoint extends AbstractOperator
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof GeoCoordinates) {
-            return 'Lat.: ' . $inputData->getLongitude() . '  Long.: ' . $inputData->getLatitude();
+            return 'Lat.: ' . $inputData->getLatitude() . '  Long.: ' . $inputData->getLongitude();
         }
 
         return $inputData;

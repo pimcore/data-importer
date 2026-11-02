@@ -61,8 +61,18 @@ final class ConfigurationDetail implements AdditionalAttributesInterface
         #[Property(
             description: 'User permissions',
             properties: [
-                new Property(property: 'update', type: 'boolean', example: true),
-                new Property(property: 'delete', type: 'boolean', example: true),
+                new Property(
+                    property: 'update',
+                    description: 'Whether the user can update this configuration',
+                    type: 'boolean',
+                    example: true
+                ),
+                new Property(
+                    property: 'delete',
+                    description: 'Whether the user can delete this configuration',
+                    type: 'boolean',
+                    example: true
+                ),
             ],
             type: 'object'
         )]

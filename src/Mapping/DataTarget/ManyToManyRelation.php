@@ -18,16 +18,16 @@ use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
 use Pimcore\Model\Element\Service;
 
-class ManyToManyRelation extends Direct
+/**
+ * @internal
+ */
+final class ManyToManyRelation extends Direct
 {
-    const OVERWRITE_MODE_MERGE = 'merge';
+    private const OVERWRITE_MODE_MERGE = 'merge';
 
-    const OVERWRITE_MODE_REPLACE = 'replace';
+    private const OVERWRITE_MODE_REPLACE = 'replace';
 
-    /**
-     * @var bool
-     */
-    protected $overwriteMode;
+    private string $overwriteMode;
 
     /**
      * @param array $settings
@@ -84,7 +84,7 @@ class ManyToManyRelation extends Direct
      *
      * @throws \Exception
      */
-    protected function getMergedDataArray($valueContainer, string $getter, string $fieldType, $data): array
+    private function getMergedDataArray($valueContainer, string $getter, string $fieldType, $data): array
     {
         if (null === $data) {
             return [];

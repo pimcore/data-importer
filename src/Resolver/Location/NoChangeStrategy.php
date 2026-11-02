@@ -14,7 +14,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Location;
 
 use Pimcore\Model\Element\ElementInterface;
 
-class NoChangeStrategy implements LocationStrategyInterface
+/**
+ * @internal
+ */
+final class NoChangeStrategy implements LocationStrategyInterface
 {
     public function updateParent(ElementInterface $element, array $inputData): ElementInterface
     {

@@ -18,6 +18,9 @@ use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Element\ElementInterface;
 
+/**
+ * @internal
+ */
 abstract class AbstractLoad implements LoadStrategyInterface
 {
     /**
@@ -87,7 +90,12 @@ abstract class AbstractLoad implements LoadStrategyInterface
      */
     public function loadElement(array $inputData): ?ElementInterface
     {
-        return $this->loadElementByIdentifier($this->extractIdentifierFromData($inputData));
+        $identifier = $this->extractIdentifierFromData($inputData);
+        if ($identifier === null) {
+            return null;
+        }
+
+        return $this->loadElementByIdentifier($identifier);
     }
 
     /**
@@ -97,6 +105,10 @@ abstract class AbstractLoad implements LoadStrategyInterface
      */
     public function extractIdentifierFromData(array $inputData)
     {
-        return $inputData[$this->dataSourceIndex] ?? throw new \InvalidArgumentException('Identifier not set.');
+        if (!array_key_exists($this->dataSourceIndex, $inputData)) {
+            throw new \InvalidArgumentException('Identifier not set.');
+        }
+
+        return $inputData[$this->dataSourceIndex];
     }
 }

@@ -1,0 +1,378 @@
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+/* eslint-disable max-lines */
+
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+import { type DataImporterFormValues, type LoaderConfig, type InterpreterConfig, type ResolverConfig, type ProcessingConfig, type ExecutionConfig, type Permission, type MappingConfigItem } from '../types'
+import { ensureMappingId } from '../components/tabs/steps/mapping-step/utils/mapping-identity'
+
+dayjs.extend(customParseFormat)
+
+/**
+ * The PHP backend (SchedulerFactory.php) expects scheduledAt in "d-m-Y H:i"
+ * format, i.e. "DD-MM-YYYY HH:mm" in dayjs terms.
+ *
+ * The studio-ui-bundle's DatePicker component calls toDayJs(value) WITHOUT
+ * passing the outputFormat, so it cannot parse "DD-MM-YYYY HH:mm" strings.
+ * We use "YYYY-MM-DD HH:mm" as the form format instead — dayjs parses it
+ * natively without a format hint, and it also serves as the display format
+ * (via outputFormat on the DatePicker), which hides seconds from the user.
+ */
+const BACKEND_DATE_FORMAT = 'DD-MM-YYYY HH:mm'
+const FORM_DATE_FORMAT = 'YYYY-MM-DD HH:mm'
+
+function scheduledAtToForm (backendValue: string | undefined): string | undefined {
+  if (backendValue === undefined || backendValue === '') return undefined
+  const parsed = dayjs(backendValue, BACKEND_DATE_FORMAT, true)
+  return parsed.isValid() ? parsed.format(FORM_DATE_FORMAT) : backendValue
+}
+
+function scheduledAtToBackend (formValue: string | undefined): string | undefined {
+  if (formValue === undefined || formValue === '') return undefined
+  const parsed = dayjs(formValue)
+  return parsed.isValid() ? parsed.format(BACKEND_DATE_FORMAT) : formValue
+}
+
+export interface BackendPermission {
+  id?: number
+  name?: string
+  read?: boolean
+  update?: boolean
+  delete?: boolean
+}
+
+export interface BackendConfiguration {
+  general?: {
+    active: boolean
+    description: string
+    group: string
+    [key: string]: any
+  }
+  loaderConfig?: LoaderConfig
+  interpreterConfig?: InterpreterConfig
+  resolverConfig?: ResolverConfig
+  mappingConfig?: MappingConfigItem[]
+  processingConfig?: ProcessingConfig
+  executionConfig?: ExecutionConfig
+  permissions?: {
+    role?: BackendPermission[]
+    user?: BackendPermission[]
+  }
+  [key: string]: any
+}
+
+export function transformPermissionToBackend (permission: Permission): BackendPermission {
+  return {
+    id: permission.id,
+    name: permission.name,
+    read: permission.read ?? false,
+    update: permission.update ?? false,
+    delete: permission.delete ?? false
+  }
+}
+
+export function transformPermissionFromBackend (backendPermission: BackendPermission): Permission {
+  return {
+    id: backendPermission.id,
+    name: backendPermission.name ?? '',
+    read: backendPermission.read ?? false,
+    update: backendPermission.update ?? false,
+    delete: backendPermission.delete ?? false
+  }
+}
+
+export function transformPermissionsToBackend (permissions: DataImporterFormValues['permissions'] | undefined): BackendConfiguration['permissions'] {
+  return {
+    role: (permissions?.roles ?? []).map(transformPermissionToBackend),
+    user: (permissions?.users ?? []).map(transformPermissionToBackend)
+  }
+}
+
+export function transformPermissionsFromBackend (backendPermissions: BackendConfiguration['permissions']): DataImporterFormValues['permissions'] {
+  return {
+    roles: (backendPermissions?.role ?? []).map(transformPermissionFromBackend),
+    users: (backendPermissions?.user ?? []).map(transformPermissionFromBackend)
+  }
+}
+
+export function transformFormToBackend (
+  formValues: DataImporterFormValues,
+  existingConfig: BackendConfiguration
+): BackendConfiguration {
+  const mergedLoaderConfig = mergeOptionConfig(formValues.loaderConfig, existingConfig.loaderConfig)
+  const mergedInterpreterConfig = mergeOptionConfig(formValues.interpreterConfig, existingConfig.interpreterConfig)
+
+  const normalizedLoaderConfig = normalizeLoaderConfig(mergedLoaderConfig)
+  const normalizedInterpreterConfig = normalizeInterpreterConfig(mergedInterpreterConfig)
+
+  return {
+    ...existingConfig,
+    general: {
+      ...existingConfig.general,
+      active: formValues.active,
+      description: formValues.description,
+      group: formValues.group
+    },
+    loaderConfig: normalizedLoaderConfig,
+    interpreterConfig: normalizedInterpreterConfig,
+    resolverConfig: formValues.resolverConfig ?? existingConfig.resolverConfig,
+    mappingConfig: formValues.mappingConfig ?? existingConfig.mappingConfig,
+    processingConfig: formValues.processingConfig ?? existingConfig.processingConfig,
+    executionConfig: formValues.executionConfig !== undefined
+      ? {
+          ...formValues.executionConfig,
+          scheduledAt: scheduledAtToBackend(formValues.executionConfig.scheduledAt)
+        }
+      : existingConfig.executionConfig,
+    permissions: transformPermissionsToBackend(formValues.permissions)
+  }
+}
+
+function mergeOptionConfig<T extends { type?: string, settings?: Record<string, unknown> }>
+(
+  formConfig: T | undefined,
+  existingConfig: T | undefined
+): T | undefined {
+  if (formConfig === undefined) {
+    return existingConfig
+  }
+
+  // When step fields are currently unmounted, form snapshots can contain
+  // empty objects like {} for loader/interpreter config. In that case we must
+  // keep the persisted config instead of overwriting it with an empty object.
+  if (formConfig.type === undefined || formConfig.type === '') {
+    return existingConfig ?? formConfig
+  }
+
+  return {
+    ...existingConfig,
+    ...formConfig,
+    settings: {
+      ...existingConfig?.settings,
+      ...formConfig.settings
+    }
+  }
+}
+
+function normalizeToString (value: unknown): string {
+  if (value === undefined || value === null) {
+    return ''
+  }
+
+  return String(value)
+}
+
+function normalizeToBoolean (value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (value === '1' || value === 1 || value === 'true') {
+    return true
+  }
+
+  return false
+}
+
+function getLoaderSettings (loaderConfig: LoaderConfig | undefined): Record<string, unknown> {
+  return (loaderConfig?.settings as Record<string, unknown> | undefined) ?? {}
+}
+
+function normalizeLoaderConfig (loaderConfig: LoaderConfig | undefined): LoaderConfig | undefined {
+  if (loaderConfig?.type === undefined) {
+    return loaderConfig
+  }
+
+  const settings = getLoaderSettings(loaderConfig)
+
+  if (loaderConfig.type === 'asset') {
+    return {
+      ...loaderConfig,
+      settings: {
+        assetPath: normalizeToString(settings.assetPath)
+      }
+    }
+  }
+
+  if (loaderConfig.type === 'upload') {
+    return {
+      ...loaderConfig,
+      settings: {
+        uploadFilePath: normalizeToString(settings.uploadFilePath)
+      }
+    }
+  }
+
+  if (loaderConfig.type === 'http') {
+    const normalizedSchema = normalizeToString(settings.schema)
+    const normalizedUrl = stripSchemaPrefix(normalizeToString(settings.url))
+
+    return {
+      ...loaderConfig,
+      settings: {
+        schema: normalizedSchema,
+        url: normalizedUrl
+      }
+    }
+  }
+
+  if (loaderConfig.type === 'sftp') {
+    return {
+      ...loaderConfig,
+      settings: {
+        host: normalizeToString(settings.host),
+        port: normalizeToString(settings.port),
+        username: normalizeToString(settings.username),
+        password: normalizeToString(settings.password),
+        remotePath: normalizeToString(settings.remotePath)
+      }
+    }
+  }
+
+  if (loaderConfig.type === 'push') {
+    return {
+      ...loaderConfig,
+      settings: {
+        apiKey: normalizeToString(settings.apiKey),
+        ignoreNotEmptyQueue: normalizeToBoolean(settings.ignoreNotEmptyQueue)
+      }
+    }
+  }
+
+  if (loaderConfig.type === 'sql') {
+    return {
+      ...loaderConfig,
+      settings: {
+        connection: normalizeToString(settings.connection),
+        select: normalizeToString(settings.select),
+        from: normalizeToString(settings.from),
+        where: normalizeToString(settings.where),
+        groupBy: normalizeToString(settings.groupBy)
+      }
+    }
+  }
+
+  return loaderConfig
+}
+
+function normalizeInterpreterConfig (interpreterConfig: InterpreterConfig | undefined): InterpreterConfig | undefined {
+  if (interpreterConfig?.type === undefined) {
+    return interpreterConfig
+  }
+
+  const settings = (interpreterConfig.settings as Record<string, unknown> | undefined) ?? {}
+
+  if (interpreterConfig.type === 'csv') {
+    return {
+      ...interpreterConfig,
+      settings: {
+        skipFirstRow: normalizeToBoolean(settings.skipFirstRow),
+        saveHeaderName: normalizeToBoolean(settings.saveHeaderName),
+        delimiter: normalizeToString(settings.delimiter),
+        enclosure: normalizeToString(settings.enclosure),
+        escape: normalizeToString(settings.escape)
+      }
+    }
+  }
+
+  if (interpreterConfig.type === 'json') {
+    return {
+      ...interpreterConfig,
+      settings: {
+        path: normalizeToString(settings.path)
+      }
+    }
+  }
+
+  if (interpreterConfig.type === 'xml') {
+    return {
+      ...interpreterConfig,
+      settings: {
+        xpath: normalizeToString(settings.xpath),
+        schema: normalizeToString(settings.schema)
+      }
+    }
+  }
+
+  if (interpreterConfig.type === 'xlsx') {
+    return {
+      ...interpreterConfig,
+      settings: {
+        skipFirstRow: normalizeToBoolean(settings.skipFirstRow),
+        sheetName: normalizeToString(settings.sheetName)
+      }
+    }
+  }
+
+  if (interpreterConfig.type === 'sql') {
+    return {
+      ...interpreterConfig,
+      settings: {}
+    }
+  }
+
+  return interpreterConfig
+}
+
+function stripSchemaPrefix (url: string): string {
+  return url.replace(/^\s*[a-z][a-z0-9+.-]*:\/\//i, '')
+}
+
+function normalizeConfigObject<T> (value: T | undefined): T | undefined {
+  return Array.isArray(value) ? undefined : value
+}
+
+function normalizeResolverConfig (resolver: BackendConfiguration['resolverConfig']): BackendConfiguration['resolverConfig'] {
+  const normalized = normalizeConfigObject(resolver)
+  if (normalized === undefined) return undefined
+  return {
+    ...normalized,
+    loadingStrategy: normalizeConfigObject(normalized.loadingStrategy),
+    createLocationStrategy: normalizeConfigObject(normalized.createLocationStrategy),
+    locationUpdateStrategy: normalizeConfigObject(normalized.locationUpdateStrategy),
+    publishingStrategy: normalizeConfigObject(normalized.publishingStrategy)
+  }
+}
+
+function normalizeExecutionConfig (config: BackendConfiguration['executionConfig']): ExecutionConfig | undefined {
+  const normalized = normalizeConfigObject(config)
+  if (normalized === undefined) return undefined
+  return {
+    ...normalized,
+    scheduledAt: scheduledAtToForm(
+      (typeof normalized.scheduledAt === 'string' && normalized.scheduledAt !== '') ? normalized.scheduledAt : undefined
+    )
+  }
+}
+
+export function transformBackendToForm (
+  backendConfig: BackendConfiguration,
+  configName: string
+): DataImporterFormValues {
+  const mappingConfig = (backendConfig.mappingConfig ?? []).map((item) => ({
+    ...ensureMappingId(item)
+  }))
+
+  return {
+    active: backendConfig.general?.active ?? false,
+    name: configName,
+    description: backendConfig.general?.description ?? '',
+    group: backendConfig.general?.group ?? '',
+    loaderConfig: normalizeConfigObject(backendConfig.loaderConfig),
+    interpreterConfig: normalizeConfigObject(backendConfig.interpreterConfig),
+    resolverConfig: normalizeResolverConfig(backendConfig.resolverConfig),
+    mappingConfig,
+    processingConfig: normalizeConfigObject(backendConfig.processingConfig),
+    executionConfig: normalizeExecutionConfig(backendConfig.executionConfig),
+    permissions: transformPermissionsFromBackend(backendConfig.permissions)
+  }
+}

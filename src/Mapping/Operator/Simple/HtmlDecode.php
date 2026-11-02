@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class HtmlDecode extends AbstractOperator
+/**
+ * @internal
+ */
+final class HtmlDecode extends AbstractOperator
 {
     /**
      * @param mixed $inputData

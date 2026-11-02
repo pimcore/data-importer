@@ -18,22 +18,15 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class PrepareImportCommand extends AbstractCommand
+/**
+ * @internal
+ */
+final class PrepareImportCommand extends AbstractCommand
 {
-    /**
-     * @var ImportPreparationService
-     */
-    protected $importPreparationService;
-
-    /**
-     * PrepareImportCommand constructor.
-     *
-     * @param ImportPreparationService $importPreparationService
-     */
-    public function __construct(ImportPreparationService $importPreparationService)
-    {
+    public function __construct(
+        private readonly ImportPreparationService $importPreparationService,
+    ) {
         parent::__construct();
-        $this->importPreparationService = $importPreparationService;
     }
 
     protected function configure(): void

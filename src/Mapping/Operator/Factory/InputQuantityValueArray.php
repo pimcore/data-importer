@@ -15,7 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class InputQuantityValueArray extends QuantityValueArray
+/**
+ * @internal
+ */
+final class InputQuantityValueArray extends QuantityValueArray
 {
     /**
      * @param mixed $inputData
@@ -32,10 +35,10 @@ class InputQuantityValueArray extends QuantityValueArray
         $result = [];
 
         foreach ($inputData as $key => $data) {
-            $result[$key] = new \Pimcore\Model\DataObject\Data\InputQuantityValue(
-                $data[0] ?? null,
-                $data[1] ?? null
-            );
+            [$value, $unitId] = $this->extractValueAndUnitId($data);
+            $result[$key] = $this->unitNullIfNoValue && $this->isEmptyValue($value)
+                ? null
+                : new \Pimcore\Model\DataObject\Data\InputQuantityValue($value, $unitId);
         }
 
         return $result;

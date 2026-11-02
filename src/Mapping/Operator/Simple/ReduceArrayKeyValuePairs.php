@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class ReduceArrayKeyValuePairs extends AbstractOperator
+/**
+ * @internal
+ */
+final class ReduceArrayKeyValuePairs extends AbstractOperator
 {
     public function setSettings(array $settings): void
     {
