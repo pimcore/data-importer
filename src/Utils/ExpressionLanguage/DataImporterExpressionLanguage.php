@@ -16,6 +16,11 @@ use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
 
+/**
+ * Expression language used by the symfony expression operator. Functions can be contributed by
+ * services tagged with `pimcore.datahub.data_importer.expression_language_provider`. The built-in
+ * `constant()` function is disabled because it would expose internal PHP constants to import configurations.
+ */
 class DataImporterExpressionLanguage extends ExpressionLanguage
 {
     /**
@@ -25,15 +30,15 @@ class DataImporterExpressionLanguage extends ExpressionLanguage
     {
         parent::__construct();
 
-        // Disable constant() to prevent exposure of internal information
-        $this->register('constant', function () {
-            throw new SyntaxError('`constant` function not available');
-        }, function () {
-            throw new SyntaxError('`constant` function not available');
-        });
+        $this->register('constant', self::rejectConstant(...), self::rejectConstant(...));
 
         foreach ($providers as $provider) {
             $this->registerProvider($provider);
         }
+    }
+
+    private static function rejectConstant(): never
+    {
+        throw new SyntaxError('The `constant` function is not available.');
     }
 }
