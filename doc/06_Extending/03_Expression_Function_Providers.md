@@ -8,7 +8,8 @@ description: Add custom functions to the Symfony Expression operator.
 The **Symfony Expression** operator of the
 [transformation pipeline](../03_Configuration/05_Mapping_Configuration/01_Transformation_Pipeline.md) evaluates its
 expression with `DataImporterExpressionLanguage` from the namespace
-`Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage`, a thin wrapper around Symfony's `ExpressionLanguage`. Every service tagged with
+`Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage`, a thin wrapper around Symfony's
+`ExpressionLanguage`. Every service tagged with
 `pimcore.datahub.data_importer.expression_language_provider` contributes its functions to that expression language, so
 reusable functions (for example `concat`, `replace` or `contains`) become available in every expression configured in
 the operator.
