@@ -71,6 +71,7 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Transformer/Combine': 'DataImporter/DynamicTypes/Transformer/Combine',
   'DataImporter/DynamicTypes/Transformer/StaticText': 'DataImporter/DynamicTypes/Transformer/StaticText',
   'DataImporter/DynamicTypes/Transformer/StringReplace': 'DataImporter/DynamicTypes/Transformer/StringReplace',
+  'DataImporter/DynamicTypes/Transformer/SymfonyExpression': 'DataImporter/DynamicTypes/Transformer/SymfonyExpression',
   'DataImporter/DynamicTypes/Transformer/Date': 'DataImporter/DynamicTypes/Transformer/Date',
   'DataImporter/DynamicTypes/Transformer/Numeric': 'DataImporter/DynamicTypes/Transformer/Numeric',
   'DataImporter/DynamicTypes/Transformer/Explode': 'DataImporter/DynamicTypes/Transformer/Explode',

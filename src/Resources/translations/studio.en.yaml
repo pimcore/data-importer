@@ -271,6 +271,9 @@ data-importer.mapping.advanced-modal.transformer.edit-source: Edit source attrib
 data-importer.mapping.advanced-modal.transformer.group.data-manipulation: Data manipulation
 data-importer.mapping.advanced-modal.transformer.group.data-types: Data types
 data-importer.mapping.advanced-modal.transformer.group.load-import: Load / Import
+data-importer.mapping.advanced-modal.transformer.symfony-expression.expression: Expression
+data-importer.mapping.advanced-modal.transformer.symfony-expression.help: Source values are available as attributes[0], attributes[1], … in the order of the selected source columns. The result of the expression is passed on.
+data-importer.mapping.advanced-modal.transformer.symfony-expression.required: An expression is required.
 data-importer.mapping.advanced-modal.recalculate-result-type: Recalculate transformation result type
 data-importer.mapping.advanced-modal.step-source.label: Source Attribute(s)
 data-importer.mapping.advanced-modal.step-source.description: Choose from the list or add a new source
