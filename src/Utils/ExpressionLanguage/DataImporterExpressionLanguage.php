@@ -30,15 +30,13 @@ class DataImporterExpressionLanguage extends ExpressionLanguage
     {
         parent::__construct();
 
-        $this->register('constant', self::rejectConstant(...), self::rejectConstant(...));
+        $rejectConstant = static function (): never {
+            throw new SyntaxError('The `constant` function is not available.');
+        };
+        $this->register('constant', $rejectConstant, $rejectConstant);
 
         foreach ($providers as $provider) {
             $this->registerProvider($provider);
         }
-    }
-
-    private static function rejectConstant(): never
-    {
-        throw new SyntaxError('The `constant` function is not available.');
     }
 }
