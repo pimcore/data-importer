@@ -66,8 +66,10 @@ class SequentialProcessQueueCommandTest extends Unit
         $this->assertTrue($held->acquire(false));
 
         // both services are final and left uninitialized: any use of the queue would throw
-        $queueService = (new \ReflectionClass(QueueService::class))->newInstanceWithoutConstructor();
-        $importProcessingService = (new \ReflectionClass(ImportProcessingService::class))->newInstanceWithoutConstructor();
+        $queueService = (new \ReflectionClass(QueueService::class))
+            ->newInstanceWithoutConstructor();
+        $importProcessingService = (new \ReflectionClass(ImportProcessingService::class))
+            ->newInstanceWithoutConstructor();
 
         $terminateExitCodes = [];
         $dispatcher = new EventDispatcher();
