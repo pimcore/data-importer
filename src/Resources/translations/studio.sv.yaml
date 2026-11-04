@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Välj kol
 data-importer.resolver.loading-strategy.language: Språk
 data-importer.resolver.loading-strategy.language-placeholder: Välj språk
 data-importer.resolver.loading-strategy.include-unpublished: Inkludera opublicerade objekt
+data-importer.resolver.loading-strategy.attribute-path: Begränsa till sökväg
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Matcha bara objekt i den här mappen eller under den. Lämna tomt för att söka i hela trädet.
 data-importer.resolver.element-creation: Elementskapande
 data-importer.resolver.create-location-strategy: Platsstrategi
 data-importer.resolver.create-location-strategy.tooltip: Styr var nyskapade element placeras när inget befintligt element kunde hittas.

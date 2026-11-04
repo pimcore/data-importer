@@ -57,14 +57,25 @@ Operators that convert the value into a Pimcore data type so it can be assigned 
 | **As Countries** | Converts an array of country display names into an array of country codes. |
 | **Gallery** | Packs an image asset or an array of image assets into an image gallery. |
 | **Image Advanced** | Packs a single asset into an advanced image. |
-| **Quantity Value** | Converts an array to a quantity value. The first item is the value, the second the unit id. |
+| **Quantity Value** | Converts an array to a quantity value. The first item is the value, the second the unit. See [Quantity Value operators](#quantity-value-operators). |
 | **Quantity Value Array** | Same as `Quantity Value`, for an array of such pairs. Returns an array of quantity values. |
-| **Input Quantity Value** | Converts an array to an input quantity value. The first item is the value, the second the unit id. |
+| **Input Quantity Value** | Converts an array to an input quantity value. The first item is the value, the second the unit. See [Quantity Value operators](#quantity-value-operators). |
 | **Input Quantity Value Array** | Same as `Input Quantity Value`, for an array of such pairs. |
 | **As Geopoint** | Expects an array of latitude and longitude. |
 | **As Geobounds** | Expects an array of north-east latitude and longitude, followed by south-west latitude and longitude. |
 | **As Geopolygon** | Expects an array of latitude and longitude pairs, one pair per point. |
 | **As Geopolyline** | Same as `As Geopolygon`. |
+
+#### Quantity Value operators
+
+The four quantity value operators share these settings:
+
+- **Unit source**: where the unit comes from. `By Unit ID` and `By Abbreviation` read it from the second item of the input; `Static` uses the unit chosen under **Unit** and takes only the value from the input.
+  - `Quantity Value` and `Input Quantity Value` look the unit up and leave it empty if it is not found. With `Static` they need a plain value as input, not an array.
+  - `Quantity Value Array` and `Input Quantity Value Array` look a unit up by abbreviation, but take a unit id as given: an unknown id makes the row fail. With `Static` each element may be a plain value or an array.
+- **Null if no value**: if the value is empty, the operator returns `null` (for the array variants, `null` for that element) instead of a quantity value. `0` is not empty.
+
+Without a setting the operators behave as before: `Quantity Value` reads the unit by id, `Input Quantity Value` by abbreviation, and the two array variants take the unit id as given.
 
 ### Load / Import
 

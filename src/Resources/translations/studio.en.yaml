@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Select co
 data-importer.resolver.loading-strategy.language: Language
 data-importer.resolver.loading-strategy.language-placeholder: Select language
 data-importer.resolver.loading-strategy.include-unpublished: Include unpublished objects
+data-importer.resolver.loading-strategy.attribute-path: Limit to path
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Only match objects in this folder or below. Leave empty to search the whole tree.
 data-importer.resolver.element-creation: Element Creation
 data-importer.resolver.create-location-strategy: Location Strategy
 data-importer.resolver.create-location-strategy.tooltip: Controls where newly created elements are placed when no existing element was resolved.

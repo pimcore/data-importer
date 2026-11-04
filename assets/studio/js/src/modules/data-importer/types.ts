@@ -102,14 +102,52 @@ export interface ClassAttribute {
 
 export const DEFAULT_ATTR_MAP_KEY = '__default__'
 
-export function resolveAttrMapKey (transformationResultType: string | undefined): string {
-  return (
+// Data targets that write into advanced relation fields. For these the backend only offers
+// advancedManyToMany(Object)Relation fields when the attributes are requested with
+// loadAdvancedRelations, so their attributes are kept under a separate map key.
+const ADVANCED_RELATION_DATA_TARGET_TYPES = new Set(['manyToManyRelation'])
+const ADVANCED_RELATION_RESULT_TYPES = new Set(['dataObjectArray', 'assetArray'])
+const ADVANCED_RELATIONS_ATTR_MAP_KEY_PREFIX = 'advancedRelations:'
+
+export function resolveAttrMapKey (transformationResultType: string | undefined, dataTargetType?: string): string {
+  if (
     transformationResultType === undefined ||
     transformationResultType === '' ||
     transformationResultType === 'default'
-  )
-    ? DEFAULT_ATTR_MAP_KEY
-    : transformationResultType
+  ) {
+    return DEFAULT_ATTR_MAP_KEY
+  }
+
+  if (
+    ADVANCED_RELATION_DATA_TARGET_TYPES.has(dataTargetType ?? '') &&
+    ADVANCED_RELATION_RESULT_TYPES.has(transformationResultType)
+  ) {
+    return ADVANCED_RELATIONS_ATTR_MAP_KEY_PREFIX + transformationResultType
+  }
+
+  return transformationResultType
+}
+
+export function isAdvancedRelationsAttrMapKey (mapKey: string): boolean {
+  return mapKey.startsWith(ADVANCED_RELATIONS_ATTR_MAP_KEY_PREFIX)
+}
+
+/**
+ * Turns an attributes map key back into the parameters of the class-attributes request.
+ */
+export function parseAttrMapKey (mapKey: string): { transformationResultType?: string, loadAdvancedRelations?: boolean } {
+  if (mapKey === DEFAULT_ATTR_MAP_KEY) {
+    return {}
+  }
+
+  if (isAdvancedRelationsAttrMapKey(mapKey)) {
+    return {
+      transformationResultType: mapKey.slice(ADVANCED_RELATIONS_ATTR_MAP_KEY_PREFIX.length),
+      loadAdvancedRelations: true
+    }
+  }
+
+  return { transformationResultType: mapKey }
 }
 
 export interface MappingConfigItem {

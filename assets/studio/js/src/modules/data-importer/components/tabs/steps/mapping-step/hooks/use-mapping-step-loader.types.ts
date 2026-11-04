@@ -25,7 +25,7 @@ export interface UseMappingStepLoaderResult {
   attributesMap: Record<string, ClassAttribute[]>
   setAttributesMap: React.Dispatch<React.SetStateAction<Record<string, ClassAttribute[]>>>
   classId: string | undefined
-  mappingTrtList: string[] | undefined
+  mappingAttrMapKeyList: string[] | undefined
   getMappingConfig: () => MappingConfigItem[]
 }
 

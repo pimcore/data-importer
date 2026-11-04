@@ -21,6 +21,13 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
  */
 class QuantityValueArray extends AbstractOperator
 {
+    use QuantityValueUnitSourceTrait;
+
+    protected function verifiesUnitId(): bool
+    {
+        return false;
+    }
+
     /**
      * @param mixed $inputData
      * @param bool $dryRun
@@ -36,9 +43,9 @@ class QuantityValueArray extends AbstractOperator
         $result = [];
 
         foreach ($inputData as $key => $data) {
-            $value = $data[0] ?? null;
-            $unitId = $data[1] ?? null;
-            if (($value === null || $value === '') && $unitId === null) {
+            [$value, $unitId] = $this->extractValueAndUnitId($data);
+            $unitId = $this->applyUnitNullIfNoValue($value, $unitId);
+            if ($this->isEmptyValue($value) && $unitId === null) {
                 $result[$key] = null;
 
                 continue;

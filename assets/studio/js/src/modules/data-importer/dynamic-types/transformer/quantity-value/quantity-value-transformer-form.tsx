@@ -22,12 +22,13 @@ interface QuantityValueTransformerConfig {
 interface QuantityValueTransformerFormProps {
   settings: QuantityValueTransformerConfig
   onChange: (settings: QuantityValueTransformerConfig) => void
+  defaultUnitSource?: string
 }
 
-export const QuantityValueTransformerForm = ({ settings, onChange }: QuantityValueTransformerFormProps): React.JSX.Element => {
+export const QuantityValueTransformerForm = ({ settings, onChange, defaultUnitSource = 'id' }: QuantityValueTransformerFormProps): React.JSX.Element => {
   const update = (key: string, value: any): void => { onChange({ ...settings, [key]: value }) }
 
-  const unitSourceSelect: string = settings.unitSourceSelect ?? 'id'
+  const unitSourceSelect: string = settings.unitSourceSelect ?? defaultUnitSource
 
   const { data: unitData, isLoading: isLoadingUnits } = useBundleDataImporterDataTypeLoadUnitDataQuery()
   const unitOptions = useMemo(

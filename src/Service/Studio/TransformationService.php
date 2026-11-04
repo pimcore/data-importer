@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\TransformationRes
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultPreviewsResponse;
@@ -55,7 +56,8 @@ final readonly class TransformationService implements TransformationServiceInter
         private InterpreterFactory $interpreterFactory,
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private ImportProcessingService $importProcessingService,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private PreviewEventApplier $previewEventApplier
     ) {
     }
 
@@ -86,7 +88,17 @@ final readonly class TransformationService implements TransformationServiceInter
                 $preparedConfig['processingConfig']
             );
 
+            $previewFilePath = $this->previewEventApplier->applyToPath(
+                $name,
+                $preparedConfig['processingConfig'],
+                $previewFilePath
+            );
             $dataPreview = $interpreter->previewData($previewFilePath, $recordNumber);
+            $dataPreview = $this->previewEventApplier->applyToPreviewData(
+                $name,
+                $preparedConfig['processingConfig'],
+                $dataPreview
+            );
             $importDataRow = $dataPreview->getRawData();
         }
 

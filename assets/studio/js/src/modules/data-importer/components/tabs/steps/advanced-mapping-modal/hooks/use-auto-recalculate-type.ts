@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react'
-import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
+import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, parseAttrMapKey } from '../../../../../types'
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../../data-importer-api-slice.gen'
 import { parseClassAttribute } from '../../mapping-step/hooks/use-mapping-step-loader.types'
 import { type TransformationResultTypeRequest } from '../../mapping-source/mapping-source'
@@ -61,13 +61,13 @@ export function useAutoRecalculateType ({
     })
   }, [pipelineKey, dataSourceKey, open, localItemRef, setCalculateTypeRequest])
 
-  const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType)
+  const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType, localItem.dataTarget?.type)
   // a host without the mapping step's attribute map gets the default attributes here too
   const needsAttrFetch = attributesMap[currentAttrMapKey] === undefined
   const { data: extraAttrData, isFetching: isFetchingExtraAttributes } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     {
       classId: classId ?? '',
-      transformationResultType: currentAttrMapKey === DEFAULT_ATTR_MAP_KEY ? undefined : localItem.transformationResultType,
+      ...parseAttrMapKey(currentAttrMapKey),
       systemWrite: true
     },
     { skip: !needsAttrFetch || classId === undefined || classId === '' }
