@@ -59,7 +59,10 @@ final class SequentialProcessQueueCommand extends AbstractCommand
     {
         if (!$this->lock()) {
             $this->writeError('The command is already running.');
-            exit(1);
+
+            // Not exit(): that would skip the console.terminate event and everything
+            // else the Application does after a command. The other run processes the queue.
+            return self::SUCCESS;
         }
 
         try {
