@@ -31,6 +31,8 @@ export interface AdvancedMappingModalProps {
   columnHeaderOptions: Array<{ value: string, label: string }>
   attributesMap: Record<string, ClassAttribute[]>
   baseConfig?: { loaderConfig?: LoaderConfig, interpreterConfig?: InterpreterConfig, resolverConfig?: ResolverConfig, processingConfig?: ProcessingConfig }
+  // a host's own content above the steps, inside the preview context
+  header?: React.ReactNode
 }
 
 export const AdvancedMappingModal = ({
@@ -42,7 +44,8 @@ export const AdvancedMappingModal = ({
   item,
   columnHeaderOptions,
   attributesMap,
-  baseConfig
+  baseConfig,
+  header
 }: AdvancedMappingModalProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -209,6 +212,7 @@ export const AdvancedMappingModal = ({
           gap="small"
           vertical
         >
+          { header }
           <div className={ styles.sectionPanel }>
             <Panel
               active={ expanded.source }
