@@ -94,6 +94,7 @@ export function AttributeLoadingStrategyResolverSettings ({
           allowPathTextInput
           allowedDataObjectTypes={ ['folder'] }
           dataObjectsAllowed
+          disabled={ disabled }
         />
       </Form.Item>
       <Form.Item

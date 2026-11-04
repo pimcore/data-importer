@@ -49,6 +49,12 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => {
         disabled={ disabled ?? React.useContext(DisabledContext) }
       />
     ),
+    ManyToOneRelationPath: ({ disabled }: { disabled?: boolean }) => (
+      <input
+        aria-label={ React.useContext(LabelContext) }
+        disabled={ disabled ?? React.useContext(DisabledContext) }
+      />
+    ),
     Switch: ({ disabled, labelRight }: { disabled?: boolean, labelRight?: string }) => (
       <input
         aria-label={ labelRight }
@@ -99,6 +105,7 @@ const attributeFields = [
   ...loadingFields,
   'data-importer.resolver.loading-strategy.attribute-name',
   'data-importer.resolver.loading-strategy.language',
+  'data-importer.resolver.loading-strategy.attribute-path',
   'data-importer.resolver.loading-strategy.include-unpublished'
 ]
 
@@ -145,7 +152,7 @@ describe('ResolverStep', () => {
            />)
 
     expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
-    expect(attributeFields.map(name => field(name).disabled)).toEqual([true, true, true, true, true])
+    expect(attributeFields.map(name => field(name).disabled)).toEqual([true, true, true, true, true, true])
   })
 
   it.each(['id', 'path'])('keeps the loading strategy and its column editable without the lock (%s)', async (strategy) => {
@@ -159,7 +166,7 @@ describe('ResolverStep', () => {
     render(<Host loadingStrategy="attribute" />)
 
     expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
-    expect(attributeFields.map(name => field(name).disabled)).toEqual([false, false, false, false, false])
+    expect(attributeFields.map(name => field(name).disabled)).toEqual([false, false, false, false, false, false])
   })
 
   it.each(['id', 'path', 'attribute'])('keeps the loading fields read-only in a read-only form without the lock (%s)', async (strategy) => {
