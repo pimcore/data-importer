@@ -5,6 +5,17 @@ description: Breaking changes and migration steps per release.
 
 # Upgrade Notes
 
+## Upgrade to 2026.4.0
+
+- [Classification Store] Added: `Write If Source Is Empty` on both classification store data targets, in force on a
+  mapping entry once its target type has been re-selected or the control changed - off by default on
+  `Classification Store Batch`, on by default on `Classification Store`.
+- [Classification Store] A `quantityValue` or `inputQuantityValue` key inside a plain `array` entry of
+  `Classification Store Batch` is now written as a quantity value model object instead of the raw source value, so such
+  a key imports where it previously stored nothing usable.
+- [Classification Store] A mapping entry writing to a non-localized classification store field no longer fails with a
+  `TypeError`; it writes to the default language.
+
 ## Upgrade to 2026.3.3
 
 ### Large XLSX Imports Read the Sheet in Row Windows, and Formula Cells Prefer Cached Results

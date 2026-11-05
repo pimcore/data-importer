@@ -13,6 +13,7 @@ import { type DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-da
 import { StepTargetAttributeSelect } from '../common/step-target-attribute-select'
 import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select'
 import { useClassificationStoreSettings } from './use-classification-store-settings'
+import { StepTargetClassificationstoreWriteSettings } from './step-target-classificationstore-write-settings'
 
 export function DataTargetClassificationstoreBatchSettings (props: DynamicTypeDataTargetRenderProps): React.JSX.Element {
   const { settings, onChange } = props
@@ -33,6 +34,12 @@ export function DataTargetClassificationstoreBatchSettings (props: DynamicTypeDa
           value={ settings?.language }
         />
       )}
+
+      <StepTargetClassificationstoreWriteSettings
+        onChange={ onChange }
+        settings={ settings }
+        target="classificationstoreBatch"
+      />
     </>
   )
 }

@@ -14,6 +14,7 @@ import { StepTargetAttributeSelect } from '../common/step-target-attribute-selec
 import { StepTargetAttributeLanguageSelect } from '../common/step-target-attribute-language-select'
 import { StepTargetClassificationstoreKeySearch } from './step-target-classificationstore-key-search'
 import { useClassificationStoreSettings } from './use-classification-store-settings'
+import { StepTargetClassificationstoreWriteSettings } from './step-target-classificationstore-write-settings'
 
 export function DataTargetClassificationstoreSettings (props: DynamicTypeDataTargetRenderProps): React.JSX.Element {
   const { classId, settings, transformationResultType, onChange } = props
@@ -45,6 +46,12 @@ export function DataTargetClassificationstoreSettings (props: DynamicTypeDataTar
           value={ settings?.language }
         />
       )}
+
+      <StepTargetClassificationstoreWriteSettings
+        onChange={ onChange }
+        settings={ settings }
+        target="classificationstore"
+      />
     </>
   )
 }
