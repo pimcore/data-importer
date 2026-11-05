@@ -71,10 +71,20 @@ wysiwyg
 `ClassificationStoreRoundTripAuditTest::testTheDerivedKeyTypeSetMatchesTheAuditDocument()` compares
 the derived set against this list, so a core release that adds or drops an accepted type fails the
 test rather than quietly leaving this document wrong. Types the rule rejects — the relation types,
-the geo types, `block`, `localizedfields`, `structuredTable`, `hotspotimage`, `image`,
+the geo types, `block`, `localizedfields`, `structuredTable`, `externalImage`, `hotspotimage`,
 `imageGallery`, `link`, `video`, `urlSlug`, `consent`, `dateRange`, `numericRange` — cannot reach a
 single value column at all and are out of scope here, even where the mapping editor currently offers
 a key of that type.
+
+**`image` is the one type whose membership depends on which core is installed, and it is not in the
+list above by accident.** The rule accepts a type for which a `classificationstore_<type>` marshaller
+is registered, and core registers `classificationstore_image` only on the classification store branch
+this epic develops against; neither 2026.3 nor 2026.x carries it, and this bundle requires
+`pimcore/pimcore: ^2026.3`. So the derived set is the 29 types above against the core the bundle
+requires, and 30 against that branch. Nothing here needs changing for that: when the branch is what
+is installed, the type-set assertion fails and names `image` as the type to add, which is what it is
+for. An `image` key is not otherwise special — it reaches a single value column through its
+marshaller exactly as `table` and `rgbaColor` do.
 
 ## Verdict table
 
@@ -184,7 +194,7 @@ of this change:
 | --- | --- | --- |
 | `doc/03_Configuration/05_Mapping_Configuration/02_Data_Target/README.md:38-40` — supported field types of `Many-to-Many Relation`: `manyToManyRelation`, `manyToManyObjectRelation`, `advancedManyToManyRelation`, `advancedManyToManyObjectRelation` | `src/Mapping/DataTarget/ManyToManyRelation.php:56-60`, the four `case` labels of the `switch` | **matches** — same four, same spelling; every other type falls through to the configuration error the page describes |
 | `README.md:42-43` — accepted result types of `Many-to-Many Relation`: `advancedDataObjectArray`, `dataObjectArray`, `assetArray`, `advancedAssetArray` | `assets/studio/js/src/modules/data-importer/dynamic-types/data-target/many-to-many-relation/dynamic-type-data-target-many-to-many-relation.tsx:24`, the `supportsType()` array | **matches** — same four |
-| `README.md:75` and `01_Classification_Store_Batch_Details.md:109` — accepted result types of `Classification Store Batch`: `array`, `quantityValueArray`, `inputQuantityValueArray`, `dateArray` | `assets/studio/js/src/modules/data-importer/dynamic-types/data-target/classificationstore/dynamic-type-data-target-classificationstore-batch.tsx:26`, the `supportsType()` array | **matches** — same four, and the two pages agree with each other |
+| `README.md:75` and `01_Classification_Store_Batch_Details.md:114` — accepted result types of `Classification Store Batch`: `array`, `quantityValueArray`, `inputQuantityValueArray`, `dateArray` | `assets/studio/js/src/modules/data-importer/dynamic-types/data-target/classificationstore/dynamic-type-data-target-classificationstore-batch.tsx:26`, the `supportsType()` array | **matches** — same four, and the two pages agree with each other |
 
 No correction was needed in any of the three. The option lists on the same page **were** wrong and
 are corrected by this change: neither classification store section listed `Write If Source Is Empty`,
@@ -193,6 +203,12 @@ and the batch section listed no configuration options at all.
 ## Items for the follow-up ticket
 
 Everything the audit found is either fixed here or listed below. Nothing is left unclassified.
+
+**Found, and needing no action:** the accepted type set gains `image` on the classification store
+core branch this epic develops against, because that branch registers a `classificationstore_image`
+marshaller which no released core does. See *Key types under audit*. Nothing to do here: the type-set
+assertion reports it as a document update on whichever core is installed, and the audit's own rule
+already covers it.
 
 **Fixed here, because it was trivial:**
 

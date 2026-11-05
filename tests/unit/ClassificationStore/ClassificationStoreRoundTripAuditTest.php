@@ -188,22 +188,53 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         }
     }
 
+    /**
+     * Asserted against the table the run actually emitted, and over the key types the acceptance
+     * rule derives rather than the ones this test managed to create: a key type that never got a
+     * key config, or a row the writer dropped, fails here instead of leaving the table short of
+     * what it claims to cover.
+     */
     public function testEveryKeyTypeHasAVerdictForEveryFieldVariantAndTarget(): void
     {
-        $verdicts = $this->runRoundTrips();
-        $this->writeVerdictTable($verdicts);
+        $table = $this->writeVerdictTable($this->runRoundTrips());
 
-        foreach (array_keys($this->keyIds) as $type) {
+        $expected = [];
+        foreach (array_keys($this->acceptedKeyTypes()) as $type) {
             foreach (self::FIELD_VARIANTS as $field) {
                 foreach (self::TARGETS as $target) {
-                    static::assertContains(
-                        $verdicts[$type][$field][$target]['verdict'] ?? null,
-                        [self::VERDICT_SURVIVED, self::VERDICT_DIFFERED, self::VERDICT_UNREACHABLE],
-                        sprintf('no verdict for %s / %s / %s', $type, $field, $target)
-                    );
+                    $expected[] = $type . ' / ' . $this->variantLabel($field) . ' / ' . $target;
                 }
             }
         }
+
+        sort($expected);
+
+        static::assertSame($expected, $this->rowsOf($table));
+    }
+
+    /**
+     * The (key type, field variant, target) triples the emitted table actually holds a row for.
+     *
+     * @return string[]
+     */
+    private function rowsOf(string $table): array
+    {
+        $rows = [];
+        foreach (explode("\n", $table) as $line) {
+            if (preg_match('/^\| (\S+) \| (\S+) \| (\S+) \| /', $line, $matches) !== 1) {
+                continue;
+            }
+
+            if ($matches[1] === '---') {
+                continue;
+            }
+
+            $rows[] = $matches[1] . ' / ' . $matches[2] . ' / ' . $matches[3];
+        }
+
+        sort($rows);
+
+        return $rows;
     }
 
     /**
@@ -413,8 +444,10 @@ class ClassificationStoreRoundTripAuditTest extends Unit
 
     /**
      * @param array<string, array<string, array<string, array{verdict: string, note: string}>>> $verdicts
+     *
+     * @return string the table as written
      */
-    private function writeVerdictTable(array $verdicts): void
+    private function writeVerdictTable(array $verdicts): string
     {
         $lines = [
             '# Classification store round trip verdicts',
@@ -432,19 +465,24 @@ class ClassificationStoreRoundTripAuditTest extends Unit
                     $lines[] = sprintf(
                         '| %s | %s | %s | %s | %s |',
                         $type,
-                        $field === ClassificationStoreFixture::FIELD_LOCALIZED ? 'localized' : 'non-localized',
+                        $this->variantLabel($field),
                         $target,
                         $result['verdict'],
-                        str_replace('|', '\\|', $result['note'])
+                        str_replace(["\r", "\n", '|'], [' ', ' ', '\\|'], $result['note'])
                     );
                 }
             }
         }
 
-        file_put_contents(
-            codecept_output_dir('classification-store-round-trip-audit.md'),
-            implode("\n", $lines) . "\n"
-        );
+        $table = implode("\n", $lines) . "\n";
+        file_put_contents(codecept_output_dir('classification-store-round-trip-audit.md'), $table);
+
+        return $table;
+    }
+
+    private function variantLabel(string $field): string
+    {
+        return $field === ClassificationStoreFixture::FIELD_LOCALIZED ? 'localized' : 'non-localized';
     }
 
     /**
