@@ -34,7 +34,9 @@ value column can hold** (the declared return type of `normalize()` is not `array
 into the two value columns. That is exactly the fork
 `Classificationstore\Engine\EavEngine::save()` takes.
 
-Against `pimcore/pimcore` 2026.3 / 2026.x that rule yields:
+Against the core this bundle requires — `pimcore/pimcore: ^2026.4` (`composer.json:26`), which CI
+installs as `dev-cs-store-improvements` until 2026.4 is tagged
+(`.github/workflows/codeception.yml:85-95`) — that rule yields:
 
 ```
 booleanSelect
@@ -48,6 +50,7 @@ email
 encryptedField
 firstname
 gender
+image
 input
 inputQuantityValue
 language
@@ -76,15 +79,16 @@ the geo types, `block`, `localizedfields`, `structuredTable`, `externalImage`, `
 single value column at all and are out of scope here, even where the mapping editor currently offers
 a key of that type.
 
-**`image` is the one type whose membership depends on which core is installed, and it is not in the
-list above by accident.** The rule accepts a type for which a `classificationstore_<type>` marshaller
-is registered, and core registers `classificationstore_image` only on the classification store branch
-this epic develops against; neither 2026.3 nor 2026.x carries it, and this bundle requires
-`pimcore/pimcore: ^2026.3`. So the derived set is the 29 types above against the core the bundle
-requires, and 30 against that branch. Nothing here needs changing for that: when the branch is what
-is installed, the type-set assertion fails and names `image` as the type to add, which is what it is
-for. An `image` key is not otherwise special — it reaches a single value column through its
-marshaller exactly as `table` and `rgbaColor` do.
+**`image` is in that list because of a marshaller, not because it normalises to a scalar.**
+`Image::normalize()` returns `['type' => 'asset', 'id' => N]`
+(`models/DataObject/ClassDefinition/Data/Image.php:265-275`), which no single value column can hold;
+core's `classificationstore_image` marshaller reduces it to the asset id
+(`bundles/CoreBundle/config/marshaller.yaml:70`). That marshaller is part of this epic, so it is
+present both in the core this bundle now declares — `^2026.4`, where the classification store core
+API lands — and in the `cs-store-improvements` branch CI installs meanwhile. It is absent from
+2026.3 and earlier, which `composer.json:26` no longer permits. An `image` key is not otherwise
+special: it reaches a single value column through its marshaller exactly as `table` and `rgbaColor`
+do.
 
 ## Verdict table
 
@@ -110,6 +114,11 @@ advance:
   definition and is the intended behaviour of this change.
 - **`password` reads back hashed and `calculatedValue` is computed rather than stored**, so both are
   `differed` by construction and not defects.
+- **An `image` key does not round-trip a plain source value.** `Image::normalize()` yields an asset
+  descriptor only for an `Asset\Image` instance and `null` for anything else
+  (`models/DataObject/ClassDefinition/Data/Image.php:265-275`), and the audited pipeline is empty,
+  so the probe value is normalised away before the marshaller ever sees it. That is core's own write
+  rule for the type, not something either target does.
 
 ## What counts as empty
 
@@ -204,11 +213,16 @@ and the batch section listed no configuration options at all.
 
 Everything the audit found is either fixed here or listed below. Nothing is left unclassified.
 
-**Found, and needing no action:** the accepted type set gains `image` on the classification store
-core branch this epic develops against, because that branch registers a `classificationstore_image`
-marshaller which no released core does. See *Key types under audit*. Nothing to do here: the type-set
-assertion reports it as a document update on whichever core is installed, and the audit's own rule
-already covers it.
+**Found, and recorded rather than deferred:** `image` is an accepted key type, and it is one only
+because core registers a `classificationstore_image` marshaller. That marshaller is part of this
+epic, so the audited set is the 30 types in *Key types under audit* — not an optional future
+variation. It is 30 both against the core the bundle declares (`composer.json:26`,
+`pimcore/pimcore: ^2026.4`) and against the core CI actually installs
+(`dev-cs-store-improvements`, pinned by `.github/workflows/codeception.yml:85-95` and
+`.github/workflows/static-analysis.yaml:74-81` until 2026.4 is tagged). Against 2026.3, which this
+bundle no longer permits, it would be 29 and
+`testTheDerivedKeyTypeSetMatchesTheAuditDocument()` would name `image` as the type to drop. Nothing
+is deferred and nothing is left to do.
 
 **Fixed here, because it was trivial:**
 
