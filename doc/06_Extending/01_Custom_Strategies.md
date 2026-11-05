@@ -61,13 +61,24 @@ This step applies to the extension points marked selectable above. The configura
 Those extension points have a registry in the Studio dependency injection container, and each selectable option is a
 *dynamic type* registered into it.
 
+The registries, their abstract classes and the service identifiers are published as the `@pimcore/data-importer` npm
+package. It contains the TypeScript types; the code is loaded from the Data Importer bundle at runtime. Add the package
+to the `dependencies` of your plugin and the bundle to the `remotes` in its `rsbuild.config.ts`:
+
+```ts
+remotes: {
+  '@pimcore/studio-ui-bundle': createDynamicRemote('pimcore_studio_ui_bundle'),
+  '@pimcore/data-importer': createDynamicRemote('pimcore_dataimporter_bundle'),
+},
+```
+
 Create a dynamic type that extends the abstract class of the extension point. Its `id` has to match the `type` of the
 service tag, `label` is a translation key, and `renderSettings()` returns the settings form:
 
 ```tsx
 import React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
-import { DynamicTypeLoaderAbstract } from '.../dynamic-type-loader-abstract'
+import { DynamicTypeLoaderAbstract } from '@pimcore/data-importer'
 import { AssetLoaderSettings } from './asset-loader-settings'
 
 @injectable()
@@ -81,13 +92,8 @@ export class DynamicTypeLoaderAsset extends DynamicTypeLoaderAbstract {
 }
 ```
 
-The abstract classes are not published as a package yet (see
-[pimcore/data-importer#628](https://github.com/pimcore/data-importer/issues/628)). Until then, extend
-`DynamicTypeAbstract` from `@pimcore/studio-ui-bundle/modules/element` and declare the same properties as the
-abstract class of the extension point. The registry only relies on those properties.
-
 Bind the type in your plugin and register it with the matching registry. The registries are resolved from the container by
-these service identifiers:
+these service identifiers, which the package also exports as `bundleServiceIds`:
 
 | Extension point | Registry service identifier |
 |---|---|
@@ -98,7 +104,9 @@ these service identifiers:
 | Resolver strategies | `DataImporter/DynamicTypes/Resolver/Registry` |
 
 ```ts
-const loaderRegistry = container.get<DynamicTypeLoaderRegistry>('DataImporter/DynamicTypes/Loader/Registry')
+import { bundleServiceIds, type DynamicTypeLoaderRegistry } from '@pimcore/data-importer'
+
+const loaderRegistry = container.get<DynamicTypeLoaderRegistry>(bundleServiceIds['DataImporter/DynamicTypes/Loader/Registry'])
 loaderRegistry.registerDynamicType(container.get('DataImporter/DynamicTypes/Loader/Asset'))
 ```
 
@@ -128,23 +136,16 @@ form to the `settings` of the configuration key of the group:
 import React from 'react'
 import { injectable } from '@pimcore/studio-ui-bundle/app'
 import { Form, Input } from '@pimcore/studio-ui-bundle/components'
-import { DynamicTypeAbstract } from '@pimcore/studio-ui-bundle/modules/element'
-
-interface ResolverRenderProps {
-  columnHeaderOptions: Array<{ value: string, label: string }>
-  languageOptions?: Array<{ value: string, label: string }>
-  classOptions?: Array<{ value: string, label: string }>
-  isLoadingClasses?: boolean
-}
+import { DynamicTypeResolverAbstract, type DynamicTypeResolverRenderProps } from '@pimcore/data-importer'
 
 @injectable()
-export class DynamicTypeResolverMyStrategyCreation extends DynamicTypeAbstract {
+export class DynamicTypeResolverMyStrategyCreation extends DynamicTypeResolverAbstract {
   readonly id = 'createLocation.myStrategy'
   readonly type = 'myStrategy'
   readonly label = 'app.resolver.location-strategy.myStrategy'
   readonly group = 'createLocation'
 
-  renderSettings (props: ResolverRenderProps): React.JSX.Element | null {
+  renderSettings (props: DynamicTypeResolverRenderProps): React.JSX.Element | null {
     return (
       <Form.Item name={ ['resolverConfig', 'createLocationStrategy', 'settings', 'rootPath'] }>
         <Input />

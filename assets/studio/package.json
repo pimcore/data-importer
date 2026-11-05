@@ -1,5 +1,5 @@
 {
-  "name": "pimcore_dataimporter_bundle",
+  "name": "@pimcore/data-importer",
   "version": "0.0.1",
   "scripts": {
     "dev": "NODE_ENV=development rsbuild build",
@@ -12,10 +12,30 @@
     "check-types": "tsc --noEmit",
     "check-types-watch": "tsc --noEmit --watch",
     "test": "jest ./js/src --passWithNoTests",
-    "build-api-client": "TS_NODE_COMPILER_OPTIONS='{\"moduleResolution\":\"node\"}' npx @rtk-query/codegen-openapi ./build/api/openapi-config.ts"
+    "build-api-client": "TS_NODE_COMPILER_OPTIONS='{\"moduleResolution\":\"node\"}' npx @rtk-query/codegen-openapi ./build/api/openapi-config.ts",
+    "generate-types": "tsc && tsc-alias"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/build/types/sdk/index.d.ts"
+    },
+    "./*": {
+      "types": "./dist/build/types/sdk/*/index.d.ts"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pimcore/data-importer"
+  },
+  "keywords": [
+    "pimcore",
+    "pimcore-studio-ui",
+    "pimcore-data-importer"
+  ],
+  "files": [
+    "dist"
+  ],
   "license": "proprietary",
-  "private": true,
   "devDependencies": {
     "@eslint/js": "^9",
     "@module-federation/rsbuild-plugin": "^2.2.3",
@@ -39,6 +59,7 @@
     "jest": "^29.7.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.9.10",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8"
   },
