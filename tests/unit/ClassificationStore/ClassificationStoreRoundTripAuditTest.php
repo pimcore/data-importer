@@ -386,7 +386,9 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         // an audit records a crash as a verdict rather than failing on it, which is why this
         // catches Throwable: a TypeError out of a target is exactly one of the findings
         try {
-            $element = (new ClassificationStoreFixture())->object(self::CLASS_NAME, uniqid('cs-audit-', false));
+            // unsaved, so that the save below is this object's only one: see
+            // ClassificationStoreFixture::newObject() for why a second save cannot reach a verdict
+            $element = (new ClassificationStoreFixture())->newObject(self::CLASS_NAME, uniqid('cs-audit-', false));
             $mappingConfiguration = $this->mappingConfiguration($type, $field, $target);
 
             $value = $target === self::TARGET_BATCH

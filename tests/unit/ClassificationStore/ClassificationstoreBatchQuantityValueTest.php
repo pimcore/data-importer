@@ -235,6 +235,11 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      * reload after a real save. The source unit differs from the key definition's default unit, so
      * a unit dropped on the way to the database cannot be masked by the default being restored on
      * the way back.
+     *
+     * The data is assigned before the object's first save rather than after it, which costs the
+     * assertion nothing — `Classificationstore\Dao::save()` deletes and re-inserts the whole
+     * `(object, fieldname)` pair either way — and keeps the save off the one event that needs a
+     * search cluster. See `ClassificationStoreFixture::newObject()`.
      */
     public function testBothQuantityKeyTypesKeepTheirValueAndUnitAcrossASave(): void
     {
@@ -245,7 +250,9 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
             'the source unit has to differ from the definition default for this test to prove anything'
         );
 
-        $element = $this->object();
+        // unsaved, so that the save below is this object's only one: see
+        // ClassificationStoreFixture::newObject() for why a second save cannot reach the database
+        $element = $this->unsavedObject();
         $this->target()->assignData($element, [
             $this->batchKey(self::KEY_QUANTITY_VALUE) => [234, $sourceUnit->getId()],
             $this->batchKey(self::KEY_INPUT_QUANTITY_VALUE) => [self::TEXT_VALUE, self::SOURCE_UNIT],
@@ -350,6 +357,11 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     private function object(): Concrete
     {
         return (new ClassificationStoreFixture())->object(self::CLASS_NAME, uniqid('cs-qv-', false));
+    }
+
+    private function unsavedObject(): Concrete
+    {
+        return (new ClassificationStoreFixture())->newObject(self::CLASS_NAME, uniqid('cs-qv-', false));
     }
 
     private function quantityValue(Concrete $element, string $keyName): AbstractQuantityValue

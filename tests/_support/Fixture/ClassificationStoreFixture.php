@@ -129,7 +129,37 @@ final class ClassificationStoreFixture
         return $definition;
     }
 
+    /**
+     * A saved object, for a test that only reads the in-memory store and never writes to the
+     * database. A test that saves must use {@see self::newObject()} instead.
+     */
     public function object(string $className, string $key): Concrete
+    {
+        $object = $this->newObject($className, $key);
+        $object->save();
+
+        return $object;
+    }
+
+    /**
+     * An object that has never been saved, so that a test which assigns data and then saves spends
+     * exactly one save on it — and that save is an insert.
+     *
+     * **This is not a style preference, it is what keeps the save path reachable in CI.** A second
+     * save is an update, and `DataObjectIndexUpdateSubscriber::updateDataObject()` answers
+     * `POST_UPDATE` — and only `POST_UPDATE` — by calling `IndexElementIndexService::updateSiblings()`,
+     * which reads the element back out of the search index before it compares indices
+     * (`updateSiblings()` → `getIndexedIndex()` → `DataObjectSearchService::byId()`). That is a live
+     * query against a search cluster, and neither this repository's codeception workflow nor
+     * `tests/bin/docker-compose.yml` runs one, so the second save raises
+     * `SearchFailedException: No alive nodes found in your cluster`. `POST_ADD` only queues the
+     * element and never searches, so an insert is unaffected.
+     *
+     * Nothing is given up by writing before the first save: `Classificationstore\Dao::save()` deletes
+     * every row for the `(object, fieldname)` pair and re-inserts, so an insert and an update take the
+     * identical write path through the marshaller and the two value columns.
+     */
+    public function newObject(string $className, string $key): Concrete
     {
         $fqcn = '\\Pimcore\\Model\\DataObject\\' . $className;
         $parent = Service::createFolderByPath('/' . $className);
@@ -139,7 +169,6 @@ final class ClassificationStoreFixture
         $object->setParent($parent);
         $object->setKey($key);
         $object->setPublished(true);
-        $object->save();
 
         return $object;
     }
