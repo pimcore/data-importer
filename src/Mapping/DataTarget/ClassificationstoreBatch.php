@@ -163,6 +163,15 @@ final class ClassificationstoreBatch implements DataTargetInterface
             $unitId = $this->resolveDefaultUnitId($relation);
         }
 
+        // A pair carrying neither a quantity nor a resolvable unit is no value at all. The same
+        // test and the same null are in Operator/Factory/QuantityValue.php:36-37 and in
+        // Operator/Factory/QuantityValueArray.php, which this pair shape comes from. Without it
+        // the cast below reads a blank source cell as 0.0 and imports missing data as a real zero,
+        // where null clears the key — which is what the empty test above does for a plain scalar.
+        if ($this->isEmptyValue($quantity) && $unitId === null) {
+            return null;
+        }
+
         if ($type === self::TYPE_INPUT_QUANTITY_VALUE) {
             return new InputQuantityValue($quantity, $unitId);
         }

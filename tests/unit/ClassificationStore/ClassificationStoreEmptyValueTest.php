@@ -246,10 +246,23 @@ class ClassificationStoreEmptyValueTest extends Unit
     }
 
     /**
+     * The value as the data target assigned it, read off the store's own item map.
+     *
+     * Deliberately not through `getLocalizedKeyValue()`: that accessor runs the key's field
+     * definition `isEmpty()` over the value before returning it
+     * (`models/DataObject/Classificationstore.php:352`), and the `isEmpty()` an `input` key
+     * inherits is `strlen((string) $data) < 1`
+     * (`models/DataObject/ClassDefinition/Data/Extension/Text.php:30`), which cannot be handed the
+     * empty-array member of the shared empty test — it raises "Array to string conversion" inside
+     * core. The item map is the flattened shape `getItems()` publishes, and what the target wrote
+     * into it is what these assertions are about.
+     *
      * @return mixed
      */
     private function keyValue(Concrete $element)
     {
-        return $this->classificationStore($element)->getLocalizedKeyValue($this->groupId, $this->keyId);
+        $items = $this->classificationStore($element)->getItems();
+
+        return $items[$this->groupId][$this->keyId]['default'] ?? null;
     }
 }

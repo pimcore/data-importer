@@ -196,6 +196,77 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
         static::assertNull($this->quantityValue($element, self::KEY_INPUT_QUANTITY_VALUE)->getUnitId());
     }
 
+    /**
+     * A pair carrying neither a quantity nor a resolvable unit writes no value, rather than a
+     * quantity of zero. Asserted over a key that already holds a value, so that the blank pair is
+     * shown to clear it: without the guard the `(float)` cast turns `['', null]` into `0.0` and the
+     * key reads back as a real zero nobody imported.
+     */
+    public function testABlankPairWritesNoValueRatherThanZero(): void
+    {
+        $presets = [
+            self::KEY_QUANTITY_VALUE => '17.5',
+            self::KEY_INPUT_QUANTITY_VALUE => self::TEXT_VALUE,
+        ];
+
+        foreach ([['', null], [null, null]] as $pair) {
+            foreach ($presets as $keyName => $preset) {
+                $label = $keyName . ', [' . var_export($pair[0], true) . ', ' . var_export($pair[1], true) . ']';
+
+                $element = $this->object();
+                $target = $this->target();
+
+                $target->assignData($element, [$this->batchKey($keyName) => $preset]);
+                static::assertInstanceOf(
+                    AbstractQuantityValue::class,
+                    $this->keyValue($element, $keyName),
+                    'the key holds a value before the blank pair, ' . $label
+                );
+
+                $target->assignData($element, [$this->batchKey($keyName) => $pair]);
+                static::assertNull($this->keyValue($element, $keyName), $label);
+            }
+        }
+    }
+
+    /**
+     * The assertions above read the in-memory store, where a loss inside the marshaller or in the
+     * two value columns cannot show. Both quantity key types are therefore read back off a forced
+     * reload after a real save. The source unit differs from the key definition's default unit, so
+     * a unit dropped on the way to the database cannot be masked by the default being restored on
+     * the way back.
+     */
+    public function testBothQuantityKeyTypesKeepTheirValueAndUnitAcrossASave(): void
+    {
+        $sourceUnit = $this->unit(self::SOURCE_UNIT);
+        static::assertNotSame(
+            $this->unit(self::DEFINITION_UNIT)->getId(),
+            $sourceUnit->getId(),
+            'the source unit has to differ from the definition default for this test to prove anything'
+        );
+
+        $element = $this->object();
+        $this->target()->assignData($element, [
+            $this->batchKey(self::KEY_QUANTITY_VALUE) => [234, $sourceUnit->getId()],
+            $this->batchKey(self::KEY_INPUT_QUANTITY_VALUE) => [self::TEXT_VALUE, self::SOURCE_UNIT],
+        ]);
+        $element->save();
+
+        $reloaded = Concrete::getById((int) $element->getId(), ['force' => true]);
+        static::assertInstanceOf(Concrete::class, $reloaded);
+
+        $quantityValue = $this->keyValue($reloaded, self::KEY_QUANTITY_VALUE);
+        static::assertInstanceOf(QuantityValue::class, $quantityValue);
+        // the value column is text, so a reloaded quantity arrives as a numeric string
+        static::assertSame(234.0, (float) $quantityValue->getValue(), 'the stored quantity');
+        static::assertSame($sourceUnit->getId(), $quantityValue->getUnitId(), 'the stored unit id');
+
+        $inputQuantityValue = $this->keyValue($reloaded, self::KEY_INPUT_QUANTITY_VALUE);
+        static::assertInstanceOf(InputQuantityValue::class, $inputQuantityValue);
+        static::assertSame(self::TEXT_VALUE, $inputQuantityValue->getValue(), 'the stored input quantity');
+        static::assertSame($sourceUnit->getId(), $inputQuantityValue->getUnitId(), 'the stored unit id');
+    }
+
     public function testUnknownUnitIdInTheSourceResolvesToNoUnit(): void
     {
         $element = $this->object();
