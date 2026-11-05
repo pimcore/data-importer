@@ -187,7 +187,11 @@ final class ClassificationstoreBatch implements DataTargetInterface
     }
 
     /**
-     * The unit of the key's field definition as the group it is assigned to sees it.
+     * The default unit of the key's own field definition. Not the group's view of it: although a
+     * `KeyGroupRelation` is handed in, `Service::getFieldDefinitionFromKeyConfig()` reads
+     * `getDefinition()` rather than `getEffectiveDefinition()` and memoises the result under the key
+     * id alone, so a per-group `definitionOverride` does not reach here. See follow-up item 5 of
+     * `tests/unit/ClassificationStore/CLASSIFICATION_STORE_ROUND_TRIP_AUDIT.md`.
      *
      * @param KeyGroupRelation $relation
      *

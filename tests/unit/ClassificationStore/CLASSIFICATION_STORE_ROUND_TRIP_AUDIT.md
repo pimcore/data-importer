@@ -252,17 +252,23 @@ already covers it.
    should agree, and which one moves, is a behaviour change for existing configurations and belongs
    in its own ticket.
 5. *A per-group unit override is stored but does not reach the importer.* The override **does**
-   exist on this branch: `KeyGroupRelation` carries `$definitionOverride`, `defaultUnit` is one of
-   the three properties an assignment may override, and `KeyGroupRelation::getEffectiveDefinition()`
-   merges it over the key's own definition. What drops it is the accessor in between. The unit for a
-   plain scalar is taken from `Classificationstore\Service::getFieldDefinitionFromKeyConfig()`, which
-   reads `$keyConfig->getDefinition()` — not `getEffectiveDefinition()` — and memoises the result
-   under the key id alone, so the same definition is returned for every group the key is assigned to.
-   Core's own docblock on `getEffectiveDefinition()` says as much: nothing in core reads it yet.
+   exist on the classification store branch this epic develops against: `KeyGroupRelation` carries
+   `$definitionOverride` (`models/DataObject/Classificationstore/KeyGroupRelation.php:93`, column
+   added by migration `Version20261029100000`), `defaultUnit` is one of the three properties an
+   assignment may override, and `KeyGroupRelation::getEffectiveDefinition()` (`:294`) merges it over
+   the key's own definition. Only the released lines have no per-group definition at all —
+   `git grep definitionOverride` finds nothing on `2026.x` or `2026.3`. What drops it on this branch
+   is the accessor in between. The unit for a plain scalar is taken from
+   `Classificationstore\Service::getFieldDefinitionFromKeyConfig()`, which reads
+   `$keyConfig->getDefinition()` — not `getEffectiveDefinition()` — and memoises the result under the
+   key id alone (`Service.php:52`, `:59`, `:63`), so the same definition is returned for every group
+   the key is assigned to. Core's own docblock on `getEffectiveDefinition()` says as much: nothing in
+   core reads it yet.
    The importer is the consumer here, not the defect, and it is left as the consumer deliberately:
-   it begins honouring the override once core resolves definitions through it and keys the definition
-   cache on (key id, group id). Calling `getEffectiveDefinition()` from this bundle would duplicate
-   the resolution that change centralises, and is not done here.
+   it begins honouring the override when pimcore/product-management#1729 lands, which resolves
+   definitions through the per-group override — on top of #1728 — and keys the definition cache on
+   (key id, group id). Calling `getEffectiveDefinition()` from this bundle would duplicate the
+   resolution that change centralises, and is not done here.
    The unit a plain scalar resolves to is therefore the key's own, whichever group it was written
    through; no test here pins that, because it is core's resolution and not this bundle's.
 6. *The mapping editor offers classification store keys of types that cannot be stored.*

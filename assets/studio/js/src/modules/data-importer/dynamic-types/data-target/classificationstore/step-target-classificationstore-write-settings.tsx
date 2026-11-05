@@ -20,16 +20,16 @@ import {
 } from './classification-store-write-settings'
 
 export interface StepTargetClassificationstoreWriteSettingsProps {
-  settings: DataTargetConfig['settings']
-  target: ClassificationStoreTargetId
-  onChange: (settings: DataTargetConfig['settings']) => void
+  readonly settings: DataTargetConfig['settings']
+  readonly target: ClassificationStoreTargetId
+  readonly onChange: (settings: DataTargetConfig['settings']) => void
 }
 
 export function StepTargetClassificationstoreWriteSettings ({
   settings,
   target,
   onChange
-}: StepTargetClassificationstoreWriteSettingsProps): React.JSX.Element {
+}: Readonly<StepTargetClassificationstoreWriteSettingsProps>): React.JSX.Element {
   const { t } = useTranslation()
   const { styles } = useStyles()
 

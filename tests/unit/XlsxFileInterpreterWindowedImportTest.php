@@ -215,7 +215,7 @@ class XlsxFileInterpreterWindowedImportTest extends Unit
         $zip = new ZipArchive();
         $zip->open($path);
         $patched = preg_replace(
-            '#(<f>[^<]*</f>)<v>[^<]*</v>#',
+            '#(<f>[^<]*</f>)<v>[^<]*</v>#u',
             '$1<v>999</v>',
             (string)$zip->getFromName(self::SHEET_XML_ENTRY),
             1,

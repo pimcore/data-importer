@@ -221,7 +221,7 @@ class ClassificationStoreRoundTripAuditTest extends Unit
     {
         $rows = [];
         foreach (explode("\n", $table) as $line) {
-            if (preg_match('/^\| (\S+) \| (\S+) \| (\S+) \| /', $line, $matches) !== 1) {
+            if (preg_match('/^\| (\S+) \| (\S+) \| (\S+) \| /u', $line, $matches) !== 1) {
                 continue;
             }
 
@@ -278,28 +278,8 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         $types = [];
         foreach ((array)glob($directory . '/*.php') as $file) {
             $className = Data::class . '\\' . basename((string)$file, '.php');
-            if (!class_exists($className)) {
-                continue;
-            }
-
-            $reflection = new ReflectionClass($className);
-            if ($reflection->isAbstract()) {
-                continue;
-            }
-
-            // a field definition the scanner cannot build is not one a key config can carry either
-            try {
-                $fieldDefinition = $reflection->newInstance();
-            } catch (Throwable) {
-                continue;
-            }
-
-            if (!$fieldDefinition instanceof NormalizerInterface || !$fieldDefinition instanceof Data) {
-                continue;
-            }
-
-            $type = $fieldDefinition->getFieldType();
-            if ($type === '') {
+            $type = $this->keyTypeOf($className);
+            if ($type === null) {
                 continue;
             }
 
@@ -313,6 +293,38 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         $this->acceptedKeyTypes = $types;
 
         return $types;
+    }
+
+    /**
+     * The field type the given class definition data class carries, or null when it is not a class a
+     * key config could hold at all: not loadable, abstract, not constructible without arguments, not
+     * a normaliser, or nameless.
+     */
+    private function keyTypeOf(string $className): ?string
+    {
+        if (!class_exists($className)) {
+            return null;
+        }
+
+        $reflection = new ReflectionClass($className);
+        if ($reflection->isAbstract()) {
+            return null;
+        }
+
+        // a field definition the scanner cannot build is not one a key config can carry either
+        try {
+            $fieldDefinition = $reflection->newInstance();
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (!$fieldDefinition instanceof NormalizerInterface || !$fieldDefinition instanceof Data) {
+            return null;
+        }
+
+        $type = $fieldDefinition->getFieldType();
+
+        return $type === '' ? null : $type;
     }
 
     /**
@@ -490,11 +502,11 @@ class ClassificationStoreRoundTripAuditTest extends Unit
      */
     private function documentedKeyTypes(): array
     {
-        if (preg_match('/## Key types under audit.*?```\n(.*?)```/s', $this->auditDocument(), $matches) !== 1) {
+        if (preg_match('/## Key types under audit.*?```\n(.*?)```/su', $this->auditDocument(), $matches) !== 1) {
             static::fail('The audit document states no key type list under "## Key types under audit".');
         }
 
-        $types = (array)preg_split('/\s+/', trim($matches[1]), -1, PREG_SPLIT_NO_EMPTY);
+        $types = (array)preg_split('/\s+/u', trim($matches[1]), -1, PREG_SPLIT_NO_EMPTY);
         sort($types);
 
         return $types;
