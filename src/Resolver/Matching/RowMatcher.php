@@ -47,19 +47,25 @@ final class RowMatcher
 
     private readonly Collator $valueCollator;
 
+    // where new objects land, when that is not already part of the target folder
+    private readonly ?string $newObjectPath;
+
     /**
-     * @param list<string> $searchPaths the normalized paths that are searched for a match, with what lies below them
+     * @param string $targetPath the normalized path of the target folder, searched with what lies below it
      */
     public function __construct(
         private readonly Resolver $resolver,
         private readonly DataObjectLoader $dataObjectLoader,
         private readonly MatchingConfiguration $configuration,
         private readonly string $className,
-        private readonly array $searchPaths,
+        private readonly string $targetPath,
         private readonly ElementInterface $newObjectFolder,
     ) {
         $this->valueCollator = new Collator('root');
         $this->valueCollator->setStrength(Collator::PRIMARY);
+
+        $newObjectPath = rtrim($newObjectFolder->getRealFullPath(), '/') . '/';
+        $this->newObjectPath = str_starts_with($newObjectPath, $targetPath) ? null : $newObjectPath;
     }
 
     /**
@@ -105,7 +111,7 @@ final class RowMatcher
         }
 
         $path = $object->getRealPath();
-        if (!array_any($this->searchPaths, static fn (string $searched): bool => str_starts_with($path, $searched))) {
+        if (!str_starts_with($path, $this->targetPath) && $path !== $this->newObjectPath) {
             return new RowMatch(RowMatchOutcome::OutsideTargetFolder, $value, objectIds: [$id]);
         }
 
@@ -118,11 +124,14 @@ final class RowMatcher
 
     private function findByAttribute(string $attributeName, string $value): RowMatch|int|null
     {
-        $ids = [];
-        foreach ($this->searchPaths as $path) {
-            array_push($ids, ...$this->findIds($attributeName, $value, $path, self::MAX_REPORTED_MATCHES));
+        $ids = $this->findIds($attributeName, $value, $this->targetPath, self::MAX_REPORTED_MATCHES);
+        if ($this->newObjectPath !== null) {
+            array_push(
+                $ids,
+                ...$this->findIds($attributeName, $value, $this->newObjectPath, self::MAX_REPORTED_MATCHES, true)
+            );
         }
-        $ids = array_slice(array_unique($ids), 0, self::MAX_REPORTED_MATCHES);
+        $ids = array_slice($ids, 0, self::MAX_REPORTED_MATCHES);
 
         if (count($ids) > 1) {
             return new RowMatch(RowMatchOutcome::SeveralMatches, $value, objectIds: $ids);
@@ -142,15 +151,21 @@ final class RowMatcher
     /**
      * @return list<int>
      */
-    private function findIds(string $attributeName, string $value, string $path, int $limit): array
-    {
+    private function findIds(
+        string $attributeName,
+        string $value,
+        string $path,
+        int $limit,
+        bool $directlyInPath = false
+    ): array {
         return $this->dataObjectLoader->findIdsByAttribute(
             $this->className,
             $attributeName,
             $value,
             $this->configuration->language,
             $path,
-            $limit
+            $limit,
+            $directlyInPath
         );
     }
 

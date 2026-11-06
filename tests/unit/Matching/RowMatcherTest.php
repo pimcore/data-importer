@@ -39,6 +39,10 @@ class RowMatcherTest extends Unit
 
     private const OTHER_BRICK_NAME = 'DiRowMatcherOtherBrick';
 
+    private const LOCALIZED_BRICK_NAME = 'DiRowMatcherLocalizedBrick';
+
+    private const INHERITING_CLASS_NAME = 'DiRowMatcherInheritingClass';
+
     private const CLASS_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
 
     private const ROOT = '/di-row-matcher';
@@ -314,6 +318,54 @@ class RowMatcherTest extends Unit
         );
     }
 
+    public static function foldersAboveTheTarget(): array
+    {
+        return [
+            'an ancestor of the target folder' => [self::ROOT],
+            'the tree root' => ['/'],
+        ];
+    }
+
+    /**
+     * @dataProvider foldersAboveTheTarget
+     */
+    public function testAFolderForNewObjectsAboveTheTargetDoesNotWidenTheSearch(string $newObjectFolder): void
+    {
+        $outside = $this->createObject(self::ELSEWHERE, 'SKU-1');
+        $byField = $this->configuration(attributeName: 'sku', newObjectFolder: $newObjectFolder);
+        $byId = $this->configuration(newObjectFolder: $newObjectFolder);
+
+        $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $this->matchOne($byField, 'SKU-1')->outcome);
+        $this->assertSame(
+            RowMatchOutcome::OutsideTargetFolder,
+            $this->matchOne($byId, (string) $outside->getId())->outcome
+        );
+    }
+
+    public function testAnObjectDirectlyInAFolderForNewObjectsAboveTheTargetIsFound(): void
+    {
+        $made = $this->createObject(self::ROOT, 'SKU-1');
+        $byField = $this->configuration(attributeName: 'sku', newObjectFolder: self::ROOT);
+        $byId = $this->configuration(newObjectFolder: self::ROOT);
+
+        $this->assertSame($made->getId(), $this->matchOne($byField, 'SKU-1')->element?->getId());
+        $this->assertSame($made->getId(), $this->matchOne($byId, (string) $made->getId())->element?->getId());
+    }
+
+    public function testAnObjectBelowTheFolderForNewObjectsStaysOutside(): void
+    {
+        Service::createFolderByPath(self::NEW_FOLDER);
+        $below = $this->createObject(self::NEW_FOLDER . '/sub', 'SKU-1');
+        $byField = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
+        $byId = $this->configuration(newObjectFolder: self::NEW_FOLDER);
+
+        $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $this->matchOne($byField, 'SKU-1')->outcome);
+        $this->assertSame(
+            RowMatchOutcome::OutsideTargetFolder,
+            $this->matchOne($byId, (string) $below->getId())->outcome
+        );
+    }
+
     public function testTheKeyOfANewObjectIsAValidKey(): void
     {
         $match = $this->matchOne($this->byField(), 'A/B');
@@ -463,6 +515,76 @@ class RowMatcherTest extends Unit
         $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $matcher->match($this->row('Code-2'), 3)->outcome);
     }
 
+    public function testABrickAttributeOnlyMatchesInTheNamedField(): void
+    {
+        $object = $this->unsavedObject(self::TARGET, 'SKU-1');
+        $brickClass = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\' . self::BRICK_NAME;
+        $brick = new $brickClass($object);
+        $brick->setCode('Code-1');
+        $object->getOtherBricks()->setDiRowMatcherBrick($brick);
+        $object->save();
+        $named = 'otherBricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE;
+        $other = 'bricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE;
+
+        $this->assertSame(
+            $object->getId(),
+            $this->matchOne($this->configuration(attributeName: $named), 'Code-1')->element?->getId()
+        );
+        $this->assertSame(
+            RowMatchOutcome::New,
+            $this->matchOne($this->configuration(attributeName: $other), 'Code-1')->outcome
+        );
+    }
+
+    public static function fieldsThatKeepTheTextAsItIs(): array
+    {
+        return [
+            'textarea' => ['notes', 'setNotes'],
+            'select' => ['state', 'setState'],
+        ];
+    }
+
+    /**
+     * @dataProvider fieldsThatKeepTheTextAsItIs
+     */
+    public function testAFieldThatKeepsTheTextAsItIsIsMatched(string $field, string $setter): void
+    {
+        $object = $this->unsavedObject(self::TARGET, 'SKU-1');
+        $object->$setter('red');
+        $object->save();
+
+        $match = $this->matchOne($this->configuration(attributeName: $field), 'red');
+
+        $this->assertSame($object->getId(), $match->element?->getId());
+    }
+
+    public function testAVariantIsFoundByItsOwnValueAndItsObjectId(): void
+    {
+        $parent = $this->createObject(self::TARGET, 'PARENT', null, true, self::INHERITING_CLASS_NAME);
+        $variant = $this->createVariant($parent, 'VARIANT');
+        $classId = ClassDefinition::getByName(self::INHERITING_CLASS_NAME)->getId();
+
+        $byField = $this->matchOne($this->configuration(classId: $classId, attributeName: 'sku'), 'VARIANT');
+        $byId = $this->matchOne($this->configuration(classId: $classId), (string) $variant->getId());
+
+        $this->assertSame(RowMatchOutcome::Existing, $byField->outcome);
+        $this->assertSame($variant->getId(), $byField->element?->getId());
+        $this->assertSame(RowMatchOutcome::Existing, $byId->outcome);
+        $this->assertSame($variant->getId(), $byId->element?->getId());
+    }
+
+    public function testAParentAndAVariantInheritingItsValueAreSeveralMatches(): void
+    {
+        $parent = $this->createObject(self::TARGET, 'SKU-1', null, true, self::INHERITING_CLASS_NAME);
+        $variant = $this->createVariant($parent, null);
+        $classId = ClassDefinition::getByName(self::INHERITING_CLASS_NAME)->getId();
+
+        $match = $this->matchOne($this->configuration(classId: $classId, attributeName: 'sku'), 'SKU-1');
+
+        $this->assertSame(RowMatchOutcome::SeveralMatches, $match->outcome);
+        $this->assertEqualsCanonicalizing([$parent->getId(), $variant->getId()], $match->objectIds);
+    }
+
     public function testATargetFolderWithATrailingSlashIsTheFolder(): void
     {
         $object = $this->createObject(self::TARGET, 'SKU-1');
@@ -503,6 +625,11 @@ class RowMatcherTest extends Unit
             'unknown field' => [['attributeName' => 'nope']],
             'field name with SQL' => [['attributeName' => "sku' OR 1=1 --"]],
             'relation field' => [['attributeName' => 'related']],
+            'many-to-many object relation, whose column wraps the ids in commas' => [['attributeName' => 'relatedMany']],
+            'many-to-many relation' => [['attributeName' => 'relatedElements']],
+            'multiselect field, whose column wraps the values in commas' => [['attributeName' => 'colors']],
+            'password field, whose column holds a hash' => [['attributeName' => 'secret']],
+            'link field, whose column holds a serialized value' => [['attributeName' => 'website']],
             'field over several columns' => [['attributeName' => 'weight']],
             'numeric field, where 12abc would compare as 12' => [['attributeName' => 'articleNo']],
             'checkbox field, where n/a would compare as 0' => [['attributeName' => 'active']],
@@ -511,6 +638,9 @@ class RowMatcherTest extends Unit
             'invalid language' => [['attributeName' => 'title', 'language' => 'en_xx-nope']],
             'brick the field does not allow' => [
                 ['attributeName' => 'bricks.' . self::OTHER_BRICK_NAME . self::BRICK_ATTRIBUTE],
+            ],
+            'localized brick attribute, whose column is in a table the lookup does not join' => [
+                ['attributeName' => 'bricks.' . self::LOCALIZED_BRICK_NAME . self::BRICK_ATTRIBUTE, 'language' => 'en'],
             ],
             'unknown brick attribute' => [['attributeName' => 'bricks.' . self::BRICK_NAME . '.nope']],
             'not a brick container' => [['attributeName' => 'sku.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE]],
@@ -659,11 +789,31 @@ class RowMatcherTest extends Unit
         return $object;
     }
 
+    private function createVariant(Concrete $parent, ?string $sku): Concrete
+    {
+        $fqcn = self::CLASS_NAMESPACE . self::INHERITING_CLASS_NAME;
+
+        /** @var Concrete $variant */
+        $variant = new $fqcn();
+        $variant->setParent($parent);
+        $variant->setKey(uniqid('v', true));
+        $variant->setPublished(true);
+        $variant->setType(DataObject::OBJECT_TYPE_VARIANT);
+        $variant->setSku($sku);
+        $variant->save();
+
+        return $variant;
+    }
+
     private function createClass(): ClassDefinition
     {
         $definition = $this->createClassNamed(self::CLASS_NAME);
-        $this->createBrick(self::BRICK_NAME, [['classname' => self::CLASS_NAME, 'fieldname' => 'bricks']]);
+        $this->createBrick(self::BRICK_NAME, [
+            ['classname' => self::CLASS_NAME, 'fieldname' => 'bricks'],
+            ['classname' => self::CLASS_NAME, 'fieldname' => 'otherBricks'],
+        ]);
         $this->createBrick(self::OTHER_BRICK_NAME, []);
+        $this->createBrick(self::LOCALIZED_BRICK_NAME, [['classname' => self::CLASS_NAME, 'fieldname' => 'bricks']], true);
 
         return $definition;
     }
@@ -692,14 +842,57 @@ class RowMatcherTest extends Unit
 
             $bricks = new ClassDefinition\Data\Objectbricks();
             $bricks->setName('bricks');
-            $bricks->setAllowedTypes([self::BRICK_NAME]);
+            $bricks->setAllowedTypes([self::BRICK_NAME, self::LOCALIZED_BRICK_NAME]);
             $panel->addChild($bricks);
+
+            $otherBricks = new ClassDefinition\Data\Objectbricks();
+            $otherBricks->setName('otherBricks');
+            $otherBricks->setAllowedTypes([self::BRICK_NAME]);
+            $panel->addChild($otherBricks);
 
             $related = new ClassDefinition\Data\ManyToOneRelation();
             $related->setName('related');
             $related->setTitle('related');
             $related->setObjectsAllowed(true);
             $panel->addChild($related);
+
+            $relatedMany = new ClassDefinition\Data\ManyToManyObjectRelation();
+            $relatedMany->setName('relatedMany');
+            $relatedMany->setTitle('relatedMany');
+            $panel->addChild($relatedMany);
+
+            $relatedElements = new ClassDefinition\Data\ManyToManyRelation();
+            $relatedElements->setName('relatedElements');
+            $relatedElements->setTitle('relatedElements');
+            $relatedElements->setObjectsAllowed(true);
+            $panel->addChild($relatedElements);
+
+            $colors = new ClassDefinition\Data\Multiselect();
+            $colors->setName('colors');
+            $colors->setTitle('colors');
+            $colors->setOptions([['key' => 'red', 'value' => 'red']]);
+            $panel->addChild($colors);
+
+            $secret = new ClassDefinition\Data\Password();
+            $secret->setName('secret');
+            $secret->setTitle('secret');
+            $panel->addChild($secret);
+
+            $website = new ClassDefinition\Data\Link();
+            $website->setName('website');
+            $website->setTitle('website');
+            $panel->addChild($website);
+
+            $notes = new ClassDefinition\Data\Textarea();
+            $notes->setName('notes');
+            $notes->setTitle('notes');
+            $panel->addChild($notes);
+
+            $state = new ClassDefinition\Data\Select();
+            $state->setName('state');
+            $state->setTitle('state');
+            $state->setOptions([['key' => 'red', 'value' => 'red']]);
+            $panel->addChild($state);
 
             $weight = new ClassDefinition\Data\QuantityValue();
             $weight->setName('weight');
@@ -725,6 +918,10 @@ class RowMatcherTest extends Unit
         $definition = new ClassDefinition();
         $definition->setName($name);
         $definition->setLayoutDefinitions($panel);
+        if ($name === self::INHERITING_CLASS_NAME) {
+            $definition->setAllowInherit(true);
+            $definition->setAllowVariants(true);
+        }
         $definition->save();
 
         return $definition;
@@ -733,7 +930,7 @@ class RowMatcherTest extends Unit
     /**
      * @param list<array{classname: string, fieldname: string}> $classDefinitions
      */
-    private function createBrick(string $name, array $classDefinitions): void
+    private function createBrick(string $name, array $classDefinitions, bool $localized = false): void
     {
         if (Objectbrick\Definition::getByKey($name) instanceof Objectbrick\Definition) {
             return;
@@ -745,7 +942,14 @@ class RowMatcherTest extends Unit
 
         $panel = new ClassDefinition\Layout\Panel();
         $panel->setName('pimcore_root');
-        $panel->addChild($code);
+        if ($localized) {
+            $localizedFields = new ClassDefinition\Data\Localizedfields();
+            $localizedFields->setName('localizedfields');
+            $localizedFields->addChild($code);
+            $panel->addChild($localizedFields);
+        } else {
+            $panel->addChild($code);
+        }
 
         $definition = new Objectbrick\Definition();
         $definition->setKey($name);

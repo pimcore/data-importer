@@ -130,8 +130,8 @@ final class DataObjectLoader
     }
 
     /**
-     * The ids of the objects whose attribute has the value, published or not, at or below the given normalized path;
-     * unlike loadByAttribute() it tells one match from several.
+     * The ids of the objects whose attribute has the value, published or not, at or below the given normalized path,
+     * or only directly in it (`/` is the tree root then); unlike loadByAttribute() it tells one match from several.
      *
      * @return list<int>
      */
@@ -141,7 +141,8 @@ final class DataObjectLoader
         string $identifier,
         string $attributeLanguage,
         string $path,
-        int $limit
+        int $limit,
+        bool $directlyInPath = false
     ): array {
         // the name goes into the listing condition unquoted for object brick attributes
         if (preg_match(self::ATTRIBUTE_NAME_PATTERN, $attributeName) !== 1) {
@@ -155,10 +156,14 @@ final class DataObjectLoader
             'limit' => $limit,
         ];
 
+        $container = '';
         if ($this->isObjectBrickAttribute($attributeName)) {
             $objectBrickParts = $this->getObjectBrickParts($attributeName);
             $options['objectbricks'] = [$objectBrickParts[self::BRICK_NAME]];
             $field = $this->getAttributeNameFromParts($objectBrickParts, false);
+            // a brick can sit in several fields of a class, and its table has one row per field
+            $container = $objectBrickParts[self::BRICK_NAME] . '.fieldname = '
+                . $db->quote($objectBrickParts[self::CLASS_FIELD_NAME]) . ' AND ';
         } else {
             $field = $db->quoteIdentifier($attributeName);
         }
@@ -167,7 +172,10 @@ final class DataObjectLoader
             $options['locale'] = $attributeLanguage;
         }
 
-        $options['condition'] = $field . ' = ' . $db->quote($identifier) . $this->getPathCondition($path);
+        $pathCondition = $directlyInPath
+            ? ' AND ' . $db->quoteIdentifier('path') . ' = ' . $db->quote($path)
+            : $this->getPathCondition($path);
+        $options['condition'] = $container . $field . ' = ' . $db->quote($identifier) . $pathCondition;
 
         return $className::getList($options)->loadIdList();
     }

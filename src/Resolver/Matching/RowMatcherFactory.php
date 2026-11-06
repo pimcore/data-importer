@@ -18,9 +18,11 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
-use Pimcore\Model\DataObject\ClassDefinition\Data\QueryResourcePersistenceAwareInterface;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Textarea;
 use Pimcore\Model\DataObject\Objectbrick;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Tool;
@@ -71,20 +73,9 @@ final class RowMatcherFactory
             $this->dataObjectLoader,
             $configuration,
             '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName()),
-            $this->searchPaths($targetFolder, $newObjectFolder),
+            $this->dataObjectLoader->normalizePath($targetFolder->getRealFullPath()),
             $newObjectFolder
         );
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function searchPaths(ElementInterface $targetFolder, ElementInterface $newObjectFolder): array
-    {
-        $targetPath = $this->dataObjectLoader->normalizePath($targetFolder->getRealFullPath());
-        $newObjectPath = $this->dataObjectLoader->normalizePath($newObjectFolder->getRealFullPath());
-
-        return str_starts_with($newObjectPath, $targetPath) ? [$targetPath] : [$targetPath, $newObjectPath];
     }
 
     private function loadFolder(string $path): ElementInterface
@@ -119,13 +110,10 @@ final class RowMatcherFactory
             throw new InvalidConfigurationException("Localized field `{$attributeName}` needs a language.");
         }
 
-        // the lookup compares one column as text: no relations, no value that spreads over several columns, and no
-        // number or date column, where the database would read `12abc` as 12 and change the wrong object
-        if (
-            !$definition instanceof QueryResourcePersistenceAwareInterface
-            || !is_string($definition->getQueryColumnType())
-            || preg_match('/char|text/i', $definition->getQueryColumnType()) !== 1
-        ) {
+        // the lookup compares one column with the cell, so only fields that keep the text as it is: a multiselect or a
+        // many-to-many relation wraps it in commas and would never match, which makes a second object, and a number or
+        // date column reads `12abc` as 12 and changes the wrong object
+        if (!$definition instanceof Input && !$definition instanceof Select && !$definition instanceof Textarea) {
             throw new InvalidConfigurationException("Objects cannot be matched by field `{$attributeName}`.");
         }
     }
@@ -146,6 +134,7 @@ final class RowMatcherFactory
             return null;
         }
 
-        return Objectbrick\Definition::getByKey($brick)?->getFieldDefinition($field);
+        // not getFieldDefinition(), which also finds a localized attribute: its column is in a table the lookup does not join
+        return Objectbrick\Definition::getByKey($brick)?->getFieldDefinitions()[$field] ?? null;
     }
 }
