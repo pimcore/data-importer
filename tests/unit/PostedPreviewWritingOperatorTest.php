@@ -35,11 +35,12 @@ class PostedPreviewWritingOperatorTest extends Unit
 
             public function setSettings(array $settings): void
             {
+                // takes no settings
             }
 
             public function process($inputData, bool $dryRun = false)
             {
-                self::$processed = true;
+                static::$processed = true;
 
                 return $inputData;
             }
@@ -56,6 +57,7 @@ class PostedPreviewWritingOperatorTest extends Unit
 
             public function setConfigName(string $configName)
             {
+                // logs nothing, so needs no configuration name
             }
         };
 
