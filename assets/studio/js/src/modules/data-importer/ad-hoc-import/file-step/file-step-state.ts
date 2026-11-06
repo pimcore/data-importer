@@ -53,7 +53,7 @@ export const refusedForFormat = (): InspectedFile => ({
 /**
  * A column chosen for matching stays only while the file still has it. XLSX columns and columns without a header are
  * known by their position, so the same dataIndex can be another column: it has to keep its name, and without a header
- * there is no name to tell one sheet's column from another's.
+ * there is no name, so only an unchanged sheet or way of splitting the rows tells it is still the same column.
  */
 export const keepMatchColumn = (objects: ObjectsSettings, before: InspectedFile, inspected: InspectedFile): ObjectsSettings => {
   if (objects.matchColumn === undefined) {
@@ -63,9 +63,14 @@ export const keepMatchColumn = (objects: ObjectsSettings, before: InspectedFile,
   const chosenIn = ({ columns }: InspectedFile): string | undefined =>
     columns.find(({ dataIndex }) => dataIndex === objects.matchColumn)?.label
 
+  const splitsAlike = inspected.sheetName === before.sheetName &&
+    inspected.delimiter === before.delimiter &&
+    inspected.enclosure === before.enclosure &&
+    inspected.escape === before.escape
+
   const isSameColumn = chosenIn(inspected) !== undefined &&
     chosenIn(inspected) === chosenIn(before) &&
-    (inspected.hasHeaderRow || inspected.sheetName === before.sheetName)
+    (inspected.hasHeaderRow || splitsAlike)
 
   return isSameColumn ? objects : { ...objects, matchColumn: undefined }
 }
