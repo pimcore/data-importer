@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useMemo } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { api as classDefinitionApi } from '@pimcore/studio-ui-bundle/api/class-definition'
 import { Flex, Form, FormKit, ManyToOneRelationPath, Segmented, Select } from '@pimcore/studio-ui-bundle/components'
 import { useBundleDataImporterAdHocImportLoadMatchFieldsQuery } from '../../data-importer-api-slice-enhanced'
@@ -22,6 +22,12 @@ const MATCH_WIDTH = 140
 const FOLDER_WIDTH = 300
 const FORM_ITEM_STYLE = { marginBottom: 0 }
 
+const useStyles = createStyles(({ token, css }) => ({
+  quiet: css`
+    color: ${token.colorTextTertiary};
+  `
+}))
+
 export interface ObjectsPanelProps {
   inspected?: InspectedFile
   objects: ObjectsSettings
@@ -30,6 +36,7 @@ export interface ObjectsPanelProps {
 
 export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const { classId, matchBy, matchField, matchColumn, newObjectsFolder } = objects
 
   const { data: classes, isLoading: isLoadingClasses } = classDefinitionApi.endpoints.classDefinitionCollectionCreatable.useQuery({})
@@ -115,7 +122,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
               value={ matchField }
             />
           ) }
-          <span>{ t('data-importer.ad-hoc-import.objects.from-column') }</span>
+          <span className={ styles.quiet }>{ t('data-importer.ad-hoc-import.objects.from-column') }</span>
           <Select
             aria-label={ t('data-importer.ad-hoc-import.objects.from-column') }
             disabled={ !hasColumns }
@@ -136,7 +143,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
           <span>
             { t('data-importer.ad-hoc-import.objects.new-objects-in') }
             { ' ' }
-            { t('data-importer.ad-hoc-import.objects.optional') }
+            <span className={ styles.quiet }>{ t('data-importer.ad-hoc-import.objects.optional') }</span>
           </span>
         ) }
         style={ FORM_ITEM_STYLE }

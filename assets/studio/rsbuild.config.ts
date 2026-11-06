@@ -87,6 +87,12 @@ export default defineConfig({
       },
       shared: {
         ...packages.dependencies,
+        // only Studio's instance: the version hoisted here carries neither its theme nor its styles
+        antd: {
+          import: false,
+          singleton: true,
+          requiredVersion: false,
+        },
         react: {
           singleton: true,
           eager: true,

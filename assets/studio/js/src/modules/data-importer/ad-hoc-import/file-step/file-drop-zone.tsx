@@ -31,8 +31,8 @@ export interface FileDropZoneProps {
 }
 
 /**
- * Built like Studio's `FileDropZone`, which `import-modal` does not export. It sets no `accept`: Studio's antd drops a
- * file of another type without a word, and such a file has to be refused with its reason.
+ * Built like Studio's `FileDropZone`, which `import-modal` does not export. It sets no `accept`: antd drops a file of
+ * another type without a word, and such a file has to be refused with its reason.
  */
 export const FileDropZone = ({ onFile }: FileDropZoneProps): React.JSX.Element => {
   const { t } = useTranslation()

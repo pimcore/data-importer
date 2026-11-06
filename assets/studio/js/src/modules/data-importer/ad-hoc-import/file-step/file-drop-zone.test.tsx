@@ -27,7 +27,7 @@ describe('FileDropZone', () => {
 
     expect(screen.getByText('Drag and drop an XLSX or CSV file here, or click to choose one')).toBeTruthy()
 
-    // the antd of these tests does not filter a drop by it, Studio's does
+    // antd would drop a file outside `accept` without a word
     const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
     expect(input.accept).toBe('')
 
