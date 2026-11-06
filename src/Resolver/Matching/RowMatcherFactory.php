@@ -134,7 +134,8 @@ final class RowMatcherFactory
             return null;
         }
 
-        // not getFieldDefinition(), which also finds a localized attribute: its column is in a table the lookup does not join
+        // not getFieldDefinition(), which also finds a localized attribute:
+        // its column is in a table the lookup does not join
         return Objectbrick\Definition::getByKey($brick)?->getFieldDefinitions()[$field] ?? null;
     }
 }

@@ -21,27 +21,27 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcher;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherFactory;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\RowMatcherModel;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\DataObject\Objectbrick;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Tests\Support\Util\TestHelper;
 
 class RowMatcherTest extends Unit
 {
-    private const CLASS_NAME = 'DiRowMatcherClass';
+    private const CLASS_NAME = RowMatcherModel::CLASS_NAME;
 
     private const OTHER_CLASS_NAME = 'DiRowMatcherOtherClass';
 
-    private const BRICK_NAME = 'DiRowMatcherBrick';
+    private const BRICK_NAME = RowMatcherModel::BRICK_NAME;
 
-    private const OTHER_BRICK_NAME = 'DiRowMatcherOtherBrick';
+    private const OTHER_BRICK_NAME = RowMatcherModel::OTHER_BRICK_NAME;
 
-    private const LOCALIZED_BRICK_NAME = 'DiRowMatcherLocalizedBrick';
+    private const LOCALIZED_BRICK_NAME = RowMatcherModel::LOCALIZED_BRICK_NAME;
 
-    private const INHERITING_CLASS_NAME = 'DiRowMatcherInheritingClass';
+    private const INHERITING_CLASS_NAME = RowMatcherModel::INHERITING_CLASS_NAME;
 
     private const CLASS_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
 
@@ -68,7 +68,7 @@ class RowMatcherTest extends Unit
 
     protected function _before(): void
     {
-        $this->class = ClassDefinition::getByName(self::CLASS_NAME) ?? $this->createClass();
+        $this->class = ClassDefinition::getByName(self::CLASS_NAME) ?? RowMatcherModel::createClass();
         Service::createFolderByPath(self::TARGET);
     }
 
@@ -625,7 +625,9 @@ class RowMatcherTest extends Unit
             'unknown field' => [['attributeName' => 'nope']],
             'field name with SQL' => [['attributeName' => "sku' OR 1=1 --"]],
             'relation field' => [['attributeName' => 'related']],
-            'many-to-many object relation, whose column wraps the ids in commas' => [['attributeName' => 'relatedMany']],
+            'many-to-many object relation, whose column wraps the ids in commas' => [
+                ['attributeName' => 'relatedMany'],
+            ],
             'many-to-many relation' => [['attributeName' => 'relatedElements']],
             'multiselect field, whose column wraps the values in commas' => [['attributeName' => 'colors']],
             'password field, whose column holds a hash' => [['attributeName' => 'secret']],
@@ -775,7 +777,7 @@ class RowMatcherTest extends Unit
         bool $published = true,
         string $className = self::CLASS_NAME
     ): Concrete {
-        ClassDefinition::getByName($className) ?? $this->createClassNamed($className);
+        ClassDefinition::getByName($className) ?? RowMatcherModel::createClassNamed($className);
 
         $fqcn = self::CLASS_NAMESPACE . $className;
 
@@ -803,158 +805,5 @@ class RowMatcherTest extends Unit
         $variant->save();
 
         return $variant;
-    }
-
-    private function createClass(): ClassDefinition
-    {
-        $definition = $this->createClassNamed(self::CLASS_NAME);
-        $this->createBrick(self::BRICK_NAME, [
-            ['classname' => self::CLASS_NAME, 'fieldname' => 'bricks'],
-            ['classname' => self::CLASS_NAME, 'fieldname' => 'otherBricks'],
-        ]);
-        $this->createBrick(self::OTHER_BRICK_NAME, []);
-        $this->createBrick(self::LOCALIZED_BRICK_NAME, [['classname' => self::CLASS_NAME, 'fieldname' => 'bricks']], true);
-
-        return $definition;
-    }
-
-    private function createClassNamed(string $name): ClassDefinition
-    {
-        $panel = new ClassDefinition\Layout\Panel();
-        $panel->setName('pimcore_root');
-
-        foreach (['sku', 'name'] as $field) {
-            $input = new ClassDefinition\Data\Input();
-            $input->setName($field);
-            $input->setTitle($field);
-            $panel->addChild($input);
-        }
-
-        if ($name === self::CLASS_NAME) {
-            $title = new ClassDefinition\Data\Input();
-            $title->setName('title');
-            $title->setTitle('title');
-
-            $localizedFields = new ClassDefinition\Data\Localizedfields();
-            $localizedFields->setName('localizedfields');
-            $localizedFields->addChild($title);
-            $panel->addChild($localizedFields);
-
-            $bricks = new ClassDefinition\Data\Objectbricks();
-            $bricks->setName('bricks');
-            $bricks->setAllowedTypes([self::BRICK_NAME, self::LOCALIZED_BRICK_NAME]);
-            $panel->addChild($bricks);
-
-            $otherBricks = new ClassDefinition\Data\Objectbricks();
-            $otherBricks->setName('otherBricks');
-            $otherBricks->setAllowedTypes([self::BRICK_NAME]);
-            $panel->addChild($otherBricks);
-
-            $related = new ClassDefinition\Data\ManyToOneRelation();
-            $related->setName('related');
-            $related->setTitle('related');
-            $related->setObjectsAllowed(true);
-            $panel->addChild($related);
-
-            $relatedMany = new ClassDefinition\Data\ManyToManyObjectRelation();
-            $relatedMany->setName('relatedMany');
-            $relatedMany->setTitle('relatedMany');
-            $panel->addChild($relatedMany);
-
-            $relatedElements = new ClassDefinition\Data\ManyToManyRelation();
-            $relatedElements->setName('relatedElements');
-            $relatedElements->setTitle('relatedElements');
-            $relatedElements->setObjectsAllowed(true);
-            $panel->addChild($relatedElements);
-
-            $colors = new ClassDefinition\Data\Multiselect();
-            $colors->setName('colors');
-            $colors->setTitle('colors');
-            $colors->setOptions([['key' => 'red', 'value' => 'red']]);
-            $panel->addChild($colors);
-
-            $secret = new ClassDefinition\Data\Password();
-            $secret->setName('secret');
-            $secret->setTitle('secret');
-            $panel->addChild($secret);
-
-            $website = new ClassDefinition\Data\Link();
-            $website->setName('website');
-            $website->setTitle('website');
-            $panel->addChild($website);
-
-            $notes = new ClassDefinition\Data\Textarea();
-            $notes->setName('notes');
-            $notes->setTitle('notes');
-            $panel->addChild($notes);
-
-            $state = new ClassDefinition\Data\Select();
-            $state->setName('state');
-            $state->setTitle('state');
-            $state->setOptions([['key' => 'red', 'value' => 'red']]);
-            $panel->addChild($state);
-
-            $weight = new ClassDefinition\Data\QuantityValue();
-            $weight->setName('weight');
-            $weight->setTitle('weight');
-            $panel->addChild($weight);
-
-            $articleNo = new ClassDefinition\Data\Numeric();
-            $articleNo->setName('articleNo');
-            $articleNo->setTitle('articleNo');
-            $panel->addChild($articleNo);
-
-            $active = new ClassDefinition\Data\Checkbox();
-            $active->setName('active');
-            $active->setTitle('active');
-            $panel->addChild($active);
-
-            $releaseDate = new ClassDefinition\Data\Date();
-            $releaseDate->setName('releaseDate');
-            $releaseDate->setTitle('releaseDate');
-            $panel->addChild($releaseDate);
-        }
-
-        $definition = new ClassDefinition();
-        $definition->setName($name);
-        $definition->setLayoutDefinitions($panel);
-        if ($name === self::INHERITING_CLASS_NAME) {
-            $definition->setAllowInherit(true);
-            $definition->setAllowVariants(true);
-        }
-        $definition->save();
-
-        return $definition;
-    }
-
-    /**
-     * @param list<array{classname: string, fieldname: string}> $classDefinitions
-     */
-    private function createBrick(string $name, array $classDefinitions, bool $localized = false): void
-    {
-        if (Objectbrick\Definition::getByKey($name) instanceof Objectbrick\Definition) {
-            return;
-        }
-
-        $code = new ClassDefinition\Data\Input();
-        $code->setName('code');
-        $code->setTitle('code');
-
-        $panel = new ClassDefinition\Layout\Panel();
-        $panel->setName('pimcore_root');
-        if ($localized) {
-            $localizedFields = new ClassDefinition\Data\Localizedfields();
-            $localizedFields->setName('localizedfields');
-            $localizedFields->addChild($code);
-            $panel->addChild($localizedFields);
-        } else {
-            $panel->addChild($code);
-        }
-
-        $definition = new Objectbrick\Definition();
-        $definition->setKey($name);
-        $definition->setLayoutDefinitions($panel);
-        $definition->setClassDefinitions($classDefinitions);
-        $definition->save();
     }
 }

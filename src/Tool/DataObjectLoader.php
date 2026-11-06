@@ -32,6 +32,8 @@ final class DataObjectLoader
 
     private const SYSTEM_KEY_ATTRIBUTE = 'key';
 
+    private const SQL_AND = ' AND ';
+
     // a field name, or `<field>.<brick>.<attribute>` for an object brick attribute
     private const ATTRIBUTE_NAME_PATTERN = '/^\w+(?:\.\w+\.\w+)?\z/';
 
@@ -163,7 +165,7 @@ final class DataObjectLoader
             $field = $this->getAttributeNameFromParts($objectBrickParts, false);
             // a brick can sit in several fields of a class, and its table has one row per field
             $container = $objectBrickParts[self::BRICK_NAME] . '.fieldname = '
-                . $db->quote($objectBrickParts[self::CLASS_FIELD_NAME]) . ' AND ';
+                . $db->quote($objectBrickParts[self::CLASS_FIELD_NAME]) . self::SQL_AND;
         } else {
             $field = $db->quoteIdentifier($attributeName);
         }
@@ -173,7 +175,7 @@ final class DataObjectLoader
         }
 
         $pathCondition = $directlyInPath
-            ? ' AND ' . $db->quoteIdentifier('path') . ' = ' . $db->quote($path)
+            ? self::SQL_AND . $db->quoteIdentifier('path') . ' = ' . $db->quote($path)
             : $this->getPathCondition($path);
         $options['condition'] = $container . $field . ' = ' . $db->quote($identifier) . $pathCondition;
 
@@ -299,7 +301,7 @@ final class DataObjectLoader
             return '';
         }
 
-        return ' AND ' . $this->getPathLikeCondition($path);
+        return self::SQL_AND . $this->getPathLikeCondition($path);
     }
 
     /**
