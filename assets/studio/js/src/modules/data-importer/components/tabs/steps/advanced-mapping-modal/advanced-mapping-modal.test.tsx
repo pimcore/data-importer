@@ -141,6 +141,21 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
     expect(screen.getByTestId('target-type').textContent).toBe('numeric')
   })
 
+  it('shows the reason a refused type calculation reports, not its stack trace', () => {
+    const trace = '#0 /var/www/src/Service/Studio/TransformationService.php(150): ...'
+    const reason = 'The operator "importAsset" writes or fetches data, so a posted mapping cannot preview it.'
+    typeQuery.mockImplementation((_request: unknown, options: { skip: boolean }) => options.skip
+      ? idle
+      : { data: undefined, error: { status: 422, data: { message: reason, detail: trace } }, isLoading: false, isFetching: false, isError: true, isSuccess: false, refetch })
+    renderDialog()
+
+    fireEvent.click(screen.getByRole('button', { name: 'refresh' }))
+
+    const target = within(screen.getByTestId('target'))
+    expect(target.getByText(reason)).toBeTruthy()
+    expect(target.queryByText(trace)).toBeNull()
+  })
+
   describe('when the result endpoint fails', () => {
     // Studio's API error body; in dev, detail carries the stack trace
     const trace = '#0 /var/www/src/Service/Studio/TransformationService.php(150): ...'

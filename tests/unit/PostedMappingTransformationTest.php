@@ -138,6 +138,16 @@ class PostedMappingTransformationTest extends Unit
         $this->assertUnprocessable($refusal, self::TYPE_ROUTE, "Unsupported input type 'array' for numeric operator");
     }
 
+    public function testAPreviewRefusesAMappingEntryThatIsNoObject(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->preview(
+            [null, ['dataSourceIndex' => ['sku'], 'transformationPipeline' => []]],
+            ['sku' => 'A-100']
+        ));
+
+        $this->assertUnprocessable($refusal, self::PREVIEW_ROUTE, 'Mapping entry 0 is not an object.');
+    }
+
     public function testAPreviewRefusesAnOperatorThatWritesOrFetches(): void
     {
         $refusal = $this->refusalOf(fn () => $this->preview(

@@ -77,8 +77,9 @@ export const AdvancedMappingModal = ({
     if (calculateTypeResult === undefined) return
     setLocalItem(prev => ({ ...prev, transformationResultType: calculateTypeResult.type }))
   }, [calculateTypeResult])
+  // Studio API errors carry the reason in message; in dev, detail holds the stack trace
   const calculateTypeErrorDetail = calculateTypeError !== undefined
-    ? (calculateTypeError as { data?: { detail?: string } }).data?.detail
+    ? (calculateTypeError as { data?: { message?: string } }).data?.message
     : undefined
   useEffect(() => {
     if (open) {
