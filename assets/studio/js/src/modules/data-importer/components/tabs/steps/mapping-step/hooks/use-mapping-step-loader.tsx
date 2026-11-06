@@ -13,13 +13,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Form } from '@pimcore/studio-ui-bundle/components'
 import { useAppDispatch } from '@pimcore/studio-ui-bundle/app'
-import { api, useBundleDataImporterConfigGetQuery } from '../../../../../data-importer-api-slice-enhanced'
-import { useBundleDataImporterConfigLoadColumnHeadersQuery, useBundleDataImporterConfigLoadPreviewQuery } from '../../../../../data-importer-api-slice.gen'
+import { api } from '../../../../../data-importer-api-slice-enhanced'
 import { transformFormToBackend, type BackendConfiguration } from '../../../../../utils/transformers'
 import { normalizeDataRow } from '../../../../../utils/normalize-data-row'
 import { type DataImporterFormValues, type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, parseAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
 import { type SourceRow } from '../sources-panel/sources-panel'
 import { parseClassAttribute, type ColumnHeaderEntry, type UseMappingStepLoaderResult } from './use-mapping-step-loader.types'
+import { type ColumnHeadersRequest, type PreviewRequest, useMappingSource } from '../../mapping-source/mapping-source'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -34,10 +34,17 @@ function collectAttrMapKeys (items: MappingConfigItem[]): string[] {
   return Array.from(mapKeys)
 }
 
-export function useMappingStepLoader (configName: string, isActive: boolean): UseMappingStepLoaderResult {
+export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderResult {
   const form = Form.useFormInstance()
   const dispatch = useAppDispatch()
-  const { data: configData, isSuccess: isConfigLoaded, requestId } = useBundleDataImporterConfigGetQuery({ name: configName })
+  const source = useMappingSource()
+  const sourceId = source.id
+  const configData = useMemo(
+    () => source.configuration === undefined ? undefined : { configuration: source.configuration },
+    [source.configuration]
+  )
+  const isConfigLoaded = source.isConfigurationLoaded
+  const requestId = source.revision
 
   const [columnHeaderOptions, setColumnHeaderOptions] = useState<Array<{ value: string, label: string }>>([])
   const [initialLoadDone, setInitialLoadDone] = useState(false)
@@ -47,19 +54,8 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
   // The class the attributesMap entries belong to. The class can be changed in the resolver
   // step without saving, so entries loaded for another class must never be reused.
   const attributesMapClassIdRef = useRef<string | undefined>(undefined)
-  const [headersRequest, setHeadersRequest] = useState<{
-    name: string
-    bundleDataImporterCopyPreviewParameters: {
-      currentConfig: BackendConfiguration
-    }
-  } | undefined>(undefined)
-  const [previewRequest, setPreviewRequest] = useState<{
-    name: string
-    bundleDataImporterLoadPreviewParameters: {
-      currentConfig: BackendConfiguration
-      recordNumber: number
-    }
-  } | undefined>(undefined)
+  const [headersRequest, setHeadersRequest] = useState<ColumnHeadersRequest | undefined>(undefined)
+  const [previewRequest, setPreviewRequest] = useState<PreviewRequest | undefined>(undefined)
   const [attrsDone, setAttrsDone] = useState(false)
 
   const {
@@ -68,12 +64,9 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     isFetching: isHeadersFetching,
     isError: isHeadersError,
     isSuccess: isHeadersSuccess
-  } = useBundleDataImporterConfigLoadColumnHeadersQuery(
-    headersRequest!,
-    {
-      skip: headersRequest === undefined,
-      refetchOnMountOrArgChange: false
-    }
+  } = source.useColumnHeadersQuery(
+    headersRequest,
+    { refetchOnMountOrArgChange: false }
   )
 
   const {
@@ -82,15 +75,12 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     isFetching: isPreviewFetching,
     isError: isPreviewError,
     isSuccess: isPreviewSuccess
-  } = useBundleDataImporterConfigLoadPreviewQuery(
-    previewRequest!,
-    {
-      skip: previewRequest === undefined,
-      refetchOnMountOrArgChange: false
-    }
+  } = source.usePreviewQuery(
+    previewRequest,
+    { refetchOnMountOrArgChange: false }
   )
 
-  const classIdFromConfig = (configData?.configuration as BackendConfiguration | undefined)?.resolverConfig?.dataObjectClassId
+  const classIdFromConfig = (configData?.configuration)?.resolverConfig?.dataObjectClassId
   const classIdFromForm = Form.useWatch(['resolverConfig', 'dataObjectClassId']) as string | undefined
   const classId = classIdFromForm ?? classIdFromConfig
 
@@ -116,7 +106,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
 
   const getBackendConfig = useCallback((): BackendConfiguration => {
     const formValues = form.getFieldsValue(true) as DataImporterFormValues
-    const existingConfig = (configData?.configuration ?? {}) as BackendConfiguration
+    const existingConfig = (configData?.configuration ?? {})
     return transformFormToBackend(formValues, existingConfig)
   }, [form, configData])
 
@@ -209,7 +199,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     if (debugEnabled) {
       console.debug('[DI][Loader] source config refresh start', {
         cycleId,
-        configName,
+        sourceId,
         argsChanged,
         requestChanged,
         loaderConfigType,
@@ -222,20 +212,8 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
     setAttrsDone(false)
     setHasPreviewError(false)
 
-    setHeadersRequest({
-      name: configName,
-      bundleDataImporterCopyPreviewParameters: {
-        currentConfig: getSourcePreviewConfig()
-      }
-    })
-
-    setPreviewRequest({
-      name: configName,
-      bundleDataImporterLoadPreviewParameters: {
-        currentConfig: getSourcePreviewConfig(),
-        recordNumber: 0
-      }
-    })
+    setHeadersRequest({ currentConfig: getSourcePreviewConfig() })
+    setPreviewRequest({ currentConfig: getSourcePreviewConfig(), recordNumber: 0 })
 
     if (requestChanged && !argsChanged && headersRequest !== undefined && previewRequest !== undefined) {
       if (debugEnabled) {
@@ -252,7 +230,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
       try {
         const classIdFromFormSync = form.getFieldValue(['resolverConfig', 'dataObjectClassId']) as string | undefined
         const effectiveClassId = classIdFromFormSync ?? classIdFromConfig
-        const backendConfig = (configData?.configuration ?? {}) as BackendConfiguration
+        const backendConfig = (configData?.configuration ?? {})
         const items: MappingConfigItem[] = (backendConfig.mappingConfig) ?? []
 
         const mapKeysArray = (effectiveClassId !== undefined && effectiveClassId !== '')
@@ -326,7 +304,7 @@ export function useMappingStepLoader (configName: string, isActive: boolean): Us
   }, [
     isConfigLoaded,
     isActive,
-    configName,
+    sourceId,
     currentConfigFingerprint,
     lastLoadedFingerprint,
     requestId,
