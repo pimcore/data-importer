@@ -190,6 +190,10 @@ final readonly class FileInspector
             // decided before the rows are read: these limits keep reading them affordable. Measured on the cells, as a
             // sheet's info counts a row that only carries formatting and believes the numbers its rows claim
             $extent = $this->withWarningsAsErrors(fn (): SheetExtentReadFilter => $this->measure($path, $sheetName));
+            if ($extent->hasCellWithoutRow()) {
+                return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
+            }
+
             $rowCount = max(0, $extent->lastRow() - ($input->hasHeaderRow ? 1 : 0));
             if ($rowCount > self::MAX_ROWS) {
                 return new FileInspection(

@@ -437,6 +437,41 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(5002, $inspection->rowCount);
     }
 
+    /**
+     * @dataProvider cellsTheMeasurementCannotPlace
+     */
+    public function testACellTheMeasurementCannotPlaceIsRefusedBeforeItsRowsAreRead(string $cells): void
+    {
+        $path = $this->xlsx(['Products' => [['sku']]]);
+        $this->replaceInSheet(
+            $path,
+            null,
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
+            . "<row r=\"1\">$cells</row></sheetData></worksheet>"
+        );
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput(hasHeaderRow: false));
+
+        $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
+        $this->assertSame(0, $inspection->rowCount);
+        $this->assertSame([], $inspection->columns);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function cellsTheMeasurementCannotPlace(): array
+    {
+        return [
+            'a row past the row limit' => ['<c r="A$6000"><v>1</v></c>'],
+            'a row within the limits' => ['<c r="A$2"><v>1</v></c>'],
+            'a row past the cell limit' => ['<c r="XFD1"><v>1</v></c><c r="A$200000"><v>1</v></c>'],
+            'a marked column' => ['<c r="$A1"><v>1</v></c>'],
+            'a marked column and row' => ['<c r="$A$6000"><v>1</v></c>'],
+            'row zero' => ['<c r="A0"><v>1</v></c>'],
+        ];
+    }
+
     public function testAFullGridOfExactlyTheLimitIsReadAndOneColumnMoreIsRefused(): void
     {
         $atLimit = $this->inspector()->inspect(
@@ -792,7 +827,8 @@ class AdHocFileInspectorTest extends Unit
     {
         $zip = new \ZipArchive();
         $zip->open($path);
-        $zip->addFromString(self::FIRST_SHEET, (string)preg_replace('/<row r="\d+"/', '<row', (string)$zip->getFromName(self::FIRST_SHEET)));
+        $xml = (string)$zip->getFromName(self::FIRST_SHEET);
+        $zip->addFromString(self::FIRST_SHEET, (string)preg_replace('/<row r="\d+"/', '<row', $xml));
         $zip->close();
     }
 
@@ -804,7 +840,8 @@ class AdHocFileInspectorTest extends Unit
         $zip = new \ZipArchive();
         $zip->open($path);
         $xml = (string)preg_replace('~<cols>.*?</cols>~s', '', (string)$zip->getFromName(self::FIRST_SHEET));
-        $zip->addFromString(self::FIRST_SHEET, str_replace('<sheetData>', "<cols>$definitions</cols><sheetData>", $xml));
+        $xml = str_replace('<sheetData>', "<cols>$definitions</cols><sheetData>", $xml);
+        $zip->addFromString(self::FIRST_SHEET, $xml);
         $zip->close();
     }
 
@@ -815,7 +852,8 @@ class AdHocFileInspectorTest extends Unit
     {
         $zip = new \ZipArchive();
         $zip->open($path);
-        $xml = $search === null ? $replacement : str_replace($search, $replacement, (string)$zip->getFromName(self::FIRST_SHEET));
+        $xml = (string)$zip->getFromName(self::FIRST_SHEET);
+        $xml = $search === null ? $replacement : str_replace($search, $replacement, $xml);
         $zip->addFromString(self::FIRST_SHEET, $xml);
         $zip->close();
     }

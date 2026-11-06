@@ -27,12 +27,21 @@ final class SheetExtentReadFilter implements IReadFilter
 
     private int $lastColumn = 0;
 
+    private bool $cellWithoutRow = false;
+
     public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
     {
+        // the reader passes row 0 for an address like A$6000, and still creates that cell in its real row
+        $this->cellWithoutRow = $this->cellWithoutRow || $row < 1;
         $this->lastRow = max($this->lastRow, $row);
         $this->lastColumn = max($this->lastColumn, Coordinate::columnIndexFromString($columnAddress));
 
         return false;
+    }
+
+    public function hasCellWithoutRow(): bool
+    {
+        return $this->cellWithoutRow;
     }
 
     public function lastRow(): int
