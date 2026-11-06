@@ -25,7 +25,9 @@ final class XlsxColumnDefinitions
 {
     public static function ignoreOn(Xlsx $reader): void
     {
-        $reader->getSecurityScannerOrThrow()->setAdditionalCallback(self::withoutColumnDefinitions(...));
+        $reader->getSecurityScannerOrThrow()->setAdditionalCallback(
+            static fn (string $xml): string => self::withoutColumnDefinitions($xml)
+        );
     }
 
     // the scanner has refused a DOCTYPE by now, so parsing here resolves no entity

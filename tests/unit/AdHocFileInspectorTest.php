@@ -35,6 +35,8 @@ class AdHocFileInspectorTest extends Unit
 
     private const string CSV_ONE_ROW = "sku,name\nA-1,Chair\n";
 
+    private const string FIRST_SHEET = 'xl/worksheets/sheet1.xml';
+
     /**
      * @var string[]
      */
@@ -788,10 +790,9 @@ class AdHocFileInspectorTest extends Unit
      */
     private function removeRowNumbers(string $path): void
     {
-        $part = 'xl/worksheets/sheet1.xml';
         $zip = new \ZipArchive();
         $zip->open($path);
-        $zip->addFromString($part, (string)preg_replace('/<row r="\d+"/', '<row', (string)$zip->getFromName($part)));
+        $zip->addFromString(self::FIRST_SHEET, (string)preg_replace('/<row r="\d+"/', '<row', (string)$zip->getFromName(self::FIRST_SHEET)));
         $zip->close();
     }
 
@@ -800,11 +801,10 @@ class AdHocFileInspectorTest extends Unit
      */
     private function setColumnDefinitions(string $path, string $definitions): void
     {
-        $part = 'xl/worksheets/sheet1.xml';
         $zip = new \ZipArchive();
         $zip->open($path);
-        $xml = (string)preg_replace('~<cols>.*?</cols>~s', '', (string)$zip->getFromName($part));
-        $zip->addFromString($part, str_replace('<sheetData>', "<cols>$definitions</cols><sheetData>", $xml));
+        $xml = (string)preg_replace('~<cols>.*?</cols>~s', '', (string)$zip->getFromName(self::FIRST_SHEET));
+        $zip->addFromString(self::FIRST_SHEET, str_replace('<sheetData>', "<cols>$definitions</cols><sheetData>", $xml));
         $zip->close();
     }
 
@@ -813,11 +813,10 @@ class AdHocFileInspectorTest extends Unit
      */
     private function replaceInSheet(string $path, ?string $search, string $replacement): void
     {
-        $part = 'xl/worksheets/sheet1.xml';
         $zip = new \ZipArchive();
         $zip->open($path);
-        $xml = $search === null ? $replacement : str_replace($search, $replacement, (string)$zip->getFromName($part));
-        $zip->addFromString($part, $xml);
+        $xml = $search === null ? $replacement : str_replace($search, $replacement, (string)$zip->getFromName(self::FIRST_SHEET));
+        $zip->addFromString(self::FIRST_SHEET, $xml);
         $zip->close();
     }
 }
