@@ -52,6 +52,10 @@ class RowMatcherTest extends Unit
 
     private const SAME_TITLE = 'Same title';
 
+    private const NOT_A_NUMBER = '12abc';
+
+    private const SIGNED_NUMBER = '+12.50';
+
     private const ROOT = '/di-row-matcher';
 
     private const TARGET = self::ROOT . '/target';
@@ -639,7 +643,7 @@ class RowMatcherTest extends Unit
     public static function valuesANumericFieldCannotHold(): array
     {
         return [
-            'text after the digits' => ['12abc'],
+            'text after the digits' => [self::NOT_A_NUMBER],
             'no number' => ['n/a'],
             'an exponent' => ['1e1'],
             'a comma' => ['12,5'],
@@ -667,11 +671,11 @@ class RowMatcherTest extends Unit
     {
         $object = $this->createObjectWith(self::TARGET, ['setArticleNo' => 12.5]);
 
-        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), '+12.50');
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), self::SIGNED_NUMBER);
 
         $this->assertSame(RowMatchOutcome::Existing, $match->outcome);
         $this->assertSame($object->getId(), $match->element?->getId());
-        $this->assertSame('+12.50', $match->matchValue);
+        $this->assertSame(self::SIGNED_NUMBER, $match->matchValue);
     }
 
     public function testANumericFieldTellsZeroFromNoValue(): void
@@ -740,11 +744,11 @@ class RowMatcherTest extends Unit
 
     public function testANewObjectIsKeyedByTheNumberAndNotItsSpelling(): void
     {
-        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), '+12.50');
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), self::SIGNED_NUMBER);
 
         $this->assertSame(RowMatchOutcome::New, $match->outcome);
         $this->assertSame('12.5', $match->element?->getKey());
-        $this->assertSame('+12.50', $match->matchValue);
+        $this->assertSame(self::SIGNED_NUMBER, $match->matchValue);
     }
 
     public function testANumericBrickAttributeIsMatched(): void
@@ -758,7 +762,7 @@ class RowMatcherTest extends Unit
         $configuration = $this->configuration(attributeName: 'bricks.' . self::BRICK_NAME . self::BRICK_NUMBER);
 
         $this->assertSame($object->getId(), $this->matchOne($configuration, '12')->element?->getId());
-        $this->assertSame(RowMatchOutcome::InvalidValue, $this->matchOne($configuration, '12abc')->outcome);
+        $this->assertSame(RowMatchOutcome::InvalidValue, $this->matchOne($configuration, self::NOT_A_NUMBER)->outcome);
     }
 
     public function testALocalizedNumericFieldIsMatchedInItsLanguage(): void
@@ -769,7 +773,7 @@ class RowMatcherTest extends Unit
         $configuration = $this->configuration(attributeName: 'localizedNumber', language: 'en');
 
         $this->assertSame($object->getId(), $this->matchOne($configuration, '12')->element?->getId());
-        $this->assertSame(RowMatchOutcome::InvalidValue, $this->matchOne($configuration, '12abc')->outcome);
+        $this->assertSame(RowMatchOutcome::InvalidValue, $this->matchOne($configuration, self::NOT_A_NUMBER)->outcome);
     }
 
     public function testAVariantIsFoundByItsOwnValueAndItsObjectId(): void

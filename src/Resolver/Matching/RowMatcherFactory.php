@@ -105,10 +105,10 @@ final class RowMatcherFactory
      * Whether objects can be matched by this attribute, named as the Data Importer's attribute lists name it, so a list
      * offers only what create() accepts. A localized field also needs a language.
      *
-     * The lookup compares one column with the cell, so only fields that keep the text as it is, and numeric fields, whose
-     * values the matcher checks first (NumericMatchValue): a multiselect or a many-to-many relation wraps the text in
-     * commas and would never match, which makes a second object, and a slider, checkbox or date column reads `12abc` as
-     * 12 and changes the wrong object.
+     * The lookup compares one column with the cell, so only fields that keep the text as it is, and numeric fields,
+     * whose values the matcher checks first (NumericMatchValue): a multiselect or a many-to-many relation wraps the
+     * text in commas and would never match, which makes a second object, and a slider, checkbox or date column reads
+     * `12abc` as 12 and changes the wrong object.
      */
     public function isMatchableField(ClassDefinition $class, string $attributeName): bool
     {

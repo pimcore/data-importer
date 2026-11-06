@@ -84,7 +84,9 @@ final class RowMatcher
         }
 
         // the error row and a match report the file's spelling; the lookup and a new key use the number's own
-        $lookupValue = $this->numericField === null ? $value : NumericMatchValue::normalize($value, $this->numericField);
+        $lookupValue = $this->numericField === null
+            ? $value
+            : NumericMatchValue::normalize($value, $this->numericField);
         if ($lookupValue === null) {
             return new RowMatch(RowMatchOutcome::InvalidValue, $value);
         }
