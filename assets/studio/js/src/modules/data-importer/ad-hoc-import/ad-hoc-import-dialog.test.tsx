@@ -584,6 +584,17 @@ describe('an XLSX the server read', () => {
     ])
   })
 
+  it('shows the values of the first rows up to the left-out columns, whose own cell stays empty', async () => {
+    const values = Array.from({ length: 14 }, (_, position) => `value ${position}`)
+    renderDialog()
+
+    await dropAndRead({ ...xlsx, firstRows: [values] }, 'northhike-autumn.xlsx', 84000)
+
+    expect(within(screen.getAllByRole('row')[1]).getAllByRole('cell').map((cell) => cell.textContent)).toEqual([
+      'value 0', 'value 1', 'value 2', 'value 3', 'value 4', 'value 5', ''
+    ])
+  })
+
   it('reads the chosen sheet', async () => {
     mockInspectFile.mockResolvedValue({ data: { ...xlsx, sheetName: 'Prices' } })
     renderDialog()
