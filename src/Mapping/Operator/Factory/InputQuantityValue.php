@@ -14,27 +14,37 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Model\DataObject\QuantityValue\Unit;
 
 /**
  * @internal
  */
 final class InputQuantityValue extends QuantityValue
 {
+    protected function getDefaultUnitSource(): string
+    {
+        return 'abbr';
+    }
+
+    protected function getOperatorLabel(): string
+    {
+        return 'input quantity value';
+    }
+
     /**
      * @param mixed $inputData
      * @param bool $dryRun
      *
-     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue
+     * @return \Pimcore\Model\DataObject\Data\InputQuantityValue|null
      */
     public function process($inputData, bool $dryRun = false)
     {
-        $unit = isset($inputData[1]) ? Unit::getByAbbreviation($inputData[1]) : null;
+        [$value, $unitId] = $this->extractValueAndUnitId($inputData);
 
-        return new \Pimcore\Model\DataObject\Data\InputQuantityValue(
-            $inputData[0] ?? null,
-            $unit
-        );
+        if ($this->unitNullIfNoValue && $this->isEmptyValue($value)) {
+            return null;
+        }
+
+        return new \Pimcore\Model\DataObject\Data\InputQuantityValue($value, $unitId);
     }
 
     /**
@@ -47,14 +57,7 @@ final class InputQuantityValue extends QuantityValue
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if ($inputType !== TransformationDataTypeService::DEFAULT_ARRAY) {
-            throw new InvalidConfigurationException(
-                sprintf(
-                    "Unsupported input type '%s' for input quantity value operator at transformation position %s",
-                    $inputType,
-                    $index)
-            );
-        }
+        parent::evaluateReturnType($inputType, $index);
 
         return TransformationDataTypeService::INPUT_QUANTITY_VALUE;
     }

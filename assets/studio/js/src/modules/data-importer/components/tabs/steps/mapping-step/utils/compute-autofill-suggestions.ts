@@ -11,7 +11,7 @@
 import { uuid } from '@pimcore/studio-ui-bundle/utils'
 import type { ClassAttribute, MappingConfigItem } from '../../../../../types'
 import type { SourceRow } from '../sources-panel/sources-panel'
-import { DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
+import { DEFAULT_ATTR_MAP_KEY, isAdvancedRelationsAttrMapKey } from '../../../../../types'
 
 export interface MappingSuggestion {
   id: string
@@ -124,12 +124,14 @@ interface PoolEntry {
 }
 
 // the default map key wins when an attribute is offered by several result types,
-// so simple fields keep the default transformation result type
+// so simple fields keep the default transformation result type. Advanced relation
+// keys are skipped: their key is not a transformation result type and autofill only
+// creates direct data targets.
 function flattenAttributes (attributesMap: Record<string, ClassAttribute[]>): PoolEntry[] {
   const attrsByKey = new Map<string, PoolEntry>()
   const keyOrder = [
     DEFAULT_ATTR_MAP_KEY,
-    ...Object.keys(attributesMap).filter((k) => k !== DEFAULT_ATTR_MAP_KEY)
+    ...Object.keys(attributesMap).filter((k) => k !== DEFAULT_ATTR_MAP_KEY && !isAdvancedRelationsAttrMapKey(k))
   ]
   for (const mapKey of keyOrder) {
     for (const attr of (attributesMap[mapKey] ?? [])) {

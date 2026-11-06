@@ -24,6 +24,11 @@ processes the sequential queue at a time. The message means the lock is held. Th
 another invocation is legitimately still running, for example a long import overlapping with the next cron tick, and it
 is not by itself evidence of a problem.
 
+The run that finds the lock held prints the message and ends with **exit code 0**, like any other finished run. Cron
+wrappers and monitors therefore do not report it as a failure, also not when the lock is stale. Tell a stale lock apart
+by the progress, not by the exit code: if the **Execution** tab shows no progress and no `process-queue-sequential`
+process is running, the lock is stale (see below).
+
 Confirm the lock is stale before touching it. Check the host for a running process
 (`ps aux | grep process-queue-sequential`) on every machine that runs the command, and check whether the import is still
 making progress in the **Execution** tab. Releasing a lock that a live worker holds lets a second processor run

@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { Form, Select, Switch } from '@pimcore/studio-ui-bundle/components'
+import { Form, ManyToOneRelationPath, Select, Switch } from '@pimcore/studio-ui-bundle/components'
 import { filterByLabel } from '../../../../utils/select-utils'
 import { DataImporterPanel } from '../../../../components/tabs/steps/data-importer-panel/data-importer-panel'
 import React, { useMemo } from 'react'
@@ -81,6 +81,17 @@ export function AttributeLoadingStrategyResolverSettings ({
         />
       </Form.Item>
       )}
+      <Form.Item
+        label={ t('data-importer.resolver.loading-strategy.attribute-path') }
+        name={ ['resolverConfig', 'loadingStrategy', 'settings', 'path'] }
+        tooltip={ t('data-importer.resolver.loading-strategy.attribute-path-tooltip') }
+      >
+        <ManyToOneRelationPath
+          allowPathTextInput
+          allowedDataObjectTypes={ ['folder'] }
+          dataObjectsAllowed
+        />
+      </Form.Item>
       <Form.Item
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'includeUnpublished'] }
         valuePropName="checked"
