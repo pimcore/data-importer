@@ -155,6 +155,20 @@ class AdHocImportServiceTest extends Unit
         $this->assertSame([], $this->storedFiles());
     }
 
+    public function testASingleSheetWhoseFullGridIsTooLargeIsNotKept(): void
+    {
+        $spreadsheet = new Spreadsheet();
+        $spreadsheet->getActiveSheet()->setCellValue('A1', 'sku')->setCellValue('XFD5001', 'far');
+        $path = $this->xlsx(['Products' => [['sku']]]);
+        (new Xlsx($spreadsheet))->save($path);
+
+        $response = $this->service()->upload($this->uploadOf($path, 'sparse.xlsx'), self::FOLDER_ID);
+
+        $this->assertSame('too-many-cells', $response->getRefusal());
+        $this->assertNull($response->getFileId());
+        $this->assertSame([], $this->storedFiles());
+    }
+
     public function testAWorkbookWithoutItsWorkbookPartIsNotKept(): void
     {
         $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);

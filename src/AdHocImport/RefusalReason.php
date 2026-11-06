@@ -19,6 +19,7 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 enum RefusalReason: string
 {
     case TooManyRows = 'too-many-rows';
+    case TooManyCells = 'too-many-cells';
     case Unreadable = 'unreadable';
     case WrongFormat = 'wrong-format';
 }

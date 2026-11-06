@@ -18,7 +18,7 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
  */
 final class CsvDelimiterDetector
 {
-    public const string DEFAULT_DELIMITER = ',';
+    private const string DEFAULT_DELIMITER = ',';
 
     // on a tie the first one wins
     private const array CANDIDATES = [';', ',', "\t", '|'];

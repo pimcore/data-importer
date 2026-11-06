@@ -126,6 +126,27 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(2, $inspection->rowCount);
     }
 
+    public function testWithoutAHeaderRowALaterRowMayBeTheWidestAndEarlierRowsAreFilledUp(): void
+    {
+        $path = $this->csv("A-1\nA-2,Chair\nA-3,Desk,12\n");
+
+        $inspection = $this->inspector()->inspect($path, FileType::Csv, new SettingsInput(hasHeaderRow: false));
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(
+            [
+                ['dataIndex' => '0', 'label' => '0'],
+                ['dataIndex' => '1', 'label' => '1'],
+                ['dataIndex' => '2', 'label' => '2'],
+            ],
+            $inspection->columns
+        );
+        $this->assertSame(
+            [['A-1', null, null], ['A-2', 'Chair', null], ['A-3', 'Desk', '12']],
+            $inspection->firstRows
+        );
+    }
+
     public function testAHeaderOnlyCsvHasItsColumnsAndNoRows(): void
     {
         $inspection = $this->inspector()->inspect($this->csv(self::CSV_HEADER), FileType::Csv, new SettingsInput());
@@ -371,6 +392,79 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(FileInspector::MAX_ROWS, $inspection->rowCount);
     }
 
+    public function testASparseSheetWhoseFullGridIsTooLargeIsRefusedBeforeItsRowsAreRead(): void
+    {
+        $path = $this->sparseXlsx('XFD5001');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::TooManyCells, $inspection->refusal);
+        $this->assertSame(['Products'], $inspection->sheets);
+        $this->assertSame([], $inspection->columns);
+        $this->assertSame([], $inspection->firstRows);
+    }
+
+    public function testASparseSheetIsRefusedWhateverNumbersItsRowsClaim(): void
+    {
+        $path = $this->sparseXlsx('XFD5001');
+        $this->replaceInSheet($path, '<row r="5001"', '<row r="2"');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::TooManyCells, $inspection->refusal);
+
+        $withoutNumbers = $this->sparseXlsx('XFD5001');
+        $this->removeRowNumbers($withoutNumbers);
+
+        $inspection = $this->inspector()->inspect($withoutNumbers, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::TooManyCells, $inspection->refusal);
+    }
+
+    public function testARowClaimingAFalseNumberIsHeldToTheRowLimitByItsCells(): void
+    {
+        $path = $this->sparseXlsx('A5003');
+        $this->replaceInSheet($path, '<row r="5003"', '<row r="2"');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::TooManyRows, $inspection->refusal);
+        $this->assertSame(5002, $inspection->rowCount);
+    }
+
+    public function testAFullGridOfExactlyTheLimitIsReadAndOneColumnMoreIsRefused(): void
+    {
+        $atLimit = $this->inspector()->inspect(
+            $this->sparseXlsx('GR5000'),
+            FileType::Xlsx,
+            new SettingsInput(hasHeaderRow: false)
+        );
+
+        $this->assertNull($atLimit->refusal);
+        $this->assertSame(5000, $atLimit->rowCount);
+        $this->assertCount(200, $atLimit->columns);
+
+        $over = $this->inspector()->inspect(
+            $this->sparseXlsx('GS5000'),
+            FileType::Xlsx,
+            new SettingsInput(hasHeaderRow: false)
+        );
+
+        $this->assertSame(RefusalReason::TooManyCells, $over->refusal);
+    }
+
+    public function testASingleWideRowIsRead(): void
+    {
+        $inspection = $this->inspector()->inspect(
+            $this->sparseXlsx('XFD2'),
+            FileType::Xlsx,
+            new SettingsInput()
+        );
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(1, $inspection->rowCount);
+    }
+
     public function testARowThatOnlyCarriesFormattingDoesNotCountForTheLimit(): void
     {
         $path = $this->xlsx(['Products' => [['sku'], ['A-1'], ['A-2']]]);
@@ -541,6 +635,23 @@ class AdHocFileInspectorTest extends Unit
         $writer = new Xlsx($spreadsheet);
         $writer->setPreCalculateFormulas($storeFormulaResults);
         $writer->save($path);
+
+        return $path;
+    }
+
+    /**
+     * A sheet with only two cells: A1 and the given one.
+     */
+    private function sparseXlsx(string $lastCell): string
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Products');
+        $sheet->setCellValue('A1', 'sku');
+        $sheet->setCellValue($lastCell, 'far');
+
+        $path = $this->file('', 'xlsx');
+        (new Xlsx($spreadsheet))->save($path);
 
         return $path;
     }

@@ -13,20 +13,24 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 
 /**
- * Keeps no cell and notes the last row that has one.
+ * Keeps no cell and notes the last row and the last column that have one.
  *
  * @internal
  */
-final class LastRowReadFilter implements IReadFilter
+final class SheetExtentReadFilter implements IReadFilter
 {
     private int $lastRow = 0;
+
+    private int $lastColumn = 0;
 
     public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
     {
         $this->lastRow = max($this->lastRow, $row);
+        $this->lastColumn = max($this->lastColumn, Coordinate::columnIndexFromString($columnAddress));
 
         return false;
     }
@@ -34,5 +38,10 @@ final class LastRowReadFilter implements IReadFilter
     public function lastRow(): int
     {
         return $this->lastRow;
+    }
+
+    public function lastColumn(): int
+    {
+        return $this->lastColumn;
     }
 }

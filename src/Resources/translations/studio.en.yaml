@@ -347,6 +347,7 @@ data-importer.ad-hoc-import.file.summary-refused: '{{rows}} rows · {{size}}'
 data-importer.ad-hoc-import.file.progress: '{{percent}} % · {{loaded}} of {{total}}'
 data-importer.ad-hoc-import.refused.too-many-rows: 'This file has {{rows}} rows; an ad hoc import takes up to {{limit}}.'
 data-importer.ad-hoc-import.refused.too-many-rows-hint: Split the file, or import it with a Data Importer configuration in the Data Hub.
+data-importer.ad-hoc-import.refused.too-many-cells: This sheet reaches too far for an ad hoc import.
 data-importer.ad-hoc-import.refused.unreadable: 'This file cannot be read as {{type}}.'
 data-importer.ad-hoc-import.refused.wrong-format: Only XLSX and CSV files can be imported.
 data-importer.ad-hoc-import.settings.delimiter: Delimiter

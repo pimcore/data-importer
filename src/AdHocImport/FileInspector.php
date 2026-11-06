@@ -30,6 +30,10 @@ final readonly class FileInspector
 {
     public const int MAX_ROWS = 5000;
 
+    // a sheet's rows are read as a full grid, so what counts is its last row times its last column: the row limit with
+    // 200 columns
+    private const int MAX_CELLS = 1_000_000;
+
     private const int FIRST_ROWS = 3;
 
     public function __construct(
@@ -89,6 +93,7 @@ final readonly class FileInspector
 
             $rowCount = 0;
             $firstRows = [];
+            $positions = [];
             foreach ($this->sourceFileReader->readRows(
                 [
                     'type' => FileType::Csv->value,
@@ -99,9 +104,10 @@ final readonly class FileInspector
                 ],
                 $path
             ) as $row) {
-                $columns ??= $this->columnsByPosition($row);
+                // without a header any row may be the widest
+                $positions += $row;
                 if ($rowCount < self::FIRST_ROWS) {
-                    $firstRows[] = $this->rowValues($row, $columns);
+                    $firstRows[] = $row;
                 }
                 ++$rowCount;
             }
@@ -119,7 +125,19 @@ final readonly class FileInspector
             );
         }
 
-        return new FileInspection($settings, $detectedDelimiter, [], $rowCount, $columns ?? [], $firstRows);
+        if ($columns === null) {
+            ksort($positions);
+            $columns = $this->columnsByPosition($positions);
+        }
+
+        return new FileInspection(
+            $settings,
+            $detectedDelimiter,
+            [],
+            $rowCount,
+            $columns,
+            array_map(fn (array $row): array => $this->rowValues($row, $columns), $firstRows)
+        );
     }
 
     /**
@@ -163,31 +181,25 @@ final readonly class FileInspector
         $sheetName = $input->sheetName ?? $sheets[0] ?? '';
         $settings = ['hasHeaderRow' => $input->hasHeaderRow, 'sheetName' => $sheetName];
 
-        $worksheet = array_values(array_filter(
-            $worksheets,
-            static fn (array $info): bool => $info['worksheetName'] === $sheetName
-        ))[0] ?? null;
-        if ($worksheet === null) {
+        if (!in_array($sheetName, $sheets, true)) {
             return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
         }
 
-        $tooManyRows = static fn (int $rowCount): FileInspection => new FileInspection(
-            $settings,
-            sheets: $sheets,
-            rowCount: $rowCount,
-            refusal: RefusalReason::TooManyRows
-        );
-
         try {
-            // decided before the rows are read: this limit keeps reading them affordable. The sheet's last row may only
-            // carry formatting, so a sheet that seems too long is counted
-            $headerRows = $input->hasHeaderRow ? 1 : 0;
-            if ($worksheet['totalRows'] - $headerRows > self::MAX_ROWS) {
-                $lastRow = $this->withWarningsAsErrors(fn (): int => $this->lastRowWithCells($path, $sheetName));
-                $rowCount = max(0, $lastRow - $headerRows);
-                if ($rowCount > self::MAX_ROWS) {
-                    return $tooManyRows($rowCount);
-                }
+            // decided before the rows are read: these limits keep reading them affordable. Measured on the cells, as a
+            // sheet's info counts a row that only carries formatting and believes the numbers its rows claim
+            $extent = $this->withWarningsAsErrors(fn (): SheetExtentReadFilter => $this->measure($path, $sheetName));
+            $rowCount = max(0, $extent->lastRow() - ($input->hasHeaderRow ? 1 : 0));
+            if ($rowCount > self::MAX_ROWS) {
+                return new FileInspection(
+                    $settings,
+                    sheets: $sheets,
+                    rowCount: $rowCount,
+                    refusal: RefusalReason::TooManyRows
+                );
+            }
+            if ($extent->lastRow() * $extent->lastColumn() > self::MAX_CELLS) {
+                return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::TooManyCells);
             }
 
             $rows = $this->withWarningsAsErrors(fn (): array => [...$this->sourceFileReader->readRows(
@@ -204,11 +216,6 @@ final readonly class FileInspector
         $columns = $input->hasHeaderRow
             ? $this->xlsxHeaderColumns(array_shift($rows) ?? [])
             : $this->columnsByPosition($rows[0] ?? []);
-
-        // a row's number is optional in a workbook, so the sheet's info may not have told how long it is
-        if (count($rows) > self::MAX_ROWS) {
-            return $tooManyRows(count($rows));
-        }
 
         return new FileInspection(
             $settings,
@@ -255,11 +262,11 @@ final readonly class FileInspector
     }
 
     /**
-     * The last row an import receives, without keeping the cells: a row without cells does not reach it.
+     * How far the rows an import receives reach, without keeping the cells: a row without cells does not reach it.
      */
-    private function lastRowWithCells(string $path, string $sheetName): int
+    private function measure(string $path, string $sheetName): SheetExtentReadFilter
     {
-        $filter = new LastRowReadFilter();
+        $filter = new SheetExtentReadFilter();
 
         $reader = new Xlsx();
         $reader->setReadDataOnly(true);
@@ -267,7 +274,7 @@ final readonly class FileInspector
         $reader->setReadFilter($filter);
         $reader->load($path);
 
-        return $filter->lastRow();
+        return $filter;
     }
 
     /**

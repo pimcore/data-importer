@@ -58,7 +58,7 @@ final class AdHocImportFileResponse implements AdditionalAttributesInterface
         #[Property(
             description: 'Why the file cannot be imported under these settings; null if it can',
             type: 'string',
-            enum: ['too-many-rows', 'unreadable', 'wrong-format'],
+            enum: ['too-many-rows', 'too-many-cells', 'unreadable', 'wrong-format'],
             example: null,
             nullable: true
         )]

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * This source file is available under the terms of the
@@ -12,6 +13,9 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
+/**
+ * @internal
+ */
 final class ReaderWarningException extends \ErrorException
 {
 }
