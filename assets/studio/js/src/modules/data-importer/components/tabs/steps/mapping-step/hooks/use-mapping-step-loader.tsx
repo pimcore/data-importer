@@ -25,27 +25,9 @@ function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
 }
 
-// the transformation result types the autofill suggestion pool covers besides the
-// default request (which the backend resolves to the DEFAULT and NUMERIC types)
-export const SUGGESTION_TRANSFORMATION_RESULT_TYPES: string[] = [
-  'array',
-  'boolean',
-  'date',
-  'quantityValue',
-  'asset',
-  'assetArray',
-  'gallery',
-  'dataObject',
-  'dataObjectArray'
-]
-
 // every attributes map key the mapping step needs for the given mapping items
 function collectAttrMapKeys (items: MappingConfigItem[]): string[] {
   const mapKeys = new Set<string>([DEFAULT_ATTR_MAP_KEY])
-  // the default request only returns DEFAULT+NUMERIC typed attributes — without
-  // the other result types the autofill suggestions would miss e.g. select,
-  // relation or asset fields on configs that have no mapping rows yet (#622)
-  SUGGESTION_TRANSFORMATION_RESULT_TYPES.forEach((trt) => mapKeys.add(resolveAttrMapKey(trt)))
   items.forEach((item) => {
     mapKeys.add(resolveAttrMapKey(item.transformationResultType, item.dataTarget?.type))
   })

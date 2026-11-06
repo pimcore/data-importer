@@ -38,8 +38,8 @@ Details:
 against the attribute names of the selected data object class and scores the similarity. Only matches above a minimum
 score are proposed, so unmatched columns are left out.
 
-Autofill recognizes locale suffixes: a column named `title_de` is proposed for the localized field `title` with the
-language `de`.
+Autofill recognizes locale suffixes: a column named `title_de`, `Title DE` or `Title (de)` is proposed for the localized
+field `title` with the language `de`, if that is a valid language of the system.
 
 Review the proposals, select the ones you want, and apply them. Autofill needs preview data, since it works on the source
 columns the preview produced.

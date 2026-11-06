@@ -23,10 +23,11 @@ import {
   useMessage
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { useSettings } from '@pimcore/studio-ui-bundle/modules/app'
+import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import { useTheme } from 'antd-style'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
 import { type MappingConfigItem } from '../../../../types'
+import { useBundleDataImporterMappingSuggestionSuggestMutation } from '../../../../data-importer-api-slice-enhanced'
 import { normalizeDataRow } from '../../../../utils/normalize-data-row'
 import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
 import { useStyles } from './mapping-step.styles'
@@ -38,7 +39,7 @@ import { createMappingItem } from './utils/mapping-factory'
 import { ensureMappingIdAtIndex } from './utils/mapping-identity'
 import { PanelArrowIcon } from './panel-arrow-icon.inline'
 import { MappingItemContextProvider } from './mapping-item-context'
-import { type MappingSuggestion, computeAutofillSuggestions } from './utils/compute-autofill-suggestions'
+import { type MappingSuggestion, collectUnmappedColumns, toMappingSuggestions } from './utils/autofill-suggestions'
 import { AutofillSuggestionsPanel, applySelectedSuggestions } from './autofill-suggestions-panel'
 
 function isMappingDebugEnabled (): boolean {
@@ -54,7 +55,6 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
   const { styles } = useStyles()
   const { t } = useTranslation()
   const theme = useTheme()
-  const { validLanguages } = useSettings()
   const modal = useFormModal()
   const message = useMessage()
   const form = Form.useFormInstance()
@@ -83,6 +83,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
   const [, expandTransition] = useTransition()
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<MappingSuggestion[] | null>(null)
+  const [suggestMappings, { isLoading: isSuggestingMappings }] = useBundleDataImporterMappingSuggestionSuggestMutation()
   const [selectedSuggestionIds, setSelectedSuggestionIds] = useState<Set<string>>(new Set())
   const autoExpandNewKeysRef = useRef(true)
   const prevLoaderTypeRef = useRef<string | undefined>(loaderConfigType)
@@ -311,24 +312,34 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     return rows.reduce<Record<string, string | null>>((acc, r) => { acc[r.dataIndex] = r.value; return acc }, {})
   }, [autofillPreviewData, sourceRows])
 
-  const handleOpenAutofillSuggestions = useCallback((): void => {
+  const handleOpenAutofillSuggestions = useCallback(async (): Promise<void> => {
+    if (isSuggestingMappings) return
+
     if (columnHeaderOptions.length === 0) {
       void message.warning(t('data-importer.mapping.autofill-suggestions.no-source-columns'))
       return
     }
 
-    const currentItems = getMappingConfig()
-    const computed = computeAutofillSuggestions(
-      columnHeaderOptions,
-      attributesMap,
-      currentItems,
-      sourceRows,
-      (validLanguages as string[] | undefined) ?? []
-    )
+    const columns = collectUnmappedColumns(columnHeaderOptions, getMappingConfig())
+    let computed: MappingSuggestion[] = []
+
+    if (classId !== undefined && classId !== '' && columns.length > 0) {
+      const result = await suggestMappings({
+        bundleDataImporterMappingSuggestionParameters: { classId, columns }
+      })
+
+      if (result.data === undefined) {
+        trackError(new ApiError(result.error ?? {}))
+        return
+      }
+
+      computed = toMappingSuggestions(result.data.suggestions, sourceRows)
+    }
+
     setSuggestions(computed)
     setSelectedSuggestionIds(new Set(computed.map((s) => s.id)))
     loadAutofillPreviewRecord(0)
-  }, [getMappingConfig, columnHeaderOptions, attributesMap, sourceRows, validLanguages, message, t, loadAutofillPreviewRecord])
+  }, [isSuggestingMappings, getMappingConfig, columnHeaderOptions, classId, sourceRows, suggestMappings, message, t, loadAutofillPreviewRecord])
 
   const handlePrevPreviewRow = useCallback((): void => {
     const prev = Math.max(0, autofillRecordIndex - 1)
@@ -518,7 +529,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
                 onCollapseAll={ collapseAll }
                 onInsertItem={ handleInsertItem }
                 onNewKey={ handleNewKey }
-                onOpenAutofillSuggestions={ handleOpenAutofillSuggestions }
+                onOpenAutofillSuggestions={ () => { void handleOpenAutofillSuggestions() } }
                 onRemoveItem={ handleRemoveItem }
                 onToggleKey={ handleToggleKey }
               />

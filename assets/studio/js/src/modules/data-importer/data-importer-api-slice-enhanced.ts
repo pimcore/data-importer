@@ -55,6 +55,11 @@ export const api = baseApi.enhanceEndpoints({
       providesTags: []
     },
 
+    // A suggestion changes nothing on the server
+    bundleDataImporterMappingSuggestionSuggest: {
+      invalidatesTags: []
+    },
+
     // Saving a config should only refresh config lists, not detail/preview/helper endpoints
     bundleDataImporterConfigSave: {
       invalidatesTags: ['DataHubConfigs']
@@ -99,7 +104,8 @@ export const {
   useBundleDataImporterConfigCheckImportProgressQuery,
   useBundleDataImporterConfigStartImportMutation,
   useBundleDataImporterConfigCancelExecutionMutation,
-  useBundleDataImporterConnectionListQuery
+  useBundleDataImporterConnectionListQuery,
+  useBundleDataImporterMappingSuggestionSuggestMutation
 } = api
 
 export type * from './data-importer-api-slice.gen'
