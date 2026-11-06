@@ -23,6 +23,6 @@ enum FileType: string
 
     public static function fromFileName(string $fileName): ?self
     {
-        return self::tryFrom(strtolower(pathinfo($fileName, PATHINFO_EXTENSION)));
+        return static::tryFrom(strtolower(pathinfo($fileName, PATHINFO_EXTENSION)));
     }
 }

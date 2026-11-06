@@ -28,19 +28,25 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\StudioBackendBundle\Util\Constant\CacheKeys;
+use Pimcore\Cache;
+use Pimcore\Cache\Core\CoreCacheHandler;
 use Psr\Log\NullLogger;
-use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Yaml\Yaml;
 
 class AdHocImportEndpointsTest extends Unit
 {
+    private const ROUTE_PREFIX = 'pimcore_studio_api_data_importer_ad_hoc_import_';
+
     private const ENDPOINTS = [
-        UploadFileController::class => ['uploadFile', 'pimcore_studio_api_data_importer_ad_hoc_import_upload_file', 'POST'],
-        InspectFileController::class => ['inspectFile', 'pimcore_studio_api_data_importer_ad_hoc_import_inspect_file', 'POST'],
-        DeleteFileController::class => ['deleteFile', 'pimcore_studio_api_data_importer_ad_hoc_import_delete_file', 'DELETE'],
-        LoadMatchFieldsController::class => ['loadMatchFields', 'pimcore_studio_api_data_importer_ad_hoc_import_load_match_fields', 'GET'],
+        UploadFileController::class => ['uploadFile', 'upload_file', 'POST', '/ad-hoc-import/file'],
+        InspectFileController::class => ['inspectFile', 'inspect_file', 'POST', '/ad-hoc-import/file/{fileId}/inspect'],
+        DeleteFileController::class => ['deleteFile', 'delete_file', 'DELETE', '/ad-hoc-import/file/{fileId}'],
+        LoadMatchFieldsController::class => ['loadMatchFields', 'load_match_fields', 'GET', '/ad-hoc-import/match-fields'],
     ];
 
     protected UnitTester $tester;
@@ -59,18 +65,31 @@ class AdHocImportEndpointsTest extends Unit
         }
     }
 
-    public function testEveryEndpointIsWiredAndRouted(): void
+    public function testEveryEndpointIsWired(): void
     {
-        /** @var RouterInterface $router */
-        $router = $this->tester->grabService('router');
-
-        foreach (self::ENDPOINTS as $controller => [, $routeName, $httpMethod]) {
+        foreach (array_keys(self::ENDPOINTS) as $controller) {
             $this->assertInstanceOf($controller, $this->tester->grabService($controller));
+        }
+    }
 
-            $route = $router->getRouteCollection()->get($routeName);
-            $this->assertNotNull($route, $routeName);
-            $this->assertSame([$httpMethod], $route->getMethods(), $routeName);
-            $this->assertStringContainsString('/bundle/data-importer/ad-hoc-import/', $route->getPath());
+    /**
+     * Read from the attributes and the bundle's routing file: the test kernel loads no routes.
+     */
+    public function testEveryEndpointIsRoutedBelowTheBundlesPrefix(): void
+    {
+        $routing = Yaml::parseFile(__DIR__ . '/../../src/Resources/config/pimcore/routing.yml')['pimcore_data_importer_studio'];
+        $this->assertSame('@PimcoreDataImporterBundle/Controller/Studio', $routing['resource']);
+        $this->assertSame('attribute', $routing['type']);
+        $this->assertStringEndsWith('/bundle/data-importer', $routing['prefix']);
+
+        foreach (self::ENDPOINTS as $controller => [$method, $routeName, $httpMethod, $path]) {
+            $attributes = (new \ReflectionMethod($controller, $method))->getAttributes(Route::class);
+            $this->assertCount(1, $attributes, $controller);
+
+            $route = $attributes[0]->newInstance();
+            $this->assertSame(self::ROUTE_PREFIX . $routeName, $route->getName());
+            $this->assertSame([$httpMethod], $route->getMethods(), $controller);
+            $this->assertSame($path, $route->getPath(), $controller);
         }
     }
 
@@ -138,5 +157,27 @@ class AdHocImportEndpointsTest extends Unit
         [$delete] = $down->getSql();
         $this->assertStringContainsString('DELETE FROM users_permission_definitions', $delete->getStatement());
         $this->assertSame([Installer::AD_HOC_IMPORT_PERMISSION], $delete->getParameters());
+    }
+
+    public function testTheMigrationDropsTheCachedListOfRightsBothWays(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn($this->createMock(AbstractPlatform::class));
+        $connection->method('createSchemaManager')->willReturn($this->createMock(AbstractSchemaManager::class));
+        $migration = new Version20261106170000($connection, new NullLogger());
+
+        $handler = $this->createMock(CoreCacheHandler::class);
+        $handler->expects($this->exactly(2))->method('remove')->with(CacheKeys::USER_PERMISSIONS->value);
+
+        $cachedHandler = new \ReflectionProperty(Cache::class, 'handler');
+        $before = $cachedHandler->getValue();
+        $cachedHandler->setValue(null, $handler);
+
+        try {
+            $migration->postUp(new Schema());
+            $migration->postDown(new Schema());
+        } finally {
+            $cachedHandler->setValue(null, $before);
+        }
     }
 }

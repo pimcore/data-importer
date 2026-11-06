@@ -16,6 +16,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Migrations;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataHubBundle\Installer as DataHubInstaller;
 use Pimcore\Bundle\DataImporterBundle\Installer;
+use Pimcore\Bundle\StudioBackendBundle\Util\Constant\CacheKeys;
+use Pimcore\Cache;
 use Pimcore\Migrations\BundleAwareMigration;
 
 /**
@@ -43,6 +45,17 @@ final class Version20261106170000 extends BundleAwareMigration
             'DELETE FROM users_permission_definitions WHERE `key` = ?',
             [Installer::AD_HOC_IMPORT_PERMISSION]
         );
+    }
+
+    public function postUp(Schema $schema): void
+    {
+        // Studio's voter grants only rights on its cached list
+        Cache::remove(CacheKeys::USER_PERMISSIONS->value);
+    }
+
+    public function postDown(Schema $schema): void
+    {
+        Cache::remove(CacheKeys::USER_PERMISSIONS->value);
     }
 
     protected function getBundleName(): string
