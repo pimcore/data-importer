@@ -16,6 +16,7 @@ import {
 import { DataTargetClassificationstoreBatchSettings } from './data-target-classificationstore-batch-settings'
 import { type TFunction } from 'i18next'
 import { type DataTargetConfig } from '../../../types'
+import { defaultWriteSettings } from './classification-store-write-settings'
 
 export class DynamicTypeDataTargetClassificationstoreBatch extends DynamicTypeDataTargetAbstract {
   readonly id = 'classificationstoreBatch'
@@ -31,7 +32,7 @@ export class DynamicTypeDataTargetClassificationstoreBatch extends DynamicTypeDa
 
   getDefaultSettings (currentSettings: DataTargetConfig['settings']): DataTargetConfig['settings'] {
     return {
-      ...currentSettings,
+      ...defaultWriteSettings(currentSettings, 'classificationstoreBatch'),
       overwriteMode: undefined,
       keyId: currentSettings?.keyId,
       fieldName: undefined,

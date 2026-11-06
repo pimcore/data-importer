@@ -20,9 +20,16 @@ use Pimcore\Model\Element\ElementInterface;
  */
 final class Classificationstore implements DataTargetInterface
 {
+    use WriteIfSourceIsEmptyTrait;
+
+    /**
+     * Without the opt-in marker this target writes every value, empty ones included.
+     */
+    private const WRITES_EMPTY_VALUES_WITHOUT_MARKER = true;
+
     private string $fieldName;
 
-    private string $language;
+    private ?string $language;
 
     private int $keyId;
 
@@ -43,6 +50,7 @@ final class Classificationstore implements DataTargetInterface
         $this->groupId = (int) $keyParts[0];
         $this->keyId = (int) $keyParts[1];
         $this->language = $settings['language'] ?? null;
+        $this->setWriteIfSourceIsEmptySettings($settings, self::WRITES_EMPTY_VALUES_WITHOUT_MARKER);
     }
 
     /**
@@ -59,6 +67,10 @@ final class Classificationstore implements DataTargetInterface
         $classificationStore = $element->$getter();
 
         if ($classificationStore instanceof \Pimcore\Model\DataObject\Classificationstore) {
+            if (!$this->writeIfSourceIsEmpty && $this->isEmptySourceValue($data)) {
+                return;
+            }
+
             $classificationStore->setLocalizedKeyValue($this->groupId, $this->keyId, $data, $this->language);
             $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$this->groupId => true]);
         } else {

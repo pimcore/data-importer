@@ -63,6 +63,9 @@ Assigns the value to one key of a classification store field.
 - **Field Name**: the classification store field.
 - **Classification Store Key**: the group and key to write.
 - **Language**: for localized keys, the language to write.
+- **Write If Source Is Empty**: enabled by default. Disable it to prevent an empty source value from clearing the key.
+  The setting only takes effect once it has been saved for the mapping entry at least once — see
+  [When the setting takes effect](#when-write-if-source-is-empty-takes-effect).
 
 ## Classification Store Batch
 
@@ -71,9 +74,31 @@ keyed by `<GROUP_ID>-<KEY_ID>`, with the values to assign.
 
 The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray` or `dateArray`.
 
+**Configuration options**
+
+- **Field Name**: the classification store field.
+- **Language**: for localized keys, the language to write.
+- **Write If Source Is Empty**: **disabled** by default, unlike every other data target. Enable it to let an empty
+  source value clear the key instead of being dropped. The setting only takes effect once it has been saved for the
+  mapping entry at least once — see [When the setting takes effect](#when-write-if-source-is-empty-takes-effect).
+
 <div class="image-as-lightbox"></div>
 
 ![Data Target Classification Store Batch](../../../img/data_target_classification_store_batch.png)
 
 For the required data shape and worked examples, see
 [Classification Store Batch Details](./01_Classification_Store_Batch_Details.md).
+
+### When Write If Source Is Empty Takes Effect
+
+On the two classification store targets the setting is only in force on a mapping entry for which it has been decided,
+which the editor records the first time the control is changed or the target type is selected. Until then the entry
+keeps the behaviour it had before the setting reached these targets, whatever its stored value says: the
+`Classification Store` target writes every value including empty ones, and `Classification Store Batch` drops every
+empty value before writing and does not activate the group of an entry whose values are all empty. Two entries with
+identical-looking settings therefore import differently depending on whether that decision has been recorded.
+
+Open the mapping entry, set the control to what the import should do and save the configuration to put it in force.
+
+A value counts as empty when PHP counts it as empty: `null`, `false`, `0`, `0.0`, `"0"`, `""` and `[]`. Note that `0`
+is among them.
