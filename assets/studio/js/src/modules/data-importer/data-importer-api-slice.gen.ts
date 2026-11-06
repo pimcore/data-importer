@@ -217,6 +217,17 @@ const injectedRtkApi = api
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterMappingSuggestionSuggest: build.mutation<
+                BundleDataImporterMappingSuggestionSuggestApiResponse,
+                BundleDataImporterMappingSuggestionSuggestApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/mapping-suggestions`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterMappingSuggestionParameters,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
             bundleDataImporterUtilityCheckCrontab: build.query<
                 BundleDataImporterUtilityCheckCrontabApiResponse,
                 BundleDataImporterUtilityCheckCrontabApiArg
@@ -375,6 +386,11 @@ export type BundleDataImporterDataTypeLoadClassAttributesApiArg = {
 export type BundleDataImporterDataTypeLoadUnitDataApiResponse =
     /** status 200 List of available quantity value units with IDs and abbreviations */ BundleDataImporterUnitDataResponse;
 export type BundleDataImporterDataTypeLoadUnitDataApiArg = void;
+export type BundleDataImporterMappingSuggestionSuggestApiResponse =
+    /** status 200 The suggested field per column, best score first */ BundleDataImporterMappingSuggestionsResponse;
+export type BundleDataImporterMappingSuggestionSuggestApiArg = {
+    bundleDataImporterMappingSuggestionParameters: BundleDataImporterMappingSuggestionParameters;
+};
 export type BundleDataImporterUtilityCheckCrontabApiResponse =
     /** status 200 Cron expression validation result with validity flag and error message */ BundleDataImporterCronValidationResponse;
 export type BundleDataImporterUtilityCheckCrontabApiArg = {
@@ -626,6 +642,40 @@ export type BundleDataImporterUnitDataResponse = {
         abbreviation?: string;
     }[];
 };
+export type BundleDataImporterMappingSuggestionsResponse = {
+    /** AdditionalAttributes */
+    additionalAttributes?: {
+        [key: string]: string | number | boolean | object;
+    };
+    /** The suggested field per column, best score first; a column without a match has none */
+    suggestions: {
+        /** Column data index */
+        sourceIndex: string;
+        /** Column name */
+        sourceLabel: string;
+        /** Key of the suggested field */
+        targetFieldName: string;
+        /** Title of the suggested field */
+        targetFieldLabel: string;
+        /** Transformation result type that writes the suggested field */
+        transformationResultType: string;
+        /** How well the names match, from 0 to 100 */
+        score: number;
+        /** Language guessed from the column name, for a localized field */
+        language: any;
+    }[];
+};
+export type BundleDataImporterMappingSuggestionParameters = {
+    /** The ID of the data object class to suggest fields of */
+    classId: string;
+    /** The source columns to suggest a field for */
+    columns: {
+        /** Column data index */
+        index: string;
+        /** Column name */
+        label: string;
+    }[];
+};
 export type BundleDataImporterCronValidationResponse = {
     /** AdditionalAttributes */
     additionalAttributes?: {
@@ -656,5 +706,6 @@ export const {
     useBundleDataImporterConnectionListQuery,
     useBundleDataImporterDataTypeLoadClassAttributesQuery,
     useBundleDataImporterDataTypeLoadUnitDataQuery,
+    useBundleDataImporterMappingSuggestionSuggestMutation,
     useBundleDataImporterUtilityCheckCrontabQuery,
 } = injectedRtkApi;
