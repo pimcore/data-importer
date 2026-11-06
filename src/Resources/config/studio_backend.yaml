@@ -62,5 +62,8 @@ services:
         arguments:
             $tasks: '@?Pimcore\Contracts\PimcoreAgent\AgentTaskServiceInterface'
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationLookupInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationLookup
+
     Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsService

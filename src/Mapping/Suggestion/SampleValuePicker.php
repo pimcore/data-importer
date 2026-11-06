@@ -27,8 +27,8 @@ final readonly class SampleValuePicker
 
     private const int MAX_VALUE_LENGTH = 50;
 
-    // the values of one row alone would be a record
-    private const int MIN_ROWS = 2;
+    // the values of one row alone would be a record; a row without a value in an asked column does not count
+    private const int MIN_ROWS_WITH_VALUES = 2;
 
     private const int MAX_ROWS = 10000;
 
@@ -47,12 +47,14 @@ final readonly class SampleValuePicker
         $samples = [];
         $seen = [];
         $rowCount = 0;
+        $rowsWithValues = 0;
 
         foreach ($rows as $row) {
             if ($rowCount === self::MAX_ROWS) {
                 break;
             }
             $rowCount++;
+            $hasValue = false;
 
             foreach ($columnIndexes as $index) {
                 $value = $this->cellValue($row[$index] ?? null);
@@ -60,12 +62,15 @@ final readonly class SampleValuePicker
                     continue;
                 }
 
+                $hasValue = true;
                 $seen[$index] = ($seen[$index] ?? 0) + 1;
                 $samples[$index] = $this->keep($samples[$index] ?? [], $value, $seen[$index]);
             }
+
+            $rowsWithValues += $hasValue ? 1 : 0;
         }
 
-        if ($rowCount < self::MIN_ROWS) {
+        if ($rowsWithValues < self::MIN_ROWS_WITH_VALUES) {
             return [];
         }
 

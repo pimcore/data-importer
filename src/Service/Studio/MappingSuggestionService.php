@@ -28,10 +28,14 @@ use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 /**
  * @internal
@@ -211,7 +215,7 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
     }
 
     /**
-     * Unreadable rows cost the agent its samples, not the suggestions.
+     * Unreadable rows cost the agent its samples, not the suggestions; a refusal stays a refusal.
      *
      * @param list<Column> $columns
      *
@@ -229,11 +233,15 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
                 $this->previewRows->read($configName, $parameters->getCurrentConfig()),
                 array_column($columns, 'index')
             );
+        } catch (ForbiddenException | NotFoundHttpException | AccessDeniedHttpException $refusal) {
+            throw $refusal;
         } catch (InvalidConfigurationException | InvalidInputException $exception) {
             $this->logger->info('Mapping suggestions: no sample values', ['exception' => $exception]);
-
-            return [];
+        } catch (Throwable $exception) {
+            $this->logger->warning('Mapping suggestions: no sample values', ['exception' => $exception]);
         }
+
+        return [];
     }
 
     /**

@@ -20,7 +20,7 @@ use Pimcore\Contracts\PimcoreAgent\AgentTaskStatus;
 use Pimcore\Contracts\PimcoreAgent\Exception\AgentTaskExceptionInterface;
 use Pimcore\Contracts\PimcoreAgent\Exception\TaskWaitTimeoutException;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
+use Throwable;
 
 /**
  * Lets the Pimcore agent suggest fields for what the name comparison leaves open. The task runs on its own and a later
@@ -93,34 +93,40 @@ final readonly class AiSuggestionStage
                 deadlineMinutes: self::DEADLINE_MINUTES,
                 origin: self::AGENT,
             ));
-        } catch (AgentTaskExceptionInterface | RuntimeException $exception) {
-            // a configured execution user that cannot be resolved fails with a plain RuntimeException
+
+            $requestId = bin2hex(random_bytes(16));
+            $stored = $this->tmpStore->add(
+                self::STORE_PREFIX . $requestId,
+                [
+                    'userId' => $actingUserId,
+                    'taskId' => $task->id,
+                    'startedAt' => time(),
+                    'input' => [
+                        'columns' => $input->columns,
+                        'targets' => $input->targets,
+                        'languages' => $input->languages,
+                        'taken' => $input->taken,
+                    ],
+                ],
+                self::STORE_TAG,
+                self::STORE_LIFETIME
+            );
+            if ($stored) {
+                return $requestId;
+            }
+
+            // nobody could read this task's outcome
+            $this->logger->warning('Mapping suggestions: the agent task could not be stored', [
+                'taskId' => $task->id,
+            ]);
+            $this->tasks->cancel($task->id);
+        } catch (Throwable $exception) {
             $this->logger->warning('Mapping suggestions: the agent task could not start', [
                 'exception' => $exception,
             ]);
-
-            return null;
         }
 
-        $requestId = bin2hex(random_bytes(16));
-        $this->tmpStore->add(
-            self::STORE_PREFIX . $requestId,
-            [
-                'userId' => $actingUserId,
-                'taskId' => $task->id,
-                'startedAt' => time(),
-                'input' => [
-                    'columns' => $input->columns,
-                    'targets' => $input->targets,
-                    'languages' => $input->languages,
-                    'taken' => $input->taken,
-                ],
-            ],
-            self::STORE_TAG,
-            self::STORE_LIFETIME
-        );
-
-        return $requestId;
+        return null;
     }
 
     /**

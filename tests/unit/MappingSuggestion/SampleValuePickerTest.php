@@ -94,6 +94,39 @@ class SampleValuePickerTest extends Unit
         $this->assertSame([], $this->picker()->pick([], ['sku']));
     }
 
+    /**
+     * @dataProvider oneRecordAndBlankRows
+     */
+    public function testBlankRowsDoNotMakeOneRecordCountAsSeveralRows(array $rows, array $columns): void
+    {
+        $this->assertSame([], $this->picker()->pick($rows, $columns));
+    }
+
+    public function oneRecordAndBlankRows(): array
+    {
+        return [
+            'a row of nulls' => [
+                [['sku' => 'A-1', 'color' => 'red'], ['sku' => null, 'color' => null]],
+                ['sku', 'color'],
+            ],
+            'a blank CSV line' => [[['A-1', 'red'], [null]], ['0', '1']],
+            'a value only in a column not asked for' => [
+                [['sku' => 'A-1', 'color' => 'red'], ['sku' => 'A-2', 'color' => '']],
+                ['color'],
+            ],
+        ];
+    }
+
+    public function testTwoRowsWithValuesInDifferentColumnsStillGiveSamples(): void
+    {
+        $samples = $this->picker()->pick(
+            [['sku' => 'A-1', 'color' => null], ['sku' => null, 'color' => 'red']],
+            ['sku', 'color']
+        );
+
+        $this->assertSame(['sku' => ['A-1'], 'color' => ['red']], $samples);
+    }
+
     public function testALongTextIsCutToFiftyCharactersNotBytes(): void
     {
         $samples = $this->picker()->pick(

@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\MappingSuggestion;
 
 use Codeception\Test\Unit;
+use Error;
+use Exception;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionInput;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStatus;
@@ -30,6 +32,7 @@ use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use Throwable;
 
 class AiSuggestionStageTest extends Unit
 {
@@ -252,7 +255,7 @@ class AiSuggestionStageTest extends Unit
     /**
      * @dataProvider startFailures
      */
-    public function testATaskThatCannotStartLeavesNoRequestAndIsLogged(RuntimeException $failure): void
+    public function testATaskThatCannotStartLeavesNoRequestAndIsLogged(Throwable $failure): void
     {
         $tasks = $this->createStub(AgentTaskServiceInterface::class);
         $tasks->method('start')->willThrowException($failure);
@@ -270,7 +273,44 @@ class AiSuggestionStageTest extends Unit
             'too many tasks' => [new TooManyTasksException('busy')],
             'dispatch failed' => [new TaskDispatchException('down')],
             'no execution user' => [new RuntimeException('no user')],
+            'a database failure' => [new Exception('table is missing')],
+            'an error' => [new Error('undefined method')],
         ];
+    }
+
+    public function testARequestThatCannotBeStoredCancelsItsTaskAndLeavesNoRequest(): void
+    {
+        $tasks = $this->createMock(AgentTaskServiceInterface::class);
+        $tasks->method('start')->willReturn(
+            new AgentTaskInfo('task-1', 'session-1', '', AgentTaskStatus::Running, null)
+        );
+        $tasks->expects($this->once())->method('cancel')->with('task-1');
+
+        $tmpStore = $this->createStub(TmpStoreResolverInterface::class);
+        $tmpStore->method('add')->willReturn(false);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning');
+
+        $stage = new AiSuggestionStage($tasks, $tmpStore, $logger, true);
+
+        $this->assertNull($stage->start($this->input(), self::USER_ID));
+    }
+
+    public function testACancelThatFailsAfterTheStoreFailedStillLeavesNoRequest(): void
+    {
+        $tasks = $this->createStub(AgentTaskServiceInterface::class);
+        $tasks->method('start')->willReturn(
+            new AgentTaskInfo('task-1', 'session-1', '', AgentTaskStatus::Running, null)
+        );
+        $tasks->method('cancel')->willThrowException(new TaskDispatchException('down'));
+
+        $tmpStore = $this->createStub(TmpStoreResolverInterface::class);
+        $tmpStore->method('add')->willReturn(false);
+
+        $stage = new AiSuggestionStage($tasks, $tmpStore, new NullLogger(), true);
+
+        $this->assertNull($stage->start($this->input(), self::USER_ID));
     }
 
     public function testAnUnknownRequestIsNull(): void

@@ -25,7 +25,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 interface PreviewRowsServiceInterface
 {
     /**
-     * The rows of the current user's preview file of a configuration, keyed as an import would; none without a file.
+     * The rows of the current user's preview file of a configuration, keyed as an import would; none without a file
+     * and none from a workbook too large to load safely.
      *
      * @param array<string, mixed>|null $currentConfig the unsaved configuration, if any
      *

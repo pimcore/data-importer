@@ -64,8 +64,12 @@ Its suggestions arrive after those of the name comparison and carry the tag `AI`
 
 With `send_sample_values`, up to three values per open column go to the model, never a row: each column is drawn on its
 own from random rows of your preview file, in its own order, and each value is cut to 50 characters. Columns that are
-mapped already or that have a name match send no values, and a preview file with a single row sends none. Only CSV and
-XLSX files give sample values; other file formats send the headers alone.
+mapped already or that have a name match send no values, and a preview file with fewer than two rows of values in the
+open columns sends none. Only CSV and XLSX files give sample values, and an XLSX file only up to 100,000 cells across
+its sheets; other files send the headers alone.
+
+The agent bundle stores these values with the task and in the task's session, owned by the user who asked; they stay
+there beyond the suggestion request, under the agent bundle's own retention.
 
 ## Writing Rules
 

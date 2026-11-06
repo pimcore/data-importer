@@ -13,7 +13,6 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\MappingSuggestion;
 
 use Codeception\Test\Unit;
-use Exception;
 use LogicException;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\MappingSuggestionsEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydrator;
@@ -30,6 +29,7 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface
 use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\Tool\TmpStoreResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Contracts\PimcoreAgent\AgentTaskInfo;
@@ -41,8 +41,13 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\User;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
+use ValueError;
 
 class MappingSuggestionServiceTest extends Unit
 {
@@ -518,7 +523,7 @@ class MappingSuggestionServiceTest extends Unit
     /**
      * @dataProvider unreadableRows
      */
-    public function testUnreadableRowsCostTheSamplesNotTheAgent(Exception $failure): void
+    public function testUnreadableRowsCostTheSamplesNotTheAgent(Throwable $failure): void
     {
         $previewRows = $this->createStub(PreviewRowsServiceInterface::class);
         $previewRows->method('read')->willThrowException($failure);
@@ -539,6 +544,43 @@ class MappingSuggestionServiceTest extends Unit
         return [
             'a format that cannot read rows' => [new InvalidConfigurationException('xml')],
             'a broken file' => [new InvalidInputException('row 3')],
+            'a storage failure' => [new RuntimeException('storage is down')],
+            'an invalid delimiter' => [new ValueError('delimiter must be a single character')],
+        ];
+    }
+
+    /**
+     * @dataProvider refusals
+     */
+    public function testARefusedConfigurationAnswersTheRefusalAndStartsNoTask(
+        Throwable $refusal,
+        string $expected
+    ): void {
+        $previewRows = $this->createStub(PreviewRowsServiceInterface::class);
+        $previewRows->method('read')->willThrowException($refusal);
+
+        $agent = $this->agent();
+
+        try {
+            $this->service(
+                ['default' => [$this->attribute('sku'), $this->attribute('color')]],
+                aiStage: $this->aiStage($agent, true, true),
+                previewRows: $previewRows
+            )->suggest($this->parametersFromPreview());
+            $this->fail('the refusal was swallowed');
+        } catch (Throwable $thrown) {
+            $this->assertInstanceOf($expected, $thrown);
+        }
+
+        $this->assertSame([], $agent->requests);
+    }
+
+    public function refusals(): array
+    {
+        return [
+            'may not read' => [new ForbiddenException('denied'), ForbiddenException::class],
+            'unknown configuration' => [new NotFoundHttpException('unknown'), NotFoundHttpException::class],
+            'denied while preparing' => [new AccessDeniedHttpException('denied'), AccessDeniedHttpException::class],
         ];
     }
 

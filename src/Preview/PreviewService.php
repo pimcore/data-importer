@@ -20,7 +20,7 @@ use Pimcore\Model\User;
 /**
  * @internal
  */
-final class PreviewService
+class PreviewService
 {
     use TemporaryFileHelperTrait;
 
