@@ -311,6 +311,28 @@ class RowMatcherTest extends Unit
         $this->assertEqualsCanonicalizing([$inside->getId(), $made->getId()], $match->objectIds);
     }
 
+    public function testSeveralMatchesInTheTargetReportAtMostFiveObjects(): void
+    {
+        $this->createSameValueObjects(self::TARGET, 6);
+
+        $match = $this->matchOne($this->byField(), 'SKU-1');
+
+        $this->assertSame(RowMatchOutcome::SeveralMatches, $match->outcome);
+        $this->assertCount(5, $match->objectIds);
+    }
+
+    public function testMatchesInTheTargetAndTheFolderForNewObjectsReportAtMostFiveObjects(): void
+    {
+        $inTarget = $this->createSameValueObjects(self::TARGET, 5);
+        $this->createSameValueObjects(self::NEW_FOLDER, 5);
+        $configuration = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
+
+        $match = $this->matchOne($configuration, 'SKU-1');
+
+        $this->assertSame(RowMatchOutcome::SeveralMatches, $match->outcome);
+        $this->assertEqualsCanonicalizing($inTarget, $match->objectIds);
+    }
+
     public function testAMatchInNeitherFolderStaysOutside(): void
     {
         Service::createFolderByPath(self::NEW_FOLDER);
@@ -883,6 +905,19 @@ class RowMatcherTest extends Unit
         $object->save();
 
         return $object;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function createSameValueObjects(string $folder, int $count): array
+    {
+        $ids = [];
+        for ($i = 0; $i < $count; $i++) {
+            $ids[] = (int) $this->createObject($folder, 'SKU-1')->getId();
+        }
+
+        return $ids;
     }
 
     private function unsavedObject(
