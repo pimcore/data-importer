@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
@@ -43,4 +44,9 @@ interface AdHocImportServiceInterface
      * @throws NotFoundHttpException if the user has no such file
      */
     public function delete(string $fileId): void;
+
+    /**
+     * @throws ForbiddenException if the user may not create objects of that class
+     */
+    public function loadMatchFields(string $classId): ClassAttributesResponse;
 }

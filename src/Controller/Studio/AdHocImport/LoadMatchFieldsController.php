@@ -15,11 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport;
 
 use OpenApi\Attributes\Get;
 use OpenApi\Attributes\JsonContent;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Query\TextFieldParameter;
@@ -33,7 +32,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
 
 /**
- * The fields objects of a class can be matched by, for users of the ad hoc import without any Data Hub right.
+ * The fields objects of a class the user may create can be matched by, for users of the ad hoc import without any Data
+ * Hub right.
  *
  * @internal
  */
@@ -43,7 +43,7 @@ final class LoadMatchFieldsController extends AbstractApiController
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly DataTypeServiceInterface $dataTypeService
+        private readonly AdHocImportServiceInterface $adHocImportService
     ) {
         parent::__construct($serializer);
     }
@@ -77,14 +77,6 @@ final class LoadMatchFieldsController extends AbstractApiController
     ])]
     public function loadMatchFields(#[MapQueryParameter] string $classId): JsonResponse
     {
-        return $this->jsonResponse(
-            $this->dataTypeService->loadClassAttributes(
-                $classId,
-                [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
-                false,
-                false,
-                false
-            )
-        );
+        return $this->jsonResponse($this->adHocImportService->loadMatchFields($classId));
     }
 }

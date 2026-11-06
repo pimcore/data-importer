@@ -26,12 +26,19 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
+use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
+use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
@@ -351,8 +358,57 @@ class AdHocImportServiceTest extends Unit
         $this->assertFileExists($this->storage . '/' . self::OTHER_USER_ID . '/' . $foreign . '.csv');
     }
 
-    private function service(mixed $folder = 'allowed'): AdHocImportService
+    public function testTheFieldsOfAClassTheUserMayCreateAreAskedWithoutSystemOrAdvancedOnes(): void
     {
+        $dataTypes = $this->createMock(DataTypeServiceInterface::class);
+        $dataTypes->expects($this->once())->method('loadClassAttributes')->with(
+            'PROD',
+            [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
+            false,
+            false,
+            false
+        )->willReturn(new ClassAttributesResponse([['key' => 'sku', 'title' => 'SKU', 'localized' => false]]));
+
+        $fields = $this->service(dataTypeService: $dataTypes, creatableClasses: ['OTHER', 'PROD'])->loadMatchFields('PROD');
+
+        $this->assertSame(['sku'], array_column($fields->getAttributes(), 'key'));
+    }
+
+    public function testTheFieldsOfAClassTheUserMayNotCreateAreForbidden(): void
+    {
+        $dataTypes = $this->createMock(DataTypeServiceInterface::class);
+        $dataTypes->expects($this->never())->method('loadClassAttributes');
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->service(dataTypeService: $dataTypes, creatableClasses: ['OTHER'])->loadMatchFields('PROD');
+    }
+
+    public function testTheObjectTypeOfAVariantClassIsNoFieldToMatchBy(): void
+    {
+        $answer = new ClassAttributesResponse([
+            ['key' => 'sku', 'title' => 'SKU', 'localized' => false],
+            ['key' => 'type', 'title' => 'SYSTEM Object Type ("variant"|"object")', 'localized' => false],
+            ['key' => 'name', 'title' => 'Name', 'localized' => false],
+        ]);
+        $answer->addAdditionalAttribute('from', 'a listener');
+        $dataTypes = $this->createStub(DataTypeServiceInterface::class);
+        $dataTypes->method('loadClassAttributes')->willReturn($answer);
+
+        $fields = $this->service(dataTypeService: $dataTypes, creatableClasses: ['PROD'])->loadMatchFields('PROD');
+
+        $this->assertSame(['sku', 'name'], array_column($fields->getAttributes(), 'key'));
+        $this->assertSame('a listener', $fields->getAdditionalAttribute('from'));
+    }
+
+    /**
+     * @param string[] $creatableClasses
+     */
+    private function service(
+        mixed $folder = 'allowed',
+        ?DataTypeServiceInterface $dataTypeService = null,
+        array $creatableClasses = []
+    ): AdHocImportService {
         if ($folder === 'allowed') {
             $folder = $this->createStub(Folder::class);
             $folder->method('isAllowed')->willReturn(true);
@@ -377,11 +433,26 @@ class AdHocImportServiceTest extends Unit
             'xlsx' => (new \ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor(),
         ]);
 
+        $classes = $this->createStub(ClassDefinitionServiceInterface::class);
+        $classes->method('getClassDefinitionCollection')->willReturnCallback(
+            static fn (bool $creatableOnly = false): array => $creatableOnly ? array_map(
+                static fn (string $id): ClassDefinitionList => new ClassDefinitionList(
+                    $id,
+                    $id,
+                    $id,
+                    new ElementIcon(ElementIconTypes::NAME->value, 'class')
+                ),
+                $creatableClasses
+            ) : []
+        );
+
         return new AdHocImportService(
             new FileStore(new Filesystem(new LocalFilesystemAdapter($this->storage))),
             new FileInspector(new SourceFileReader($factory), $factory, new CsvDelimiterDetector()),
             $security,
-            $resolver
+            $resolver,
+            $dataTypeService ?? $this->createStub(DataTypeServiceInterface::class),
+            $classes
         );
     }
 

@@ -19,9 +19,13 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\RefusalReason;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
+use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
@@ -40,11 +44,16 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
 
     private const int MAX_FILE_SIZE = 52428800; // 50MB, as for the preview files of a configuration
 
+    // a system attribute of a class with variants; objects cannot be matched by it
+    private const string OBJECT_TYPE_ATTRIBUTE = 'type';
+
     public function __construct(
         private FileStore $fileStore,
         private FileInspector $fileInspector,
         private SecurityServiceInterface $securityService,
         private DataObjectResolverInterface $dataObjectResolver,
+        private DataTypeServiceInterface $dataTypeService,
+        private ClassDefinitionServiceInterface $classDefinitionService,
     ) {
     }
 
@@ -101,6 +110,35 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
         $user = $this->resolveCurrentUser();
 
         $this->fileStore->delete($user->getId(), $fileId, $this->requireType($user, $fileId));
+    }
+
+    public function loadMatchFields(string $classId): ClassAttributesResponse
+    {
+        $creatable = array_map(
+            static fn (ClassDefinitionList $class): string => $class->getId(),
+            $this->classDefinitionService->getClassDefinitionCollection(creatableOnly: true)
+        );
+        if (!in_array($classId, $creatable, true)) {
+            throw new ForbiddenException(sprintf('Access denied to class %s', $classId));
+        }
+
+        $attributes = $this->dataTypeService->loadClassAttributes(
+            $classId,
+            [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
+            false,
+            false,
+            false
+        );
+
+        $fields = new ClassAttributesResponse(array_values(array_filter(
+            $attributes->getAttributes(),
+            static fn (array $attribute): bool => $attribute['key'] !== self::OBJECT_TYPE_ATTRIBUTE
+        )));
+        foreach ($attributes->getAdditionalAttributes() as $key => $value) {
+            $fields->addAdditionalAttribute($key, $value);
+        }
+
+        return $fields;
     }
 
     /**
