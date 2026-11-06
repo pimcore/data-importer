@@ -147,6 +147,8 @@ class AdHocImportEndpointsTest extends Unit
         $connection->method('createSchemaManager')->willReturn($this->createMock(AbstractSchemaManager::class));
 
         $up = new Version20261106170000($connection, new NullLogger());
+        $this->assertStringContainsString('right', $up->getDescription());
+        $this->assertSame('PimcoreDataImporterBundle', (new \ReflectionMethod($up, 'getBundleName'))->invoke($up));
         $up->up(new Schema());
         [$insert] = $up->getSql();
         $this->assertStringContainsString('INSERT IGNORE INTO users_permission_definitions', $insert->getStatement());

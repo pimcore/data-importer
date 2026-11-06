@@ -272,6 +272,28 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
+    public function testAWorkbookWithABrokenWorkbookPartIsUnreadableInsteadOfAnError(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->addFromString('xl/workbook.xml', '<workbook><sheets><sheet');
+        $zip->close();
+
+        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+    }
+
+    public function testAWorkbookWithAPartOnlyTheLoadReadsBrokenIsUnreadableInsteadOfAnError(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->addFromString('xl/sharedStrings.xml', '<sst><si><t');
+        $zip->close();
+
+        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+    }
+
     public function testAnXlsxUpToTheLimitIsTakenWithItsCount(): void
     {
         $path = $this->xlsx(['Products' => array_fill(0, FileInspector::MAX_ROWS + 1, ['value'])]);

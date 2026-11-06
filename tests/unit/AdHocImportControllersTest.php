@@ -99,6 +99,17 @@ class AdHocImportControllersTest extends Unit
         $this->assertSame(self::ANSWER, $response->getContent());
     }
 
+    public function testTheSettingsShowWhatWasGiven(): void
+    {
+        $settings = new AdHocImportFileSettings(';', "'", '', false, 'Notes');
+
+        $this->assertSame(';', $settings->getDelimiter());
+        $this->assertSame("'", $settings->getEnclosure());
+        $this->assertSame('', $settings->getEscape());
+        $this->assertFalse($settings->getHasHeaderRow());
+        $this->assertSame('Notes', $settings->getSheetName());
+    }
+
     private function serializer(?object $answer = null): SerializerInterface
     {
         $serializer = $this->createMock(SerializerInterface::class);

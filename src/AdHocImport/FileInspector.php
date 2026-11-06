@@ -43,17 +43,13 @@ final readonly class FileInspector
      */
     public function isReadable(string $path, FileType $type): bool
     {
-        try {
-            return match ($type) {
-                FileType::Csv => $this->interpreterFactory
-                    ->loadInterpreter('', ['type' => FileType::Csv->value, 'settings' => []], [])
-                    ->fileValid($path),
-                // not the interpreter's check: it also accepts what another reader can read, like plain text
-                FileType::Xlsx => (new Xlsx())->canRead($path),
-            };
-        } catch (SpreadsheetException|InvalidInputException) {
-            return false;
-        }
+        return match ($type) {
+            FileType::Csv => $this->interpreterFactory
+                ->loadInterpreter('', ['type' => FileType::Csv->value, 'settings' => []], [])
+                ->fileValid($path),
+            // not the interpreter's check: it also accepts what another reader can read, like plain text
+            FileType::Xlsx => (new Xlsx())->canRead($path),
+        };
     }
 
     public function inspect(string $path, FileType $type, SettingsInput $input): FileInspection
@@ -140,8 +136,9 @@ final readonly class FileInspector
 
     private function inspectXlsx(string $path, SettingsInput $input): FileInspection
     {
-        $worksheets = $this->listWorksheets($path);
-        if ($worksheets === null) {
+        try {
+            $worksheets = $this->withWarningsAsErrors(static fn (): array => (new Xlsx())->listWorksheetInfo($path));
+        } catch (SpreadsheetException|\ErrorException) {
             return new FileInspection(['hasHeaderRow' => $input->hasHeaderRow], refusal: RefusalReason::Unreadable);
         }
 
@@ -162,17 +159,18 @@ final readonly class FileInspector
             // carry formatting, so a sheet that seems too long is counted
             $headerRows = $input->hasHeaderRow ? 1 : 0;
             if ($worksheet['totalRows'] - $headerRows > self::MAX_ROWS) {
-                $rowCount = max(0, $this->lastRowWithCells($path, $sheetName) - $headerRows);
+                $lastRow = $this->withWarningsAsErrors(fn (): int => $this->lastRowWithCells($path, $sheetName));
+                $rowCount = max(0, $lastRow - $headerRows);
                 if ($rowCount > self::MAX_ROWS) {
                     return new FileInspection($settings, sheets: $sheets, rowCount: $rowCount, refusal: RefusalReason::TooManyRows);
                 }
             }
 
-            $rows = [...$this->sourceFileReader->readRows(
+            $rows = $this->withWarningsAsErrors(fn (): array => [...$this->sourceFileReader->readRows(
                 ['type' => FileType::Xlsx->value, 'settings' => ['skipFirstRow' => false, 'sheetName' => $sheetName, 'onlyChosenSheet' => true]],
                 $path
-            )];
-        } catch (SpreadsheetException|InvalidInputException) {
+            )]);
+        } catch (SpreadsheetException|InvalidInputException|\ErrorException) {
             return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
         }
 
@@ -191,10 +189,17 @@ final readonly class FileInspector
     }
 
     /**
-     * @return array<int, array{worksheetName: string, totalRows: int}>|null null if the workbook is broken, which the
-     *                                                                       reader may only tell by a PHP warning
+     * The reader may tell a broken part of a workbook only by a PHP warning, and goes on without what it could not read.
+     *
+     * @template T
+     *
+     * @param callable(): T $read
+     *
+     * @return T
+     *
+     * @throws \ErrorException|SpreadsheetException|InvalidInputException
      */
-    private function listWorksheets(string $path): ?array
+    private function withWarningsAsErrors(callable $read): mixed
     {
         set_error_handler(
             static function (int $level, string $message, string $file, int $line): bool {
@@ -208,9 +213,7 @@ final readonly class FileInspector
         );
 
         try {
-            return (new Xlsx())->listWorksheetInfo($path);
-        } catch (SpreadsheetException|\ErrorException) {
-            return null;
+            return $read();
         } finally {
             restore_error_handler();
         }
