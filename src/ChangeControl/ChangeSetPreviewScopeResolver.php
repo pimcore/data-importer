@@ -17,7 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 use function count;
 use Pimcore\Bundle\ChangeControlBundle\ChangeSet\MappedParameter\ListChangeSetsParameters;
 use Pimcore\Bundle\ChangeControlBundle\ChangeSet\Service\ChangeSetServiceInterface;
-use Pimcore\Bundle\ChangeControlBundle\Contract\ChangeControlAuthoringInterface;
+use Pimcore\Bundle\ChangeControlBundle\Service\ChangeControlAuthoringInterface;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface;
 use Symfony\Component\Uid\Uuid;
