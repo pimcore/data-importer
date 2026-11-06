@@ -24,6 +24,7 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFie
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
@@ -31,6 +32,7 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class AdHocImportEndpointsTest extends Unit
 {
@@ -90,6 +92,33 @@ class AdHocImportEndpointsTest extends Unit
         $default = $serializer->denormalize([], AdHocImportFileSettings::class)->toInput();
         $this->assertNull($default->delimiter);
         $this->assertTrue($default->hasHeaderRow);
+    }
+
+    public function testAnAnswerReachesTheStudioWithItsFieldNames(): void
+    {
+        /** @var SerializerInterface $serializer */
+        $serializer = $this->tester->grabService('serializer');
+
+        $answer = json_decode($serializer->serialize(
+            new AdHocImportFileResponse(
+                5000,
+                'file-1',
+                'csv',
+                delimiter: ';',
+                detectedDelimiter: ';',
+                rowCount: 2,
+                columns: [['dataIndex' => 'sku', 'label' => 'SKU']],
+                firstRows: [['A-1'], [null]]
+            ),
+            'json'
+        ), true);
+
+        $this->assertSame(5000, $answer['maxRows']);
+        $this->assertSame('file-1', $answer['fileId']);
+        $this->assertSame(';', $answer['detectedDelimiter']);
+        $this->assertTrue($answer['hasHeaderRow']);
+        $this->assertSame([['dataIndex' => 'sku', 'label' => 'SKU']], $answer['columns']);
+        $this->assertSame([['A-1'], [null]], $answer['firstRows']);
     }
 
     public function testTheMigrationAddsTheRightUnlessItExistsAndRemovesItAgain(): void

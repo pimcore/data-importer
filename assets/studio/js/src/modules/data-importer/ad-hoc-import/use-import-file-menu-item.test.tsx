@@ -84,7 +84,7 @@ describe('the menu item', () => {
     const menuItem = item(folder())
     act(() => { menuItem.onClick() })
 
-    expect(result.current).toEqual({ folderId: 77, folderPath: '/Products/Outdoor' })
+    expect(result.current).toEqual({ folderId: 77, folderPath: '/Products/Outdoor', folderLabel: 'Outdoor' })
   })
 
   it('falls back to the label for a node without its object', () => {
@@ -93,6 +93,6 @@ describe('the menu item', () => {
     const menuItem = item(folder({ label: 'home', metaData: {} }))
     act(() => { menuItem.onClick() })
 
-    expect(result.current).toEqual({ folderId: 77, folderPath: '/home' })
+    expect(result.current).toEqual({ folderId: 77, folderPath: '/home', folderLabel: 'home' })
   })
 })

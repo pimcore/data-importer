@@ -46,7 +46,6 @@ export const FileStep = ({ phase, isInspecting, objects, onFile, onRemoveFile, o
         size="small"
       >
         <FormKit.Panel
-          theme="border-highlight"
           title={ t('data-importer.ad-hoc-import.file.title') }
         >
           <Space

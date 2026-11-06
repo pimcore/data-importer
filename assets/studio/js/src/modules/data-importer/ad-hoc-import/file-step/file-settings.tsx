@@ -23,6 +23,7 @@ const DELIMITERS = [
 
 const SELECT_WIDTH = 200
 const CHARACTER_WIDTH = 64
+const FORM_ITEM_STYLE = { marginBottom: 0 }
 
 export const settingsOf = (inspected: InspectedFile): BundleDataImporterAdHocImportFileSettings => ({
   delimiter: inspected.delimiter,
@@ -80,7 +81,10 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
   })), [inspected.detectedDelimiter, t])
 
   const columnNames = (
-    <Form.Item label={ t('data-importer.ad-hoc-import.settings.column-names') }>
+    <Form.Item
+      label={ t('data-importer.ad-hoc-import.settings.column-names') }
+      style={ FORM_ITEM_STYLE }
+    >
       <Switch
         checked={ inspected.hasHeaderRow }
         labelRight={ t('data-importer.ad-hoc-import.settings.in-first-row') }
@@ -96,6 +100,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
         <Form.Item
           htmlFor="ad-hoc-import-sheet"
           label={ t('data-importer.ad-hoc-import.settings.sheet') }
+          style={ FORM_ITEM_STYLE }
         >
           <Select
             id="ad-hoc-import-sheet"
@@ -115,6 +120,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
       <Form.Item
         htmlFor="ad-hoc-import-delimiter"
         label={ t('data-importer.ad-hoc-import.settings.delimiter') }
+        style={ FORM_ITEM_STYLE }
       >
         <Select
           id="ad-hoc-import-delimiter"
@@ -127,6 +133,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
       <Form.Item
         htmlFor="ad-hoc-import-enclosure"
         label={ t('data-importer.ad-hoc-import.settings.enclosure') }
+        style={ FORM_ITEM_STYLE }
       >
         <CharacterInput
           allowEmpty={ false }
@@ -138,6 +145,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
       <Form.Item
         htmlFor="ad-hoc-import-escape"
         label={ t('data-importer.ad-hoc-import.settings.escape') }
+        style={ FORM_ITEM_STYLE }
       >
         <CharacterInput
           allowEmpty

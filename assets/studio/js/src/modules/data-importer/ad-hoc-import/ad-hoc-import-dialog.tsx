@@ -32,10 +32,15 @@ import {
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
 
 const DIALOG_WIDTH = 1160
+const STEPS_WIDTH = 720
 
 const STEPS = ['file', 'mapping', 'preview', 'import']
 
-const titlePath = (folderPath: string): string => folderPath.split('/').filter((part) => part !== '').join(' / ')
+const titlePath = ({ folderPath, folderLabel }: AdHocImportTarget): string => {
+  const path = folderPath.split('/').filter((part) => part !== '').join(' / ')
+
+  return path === '' ? folderLabel : path
+}
 
 export interface AdHocImportDialogProps {
   target: AdHocImportTarget
@@ -177,16 +182,18 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       onCancel={ close }
       open
       title={ t('data-importer.ad-hoc-import.title', {
-        path: titlePath(target.folderPath),
+        path: titlePath(target),
         interpolation: { escapeValue: false }
       }) }
       width={ DIALOG_WIDTH }
     >
-      <Steps
-        current={ step }
-        items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-        size="small"
-      />
+      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
+        <Steps
+          current={ step }
+          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
+          size="small"
+        />
+      </div>
       { step === 0 && (
         <FileStep
           isInspecting={ isInspecting }

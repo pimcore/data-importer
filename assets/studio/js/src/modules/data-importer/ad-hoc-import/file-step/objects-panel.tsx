@@ -20,6 +20,7 @@ import { type InspectedFile, type MatchBy, type ObjectsSettings } from './file-s
 const CLASS_WIDTH = 200
 const MATCH_WIDTH = 140
 const FOLDER_WIDTH = 300
+const FORM_ITEM_STYLE = { marginBottom: 0 }
 
 export interface ObjectsPanelProps {
   inspected?: InspectedFile
@@ -65,12 +66,12 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
 
   return (
     <FormKit.Panel
-      theme="border-highlight"
       title={ t('data-importer.ad-hoc-import.objects.title') }
     >
       <Form.Item
         htmlFor="ad-hoc-import-class"
         label={ t('data-importer.ad-hoc-import.objects.class') }
+        style={ FORM_ITEM_STYLE }
       >
         <Select
           filterOption={ filterByLabel }
@@ -87,6 +88,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
       <Form.Item
         extra={ t('data-importer.ad-hoc-import.objects.match-hint') }
         label={ t('data-importer.ad-hoc-import.objects.match-by') }
+        style={ FORM_ITEM_STYLE }
       >
         <Flex
           align="center"
@@ -136,6 +138,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
             { t('data-importer.ad-hoc-import.objects.optional') }
           </span>
         ) }
+        style={ FORM_ITEM_STYLE }
       >
         <ManyToOneRelationPath
           allowedDataObjectTypes={ ['folder'] }

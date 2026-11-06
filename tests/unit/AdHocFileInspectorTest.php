@@ -262,6 +262,29 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
     }
 
+    public function testAWorkbookWithABrokenSheetHasNoRowsInsteadOfAnError(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->addFromString('xl/worksheets/sheet1.xml', '<worksheet><sheetData><row><c');
+        $zip->close();
+
+        // the reader finds no rows in it: nothing to import, which the step does not go on with
+        $this->assertSame(0, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->rowCount);
+    }
+
+    public function testAWorkbookWithoutItsWorkbookPartIsUnreadableInsteadOfAnError(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->deleteName('xl/workbook.xml');
+        $zip->close();
+
+        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+    }
+
     public function testAnXlsxIsReadable(): void
     {
         $this->assertTrue($this->inspector()->isReadable($this->xlsx(['Products' => [['a']]]), FileType::Xlsx));

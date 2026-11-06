@@ -105,11 +105,11 @@ interface Running {
 
 const onClose = jest.fn()
 
-const renderDialog = (): void => {
+const renderDialog = (folderPath = '/Products/Outdoor'): void => {
   render(
     <AdHocImportDialog
       onClose={ onClose }
-      target={ { folderId: 77, folderPath: '/Products/Outdoor' } }
+      target={ { folderId: 77, folderPath, folderLabel: 'Home' } }
     />
   )
 }
@@ -174,6 +174,12 @@ describe('the file step without a file', () => {
     expect(screen.getByRole('region', { name: 'Objects' })).toBeTruthy()
     expect(screen.getByText('Found objects are updated where they are.')).toBeTruthy()
     expect(screen.getByText('Empty: the folder you clicked.')).toBeTruthy()
+  })
+
+  it('names the root folder by its label, as it has no path', () => {
+    renderDialog('/')
+
+    expect(screen.getByRole('dialog', { name: 'Import file into Home' })).toBeTruthy()
   })
 
   it('has no column to choose yet and cannot go on', () => {
@@ -273,6 +279,18 @@ describe('uploading', () => {
     await act(async () => { cleanup() })
 
     expect(running.abort).toHaveBeenCalled()
+  })
+
+  it('ignores an answer that arrives after it was cancelled', async () => {
+    renderDialog()
+    const running = dropFile('prices.csv')
+    running.abort.mockImplementation(() => undefined)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel upload' }))
+    await act(async () => { running.resolve(csv) })
+
+    expect(screen.getByLabelText('drop zone')).toBeTruthy()
+    expect(screen.queryByText('prices.csv')).toBeNull()
   })
 
   it('reports a refusal of the server and starts over', async () => {
@@ -469,6 +487,19 @@ describe('changing the settings', () => {
     expect(screen.queryByRole('table')).toBeNull()
     expect(screen.queryByRole('region', { name: 'Objects' })).toBeNull()
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('ignores an answer that arrives after the file was removed', async () => {
+    let answer: (value: unknown) => void = () => undefined
+    mockInspectFile.mockReturnValue(new Promise((resolve) => { answer = resolve }))
+    renderDialog()
+    await dropAndRead(csv)
+    await act(async () => { select('Delimiter', ',') })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove file' }))
+    await act(async () => { answer({ data: csv }) })
+
+    expect(screen.getByLabelText('drop zone')).toBeTruthy()
   })
 
   it('starts over when the file is gone', async () => {

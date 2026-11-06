@@ -34,7 +34,8 @@ export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
     onClick: () => {
       openAdHocImport({
         folderId: Number.parseInt(node.id),
-        folderPath: node.metaData?.dataObject?.fullPath ?? `/${node.label}`
+        folderPath: node.metaData?.dataObject?.fullPath ?? `/${node.label}`,
+        folderLabel: node.label
       })
     }
   }

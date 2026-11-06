@@ -148,6 +148,21 @@ class AdHocImportServiceTest extends Unit
         $this->assertSame([], $this->storedFiles());
     }
 
+    public function testAWorkbookWithoutItsWorkbookPartIsNotKept(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->deleteName('xl/workbook.xml');
+        $zip->close();
+
+        $response = $this->service()->upload($this->uploadOf($path, 'broken.xlsx'), self::FOLDER_ID);
+
+        $this->assertSame('unreadable', $response->getRefusal());
+        $this->assertNull($response->getFileId());
+        $this->assertSame([], $this->storedFiles());
+    }
+
     public function testAWorkbookWhoseFirstSheetIsOverTheLimitIsKeptSoAnotherSheetCanBeChosen(): void
     {
         $path = $this->xlsx([

@@ -76,8 +76,7 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
 
         $inspection = $this->fileInspector->inspect($path, $type, new SettingsInput());
 
-        // no setting can bring it down: keeping the file would keep it for nothing
-        if ($inspection->refusal === RefusalReason::TooManyRows && count($inspection->sheets) < 2) {
+        if ($inspection->refusal !== null && !$this->settingsCouldHelp($type, $inspection)) {
             $this->fileStore->delete($user->getId(), $fileId, $type);
             $fileId = null;
         }
@@ -102,6 +101,17 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
         $user = $this->resolveCurrentUser();
 
         $this->fileStore->delete($user->getId(), $fileId, $this->requireType($user, $fileId));
+    }
+
+    /**
+     * Whether to keep a refused file for another try: another sheet, or the settings of a CSV that does not fit its header.
+     */
+    private function settingsCouldHelp(FileType $type, FileInspection $inspection): bool
+    {
+        return match ($type) {
+            FileType::Csv => $inspection->refusal === RefusalReason::Unreadable,
+            FileType::Xlsx => count($inspection->sheets) > 1,
+        };
     }
 
     private function assertMayImportInto(int $folderId, User $user): void

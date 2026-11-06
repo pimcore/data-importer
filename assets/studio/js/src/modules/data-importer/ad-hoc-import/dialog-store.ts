@@ -14,6 +14,8 @@ export interface AdHocImportTarget {
   folderId: number
   // the folder's path; shown in the title and where new objects go by default
   folderPath: string
+  // for the title of the root folder, whose path is empty
+  folderLabel: string
 }
 
 // A menu item is gone once its menu closes, so the dialog it opens lives in a host of its own

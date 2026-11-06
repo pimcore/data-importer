@@ -34,14 +34,14 @@ describe('AdHocImportHost', () => {
     const { container } = render(<AdHocImportHost />)
     expect(container.innerHTML).toBe('')
 
-    act(() => { openAdHocImport({ folderId: 77, folderPath: '/Products/Outdoor' }) })
+    act(() => { openAdHocImport({ folderId: 77, folderPath: '/Products/Outdoor', folderLabel: 'Outdoor' }) })
 
     expect(screen.getByRole('button', { name: '/Products/Outdoor' })).toBeTruthy()
   })
 
   it('renders nothing again once the dialog closes', () => {
     const { container } = render(<AdHocImportHost />)
-    act(() => { openAdHocImport({ folderId: 77, folderPath: '/Products/Outdoor' }) })
+    act(() => { openAdHocImport({ folderId: 77, folderPath: '/Products/Outdoor', folderLabel: 'Outdoor' }) })
 
     act(() => { screen.getByRole('button').click() })
 
