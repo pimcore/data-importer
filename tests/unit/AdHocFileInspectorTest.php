@@ -262,16 +262,82 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
     }
 
-    public function testAWorkbookWithABrokenSheetHasNoRowsInsteadOfAnError(): void
+    public function testAWorkbookWithABrokenSheetIsUnreadableInsteadOfAnError(): void
     {
         $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
-        $zip = new \ZipArchive();
-        $zip->open($path);
-        $zip->addFromString('xl/worksheets/sheet1.xml', '<worksheet><sheetData><row><c');
-        $zip->close();
+        $this->replaceInSheet($path, null, '<worksheet><sheetData><row><c');
 
-        // the reader finds no rows in it: nothing to import, which the step does not go on with
-        $this->assertSame(0, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->rowCount);
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
+    }
+
+    public function testAnXlsxUpToTheLimitIsTakenWithItsCount(): void
+    {
+        $path = $this->xlsx(['Products' => array_fill(0, FileInspector::MAX_ROWS + 1, ['value'])]);
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(FileInspector::MAX_ROWS, $inspection->rowCount);
+    }
+
+    public function testARowThatOnlyCarriesFormattingDoesNotCountForTheLimit(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1'], ['A-2']]]);
+        $this->replaceInSheet($path, '</sheetData>', '<row r="6000" s="1" customFormat="1"/></sheetData>');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(2, $inspection->rowCount);
+    }
+
+    public function testEmptyCellsCountForTheLimitBecauseAnImportReceivesThemAsRows(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $this->replaceInSheet($path, '</sheetData>', '<row r="6000"><c r="A6000" s="0"/></row></sheetData>');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::TooManyRows, $inspection->refusal);
+        $this->assertSame(5999, $inspection->rowCount);
+    }
+
+    public function testOnlyTheChosenSheetIsLoaded(): void
+    {
+        // without a stored result the formula could only be calculated with the other sheet loaded
+        $path = $this->xlsxWithAFormulaOnAnotherSheet(storeResults: false);
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertNotSame('5', $inspection->firstRows[0][1]);
+    }
+
+    public function testAFormulaShowsItsStoredResultAlthoughItsSheetIsNotLoaded(): void
+    {
+        $inspection = $this->inspector()->inspect(
+            $this->xlsxWithAFormulaOnAnotherSheet(storeResults: true),
+            FileType::Xlsx,
+            new SettingsInput()
+        );
+
+        $this->assertSame([['A-1', '5', '12', '7x', 'TRUE', '005']], $inspection->firstRows);
+    }
+
+    public function testAnImportStillCalculatesFormulasFromOtherSheets(): void
+    {
+        $factory = new InterpreterFactory([
+            'xlsx' => (new \ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor(),
+        ]);
+
+        $rows = (new SourceFileReader($factory))->readRows(
+            ['type' => 'xlsx', 'settings' => ['skipFirstRow' => true, 'sheetName' => 'Products']],
+            $this->xlsxWithAFormulaOnAnotherSheet(storeResults: false)
+        );
+
+        $this->assertSame([['A-1', '5', '12', '7x', 'TRUE', '005']], [...$rows]);
     }
 
     public function testAWorkbookWithoutItsWorkbookPartIsUnreadableInsteadOfAnError(): void
@@ -371,7 +437,7 @@ class AdHocFileInspectorTest extends Unit
     /**
      * @param array<string, array<int, array<int, mixed>>> $sheets
      */
-    private function xlsx(array $sheets, string $extension = 'xlsx'): string
+    private function xlsx(array $sheets, string $extension = 'xlsx', bool $storeFormulaResults = true): string
     {
         $spreadsheet = new Spreadsheet();
         $spreadsheet->removeSheetByIndex(0);
@@ -382,8 +448,37 @@ class AdHocFileInspectorTest extends Unit
         }
 
         $path = $this->file('', $extension);
-        (new Xlsx($spreadsheet))->save($path);
+        $writer = new Xlsx($spreadsheet);
+        $writer->setPreCalculateFormulas($storeFormulaResults);
+        $writer->save($path);
 
         return $path;
+    }
+
+    private function xlsxWithAFormulaOnAnotherSheet(bool $storeResults): string
+    {
+        return $this->xlsx(
+            [
+                'Products' => [
+                    ['sku', 'stock', 'sum', 'text', 'flag', 'code'],
+                    ['A-1', '=Stock!A1', '=SUM(Stock!A1:A2)', '=Stock!A2&"x"', '=Stock!A1>1', '="00"&Stock!A1'],
+                ],
+                'Stock' => [[5], [7]],
+            ],
+            storeFormulaResults: $storeResults
+        );
+    }
+
+    /**
+     * @param string|null $search null replaces all of the first sheet's XML
+     */
+    private function replaceInSheet(string $path, ?string $search, string $replacement): void
+    {
+        $part = 'xl/worksheets/sheet1.xml';
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $xml = $search === null ? $replacement : str_replace($search, $replacement, (string)$zip->getFromName($part));
+        $zip->addFromString($part, $xml);
+        $zip->close();
     }
 }

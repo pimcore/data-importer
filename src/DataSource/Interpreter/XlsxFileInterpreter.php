@@ -32,6 +32,8 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
 
     private string $sheetName;
 
+    private bool $onlyChosenSheet;
+
     protected function doInterpretFileAndCallProcessRow(string $path): void
     {
         foreach ($this->loadRows($path, false) as $rowData) {
@@ -73,9 +75,15 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
+        if ($this->onlyChosenSheet) {
+            $reader->setLoadSheetsOnly($this->sheetName);
+        }
         $spreadSheet = $reader->load($path);
 
         $spreadSheet->setActiveSheetIndexByName($this->sheetName);
+        if ($this->onlyChosenSheet) {
+            $this->replaceFormulasByStoredResults($spreadSheet->getActiveSheet());
+        }
 
         // imports receive formatted text; changing that would alter what existing mappings and delta checks see
         $data = $spreadSheet->getActiveSheet()->toArray(null, true, !$typedValues);
@@ -85,6 +93,28 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
         }
 
         return $data;
+    }
+
+    /**
+     * A formula on a sheet that was not loaded would calculate to "#REF!" or 0 without a word.
+     */
+    private function replaceFormulasByStoredResults(Worksheet $sheet): void
+    {
+        foreach ($sheet->getCoordinates() as $coordinate) {
+            $cell = $sheet->getCell($coordinate);
+            if ($cell->getDataType() !== DataType::TYPE_FORMULA) {
+                continue;
+            }
+
+            $stored = $cell->getOldCalculatedValue();
+            if ($stored !== null) {
+                $cell->setValueExplicit($stored, match (true) {
+                    is_bool($stored) => DataType::TYPE_BOOL,
+                    is_int($stored), is_float($stored) => DataType::TYPE_NUMERIC,
+                    default => DataType::TYPE_STRING,
+                });
+            }
+        }
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -241,5 +271,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
     {
         $this->skipFirstRow = $settings['skipFirstRow'] ?? false;
         $this->sheetName = $settings['sheetName'] ?? 'Sheet1';
+        // to look at a sheet of a workbook, not to import it: formulas show their stored results
+        $this->onlyChosenSheet = $settings['onlyChosenSheet'] ?? false;
     }
 }

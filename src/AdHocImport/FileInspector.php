@@ -20,7 +20,8 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 
 /**
- * Reads a file the way its import will, so a file refused here is one the import could not take either.
+ * Reads a file the way its import will, so a file refused here is one the import could not take either. Of a workbook
+ * it loads only the chosen sheet: another sheet's size is no reason to refuse this one.
  *
  * @internal
  */
@@ -139,9 +140,8 @@ final readonly class FileInspector
 
     private function inspectXlsx(string $path, SettingsInput $input): FileInspection
     {
-        try {
-            $worksheets = (new Xlsx())->listWorksheetInfo($path);
-        } catch (SpreadsheetException) {
+        $worksheets = $this->listWorksheets($path);
+        if ($worksheets === null) {
             return new FileInspection(['hasHeaderRow' => $input->hasHeaderRow], refusal: RefusalReason::Unreadable);
         }
 
@@ -157,18 +157,22 @@ final readonly class FileInspector
             return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
         }
 
-        // decided before the sheet is loaded: this limit keeps the load affordable
-        $rowCount = max(0, $worksheet['totalRows'] - ($input->hasHeaderRow ? 1 : 0));
-        if ($rowCount > self::MAX_ROWS) {
-            return new FileInspection($settings, sheets: $sheets, rowCount: $rowCount, refusal: RefusalReason::TooManyRows);
-        }
-
         try {
+            // decided before the rows are read: this limit keeps reading them affordable. The sheet's last row may only
+            // carry formatting, so a sheet that seems too long is counted
+            $headerRows = $input->hasHeaderRow ? 1 : 0;
+            if ($worksheet['totalRows'] - $headerRows > self::MAX_ROWS) {
+                $rowCount = max(0, $this->lastRowWithCells($path, $sheetName) - $headerRows);
+                if ($rowCount > self::MAX_ROWS) {
+                    return new FileInspection($settings, sheets: $sheets, rowCount: $rowCount, refusal: RefusalReason::TooManyRows);
+                }
+            }
+
             $rows = [...$this->sourceFileReader->readRows(
-                ['type' => FileType::Xlsx->value, 'settings' => ['skipFirstRow' => false, 'sheetName' => $sheetName]],
+                ['type' => FileType::Xlsx->value, 'settings' => ['skipFirstRow' => false, 'sheetName' => $sheetName, 'onlyChosenSheet' => true]],
                 $path
             )];
-        } catch (InvalidInputException) {
+        } catch (SpreadsheetException|InvalidInputException) {
             return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
         }
 
@@ -184,6 +188,48 @@ final readonly class FileInspector
                 array_slice($rows, 0, self::FIRST_ROWS)
             )
         );
+    }
+
+    /**
+     * @return array<int, array{worksheetName: string, totalRows: int}>|null null if the workbook is broken, which the
+     *                                                                       reader may only tell by a PHP warning
+     */
+    private function listWorksheets(string $path): ?array
+    {
+        set_error_handler(
+            static function (int $level, string $message, string $file, int $line): bool {
+                if ((error_reporting() & $level) === 0) {
+                    return false;
+                }
+
+                throw new \ErrorException($message, 0, $level, $file, $line);
+            },
+            E_WARNING
+        );
+
+        try {
+            return (new Xlsx())->listWorksheetInfo($path);
+        } catch (SpreadsheetException|\ErrorException) {
+            return null;
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    /**
+     * The last row an import receives, without keeping the cells: a row without cells does not reach it.
+     */
+    private function lastRowWithCells(string $path, string $sheetName): int
+    {
+        $filter = new LastRowReadFilter();
+
+        $reader = new Xlsx();
+        $reader->setReadDataOnly(true);
+        $reader->setLoadSheetsOnly($sheetName);
+        $reader->setReadFilter($filter);
+        $reader->load($path);
+
+        return $filter->lastRow();
     }
 
     /**
