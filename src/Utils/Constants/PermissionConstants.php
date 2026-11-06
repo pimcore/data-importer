@@ -32,4 +32,6 @@ final class PermissionConstants
     public const string PLUGIN_DATA_IMPORTER_ADMIN = 'plugin_datahub_admin';
 
     public const string PLUGIN_DATA_IMPORTER_ADAPTER = Installer::DATAHUB_ADAPTER_PERMISSION;
+
+    public const string PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT = Installer::AD_HOC_IMPORT_PERMISSION;
 }

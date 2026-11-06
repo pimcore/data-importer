@@ -1,0 +1,144 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
+
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspection;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\RefusalReason;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
+use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Model\DataObject\Folder;
+use Pimcore\Model\User;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+/**
+ * @internal
+ */
+final readonly class AdHocImportService implements AdHocImportServiceInterface
+{
+    use CurrentUserResolverTrait;
+
+    private const int MAX_FILE_SIZE = 52428800; // 50MB, as for the preview files of a configuration
+
+    public function __construct(
+        private FileStore $fileStore,
+        private FileInspector $fileInspector,
+        private SecurityServiceInterface $securityService,
+        private DataObjectResolverInterface $dataObjectResolver,
+    ) {
+    }
+
+    public function upload(UploadedFile $file, int $folderId): AdHocImportFileResponse
+    {
+        $user = $this->resolveCurrentUser();
+        $this->assertMayImportInto($folderId, $user);
+
+        if (!$file->isValid()) {
+            throw new EnvironmentException($file->getErrorMessage());
+        }
+        if ($file->getSize() > self::MAX_FILE_SIZE) {
+            throw new MaxFileSizeExceededException(self::MAX_FILE_SIZE);
+        }
+
+        $type = FileType::fromFileName($file->getClientOriginalName());
+        if ($type === null) {
+            return new AdHocImportFileResponse(FileInspector::MAX_ROWS, refusal: RefusalReason::WrongFormat->value);
+        }
+
+        $fileId = $this->fileStore->store($user->getId(), $type, $file->getPathname());
+        $path = $this->fileStore->localPath($user->getId(), $fileId, $type);
+
+        if (!$this->fileInspector->isReadable($path, $type)) {
+            $this->fileStore->delete($user->getId(), $fileId, $type);
+
+            return new AdHocImportFileResponse(FileInspector::MAX_ROWS, type: $type->value, refusal: RefusalReason::Unreadable->value);
+        }
+
+        $inspection = $this->fileInspector->inspect($path, $type, new SettingsInput());
+
+        // no setting can bring it down: keeping the file would keep it for nothing
+        if ($inspection->refusal === RefusalReason::TooManyRows && count($inspection->sheets) < 2) {
+            $this->fileStore->delete($user->getId(), $fileId, $type);
+            $fileId = null;
+        }
+
+        return $this->response($fileId, $type, $inspection);
+    }
+
+    public function inspect(string $fileId, SettingsInput $settings): AdHocImportFileResponse
+    {
+        $user = $this->resolveCurrentUser();
+        $type = $this->requireType($user, $fileId);
+
+        return $this->response(
+            $fileId,
+            $type,
+            $this->fileInspector->inspect($this->fileStore->localPath($user->getId(), $fileId, $type), $type, $settings)
+        );
+    }
+
+    public function delete(string $fileId): void
+    {
+        $user = $this->resolveCurrentUser();
+
+        $this->fileStore->delete($user->getId(), $fileId, $this->requireType($user, $fileId));
+    }
+
+    private function assertMayImportInto(int $folderId, User $user): void
+    {
+        $folder = $this->dataObjectResolver->getById($folderId);
+        if (!$folder instanceof Folder) {
+            throw new NotFoundHttpException(sprintf('Data object folder %d not found', $folderId));
+        }
+
+        if (!$folder->isAllowed('create', $user) || !$folder->isAllowed('save', $user)) {
+            throw new ForbiddenException(sprintf('Access denied to data object folder %d', $folderId));
+        }
+    }
+
+    private function requireType(User $user, string $fileId): FileType
+    {
+        return $this->fileStore->findType($user->getId(), $fileId)
+            ?? throw new NotFoundHttpException(sprintf('File %s not found', $fileId));
+    }
+
+    private function response(?string $fileId, FileType $type, FileInspection $inspection): AdHocImportFileResponse
+    {
+        return new AdHocImportFileResponse(
+            FileInspector::MAX_ROWS,
+            $fileId,
+            $type->value,
+            $inspection->refusal?->value,
+            $inspection->settings['delimiter'] ?? null,
+            $inspection->detectedDelimiter,
+            $inspection->settings['enclosure'] ?? null,
+            $inspection->settings['escape'] ?? null,
+            $inspection->settings['hasHeaderRow'],
+            $inspection->settings['sheetName'] ?? null,
+            $inspection->sheets,
+            $inspection->rowCount,
+            $inspection->columns,
+            $inspection->firstRows
+        );
+    }
+}

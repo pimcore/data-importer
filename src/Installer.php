@@ -23,6 +23,8 @@ final class Installer extends SettingsStoreAwareInstaller
 {
     public const DATAHUB_ADAPTER_PERMISSION = 'plugin_datahub_adapter_dataImporterDataObject';
 
+    public const AD_HOC_IMPORT_PERMISSION = 'plugin_data_importer_ad_hoc_import';
+
     /**
      * {@inheritdoc}
      *
@@ -38,6 +40,10 @@ final class Installer extends SettingsStoreAwareInstaller
 
         // create backend permission
         Permission\Definition::create(self::DATAHUB_ADAPTER_PERMISSION)
+            ->setCategory(\Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY)
+            ->save();
+
+        Permission\Definition::create(self::AD_HOC_IMPORT_PERMISSION)
             ->setCategory(\Pimcore\Bundle\DataHubBundle\Installer::DATAHUB_PERMISSION_CATEGORY)
             ->save();
 

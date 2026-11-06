@@ -46,3 +46,10 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydratorInterface:
         class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~
