@@ -129,6 +129,49 @@ final class DataObjectLoader
         return null;
     }
 
+    /**
+     * The ids of the objects whose attribute has the value, published or not, at or below the given normalized path;
+     * unlike loadByAttribute() it tells one match from several.
+     *
+     * @return list<int>
+     */
+    public function findIdsByAttribute(
+        string $className,
+        string $attributeName,
+        string $identifier,
+        string $attributeLanguage,
+        string $path,
+        int $limit
+    ): array {
+        // the name goes into the listing condition unquoted for object brick attributes
+        if (preg_match(self::ATTRIBUTE_NAME_PATTERN, $attributeName) !== 1) {
+            throw new InvalidConfigurationException(sprintf('Invalid attribute name "%s".', $attributeName));
+        }
+
+        $db = Db::get();
+        $options = [
+            'objectTypes' => [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT],
+            'unpublished' => true,
+            'limit' => $limit,
+        ];
+
+        if ($this->isObjectBrickAttribute($attributeName)) {
+            $objectBrickParts = $this->getObjectBrickParts($attributeName);
+            $options['objectbricks'] = [$objectBrickParts[self::BRICK_NAME]];
+            $field = $this->getAttributeNameFromParts($objectBrickParts, false);
+        } else {
+            $field = $db->quoteIdentifier($attributeName);
+        }
+
+        if ($attributeLanguage !== '') {
+            $options['locale'] = $attributeLanguage;
+        }
+
+        $options['condition'] = $field . ' = ' . $db->quote($identifier) . $this->getPathCondition($path);
+
+        return $className::getList($options)->loadIdList();
+    }
+
     public function loadById(string $identifier,
         string $className = '\\Pimcore\\Model\\DataObject'): ?ElementInterface
     {
