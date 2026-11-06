@@ -119,6 +119,14 @@ describe('keepMatchColumn', () => {
     expect(keepMatchColumn(byPosition, unnamed, named).matchColumn).toBeUndefined()
   })
 
+  it('forgets a column named like a position once the first row stops or starts being the header', () => {
+    const named = inspected({ columns: [{ dataIndex: 'sku', label: 'sku' }, { dataIndex: '0', label: '0' }] })
+    const unnamed = inspected({ columns: [{ dataIndex: '0', label: '0' }, { dataIndex: '1', label: '1' }], hasHeaderRow: false })
+
+    expect(keepMatchColumn(byPosition, named, unnamed).matchColumn).toBeUndefined()
+    expect(keepMatchColumn(byPosition, unnamed, named).matchColumn).toBeUndefined()
+  })
+
   it('leaves no column as it is', () => {
     const none = { ...objects, matchColumn: undefined }
     expect(keepMatchColumn(none, inspected(), inspected())).toBe(none)
