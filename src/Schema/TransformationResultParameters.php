@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Schema;
 use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 
 /**
  * @internal
@@ -45,9 +46,19 @@ final readonly class TransformationResultParameters
     ) {
     }
 
+    /**
+     * @throws InvalidArgumentException for an entry that is not an object: dropping it would shift the preview
+     *                                  positions
+     */
     public function getMappingConfig(): array
     {
-        return array_values(array_filter($this->mappingConfig, 'is_array'));
+        foreach ($this->mappingConfig as $index => $entry) {
+            if (!is_array($entry)) {
+                throw new InvalidArgumentException(sprintf('Mapping entry %s is not an object.', $index));
+            }
+        }
+
+        return array_values($this->mappingConfig);
     }
 
     public function getDataRow(): array
