@@ -605,6 +605,65 @@ describe('an XLSX the server read', () => {
     expect(mockInspectFile.mock.lastCall[0].bundleDataImporterAdHocImportFileSettings.hasHeaderRow).toBe(false)
   })
 
+  describe('with a column chosen to match by', () => {
+    const chooseFirstColumn = async (first: InspectedFile): Promise<void> => {
+      renderDialog()
+      await dropAndRead(first, 'northhike-autumn.xlsx')
+      select('Field', 'sku')
+      select('from column', '0')
+    }
+
+    it('forgets it when the chosen sheet has another column at its position', async () => {
+      mockInspectFile.mockResolvedValue({ data: { ...xlsx, sheetName: 'Prices', columns: [{ dataIndex: '0', label: 'price' }] } })
+      await chooseFirstColumn({ ...xlsx, columns: [{ dataIndex: '0', label: 'sku' }] })
+
+      await act(async () => { select('Sheet', 'Prices') })
+
+      expect(screen.getByLabelText<HTMLSelectElement>('from column').value).toBe('')
+      expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+    })
+
+    it('keeps it when the chosen sheet has the same column at its position', async () => {
+      mockInspectFile.mockResolvedValue({ data: { ...xlsx, sheetName: 'Prices', columns: [{ dataIndex: '0', label: 'sku' }] } })
+      await chooseFirstColumn({ ...xlsx, columns: [{ dataIndex: '0', label: 'sku' }] })
+
+      await act(async () => { select('Sheet', 'Prices') })
+
+      expect(screen.getByLabelText<HTMLSelectElement>('from column').value).toBe('0')
+      expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+    })
+
+    it('forgets it on another sheet when the columns have no names', async () => {
+      const columns = [{ dataIndex: '0', label: '0' }]
+      mockInspectFile.mockResolvedValue({ data: { ...xlsx, hasHeaderRow: false, sheetName: 'Prices', columns } })
+      await chooseFirstColumn({ ...xlsx, hasHeaderRow: false, columns })
+
+      await act(async () => { select('Sheet', 'Prices') })
+
+      expect(screen.getByLabelText<HTMLSelectElement>('from column').value).toBe('')
+    })
+
+    it('does not offer it for the next file after the file was removed', async () => {
+      await chooseFirstColumn(xlsx)
+
+      fireEvent.click(screen.getByRole('button', { name: 'Remove file' }))
+      await dropAndRead(xlsx, 'another.xlsx')
+
+      expect(screen.getByLabelText<HTMLSelectElement>('from column').value).toBe('')
+      expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+    })
+
+    it('does not offer it for the next file after the file was gone', async () => {
+      mockInspectFile.mockResolvedValue({ error: { status: 404, data: {} } })
+      await chooseFirstColumn(xlsx)
+
+      await act(async () => { select('Sheet', 'Prices') })
+      await dropAndRead(xlsx, 'another.xlsx')
+
+      expect(screen.getByLabelText<HTMLSelectElement>('from column').value).toBe('')
+    })
+  })
+
   it('keeps the sheets of a workbook whose first sheet is over the limit', async () => {
     renderDialog()
 

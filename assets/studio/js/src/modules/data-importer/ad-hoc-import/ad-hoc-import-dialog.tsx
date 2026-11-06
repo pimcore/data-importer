@@ -27,7 +27,6 @@ import {
   keepMatchColumn,
   refusedForFormat,
   type FilePhase,
-  type InspectedFile,
   type ObjectsSettings
 } from './file-step/file-step-state'
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
@@ -83,12 +82,11 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     setPhase({ kind: 'empty' })
   }
 
-  const applyInspected = (inspected: InspectedFile): void => {
-    setObjects((current) => keepMatchColumn(current, inspected))
-  }
-
   const onFile = (file: File): void => {
     const info = { name: file.name, size: file.size }
+
+    // another file's column at the same position would be another column
+    setObjects((current) => ({ ...current, matchColumn: undefined }))
 
     if (!hasAcceptedExtension(file.name)) {
       setPhase({ kind: 'inspected', file: info, inspected: refusedForFormat() })
@@ -107,7 +105,6 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
         return
       }
       upload.current = null
-      applyInspected(inspected)
       setPhase({ kind: 'inspected', file: info, inspected })
     }).catch((error: unknown) => {
       if (error instanceof UploadAborted) {
@@ -128,7 +125,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       return
     }
 
-    const settings = { ...(requestedSettings.current ?? settingsOf(phase.inspected)), ...changed }
+    const before = phase.inspected
+    const settings = { ...(requestedSettings.current ?? settingsOf(before)), ...changed }
     requestedSettings.current = settings
 
     const inspection = ++latestInspection.current
@@ -149,7 +147,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       }
 
       const inspected = result.data
-      applyInspected(inspected)
+      setObjects((current) => keepMatchColumn(current, before, inspected))
       setPhase((current) => current.kind === 'inspected' ? { ...current, inspected } : current)
     })
   }

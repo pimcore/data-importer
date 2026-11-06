@@ -62,17 +62,48 @@ describe('canContinue', () => {
 })
 
 describe('keepMatchColumn', () => {
+  const byPosition = { ...objects, matchColumn: '0' }
+
   it('keeps a column the file still has', () => {
-    expect(keepMatchColumn(objects, inspected())).toBe(objects)
+    expect(keepMatchColumn(objects, inspected(), inspected())).toBe(objects)
   })
 
   it('forgets a column the file no longer has', () => {
-    expect(keepMatchColumn(objects, inspected({ columns: [{ dataIndex: '0', label: '0' }] })).matchColumn).toBeUndefined()
+    expect(keepMatchColumn(objects, inspected(), inspected({ columns: [{ dataIndex: '0', label: '0' }] })).matchColumn).toBeUndefined()
+  })
+
+  it('forgets a column another one took the position of', () => {
+    const before = inspected({ columns: [{ dataIndex: '0', label: 'sku' }] })
+    const after = inspected({ columns: [{ dataIndex: '0', label: 'price' }] })
+
+    expect(keepMatchColumn(byPosition, before, after).matchColumn).toBeUndefined()
+  })
+
+  it('keeps a named column at its position on another sheet', () => {
+    const columns = [{ dataIndex: '0', label: 'sku' }]
+
+    expect(keepMatchColumn(byPosition, inspected({ columns, sheetName: 'Products' }), inspected({ columns, sheetName: 'Prices' }))).toBe(byPosition)
+  })
+
+  it('forgets a column without a header on another sheet, and keeps it on the same one', () => {
+    const headerless = { columns: [{ dataIndex: '0', label: '0' }], hasHeaderRow: false }
+    const before = inspected({ ...headerless, sheetName: 'Products' })
+
+    expect(keepMatchColumn(byPosition, before, inspected({ ...headerless, sheetName: 'Prices' })).matchColumn).toBeUndefined()
+    expect(keepMatchColumn(byPosition, before, inspected({ ...headerless, sheetName: 'Products' }))).toBe(byPosition)
+  })
+
+  it('forgets a column once the first row stops or starts being the header', () => {
+    const named = inspected({ columns: [{ dataIndex: '0', label: 'sku' }] })
+    const unnamed = inspected({ columns: [{ dataIndex: '0', label: '0' }], hasHeaderRow: false })
+
+    expect(keepMatchColumn(byPosition, named, unnamed).matchColumn).toBeUndefined()
+    expect(keepMatchColumn(byPosition, unnamed, named).matchColumn).toBeUndefined()
   })
 
   it('leaves no column as it is', () => {
     const none = { ...objects, matchColumn: undefined }
-    expect(keepMatchColumn(none, inspected())).toBe(none)
+    expect(keepMatchColumn(none, inspected(), inspected())).toBe(none)
   })
 })
 

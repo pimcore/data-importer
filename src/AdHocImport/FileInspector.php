@@ -171,6 +171,13 @@ final readonly class FileInspector
             return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
         }
 
+        $tooManyRows = static fn (int $rowCount): FileInspection => new FileInspection(
+            $settings,
+            sheets: $sheets,
+            rowCount: $rowCount,
+            refusal: RefusalReason::TooManyRows
+        );
+
         try {
             // decided before the rows are read: this limit keeps reading them affordable. The sheet's last row may only
             // carry formatting, so a sheet that seems too long is counted
@@ -179,12 +186,7 @@ final readonly class FileInspector
                 $lastRow = $this->withWarningsAsErrors(fn (): int => $this->lastRowWithCells($path, $sheetName));
                 $rowCount = max(0, $lastRow - $headerRows);
                 if ($rowCount > self::MAX_ROWS) {
-                    return new FileInspection(
-                        $settings,
-                        sheets: $sheets,
-                        rowCount: $rowCount,
-                        refusal: RefusalReason::TooManyRows
-                    );
+                    return $tooManyRows($rowCount);
                 }
             }
 
@@ -202,6 +204,11 @@ final readonly class FileInspector
         $columns = $input->hasHeaderRow
             ? $this->xlsxHeaderColumns(array_shift($rows) ?? [])
             : $this->columnsByPosition($rows[0] ?? []);
+
+        // a row's number is optional in a workbook, so the sheet's info may not have told how long it is
+        if (count($rows) > self::MAX_ROWS) {
+            return $tooManyRows(count($rows));
+        }
 
         return new FileInspection(
             $settings,

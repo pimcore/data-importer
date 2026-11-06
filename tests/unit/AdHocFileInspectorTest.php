@@ -346,6 +346,31 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(FileInspector::MAX_ROWS, $inspection->rowCount);
     }
 
+    public function testAWorkbookWithoutRowNumbersIsHeldToTheLimitByTheRowsItHas(): void
+    {
+        $path = $this->xlsx(['Products' => array_fill(0, FileInspector::MAX_ROWS + 2, ['value'])]);
+        $this->removeRowNumbers($path);
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertSame(RefusalReason::TooManyRows, $inspection->refusal);
+        $this->assertSame(FileInspector::MAX_ROWS + 1, $inspection->rowCount);
+        $this->assertSame(['Products'], $inspection->sheets);
+        $this->assertSame([], $inspection->columns);
+        $this->assertSame([], $inspection->firstRows);
+    }
+
+    public function testAWorkbookWithoutRowNumbersUpToTheLimitIsTaken(): void
+    {
+        $path = $this->xlsx(['Products' => array_fill(0, FileInspector::MAX_ROWS + 1, ['value'])]);
+        $this->removeRowNumbers($path);
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(FileInspector::MAX_ROWS, $inspection->rowCount);
+    }
+
     public function testARowThatOnlyCarriesFormattingDoesNotCountForTheLimit(): void
     {
         $path = $this->xlsx(['Products' => [['sku'], ['A-1'], ['A-2']]]);
@@ -532,6 +557,18 @@ class AdHocFileInspectorTest extends Unit
             ],
             storeFormulaResults: $storeResults
         );
+    }
+
+    /**
+     * A row's number is optional in a workbook.
+     */
+    private function removeRowNumbers(string $path): void
+    {
+        $part = 'xl/worksheets/sheet1.xml';
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $zip->addFromString($part, (string)preg_replace('/<row r="\d+"/', '<row', (string)$zip->getFromName($part)));
+        $zip->close();
     }
 
     /**
