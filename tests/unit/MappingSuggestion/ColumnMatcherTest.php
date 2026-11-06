@@ -108,6 +108,11 @@ class ColumnMatcherTest extends Unit
         $this->assertSame(100, $this->matchOne('Цена', [$this->target('price', 'Цена')])['score']);
     }
 
+    public function testAnEmptyHeaderCellIsNoSuggestion(): void
+    {
+        $this->assertNull($this->matchOne('', [$this->target('name')]));
+    }
+
     public function testAnOverlongLabelIsNoSuggestion(): void
     {
         $this->assertNull($this->matchOne(str_repeat('name;', 60), [$this->target('name')]));
