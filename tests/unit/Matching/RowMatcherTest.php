@@ -385,6 +385,21 @@ class RowMatcherTest extends Unit
         $this->assertNull($match->element);
     }
 
+    public function testAKeyIsCheckedInTheFolderForNewObjectsAndNotInTheTarget(): void
+    {
+        $taken = $this->createObject(self::NEW_FOLDER, 'other value', 'SKU-1');
+        $this->createObject(self::TARGET, 'other value', 'SKU-2');
+        $configuration = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
+
+        $takenThere = $this->matchOne($configuration, 'SKU-1');
+        $takenInTarget = $this->matchOne($configuration, 'SKU-2');
+
+        $this->assertSame(RowMatchOutcome::KeyTaken, $takenThere->outcome);
+        $this->assertSame([$taken->getId()], $takenThere->objectIds);
+        $this->assertSame(RowMatchOutcome::New, $takenInTarget->outcome);
+        $this->assertSame(DataObject::getByPath(self::NEW_FOLDER)?->getId(), $takenInTarget->element?->getParentId());
+    }
+
     public function testAKeyAnEarlierNewObjectClaimedIsAnErrorRowNamingTheRow(): void
     {
         $matcher = $this->matcher($this->byField());
@@ -502,6 +517,38 @@ class RowMatcherTest extends Unit
 
         $this->assertSame($object->getId(), $matcher->match($this->row('Title-1'), 2)->element?->getId());
         $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $matcher->match($this->row('Title-2'), 3)->outcome);
+    }
+
+    public function testALocalizedFieldIsMatchedOnlyInTheNamedLanguage(): void
+    {
+        $english = $this->unsavedObject(self::TARGET, 'SKU-1');
+        $english->setTitle('Same title', 'en');
+        $english->save();
+        $german = $this->unsavedObject(self::TARGET, 'SKU-2');
+        $german->setTitle('Same title', 'de');
+        $german->save();
+
+        $inGerman = $this->matchOne($this->configuration(attributeName: 'title', language: 'de'), 'Same title');
+        $inEnglish = $this->matchOne($this->configuration(attributeName: 'title', language: 'en'), 'Same title');
+
+        $this->assertSame($german->getId(), $inGerman->element?->getId());
+        $this->assertSame($english->getId(), $inEnglish->element?->getId());
+    }
+
+    public function testABrickWhoseNameIsAReservedWordIsMatched(): void
+    {
+        $object = $this->unsavedObject(self::TARGET, 'SKU-1');
+        $brickClass = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\' . RowMatcherModel::RESERVED_WORD_BRICK_NAME;
+        $brick = new $brickClass($object);
+        $brick->setCode('Code-1');
+        $object->getBricks()->setOrder($brick);
+        $object->save();
+        $attributeName = 'bricks.' . RowMatcherModel::RESERVED_WORD_BRICK_NAME . self::BRICK_ATTRIBUTE;
+
+        $match = $this->matchOne($this->configuration(attributeName: $attributeName), 'Code-1');
+
+        $this->assertSame(RowMatchOutcome::Existing, $match->outcome);
+        $this->assertSame($object->getId(), $match->element?->getId());
     }
 
     public function testABrickAttributeIsMatched(): void

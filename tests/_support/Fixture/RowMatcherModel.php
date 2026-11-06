@@ -29,6 +29,9 @@ final class RowMatcherModel
 
     public const LOCALIZED_BRICK_NAME = 'DiRowMatcherLocalizedBrick';
 
+    // a reserved word in SQL, which core does not forbid as a brick's name
+    public const RESERVED_WORD_BRICK_NAME = 'Order';
+
     public const INHERITING_CLASS_NAME = 'DiRowMatcherInheritingClass';
 
     public static function createClass(): ClassDefinition
@@ -44,6 +47,7 @@ final class RowMatcherModel
             [['classname' => self::CLASS_NAME, 'fieldname' => 'bricks']],
             true
         );
+        self::createBrick(self::RESERVED_WORD_BRICK_NAME, [['classname' => self::CLASS_NAME, 'fieldname' => 'bricks']]);
 
         return $definition;
     }
@@ -72,7 +76,7 @@ final class RowMatcherModel
 
             $bricks = new ClassDefinition\Data\Objectbricks();
             $bricks->setName('bricks');
-            $bricks->setAllowedTypes([self::BRICK_NAME, self::LOCALIZED_BRICK_NAME]);
+            $bricks->setAllowedTypes([self::BRICK_NAME, self::LOCALIZED_BRICK_NAME, self::RESERVED_WORD_BRICK_NAME]);
             $panel->addChild($bricks);
 
             $otherBricks = new ClassDefinition\Data\Objectbricks();
