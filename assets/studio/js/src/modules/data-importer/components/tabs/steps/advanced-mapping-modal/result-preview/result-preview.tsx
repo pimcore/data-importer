@@ -17,7 +17,6 @@ import { useStyles } from './result-preview.styles'
 
 export const ResultPreview = (): React.JSX.Element => {
   const {
-    configName,
     previewRefreshToken,
     forceRefreshToken,
     currentMappingItem,
@@ -36,7 +35,6 @@ export const ResultPreview = (): React.JSX.Element => {
       { !isFetchingAttributes && calculateTypeError === undefined && (
         <PreviewPanel
           baseConfig={ baseConfig }
-          configName={ configName }
           currentMappingItem={ currentMappingItem }
           forceRefreshToken={ forceRefreshToken }
           mode="result"

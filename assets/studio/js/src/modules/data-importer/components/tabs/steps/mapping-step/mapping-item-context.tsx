@@ -13,7 +13,6 @@ import { type ClassAttribute } from '../../../../types'
 import { type SourceRow } from './sources-panel/sources-panel'
 
 export interface MappingItemContextValue {
-  configName: string
   classId: string | undefined
   columnHeaderOptions: Array<{ value: string, label: string }>
   attributesMap: Record<string, ClassAttribute[]>
@@ -21,7 +20,6 @@ export interface MappingItemContextValue {
 }
 
 const MappingItemContext = createContext<MappingItemContextValue>({
-  configName: '',
   classId: undefined,
   columnHeaderOptions: [],
   attributesMap: {},

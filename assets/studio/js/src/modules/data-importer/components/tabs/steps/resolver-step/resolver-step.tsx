@@ -26,12 +26,13 @@ import { bundleServiceIds } from '../../../../../../config/service-ids'
 import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/resolver/dynamic-type-resolver-registry'
 
 export interface ResolverStepProps {
-  configName: string
   columnHeaderOptions: Array<{ value: string, label: string }>
   isActive: boolean
+  // a host that derives Element Loading from its own data shows it read-only
+  isElementLoadingLocked?: boolean
 }
 
-export const ResolverStep = ({ configName: _configName, columnHeaderOptions, isActive }: ResolverStepProps): React.JSX.Element => {
+export const ResolverStep = ({ columnHeaderOptions, isActive, isElementLoadingLocked }: ResolverStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const settings = useSettings()
 
@@ -76,6 +77,8 @@ export const ResolverStep = ({ configName: _configName, columnHeaderOptions, isA
 
         <LoadingPanel
           columnHeaderOptions={ columnHeaderOptions }
+          // never false: an explicit false would make the fields editable in a read-only form
+          disabled={ isElementLoadingLocked === true ? true : undefined }
           languageOptions={ languageOptions }
           registry={ registry }
         />
