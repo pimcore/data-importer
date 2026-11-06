@@ -112,6 +112,16 @@ final class RowMatcherModel
             $secret->setTitle('secret');
             $panel->addChild($secret);
 
+            $description = new ClassDefinition\Data\Wysiwyg();
+            $description->setName('description');
+            $description->setTitle('description');
+            $panel->addChild($description);
+
+            $rating = new ClassDefinition\Data\Slider();
+            $rating->setName('rating');
+            $rating->setTitle('rating');
+            $panel->addChild($rating);
+
             $website = new ClassDefinition\Data\Link();
             $website->setName('website');
             $website->setTitle('website');

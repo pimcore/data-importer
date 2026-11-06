@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Matching;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\MatchingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcher;
@@ -684,6 +685,8 @@ class RowMatcherTest extends Unit
             'many-to-many relation' => [['attributeName' => 'relatedElements']],
             'multiselect field, whose column wraps the values in commas' => [['attributeName' => 'colors']],
             'password field, whose column holds a hash' => [['attributeName' => 'secret']],
+            'wysiwyg field, whose column holds markup' => [['attributeName' => 'description']],
+            'slider field, where 12abc would compare as 12' => [['attributeName' => 'rating']],
             'link field, whose column holds a serialized value' => [['attributeName' => 'website']],
             'field over several columns' => [['attributeName' => 'weight']],
             'numeric field, where 12abc would compare as 12' => [['attributeName' => 'articleNo']],
@@ -717,6 +720,65 @@ class RowMatcherTest extends Unit
         } catch (InvalidConfigurationException) {
             $this->assertNull(DataObject::getByPath(self::MISSING));
         }
+    }
+
+    public function testAnAttributeListFilteredByTheRuleOffersOnlyWhatAMatcherAccepts(): void
+    {
+        /** @var RowMatcherFactory $factory */
+        $factory = $this->tester->grabService(RowMatcherFactory::class);
+        $attributes = (new TransformationDataTypeService())->getPimcoreDataTypes(
+            $this->class->getId(),
+            [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
+            false,
+            false,
+            false
+        );
+
+        $matchable = [];
+        $refused = [];
+        foreach ($attributes as $attribute) {
+            $configuration = $this->configuration(
+                attributeName: $attribute['key'],
+                language: $attribute['localized'] ? 'en' : ''
+            );
+            if ($factory->isMatchableField($this->class, $attribute['key'])) {
+                $factory->create($configuration);
+                $matchable[] = $attribute['key'];
+
+                continue;
+            }
+
+            try {
+                $factory->create($configuration);
+                $this->fail("`{$attribute['key']}` is not offered, but a matcher accepts it.");
+            } catch (InvalidConfigurationException) {
+                $refused[] = $attribute['key'];
+            }
+        }
+
+        $this->assertEqualsCanonicalizing(
+            [
+                'sku',
+                'name',
+                'title',
+                'notes',
+                'state',
+                'bricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE,
+                'bricks.' . RowMatcherModel::RESERVED_WORD_BRICK_NAME . self::BRICK_ATTRIBUTE,
+                'otherBricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE,
+            ],
+            $matchable
+        );
+        $this->assertEqualsCanonicalizing(
+            [
+                'secret',
+                'description',
+                'rating',
+                'articleNo',
+                'bricks.' . self::LOCALIZED_BRICK_NAME . self::BRICK_ATTRIBUTE,
+            ],
+            $refused
+        );
     }
 
     public function testTheLookupRefusesAnAttributeNameThatIsNoFieldName(): void

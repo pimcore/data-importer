@@ -96,11 +96,24 @@ final class RowMatcherFactory
         }
     }
 
-    private function assertMatchableField(ClassDefinition $class, string $attributeName, string $language): void
+    /**
+     * Whether objects can be matched by this attribute, named as the Data Importer's attribute lists name it, so a list
+     * offers only what create() accepts. A localized field also needs a language.
+     *
+     * The lookup compares one column with the cell, so only fields that keep the text as it is: a multiselect or a
+     * many-to-many relation wraps it in commas and would never match, which makes a second object, and a number or date
+     * column reads `12abc` as 12 and changes the wrong object.
+     */
+    public function isMatchableField(ClassDefinition $class, string $attributeName): bool
     {
         // finds a localized field as well
         $definition = $class->getFieldDefinition($attributeName) ?? $this->brickFieldDefinition($class, $attributeName);
 
+        return $definition instanceof Input || $definition instanceof Select || $definition instanceof Textarea;
+    }
+
+    private function assertMatchableField(ClassDefinition $class, string $attributeName, string $language): void
+    {
         $localizedFields = $class->getFieldDefinition(self::LOCALIZED_FIELDS);
         if (
             $language === ''
@@ -110,10 +123,7 @@ final class RowMatcherFactory
             throw new InvalidConfigurationException("Localized field `{$attributeName}` needs a language.");
         }
 
-        // the lookup compares one column with the cell, so only fields that keep the text as it is: a multiselect or a
-        // many-to-many relation wraps it in commas and would never match, which makes a second object, and a number or
-        // date column reads `12abc` as 12 and changes the wrong object
-        if (!$definition instanceof Input && !$definition instanceof Select && !$definition instanceof Textarea) {
+        if (!$this->isMatchableField($class, $attributeName)) {
             throw new InvalidConfigurationException("Objects cannot be matched by field `{$attributeName}`.");
         }
     }
