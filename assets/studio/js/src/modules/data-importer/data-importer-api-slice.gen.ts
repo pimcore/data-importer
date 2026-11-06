@@ -353,6 +353,10 @@ export type BundleDataImporterConfigUploadPreviewApiArg = {
     body: {
         /** Preview data file to upload */
         file: Blob;
+        /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+        previewScope?: string;
+        /** The context the change set is kept in, when its author keeps it in one */
+        previewContext?: string;
     };
 };
 export type BundleDataImporterConnectionListApiResponse =
@@ -454,6 +458,10 @@ export type BundleDataImporterCalculateTransformationResultTypeParameters = {
         transformationPipeline?: object[];
         dataTarget?: object;
     };
+    /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+    previewScope?: string;
+    /** The context the change set is kept in, when its author keeps it in one */
+    previewContext?: string;
 };
 export type BundleDataImporterImportProgressResponse = {
     /** AdditionalAttributes */
@@ -480,6 +488,10 @@ export type BundleDataImporterCopyPreviewParameters = {
         mappingConfig?: object;
         executionConfig?: object;
     };
+    /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+    previewScope?: string;
+    /** The context the change set is kept in, when its author keeps it in one */
+    previewContext?: string;
 };
 export type BundleDataImporterConfigurationDetail = {
     /** AdditionalAttributes */
@@ -583,6 +595,10 @@ export type BundleDataImporterLoadPreviewParameters = {
     };
     /** Zero-based record number to preview from the data source */
     recordNumber?: number;
+    /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+    previewScope?: string;
+    /** The context the change set is kept in, when its author keeps it in one */
+    previewContext?: string;
 };
 export type BundleDataImporterTransformationResultPreviewsResponse = {
     /** AdditionalAttributes */

@@ -18,12 +18,13 @@ use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\TransformationRes
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\TransformationResultTypeEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultPreviewsResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultTypeResponse;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\ConfigurationPermissionTrait;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
@@ -35,7 +36,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  */
 final readonly class TransformationService implements TransformationServiceInterface
 {
-    use ConfigurationPermissionTrait;
     use CurrentUserResolverTrait;
 
     public function __construct(
@@ -47,18 +47,21 @@ final readonly class TransformationService implements TransformationServiceInter
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private ImportProcessingService $importProcessingService,
         private EventDispatcherInterface $eventDispatcher,
-        private PreviewEventApplier $previewEventApplier
+        private PreviewEventApplier $previewEventApplier,
+        private PreviewAccess $previewAccess,
     ) {
     }
 
     public function loadTransformationResultPreviews(
         string $name,
         ?array $currentConfig,
-        int $recordNumber
+        int $recordNumber,
+        ?PreviewScope $scope = null
     ): TransformationResultPreviewsResponse {
-        $this->loadConfigurationWithPermission(
+        $this->previewAccess->authorize(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $user = $this->resolveCurrentUser();
@@ -68,7 +71,7 @@ final readonly class TransformationService implements TransformationServiceInter
             $currentConfig
         );
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope);
         $importDataRow = [];
 
         if ($previewFilePath !== null && is_file($previewFilePath)) {
@@ -119,11 +122,13 @@ final readonly class TransformationService implements TransformationServiceInter
 
     public function calculateTransformationResultType(
         string $name,
-        array $currentConfig
+        array $currentConfig,
+        ?PreviewScope $scope = null
     ): TransformationResultTypeResponse {
-        $this->loadConfigurationWithPermission(
+        $this->previewAccess->authorize(
             $name,
-            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ
+            PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ,
+            $scope
         );
 
         $mappingConfiguration = $this->mappingConfigurationFactory->loadMappingConfigurationItem(

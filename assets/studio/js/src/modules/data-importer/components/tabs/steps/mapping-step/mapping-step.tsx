@@ -68,7 +68,8 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     hasPreviewError,
     attributesMap,
     classId,
-    getMappingConfig
+    getMappingConfig,
+    getBackendConfig
   } = useMappingStepLoader(configName, isActive)
 
   const {
@@ -76,7 +77,9 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     currentRecordIndex: autofillRecordIndex,
     isFetching: isAutofillPreviewFetching,
     load: loadAutofillPreviewRecord
-  } = usePreviewRecordQuery({ configName, enabled: isActive })
+  // the suggestions read the form's own loader and interpreter, not the stored configuration's:
+  // under a proposal the two differ, and a proposed-only configuration has no stored one
+  } = usePreviewRecordQuery({ configName, enabled: isActive, getCurrentConfig: getBackendConfig })
 
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<number> | 'all'>(new Set())
   const [expandAllPending, setExpandAllPending] = useState(false)

@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Hydrator;
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
@@ -49,7 +50,7 @@ final readonly class PreviewHydrator implements PreviewHydratorInterface
         return new ColumnHeadersResponse($columnHeaders);
     }
 
-    public function loadAvailableColumnHeaders(string $name, array $config): array
+    public function loadAvailableColumnHeaders(string $name, array $config, ?PreviewScope $scope = null): array
     {
         try {
             $user = $this->resolveCurrentUser();
@@ -57,7 +58,7 @@ final readonly class PreviewHydrator implements PreviewHydratorInterface
             return [];
         }
 
-        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user);
+        $previewFilePath = $this->previewService->getLocalPreviewFile($name, $user, $scope);
         if ($previewFilePath === null || !is_file($previewFilePath)) {
             return [];
         }

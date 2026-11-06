@@ -81,7 +81,8 @@ final class CalculateTransformationResultTypeController extends AbstractApiContr
         return $this->jsonResponse(
             $this->transformationService->calculateTransformationResultType(
                 $name,
-                $parameters->getCurrentConfig()
+                $parameters->getCurrentConfig(),
+                $parameters->getPreviewScope()
             )
         );
     }

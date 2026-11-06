@@ -13,11 +13,13 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Controller\Studio\Config;
 
+use function is_string;
 use OpenApi\Attributes\Post;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewDataServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
@@ -73,6 +75,17 @@ final class UploadPreviewController extends AbstractApiController
                 type: 'string',
                 format: 'binary'
             ),
+            new Property(
+                property: 'previewScope',
+                description: 'A change set under review: its preview data is kept beside the live '
+                    . 'configuration\'s, and a configuration that is only proposed so far is accepted',
+                type: 'string'
+            ),
+            new Property(
+                property: 'previewContext',
+                description: 'The context the change set is kept in, when its author keeps it in one',
+                type: 'string'
+            ),
         ],
         ['file']
     )]
@@ -95,7 +108,14 @@ final class UploadPreviewController extends AbstractApiController
             throw new EnvironmentException('Invalid file found in the request');
         }
 
-        $this->previewDataService->uploadPreviewData($name, $file);
+        // multipart: the review's scope rides as form fields
+        $scope = $request->request->get('previewScope');
+        $context = $request->request->get('previewContext');
+        $this->previewDataService->uploadPreviewData(
+            $name,
+            $file,
+            PreviewScope::fromRequest(is_string($scope) ? $scope : '', is_string($context) ? $context : ''),
+        );
 
         return new Response();
     }
