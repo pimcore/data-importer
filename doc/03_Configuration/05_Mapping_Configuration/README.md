@@ -44,6 +44,29 @@ field `title` with the language `de`, if that is a valid language of the system.
 Review the proposals, select the ones you want, and apply them. Autofill needs preview data, since it works on the source
 columns the preview produced.
 
+### Suggestions from the Pimcore agent
+
+With the Pimcore agent installed, the agent can suggest fields for the columns the name comparison leaves open. This is
+off until you switch it on:
+
+```yaml
+pimcore_data_importer:
+    mapping_suggestions:
+        ai:
+            # send the headers of open columns and the fields of the class to the agent's model
+            enabled: true
+            # also send a few values per open column
+            send_sample_values: true
+```
+
+Its suggestions arrive after those of the name comparison and carry the tag `AI`; review them like any other. The agent
+`data-importer-mapping-suggestions` runs as the user who asked and has no tools. Choose its model in Studio.
+
+With `send_sample_values`, up to three values per open column go to the model, never a row: each column is drawn on its
+own from random rows of your preview file, in its own order, and each value is cut to 50 characters. Columns that are
+mapped already or that have a name match send no values, and a preview file with a single row sends none. Only CSV and
+XLSX files give sample values; other file formats send the headers alone.
+
 ## Writing Rules
 
 Two options on the data target control whether a value is written at all:

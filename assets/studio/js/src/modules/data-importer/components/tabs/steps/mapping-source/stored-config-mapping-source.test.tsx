@@ -38,7 +38,7 @@ jest.mock('../mapping-step', () => {
   return {
     MappingStep: () => {
       const source = useMappingSource()
-      return <span data-testid="mapping-source">{ `${source.id}:${String(source.revision)}` }</span>
+      return <span data-testid="mapping-source">{ `${source.id}:${String(source.configName)}:${String(source.revision)}` }</span>
     }
   }
 })
@@ -98,7 +98,7 @@ describe('DataSetupTab', () => {
     render(<DataSetupTab configName="products" />)
 
     expect(getQuery).toHaveBeenCalledWith({ name: 'products' })
-    expect(screen.getByTestId('mapping-source').textContent).toBe('products:r1')
+    expect(screen.getByTestId('mapping-source').textContent).toBe('products:products:r1')
   })
 
   it('reloads the column lists once the preview data changed', () => {
