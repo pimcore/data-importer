@@ -66,6 +66,8 @@ class RowMatcherTest extends Unit
 
     private const BRICK_ATTRIBUTE = '.code';
 
+    private const BRICK_NUMBER = '.number';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -634,6 +636,142 @@ class RowMatcherTest extends Unit
         $this->assertSame($object->getId(), $match->element?->getId());
     }
 
+    public static function valuesANumericFieldCannotHold(): array
+    {
+        return [
+            'text after the digits' => ['12abc'],
+            'no number' => ['n/a'],
+            'an exponent' => ['1e1'],
+            'a comma' => ['12,5'],
+            'a leading zero' => ['012'],
+        ];
+    }
+
+    /**
+     * @dataProvider valuesANumericFieldCannotHold
+     */
+    public function testAValueANumericFieldCannotHoldIsAnErrorRowAndNeitherMatchNorNewObject(string $value): void
+    {
+        $this->createObjectWith(self::TARGET, ['setArticleNo' => 12]);
+        $this->createObjectWith(self::TARGET, ['setArticleNo' => 0]);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), $value);
+
+        $this->assertSame(RowMatchOutcome::InvalidValue, $match->outcome);
+        $this->assertSame($value, $match->matchValue);
+        $this->assertNull($match->element);
+        $this->assertTrue($match->isError());
+    }
+
+    public function testANumericFieldFindsTheNumberInAnySpellingAndReportsTheFilesOne(): void
+    {
+        $object = $this->createObjectWith(self::TARGET, ['setArticleNo' => 12.5]);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), '+12.50');
+
+        $this->assertSame(RowMatchOutcome::Existing, $match->outcome);
+        $this->assertSame($object->getId(), $match->element?->getId());
+        $this->assertSame('+12.50', $match->matchValue);
+    }
+
+    public function testANumericFieldTellsZeroFromNoValue(): void
+    {
+        $this->createObjectWith(self::TARGET, []);
+        $zero = $this->createObjectWith(self::TARGET, ['setArticleNo' => 0]);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), '0');
+
+        $this->assertSame($zero->getId(), $match->element?->getId());
+    }
+
+    public function testANumericMatchOnlyOutsideTheTargetFolderIsAnErrorRow(): void
+    {
+        $outside = $this->createObjectWith(self::ELSEWHERE, ['setArticleNo' => 12]);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), '12');
+
+        $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $match->outcome);
+        $this->assertSame([$outside->getId()], $match->objectIds);
+    }
+
+    public function testAnIntegerFieldTellsBigNumbersADoubleCannotTellApart(): void
+    {
+        $object = $this->createObjectWith(self::TARGET, ['setStock' => 9007199254740993]);
+        $this->createObjectWith(self::TARGET, ['setStock' => 9007199254740992]);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'stock'), '9007199254740993');
+
+        $this->assertSame(RowMatchOutcome::Existing, $match->outcome);
+        $this->assertSame($object->getId(), $match->element?->getId());
+    }
+
+    public function testADecimalFieldIsMatchedByTheNumber(): void
+    {
+        $object = $this->createObjectWith(self::TARGET, ['setPrice' => '19.90']);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'price'), '19.9');
+
+        $this->assertSame($object->getId(), $match->element?->getId());
+    }
+
+    public function testADecimalFieldRefusesMoreDecimalsThanItHolds(): void
+    {
+        $this->createObjectWith(self::TARGET, ['setPrice' => '19.90']);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'price'), '19.901');
+
+        $this->assertSame(RowMatchOutcome::InvalidValue, $match->outcome);
+    }
+
+    public function testANumberTwiceInTheFileInTwoSpellingsMakesTheSecondRowAnErrorRow(): void
+    {
+        $matcher = $this->matcher($this->configuration(attributeName: 'articleNo'));
+
+        $first = $matcher->match($this->row('12.5'), 2);
+        $second = $matcher->match($this->row('12.50'), 3);
+        $otherSign = $matcher->match($this->row('-12.5'), 4);
+
+        $this->assertSame(RowMatchOutcome::New, $first->outcome);
+        $this->assertSame(RowMatchOutcome::DuplicateInFile, $second->outcome);
+        $this->assertSame(2, $second->firstRow);
+        $this->assertSame('12.50', $second->matchValue);
+        $this->assertSame(RowMatchOutcome::New, $otherSign->outcome);
+    }
+
+    public function testANewObjectIsKeyedByTheNumberAndNotItsSpelling(): void
+    {
+        $match = $this->matchOne($this->configuration(attributeName: 'articleNo'), '+12.50');
+
+        $this->assertSame(RowMatchOutcome::New, $match->outcome);
+        $this->assertSame('12.5', $match->element?->getKey());
+        $this->assertSame('+12.50', $match->matchValue);
+    }
+
+    public function testANumericBrickAttributeIsMatched(): void
+    {
+        $object = $this->unsavedObject(self::TARGET, 'SKU-1');
+        $brickClass = self::BRICK_DATA_NAMESPACE . self::BRICK_NAME;
+        $brick = new $brickClass($object);
+        $brick->setNumber(12);
+        $object->getBricks()->setDiRowMatcherBrick($brick);
+        $object->save();
+        $configuration = $this->configuration(attributeName: 'bricks.' . self::BRICK_NAME . self::BRICK_NUMBER);
+
+        $this->assertSame($object->getId(), $this->matchOne($configuration, '12')->element?->getId());
+        $this->assertSame(RowMatchOutcome::InvalidValue, $this->matchOne($configuration, '12abc')->outcome);
+    }
+
+    public function testALocalizedNumericFieldIsMatchedInItsLanguage(): void
+    {
+        $object = $this->unsavedObject(self::TARGET, 'SKU-1');
+        $object->setLocalizedNumber(12, 'en');
+        $object->save();
+        $configuration = $this->configuration(attributeName: 'localizedNumber', language: 'en');
+
+        $this->assertSame($object->getId(), $this->matchOne($configuration, '12')->element?->getId());
+        $this->assertSame(RowMatchOutcome::InvalidValue, $this->matchOne($configuration, '12abc')->outcome);
+    }
+
     public function testAVariantIsFoundByItsOwnValueAndItsObjectId(): void
     {
         $parent = $this->createObject(self::TARGET, 'PARENT', null, true, self::INHERITING_CLASS_NAME);
@@ -711,7 +849,6 @@ class RowMatcherTest extends Unit
             'slider field, where 12abc would compare as 12' => [['attributeName' => 'rating']],
             'link field, whose column holds a serialized value' => [['attributeName' => 'website']],
             'field over several columns' => [['attributeName' => 'weight']],
-            'numeric field, where 12abc would compare as 12' => [['attributeName' => 'articleNo']],
             'checkbox field, where n/a would compare as 0' => [['attributeName' => 'active']],
             'date field' => [['attributeName' => 'releaseDate']],
             'localized field without a language' => [['attributeName' => 'title']],
@@ -785,9 +922,16 @@ class RowMatcherTest extends Unit
                 'title',
                 'notes',
                 'state',
+                'articleNo',
+                'stock',
+                'price',
+                'localizedNumber',
                 'bricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE,
+                'bricks.' . self::BRICK_NAME . self::BRICK_NUMBER,
                 'bricks.' . RowMatcherModel::RESERVED_WORD_BRICK_NAME . self::BRICK_ATTRIBUTE,
+                'bricks.' . RowMatcherModel::RESERVED_WORD_BRICK_NAME . self::BRICK_NUMBER,
                 'otherBricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE,
+                'otherBricks.' . self::BRICK_NAME . self::BRICK_NUMBER,
             ],
             $matchable
         );
@@ -796,7 +940,6 @@ class RowMatcherTest extends Unit
                 'secret',
                 'description',
                 'rating',
-                'articleNo',
                 'bricks.' . self::LOCALIZED_BRICK_NAME . self::BRICK_ATTRIBUTE,
             ],
             $refused
@@ -811,6 +954,20 @@ class RowMatcherTest extends Unit
             self::CLASS_NAMESPACE . self::CLASS_NAME,
             'sku = 1 OR 1=1 --',
             'SKU-1',
+            '',
+            '',
+            1
+        );
+    }
+
+    public function testTheNumberLookupRefusesWhatIsNoNumber(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        (new DataObjectLoader())->findIdsByNumber(
+            self::CLASS_NAMESPACE . self::CLASS_NAME,
+            'articleNo',
+            '1 OR 1=1',
             '',
             '',
             1
@@ -901,6 +1058,20 @@ class RowMatcherTest extends Unit
             $brick = new $brickClass($object);
             $brick->setCode($brickCode);
             $object->getBricks()->setDiRowMatcherBrick($brick);
+        }
+        $object->save();
+
+        return $object;
+    }
+
+    /**
+     * @param array<string, int|float|string> $values the setters to call and their values
+     */
+    private function createObjectWith(string $folder, array $values): Concrete
+    {
+        $object = $this->unsavedObject($folder, null);
+        foreach ($values as $setter => $value) {
+            $object->$setter($value);
         }
         $object->save();
 

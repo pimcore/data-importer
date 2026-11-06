@@ -26,6 +26,9 @@ enum RowMatchOutcome: string
     // no value to match by, and so no key for a new object
     case EmptyValue = 'empty_value';
 
+    // the field to match by cannot hold the value: `12abc`, or a number outside its limits
+    case InvalidValue = 'invalid_value';
+
     // an earlier row of the file has the same value or resolved to the same object
     case DuplicateInFile = 'duplicate_in_file';
     case SeveralMatches = 'several_matches';

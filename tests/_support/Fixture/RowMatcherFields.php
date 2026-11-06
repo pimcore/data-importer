@@ -49,6 +49,16 @@ final class RowMatcherFields
 
         self::add($panel, new Data\QuantityValue(), 'weight');
         self::add($panel, new Data\Numeric(), 'articleNo');
+
+        $stock = new Data\Numeric();
+        $stock->setInteger(true);
+        self::add($panel, $stock, 'stock');
+
+        $price = new Data\Numeric();
+        $price->setDecimalSize(10);
+        $price->setDecimalPrecision(2);
+        self::add($panel, $price, 'price');
+
         self::add($panel, new Data\Checkbox(), 'active');
         self::add($panel, new Data\Date(), 'releaseDate');
     }

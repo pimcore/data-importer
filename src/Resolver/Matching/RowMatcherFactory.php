@@ -20,6 +20,7 @@ use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Numeric;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Textarea;
@@ -51,8 +52,11 @@ final class RowMatcherFactory
         }
 
         $this->assertLanguage($configuration->language);
+        $numericField = null;
         if ($configuration->attributeName !== null) {
             $this->assertMatchableField($class, $configuration->attributeName, $configuration->language);
+            $field = $this->fieldDefinition($class, $configuration->attributeName);
+            $numericField = $field instanceof Numeric ? $field : null;
         }
 
         $targetFolder = $this->loadFolder($configuration->targetFolder);
@@ -74,7 +78,8 @@ final class RowMatcherFactory
             $configuration,
             '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName()),
             $this->dataObjectLoader->normalizePath($targetFolder->getRealFullPath()),
-            $newObjectFolder
+            $newObjectFolder,
+            $numericField
         );
     }
 
@@ -100,16 +105,25 @@ final class RowMatcherFactory
      * Whether objects can be matched by this attribute, named as the Data Importer's attribute lists name it, so a list
      * offers only what create() accepts. A localized field also needs a language.
      *
-     * The lookup compares one column with the cell, so only fields that keep the text as it is: a multiselect or a
-     * many-to-many relation wraps it in commas and would never match, which makes a second object, and a number or date
-     * column reads `12abc` as 12 and changes the wrong object.
+     * The lookup compares one column with the cell, so only fields that keep the text as it is, and numeric fields, whose
+     * values the matcher checks first (NumericMatchValue): a multiselect or a many-to-many relation wraps the text in
+     * commas and would never match, which makes a second object, and a slider, checkbox or date column reads `12abc` as
+     * 12 and changes the wrong object.
      */
     public function isMatchableField(ClassDefinition $class, string $attributeName): bool
     {
-        // finds a localized field as well
-        $definition = $class->getFieldDefinition($attributeName) ?? $this->brickFieldDefinition($class, $attributeName);
+        $definition = $this->fieldDefinition($class, $attributeName);
 
-        return $definition instanceof Input || $definition instanceof Select || $definition instanceof Textarea;
+        return $definition instanceof Input
+            || $definition instanceof Select
+            || $definition instanceof Textarea
+            || $definition instanceof Numeric;
+    }
+
+    private function fieldDefinition(ClassDefinition $class, string $attributeName): ?ClassDefinition\Data
+    {
+        // finds a localized field as well
+        return $class->getFieldDefinition($attributeName) ?? $this->brickFieldDefinition($class, $attributeName);
     }
 
     private function assertMatchableField(ClassDefinition $class, string $attributeName, string $language): void

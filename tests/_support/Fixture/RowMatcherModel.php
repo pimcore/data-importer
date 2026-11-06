@@ -72,6 +72,11 @@ final class RowMatcherModel
             $localizedFields = new ClassDefinition\Data\Localizedfields();
             $localizedFields->setName('localizedfields');
             $localizedFields->addChild($title);
+
+            $localizedNumber = new ClassDefinition\Data\Numeric();
+            $localizedNumber->setName('localizedNumber');
+            $localizedNumber->setTitle('localizedNumber');
+            $localizedFields->addChild($localizedNumber);
             $panel->addChild($localizedFields);
 
             $bricks = new ClassDefinition\Data\Objectbricks();
@@ -121,6 +126,11 @@ final class RowMatcherModel
             $panel->addChild($localizedFields);
         } else {
             $panel->addChild($code);
+
+            $number = new ClassDefinition\Data\Numeric();
+            $number->setName('number');
+            $number->setTitle('number');
+            $panel->addChild($number);
         }
 
         $definition = new Objectbrick\Definition();

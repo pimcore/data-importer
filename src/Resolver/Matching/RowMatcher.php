@@ -17,6 +17,7 @@ use Collator;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Numeric;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Element\Service;
@@ -52,6 +53,7 @@ final class RowMatcher
 
     /**
      * @param string $targetPath the normalized path of the target folder, searched with what lies below it
+     * @param Numeric|null $numericField the field to match by, when its values need the strict check of a number
      */
     public function __construct(
         private readonly Resolver $resolver,
@@ -60,6 +62,7 @@ final class RowMatcher
         private readonly string $className,
         private readonly string $targetPath,
         private readonly ElementInterface $newObjectFolder,
+        private readonly ?Numeric $numericField = null,
     ) {
         $this->valueCollator = new Collator('root');
         $this->valueCollator->setStrength(Collator::PRIMARY);
@@ -80,8 +83,14 @@ final class RowMatcher
             return new RowMatch(RowMatchOutcome::EmptyValue, '');
         }
 
+        // the error row and a match report the file's spelling; the lookup and a new key use the number's own
+        $lookupValue = $this->numericField === null ? $value : NumericMatchValue::normalize($value, $this->numericField);
+        if ($lookupValue === null) {
+            return new RowMatch(RowMatchOutcome::InvalidValue, $value);
+        }
+
         // the class tables' collation ignores case and accents, so `abc` and `ABC` would be one object after the import
-        $valueKey = $this->valueCollator->getSortKey($value) ?: $value;
+        $valueKey = $this->valueCollator->getSortKey($lookupValue) ?: $lookupValue;
         if (isset($this->rowByValue[$valueKey])) {
             return new RowMatch(RowMatchOutcome::DuplicateInFile, $value, firstRow: $this->rowByValue[$valueKey]);
         }
@@ -89,14 +98,14 @@ final class RowMatcher
 
         $found = $this->configuration->attributeName === null
             ? $this->findById($value)
-            : $this->findByAttribute($this->configuration->attributeName, $value);
+            : $this->findByAttribute($this->configuration->attributeName, $value, $lookupValue);
 
         if ($found instanceof RowMatch) {
             return $found;
         }
 
         return $found === null
-            ? $this->newObject($value, $rowNumber)
+            ? $this->newObject($value, $lookupValue, $rowNumber)
             : $this->existingObject($value, $found, $rowNumber);
     }
 
@@ -122,13 +131,13 @@ final class RowMatcher
         return $id;
     }
 
-    private function findByAttribute(string $attributeName, string $value): RowMatch|int|null
+    private function findByAttribute(string $attributeName, string $value, string $lookupValue): RowMatch|int|null
     {
-        $ids = $this->findIds($attributeName, $value, $this->targetPath, self::MAX_REPORTED_MATCHES);
+        $ids = $this->findIds($attributeName, $lookupValue, $this->targetPath, self::MAX_REPORTED_MATCHES);
         if ($this->newObjectPath !== null) {
             array_push(
                 $ids,
-                ...$this->findIds($attributeName, $value, $this->newObjectPath, self::MAX_REPORTED_MATCHES, true)
+                ...$this->findIds($attributeName, $lookupValue, $this->newObjectPath, self::MAX_REPORTED_MATCHES, true)
             );
         }
         $ids = array_slice($ids, 0, self::MAX_REPORTED_MATCHES);
@@ -141,7 +150,7 @@ final class RowMatcher
             return $ids[0];
         }
 
-        $elsewhere = $this->findIds($attributeName, $value, '', 1);
+        $elsewhere = $this->findIds($attributeName, $lookupValue, '', 1);
 
         return $elsewhere === []
             ? null
@@ -158,7 +167,11 @@ final class RowMatcher
         int $limit,
         bool $directlyInPath = false
     ): array {
-        return $this->dataObjectLoader->findIdsByAttribute(
+        $find = $this->numericField === null
+            ? $this->dataObjectLoader->findIdsByAttribute(...)
+            : $this->dataObjectLoader->findIdsByNumber(...);
+
+        return $find(
             $this->className,
             $attributeName,
             $value,
@@ -187,9 +200,9 @@ final class RowMatcher
         return new RowMatch(RowMatchOutcome::Existing, $value, $element);
     }
 
-    private function newObject(string $value, int $rowNumber): RowMatch
+    private function newObject(string $value, string $lookupValue, int $rowNumber): RowMatch
     {
-        $key = Service::getValidKey($value, 'object');
+        $key = Service::getValidKey($lookupValue, 'object');
         if ($key === '') {
             return new RowMatch(RowMatchOutcome::EmptyValue, $value);
         }
