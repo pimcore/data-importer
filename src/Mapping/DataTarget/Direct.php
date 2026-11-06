@@ -193,12 +193,9 @@ class Direct implements DataTargetInterface
         }
 
         $keys = array_filter(explode('/', $path), static fn (string $key) => $key !== '');
-        $sanitizedPath = '/' . implode('/', array_map(
-            static fn (string $key) => ElementService::getValidKey($key, 'object'),
-            $keys
-        ));
+        $validKeys = array_map(static fn (string $key) => ElementService::getValidKey($key, 'object'), $keys);
 
-        return DataObject::getByPath($sanitizedPath);
+        return DataObject::getByPath('/' . implode('/', $validKeys));
     }
 
     /**
