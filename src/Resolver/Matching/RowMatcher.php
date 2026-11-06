@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Matching;
 
+use Collator;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
@@ -44,14 +45,21 @@ final class RowMatcher
     /** @var array<string, int> */
     private array $rowByNewKey = [];
 
+    private readonly Collator $valueCollator;
+
+    /**
+     * @param list<string> $searchPaths the normalized paths that are searched for a match, with what lies below them
+     */
     public function __construct(
         private readonly Resolver $resolver,
         private readonly DataObjectLoader $dataObjectLoader,
         private readonly MatchingConfiguration $configuration,
         private readonly string $className,
-        private readonly string $targetPath,
+        private readonly array $searchPaths,
         private readonly ElementInterface $newObjectFolder,
     ) {
+        $this->valueCollator = new Collator('root');
+        $this->valueCollator->setStrength(Collator::PRIMARY);
     }
 
     /**
@@ -66,10 +74,12 @@ final class RowMatcher
             return new RowMatch(RowMatchOutcome::EmptyValue, '');
         }
 
-        if (isset($this->rowByValue[$value])) {
-            return new RowMatch(RowMatchOutcome::DuplicateInFile, $value, firstRow: $this->rowByValue[$value]);
+        // the class tables' collation ignores case and accents, so `abc` and `ABC` would be one object after the import
+        $valueKey = $this->valueCollator->getSortKey($value) ?: $value;
+        if (isset($this->rowByValue[$valueKey])) {
+            return new RowMatch(RowMatchOutcome::DuplicateInFile, $value, firstRow: $this->rowByValue[$valueKey]);
         }
-        $this->rowByValue[$value] = $rowNumber;
+        $this->rowByValue[$valueKey] = $rowNumber;
 
         $found = $this->configuration->attributeName === null
             ? $this->findById($value)
@@ -79,19 +89,23 @@ final class RowMatcher
             return $found;
         }
 
-        return $found === null ? $this->newObject($value, $rowNumber) : $this->existingObject($value, $found, $rowNumber);
+        return $found === null
+            ? $this->newObject($value, $rowNumber)
+            : $this->existingObject($value, $found, $rowNumber);
     }
 
-    private function findById(string $value): RowMatch|int|null
+    private function findById(string $value): RowMatch|int
     {
         // not a cast: an import's (int) '12abc' would load object 12
         $id = filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $object = $id === false ? null : DataObject::getById($id);
         if ($object === null) {
-            return null;
+            // Pimcore assigns ids itself, so a new object could never take this one
+            return new RowMatch(RowMatchOutcome::UnknownObjectId, $value);
         }
 
-        if ($this->targetPath !== '' && !str_starts_with($object->getRealPath(), $this->targetPath)) {
+        $path = $object->getRealPath();
+        if (!array_any($this->searchPaths, static fn (string $searched): bool => str_starts_with($path, $searched))) {
             return new RowMatch(RowMatchOutcome::OutsideTargetFolder, $value, objectIds: [$id]);
         }
 
@@ -104,7 +118,12 @@ final class RowMatcher
 
     private function findByAttribute(string $attributeName, string $value): RowMatch|int|null
     {
-        $ids = $this->findIds($attributeName, $value, $this->targetPath, self::MAX_REPORTED_MATCHES);
+        $ids = [];
+        foreach ($this->searchPaths as $path) {
+            array_push($ids, ...$this->findIds($attributeName, $value, $path, self::MAX_REPORTED_MATCHES));
+        }
+        $ids = array_slice(array_unique($ids), 0, self::MAX_REPORTED_MATCHES);
+
         if (count($ids) > 1) {
             return new RowMatch(RowMatchOutcome::SeveralMatches, $value, objectIds: $ids);
         }
@@ -113,9 +132,11 @@ final class RowMatcher
             return $ids[0];
         }
 
-        $elsewhere = $this->targetPath === '' ? [] : $this->findIds($attributeName, $value, '', 1);
+        $elsewhere = $this->findIds($attributeName, $value, '', 1);
 
-        return $elsewhere === [] ? null : new RowMatch(RowMatchOutcome::OutsideTargetFolder, $value, objectIds: $elsewhere);
+        return $elsewhere === []
+            ? null
+            : new RowMatch(RowMatchOutcome::OutsideTargetFolder, $value, objectIds: $elsewhere);
     }
 
     /**

@@ -54,6 +54,9 @@ final class RowMatcherFactory
         }
 
         $targetFolder = $this->loadFolder($configuration->targetFolder);
+        $newObjectFolder = $configuration->newObjectFolder === null
+            ? $targetFolder
+            : $this->loadFolder($configuration->newObjectFolder);
 
         return new RowMatcher(
             // the matcher picks the object and places a new one, so the resolver loads by id and moves nothing
@@ -68,9 +71,20 @@ final class RowMatcherFactory
             $this->dataObjectLoader,
             $configuration,
             '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName()),
-            $this->dataObjectLoader->normalizePath($targetFolder->getRealFullPath()),
-            $configuration->newObjectFolder === null ? $targetFolder : $this->loadFolder($configuration->newObjectFolder)
+            $this->searchPaths($targetFolder, $newObjectFolder),
+            $newObjectFolder
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function searchPaths(ElementInterface $targetFolder, ElementInterface $newObjectFolder): array
+    {
+        $targetPath = $this->dataObjectLoader->normalizePath($targetFolder->getRealFullPath());
+        $newObjectPath = $this->dataObjectLoader->normalizePath($newObjectFolder->getRealFullPath());
+
+        return str_starts_with($newObjectPath, $targetPath) ? [$targetPath] : [$targetPath, $newObjectPath];
     }
 
     private function loadFolder(string $path): ElementInterface
@@ -93,25 +107,24 @@ final class RowMatcherFactory
 
     private function assertMatchableField(ClassDefinition $class, string $attributeName, string $language): void
     {
-        $definition = $class->getFieldDefinition($attributeName);
+        // finds a localized field as well
+        $definition = $class->getFieldDefinition($attributeName) ?? $this->brickFieldDefinition($class, $attributeName);
 
-        if ($definition === null) {
-            $localizedFields = $class->getFieldDefinition(self::LOCALIZED_FIELDS);
-            $definition = $localizedFields instanceof Localizedfields
-                ? $localizedFields->getFieldDefinition($attributeName)
-                : null;
-
-            if ($definition !== null && $language === '') {
-                throw new InvalidConfigurationException("Localized field `{$attributeName}` needs a language.");
-            }
+        $localizedFields = $class->getFieldDefinition(self::LOCALIZED_FIELDS);
+        if (
+            $language === ''
+            && $localizedFields instanceof Localizedfields
+            && $localizedFields->getFieldDefinition($attributeName) !== null
+        ) {
+            throw new InvalidConfigurationException("Localized field `{$attributeName}` needs a language.");
         }
 
-        $definition ??= $this->brickFieldDefinition($class, $attributeName);
-
-        // the lookup compares one column: no relations, and no value that spreads over several columns
+        // the lookup compares one column as text: no relations, no value that spreads over several columns, and no
+        // number or date column, where the database would read `12abc` as 12 and change the wrong object
         if (
             !$definition instanceof QueryResourcePersistenceAwareInterface
             || !is_string($definition->getQueryColumnType())
+            || preg_match('/char|text/i', $definition->getQueryColumnType()) !== 1
         ) {
             throw new InvalidConfigurationException("Objects cannot be matched by field `{$attributeName}`.");
         }

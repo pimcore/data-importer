@@ -31,6 +31,9 @@ enum RowMatchOutcome: string
     case SeveralMatches = 'several_matches';
     case OutsideTargetFolder = 'outside_target_folder';
 
+    // the value is no Object ID or no object has it: matching by the ID only changes objects that exist
+    case UnknownObjectId = 'unknown_object_id';
+
     // the Object ID belongs to a folder or an object of another class
     case OtherClass = 'other_class';
 

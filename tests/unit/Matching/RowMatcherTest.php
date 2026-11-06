@@ -49,6 +49,12 @@ class RowMatcherTest extends Unit
 
     private const NEW_FOLDER = self::ROOT . '/new-objects';
 
+    private const ELSEWHERE = self::ROOT . '/elsewhere';
+
+    private const MISSING = self::ROOT . '/missing';
+
+    private const BRICK_ATTRIBUTE = '.code';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -136,7 +142,7 @@ class RowMatcherTest extends Unit
 
     public function testAFieldMatchOnlyOutsideTheTargetFolderIsAnErrorRowNamingIt(): void
     {
-        $outside = $this->createObject(self::ROOT . '/elsewhere', 'SKU-1');
+        $outside = $this->createObject(self::ELSEWHERE, 'SKU-1');
 
         $match = $this->matchOne($this->byField(), 'SKU-1');
 
@@ -157,7 +163,7 @@ class RowMatcherTest extends Unit
 
     public function testAMatchInTheTargetFolderWinsOverOneOutsideIt(): void
     {
-        $this->createObject(self::ROOT . '/elsewhere', 'SKU-1');
+        $this->createObject(self::ELSEWHERE, 'SKU-1');
         $inside = $this->createObject(self::TARGET, 'SKU-1');
 
         $match = $this->matchOne($this->byField(), 'SKU-1');
@@ -168,7 +174,7 @@ class RowMatcherTest extends Unit
 
     public function testTheTreeRootAsTargetFolderMatchesEverywhere(): void
     {
-        $object = $this->createObject(self::ROOT . '/elsewhere', 'SKU-1');
+        $object = $this->createObject(self::ELSEWHERE, 'SKU-1');
         $configuration = $this->configuration(targetFolder: '/', attributeName: 'sku');
 
         $this->assertSame($object->getId(), $this->matchOne($configuration, 'SKU-1')->element?->getId());
@@ -191,7 +197,7 @@ class RowMatcherTest extends Unit
 
     public function testAnObjectIdOutsideTheTargetFolderIsAnErrorRowNamingIt(): void
     {
-        $outside = $this->createObject(self::ROOT . '/elsewhere', 'SKU-1');
+        $outside = $this->createObject(self::ELSEWHERE, 'SKU-1');
 
         $match = $this->matchOne($this->byObjectId(), (string) $outside->getId());
 
@@ -214,13 +220,13 @@ class RowMatcherTest extends Unit
         $this->assertSame([$other->getId()], $otherMatch->objectIds);
     }
 
-    public function testAnObjectIdThatFindsNothingIsANewObjectNamedByIt(): void
+    public function testAnObjectIdThatFindsNothingIsAnErrorRow(): void
     {
         $match = $this->matchOne($this->byObjectId(), '999999999');
 
-        $this->assertSame(RowMatchOutcome::New, $match->outcome);
-        $this->assertSame('999999999', $match->element?->getKey());
-        $this->assertNull($match->element->getId());
+        $this->assertSame(RowMatchOutcome::UnknownObjectId, $match->outcome);
+        $this->assertSame('999999999', $match->matchValue);
+        $this->assertNull($match->element);
     }
 
     public static function valuesThatAreNoObjectId(): array
@@ -235,15 +241,16 @@ class RowMatcherTest extends Unit
     /**
      * @dataProvider valuesThatAreNoObjectId
      */
-    public function testAValueThatIsNoObjectIdIsNotCastToOne(string $format): void
+    public function testAValueThatIsNoObjectIdIsAnErrorRowAndNotCastToOne(string $format): void
     {
         $object = $this->createObject(self::TARGET, 'SKU-1');
         $value = sprintf($format, $object->getId());
 
         $match = $this->matchOne($this->byObjectId(), $value);
 
-        $this->assertSame(RowMatchOutcome::New, $match->outcome);
-        $this->assertSame($value, $match->element?->getKey());
+        $this->assertSame(RowMatchOutcome::UnknownObjectId, $match->outcome);
+        $this->assertSame($value, $match->matchValue);
+        $this->assertNull($match->element);
     }
 
     public function testANewObjectIsUnsavedUnpublishedInTheTargetFolderAndKeyedByTheValue(): void
@@ -269,6 +276,42 @@ class RowMatcherTest extends Unit
         $match = $this->matchOne($configuration, 'SKU-1');
 
         $this->assertSame($folder->getId(), $match->element?->getParentId());
+    }
+
+    public function testAnObjectInTheFolderForNewObjectsIsFoundWhenTheFolderLiesOutsideTheTarget(): void
+    {
+        $made = $this->createObject(self::NEW_FOLDER, 'SKU-1');
+        $byField = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
+        $byId = $this->configuration(newObjectFolder: self::NEW_FOLDER);
+
+        $this->assertSame($made->getId(), $this->matchOne($byField, 'SKU-1')->element?->getId());
+        $this->assertSame($made->getId(), $this->matchOne($byId, (string) $made->getId())->element?->getId());
+    }
+
+    public function testAMatchInTheTargetAndOneInTheFolderForNewObjectsAreSeveralMatches(): void
+    {
+        $inside = $this->createObject(self::TARGET, 'SKU-1');
+        $made = $this->createObject(self::NEW_FOLDER, 'SKU-1');
+        $configuration = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
+
+        $match = $this->matchOne($configuration, 'SKU-1');
+
+        $this->assertSame(RowMatchOutcome::SeveralMatches, $match->outcome);
+        $this->assertEqualsCanonicalizing([$inside->getId(), $made->getId()], $match->objectIds);
+    }
+
+    public function testAMatchInNeitherFolderStaysOutside(): void
+    {
+        Service::createFolderByPath(self::NEW_FOLDER);
+        $outside = $this->createObject(self::ELSEWHERE, 'SKU-1');
+        $byField = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
+        $byId = $this->configuration(newObjectFolder: self::NEW_FOLDER);
+
+        $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $this->matchOne($byField, 'SKU-1')->outcome);
+        $this->assertSame(
+            RowMatchOutcome::OutsideTargetFolder,
+            $this->matchOne($byId, (string) $outside->getId())->outcome
+        );
     }
 
     public function testTheKeyOfANewObjectIsAValidKey(): void
@@ -351,7 +394,7 @@ class RowMatcherTest extends Unit
 
     public function testAValueTwiceInTheFileCountsForNewObjectsAndAfterAnErrorRow(): void
     {
-        $this->createObject(self::ROOT . '/elsewhere', 'SKU-2');
+        $this->createObject(self::ELSEWHERE, 'SKU-2');
         $matcher = $this->matcher($this->byField());
 
         $matcher->match($this->row('SKU-1'), 2);
@@ -359,6 +402,30 @@ class RowMatcherTest extends Unit
 
         $this->assertSame(2, $matcher->match($this->row('SKU-1'), 4)->firstRow);
         $this->assertSame(3, $matcher->match($this->row('SKU-2'), 5)->firstRow);
+    }
+
+    public function testValuesTheFieldTreatsAsEqualAreOneValueWhenNoObjectHasThemYet(): void
+    {
+        $matcher = $this->matcher($this->byField());
+
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('abc'), 2)->outcome);
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('Muller'), 3)->outcome);
+
+        $sameCase = $matcher->match($this->row('ABC'), 4);
+        $sameAccent = $matcher->match($this->row('Müller'), 5);
+
+        $this->assertSame(RowMatchOutcome::DuplicateInFile, $sameCase->outcome);
+        $this->assertSame(2, $sameCase->firstRow);
+        $this->assertSame('ABC', $sameCase->matchValue);
+        $this->assertSame(RowMatchOutcome::DuplicateInFile, $sameAccent->outcome);
+        $this->assertSame(3, $sameAccent->firstRow);
+    }
+
+    public function testTheDatabaseFindsWhatTheMatcherTreatsAsOneValue(): void
+    {
+        $object = $this->createObject(self::TARGET, 'Müller');
+
+        $this->assertSame($object->getId(), $this->matchOne($this->byField(), 'MULLER')->element?->getId());
     }
 
     public function testTwoValuesForOneObjectMakeTheSecondRowAnErrorRow(): void
@@ -378,7 +445,7 @@ class RowMatcherTest extends Unit
     public function testALocalizedFieldIsMatchedInItsLanguage(): void
     {
         $object = $this->createObject(self::TARGET, 'SKU-1', null, true, self::CLASS_NAME, 'Title-1');
-        $this->createObject(self::ROOT . '/elsewhere', 'SKU-2', null, true, self::CLASS_NAME, 'Title-2');
+        $this->createObject(self::ELSEWHERE, 'SKU-2', null, true, self::CLASS_NAME, 'Title-2');
         $matcher = $this->matcher($this->configuration(attributeName: 'title', language: 'en'));
 
         $this->assertSame($object->getId(), $matcher->match($this->row('Title-1'), 2)->element?->getId());
@@ -388,8 +455,9 @@ class RowMatcherTest extends Unit
     public function testABrickAttributeIsMatched(): void
     {
         $object = $this->createObject(self::TARGET, 'SKU-1', null, true, self::CLASS_NAME, null, 'Code-1');
-        $this->createObject(self::ROOT . '/elsewhere', 'SKU-2', null, true, self::CLASS_NAME, null, 'Code-2');
-        $matcher = $this->matcher($this->configuration(attributeName: 'bricks.' . self::BRICK_NAME . '.code'));
+        $this->createObject(self::ELSEWHERE, 'SKU-2', null, true, self::CLASS_NAME, null, 'Code-2');
+        $attributeName = 'bricks.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE;
+        $matcher = $this->matcher($this->configuration(attributeName: $attributeName));
 
         $this->assertSame($object->getId(), $matcher->match($this->row('Code-1'), 2)->element?->getId());
         $this->assertSame(RowMatchOutcome::OutsideTargetFolder, $matcher->match($this->row('Code-2'), 3)->outcome);
@@ -405,7 +473,8 @@ class RowMatcherTest extends Unit
 
     public function testAnEmptyCellClearsTheFieldOfAMatchedObject(): void
     {
-        $object = $this->createObject(self::TARGET, 'SKU-1');
+        // one save only: updating an object reaches the search index, which the test environment does not have
+        $object = $this->unsavedObject(self::TARGET, 'SKU-1');
         $object->setName('old name');
         $object->save();
 
@@ -420,6 +489,8 @@ class RowMatcherTest extends Unit
 
         $row = [self::COLUMN => 'SKU-1', 'name' => ''];
         $match = $this->matcher($this->byField())->match($row, 2);
+        $this->assertSame('old name', $match->element?->getName());
+
         $mapping->apply($match->element, $row);
 
         $this->assertEmpty($match->element->getName());
@@ -433,13 +504,18 @@ class RowMatcherTest extends Unit
             'field name with SQL' => [['attributeName' => "sku' OR 1=1 --"]],
             'relation field' => [['attributeName' => 'related']],
             'field over several columns' => [['attributeName' => 'weight']],
+            'numeric field, where 12abc would compare as 12' => [['attributeName' => 'articleNo']],
+            'checkbox field, where n/a would compare as 0' => [['attributeName' => 'active']],
+            'date field' => [['attributeName' => 'releaseDate']],
             'localized field without a language' => [['attributeName' => 'title']],
             'invalid language' => [['attributeName' => 'title', 'language' => 'en_xx-nope']],
-            'brick the field does not allow' => [['attributeName' => 'bricks.' . self::OTHER_BRICK_NAME . '.code']],
+            'brick the field does not allow' => [
+                ['attributeName' => 'bricks.' . self::OTHER_BRICK_NAME . self::BRICK_ATTRIBUTE],
+            ],
             'unknown brick attribute' => [['attributeName' => 'bricks.' . self::BRICK_NAME . '.nope']],
-            'not a brick container' => [['attributeName' => 'sku.' . self::BRICK_NAME . '.code']],
-            'missing target folder' => [['targetFolder' => self::ROOT . '/missing']],
-            'missing folder for new objects' => [['newObjectFolder' => self::ROOT . '/missing']],
+            'not a brick container' => [['attributeName' => 'sku.' . self::BRICK_NAME . self::BRICK_ATTRIBUTE]],
+            'missing target folder' => [['targetFolder' => self::MISSING]],
+            'missing folder for new objects' => [['newObjectFolder' => self::MISSING]],
         ];
     }
 
@@ -454,7 +530,7 @@ class RowMatcherTest extends Unit
             $this->matcher($this->configuration(...$settings));
             $this->fail('The configuration was accepted.');
         } catch (InvalidConfigurationException) {
-            $this->assertNull(DataObject::getByPath(self::ROOT . '/missing'));
+            $this->assertNull(DataObject::getByPath(self::MISSING));
         }
     }
 
@@ -547,16 +623,7 @@ class RowMatcherTest extends Unit
         ?string $title = null,
         ?string $brickCode = null
     ): Concrete {
-        ClassDefinition::getByName($className) ?? $this->createClassNamed($className);
-
-        $fqcn = self::CLASS_NAMESPACE . $className;
-
-        /** @var Concrete $object */
-        $object = new $fqcn();
-        $object->setParent(Service::createFolderByPath($folder));
-        $object->setKey($key ?? uniqid('o', true));
-        $object->setPublished($published);
-        $object->setSku($sku);
+        $object = $this->unsavedObject($folder, $sku, $key, $published, $className);
         if ($title !== null) {
             $object->setTitle($title, 'en');
         }
@@ -567,6 +634,27 @@ class RowMatcherTest extends Unit
             $object->getBricks()->setDiRowMatcherBrick($brick);
         }
         $object->save();
+
+        return $object;
+    }
+
+    private function unsavedObject(
+        string $folder,
+        ?string $sku,
+        ?string $key = null,
+        bool $published = true,
+        string $className = self::CLASS_NAME
+    ): Concrete {
+        ClassDefinition::getByName($className) ?? $this->createClassNamed($className);
+
+        $fqcn = self::CLASS_NAMESPACE . $className;
+
+        /** @var Concrete $object */
+        $object = new $fqcn();
+        $object->setParent(Service::createFolderByPath($folder));
+        $object->setKey($key ?? uniqid('o', true));
+        $object->setPublished($published);
+        $object->setSku($sku);
 
         return $object;
     }
@@ -617,6 +705,21 @@ class RowMatcherTest extends Unit
             $weight->setName('weight');
             $weight->setTitle('weight');
             $panel->addChild($weight);
+
+            $articleNo = new ClassDefinition\Data\Numeric();
+            $articleNo->setName('articleNo');
+            $articleNo->setTitle('articleNo');
+            $panel->addChild($articleNo);
+
+            $active = new ClassDefinition\Data\Checkbox();
+            $active->setName('active');
+            $active->setTitle('active');
+            $panel->addChild($active);
+
+            $releaseDate = new ClassDefinition\Data\Date();
+            $releaseDate->setName('releaseDate');
+            $releaseDate->setTitle('releaseDate');
+            $panel->addChild($releaseDate);
         }
 
         $definition = new ClassDefinition();
