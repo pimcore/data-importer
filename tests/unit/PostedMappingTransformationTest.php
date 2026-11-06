@@ -148,6 +148,30 @@ class PostedMappingTransformationTest extends Unit
         $this->assertUnprocessable($refusal, self::PREVIEW_ROUTE, 'Mapping entry 0 is not an object.');
     }
 
+    public function testAPreviewRefusesAPipelineThatIsNoList(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->preview(
+            [['dataSourceIndex' => ['sku'], 'transformationPipeline' => 'invalid']],
+            ['sku' => 'A-100']
+        ));
+
+        $this->assertUnprocessable(
+            $refusal,
+            self::PREVIEW_ROUTE,
+            'Mapping entry 0: transformationPipeline must be a list'
+        );
+    }
+
+    public function testTheTypeRefusesAnOperatorWithoutObjectSettings(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->type([
+            'dataSourceIndex' => ['sku'],
+            'transformationPipeline' => [['type' => 'trim', 'settings' => 'both']],
+        ]));
+
+        $this->assertUnprocessable($refusal, self::TYPE_ROUTE, 'operator 0 needs a type');
+    }
+
     public function testAPreviewRefusesAnOperatorThatWritesOrFetches(): void
     {
         $refusal = $this->refusalOf(fn () => $this->preview(

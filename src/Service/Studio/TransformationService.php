@@ -108,6 +108,9 @@ final readonly class TransformationService implements TransformationServiceInter
         array $dataRow
     ): TransformationResultPreviewsResponse {
         $this->assertImporterPermission();
+        foreach ($mappingConfig as $index => $entry) {
+            $this->assertPostedEntryShape($entry, sprintf('Mapping entry %s', $index));
+        }
         $this->assertNoSideEffects($mappingConfig);
 
         try {
@@ -132,11 +135,45 @@ final readonly class TransformationService implements TransformationServiceInter
     public function calculateTransformationResultTypeOf(array $mappingEntry): TransformationResultTypeResponse
     {
         $this->assertImporterPermission();
+        $this->assertPostedEntryShape($mappingEntry, 'The mapping entry');
 
         try {
             return $this->evaluateTransformationResultType(self::POSTED_CONFIG_NAME, $mappingEntry);
         } catch (InvalidConfigurationException $exception) {
             throw new InvalidArgumentException($exception->getMessage(), $exception);
+        }
+    }
+
+    /**
+     * The factory takes a posted entry as it is and fails with a \TypeError on a wrong shape; refuse that as a 422.
+     *
+     * @throws InvalidArgumentException
+     */
+    private function assertPostedEntryShape(mixed $entry, string $what): void
+    {
+        if (!is_array($entry)) {
+            throw new InvalidArgumentException(sprintf('%s is not an object.', $what));
+        }
+        if (!is_array($entry['dataSourceIndex'] ?? [])) {
+            throw new InvalidArgumentException(sprintf('%s: dataSourceIndex must be a list.', $what));
+        }
+        $pipeline = $entry['transformationPipeline'] ?? [];
+        if (!is_array($pipeline)) {
+            throw new InvalidArgumentException(
+                sprintf('%s: transformationPipeline must be a list of operators.', $what)
+            );
+        }
+        foreach ($pipeline as $position => $operator) {
+            $wellFormed = is_array($operator)
+                && is_string($operator['type'] ?? null)
+                && is_array($operator['settings'] ?? []);
+            if (!$wellFormed) {
+                throw new InvalidArgumentException(sprintf(
+                    '%s: operator %s needs a type and, if any, settings as an object.',
+                    $what,
+                    $position
+                ));
+            }
         }
     }
 
