@@ -50,7 +50,7 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
     public function __construct(
         private FileStore $fileStore,
         private FileInspector $fileInspector,
-        private SecurityServiceInterface $securityService,
+        private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
         private DataObjectResolverInterface $dataObjectResolver,
         private DataTypeServiceInterface $dataTypeService,
         private ClassDefinitionServiceInterface $classDefinitionService,
@@ -80,7 +80,11 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
         if (!$this->fileInspector->isReadable($path, $type)) {
             $this->fileStore->delete($user->getId(), $fileId, $type);
 
-            return new AdHocImportFileResponse(FileInspector::MAX_ROWS, type: $type->value, refusal: RefusalReason::Unreadable->value);
+            return new AdHocImportFileResponse(
+                FileInspector::MAX_ROWS,
+                type: $type->value,
+                refusal: RefusalReason::Unreadable->value
+            );
         }
 
         $inspection = $this->fileInspector->inspect($path, $type, new SettingsInput());
@@ -142,7 +146,8 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
     }
 
     /**
-     * Whether to keep a refused file for another try: another sheet, or the settings of a CSV that does not fit its header.
+     * Whether to keep a refused file for another try: another sheet, or the settings of a CSV that does not fit its
+     * header.
      */
     private function settingsCouldHelp(FileType $type, FileInspection $inspection): bool
     {

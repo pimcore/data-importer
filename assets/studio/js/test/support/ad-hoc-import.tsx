@@ -83,8 +83,8 @@ export const components = {
         <tr>{ columns.map((column) => <th key={ column.id }>{ column.header }</th>) }</tr>
       </thead>
       <tbody>
-        { data.map((row, index) => (
-          <tr key={ index }>{ columns.map((column) => <td key={ column.id }>{ column.accessorFn(row) }</td>) }</tr>
+        { data.map((row) => (
+          <tr key={ JSON.stringify(row) }>{ columns.map((column) => <td key={ column.id }>{ column.accessorFn(row) }</td>) }</tr>
         )) }
       </tbody>
     </table>

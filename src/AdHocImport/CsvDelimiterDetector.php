@@ -76,6 +76,8 @@ final class CsvDelimiterDetector
             array_pop($lines);
         }
 
-        return array_slice(array_values(array_filter($lines, static fn (string $line): bool => $line !== '')), 0, self::SAMPLE_LINES);
+        $nonEmpty = array_filter($lines, static fn (string $line): bool => $line !== '');
+
+        return array_slice(array_values($nonEmpty), 0, self::SAMPLE_LINES);
     }
 }

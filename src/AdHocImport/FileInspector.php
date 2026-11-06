@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\Exception\ReaderWarningException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 
 /**
@@ -71,7 +72,11 @@ final readonly class FileInspector
         ];
         $refused = new FileInspection($settings, $detectedDelimiter, refusal: RefusalReason::Unreadable);
 
-        $format = ['delimiter' => $settings['delimiter'], 'enclosure' => $settings['enclosure'], 'escape' => $settings['escape']];
+        $format = [
+            'delimiter' => $settings['delimiter'],
+            'enclosure' => $settings['enclosure'],
+            'escape' => $settings['escape'],
+        ];
 
         try {
             $columns = null;
@@ -85,7 +90,13 @@ final readonly class FileInspector
             $rowCount = 0;
             $firstRows = [];
             foreach ($this->sourceFileReader->readRows(
-                ['type' => FileType::Csv->value, 'settings' => $format + ['skipFirstRow' => $input->hasHeaderRow, 'saveHeaderName' => $input->hasHeaderRow]],
+                [
+                    'type' => FileType::Csv->value,
+                    'settings' => $format + [
+                        'skipFirstRow' => $input->hasHeaderRow,
+                        'saveHeaderName' => $input->hasHeaderRow,
+                    ],
+                ],
                 $path
             ) as $row) {
                 $columns ??= $this->columnsByPosition($row);
@@ -100,7 +111,12 @@ final readonly class FileInspector
         }
 
         if ($rowCount > self::MAX_ROWS) {
-            return new FileInspection($settings, $detectedDelimiter, rowCount: $rowCount, refusal: RefusalReason::TooManyRows);
+            return new FileInspection(
+                $settings,
+                $detectedDelimiter,
+                rowCount: $rowCount,
+                refusal: RefusalReason::TooManyRows
+            );
         }
 
         return new FileInspection($settings, $detectedDelimiter, [], $rowCount, $columns ?? [], $firstRows);
@@ -115,7 +131,8 @@ final readonly class FileInspector
     private function csvHeaderColumns(string $path, array $format): ?array
     {
         $names = [];
-        foreach ($this->sourceFileReader->readRows(['type' => FileType::Csv->value, 'settings' => $format], $path) as $row) {
+        $source = ['type' => FileType::Csv->value, 'settings' => $format];
+        foreach ($this->sourceFileReader->readRows($source, $path) as $row) {
             $names = array_values(array_filter(
                 $row,
                 static fn (?string $name): bool => $name !== null && $name !== ''
@@ -162,19 +179,29 @@ final readonly class FileInspector
                 $lastRow = $this->withWarningsAsErrors(fn (): int => $this->lastRowWithCells($path, $sheetName));
                 $rowCount = max(0, $lastRow - $headerRows);
                 if ($rowCount > self::MAX_ROWS) {
-                    return new FileInspection($settings, sheets: $sheets, rowCount: $rowCount, refusal: RefusalReason::TooManyRows);
+                    return new FileInspection(
+                        $settings,
+                        sheets: $sheets,
+                        rowCount: $rowCount,
+                        refusal: RefusalReason::TooManyRows
+                    );
                 }
             }
 
             $rows = $this->withWarningsAsErrors(fn (): array => [...$this->sourceFileReader->readRows(
-                ['type' => FileType::Xlsx->value, 'settings' => ['skipFirstRow' => false, 'sheetName' => $sheetName, 'onlyChosenSheet' => true]],
+                [
+                    'type' => FileType::Xlsx->value,
+                    'settings' => ['skipFirstRow' => false, 'sheetName' => $sheetName, 'onlyChosenSheet' => true],
+                ],
                 $path
             )]);
         } catch (SpreadsheetException|InvalidInputException|\ErrorException) {
             return new FileInspection($settings, sheets: $sheets, refusal: RefusalReason::Unreadable);
         }
 
-        $columns = $input->hasHeaderRow ? $this->xlsxHeaderColumns(array_shift($rows) ?? []) : $this->columnsByPosition($rows[0] ?? []);
+        $columns = $input->hasHeaderRow
+            ? $this->xlsxHeaderColumns(array_shift($rows) ?? [])
+            : $this->columnsByPosition($rows[0] ?? []);
 
         return new FileInspection(
             $settings,
@@ -189,7 +216,8 @@ final readonly class FileInspector
     }
 
     /**
-     * The reader may tell a broken part of a workbook only by a PHP warning, and goes on without what it could not read.
+     * The reader may tell a broken part of a workbook only by a PHP warning, and goes on without what it could not
+     * read.
      *
      * @template T
      *
@@ -197,7 +225,7 @@ final readonly class FileInspector
      *
      * @return T
      *
-     * @throws \ErrorException|SpreadsheetException|InvalidInputException
+     * @throws ReaderWarningException|SpreadsheetException|InvalidInputException
      */
     private function withWarningsAsErrors(callable $read): mixed
     {
@@ -207,7 +235,7 @@ final readonly class FileInspector
                     return false;
                 }
 
-                throw new \ErrorException($message, 0, $level, $file, $line);
+                throw new ReaderWarningException($message, 0, $level, $file, $line);
             },
             E_WARNING
         );
@@ -238,7 +266,8 @@ final readonly class FileInspector
     /**
      * @param array<int, mixed> $header
      *
-     * @return array<int, array{dataIndex: string, label: string}> an unnamed column is left out; XLSX rows stay keyed by position
+     * @return array<int, array{dataIndex: string, label: string}> an unnamed column is left out; XLSX rows stay keyed
+     *                                                             by position
      */
     private function xlsxHeaderColumns(array $header): array
     {

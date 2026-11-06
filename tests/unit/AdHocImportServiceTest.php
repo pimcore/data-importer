@@ -224,7 +224,10 @@ class AdHocImportServiceTest extends Unit
     {
         $this->expectException(NotFoundHttpException::class);
 
-        $this->service(folder: $this->createStub(Concrete::class))->upload($this->upload(self::CSV, 'prices.csv'), self::FOLDER_ID);
+        $this->service(folder: $this->createStub(Concrete::class))->upload(
+            $this->upload(self::CSV, 'prices.csv'),
+            self::FOLDER_ID
+        );
     }
 
     /**
@@ -369,7 +372,8 @@ class AdHocImportServiceTest extends Unit
             false
         )->willReturn(new ClassAttributesResponse([['key' => 'sku', 'title' => 'SKU', 'localized' => false]]));
 
-        $fields = $this->service(dataTypeService: $dataTypes, creatableClasses: ['OTHER', 'PROD'])->loadMatchFields('PROD');
+        $service = $this->service(dataTypeService: $dataTypes, creatableClasses: ['OTHER', 'PROD']);
+        $fields = $service->loadMatchFields('PROD');
 
         $this->assertSame(['sku'], array_column($fields->getAttributes(), 'key'));
     }

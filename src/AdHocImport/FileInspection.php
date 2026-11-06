@@ -21,7 +21,13 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 final readonly class FileInspection
 {
     /**
-     * @param array{delimiter?: string, enclosure?: string, escape?: string, hasHeaderRow: bool, sheetName?: string} $settings
+     * @param array{
+     *     delimiter?: string,
+     *     enclosure?: string,
+     *     escape?: string,
+     *     hasHeaderRow: bool,
+     *     sheetName?: string
+     * } $settings
      * @param string[] $sheets
      * @param array<int, array{dataIndex: string, label: string}> $columns
      * @param array<int, array<int, string|null>> $firstRows the values in the order of $columns

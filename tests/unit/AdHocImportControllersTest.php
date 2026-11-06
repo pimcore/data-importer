@@ -65,7 +65,9 @@ class AdHocImportControllersTest extends Unit
         $service = $this->createMock(AdHocImportServiceInterface::class);
         $service->expects($this->once())->method('inspect')->with(
             'file-1',
-            $this->callback(static fn (SettingsInput $input): bool => $input->delimiter === ';' && !$input->hasHeaderRow)
+            $this->callback(
+                static fn (SettingsInput $input): bool => $input->delimiter === ';' && !$input->hasHeaderRow
+            )
         )->willReturn($answer);
 
         $response = (new InspectFileController($this->serializer($answer), $service))->inspectFile(

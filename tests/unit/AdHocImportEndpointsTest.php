@@ -46,7 +46,12 @@ class AdHocImportEndpointsTest extends Unit
         UploadFileController::class => ['uploadFile', 'upload_file', 'POST', '/ad-hoc-import/file'],
         InspectFileController::class => ['inspectFile', 'inspect_file', 'POST', '/ad-hoc-import/file/{fileId}/inspect'],
         DeleteFileController::class => ['deleteFile', 'delete_file', 'DELETE', '/ad-hoc-import/file/{fileId}'],
-        LoadMatchFieldsController::class => ['loadMatchFields', 'load_match_fields', 'GET', '/ad-hoc-import/match-fields'],
+        LoadMatchFieldsController::class => [
+            'loadMatchFields',
+            'load_match_fields',
+            'GET',
+            '/ad-hoc-import/match-fields',
+        ],
     ];
 
     protected UnitTester $tester;
@@ -77,7 +82,8 @@ class AdHocImportEndpointsTest extends Unit
      */
     public function testEveryEndpointIsRoutedBelowTheBundlesPrefix(): void
     {
-        $routing = Yaml::parseFile(__DIR__ . '/../../src/Resources/config/pimcore/routing.yml')['pimcore_data_importer_studio'];
+        $routes = Yaml::parseFile(__DIR__ . '/../../src/Resources/config/pimcore/routing.yml');
+        $routing = $routes['pimcore_data_importer_studio'];
         $this->assertSame('@PimcoreDataImporterBundle/Controller/Studio', $routing['resource']);
         $this->assertSame('attribute', $routing['type']);
         $this->assertStringEndsWith('/bundle/data-importer', $routing['prefix']);

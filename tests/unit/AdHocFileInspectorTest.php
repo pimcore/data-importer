@@ -28,6 +28,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 
 class AdHocFileInspectorTest extends Unit
 {
+    private const string CSV_HEADER = "sku,name\n";
+
+    private const string CSV_ONE_ROW = "sku,name\nA-1,Chair\n";
+
     /**
      * @var string[]
      */
@@ -42,7 +46,9 @@ class AdHocFileInspectorTest extends Unit
 
     public function testACsvIsReadWithTheDetectedDelimiter(): void
     {
-        $path = $this->csv("Artikelnr;Bezeichnung;Preis\nNH-1001;Trail jacket;\"189,90\"\nNH-1002;Rain pants;\"99,00\"\n");
+        $path = $this->csv(
+            "Artikelnr;Bezeichnung;Preis\nNH-1001;Trail jacket;\"189,90\"\nNH-1002;Rain pants;\"99,00\"\n"
+        );
 
         $inspection = $this->inspector()->inspect($path, FileType::Csv, new SettingsInput());
 
@@ -68,7 +74,8 @@ class AdHocFileInspectorTest extends Unit
 
     public function testOnlyTheFirstThreeRowsAreReturnedButAllAreCounted(): void
     {
-        $path = $this->csv("sku,name\n" . implode("\n", array_map(static fn (int $i): string => "A-$i,Name $i", range(1, 7))) . "\n");
+        $rows = array_map(static fn (int $i): string => "A-$i,Name $i", range(1, 7));
+        $path = $this->csv(self::CSV_HEADER . implode("\n", $rows) . "\n");
 
         $inspection = $this->inspector()->inspect($path, FileType::Csv, new SettingsInput());
 
@@ -78,7 +85,11 @@ class AdHocFileInspectorTest extends Unit
 
     public function testTheByteOrderMarkIsNoPartOfTheFirstColumn(): void
     {
-        $inspection = $this->inspector()->inspect($this->csv("\xEF\xBB\xBFsku,name\nA-1,Chair\n"), FileType::Csv, new SettingsInput());
+        $inspection = $this->inspector()->inspect(
+            $this->csv("\xEF\xBB\xBFsku,name\nA-1,Chair\n"),
+            FileType::Csv,
+            new SettingsInput()
+        );
 
         $this->assertSame('sku', $inspection->columns[0]['dataIndex']);
     }
@@ -117,7 +128,7 @@ class AdHocFileInspectorTest extends Unit
 
     public function testAHeaderOnlyCsvHasItsColumnsAndNoRows(): void
     {
-        $inspection = $this->inspector()->inspect($this->csv("sku,name\n"), FileType::Csv, new SettingsInput());
+        $inspection = $this->inspector()->inspect($this->csv(self::CSV_HEADER), FileType::Csv, new SettingsInput());
 
         $this->assertNull($inspection->refusal);
         $this->assertSame(0, $inspection->rowCount);
@@ -126,11 +137,19 @@ class AdHocFileInspectorTest extends Unit
 
     public function testACsvUpToTheLimitIsTakenAndOneRowMoreIsRefusedWithItsCount(): void
     {
-        $atLimit = $this->inspector()->inspect($this->csvWithRows(FileInspector::MAX_ROWS), FileType::Csv, new SettingsInput());
+        $atLimit = $this->inspector()->inspect(
+            $this->csvWithRows(FileInspector::MAX_ROWS),
+            FileType::Csv,
+            new SettingsInput()
+        );
         $this->assertNull($atLimit->refusal);
         $this->assertSame(FileInspector::MAX_ROWS, $atLimit->rowCount);
 
-        $over = $this->inspector()->inspect($this->csvWithRows(FileInspector::MAX_ROWS + 1), FileType::Csv, new SettingsInput());
+        $over = $this->inspector()->inspect(
+            $this->csvWithRows(FileInspector::MAX_ROWS + 1),
+            FileType::Csv,
+            new SettingsInput()
+        );
         $this->assertSame(RefusalReason::TooManyRows, $over->refusal);
         $this->assertSame(FileInspector::MAX_ROWS + 1, $over->rowCount);
         $this->assertSame([], $over->columns);
@@ -138,7 +157,11 @@ class AdHocFileInspectorTest extends Unit
 
     public function testACsvRowNotFittingTheHeaderIsUnreadableButKeepsItsSettings(): void
     {
-        $inspection = $this->inspector()->inspect($this->csv("sku,name\nA-1,Chair\nA-2\n"), FileType::Csv, new SettingsInput());
+        $inspection = $this->inspector()->inspect(
+            $this->csv("sku,name\nA-1,Chair\nA-2\n"),
+            FileType::Csv,
+            new SettingsInput()
+        );
 
         $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
         $this->assertSame(',', $inspection->settings['delimiter']);
@@ -146,21 +169,33 @@ class AdHocFileInspectorTest extends Unit
 
     public function testACsvNotInUtf8IsUnreadable(): void
     {
-        $inspection = $this->inspector()->inspect($this->csv("sku,name\nA-1,gr\xFCn\n"), FileType::Csv, new SettingsInput());
+        $inspection = $this->inspector()->inspect(
+            $this->csv("sku,name\nA-1,gr\xFCn\n"),
+            FileType::Csv,
+            new SettingsInput()
+        );
 
         $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
     public function testTwoColumnsOfOneNameAreUnreadableBecauseAnImportWouldKeepOnlyOne(): void
     {
-        $inspection = $this->inspector()->inspect($this->csv("sku,name,name\nA-1,Chair,Table\n"), FileType::Csv, new SettingsInput());
+        $inspection = $this->inspector()->inspect(
+            $this->csv("sku,name,name\nA-1,Chair,Table\n"),
+            FileType::Csv,
+            new SettingsInput()
+        );
 
         $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
     public function testUnnamedCsvColumnsAreLeftOut(): void
     {
-        $inspection = $this->inspector()->inspect($this->csv("sku,name,,\nA-1,Chair,,\n"), FileType::Csv, new SettingsInput());
+        $inspection = $this->inspector()->inspect(
+            $this->csv("sku,name,,\nA-1,Chair,,\n"),
+            FileType::Csv,
+            new SettingsInput()
+        );
 
         $this->assertNull($inspection->refusal);
         $this->assertSame(['sku', 'name'], array_column($inspection->columns, 'dataIndex'));
@@ -170,7 +205,7 @@ class AdHocFileInspectorTest extends Unit
     public function testAnEnclosureOfSeveralBytesIsUnreadableInsteadOfAnError(): void
     {
         $inspection = $this->inspector()->inspect(
-            $this->csv("sku,name\nA-1,Chair\n"),
+            $this->csv(self::CSV_ONE_ROW),
             FileType::Csv,
             new SettingsInput(enclosure: '“')
         );
@@ -207,7 +242,11 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame('Note', $withHeader->columns[0]['label']);
         $this->assertSame(2, $withHeader->rowCount);
 
-        $withoutHeader = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput(hasHeaderRow: false, sheetName: 'Notes'));
+        $withoutHeader = $this->inspector()->inspect(
+            $path,
+            FileType::Xlsx,
+            new SettingsInput(hasHeaderRow: false, sheetName: 'Notes')
+        );
         $this->assertSame('0', $withoutHeader->columns[0]['label']);
         $this->assertSame(3, $withoutHeader->rowCount);
         $this->assertSame([['Note'], ['one'], ['two']], $withoutHeader->firstRows);
@@ -256,10 +295,11 @@ class AdHocFileInspectorTest extends Unit
 
     public function testATextFileNamedXlsxIsNotReadable(): void
     {
-        $path = $this->file("sku,name\nA-1,Chair\n", 'xlsx');
+        $path = $this->file(self::CSV_ONE_ROW, 'xlsx');
 
         $this->assertFalse($this->inspector()->isReadable($path, FileType::Xlsx));
-        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+        $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
     public function testAWorkbookWithABrokenSheetIsUnreadableInsteadOfAnError(): void
@@ -280,7 +320,8 @@ class AdHocFileInspectorTest extends Unit
         $zip->addFromString('xl/workbook.xml', '<workbook><sheets><sheet');
         $zip->close();
 
-        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+        $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
     public function testAWorkbookWithAPartOnlyTheLoadReadsBrokenIsUnreadableInsteadOfAnError(): void
@@ -291,7 +332,8 @@ class AdHocFileInspectorTest extends Unit
         $zip->addFromString('xl/sharedStrings.xml', '<sst><si><t');
         $zip->close();
 
-        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+        $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
     public function testAnXlsxUpToTheLimitIsTakenWithItsCount(): void
@@ -370,7 +412,8 @@ class AdHocFileInspectorTest extends Unit
         $zip->deleteName('xl/workbook.xml');
         $zip->close();
 
-        $this->assertSame(RefusalReason::Unreadable, $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput())->refusal);
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+        $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
     public function testAnXlsxIsReadable(): void
@@ -380,7 +423,7 @@ class AdHocFileInspectorTest extends Unit
 
     public function testACsvIsReadableAndABinaryFileNamedCsvIsNot(): void
     {
-        $this->assertTrue($this->inspector()->isReadable($this->csv("sku,name\nA-1,Chair\n"), FileType::Csv));
+        $this->assertTrue($this->inspector()->isReadable($this->csv(self::CSV_ONE_ROW), FileType::Csv));
         $this->assertFalse($this->inspector()->isReadable($this->xlsx(['Products' => [['a']]], 'csv'), FileType::Csv));
     }
 
@@ -444,7 +487,7 @@ class AdHocFileInspectorTest extends Unit
 
     private function csvWithRows(int $rows): string
     {
-        return $this->csv("sku,name\n" . str_repeat("A-1,Chair\n", $rows));
+        return $this->csv(self::CSV_HEADER . str_repeat("A-1,Chair\n", $rows));
     }
 
     private function file(string $content, string $extension): string

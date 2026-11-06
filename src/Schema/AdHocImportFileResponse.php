@@ -40,15 +40,37 @@ final class AdHocImportFileResponse implements AdditionalAttributesInterface
     public function __construct(
         #[Property(description: 'Rows a file may have', type: 'integer', example: 5000)]
         private readonly int $maxRows,
-        #[Property(description: 'The stored file; null if it was refused for good and not kept', type: 'string', example: '0f8fad5b-d9cb-469f-a165-70867728950e', nullable: true)]
+        #[Property(
+            description: 'The stored file; null if it was refused for good and not kept',
+            type: 'string',
+            example: '0f8fad5b-d9cb-469f-a165-70867728950e',
+            nullable: true
+        )]
         private readonly ?string $fileId = null,
-        #[Property(description: 'The file type; null if it is none of the supported ones', type: 'string', enum: ['csv', 'xlsx'], example: 'csv', nullable: true)]
+        #[Property(
+            description: 'The file type; null if it is none of the supported ones',
+            type: 'string',
+            enum: ['csv', 'xlsx'],
+            example: 'csv',
+            nullable: true
+        )]
         private readonly ?string $type = null,
-        #[Property(description: 'Why the file cannot be imported under these settings; null if it can', type: 'string', enum: ['too-many-rows', 'unreadable', 'wrong-format'], example: null, nullable: true)]
+        #[Property(
+            description: 'Why the file cannot be imported under these settings; null if it can',
+            type: 'string',
+            enum: ['too-many-rows', 'unreadable', 'wrong-format'],
+            example: null,
+            nullable: true
+        )]
         private readonly ?string $refusal = null,
         #[Property(description: 'CSV: the delimiter in use', type: 'string', example: ';', nullable: true)]
         private readonly ?string $delimiter = null,
-        #[Property(description: 'CSV: the delimiter detected in the file', type: 'string', example: ';', nullable: true)]
+        #[Property(
+            description: 'CSV: the delimiter detected in the file',
+            type: 'string',
+            example: ';',
+            nullable: true
+        )]
         private readonly ?string $detectedDelimiter = null,
         #[Property(description: 'CSV: the enclosure in use', type: 'string', example: '"', nullable: true)]
         private readonly ?string $enclosure = null,

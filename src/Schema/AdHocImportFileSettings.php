@@ -28,7 +28,12 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 final readonly class AdHocImportFileSettings
 {
     public function __construct(
-        #[Property(description: 'CSV: the delimiter; empty for the detected one', type: 'string', example: ';', nullable: true)]
+        #[Property(
+            description: 'CSV: the delimiter; empty for the detected one',
+            type: 'string',
+            example: ';',
+            nullable: true
+        )]
         private ?string $delimiter = null,
         #[Property(description: 'CSV: the enclosure', type: 'string', example: '"', nullable: true)]
         private ?string $enclosure = null,
@@ -36,7 +41,12 @@ final readonly class AdHocImportFileSettings
         private ?string $escape = null,
         #[Property(description: 'Whether the first row holds the column names', type: 'boolean', example: true)]
         private bool $hasHeaderRow = true,
-        #[Property(description: 'XLSX: the sheet; empty for the first one', type: 'string', example: 'Products', nullable: true)]
+        #[Property(
+            description: 'XLSX: the sheet; empty for the first one',
+            type: 'string',
+            example: 'Products',
+            nullable: true
+        )]
         private ?string $sheetName = null,
     ) {
     }
@@ -68,6 +78,12 @@ final readonly class AdHocImportFileSettings
 
     public function toInput(): SettingsInput
     {
-        return new SettingsInput($this->delimiter, $this->enclosure, $this->escape, $this->hasHeaderRow, $this->sheetName);
+        return new SettingsInput(
+            $this->delimiter,
+            $this->enclosure,
+            $this->escape,
+            $this->hasHeaderRow,
+            $this->sheetName
+        );
     }
 }
