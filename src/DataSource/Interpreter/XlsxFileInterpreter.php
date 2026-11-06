@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -77,6 +78,9 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
         $reader->setReadDataOnly(true);
         if ($this->onlyChosenSheet) {
             $reader->setLoadSheetsOnly($this->sheetName);
+            if ($reader instanceof Xlsx) {
+                XlsxColumnDefinitions::ignoreOn($reader);
+            }
         }
         $spreadSheet = $reader->load($path);
 

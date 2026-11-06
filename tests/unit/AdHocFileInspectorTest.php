@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector;
@@ -23,6 +25,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\RefusalReason;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxColumnDefinitions;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 
@@ -476,6 +479,116 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(2, $inspection->rowCount);
     }
 
+    public function testARowThatOnlyCarriesFormattingDoesNotCountBesideAColumnDefinition(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1'], ['A-2']]]);
+        $this->replaceInSheet(
+            $path,
+            '</sheetData>',
+            '<row r="6000" s="1" customFormat="1"/></sheetData>'
+        );
+        $this->setColumnDefinitions($path, '<col min="1" max="1" width="11" customWidth="1"/>');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(2, $inspection->rowCount);
+    }
+
+    public function testAColumnDefinitionWiderThanTheCellsAddsNoColumnsAndNoCells(): void
+    {
+        $rows = array_fill(0, 1000, ['a', 'b', 'c']);
+        $path = $this->xlsx(['Products' => $rows]);
+        $this->setColumnDefinitions($path, '<col min="1" max="1024" width="11" customWidth="1"/>');
+
+        $withHeader = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($withHeader->refusal);
+        $this->assertSame(999, $withHeader->rowCount);
+        $this->assertCount(3, $withHeader->columns);
+
+        $withoutHeader = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput(hasHeaderRow: false));
+
+        $this->assertNull($withoutHeader->refusal);
+        $this->assertSame(1000, $withoutHeader->rowCount);
+        $this->assertCount(3, $withoutHeader->columns);
+        $this->assertSame(['a', 'b', 'c'], $withoutHeader->firstRows[0]);
+    }
+
+    public function testATinySheetOfEmptyRowsAndAWideColumnDefinitionReachesOnlyItsCells(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $this->replaceInSheet($path, '</sheetData>', str_repeat('<row/>', 20000) . '</sheetData>');
+        $this->setColumnDefinitions($path, '<col min="1" max="16383" width="11"/>');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(1, $inspection->rowCount);
+        $this->assertCount(1, $inspection->columns);
+    }
+
+    public function testAReadFilterIsAskedOnlyAboutTheCells(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku', 'name'], ['A-1', 'Chair']]]);
+        $this->replaceInSheet($path, '</sheetData>', '<row/><row/><row/></sheetData>');
+        $this->setColumnDefinitions($path, '<col min="1" max="50" width="11"/>');
+        $filter = new class() implements IReadFilter {
+            public int $calls = 0;
+
+            public function readCell(string $columnAddress, int $row, string $worksheetName = ''): bool
+            {
+                ++$this->calls;
+
+                return false;
+            }
+        };
+
+        $reader = new XlsxReader();
+        $reader->setReadDataOnly(true);
+        XlsxColumnDefinitions::ignoreOn($reader);
+        $reader->setReadFilter($filter);
+        $reader->load($path);
+
+        $this->assertSame(4, $filter->calls);
+    }
+
+    public function testAColumnDefinitionRunningBackwardsIsNoReasonToRefuseASheet(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
+        $this->setColumnDefinitions($path, '<col min="5" max="1" width="11"/>');
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame(1, $inspection->rowCount);
+    }
+
+    public function testAValueThatLooksLikeAColumnDefinitionStays(): void
+    {
+        $path = $this->xlsx(['Products' => [['sku'], ['cols']]]);
+        $this->replaceInSheet(
+            $path,
+            '</sheetData>',
+            '<row r="3"><c r="A3" t="inlineStr"><is><t><![CDATA[<cols>x</cols>]]></t></is></c></row></sheetData>'
+        );
+
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput());
+
+        $this->assertNull($inspection->refusal);
+        $this->assertSame([['cols'], ['<cols>x</cols>']], $inspection->firstRows);
+    }
+
+    public function testBrokenXmlIsLeftForTheReaderToReport(): void
+    {
+        $reader = new XlsxReader();
+        XlsxColumnDefinitions::ignoreOn($reader);
+
+        $broken = '<worksheet><cols><col min="1" max="1"/>';
+
+        $this->assertSame($broken, $reader->getSecurityScannerOrThrow()->scan($broken));
+    }
+
     public function testEmptyCellsCountForTheLimitBecauseAnImportReceivesThemAsRows(): void
     {
         $path = $this->xlsx(['Products' => [['sku'], ['A-1']]]);
@@ -679,6 +792,19 @@ class AdHocFileInspectorTest extends Unit
         $zip = new \ZipArchive();
         $zip->open($path);
         $zip->addFromString($part, (string)preg_replace('/<row r="\d+"/', '<row', (string)$zip->getFromName($part)));
+        $zip->close();
+    }
+
+    /**
+     * Replaces what the writer put there, which is a definition per column it knows.
+     */
+    private function setColumnDefinitions(string $path, string $definitions): void
+    {
+        $part = 'xl/worksheets/sheet1.xml';
+        $zip = new \ZipArchive();
+        $zip->open($path);
+        $xml = (string)preg_replace('~<cols>.*?</cols>~s', '', (string)$zip->getFromName($part));
+        $zip->addFromString($part, str_replace('<sheetData>', "<cols>$definitions</cols><sheetData>", $xml));
         $zip->close();
     }
 

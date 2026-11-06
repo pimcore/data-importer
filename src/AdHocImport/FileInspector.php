@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxColumnDefinitions;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Exception\ReaderWarningException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
@@ -271,6 +272,7 @@ final readonly class FileInspector
         $reader = new Xlsx();
         $reader->setReadDataOnly(true);
         $reader->setLoadSheetsOnly($sheetName);
+        XlsxColumnDefinitions::ignoreOn($reader);
         $reader->setReadFilter($filter);
         $reader->load($path);
 
