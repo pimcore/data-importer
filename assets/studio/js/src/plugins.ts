@@ -10,6 +10,7 @@
 
 import { type IAbstractPlugin } from '@pimcore/studio-ui-bundle'
 import { DataImporterModule } from './modules/data-importer/index'
+import { AdHocImportModule } from './modules/data-importer/ad-hoc-import'
 import { bundleServiceIds } from './config/service-ids'
 import { DynamicTypeDataImporterDataObject } from './modules/data-importer/dynamic-types/dynamic-type-data-importer-data-object'
 
@@ -28,6 +29,7 @@ export const DataImporterPlugin: IAbstractPlugin = {
   // register modules here
   onStartup: ({ moduleSystem }): void => {
     moduleSystem.registerModule(DataImporterModule)
+    moduleSystem.registerModule(AdHocImportModule)
     console.log('Hello from data importer bundle.')
   }
 }
