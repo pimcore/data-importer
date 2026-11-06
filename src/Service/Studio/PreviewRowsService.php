@@ -38,7 +38,7 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
 
     public function __construct(
         private PreviewService $previewService,
-        private SecurityServiceInterface $securityService,
+        private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
         private ConfigurationPreparationService $configurationPreparationService,
         private PreviewEventApplier $previewEventApplier,
         private SourceFileReader $sourceFileReader,

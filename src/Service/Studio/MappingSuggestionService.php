@@ -14,28 +14,20 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\MappingSuggestionsEvent;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionInput;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStatus;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\ColumnMatcher;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\SampleValuePicker;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Throwable;
 
 /**
  * @internal
@@ -77,10 +69,8 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         private MappingSuggestionHydratorInterface $hydrator,
         private EventDispatcherInterface $eventDispatcher,
         private AiSuggestionStage $aiStage,
-        private SampleValuePicker $sampleValuePicker,
-        private PreviewRowsServiceInterface $previewRows,
-        private SecurityServiceInterface $securityService,
-        private LoggerInterface $logger
+        private SampleValueReader $sampleValueReader,
+        private SecurityServiceInterface $securityService // NOSONAR php:S1068 read by CurrentUserResolverTrait
     ) {
     }
 
@@ -215,8 +205,6 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
     }
 
     /**
-     * Unreadable rows cost the agent its samples, not the suggestions; a refusal stays a refusal.
-     *
      * @param list<Column> $columns
      *
      * @return array<string, list<string>>
@@ -228,20 +216,11 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
             return [];
         }
 
-        try {
-            return $this->sampleValuePicker->pick(
-                $this->previewRows->read($configName, $parameters->getCurrentConfig()),
-                array_column($columns, 'index')
-            );
-        } catch (ForbiddenException | NotFoundHttpException | AccessDeniedHttpException $refusal) {
-            throw $refusal;
-        } catch (InvalidConfigurationException | InvalidInputException $exception) {
-            $this->logger->info('Mapping suggestions: no sample values', ['exception' => $exception]);
-        } catch (Throwable $exception) {
-            $this->logger->warning('Mapping suggestions: no sample values', ['exception' => $exception]);
-        }
-
-        return [];
+        return $this->sampleValueReader->read(
+            $configName,
+            $parameters->getCurrentConfig(),
+            array_column($columns, 'index')
+        );
     }
 
     /**

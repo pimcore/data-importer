@@ -41,6 +41,7 @@ class AiStageConfigurationTest extends Unit
 
             public function load(array $configs, ContainerBuilder $container): void
             {
+                // only the alias matters here: the extension has nothing to load
             }
         };
     }

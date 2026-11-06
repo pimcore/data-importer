@@ -57,6 +57,8 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\SampleValuePicker: ~
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\SampleValueReader: ~
+
     # the agent bundle is optional: without it, suggestions come from the name comparison alone
     Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage:
         arguments:
