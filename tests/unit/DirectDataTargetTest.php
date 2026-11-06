@@ -27,6 +27,8 @@ use Pimcore\Model\Element\ElementInterface;
  */
 class DirectDataTargetTest extends Unit
 {
+    private const VARIANTS_FOLDER = '/variants';
+
     private string $rootFolderName;
 
     protected function _before(): void
@@ -102,13 +104,15 @@ class DirectDataTargetTest extends Unit
         $variant = $this->createConcrete(AbstractObject::OBJECT_TYPE_VARIANT);
         $variant->setId(PHP_INT_MAX);
 
-        $path = '/' . $this->rootFolderName . '/variants';
+        $path = '/' . $this->rootFolderName . self::VARIANTS_FOLDER;
 
+        $rejected = false;
         try {
             $this->createPathTarget()->assignData($variant, $path);
-            static::fail('Expected InvalidInputException');
         } catch (InvalidInputException) {
+            $rejected = true;
         }
+        static::assertTrue($rejected, 'Expected InvalidInputException');
 
         // The rejected move must not leave the folder structure behind.
         static::assertNull(DataObject::getByPath('/' . $this->rootFolderName));
@@ -117,7 +121,7 @@ class DirectDataTargetTest extends Unit
 
     public function testExistingVariantKeepsCurrentParent(): void
     {
-        $path = '/' . $this->rootFolderName . '/variants';
+        $path = '/' . $this->rootFolderName . self::VARIANTS_FOLDER;
         $parent = DataObject\Service::createFolderByPath($path);
 
         $variant = $this->createConcrete(AbstractObject::OBJECT_TYPE_VARIANT);
@@ -133,7 +137,7 @@ class DirectDataTargetTest extends Unit
     {
         $variant = $this->createConcrete(AbstractObject::OBJECT_TYPE_VARIANT);
 
-        $path = '/' . $this->rootFolderName . '/variants';
+        $path = '/' . $this->rootFolderName . self::VARIANTS_FOLDER;
         $this->createPathTarget()->assignData($variant, $path);
 
         static::assertSame(DataObject::getByPath($path)->getId(), $variant->getParentId());

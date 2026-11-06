@@ -139,7 +139,8 @@ class Direct implements DataTargetInterface
 
     /**
      * Sets the element's parent based on a path, creating the necessary folder
-     * structure if it does not exist yet.
+     * structure if it does not exist yet. Folders are created right away, not on save: when a later
+     * mapping of the same row fails or the object is not saved, the created folders remain.
      *
      * @throws InvalidConfigurationException
      * @throws InvalidInputException
