@@ -97,9 +97,10 @@ export const components = {
       type="button"
     />
   ),
-  Input: ({ id, value, onChange }: { id?: string, value?: string, onChange?: React.ChangeEventHandler<HTMLInputElement> }) => (
+  Input: ({ id, value, onBlur, onChange }: { id?: string, value?: string, onBlur?: React.FocusEventHandler<HTMLInputElement>, onChange?: React.ChangeEventHandler<HTMLInputElement> }) => (
     <input
       id={ id }
+      onBlur={ onBlur }
       onChange={ onChange }
       value={ value }
     />

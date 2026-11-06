@@ -18,6 +18,7 @@ import {
 } from '../data-importer-api-slice-enhanced'
 import { type BundleDataImporterAdHocImportFileSettings } from '../data-importer-api-slice.gen'
 import { type AdHocImportTarget } from './dialog-store'
+import { settingsOf } from './file-step/file-settings'
 import { FileStep } from './file-step/file-step'
 import {
   canContinue,
@@ -60,6 +61,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
   const latestInspection = useRef(0)
+  // a change made while an answer is pending builds on what was asked for, not on the last answer
+  const requestedSettings = useRef<BundleDataImporterAdHocImportFileSettings | null>(null)
 
   const deleteStoredFile = (): void => {
     if (phase.kind === 'inspected' && phase.inspected.fileId !== undefined && phase.inspected.fileId !== null) {
@@ -75,6 +78,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     upload.current?.abort()
     upload.current = null
     latestInspection.current += 1
+    requestedSettings.current = null
     setIsInspecting(false)
     setPhase({ kind: 'empty' })
   }
@@ -119,10 +123,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
-  const onSettingsChange = (settings: BundleDataImporterAdHocImportFileSettings): void => {
+  const onSettingsChange = (changed: Partial<BundleDataImporterAdHocImportFileSettings>): void => {
     if (phase.kind !== 'inspected' || phase.inspected.fileId === undefined || phase.inspected.fileId === null) {
       return
     }
+
+    const settings = { ...(requestedSettings.current ?? settingsOf(phase.inspected)), ...changed }
+    requestedSettings.current = settings
 
     const inspection = ++latestInspection.current
     setIsInspecting(true)
@@ -131,6 +138,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       if (inspection !== latestInspection.current) {
         return
       }
+      requestedSettings.current = null
       setIsInspecting(false)
 
       if ('error' in result && result.error !== undefined) {

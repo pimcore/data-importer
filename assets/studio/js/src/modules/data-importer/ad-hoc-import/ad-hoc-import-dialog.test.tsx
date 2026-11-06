@@ -431,6 +431,62 @@ describe('changing the settings', () => {
     expect(screen.getByLabelText<HTMLInputElement>('Enclosure').value).toBe('')
   })
 
+  it('shows the enclosure again when it is left empty', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+
+    await act(async () => { fireEvent.change(screen.getByLabelText('Enclosure'), { target: { value: '' } }) })
+    await act(async () => { fireEvent.blur(screen.getByLabelText('Enclosure')) })
+
+    expect(screen.getByLabelText<HTMLInputElement>('Enclosure').value).toBe('"')
+    expect(mockInspectFile).not.toHaveBeenCalled()
+  })
+
+  it('keeps a change another one follows before the answer came, and shows what the server read', async () => {
+    const answers: Array<(value: unknown) => void> = []
+    mockInspectFile.mockImplementation(async () => await new Promise((resolve) => { answers.push(resolve) }))
+    renderDialog()
+    await dropAndRead(csv)
+
+    await act(async () => { fireEvent.change(screen.getByLabelText('Enclosure'), { target: { value: "'" } }) })
+    await act(async () => { fireEvent.click(screen.getByLabelText('in the first row')) })
+
+    const settings = mockInspectFile.mock.lastCall[0].bundleDataImporterAdHocImportFileSettings
+    expect(settings.enclosure).toBe("'")
+    expect(settings.hasHeaderRow).toBe(false)
+
+    await act(async () => { answers[0]({ data: csv }) })
+    expect(screen.getByLabelText<HTMLInputElement>('Enclosure').value).toBe("'")
+
+    await act(async () => { answers[1]({ data: { ...csv, enclosure: '~', hasHeaderRow: false } }) })
+    expect(screen.getByLabelText<HTMLInputElement>('Enclosure').value).toBe('~')
+  })
+
+  it('builds the next change on the answer, once it came', async () => {
+    mockInspectFile.mockResolvedValue({ data: { ...csv, enclosure: '~' } })
+    renderDialog()
+    await dropAndRead(csv)
+
+    await act(async () => { fireEvent.change(screen.getByLabelText('Enclosure'), { target: { value: "'" } }) })
+    await act(async () => { select('Delimiter', ',') })
+
+    expect(mockInspectFile.mock.lastCall[0].bundleDataImporterAdHocImportFileSettings.enclosure).toBe('~')
+  })
+
+  it('forgets a pending change with the file it was for', async () => {
+    mockInspectFile.mockReturnValueOnce(new Promise(() => undefined))
+    renderDialog()
+    await dropAndRead(csv)
+    await act(async () => { fireEvent.change(screen.getByLabelText('Enclosure'), { target: { value: "'" } }) })
+
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Remove file' })) })
+    await dropAndRead(csv)
+
+    mockInspectFile.mockResolvedValue({ data: csv })
+    await act(async () => { select('Delimiter', ',') })
+    expect(mockInspectFile.mock.lastCall[0].bundleDataImporterAdHocImportFileSettings.enclosure).toBe('"')
+  })
+
   it('cannot go on while the file is being read', async () => {
     let answer: (value: unknown) => void = () => undefined
     mockInspectFile.mockReturnValue(new Promise((resolve) => { answer = resolve }))

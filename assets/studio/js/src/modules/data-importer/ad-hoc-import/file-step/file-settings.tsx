@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Form, Input, Select, Switch } from '@pimcore/studio-ui-bundle/components'
 import { type BundleDataImporterAdHocImportFileSettings } from '../../data-importer-api-slice.gen'
@@ -44,10 +44,17 @@ interface CharacterInputProps {
 const CharacterInput = ({ id, value, allowEmpty, onCommit }: CharacterInputProps): React.JSX.Element => {
   const [draft, setDraft] = useState(value)
 
+  useEffect(() => { setDraft(value) }, [value])
+
   return (
     <Input
       id={ id }
       maxLength={ 1 }
+      onBlur={ () => {
+        if (draft === '' && !allowEmpty) {
+          setDraft(value)
+        }
+      } }
       onChange={ (event) => {
         const next = event.target.value
         setDraft(next)
@@ -63,15 +70,11 @@ const CharacterInput = ({ id, value, allowEmpty, onCommit }: CharacterInputProps
 
 export interface FileSettingsProps {
   inspected: InspectedFile
-  onChange: (settings: BundleDataImporterAdHocImportFileSettings) => void
+  onChange: (changed: Partial<BundleDataImporterAdHocImportFileSettings>) => void
 }
 
 export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.JSX.Element => {
   const { t } = useTranslation()
-
-  const change = (changed: Partial<BundleDataImporterAdHocImportFileSettings>): void => {
-    onChange({ ...settingsOf(inspected), ...changed })
-  }
 
   const delimiterOptions = useMemo(() => DELIMITERS.map(({ value, label }) => ({
     value,
@@ -88,7 +91,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
       <Switch
         checked={ inspected.hasHeaderRow }
         labelRight={ t('data-importer.ad-hoc-import.settings.in-first-row') }
-        onChange={ (hasHeaderRow: boolean) => { change({ hasHeaderRow }) } }
+        onChange={ (hasHeaderRow: boolean) => { onChange({ hasHeaderRow }) } }
         size="small"
       />
     </Form.Item>
@@ -104,7 +107,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
         >
           <Select
             id="ad-hoc-import-sheet"
-            onChange={ (sheetName: string) => { change({ sheetName }) } }
+            onChange={ (sheetName: string) => { onChange({ sheetName }) } }
             options={ inspected.sheets.map((sheet) => ({ value: sheet, label: sheet })) }
             style={ { width: SELECT_WIDTH } }
             value={ inspected.sheetName }
@@ -124,7 +127,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
       >
         <Select
           id="ad-hoc-import-delimiter"
-          onChange={ (delimiter: string) => { change({ delimiter }) } }
+          onChange={ (delimiter: string) => { onChange({ delimiter }) } }
           options={ delimiterOptions }
           style={ { width: SELECT_WIDTH } }
           value={ inspected.delimiter }
@@ -138,7 +141,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
         <CharacterInput
           allowEmpty={ false }
           id="ad-hoc-import-enclosure"
-          onCommit={ (enclosure) => { change({ enclosure }) } }
+          onCommit={ (enclosure) => { onChange({ enclosure }) } }
           value={ inspected.enclosure ?? '' }
         />
       </Form.Item>
@@ -150,7 +153,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
         <CharacterInput
           allowEmpty
           id="ad-hoc-import-escape"
-          onCommit={ (escape) => { change({ escape }) } }
+          onCommit={ (escape) => { onChange({ escape }) } }
           value={ inspected.escape ?? '' }
         />
       </Form.Item>

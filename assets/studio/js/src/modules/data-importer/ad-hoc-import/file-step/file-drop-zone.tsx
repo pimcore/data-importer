@@ -12,7 +12,6 @@ import React from 'react'
 import { Upload } from 'antd'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Icon } from '@pimcore/studio-ui-bundle/components'
-import { ACCEPTED_EXTENSIONS } from './file-step-state'
 
 const useStyles = createStyles(({ token, css }) => ({
   zone: css`
@@ -32,7 +31,8 @@ export interface FileDropZoneProps {
 }
 
 /**
- * Built like Studio's `FileDropZone`, which `import-modal` does not export.
+ * Built like Studio's `FileDropZone`, which `import-modal` does not export. It sets no `accept`: Studio's antd drops a
+ * file of another type without a word, and such a file has to be refused with its reason.
  */
 export const FileDropZone = ({ onFile }: FileDropZoneProps): React.JSX.Element => {
   const { t } = useTranslation()
@@ -41,7 +41,6 @@ export const FileDropZone = ({ onFile }: FileDropZoneProps): React.JSX.Element =
   return (
     <div className={ styles.zone }>
       <Upload.Dragger
-        accept={ ACCEPTED_EXTENSIONS.join(',') }
         beforeUpload={ (file) => {
           onFile(file)
 

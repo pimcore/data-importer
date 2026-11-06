@@ -26,7 +26,7 @@ export interface FileStepProps {
   objects: ObjectsSettings
   onFile: (file: File) => void
   onRemoveFile: () => void
-  onSettingsChange: (settings: BundleDataImporterAdHocImportFileSettings) => void
+  onSettingsChange: (changed: Partial<BundleDataImporterAdHocImportFileSettings>) => void
   onObjectsChange: (objects: ObjectsSettings) => void
 }
 
