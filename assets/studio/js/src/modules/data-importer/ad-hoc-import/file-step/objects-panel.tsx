@@ -45,7 +45,8 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
     }
   }, [classId, classOptions])
 
-  const { data: fields, isLoading: isLoadingFields } = useBundleDataImporterAdHocImportLoadMatchFieldsQuery(
+  // not `data`: it still holds the previous class's fields while the next ones load
+  const { currentData: fields, isFetching: isLoadingFields } = useBundleDataImporterAdHocImportLoadMatchFieldsQuery(
     { classId: classId ?? '' },
     { skip: classId === undefined }
   )

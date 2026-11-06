@@ -38,13 +38,15 @@ interface CharacterInputProps {
   value: string
   // the escape may be empty, the enclosure not
   allowEmpty: boolean
+  // what the server last read: a failed read brings the typed character back to the value, which did not change
+  inspected: InspectedFile
   onCommit: (value: string) => void
 }
 
-const CharacterInput = ({ id, value, allowEmpty, onCommit }: CharacterInputProps): React.JSX.Element => {
+const CharacterInput = ({ id, value, allowEmpty, inspected, onCommit }: CharacterInputProps): React.JSX.Element => {
   const [draft, setDraft] = useState(value)
 
-  useEffect(() => { setDraft(value) }, [value])
+  useEffect(() => { setDraft(value) }, [value, inspected])
 
   return (
     <Input
@@ -141,6 +143,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
         <CharacterInput
           allowEmpty={ false }
           id="ad-hoc-import-enclosure"
+          inspected={ inspected }
           onCommit={ (enclosure) => { onChange({ enclosure }) } }
           value={ inspected.enclosure ?? '' }
         />
@@ -153,6 +156,7 @@ export const FileSettings = ({ inspected, onChange }: FileSettingsProps): React.
         <CharacterInput
           allowEmpty
           id="ad-hoc-import-escape"
+          inspected={ inspected }
           onCommit={ (escape) => { onChange({ escape }) } }
           value={ inspected.escape ?? '' }
         />

@@ -153,8 +153,8 @@ const chooseWhatToMatchBy = (): void => {
 beforeEach(() => {
   mockClasses.mockReturnValue({ data: { items: [{ id: 'PROD', name: 'Product' }] }, isLoading: false })
   mockLoadMatchFields.mockReturnValue({
-    data: { attributes: [{ key: 'sku', title: 'SKU' }, { key: 'name', title: 'Name', localized: true }] },
-    isLoading: false
+    currentData: { attributes: [{ key: 'sku', title: 'SKU' }, { key: 'name', title: 'Name', localized: true }] },
+    isFetching: false
   })
   mockDeleteFile.mockResolvedValue({ data: undefined })
 })
@@ -231,6 +231,20 @@ describe('the file step without a file', () => {
     select('Class', 'CAT')
 
     expect(screen.getByLabelText<HTMLSelectElement>('Field').value).toBe('')
+  })
+})
+
+describe('while the fields of another class load', () => {
+  it('offers none of the previous class, so none of them can be chosen', () => {
+    mockLoadMatchFields.mockReturnValue({
+      data: { attributes: [{ key: 'sku', title: 'SKU' }] },
+      currentData: undefined,
+      isFetching: true
+    })
+
+    renderDialog()
+
+    expect(within(screen.getByLabelText('Field')).queryByText('SKU')).toBeNull()
   })
 })
 
@@ -570,6 +584,66 @@ describe('changing the settings', () => {
   })
 })
 
+describe('a read that fails while the file may still be there', () => {
+  const failingRead = async (): Promise<void> => {
+    renderDialog()
+    await dropAndRead(csv)
+    mockInspectFile.mockResolvedValue({ error: { status: 500, data: {} } })
+  }
+
+  it('keeps the file, its settings and its first rows, and reports the error', async () => {
+    await failingRead()
+
+    select('Delimiter', ',')
+    await act(async () => {})
+
+    expect(mockTrackError).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('prices.csv')).toBeTruthy()
+    expect(screen.getByLabelText<HTMLSelectElement>('Delimiter').value).toBe(';')
+    expect(screen.getByText('NH-1001')).toBeTruthy()
+    expect(screen.queryByLabelText('drop zone')).toBeNull()
+  })
+
+  it('keeps it after a broken connection as well', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+    mockInspectFile.mockResolvedValue({ error: { status: 'FETCH_ERROR', error: 'offline' } })
+
+    select('Delimiter', ',')
+    await act(async () => {})
+
+    expect(screen.getByText('prices.csv')).toBeTruthy()
+    expect(screen.queryByLabelText('drop zone')).toBeNull()
+  })
+
+  it('brings a typed character back to the one last read', async () => {
+    await failingRead()
+
+    fireEvent.change(screen.getByLabelText('Enclosure'), { target: { value: '~' } })
+    await act(async () => {})
+
+    expect(screen.getByLabelText<HTMLInputElement>('Enclosure').value).toBe('"')
+  })
+
+  it('reads again from the settings last read, and deletes the file on leaving', async () => {
+    await failingRead()
+    select('Delimiter', ',')
+    await act(async () => {})
+
+    mockInspectFile.mockResolvedValue({ data: csv })
+    fireEvent.change(screen.getByLabelText('Enclosure'), { target: { value: '~' } })
+    await act(async () => {})
+
+    const settings = mockInspectFile.mock.lastCall[0].bundleDataImporterAdHocImportFileSettings
+    expect(settings.delimiter).toBe(';')
+    expect(settings.enclosure).toBe('~')
+
+    fireEvent.click(screen.getByRole('button', { name: 'close dialog' }))
+
+    expect(mockDeleteFile).toHaveBeenCalledWith({ fileId: 'file-1' })
+  })
+})
+
 describe('an XLSX the server read', () => {
   it('offers its sheets and says how many columns the first rows leave out', async () => {
     renderDialog()
@@ -699,6 +773,14 @@ describe('a refused file', () => {
     expect(screen.queryByRole('table')).toBeNull()
     expect(screen.queryByRole('region', { name: 'Objects' })).toBeNull()
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('that reaches too far says so and points to a configuration', async () => {
+    renderDialog()
+    await dropAndRead(refused({ type: 'xlsx', refusal: 'too-many-cells' }), 'sparse.xlsx')
+
+    expect(screen.getByRole('alert').textContent).toContain('This sheet reaches too far for an ad hoc import.')
+    expect(screen.getByRole('alert').textContent).toContain('Split the file, or import it with a Data Importer configuration in the Data Hub.')
   })
 
   it('that cannot be read names its type', async () => {

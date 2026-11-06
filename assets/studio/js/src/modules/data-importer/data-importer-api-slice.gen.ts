@@ -758,7 +758,7 @@ export type BundleDataImporterAdHocImportFileResponse = {
     /** The file type; null if it is none of the supported ones */
     type?: ("csv" | "xlsx") | null;
     /** Why the file cannot be imported under these settings; null if it can */
-    refusal?: ("too-many-rows" | "unreadable" | "wrong-format") | null;
+    refusal?: ("too-many-rows" | "too-many-cells" | "unreadable" | "wrong-format") | null;
     /** CSV: the delimiter in use */
     delimiter?: string | null;
     /** CSV: the delimiter detected in the file */

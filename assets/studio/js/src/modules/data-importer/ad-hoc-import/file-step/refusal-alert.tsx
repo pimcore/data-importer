@@ -33,6 +33,15 @@ export const RefusalAlert = ({ inspected }: RefusalAlertProps): React.JSX.Elemen
           type="error"
         />
       )
+    case 'too-many-cells':
+      return (
+        <Alert
+          description={ t('data-importer.ad-hoc-import.refused.too-many-rows-hint') }
+          message={ t('data-importer.ad-hoc-import.refused.too-many-cells') }
+          style={ { maxWidth: 560 } }
+          type="error"
+        />
+      )
     case 'unreadable':
       return (
         <Alert

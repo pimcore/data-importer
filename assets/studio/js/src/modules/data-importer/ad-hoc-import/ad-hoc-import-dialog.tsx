@@ -141,8 +141,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
       if ('error' in result && result.error !== undefined) {
         trackError(new ApiError(result.error))
-        // the file is gone: start over
-        setPhase({ kind: 'empty' })
+        if ('status' in result.error && result.error.status === 404) {
+          // the file is gone: start over
+          setPhase({ kind: 'empty' })
+          return
+        }
+        // the file may well be there: it stays, with the settings last read, and a new object brings back what is typed
+        setPhase((current) => current.kind === 'inspected' ? { ...current, inspected: { ...current.inspected } } : current)
         return
       }
 
