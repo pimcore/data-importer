@@ -97,6 +97,19 @@ class NumericMatchValueTest extends Unit
         $this->assertNull(NumericMatchValue::normalize('1000', $field));
     }
 
+    public function testADecimalFieldOfOnlyDecimalsTakesNumbersBelowOne(): void
+    {
+        $field = new Numeric();
+        $field->setDecimalSize(2);
+        $field->setDecimalPrecision(2);
+
+        $this->assertSame('0.5', NumericMatchValue::normalize('0.5', $field));
+        $this->assertSame('0.99', NumericMatchValue::normalize('0.99', $field));
+        $this->assertSame('0', NumericMatchValue::normalize('0', $field));
+        $this->assertNull(NumericMatchValue::normalize('1', $field));
+        $this->assertNull(NumericMatchValue::normalize('0.999', $field));
+    }
+
     public function testADecimalFieldWithOnlyAPrecisionTakesCoresDefaultSize(): void
     {
         $field = new Numeric();
@@ -127,6 +140,12 @@ class NumericMatchValueTest extends Unit
         $this->assertSame('1234567890.12345', NumericMatchValue::normalize('1234567890.12345', new Numeric()));
         $this->assertNull(NumericMatchValue::normalize('1234567890123456', new Numeric()));
         $this->assertNull(NumericMatchValue::normalize('1234567890.123456', new Numeric()));
+    }
+
+    public function testADoubleFieldDoesNotCountTheZeroOfANumberBelowOne(): void
+    {
+        $this->assertSame('0.123456789012345', NumericMatchValue::normalize('0.123456789012345', new Numeric()));
+        $this->assertNull(NumericMatchValue::normalize('0.1234567890123456', new Numeric()));
     }
 
     public function testAnUnsignedFieldRefusesANegativeNumberButNotNegativeZero(): void

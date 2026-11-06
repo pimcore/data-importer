@@ -53,17 +53,19 @@ final class NumericMatchValue
             return filter_var($number, FILTER_VALIDATE_INT) !== false;
         }
 
+        // the `0` of a number below one is no digit: DECIMAL(2, 2) holds 0.99
+        $wholeDigits = $whole === '0' ? 0 : strlen($whole);
         $size = $field->getDecimalSize();
         $scale = $field->getDecimalPrecision();
         if ($size === null && $scale === null) {
             // more digits than a double keeps would compare equal to another number
-            return strlen($whole . $fraction) <= PHP_FLOAT_DIG;
+            return $wholeDigits + strlen($fraction) <= PHP_FLOAT_DIG;
         }
 
         $size ??= Numeric::DECIMAL_SIZE_DEFAULT;
         $scale ??= Numeric::DECIMAL_PRECISION_DEFAULT;
 
-        return strlen($fraction) <= $scale && strlen($whole) <= $size - $scale;
+        return strlen($fraction) <= $scale && $wholeDigits <= $size - $scale;
     }
 
     private static function isWithinLimits(string $number, Numeric $field): bool
