@@ -240,6 +240,15 @@ const injectedRtkApi = api
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterMappingSuggestionLoadAi: build.query<
+                BundleDataImporterMappingSuggestionLoadAiApiResponse,
+                BundleDataImporterMappingSuggestionLoadAiApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/mapping-suggestions/ai/${queryArg.requestId}`,
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
             bundleDataImporterMappingSuggestionSuggest: build.mutation<
                 BundleDataImporterMappingSuggestionSuggestApiResponse,
                 BundleDataImporterMappingSuggestionSuggestApiArg
@@ -419,6 +428,12 @@ export type BundleDataImporterDataTypeLoadClassAttributesApiArg = {
 export type BundleDataImporterDataTypeLoadUnitDataApiResponse =
     /** status 200 List of available quantity value units with IDs and abbreviations */ BundleDataImporterUnitDataResponse;
 export type BundleDataImporterDataTypeLoadUnitDataApiArg = void;
+export type BundleDataImporterMappingSuggestionLoadAiApiResponse =
+    /** status 200 Where the AI stage stands, with its suggestions once it finished */ BundleDataImporterMappingSuggestionsResponse;
+export type BundleDataImporterMappingSuggestionLoadAiApiArg = {
+    /** RequestId of the mapping suggestion request */
+    requestId: string;
+};
 export type BundleDataImporterMappingSuggestionSuggestApiResponse =
     /** status 200 The suggested field per column, best score first */ BundleDataImporterMappingSuggestionsResponse;
 export type BundleDataImporterMappingSuggestionSuggestApiArg = {
@@ -706,7 +721,13 @@ export type BundleDataImporterMappingSuggestionsResponse = {
         score: number;
         /** Language guessed from the column name, for a localized field */
         language: any;
+        /** Where the suggestion comes from: the name comparison or the AI stage */
+        source: "name" | "ai";
     }[];
+    /** Where the AI stage stands; while it is running, load its suggestions with the request id */
+    aiStatus: "none" | "running" | "finished" | "failed";
+    /** The id to load the suggestions of the AI stage with; null when it started no task */
+    aiRequestId: any;
 };
 export type BundleDataImporterMappingSuggestionParameters = {
     /** The ID of the data object class to suggest fields of */
@@ -718,6 +739,13 @@ export type BundleDataImporterMappingSuggestionParameters = {
         /** Column name */
         label: string;
     }[];
+    /** A stored configuration whose preview file may give sample values for the AI stage */
+    configName?: any;
+    /** Its unsaved in-progress settings, if any, to read the preview file with */
+    currentConfig?: {
+        loaderConfig?: object;
+        interpreterConfig?: object;
+    };
 };
 export type BundleDataImporterCronValidationResponse = {
     /** AdditionalAttributes */
@@ -751,6 +779,7 @@ export const {
     useBundleDataImporterConnectionListQuery,
     useBundleDataImporterDataTypeLoadClassAttributesQuery,
     useBundleDataImporterDataTypeLoadUnitDataQuery,
+    useBundleDataImporterMappingSuggestionLoadAiQuery,
     useBundleDataImporterMappingSuggestionSuggestMutation,
     useBundleDataImporterUtilityCheckCrontabQuery,
 } = injectedRtkApi;

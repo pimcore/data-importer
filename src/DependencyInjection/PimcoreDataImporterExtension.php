@@ -14,6 +14,7 @@ namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -55,6 +56,10 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $definition = $container->getDefinition(RestartQueueWorkersTask::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
+
+        $definition = $container->getDefinition(AiSuggestionStage::class);
+        $definition->setArgument('$enabled', $config['mapping_suggestions']['ai']['enabled']);
+        $definition->setArgument('$sendSampleValues', $config['mapping_suggestions']['ai']['send_sample_values']);
     }
 
     public function prepend(ContainerBuilder $container): void
@@ -70,5 +75,12 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
 
         $loader->load('studio_ui.yaml');
         $loader->load('pimcore/studio_backend.yaml');
+
+        // the agent bundle is optional: with it, the mapping suggestions' agent is available
+        if ($container->hasExtension('pimcore_agent')) {
+            $container->prependExtensionConfig('pimcore_agent', [
+                'agents' => ['paths' => [dirname(__DIR__) . '/Resources/config/agents']],
+            ]);
+        }
     }
 }

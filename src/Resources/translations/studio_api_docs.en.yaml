@@ -51,6 +51,10 @@ bundle_data_importer_mapping_suggestion_suggest: Suggest Mappings
 bundle_data_importer_mapping_suggestion_suggest_description: Suggest a field of a data object class for each given source column, by comparing their names and guessing the language from the column name
 bundle_data_importer_mapping_suggestion_suggest_summary: Suggest Mappings
 bundle_data_importer_mapping_suggestion_suggest_success_response: The suggested field per column, best score first
+bundle_data_importer_mapping_suggestion_load_ai: Load AI Mapping Suggestions
+bundle_data_importer_mapping_suggestion_load_ai_description: Load the suggestions of the AI stage a suggestion request started; only the user who started it can
+bundle_data_importer_mapping_suggestion_load_ai_summary: Load AI Mapping Suggestions
+bundle_data_importer_mapping_suggestion_load_ai_success_response: Where the AI stage stands, with its suggestions once it finished
 bundle_data_importer_classificationstore_load_attributes: Load Classification Store Attributes
 bundle_data_importer_classificationstore_load_attributes_description: Load available classification store field definitions for a given data object class
 bundle_data_importer_classificationstore_load_attributes_summary: Load Classification Store Attributes
@@ -110,6 +114,7 @@ pimcore_studio_api_data_importer_utility_check_crontab: Validate Cron Expression
 pimcore_studio_api_data_importer_data_type_load_class_attributes: Load Class Attributes
 pimcore_studio_api_data_importer_data_type_load_unit_data: Load Unit Data
 pimcore_studio_api_data_importer_mapping_suggestion_suggest: Suggest Mappings
+pimcore_studio_api_data_importer_mapping_suggestion_load_ai: Load AI Mapping Suggestions
 pimcore_studio_api_data_importer_classificationstore_load_attributes: Load Classification Store Attributes
 pimcore_studio_api_data_importer_classificationstore_load_keys: Load Classification Store Keys
 pimcore_studio_api_data_importer_classificationstore_load_key_name: Load Classification Store Key Name
