@@ -138,10 +138,11 @@ class SuggestEndpointTest extends Unit
         $operation = $snapshot['paths']['/pimcore-studio/api/bundle/data-importer/mapping-suggestions']['post'];
         $this->assertSame('bundle_data_importer_mapping_suggestion_suggest', $operation['operationId']);
 
-        $itemProperties = array_keys(
-            $snapshot['components']['schemas']['BundleDataImporterMappingSuggestionsResponse']['properties']['suggestions']['items']['properties']
+        $response = $snapshot['components']['schemas']['BundleDataImporterMappingSuggestionsResponse'];
+        $this->assertSame(
+            array_keys(self::SUGGESTION),
+            array_keys($response['properties']['suggestions']['items']['properties'])
         );
-        $this->assertSame(array_keys(self::SUGGESTION), $itemProperties);
 
         $client = file_get_contents(self::GENERATED_CLIENT_PATH);
         $this->assertStringContainsString('useBundleDataImporterMappingSuggestionSuggestMutation', $client);
