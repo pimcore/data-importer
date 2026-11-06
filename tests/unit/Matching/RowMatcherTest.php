@@ -45,6 +45,12 @@ class RowMatcherTest extends Unit
 
     private const CLASS_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
 
+    private const BRICK_DATA_NAMESPACE = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\';
+
+    private const OTHER_VALUE = 'other value';
+
+    private const SAME_TITLE = 'Same title';
+
     private const ROOT = '/di-row-matcher';
 
     private const TARGET = self::ROOT . '/target';
@@ -376,7 +382,7 @@ class RowMatcherTest extends Unit
 
     public function testAKeyTakenByAnObjectThatDoesNotMatchIsAnErrorRowNamingIt(): void
     {
-        $taken = $this->createObject(self::TARGET, 'other value', 'SKU-1');
+        $taken = $this->createObject(self::TARGET, self::OTHER_VALUE, 'SKU-1');
 
         $match = $this->matchOne($this->byField(), 'SKU-1');
 
@@ -387,8 +393,8 @@ class RowMatcherTest extends Unit
 
     public function testAKeyIsCheckedInTheFolderForNewObjectsAndNotInTheTarget(): void
     {
-        $taken = $this->createObject(self::NEW_FOLDER, 'other value', 'SKU-1');
-        $this->createObject(self::TARGET, 'other value', 'SKU-2');
+        $taken = $this->createObject(self::NEW_FOLDER, self::OTHER_VALUE, 'SKU-1');
+        $this->createObject(self::TARGET, self::OTHER_VALUE, 'SKU-2');
         $configuration = $this->configuration(attributeName: 'sku', newObjectFolder: self::NEW_FOLDER);
 
         $takenThere = $this->matchOne($configuration, 'SKU-1');
@@ -522,14 +528,14 @@ class RowMatcherTest extends Unit
     public function testALocalizedFieldIsMatchedOnlyInTheNamedLanguage(): void
     {
         $english = $this->unsavedObject(self::TARGET, 'SKU-1');
-        $english->setTitle('Same title', 'en');
+        $english->setTitle(self::SAME_TITLE, 'en');
         $english->save();
         $german = $this->unsavedObject(self::TARGET, 'SKU-2');
-        $german->setTitle('Same title', 'de');
+        $german->setTitle(self::SAME_TITLE, 'de');
         $german->save();
 
-        $inGerman = $this->matchOne($this->configuration(attributeName: 'title', language: 'de'), 'Same title');
-        $inEnglish = $this->matchOne($this->configuration(attributeName: 'title', language: 'en'), 'Same title');
+        $inGerman = $this->matchOne($this->configuration(attributeName: 'title', language: 'de'), self::SAME_TITLE);
+        $inEnglish = $this->matchOne($this->configuration(attributeName: 'title', language: 'en'), self::SAME_TITLE);
 
         $this->assertSame($german->getId(), $inGerman->element?->getId());
         $this->assertSame($english->getId(), $inEnglish->element?->getId());
@@ -538,7 +544,7 @@ class RowMatcherTest extends Unit
     public function testABrickWhoseNameIsAReservedWordIsMatched(): void
     {
         $object = $this->unsavedObject(self::TARGET, 'SKU-1');
-        $brickClass = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\' . RowMatcherModel::RESERVED_WORD_BRICK_NAME;
+        $brickClass = self::BRICK_DATA_NAMESPACE . RowMatcherModel::RESERVED_WORD_BRICK_NAME;
         $brick = new $brickClass($object);
         $brick->setCode('Code-1');
         $object->getBricks()->setOrder($brick);
@@ -565,7 +571,7 @@ class RowMatcherTest extends Unit
     public function testABrickAttributeOnlyMatchesInTheNamedField(): void
     {
         $object = $this->unsavedObject(self::TARGET, 'SKU-1');
-        $brickClass = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\' . self::BRICK_NAME;
+        $brickClass = self::BRICK_DATA_NAMESPACE . self::BRICK_NAME;
         $brick = new $brickClass($object);
         $brick->setCode('Code-1');
         $object->getOtherBricks()->setDiRowMatcherBrick($brick);
@@ -807,7 +813,7 @@ class RowMatcherTest extends Unit
             $object->setTitle($title, 'en');
         }
         if ($brickCode !== null) {
-            $brickClass = self::CLASS_NAMESPACE . 'Objectbrick\\Data\\' . self::BRICK_NAME;
+            $brickClass = self::BRICK_DATA_NAMESPACE . self::BRICK_NAME;
             $brick = new $brickClass($object);
             $brick->setCode($brickCode);
             $object->getBricks()->setDiRowMatcherBrick($brick);
