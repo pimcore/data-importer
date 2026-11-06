@@ -312,7 +312,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     return rows.reduce<Record<string, string | null>>((acc, r) => { acc[r.dataIndex] = r.value; return acc }, {})
   }, [autofillPreviewData, sourceRows])
 
-  const handleOpenAutofillSuggestions = useCallback(async (): Promise<void> => {
+  const loadAutofillSuggestions = useCallback(async (): Promise<void> => {
     if (isSuggestingMappings) return
 
     if (columnHeaderOptions.length === 0) {
@@ -340,6 +340,10 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     setSelectedSuggestionIds(new Set(computed.map((s) => s.id)))
     loadAutofillPreviewRecord(0)
   }, [isSuggestingMappings, getMappingConfig, columnHeaderOptions, classId, sourceRows, suggestMappings, message, t, loadAutofillPreviewRecord])
+
+  const handleOpenAutofillSuggestions = useCallback((): void => {
+    void loadAutofillSuggestions()
+  }, [loadAutofillSuggestions])
 
   const handlePrevPreviewRow = useCallback((): void => {
     const prev = Math.max(0, autofillRecordIndex - 1)
@@ -529,7 +533,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
                 onCollapseAll={ collapseAll }
                 onInsertItem={ handleInsertItem }
                 onNewKey={ handleNewKey }
-                onOpenAutofillSuggestions={ () => { void handleOpenAutofillSuggestions() } }
+                onOpenAutofillSuggestions={ handleOpenAutofillSuggestions }
                 onRemoveItem={ handleRemoveItem }
                 onToggleKey={ handleToggleKey }
               />
