@@ -99,35 +99,44 @@ class Direct implements DataTargetInterface
             $this->doAssignData($element, $this->fieldName, $data);
         } elseif (count($setterParts) === 3) {
             //brick attribute
-
-            $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
-            $brickContainer = $element->$brickContainerGetter();
-
-            $brickGetter = 'get' . ucfirst($setterParts[1]);
-            $brick = $brickContainer->$brickGetter();
-
-            $isNewBrick = empty($brick);
-            if ($isNewBrick) {
-                // keep the new brick detached until the overwrite checks pass, so skipped writes
-                // do not leave an empty brick in the container
-                $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
-                $brick = new $brickClassName($element);
-                $brick->setFieldname($setterParts[0]);
-            }
-
-            $getter = 'get' . ucfirst($setterParts[2]);
-            if (!$this->checkAssignData($data, $brick, $getter)) {
-                return;
-            }
-
-            if ($isNewBrick) {
-                $brickSetter = 'set' . ucfirst($setterParts[1]);
-                $brickContainer->$brickSetter($brick);
-            }
-            $this->doAssignData($brick, $setterParts[2], $data);
+            $this->assignBrickData($element, $setterParts, $data);
         } else {
             throw new InvalidConfigurationException('Invalid number of setter parts for ' . $this->fieldName);
         }
+    }
+
+    /**
+     * @param ElementInterface $element
+     * @param string[] $setterParts container, brick and field name
+     * @param mixed $data
+     */
+    private function assignBrickData(ElementInterface $element, array $setterParts, mixed $data): void
+    {
+        $brickContainerGetter = 'get' . ucfirst($setterParts[0]);
+        $brickContainer = $element->$brickContainerGetter();
+
+        $brickGetter = 'get' . ucfirst($setterParts[1]);
+        $brick = $brickContainer->$brickGetter();
+
+        $isNewBrick = empty($brick);
+        if ($isNewBrick) {
+            // keep the new brick detached until the overwrite checks pass, so skipped writes
+            // do not leave an empty brick in the container
+            $brickClassName = '\\Pimcore\\Model\\DataObject\\Objectbrick\\Data\\' . ucfirst($setterParts[1]);
+            $brick = new $brickClassName($element);
+            $brick->setFieldname($setterParts[0]);
+        }
+
+        $getter = 'get' . ucfirst($setterParts[2]);
+        if (!$this->checkAssignData($data, $brick, $getter)) {
+            return;
+        }
+
+        if ($isNewBrick) {
+            $brickSetter = 'set' . ucfirst($setterParts[1]);
+            $brickContainer->$brickSetter($brick);
+        }
+        $this->doAssignData($brick, $setterParts[2], $data);
     }
 
     /**
