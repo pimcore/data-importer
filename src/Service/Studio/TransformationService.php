@@ -158,8 +158,8 @@ final readonly class TransformationService implements TransformationServiceInter
                     $entry,
                     true
                 );
-            } catch (\Throwable) {
-                // a malformed entry fails in the preview itself, with its own message
+            } catch (InvalidConfigurationException) {
+                // an unknown operator fails in the preview itself, with its own message
                 continue;
             }
 

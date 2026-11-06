@@ -47,7 +47,8 @@ final readonly class TransformationResultParameters
     }
 
     /**
-     * @throws InvalidArgumentException for an entry that is not an object: dropping it would shift the preview positions
+     * @throws InvalidArgumentException for an entry that is not an object: dropping it would shift the preview
+     *                                  positions
      */
     public function getMappingConfig(): array
     {

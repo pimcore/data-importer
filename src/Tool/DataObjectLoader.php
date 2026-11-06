@@ -33,7 +33,7 @@ final class DataObjectLoader
     private const SYSTEM_KEY_ATTRIBUTE = 'key';
 
     // a field name, or `<field>.<brick>.<attribute>` for an object brick attribute
-    private const ATTRIBUTE_NAME_PATTERN = '/^\w+(?:\.\w+){0,2}$/';
+    private const ATTRIBUTE_NAME_PATTERN = '/^\w+(?:\.\w+\.\w+)?\z/';
 
     private function isObjectBrickAttribute(string $attributeName): bool
     {

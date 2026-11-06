@@ -24,6 +24,8 @@ class DataObjectLoaderAttributeNameTest extends Unit
             'condition in a partial match' => ['sku = 1 OR 1=1 --'],
             'condition in a brick attribute' => ['attributes.Brick.size) OR (1=1'],
             'too many brick parts' => ['attributes.Brick.size.extra'],
+            'two brick parts' => ['attributes.Brick'],
+            'trailing newline' => ["sku\n"],
             'quote' => ["sku'"],
             'empty' => [''],
         ];
