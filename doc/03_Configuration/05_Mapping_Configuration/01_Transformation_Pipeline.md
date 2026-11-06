@@ -42,6 +42,7 @@ Operators that reshape the value without committing it to a specific Pimcore dat
 | **HTML Decode** | Applies `html_entity_decode`. |
 | **Conditional Conversion** | Maps string values onto other string values. Separate multiple pairs with `\|`, for example **Original** `0\|1\|2` and **Converted** `some\|other\|values`. An asterisk in **Original** acts as a wildcard, so `0\|*` with `no value\|default` converts `0` to `no value` and everything else to `default`. |
 | **Object Field** | Reads one attribute from a data object. Set **Attribute**, and **Forward parameter** to pass an argument to the getter. Use it after `Load Data Object`. |
+| **Symfony Expression** | Evaluates a [Symfony Expression Language](https://symfony.com/doc/current/components/expression_language.html) expression and passes its result on. The source values are available as `attributes[0]`, `attributes[1]`, … in the order of the selected source columns, for example `attributes[0] == 'Demo Value' ? attributes[1] : null`. Custom functions can be added with [expression function providers](../../06_Extending/03_Expression_Function_Providers.md). |
 
 ### Data Types
 

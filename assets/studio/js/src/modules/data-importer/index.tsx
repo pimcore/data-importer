@@ -17,6 +17,7 @@ import {
   DynamicTypeTransformerCombine,
   DynamicTypeTransformerStaticText,
   DynamicTypeTransformerStringReplace,
+  DynamicTypeTransformerSymfonyExpression,
   DynamicTypeTransformerDate,
   DynamicTypeTransformerNumeric,
   DynamicTypeTransformerExplode,
@@ -195,6 +196,7 @@ export const DataImporterModule: AbstractModule = {
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Combine']).to(DynamicTypeTransformerCombine).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/StaticText']).to(DynamicTypeTransformerStaticText).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/StringReplace']).to(DynamicTypeTransformerStringReplace).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/SymfonyExpression']).to(DynamicTypeTransformerSymfonyExpression).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Date']).to(DynamicTypeTransformerDate).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Numeric']).to(DynamicTypeTransformerNumeric).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/Explode']).to(DynamicTypeTransformerExplode).inSingletonScope()
@@ -231,6 +233,7 @@ export const DataImporterModule: AbstractModule = {
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/Combine'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/StaticText'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/StringReplace'],
+      bundleServiceIds['DataImporter/DynamicTypes/Transformer/SymfonyExpression'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/Date'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/Numeric'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/Explode'],
