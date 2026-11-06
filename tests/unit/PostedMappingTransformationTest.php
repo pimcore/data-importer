@@ -162,6 +162,27 @@ class PostedMappingTransformationTest extends Unit
         );
     }
 
+    public function testAPreviewRefusesANestedColumnIndex(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->preview(
+            [['dataSourceIndex' => [['sku']], 'transformationPipeline' => []]],
+            ['sku' => 'A-100']
+        ));
+
+        $this->assertUnprocessable($refusal, self::PREVIEW_ROUTE, 'dataSourceIndex must be a list of columns');
+    }
+
+    public function testTheTypeRefusesALabelThatIsNoString(): void
+    {
+        $refusal = $this->refusalOf(fn () => $this->type([
+            'label' => [],
+            'dataSourceIndex' => ['sku'],
+            'transformationPipeline' => [],
+        ]));
+
+        $this->assertUnprocessable($refusal, self::TYPE_ROUTE, 'label must be a string');
+    }
+
     public function testTheTypeRefusesAnOperatorWithoutObjectSettings(): void
     {
         $refusal = $this->refusalOf(fn () => $this->type([

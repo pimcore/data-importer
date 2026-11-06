@@ -154,8 +154,14 @@ final readonly class TransformationService implements TransformationServiceInter
         if (!is_array($entry)) {
             throw new InvalidArgumentException(sprintf('%s is not an object.', $what));
         }
-        if (!is_array($entry['dataSourceIndex'] ?? [])) {
-            throw new InvalidArgumentException(sprintf('%s: dataSourceIndex must be a list.', $what));
+        if (!is_string($entry['label'] ?? '')) {
+            throw new InvalidArgumentException(sprintf('%s: label must be a string.', $what));
+        }
+        $indexes = $entry['dataSourceIndex'] ?? [];
+        $indexesWellFormed = is_array($indexes)
+            && array_filter($indexes, static fn ($index) => !is_string($index) && !is_int($index)) === [];
+        if (!$indexesWellFormed) {
+            throw new InvalidArgumentException(sprintf('%s: dataSourceIndex must be a list of columns.', $what));
         }
         $pipeline = $entry['transformationPipeline'] ?? [];
         if (!is_array($pipeline)) {
