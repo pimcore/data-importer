@@ -108,11 +108,12 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
 
             $stored = $cell->getOldCalculatedValue();
             if ($stored !== null) {
-                $cell->setValueExplicit($stored, match (true) {
+                $type = match (true) {
                     is_bool($stored) => DataType::TYPE_BOOL,
                     is_int($stored), is_float($stored) => DataType::TYPE_NUMERIC,
                     default => DataType::TYPE_STRING,
-                });
+                };
+                $cell->setValueExplicit($stored, $type);
             }
         }
     }

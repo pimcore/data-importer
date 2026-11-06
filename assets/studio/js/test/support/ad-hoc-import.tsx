@@ -9,8 +9,8 @@
  */
 
 // Test stand-ins for the Studio components of the ad hoc import, and the English catalogue behind t()
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 import React from 'react'
 
 const catalogue: Record<string, string> = Object.fromEntries(

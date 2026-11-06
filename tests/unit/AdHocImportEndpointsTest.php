@@ -124,19 +124,17 @@ class AdHocImportEndpointsTest extends Unit
         /** @var SerializerInterface $serializer */
         $serializer = $this->tester->grabService('serializer');
 
-        $answer = json_decode($serializer->serialize(
-            new AdHocImportFileResponse(
-                5000,
-                'file-1',
-                'csv',
-                delimiter: ';',
-                detectedDelimiter: ';',
-                rowCount: 2,
-                columns: [['dataIndex' => 'sku', 'label' => 'SKU']],
-                firstRows: [['A-1'], [null]]
-            ),
-            'json'
-        ), true);
+        $response = new AdHocImportFileResponse(
+            5000,
+            'file-1',
+            'csv',
+            delimiter: ';',
+            detectedDelimiter: ';',
+            rowCount: 2,
+            columns: [['dataIndex' => 'sku', 'label' => 'SKU']],
+            firstRows: [['A-1'], [null]]
+        );
+        $answer = json_decode($serializer->serialize($response, 'json'), true);
 
         $this->assertSame(5000, $answer['maxRows']);
         $this->assertSame('file-1', $answer['fileId']);
