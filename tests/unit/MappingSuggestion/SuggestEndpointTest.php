@@ -36,9 +36,11 @@ class SuggestEndpointTest extends Unit
     private const string GENERATED_CLIENT_PATH =
         __DIR__ . '/../../../assets/studio/js/src/modules/data-importer/data-importer-api-slice.gen.ts';
 
+    private const string SOURCE_LABEL = 'Bezeichnung DE';
+
     private const array SUGGESTION = [
         'sourceIndex' => 'col_0',
-        'sourceLabel' => 'Bezeichnung DE',
+        'sourceLabel' => self::SOURCE_LABEL,
         'targetFieldName' => 'bezeichnung',
         'targetFieldLabel' => 'Bezeichnung [bezeichnung]',
         'transformationResultType' => 'default',
@@ -71,7 +73,7 @@ class SuggestEndpointTest extends Unit
 
     public function testTheAnswerIsTheServicesSuggestionsAsJson(): void
     {
-        $parameters = new MappingSuggestionParameters('Product', [['index' => 'col_0', 'label' => 'Bezeichnung DE']]);
+        $parameters = new MappingSuggestionParameters('Product', [['index' => 'col_0', 'label' => self::SOURCE_LABEL]]);
 
         $service = $this->createMock(MappingSuggestionServiceInterface::class);
         $service->expects($this->once())
@@ -99,7 +101,7 @@ class SuggestEndpointTest extends Unit
     public function testARequestNeedsOnlyAClassAndColumnsAndAcceptsNoColumnsAtAll(): void
     {
         $this->assertSame(0, $this->violations(new MappingSuggestionParameters('Product', [
-            ['index' => 'col_0', 'label' => 'Bezeichnung DE'],
+            ['index' => 'col_0', 'label' => self::SOURCE_LABEL],
         ])));
         $this->assertSame(0, $this->violations(new MappingSuggestionParameters('Product', [])));
     }
@@ -137,8 +139,7 @@ class SuggestEndpointTest extends Unit
         $this->assertSame('bundle_data_importer_mapping_suggestion_suggest', $operation['operationId']);
 
         $itemProperties = array_keys(
-            $snapshot['components']['schemas']['BundleDataImporterMappingSuggestionsResponse']
-                ['properties']['suggestions']['items']['properties']
+            $snapshot['components']['schemas']['BundleDataImporterMappingSuggestionsResponse']['properties']['suggestions']['items']['properties']
         );
         $this->assertSame(array_keys(self::SUGGESTION), $itemProperties);
 

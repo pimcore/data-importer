@@ -17,6 +17,7 @@ import { MappingStep } from '.'
 
 const dispatch = jest.fn(async (_action: unknown) => await Promise.resolve({ data: { attributes: [{ key: 'sku', title: 'SKU' }] } }))
 const initiate = jest.fn((request: unknown, options?: unknown) => ({ request, options }))
+const suggestMappings = jest.fn(async (_request: unknown) => await Promise.resolve({ data: { suggestions: [] } }))
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -29,7 +30,8 @@ jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
 jest.mock('@pimcore/studio-ui-bundle/utils', () => ({ uuid: () => crypto.randomUUID() }))
 // the factory runs before this file's constants exist, so it reaches initiate lazily
 jest.mock('../../../../data-importer-api-slice-enhanced', () => ({
-  api: { endpoints: { bundleDataImporterDataTypeLoadClassAttributes: { initiate: (...args: Parameters<typeof initiate>) => initiate(...args) } } }
+  api: { endpoints: { bundleDataImporterDataTypeLoadClassAttributes: { initiate: (...args: Parameters<typeof initiate>) => initiate(...args) } } },
+  useBundleDataImporterMappingSuggestionSuggestMutation: () => [async (request: unknown) => await suggestMappings(request), { isLoading: false }]
 }))
 jest.mock('../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery: jest.fn(),
@@ -116,6 +118,13 @@ describe('MappingStep on a posted mapping source', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'autofill' }))
 
-    expect(JSON.parse(screen.getByTestId('autofill-record').textContent ?? '')).toEqual({ sku: 'A-1', 'name [de]': 'Stuhl' })
+    const record = await screen.findByTestId('autofill-record')
+    expect(JSON.parse(record.textContent ?? '')).toEqual({ sku: 'A-1', 'name [de]': 'Stuhl' })
+    expect(suggestMappings).toHaveBeenCalledWith({
+      bundleDataImporterMappingSuggestionParameters: {
+        classId: 'Product',
+        columns: [{ index: 'sku', label: 'SKU' }, { index: 'name [de]', label: 'name [de]' }]
+      }
+    })
   })
 })
