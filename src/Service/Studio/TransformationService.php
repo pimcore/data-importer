@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\TransformationRes
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\TransformationHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mapping\WritesElementsInterface;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
@@ -44,9 +45,6 @@ final readonly class TransformationService implements TransformationServiceInter
 
     // operators log under their configuration's name; a posted configuration has none
     private const string POSTED_CONFIG_NAME = '';
-
-    // a preview runs operators with dryRun, but these still write or fetch: importAsset creates folders and loads URLs
-    private const array OPERATORS_WITH_SIDE_EFFECTS = ['importAsset'];
 
     public function __construct(
         private TransformationHydratorInterface $transformationHydrator,
@@ -150,12 +148,29 @@ final readonly class TransformationService implements TransformationServiceInter
     private function assertNoSideEffects(array $mappingConfig): void
     {
         foreach ($mappingConfig as $entry) {
-            foreach ((array) ($entry['transformationPipeline'] ?? []) as $operator) {
-                $type = is_array($operator) ? ($operator['type'] ?? null) : null;
-                if (in_array($type, self::OPERATORS_WITH_SIDE_EFFECTS, true)) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            try {
+                $item = $this->mappingConfigurationFactory->loadMappingConfigurationItem(
+                    self::POSTED_CONFIG_NAME,
+                    $entry,
+                    true
+                );
+            } catch (\Throwable) {
+                // a malformed entry fails in the preview itself, with its own message
+                continue;
+            }
+
+            // a preview runs operators with dryRun, but these still write or fetch (importAsset creates folders and
+            // loads URLs)
+            $operatorConfigs = array_values((array) ($entry['transformationPipeline'] ?? []));
+            foreach ($item->getTransformationPipeline() as $position => $operator) {
+                if ($operator instanceof WritesElementsInterface) {
                     throw new InvalidArgumentException(sprintf(
                         'The operator "%s" writes or fetches data, so a posted mapping cannot preview it.',
-                        $type
+                        $operatorConfigs[$position]['type'] ?? $operator::class
                     ));
                 }
             }

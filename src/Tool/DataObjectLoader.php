@@ -12,6 +12,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tool;
 
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Db;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Element\ElementInterface;
@@ -30,6 +31,9 @@ final class DataObjectLoader
     private const BRICK_ATTRIBUTE_SEPARATOR = '.';
 
     private const SYSTEM_KEY_ATTRIBUTE = 'key';
+
+    // a field name, or `<field>.<brick>.<attribute>` for an object brick attribute
+    private const ATTRIBUTE_NAME_PATTERN = '/^\w+(?:\.\w+){0,2}$/';
 
     private function isObjectBrickAttribute(string $attributeName): bool
     {
@@ -74,6 +78,11 @@ final class DataObjectLoader
         string $operator = '=',
         string $path = ''
     ): ?ElementInterface {
+        // the name goes into the listing condition unquoted for partial matches and object brick attributes
+        if (preg_match(self::ATTRIBUTE_NAME_PATTERN, $attributeName) !== 1) {
+            throw new InvalidConfigurationException(sprintf('Invalid attribute name "%s".', $attributeName));
+        }
+
         $element = null;
         $path = $this->normalizePath($path);
         $objectTypes = [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT];
