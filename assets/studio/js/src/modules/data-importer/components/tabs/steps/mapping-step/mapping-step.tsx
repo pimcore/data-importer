@@ -93,6 +93,8 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
   const [suggestMappings, { isLoading: isSuggestingMappings }] = useBundleDataImporterMappingSuggestionSuggestMutation()
   const [selectedSuggestionIds, setSelectedSuggestionIds] = useState<Set<string>>(new Set())
   const [aiRequestId, setAiRequestId] = useState<string | null>(null)
+  // the suggestion generation the AI stage was started for; a class or source change since makes its result stale
+  const aiRequestGenerationRef = useRef(0)
   const autoExpandNewKeysRef = useRef(true)
   const prevLoaderTypeRef = useRef<string | undefined>(loaderConfigType)
   const prevInterpreterTypeRef = useRef<string | undefined>(interpreterConfigType)
@@ -362,6 +364,7 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
         sourceRows
       )
       startedAiRequestId = result.data.aiStatus === 'running' ? result.data.aiRequestId as string : null
+      aiRequestGenerationRef.current = request
     }
 
     setSuggestions(computed)
@@ -371,11 +374,17 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
   }, [isSuggestingMappings, getMappingConfig, columnHeaderOptions, classId, configName, getSourcePreviewConfig, sourceRows, suggestMappings, message, t, loadAutofillPreviewRecord])
 
   const handleAiSuggestionsSettled = useCallback((aiSuggestions: BundleDataImporterMappingSuggestionsResponse['suggestions']): void => {
-    const added = toMappingSuggestions(aiSuggestions, sourceRows)
     setAiRequestId(null)
+    if (aiRequestGenerationRef.current !== suggestionRequestRef.current) return
+
+    const stillUnmapped = new Set(collectUnmappedColumns(columnHeaderOptions, getMappingConfig()).map((column) => column.index))
+    const added = toMappingSuggestions(
+      aiSuggestions.filter((suggestion) => stillUnmapped.has(suggestion.sourceIndex)),
+      sourceRows
+    )
     setSuggestions((current) => current === null ? null : [...current, ...added])
     setSelectedSuggestionIds((current) => new Set([...current, ...added.map((s) => s.id)]))
-  }, [sourceRows])
+  }, [columnHeaderOptions, getMappingConfig, sourceRows])
 
   const isLoadingAiSuggestions = useAiSuggestions(aiRequestId, handleAiSuggestionsSettled)
 

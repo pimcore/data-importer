@@ -85,14 +85,26 @@ const StoredConfig = ({ children }: { children: React.ReactNode }): React.JSX.El
   return <MappingSourceContext.Provider value={ value }>{ children }</MappingSourceContext.Provider>
 }
 
-const Host = ({ stored = false }: { stored?: boolean }): React.JSX.Element => {
+const Host = ({ stored = false, mappingConfig = [] }: { stored?: boolean, mappingConfig?: unknown[] }): React.JSX.Element => {
   const [form] = Form.useForm()
 
   return (
     <Form
       form={ form }
-      initialValues={ { mappingConfig: [], interpreterConfig: { type: 'csv' } } }
+      initialValues={ { mappingConfig, interpreterConfig: { type: 'csv' } } }
     >
+      <Form.Item
+        name={ ['resolverConfig', 'dataObjectClassId'] }
+        noStyle
+      >
+        <input type="hidden" />
+      </Form.Item>
+      <button
+        onClick={ () => { form.setFieldValue(['resolverConfig', 'dataObjectClassId'], 'Other') } }
+        type="button"
+      >
+        switch class
+      </button>
       { /* stands in for the mappings panel's list; the test's antd only watches the list's registered item fields */ }
       <Form.List name="mappingConfig">
         { (fields) => fields.map(field => (
@@ -183,6 +195,37 @@ describe('MappingStep with the AI stage', () => {
     await waitFor(() => {
       expect(initiate).toHaveBeenCalledWith(expect.objectContaining({ transformationResultType: 'date' }))
     })
+  })
+
+  it('adds no suggestion of the stage for a column mapped meanwhile', async () => {
+    suggestMappings.mockResolvedValueOnce(started)
+    loadAi.mockImplementation((request) => (request as { requestId: string }).requestId === 'abc'
+      ? { currentData: { aiStatus: 'finished', suggestions: [aiSuggestion] }, isError: false }
+      : { isError: false })
+    render(<Host mappingConfig={ [{ id: 'm-1', dataSourceIndex: ['name [de]'], transformationResultType: 'default' }] } />)
+
+    await clickAutofillOnceLoaded()
+
+    await waitFor(() => { expect(screen.getByTestId('autofill-ai-loading').textContent).toBe('false') })
+    expect(screen.getByTestId('autofill-suggestions').textContent).toBe('1')
+  })
+
+  it('drops the stage\'s result once the class changed while it ran', async () => {
+    let finished = false
+    suggestMappings.mockResolvedValueOnce(started)
+    loadAi.mockImplementation((request) => finished && (request as { requestId: string }).requestId === 'abc'
+      ? { currentData: { aiStatus: 'finished', suggestions: [aiSuggestion] }, isError: false }
+      : { isError: false })
+    render(<Host />)
+
+    await clickAutofillOnceLoaded()
+    await waitFor(() => { expect(screen.getByTestId('autofill-ai-loading').textContent).toBe('true') })
+
+    finished = true
+    fireEvent.click(screen.getByRole('button', { name: 'switch class' }))
+
+    await waitFor(() => { expect(screen.getByTestId('autofill-ai-loading').textContent).toBe('false') })
+    expect(screen.getByTestId('autofill-suggestions').textContent).toBe('1')
   })
 
   it.each([
