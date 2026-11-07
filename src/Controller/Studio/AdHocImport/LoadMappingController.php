@@ -19,7 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Request\ReferenceRequestBody;
@@ -44,7 +44,7 @@ final class LoadMappingController extends AbstractApiController
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly AdHocImportServiceInterface $adHocImportService
+        private readonly AdHocImportMappingServiceInterface $mappingService
     ) {
         parent::__construct($serializer);
     }
@@ -73,6 +73,6 @@ final class LoadMappingController extends AbstractApiController
     ])]
     public function loadMapping(#[MapRequestPayload] MappingSuggestionParameters $parameters): JsonResponse
     {
-        return $this->jsonResponse($this->adHocImportService->loadMapping($parameters));
+        return $this->jsonResponse($this->mappingService->loadMapping($parameters));
     }
 }

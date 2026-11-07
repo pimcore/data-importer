@@ -20,7 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Prefix;
 use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportTransformationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Path\IdParameter;
@@ -45,7 +45,7 @@ final class PreviewTransformationsController extends AbstractApiController
 
     public function __construct(
         SerializerInterface $serializer,
-        private readonly AdHocImportServiceInterface $adHocImportService
+        private readonly AdHocImportTransformationServiceInterface $transformationService
     ) {
         parent::__construct($serializer);
     }
@@ -83,6 +83,6 @@ final class PreviewTransformationsController extends AbstractApiController
         string $fileId,
         #[MapRequestPayload] AdHocImportTransformationParameters $parameters
     ): JsonResponse {
-        return $this->jsonResponse($this->adHocImportService->previewTransformations($fileId, $parameters));
+        return $this->jsonResponse($this->transformationService->previewTransformations($fileId, $parameters));
     }
 }

@@ -220,6 +220,23 @@ class AdHocTransformationChainTest extends Unit
         $this->assertStringNotContainsString(self::HIDDEN_ARTICLE, json_encode($this->items($listed->getResults())));
     }
 
+    public function testARowAStepFailsOnIsLeftOutOfTheStepsAfterIt(): void
+    {
+        $result = $this->chainOn(['broken', '1'], [$this->step(TransformationAllowList::LOAD_ASSET)], [Types::GALLERY]);
+
+        $this->assertSame([true, false], $this->failed($result->getSteps()[0]['values']));
+        $this->assertSame('gallery', $result->getConversion());
+        $this->assertSame([true, false], $this->failed($result->getResults()));
+        $this->assertSame([[], ['/images/1.jpg']], $this->items($result->getResults()));
+    }
+
+    public function testAValueThePreviewCannotShowIsNamedByItsType(): void
+    {
+        $result = $this->chainOn(['odd'], [$this->step(TransformationAllowList::LOAD_OBJECT)], [Types::DATA_OBJECT]);
+
+        $this->assertSame([['stdClass']], $this->items($result->getResults()));
+    }
+
     public function testAStepThatCannotTakeTheResultBeforeItStopsTheChain(): void
     {
         $result = $this->chainOn(['1'], [
@@ -389,7 +406,7 @@ class AdHocTransformationChainTest extends Unit
             'loadDataObject' => $this->loader(
                 Types::DATA_OBJECT,
                 Types::DATA_OBJECT_ARRAY,
-                fn (string $id): ?ElementInterface => $this->object($id)
+                fn (string $id): mixed => $this->object($id)
             ),
             'numeric' => new Numeric($logger),
             'date' => new Date($logger),
@@ -407,7 +424,7 @@ class AdHocTransformationChainTest extends Unit
     /**
      * Stands in for a load operator, which needs the database: loads by ID as the real one does.
      *
-     * @param \Closure(string): ?ElementInterface $load
+     * @param \Closure(string): mixed $load
      */
     private function loader(string $type, string $arrayType, \Closure $load): AbstractOperator
     {
@@ -445,6 +462,9 @@ class AdHocTransformationChainTest extends Unit
 
     private function image(string $id): ?Image
     {
+        if ($id === 'broken') {
+            throw new \RuntimeException('The asset cannot be read');
+        }
         if (!in_array($id, ['1', '2'], true)) {
             return null;
         }
@@ -455,8 +475,11 @@ class AdHocTransformationChainTest extends Unit
         return $image;
     }
 
-    private function object(string $id): ?Concrete
+    private function object(string $id): mixed
     {
+        if ($id === 'odd') {
+            return new \stdClass();
+        }
         if (!in_array($id, ['1', '2'], true)) {
             return null;
         }

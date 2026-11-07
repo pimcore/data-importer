@@ -28,7 +28,9 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationParameters
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportTransformationServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -112,7 +114,7 @@ class AdHocImportControllersTest extends Unit
         $parameters = new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]);
         $answer = new AdHocImportMappingResponse([], []);
 
-        $service = $this->createMock(AdHocImportServiceInterface::class);
+        $service = $this->createMock(AdHocImportMappingServiceInterface::class);
         $service->expects($this->once())->method('loadMapping')->with($parameters)->willReturn($answer);
 
         $response = (new LoadMappingController($this->serializer($answer), $service))->loadMapping($parameters);
@@ -125,7 +127,7 @@ class AdHocImportControllersTest extends Unit
         $parameters = new AdHocImportTransformationParameters('PROD', 'name', 'name', [['type' => 'trim']]);
         $answer = new AdHocImportTransformationResponse([], [], null, 'default', true, [], []);
 
-        $service = $this->createMock(AdHocImportServiceInterface::class);
+        $service = $this->createMock(AdHocImportTransformationServiceInterface::class);
         $service->expects($this->once())->method('previewTransformations')->with('file-1', $parameters)
             ->willReturn($answer);
 

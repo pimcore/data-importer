@@ -344,7 +344,7 @@ final readonly class TransformationChain
             $value instanceof ElementInterface => $value->getRealFullPath(),
             $value instanceof \DateTimeInterface => $value->format(self::DATE_FORMAT),
             is_array($value) => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: null,
-            $value instanceof \Stringable => (string) $value,
+            // nothing an allowed operator returns; named so a preview still shows there is a value
             default => get_debug_type($value),
         };
     }

@@ -15,14 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationParameters;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -54,23 +49,4 @@ interface AdHocImportServiceInterface
      * @throws ForbiddenException if the user may not create objects of that class
      */
     public function loadMatchFields(string $classId): ClassAttributesResponse;
-
-    /**
-     * The fields the columns can be imported into, and a suggested field per column.
-     *
-     * @throws ForbiddenException if the user may not create objects of that class
-     */
-    public function loadMapping(MappingSuggestionParameters $parameters): AdHocImportMappingResponse;
-
-    /**
-     * The transformations of one column run on its values in the first rows, converted to the field's type.
-     *
-     * @throws ForbiddenException if the user may not create objects of that class
-     * @throws NotFoundHttpException if the user has no such file, or the file no such column or the class no such field
-     * @throws InvalidArgumentException for a transformation the ad hoc import does not offer
-     */
-    public function previewTransformations(
-        string $fileId,
-        AdHocImportTransformationParameters $parameters
-    ): AdHocImportTransformationResponse;
 }
