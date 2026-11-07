@@ -1,0 +1,299 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
+
+use Codeception\Test\Unit;
+use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportConfigurationService;
+use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
+use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
+use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
+use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Folder;
+use Pimcore\Model\User;
+use Pimcore\Model\UserInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+
+class AdHocImportConfigurationServiceTest extends Unit
+{
+    private const string FOLDER = '/Products/Imported';
+
+    private const string LOCKED_FOLDER = '/Products/Locked';
+
+    private const string CLASS_ID = 'PROD';
+
+    private User $user;
+
+    protected function _before(): void
+    {
+        $this->user = new User();
+        $this->user->setId(7);
+    }
+
+    public function testOnlyDataObjectImportConfigurationsTheUserMayReadAreListedByName(): void
+    {
+        $listed = $this->service([
+            $this->configuration('products-b', $this->config()),
+            $this->configuration('hidden', $this->config(), readable: false),
+            $this->configuration('api', $this->config(), type: 'graphql'),
+            $this->configuration('Products-a', $this->config()),
+        ])->listConfigurations()->getConfigurations();
+
+        $this->assertSame(['Products-a', 'products-b'], array_column($listed, 'name'));
+    }
+
+    public function testReadingIsAskedForTheCurrentUser(): void
+    {
+        $configuration = $this->createMock(Configuration::class);
+        $configuration->method('getType')->willReturn('dataImporterDataObject');
+        $configuration->expects($this->once())->method('isAllowed')->with('read', $this->user)->willReturn(false);
+
+        $this->assertSame([], $this->service([$configuration])->listConfigurations()->getConfigurations());
+    }
+
+    public function testWithoutAPimcoreUserNothingIsListed(): void
+    {
+        $security = $this->createStub(SecurityServiceInterface::class);
+        $security->method('getCurrentUser')->willReturn($this->createStub(UserInterface::class));
+
+        $this->expectException(EnvironmentException::class);
+
+        $this->service([], $security)->listConfigurations();
+    }
+
+    public function testAConfigurationMatchingByAFieldGivesItsClassMatchAndFolder(): void
+    {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(
+            loading: ['type' => 'attribute', 'settings' => [
+                'dataSourceIndex' => 'Name DE',
+                'attributeName' => 'name',
+                'language' => 'de',
+            ]],
+            mapping: [['dataSourceIndex' => ['Name DE']], ['dataSourceIndex' => ['Price']]]
+        ))])->listConfigurations()->getConfigurations();
+
+        $this->assertSame([
+            'name' => 'products',
+            'classId' => self::CLASS_ID,
+            'className' => 'Product',
+            'matchBy' => 'field',
+            'matchField' => 'name',
+            'matchLanguage' => 'de',
+            'matchColumn' => 'Name DE',
+            'newObjectsFolder' => self::FOLDER,
+            'columns' => ['Name DE', 'Price'],
+            'unusable' => null,
+        ], $configuration);
+    }
+
+    public function testAConfigurationMatchingByTheObjectIdNamesNoField(): void
+    {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(
+            loading: ['type' => 'id', 'settings' => ['dataSourceIndex' => 0, 'attributeName' => 'sku']]
+        ))])->listConfigurations()->getConfigurations();
+
+        $this->assertSame('id', $configuration['matchBy']);
+        $this->assertNull($configuration['matchField']);
+        $this->assertNull($configuration['matchLanguage']);
+        $this->assertSame('0', $configuration['matchColumn']);
+        $this->assertNull($configuration['unusable']);
+    }
+
+    public function testTheColumnsAreThoseItsMatchAndMappingReadOnceEach(): void
+    {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(
+            mapping: [
+                ['dataSourceIndex' => ['Name', 'Name']],
+                ['dataSourceIndex' => [3, '']],
+                ['dataSourceIndex' => 'Price'],
+                ['dataSourceIndex' => null],
+                ['label' => 'no column'],
+                ['dataSourceIndex' => ['SKU']],
+                'not a row',
+            ]
+        ))])->listConfigurations()->getConfigurations();
+
+        $this->assertSame(['SKU', 'Name', '3', 'Price'], $configuration['columns']);
+    }
+
+    /**
+     * @param array<string, mixed> $resolver
+     */
+    #[DataProvider('unusableConfigurations')]
+    public function testWhyAnAdHocImportCannotUseAConfiguration(array $resolver, string $reason): void
+    {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(...$resolver))])
+            ->listConfigurations()->getConfigurations();
+
+        $this->assertSame($reason, $configuration['unusable']);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function unusableConfigurations(): array
+    {
+        $byPath = ['type' => 'path', 'settings' => ['dataSourceIndex' => 'Path']];
+
+        return [
+            'a class the user may not create' => [['classId' => 'CAR'], 'class'],
+            'no class' => [['classId' => ''], 'class'],
+            'matching by path' => [['loading' => $byPath], 'matching'],
+            'matching nothing' => [['loading' => ['type' => 'notLoad']], 'matching'],
+            'a field without its name' => [
+                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU']]],
+                'matching',
+            ],
+            'matching without a column' => [
+                ['loading' => ['type' => 'id', 'settings' => ['dataSourceIndex' => null]]],
+                'matching',
+            ],
+            'new objects placed by the file' => [
+                ['location' => ['type' => 'findParent', 'settings' => ['dataSourceIndex' => 'Parent']]],
+                'folder',
+            ],
+            'no new objects' => [['location' => ['type' => 'doNotCreate']], 'folder'],
+            'a static path without a path' => [['location' => ['type' => 'staticPath', 'settings' => []]], 'folder'],
+            'a folder that does not exist' => [
+                ['location' => ['type' => 'staticPath', 'settings' => ['path' => '/Gone']]],
+                'folder-missing',
+            ],
+            'a folder the user may not create in' => [
+                ['location' => ['type' => 'staticPath', 'settings' => ['path' => self::LOCKED_FOLDER]]],
+                'folder-not-allowed',
+            ],
+        ];
+    }
+
+    public function testAConfigurationWithoutAResolverIsListedAsUnusable(): void
+    {
+        [$configuration] = $this->service([$this->configuration('empty', ['resolverConfig' => 'broken'])])
+            ->listConfigurations()->getConfigurations();
+
+        $this->assertSame([
+            'name' => 'empty',
+            'classId' => null,
+            'className' => null,
+            'matchBy' => null,
+            'matchField' => null,
+            'matchLanguage' => null,
+            'matchColumn' => null,
+            'newObjectsFolder' => null,
+            'columns' => [],
+            'unusable' => 'class',
+        ], $configuration);
+    }
+
+    /**
+     * @param array<string, mixed>|null $loading
+     * @param array<string, mixed>|null $location
+     * @param array<mixed> $mapping
+     *
+     * @return array<string, mixed>
+     */
+    private function config(
+        string $classId = self::CLASS_ID,
+        ?array $loading = null,
+        ?array $location = null,
+        array $mapping = [],
+    ): array {
+        return [
+            'resolverConfig' => [
+                'elementType' => 'dataObject',
+                'dataObjectClassId' => $classId,
+                'loadingStrategy' => $loading
+                    ?? ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'sku']],
+                'createLocationStrategy' => $location
+                    ?? ['type' => 'staticPath', 'settings' => ['path' => self::FOLDER]],
+            ],
+            'mappingConfig' => $mapping,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function configuration(
+        string $name,
+        array $data,
+        bool $readable = true,
+        string $type = 'dataImporterDataObject',
+    ): Configuration {
+        $configuration = $this->createStub(Configuration::class);
+        $configuration->method('getName')->willReturn($name);
+        $configuration->method('getType')->willReturn($type);
+        $configuration->method('getConfiguration')->willReturn($data);
+        $configuration->method('isAllowed')->willReturnCallback(
+            fn (string $permission, ?User $user = null): bool => $readable
+                && $permission === 'read'
+                && $user === $this->user
+        );
+
+        return $configuration;
+    }
+
+    /**
+     * @param list<Configuration> $configurations
+     */
+    private function service(
+        array $configurations,
+        ?SecurityServiceInterface $security = null
+    ): AdHocImportConfigurationService {
+        if ($security === null) {
+            $security = $this->createStub(SecurityServiceInterface::class);
+            $security->method('getCurrentUser')->willReturn($this->user);
+        }
+
+        $classes = $this->createStub(ClassDefinitionServiceInterface::class);
+        $classes->method('getClassDefinitionCollection')->willReturnCallback(
+            static fn (bool $creatableOnly = false): array => $creatableOnly ? [new ClassDefinitionList(
+                self::CLASS_ID,
+                'Product',
+                'Product',
+                new ElementIcon(ElementIconTypes::NAME->value, 'class')
+            )] : []
+        );
+
+        $class = new ClassDefinition();
+        $class->setName('Product');
+        $classResolver = $this->createStub(ClassDefinitionResolverInterface::class);
+        $classResolver->method('getById')->willReturnCallback(
+            static fn (string $id): ?ClassDefinition => in_array($id, [self::CLASS_ID, 'CAR'], true) ? $class : null
+        );
+
+        $open = $this->createStub(Folder::class);
+        $open->method('isAllowed')->willReturnCallback(
+            fn (string $type, ?User $user = null): bool => $type === 'create' && $user === $this->user
+        );
+        $locked = $this->createStub(Folder::class);
+        $locked->method('isAllowed')->willReturn(false);
+        $objects = $this->createStub(DataObjectResolverInterface::class);
+        $objects->method('getByPath')->willReturnCallback(
+            static fn (string $path): ?Folder => [self::FOLDER => $open, self::LOCKED_FOLDER => $locked][$path] ?? null
+        );
+
+        return new AdHocImportConfigurationService(
+            $security,
+            $classes,
+            $classResolver,
+            $objects,
+            static fn (): array => $configurations,
+        );
+    }
+}
