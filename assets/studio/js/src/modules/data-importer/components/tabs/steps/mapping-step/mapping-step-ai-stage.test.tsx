@@ -197,6 +197,7 @@ describe('MappingStep with the AI stage', () => {
 
     await waitFor(() => { expect(screen.getByTestId('autofill-ai-loading').textContent).toBe('false') })
     expect(screen.getByTestId('autofill-suggestions').textContent).toBe('1')
+    expect(lastLoadOptions().skip).toBe(true)
     expect(trackError).not.toHaveBeenCalled()
   })
 
