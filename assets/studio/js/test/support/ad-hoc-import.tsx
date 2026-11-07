@@ -62,32 +62,31 @@ interface PickerGroup {
 
 // a group of the column picker as a labelled list of its subgroups and items
 const PickerGroupView = ({ group, onSelect }: { group: PickerGroup, onSelect: (item: PickerItem) => void }): React.JSX.Element => (
-  <ul
-    aria-label={ group.label }
-    role="group"
-  >
-    { (group.children ?? []).map((child) => (
-      <li key={ child.key }>
-        <PickerGroupView
-          group={ child }
-          onSelect={ onSelect }
-        />
-      </li>
-    )) }
-    { group.items.map((item) => (
-      <li key={ item.key }>
-        <button
-          aria-selected={ false }
-          disabled={ item.disabled }
-          onClick={ () => { onSelect(item) } }
-          role="treeitem"
-          type="button"
-        >
-          { item.label }
-        </button>
-      </li>
-    )) }
-  </ul>
+  <fieldset aria-label={ group.label }>
+    <ul>
+      { (group.children ?? []).map((child) => (
+        <li key={ child.key }>
+          <PickerGroupView
+            group={ child }
+            onSelect={ onSelect }
+          />
+        </li>
+      )) }
+      { group.items.map((item) => (
+        <li key={ item.key }>
+          <button
+            aria-selected={ false }
+            disabled={ item.disabled }
+            onClick={ () => { onSelect(item) } }
+            role="treeitem"
+            type="button"
+          >
+            { item.label }
+          </button>
+        </li>
+      )) }
+    </ul>
+  </fieldset>
 )
 
 export const components = {

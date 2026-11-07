@@ -39,6 +39,8 @@ use Pimcore\Model\DataObject\ClassDefinition\Layout\Tabpanel;
 
 class AdHocImportMappingServiceTest extends Unit
 {
+    private const BASE_DATA = 'Base data';
+
     public function testTheMappingOffersTheClassFieldsSayingWhichTheClassRequires(): void
     {
         $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
@@ -92,7 +94,7 @@ class AdHocImportMappingServiceTest extends Unit
         $bricks->setName('technical');
         $class = $this->classWithLayout($this->layout(Panel::class, '', [
             $this->layout(Tabpanel::class, '', [
-                $this->layout(Panel::class, 'Base data', [
+                $this->layout(Panel::class, self::BASE_DATA, [
                     $this->input('sku', mandatory: false),
                     // a titled layout below a titled one does not group again
                     $this->layout(Fieldset::class, 'Texts', [$localized]),
@@ -106,8 +108,8 @@ class AdHocImportMappingServiceTest extends Unit
             ->loadMapping(new MappingSuggestionParameters('PROD', []));
 
         $this->assertSame([
-            'sku' => ['Base data'],
-            'name' => ['Base data'],
+            'sku' => [self::BASE_DATA],
+            'name' => [self::BASE_DATA],
             'price' => ['Technical'],
             'notes' => ['Product'],
             'technical.Engine.power' => ['Technical', 'technical', 'Engine'],
