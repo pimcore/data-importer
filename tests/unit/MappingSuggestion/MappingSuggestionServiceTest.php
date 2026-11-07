@@ -20,10 +20,18 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionService;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
+use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
+use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\User;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -36,7 +44,9 @@ class MappingSuggestionServiceTest extends Unit
         array $attributesByType,
         ?EventDispatcherInterface $dispatcher = null,
         bool $classExists = true,
-        array &$requests = []
+        array &$requests = [],
+        array $rights = [PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG],
+        array $creatableClasses = []
     ): MappingSuggestionService {
         $dataTypes = $this->createStub(DataTypeServiceInterface::class);
         $dataTypes->method('loadClassAttributes')->willReturnCallback(
@@ -59,13 +69,36 @@ class MappingSuggestionServiceTest extends Unit
         $tool = $this->createStub(ToolResolverInterface::class);
         $tool->method('getValidLanguages')->willReturn(['de', 'en']);
 
+        $user = new User();
+        $user->setAdmin(false);
+        foreach ($rights as $right) {
+            $user->setPermission($right, true);
+        }
+        $security = $this->createStub(SecurityServiceInterface::class);
+        $security->method('getCurrentUser')->willReturn($user);
+
+        $classService = $this->createStub(ClassDefinitionServiceInterface::class);
+        $classService->method('getClassDefinitionCollection')->willReturnCallback(
+            static fn (bool $creatableOnly = false): array => $creatableOnly ? array_map(
+                static fn (string $id): ClassDefinitionList => new ClassDefinitionList(
+                    $id,
+                    $id,
+                    $id,
+                    new ElementIcon(ElementIconTypes::NAME->value, 'class')
+                ),
+                $creatableClasses
+            ) : []
+        );
+
         return new MappingSuggestionService(
             $dataTypes,
             $classes,
             $tool,
             new ColumnMatcher(),
             new MappingSuggestionHydrator(),
-            $dispatcher ?? new EventDispatcher()
+            $dispatcher ?? new EventDispatcher(),
+            $security,
+            $classService
         );
     }
 
@@ -190,5 +223,79 @@ class MappingSuggestionServiceTest extends Unit
         $response = $this->service([], $dispatcher)->suggest($this->parameters('name'));
 
         $this->assertSame($response, $seen);
+    }
+
+    /**
+     * One case per role: the endpoint has no route-level right, so these are its access rules.
+     *
+     * @dataProvider roles
+     *
+     * @param string[] $rights
+     * @param string[] $creatableClasses
+     */
+    public function testWhoGetsSuggestions(array $rights, array $creatableClasses, bool $allowed): void
+    {
+        $requests = [];
+        $service = $this->service(
+            ['default' => [$this->attribute('sku')]],
+            null,
+            true,
+            $requests,
+            $rights,
+            $creatableClasses
+        );
+
+        if (!$allowed) {
+            try {
+                $service->suggest($this->parameters('SKU'));
+                $this->fail('expected a ForbiddenException');
+            } catch (ForbiddenException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+            $this->assertSame([], $requests, 'a refused request reads no class field');
+
+            return;
+        }
+
+        $suggestions = $service->suggest($this->parameters('SKU'))->getSuggestions();
+        $this->assertSame([[
+            'sourceIndex' => 'col_0',
+            'sourceLabel' => 'SKU',
+            'targetFieldName' => 'sku',
+            'targetFieldLabel' => 'sku [sku]',
+            'transformationResultType' => 'default',
+            'score' => 100,
+            'language' => null,
+        ]], $suggestions);
+    }
+
+    public function roles(): array
+    {
+        $config = PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG;
+        $adHoc = PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT;
+
+        return [
+            'neither right' => [[], ['Product'], false],
+            'another data hub right only' => [[PermissionConstants::PLUGIN_DATA_IMPORTER_ADAPTER], ['Product'], false],
+            'only the ad hoc right, a class it may create' => [[$adHoc], ['Product'], true],
+            'only the ad hoc right, a class it may not create' => [[$adHoc], ['Category'], false],
+            'only the configuration right, any class' => [[$config], [], true],
+            'both rights, any class' => [[$config, $adHoc], [], true],
+        ];
+    }
+
+    public function testAnAdHocUserAskingForAnUnknownClassIsNotFound(): void
+    {
+        $requests = [];
+        $this->expectException(NotFoundException::class);
+
+        $this->service(
+            [],
+            null,
+            false,
+            $requests,
+            [PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT],
+            ['Product']
+        )->suggest($this->parameters('SKU'));
     }
 }

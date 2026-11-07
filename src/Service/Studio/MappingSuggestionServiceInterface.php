@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 
 /**
@@ -24,6 +25,8 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 interface MappingSuggestionServiceInterface
 {
     /**
+     * @throws ForbiddenException without the data importer's configuration right or the ad hoc import's right,
+     *                             or with only the latter for a class the user may not create
      * @throws NotFoundException when the class does not exist
      * @throws Exception
      */
