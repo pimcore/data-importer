@@ -29,6 +29,7 @@ import {
 } from './mapping-state'
 import { MappingRowView } from './mapping-row'
 import { StoreKeyDialog } from './store-key-dialog'
+import { takenStoreKeys } from './taken-store-keys'
 import { useLanguages } from './use-languages'
 
 const SEARCH_WIDTH = 240
@@ -222,6 +223,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
             change(chooseStoreKey(mapping, storeKeyFor.column, storeKeyFor.field, key))
             setStoreKeyFor(null)
           } }
+          takenKeyIds={ takenStoreKeys(mapping.rows, { key: storeKeyFor.field, localized: fields.some(({ key, localized }) => key === storeKeyFor.field && localized) }, storeKeyFor.column, languages) }
         />
       ) }
 

@@ -9,6 +9,7 @@
  */
 
 import React from 'react'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import {
   ClassificationStoreKeyModal,
   type ClassificationStoreKeyRow,
@@ -31,16 +32,24 @@ export interface StoreKeyDialogProps {
   fieldName: string
   onClose: () => void
   onSelect: (key: StoreKey) => void
+  // the keys of the store other columns already go into
+  takenKeyIds?: string[]
 }
 
-export const StoreKeyDialog = ({ classId, fieldName, onClose, onSelect }: StoreKeyDialogProps): React.JSX.Element => (
-  <ClassificationStoreKeyModal
-    classId={ classId }
-    fieldName={ fieldName }
-    onClose={ onClose }
-    onSelect={ (keyId, row) => { onSelect(storeKeyOf(keyId, row)) } }
-    open
-    transformationResultType=""
-    useKeysQuery={ useAdHocStoreKeys }
-  />
-)
+export const StoreKeyDialog = ({ classId, fieldName, onClose, onSelect, takenKeyIds }: StoreKeyDialogProps): React.JSX.Element => {
+  const { t } = useTranslation()
+
+  return (
+    <ClassificationStoreKeyModal
+      classId={ classId }
+      fieldName={ fieldName }
+      onClose={ onClose }
+      onSelect={ (keyId, row) => { onSelect(storeKeyOf(keyId, row)) } }
+      open
+      takenKeyHint={ t('data-importer.ad-hoc-import.mapping.key-taken') }
+      takenKeyIds={ takenKeyIds }
+      transformationResultType=""
+      useKeysQuery={ useAdHocStoreKeys }
+    />
+  )
+}

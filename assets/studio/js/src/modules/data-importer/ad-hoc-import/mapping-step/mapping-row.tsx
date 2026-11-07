@@ -16,6 +16,7 @@ import {
   chooseField,
   chooseLanguage,
   canGoInto,
+  freeLanguages,
   skipColumn,
   type Mapping,
   type MappingField,
@@ -53,6 +54,38 @@ export interface MappingRowViewProps {
   onChange: (mapping: Mapping) => void
   // a classification store goes in by a key chosen in its own dialog
   onPickStoreKey: (column: string, field: string) => void
+}
+
+type ChoiceDetailsProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'languages' | 'onChange' | 'onPickStoreKey'>
+
+// the store key and the language of the row's choice, each changeable; a language another column has is not offered
+const ChoiceDetails = ({ row, mapping, languages, onChange, onPickStoreKey }: ChoiceDetailsProps): React.JSX.Element | null => {
+  const { t } = useTranslation()
+  const { column, label, choice } = row
+  if (choice === undefined) {
+    return null
+  }
+
+  return (
+    <>
+      { choice.key !== undefined && (
+        <Button
+          aria-label={ t('data-importer.ad-hoc-import.mapping.change-key', { column: label, interpolation: { escapeValue: false } }) }
+          onClick={ () => { onPickStoreKey(column, choice.field) } }
+          type="link"
+        >
+          { choice.key.label }
+        </Button>
+      ) }
+      { choice.language !== null && (
+        <LanguageSelection
+          languages={ freeLanguages(mapping.rows, row, languages) }
+          onSelectLanguage={ (language) => { onChange(chooseLanguage(mapping, column, language)) } }
+          selectedLanguage={ choice.language }
+        />
+      ) }
+    </>
+  )
 }
 
 export const MappingRowView = ({
@@ -151,23 +184,17 @@ export const MappingRowView = ({
           />
           ) }
 
-      { isMatch && <Tag>{ t('data-importer.ad-hoc-import.mapping.match') }</Tag> }
-      { !isMatch && choice?.key !== undefined && (
-        <Button
-          aria-label={ t('data-importer.ad-hoc-import.mapping.change-key', { column: label, interpolation: { escapeValue: false } }) }
-          onClick={ () => { onPickStoreKey(column, choice.field) } }
-          type="link"
-        >
-          { choice.key.label }
-        </Button>
-      ) }
-      { !isMatch && choice?.language !== null && choice?.language !== undefined && (
-        <LanguageSelection
-          languages={ languages }
-          onSelectLanguage={ (language) => { onChange(chooseLanguage(mapping, column, language)) } }
-          selectedLanguage={ choice.language }
-        />
-      ) }
+      { isMatch
+        ? <Tag>{ t('data-importer.ad-hoc-import.mapping.match') }</Tag>
+        : (
+          <ChoiceDetails
+            languages={ languages }
+            mapping={ mapping }
+            onChange={ onChange }
+            onPickStoreKey={ onPickStoreKey }
+            row={ row }
+          />
+          ) }
       { auto && <Tag color="purple">{ t('data-importer.ad-hoc-import.mapping.auto') }</Tag> }
     </Flex>
   )

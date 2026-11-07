@@ -163,17 +163,34 @@ export const chooseField = (mapping: Mapping, column: string, field: string | un
   }))
 
 /**
- * A classification store goes in by one of its keys; the language stays while the store does.
+ * A classification store goes in by one of its keys, one column per key (and language); the language stays while the
+ * store does.
  */
 export const chooseStoreKey = (mapping: Mapping, column: string, field: string, key: StoreKey): Mapping =>
-  changeRow(mapping, column, (row) => ({
-    ...row,
-    choice: { field, language: row.choice?.field === field ? row.choice.language : null, key },
-    auto: false
-  }))
+  changeRow(mapping, column, (row) => {
+    const language = row.choice?.field === field ? row.choice.language : null
 
+    return isTaken(mapping.rows, { field, language, key }, column)
+      ? row
+      : { ...row, choice: { field, language, key }, auto: false }
+  })
+
+const languageTaken = (rows: MappingRow[], row: MappingRow, language: string): boolean =>
+  row.choice !== undefined && isTaken(rows, { ...row.choice, language }, row.column)
+
+/**
+ * The languages the column can hold: its own and those no other column has for its field (and key).
+ */
+export const freeLanguages = (rows: MappingRow[], row: MappingRow, languages: string[]): string[] =>
+  languages.filter((language) => language === row.choice?.language || !languageTaken(rows, row, language))
+
+/**
+ * A language another column already has for the field (and key) is refused.
+ */
 export const chooseLanguage = (mapping: Mapping, column: string, language: string): Mapping =>
-  changeRow(mapping, column, (row) => row.choice === undefined ? row : { ...row, choice: { ...row.choice, language } })
+  changeRow(mapping, column, (row) => row.choice === undefined || languageTaken(mapping.rows, row, language)
+    ? row
+    : { ...row, choice: { ...row.choice, language } })
 
 /**
  * Gives each column going into a localized field without a language one: the language guessed from the column name,

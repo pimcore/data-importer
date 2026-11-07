@@ -15,12 +15,15 @@ import {
   chooseLanguage,
   chooseStoreKey,
   createMapping,
+  freeLanguages,
   isTaken,
+  skipColumn,
   withLanguages,
   type LoadedMapping,
   type Mapping,
   type MappingField
 } from './mapping-state'
+import { takenStoreKeys } from './taken-store-keys'
 
 const inspected: InspectedFile = {
   maxRows: 5000,
@@ -98,6 +101,37 @@ describe('a classification store', () => {
   it('never changes the match column', () => {
     expect(chooseStoreKey(mapping, 'Artikelnr', 'attributes', width)).toEqual(mapping)
   })
+
+  it('refuses a key another column goes into', () => {
+    const notizHasWidth = chooseStoreKey(mapping, 'Notiz', 'attributes', width)
+
+    expect(chooseStoreKey(notizHasWidth, 'Preis', 'attributes', width)).toEqual(notizHasWidth)
+    expect(rowOf(chooseStoreKey(notizHasWidth, 'Preis', 'attributes', height), 'Preis').choice?.key).toEqual(height)
+    expect(rowOf(chooseStoreKey(notizHasWidth, 'Notiz', 'attributes', width), 'Notiz').choice?.key).toEqual(width)
+  })
+
+  it('names the keys other columns go into', () => {
+    const rows = chooseStoreKey(chooseStoreKey(mapping, 'Notiz', 'attributes', width), 'Preis', 'features', height).rows
+    const attributes = { key: 'attributes', localized: false }
+
+    expect(takenStoreKeys(rows, attributes, 'Preis', [])).toEqual(['2-4'])
+    expect(takenStoreKeys(rows, attributes, 'Notiz', [])).toEqual([])
+    expect(takenStoreKeys(rows, { key: 'features', localized: false }, 'Notiz', [])).toEqual(['2-5'])
+    expect(takenStoreKeys(skipColumn({ ...mapping, rows }, 'Notiz').rows, attributes, 'Preis', [])).toEqual([])
+  })
+
+  it('takes a localized store\'s key in each language once', () => {
+    const english = chooseLanguage(chooseStoreKey(mapping, 'Notiz', 'attributes', width), 'Notiz', 'en')
+    const attributes = { key: 'attributes', localized: true }
+
+    expect(takenStoreKeys(english.rows, attributes, 'Preis', ['en', 'de'])).toEqual([])
+    expect(takenStoreKeys(english.rows, attributes, 'Preis', ['en'])).toEqual(['2-4'])
+
+    const germanToo = chooseLanguage(chooseStoreKey(english, 'Preis', 'attributes', width), 'Preis', 'de')
+    expect(rowOf(germanToo, 'Preis').choice).toEqual({ field: 'attributes', language: 'de', key: width })
+    expect(takenStoreKeys(germanToo.rows, attributes, 'Name DE', ['en', 'de'])).toEqual(['2-4'])
+    expect(chooseLanguage(germanToo, 'Preis', 'en')).toEqual(germanToo)
+  })
 })
 
 describe('the language of a column', () => {
@@ -109,6 +143,26 @@ describe('the language of a column', () => {
 
   it('stays without a field', () => {
     expect(rowOf(chooseLanguage(mapping, 'Notiz', 'fr'), 'Notiz').choice).toBeUndefined()
+  })
+
+  it('refuses a language another column has for the field', () => {
+    expect(chooseLanguage(mapping, 'Name DE', 'en')).toEqual(mapping)
+    expect(rowOf(chooseLanguage(mapping, 'Name DE', 'en'), 'Name DE').choice).toEqual({ field: 'name', language: 'de' })
+  })
+
+  it('offers its own language and those no other column has', () => {
+    expect(freeLanguages(mapping.rows, rowOf(mapping, 'Name DE'), ['en', 'de', 'fr'])).toEqual(['de', 'fr'])
+    expect(freeLanguages(mapping.rows, rowOf(mapping, 'Name EN'), ['en', 'de', 'fr'])).toEqual(['en', 'fr'])
+  })
+
+  it('is per key in a localized classification store', () => {
+    const width = { id: '2-4', label: 'Width' }
+    const height = { id: '2-5', label: 'Height' }
+    const english = chooseLanguage(chooseStoreKey(mapping, 'Notiz', 'attributes', width), 'Notiz', 'en')
+    const both = chooseLanguage(chooseStoreKey(english, 'Preis', 'attributes', height), 'Preis', 'en')
+
+    expect(rowOf(both, 'Preis').choice?.language).toBe('en')
+    expect(freeLanguages(both.rows, rowOf(both, 'Preis'), ['en', 'de'])).toEqual(['en', 'de'])
   })
 })
 

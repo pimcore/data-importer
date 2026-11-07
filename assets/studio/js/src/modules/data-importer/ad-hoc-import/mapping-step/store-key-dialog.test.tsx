@@ -13,18 +13,21 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { StoreKeyDialog, storeKeyOf, useAdHocStoreKeys } from './store-key-dialog'
 
 const mockKeysQuery = jest.fn()
+jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../../test/support/ad-hoc-import'))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery: (...args: unknown[]) => mockKeysQuery(...args)
 }))
 // the configuration's key modal, shown with the keys its query gives
 jest.mock('../../components/tabs/steps/advanced-mapping-modal/step-target/classification-store-key-modal/classification-store-key-modal', () => ({
-  ClassificationStoreKeyModal: ({ classId, fieldName, transformationResultType, useKeysQuery, onSelect, onClose }: {
+  ClassificationStoreKeyModal: ({ classId, fieldName, transformationResultType, useKeysQuery, onSelect, onClose, takenKeyIds, takenKeyHint }: {
     classId: string
     fieldName: string
     transformationResultType: string
     useKeysQuery: (arg: object, options: { skip: boolean }) => { data?: { data: Array<{ id: string, groupName?: string, keyName?: string }> } }
     onSelect: (keyId: string, row?: object) => void
     onClose: () => void
+    takenKeyIds?: string[]
+    takenKeyHint?: string
   }) => {
     const { data } = useKeysQuery({ classId, fieldName, transformationResultType, start: 0, limit: 10 }, { skip: false })
 
@@ -32,8 +35,10 @@ jest.mock('../../components/tabs/steps/advanced-mapping-modal/step-target/classi
       <dialog open>
         { data?.data.map((row) => (
           <button
+            disabled={ takenKeyIds?.includes(row.id) }
             key={ row.id }
             onClick={ () => { onSelect(row.id, row) } }
+            title={ takenKeyIds?.includes(row.id) === true ? takenKeyHint : undefined }
             type="button"
           >
             { row.keyName }
@@ -91,5 +96,23 @@ describe('the key dialog of the ad hoc import', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(onClose).toHaveBeenCalled()
+  })
+  it('marks the keys other columns already go into', () => {
+    mockKeysQuery.mockReturnValue({ data: { data: [{ id: '2-4', groupName: 'Dimensions', keyName: 'Width' }, { id: '2-5', groupName: 'Dimensions', keyName: 'Height' }], total: 2 }, isFetching: false })
+
+    render(
+      <StoreKeyDialog
+        classId="PROD"
+        fieldName="attributes"
+        onClose={ jest.fn() }
+        onSelect={ jest.fn() }
+        takenKeyIds={ ['2-4'] }
+      />
+    )
+
+    const taken = screen.getByRole<HTMLButtonElement>('button', { name: 'Width' })
+    expect(taken.disabled).toBe(true)
+    expect(taken.title).toBe('Another column already goes into this key')
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Height' }).disabled).toBe(false)
   })
 })

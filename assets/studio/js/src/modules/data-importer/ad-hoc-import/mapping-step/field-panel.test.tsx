@@ -19,15 +19,17 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   createStyles: () => () => ({ styles: {} })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
-jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en', 'de', 'fr'] }) }))
+let mockLanguages = ['en', 'de', 'fr']
+jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: mockLanguages }) }))
 // the key dialog loads its keys from the server; here it offers one key to take, and a way out
 jest.mock('./store-key-dialog', () => ({
-  StoreKeyDialog: ({ fieldName, onSelect, onClose }: { fieldName: string, onSelect: (key: { id: string, label: string }) => void, onClose: () => void }) => (
+  StoreKeyDialog: ({ fieldName, onSelect, onClose, takenKeyIds }: { fieldName: string, onSelect: (key: { id: string, label: string }) => void, onClose: () => void, takenKeyIds?: string[] }) => (
     <dialog
       aria-label={ `Keys of ${fieldName}` }
       open
     >
       <button
+        disabled={ takenKeyIds?.includes('2-4') }
         onClick={ () => { onSelect({ id: '2-4', label: 'Dimensions › Width' }) } }
         type="button"
       >
@@ -113,6 +115,7 @@ const rowOf = (column: string): HTMLElement => fieldOf(column).closest<HTMLEleme
 
 afterEach(() => {
   cleanup()
+  mockLanguages = ['en', 'de', 'fr']
 })
 
 describe('picking fields', () => {
@@ -196,6 +199,17 @@ describe('picking fields', () => {
       expect(fieldOf('Name DE').value).toBe('name')
     })
 
+    it('offers no language another column has for the field', () => {
+      renderStep()
+      fireEvent.click(rowOf('Notiz'))
+      fireEvent.click(within(screen.getByRole('region', { name: 'Fields for Notiz' })).getByRole('treeitem', { name: 'Name' }))
+
+      const languagesOf = (column: string): string[] =>
+        Array.from(within(rowOf(column)).getByRole<HTMLSelectElement>('combobox', { name: 'Language' }).options).map(({ value }) => value)
+      expect(languagesOf('Notiz')).toEqual(['en', 'fr'])
+      expect(languagesOf('Name DE')).toEqual(['de', 'fr'])
+    })
+
     it('picked by hand gets the first language no other column has', () => {
       renderStep()
       fireEvent.click(rowOf('Notiz'))
@@ -231,6 +245,34 @@ describe('picking fields', () => {
 
       expect(screen.queryByRole('dialog')).toBeNull()
       expect(fieldOf('Preis').value).toBe('')
+    })
+
+    it('takes a key another column goes into only in another language', () => {
+      renderStep()
+      choose('Notiz', 'attributes')
+      fireEvent.click(screen.getByRole('button', { name: 'Width' }))
+
+      choose('Preis', 'attributes')
+      fireEvent.click(screen.getByRole('button', { name: 'Width' }))
+
+      const language = within(rowOf('Preis')).getByRole<HTMLSelectElement>('combobox', { name: 'Language' })
+      expect(within(rowOf('Notiz')).getByRole<HTMLSelectElement>('combobox', { name: 'Language' }).value).toBe('en')
+      expect(language.value).toBe('de')
+      expect(Array.from(language.options).map(({ value }) => value)).toEqual(['de', 'fr'])
+    })
+
+    it('does not offer a key other columns hold in every language', () => {
+      mockLanguages = ['en']
+      renderStep()
+      choose('Notiz', 'attributes')
+      fireEvent.click(screen.getByRole('button', { name: 'Width' }))
+
+      choose('Preis', 'attributes')
+
+      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Width' }).disabled).toBe(true)
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Change the key for Notiz' }))
+      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Width' }).disabled).toBe(false)
     })
 
     it('can change its key', () => {

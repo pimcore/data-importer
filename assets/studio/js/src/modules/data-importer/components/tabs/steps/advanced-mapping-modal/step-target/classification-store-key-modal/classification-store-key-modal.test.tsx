@@ -119,4 +119,32 @@ describe('the classification store key modal', () => {
     expect(useKeys).toHaveBeenCalledWith(expect.objectContaining({ classId: 'PROD', fieldName: 'attributes' }), { skip: false })
     expect(onSelect).toHaveBeenCalledWith('2-4', width)
   })
+  it('refuses a key a caller marks as taken, saying why', () => {
+    const height = { ...width, id: '2-5', keyId: 5, keyName: 'Height' }
+    mockConfigKeys.mockReturnValue({ data: { data: [width, height], total: 2 }, isFetching: false })
+    const onSelect = jest.fn()
+
+    render(
+      <ClassificationStoreKeyModal
+        classId="PROD"
+        fieldName="attributes"
+        onClose={ jest.fn() }
+        onSelect={ onSelect }
+        open
+        takenKeyHint="Taken by another column"
+        takenKeyIds={ ['2-4'] }
+        transformationResultType=""
+      />
+    )
+    apply()
+
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'common.apply-selection' }).disabled).toBe(true)
+    expect(screen.getByText('Taken by another column')).toBeTruthy()
+    expect(onSelect).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'row Height' }))
+    expect(screen.queryByText('Taken by another column')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'common.apply-selection' }))
+    expect(onSelect).toHaveBeenCalledWith('2-5', height)
+  })
 })

@@ -46,6 +46,9 @@ export interface ClassificationStoreKeyModalProps {
   onSelect: (keyId: string, row?: ClassificationStoreKeyRow) => void
   // where the keys come from; the configuration's endpoint unless a caller has its own
   useKeysQuery?: ClassificationStoreKeysQuery
+  // keys that can't be chosen here, with the reason shown when one is selected
+  takenKeyIds?: string[]
+  takenKeyHint?: string
 }
 
 export type ClassificationStoreKeysQuery = (
@@ -62,7 +65,9 @@ export const ClassificationStoreKeyModal = ({
   transformationResultType,
   onClose,
   onSelect,
-  useKeysQuery = useBundleDataImporterClassificationstoreLoadKeysQuery
+  useKeysQuery = useBundleDataImporterClassificationstoreLoadKeysQuery,
+  takenKeyIds = [],
+  takenKeyHint
 }: ClassificationStoreKeyModalProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -117,6 +122,7 @@ export const ClassificationStoreKeyModal = ({
   )
 
   const selectedRows: RowSelectionState = selectedRowId === null ? {} : { [selectedRowId]: true }
+  const selectionTaken = selectedRowId !== null && takenKeyIds.includes(selectedRowId)
 
   return (
     <Modal
@@ -189,6 +195,7 @@ export const ClassificationStoreKeyModal = ({
         gap="extra-small"
         justify="flex-end"
       >
+        { selectionTaken && takenKeyHint !== undefined && <Text type="secondary">{ takenKeyHint }</Text> }
         <Button
           onClick={ onClose }
           type="default"
@@ -196,7 +203,7 @@ export const ClassificationStoreKeyModal = ({
           { t('cancel') }
         </Button>
         <Button
-          disabled={ selectedRowId === null }
+          disabled={ selectedRowId === null || selectionTaken }
           onClick={ () => {
             if (selectedRowId !== null) {
               // Pre-seed the key-name cache from the row we already have, so the

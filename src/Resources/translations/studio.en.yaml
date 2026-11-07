@@ -401,3 +401,4 @@ data-importer.ad-hoc-import.mapping.pick-a-column: Pick a column to choose its f
 data-importer.ad-hoc-import.mapping.find-field: Find a field
 data-importer.ad-hoc-import.mapping.no-fields: No field found
 data-importer.ad-hoc-import.mapping.change-key: 'Change the key for {{column}}'
+data-importer.ad-hoc-import.mapping.key-taken: 'Another column already goes into this key'
