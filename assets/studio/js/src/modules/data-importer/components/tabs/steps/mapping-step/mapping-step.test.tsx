@@ -9,8 +9,8 @@
  */
 
 import React from 'react'
-import { Form } from 'antd'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { Form, type FormInstance } from 'antd'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { type SourceRow } from './sources-panel/sources-panel'
 import { PostedMappingSource } from '../mapping-source/posted-mapping-source'
 import { MappingStep } from '.'
@@ -87,14 +87,28 @@ const configuration = {
   mappingConfig: [{ label: 'Price', dataSourceIndex: ['price'], transformationResultType: 'numeric' }]
 }
 
-const Host = ({ classId = 'Product', mapped = [] }: { classId?: string, mapped?: Array<{ dataSourceIndex: string[] }> }): React.JSX.Element => {
+interface HostProps {
+  classId?: string
+  mapped?: Array<{ dataSourceIndex: string[] }>
+  formRef?: { current: FormInstance | null }
+}
+
+const Host = ({ classId = 'Product', mapped = [], formRef }: HostProps): React.JSX.Element => {
   const [form] = Form.useForm()
+  if (formRef !== undefined) formRef.current = form
 
   return (
     <Form
       form={ form }
       initialValues={ { mappingConfig: mapped } }
     >
+      { /* stands in for the resolver step's class select */ }
+      <Form.Item
+        name={ ['resolverConfig', 'dataObjectClassId'] }
+        noStyle
+      >
+        <input type="hidden" />
+      </Form.Item>
       { /* stands in for the mappings panel's list; the test's antd only watches the list's registered item fields */ }
       <Form.List name="mappingConfig">
         { (fields) => fields.map(field => (
@@ -117,6 +131,15 @@ const Host = ({ classId = 'Product', mapped = [] }: { classId?: string, mapped?:
       </PostedMappingSource>
     </Form>
   )
+}
+
+const suggestion = (sourceIndex: string, targetFieldName: string): Record<string, unknown> =>
+  ({ sourceIndex, sourceLabel: sourceIndex, targetFieldName, targetFieldLabel: targetFieldName, transformationResultType: 'input', score: 100, language: null })
+
+const pendingSuggestions = (): (suggestions: unknown[]) => void => {
+  let respond: (value: { data: { suggestions: unknown[] } }) => void = () => {}
+  suggestMappings.mockImplementationOnce(async () => await new Promise((resolve) => { respond = resolve }))
+  return (suggestions) => { respond({ data: { suggestions } }) }
 }
 
 const clickAutofillOnceLoaded = async (): Promise<void> => {
@@ -210,6 +233,36 @@ describe('MappingStep on a posted mapping source', () => {
 
     expect((await screen.findByTestId('autofill-suggestions')).textContent).toBe('0')
     expect(suggestMappings).not.toHaveBeenCalled()
+  })
+
+  it('drops a response that arrives after the class changed', async () => {
+    const formRef: { current: FormInstance | null } = { current: null }
+    const respond = pendingSuggestions()
+    render(<Host formRef={ formRef } />)
+    await clickAutofillOnceLoaded()
+    await waitFor(() => { expect(suggestMappings).toHaveBeenCalledTimes(1) })
+
+    act(() => { formRef.current?.setFieldValue(['resolverConfig', 'dataObjectClassId'], 'Variant') })
+    await waitFor(() => {
+      expect(initiate).toHaveBeenCalledWith(expect.objectContaining({ classId: 'Variant' }))
+    })
+    await act(async () => { respond([suggestion('sku', 'sku')]) })
+
+    expect(screen.queryByTestId('autofill-suggestions')).toBeNull()
+    expect(trackError).not.toHaveBeenCalled()
+  })
+
+  it('leaves out a column mapped while the request ran', async () => {
+    const formRef: { current: FormInstance | null } = { current: null }
+    const respond = pendingSuggestions()
+    render(<Host formRef={ formRef } />)
+    await clickAutofillOnceLoaded()
+    await waitFor(() => { expect(suggestMappings).toHaveBeenCalledTimes(1) })
+
+    act(() => { formRef.current?.setFieldValue('mappingConfig', [{ dataSourceIndex: ['sku'] }]) })
+    await act(async () => { respond([suggestion('sku', 'sku'), suggestion('name [de]', 'name')]) })
+
+    expect((await screen.findByTestId('autofill-suggestions')).textContent).toBe('1')
   })
 
   it('loads the attributes of an applied suggestion\'s result type', async () => {

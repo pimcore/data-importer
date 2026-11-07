@@ -148,6 +148,8 @@ final readonly class ColumnMatcher
 
     /**
      * A regional language needs to be a valid one; a two letter region of an unknown one falls back to its language.
+     * Spelled like a locale (`en_DE`), the suffix is that fallback even when its region is a valid language too;
+     * otherwise of two languages (`de_en`) the last one counts.
      *
      * @param array<string, string> $languages valid languages by their lower case spelling
      *
@@ -158,10 +160,19 @@ final readonly class ColumnMatcher
         $label = trim($label);
         $regional = preg_match(self::REGIONAL_LANGUAGE_PATTERN, $label, $regionalMatch) === 1;
 
+        $fallback = null;
         if ($regional) {
             $language = $languages[strtolower($regionalMatch[2] . '_' . $regionalMatch[3])] ?? null;
             if ($language !== null) {
                 return ['base' => $regionalMatch[1], 'language' => $language];
+            }
+
+            $language = strlen($regionalMatch[3]) === 2 ? $languages[strtolower($regionalMatch[2])] ?? null : null;
+            if ($language !== null) {
+                $fallback = ['base' => $regionalMatch[1], 'language' => $language];
+                if (ctype_lower($regionalMatch[2]) && ctype_upper($regionalMatch[3])) {
+                    return $fallback;
+                }
             }
         }
 
@@ -172,14 +183,7 @@ final readonly class ColumnMatcher
             }
         }
 
-        if ($regional && strlen($regionalMatch[3]) === 2) {
-            $language = $languages[strtolower($regionalMatch[2])] ?? null;
-            if ($language !== null) {
-                return ['base' => $regionalMatch[1], 'language' => $language];
-            }
-        }
-
-        return null;
+        return $fallback;
     }
 
     /**
