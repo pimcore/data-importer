@@ -69,3 +69,10 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsService
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~

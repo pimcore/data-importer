@@ -119,3 +119,19 @@ pimcore_studio_api_data_importer_classificationstore_load_attributes: Load Class
 pimcore_studio_api_data_importer_classificationstore_load_keys: Load Classification Store Keys
 pimcore_studio_api_data_importer_classificationstore_load_key_name: Load Classification Store Key Name
 pimcore_studio_api_data_importer_connection_list: List Database Connections
+bundle_data_importer_ad_hoc_import_upload_file: Upload a File for an Ad Hoc Import
+bundle_data_importer_ad_hoc_import_upload_file_description: Upload a CSV or XLSX file for an ad hoc import into a data object folder and read what it holds, or why it cannot be imported
+bundle_data_importer_ad_hoc_import_upload_file_summary: Upload a File for an Ad Hoc Import
+bundle_data_importer_ad_hoc_import_upload_file_success_response: The file, its detected settings and first rows, or why it is refused
+bundle_data_importer_ad_hoc_import_inspect_file: Read an Uploaded File with Other Settings
+bundle_data_importer_ad_hoc_import_inspect_file_description: Read a file uploaded for an ad hoc import with the given settings
+bundle_data_importer_ad_hoc_import_inspect_file_summary: Read an Uploaded File with Other Settings
+bundle_data_importer_ad_hoc_import_inspect_file_success_response: The file under these settings, or why it is refused under them
+bundle_data_importer_ad_hoc_import_delete_file: Delete an Uploaded File
+bundle_data_importer_ad_hoc_import_delete_file_description: Delete a file uploaded for an ad hoc import
+bundle_data_importer_ad_hoc_import_delete_file_summary: Delete an Uploaded File
+bundle_data_importer_ad_hoc_import_delete_file_success_response: The file was deleted
+bundle_data_importer_ad_hoc_import_load_match_fields: Load the Fields to Match Objects by
+bundle_data_importer_ad_hoc_import_load_match_fields_description: Load the fields objects of a class can be matched by in an ad hoc import
+bundle_data_importer_ad_hoc_import_load_match_fields_summary: Load the Fields to Match Objects by
+bundle_data_importer_ad_hoc_import_load_match_fields_success_response: List of the fields

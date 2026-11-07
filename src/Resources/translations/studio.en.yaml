@@ -327,3 +327,50 @@ data-importer.execution.status.cancel: Cancel execution & clean up queue
 data-importer.execution.cron-validating: Validating cron expression...
 data-importer.validation.required: '{{field}} is required'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Data Object Importer
+user-management.permissions.plugin_data_importer_ad_hoc_import: Ad-hoc import
+
+# Ad hoc import
+data-importer.ad-hoc-import.menu-item: Import file…
+data-importer.ad-hoc-import.title: 'Import file into {{path}}'
+data-importer.ad-hoc-import.step.file: File
+data-importer.ad-hoc-import.step.mapping: Mapping
+data-importer.ad-hoc-import.step.preview: Preview
+data-importer.ad-hoc-import.step.import: Import
+data-importer.ad-hoc-import.cancel: Cancel
+data-importer.ad-hoc-import.back: Back
+data-importer.ad-hoc-import.next: Next
+data-importer.ad-hoc-import.file.title: File
+data-importer.ad-hoc-import.file.drop: Drag and drop an XLSX or CSV file here, or click to choose one
+data-importer.ad-hoc-import.file.remove: Remove file
+data-importer.ad-hoc-import.file.cancel-upload: Cancel upload
+data-importer.ad-hoc-import.file.summary: '{{rows}} rows · {{columns}} columns · {{size}}'
+data-importer.ad-hoc-import.file.summary-refused: '{{rows}} rows · {{size}}'
+data-importer.ad-hoc-import.file.progress: '{{percent}} % · {{loaded}} of {{total}}'
+data-importer.ad-hoc-import.refused.too-many-rows: 'This file has {{rows}} rows; an ad hoc import takes up to {{limit}}.'
+data-importer.ad-hoc-import.refused.too-many-rows-hint: Split the file, or import it with a Data Importer configuration in the Data Hub.
+data-importer.ad-hoc-import.refused.too-many-cells: This sheet reaches too far for an ad hoc import.
+data-importer.ad-hoc-import.refused.unreadable: 'This file cannot be read as {{type}}.'
+data-importer.ad-hoc-import.refused.wrong-format: Only XLSX and CSV files can be imported.
+data-importer.ad-hoc-import.settings.delimiter: Delimiter
+data-importer.ad-hoc-import.settings.delimiter.semicolon: '; Semicolon'
+data-importer.ad-hoc-import.settings.delimiter.comma: ', Comma'
+data-importer.ad-hoc-import.settings.delimiter.tab: Tab
+data-importer.ad-hoc-import.settings.delimiter.pipe: '| Pipe'
+data-importer.ad-hoc-import.settings.delimiter.detected: '{{delimiter}} (detected)'
+data-importer.ad-hoc-import.settings.enclosure: Enclosure
+data-importer.ad-hoc-import.settings.escape: Escape
+data-importer.ad-hoc-import.settings.sheet: Sheet
+data-importer.ad-hoc-import.settings.column-names: Column names
+data-importer.ad-hoc-import.settings.in-first-row: in the first row
+data-importer.ad-hoc-import.first-rows.more-columns: '+{{count}} more'
+data-importer.ad-hoc-import.objects.title: Objects
+data-importer.ad-hoc-import.objects.class: Class
+data-importer.ad-hoc-import.objects.match-by: Match existing objects by
+data-importer.ad-hoc-import.objects.match-by.object-id: Object ID
+data-importer.ad-hoc-import.objects.match-by.field: Field
+data-importer.ad-hoc-import.objects.from-column: from column
+data-importer.ad-hoc-import.objects.after-the-file: after the file
+data-importer.ad-hoc-import.objects.match-hint: Found objects are updated where they are.
+data-importer.ad-hoc-import.objects.new-objects-in: New objects in
+data-importer.ad-hoc-import.objects.optional: (optional)
+data-importer.ad-hoc-import.objects.new-objects-hint: 'Empty: the folder you clicked.'
