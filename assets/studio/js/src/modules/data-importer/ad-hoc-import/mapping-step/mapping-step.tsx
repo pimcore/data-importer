@@ -220,7 +220,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
           fieldName={ storeKeyFor.field }
           onClose={ () => { setStoreKeyFor(null) } }
           onSelect={ (key) => {
-            change(chooseStoreKey(mapping, storeKeyFor.column, storeKeyFor.field, key))
+            change(chooseStoreKey(mapping, storeKeyFor.column, storeKeyFor.field, key, languages))
             setStoreKeyFor(null)
           } }
           takenKeyIds={ takenStoreKeys(mapping.rows, { key: storeKeyFor.field, localized: fields.some(({ key, localized }) => key === storeKeyFor.field && localized) }, storeKeyFor.column, languages) }

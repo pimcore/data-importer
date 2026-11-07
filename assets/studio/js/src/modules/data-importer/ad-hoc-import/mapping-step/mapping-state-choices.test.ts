@@ -132,6 +132,15 @@ describe('a classification store', () => {
     expect(takenStoreKeys(germanToo.rows, attributes, 'Name DE', ['en', 'de'])).toEqual(['2-4'])
     expect(chooseLanguage(germanToo, 'Preis', 'en')).toEqual(germanToo)
   })
+
+  it('moves to a free language when the key is taken in its own', () => {
+    const notizWidthEn = chooseLanguage(chooseStoreKey(mapping, 'Notiz', 'attributes', width), 'Notiz', 'en')
+    const preisHeightEn = chooseLanguage(chooseStoreKey(notizWidthEn, 'Preis', 'attributes', height), 'Preis', 'en')
+
+    const next = chooseStoreKey(preisHeightEn, 'Preis', 'attributes', width, ['en', 'de'])
+    expect(rowOf(next, 'Preis').choice).toEqual({ field: 'attributes', language: 'de', key: width })
+    expect(chooseStoreKey(preisHeightEn, 'Preis', 'attributes', width, ['en'])).toEqual(preisHeightEn)
+  })
 })
 
 describe('the language of a column', () => {

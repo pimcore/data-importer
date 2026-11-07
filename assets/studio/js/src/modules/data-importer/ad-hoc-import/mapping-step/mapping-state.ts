@@ -164,13 +164,21 @@ export const chooseField = (mapping: Mapping, column: string, field: string | un
 
 /**
  * A classification store goes in by one of its keys, one column per key (and language); the language stays while the
- * store does.
+ * store does, unless another column holds the key in it: then the first language free for the key.
  */
-export const chooseStoreKey = (mapping: Mapping, column: string, field: string, key: StoreKey): Mapping =>
+export const chooseStoreKey = (
+  mapping: Mapping,
+  column: string,
+  field: string,
+  key: StoreKey,
+  languages: string[] = []
+): Mapping =>
   changeRow(mapping, column, (row) => {
-    const language = row.choice?.field === field ? row.choice.language : null
+    const free = (language: string | null): boolean => !isTaken(mapping.rows, { field, language, key }, column)
+    const kept = row.choice?.field === field ? row.choice.language : null
+    const language = free(kept) ? kept : kept === null ? undefined : languages.find(free)
 
-    return isTaken(mapping.rows, { field, language, key }, column)
+    return language === undefined
       ? row
       : { ...row, choice: { field, language, key }, auto: false }
   })
