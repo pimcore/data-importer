@@ -137,7 +137,9 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             'matchColumn' => $match['column'] ?? null,
             'newObjectsFolder' => $folder,
             'columns' => $columns,
-            'columnsBy' => $this->columnsBy(is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []),
+            'columnsBy' => $this->columnsBy(
+                is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []
+            ),
             'unusable' => $unusable,
         ];
     }
