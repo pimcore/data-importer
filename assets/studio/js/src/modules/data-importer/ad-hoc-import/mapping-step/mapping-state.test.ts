@@ -48,7 +48,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, given: Partial<MappingField> = {}): MappingField =>
-  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', ...given })
+  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', group: ['Product'], classificationStore: false, ...given })
 
 const fields = [field('sku', { mandatory: true }), field('name', { localized: true, mandatory: true }), field('price'), field('ean', { mandatory: true })]
 

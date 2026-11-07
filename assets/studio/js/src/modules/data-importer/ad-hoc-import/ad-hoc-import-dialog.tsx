@@ -31,8 +31,16 @@ import {
   type ObjectsSettings
 } from './file-step/file-step-state'
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
-import { canContinueMapping, createMapping, mappingBasis, type Mapping, type MappingField } from './mapping-step/mapping-state'
+import {
+  canContinueMapping,
+  createMapping,
+  mappingBasis,
+  withLanguages,
+  type Mapping,
+  type MappingField
+} from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
+import { useLanguages } from './mapping-step/use-languages'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -52,6 +60,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
   const [step, setStep] = useState(0)
@@ -199,7 +208,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       }
 
       setFields(result.data.fields)
-      setMapping(createMapping(inspected, objects, result.data))
+      setMapping(withLanguages(createMapping(inspected, objects, result.data), result.data.fields, languages))
     })
   }
 
@@ -266,8 +275,9 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           phase={ phase }
         />
       ) }
-      { step === 1 && (
+      { step === 1 && objects.classId !== undefined && (
         <MappingStep
+          classId={ objects.classId }
           fields={ fields }
           isLoading={ isLoadingMapping }
           mapping={ mapping }

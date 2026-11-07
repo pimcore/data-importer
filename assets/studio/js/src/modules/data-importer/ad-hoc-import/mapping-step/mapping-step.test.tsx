@@ -19,6 +19,9 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   createStyles: () => () => ({ styles: {} })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
+jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en', 'de', 'fr'] }) }))
+// loads its keys from the server, which the field panel's test stands in for
+jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
 
 const inspected: InspectedFile = {
   maxRows: 5000,
@@ -39,7 +42,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, title: string, given: Partial<LoadedMapping['fields'][number]> = {}): LoadedMapping['fields'][number] =>
-  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', ...given })
+  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', group: ['Product'], classificationStore: false, ...given })
 
 const loaded: LoadedMapping = {
   fields: [
@@ -60,6 +63,7 @@ const Stateful = ({ initial, isLoading = false }: { initial: Mapping | null, isL
 
   return (
     <MappingStep
+      classId="PROD"
       fields={ loaded.fields }
       isLoading={ isLoading }
       mapping={ mapping }

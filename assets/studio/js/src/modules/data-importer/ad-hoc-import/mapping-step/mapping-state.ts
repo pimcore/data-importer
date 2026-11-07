@@ -17,10 +17,18 @@ export type MappingField = LoadedMapping['fields'][number]
 // A suggestion this sure is taken at once; a weaker one waits for "Use all suggestions"
 export const AUTO_SCORE = 100
 
+// a key of a classification store, as `<group id>-<key id>`
+export interface StoreKey {
+  id: string
+  label: string
+}
+
 export interface FieldChoice {
   field: string
   // for a localized field: the language the column holds
   language: string | null
+  // for a classification store: the key the column goes into
+  key?: StoreKey
 }
 
 export interface MappingRow {
@@ -60,7 +68,8 @@ const sampleOf = (inspected: InspectedFile, position: number): string | undefine
     .map((row) => row[position])
     .find((value): value is string => value !== null && value !== undefined && value !== '')
 
-const sameChoice = (a: FieldChoice, b: FieldChoice): boolean => a.field === b.field && a.language === b.language
+const sameChoice = (a: FieldChoice, b: FieldChoice): boolean =>
+  a.field === b.field && a.language === b.language && a.key?.id === b.key?.id
 
 /**
  * Whether another column than this one already goes into the field; one column per field, and per language for a
@@ -68,6 +77,21 @@ const sameChoice = (a: FieldChoice, b: FieldChoice): boolean => a.field === b.fi
  */
 export const isTaken = (rows: MappingRow[], choice: FieldChoice, column?: string): boolean =>
   rows.some((row) => row.column !== column && !row.skipped && row.choice !== undefined && sameChoice(row.choice, choice))
+
+/**
+ * Whether the column can still go into the field: a classification store by another key, a localized field in another
+ * language.
+ */
+export const canGoInto = (rows: MappingRow[], field: MappingField, column: string, languages: string[]): boolean => {
+  if (field.classificationStore) {
+    return true
+  }
+  if (field.localized) {
+    return languages.length === 0 || languages.some((language) => !isTaken(rows, { field: field.key, language }, column))
+  }
+
+  return !isTaken(rows, { field: field.key, language: null }, column)
+}
 
 const isOpen = (row: MappingRow): boolean => !row.isMatch && !row.skipped && row.choice === undefined
 
@@ -137,6 +161,46 @@ export const chooseField = (mapping: Mapping, column: string, field: string | un
       : { field, language: row.choice?.field === field ? row.choice.language : null },
     auto: false
   }))
+
+/**
+ * A classification store goes in by one of its keys; the language stays while the store does.
+ */
+export const chooseStoreKey = (mapping: Mapping, column: string, field: string, key: StoreKey): Mapping =>
+  changeRow(mapping, column, (row) => ({
+    ...row,
+    choice: { field, language: row.choice?.field === field ? row.choice.language : null, key },
+    auto: false
+  }))
+
+export const chooseLanguage = (mapping: Mapping, column: string, language: string): Mapping =>
+  changeRow(mapping, column, (row) => row.choice === undefined ? row : { ...row, choice: { ...row.choice, language } })
+
+/**
+ * Gives each column going into a localized field without a language one: the language guessed from the column name,
+ * else the first no other column has for that field, else the first.
+ */
+export const withLanguages = (mapping: Mapping, fields: MappingField[], languages: string[]): Mapping => {
+  const localized = new Set(fields.filter(({ localized }) => localized).map(({ key }) => key))
+  const needsLanguage = (row: MappingRow): boolean =>
+    !row.isMatch && !row.skipped && row.choice?.language === null && localized.has(row.choice.field)
+  if (languages.length === 0 || !mapping.rows.some(needsLanguage)) {
+    return mapping
+  }
+
+  const rows = [...mapping.rows]
+  rows.forEach((row, position) => {
+    if (!needsLanguage(row)) {
+      return
+    }
+    const choice = row.choice!
+    const free = languages.filter((language) => !isTaken(rows, { ...choice, language }, row.column))
+    const guessed = row.suggestion?.language ?? null
+    const language = guessed !== null && free.includes(guessed) ? guessed : free[0] ?? languages[0]
+    rows[position] = { ...row, choice: { ...choice, language } }
+  })
+
+  return { ...mapping, rows }
+}
 
 export const skipColumn = (mapping: Mapping, column: string): Mapping =>
   changeRow(mapping, column, (row) => ({ ...row, choice: undefined, auto: false, skipped: true }))

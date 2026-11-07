@@ -11,7 +11,10 @@
 import React, { useMemo, useState } from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Button, Flex, FormKit, SearchInput, Segmented, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
+import { FieldPanel } from './field-panel'
 import {
+  chooseField,
+  chooseStoreKey,
   missingRequiredFields,
   pendingSuggestionCount,
   restoreColumn,
@@ -19,33 +22,54 @@ import {
   skippedRows,
   takeAllSuggestions,
   visibleRows,
+  withLanguages,
   type Mapping,
   type MappingField,
   type RowFilter
 } from './mapping-state'
 import { MappingRowView } from './mapping-row'
+import { StoreKeyDialog } from './store-key-dialog'
+import { useLanguages } from './use-languages'
 
 const SEARCH_WIDTH = 240
+const PANEL_WIDTH = 320
 const FILTERS: RowFilter[] = ['all', 'mapped', 'open']
 
 const useStyles = createStyles(({ token, css }) => ({
   quiet: css`
     color: ${token.colorTextTertiary};
+  `,
+  rows: css`
+    flex: 1;
+    min-width: 0;
+  `,
+  panel: css`
+    width: ${PANEL_WIDTH}px;
+    flex: none;
   `
 }))
 
 export interface MappingStepProps {
+  // the class the objects are of, whose classification store keys are offered
+  classId: string
   mapping: Mapping | null
   fields: MappingField[]
   isLoading: boolean
   onChange: (mapping: Mapping) => void
 }
 
-export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const languages = useLanguages()
   const [filter, setFilter] = useState<RowFilter>('all')
   const [search, setSearch] = useState('')
+  const [activeColumn, setActiveColumn] = useState<string | null>(null)
+  // the column and store whose key is being chosen
+  const [storeKeyFor, setStoreKeyFor] = useState<{ column: string, field: string } | null>(null)
+
+  // a column going into a localized field always holds a language
+  const change = (next: Mapping): void => { onChange(withLanguages(next, fields, languages)) }
 
   const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
 
@@ -76,6 +100,21 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
         { isLoading && <Skeleton active /> }
       </Flex>
     )
+  }
+
+  // the column picked last, else the first one that can take a field
+  const activeRow = mapping.rows.find((row) => row.column === activeColumn && !row.isMatch && !row.skipped) ??
+    mapping.rows.find((row) => !row.isMatch && !row.skipped)
+
+  const pick = (field: MappingField): void => {
+    if (activeRow === undefined) {
+      return
+    }
+    if (field.classificationStore) {
+      setStoreKeyFor({ column: activeRow.column, field: field.key })
+      return
+    }
+    change(chooseField(mapping, activeRow.column, field.key))
   }
 
   const counts = rowCounts(mapping)
@@ -120,7 +159,7 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
         </Flex>
         <Button
           disabled={ pending === 0 }
-          onClick={ () => { onChange(takeAllSuggestions(mapping)) } }
+          onClick={ () => { change(takeAllSuggestions(mapping)) } }
         >
           { t('data-importer.ad-hoc-import.mapping.use-all-suggestions', { count: pending }) }
         </Button>
@@ -138,22 +177,53 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
       ) }
 
       <Flex
-        aria-label={ t('data-importer.ad-hoc-import.mapping.columns') }
-        gap="small"
-        role="list"
-        vertical
+        align="flex-start"
+        gap="normal"
       >
-        { rows.map((row) => (
-          <MappingRowView
+        <Flex
+          aria-label={ t('data-importer.ad-hoc-import.mapping.columns') }
+          className={ styles.rows }
+          gap="small"
+          role="list"
+          vertical
+        >
+          { rows.map((row) => (
+            <MappingRowView
+              fields={ fields }
+              isActive={ row.column === activeRow?.column }
+              key={ row.column }
+              languages={ languages }
+              mapping={ mapping }
+              onActivate={ setActiveColumn }
+              onChange={ change }
+              onPickStoreKey={ (column, field) => { setStoreKeyFor({ column, field }) } }
+              row={ row }
+            />
+          )) }
+          { rows.length === 0 && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.mapping.no-rows') }</Text> }
+        </Flex>
+        <div className={ styles.panel }>
+          <FieldPanel
             fields={ fields }
-            key={ row.column }
+            languages={ languages }
             mapping={ mapping }
-            onChange={ onChange }
-            row={ row }
+            onPick={ pick }
+            row={ activeRow }
           />
-        )) }
-        { rows.length === 0 && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.mapping.no-rows') }</Text> }
+        </div>
       </Flex>
+
+      { storeKeyFor !== null && (
+        <StoreKeyDialog
+          classId={ classId }
+          fieldName={ storeKeyFor.field }
+          onClose={ () => { setStoreKeyFor(null) } }
+          onSelect={ (key) => {
+            change(chooseStoreKey(mapping, storeKeyFor.column, storeKeyFor.field, key))
+            setStoreKeyFor(null)
+          } }
+        />
+      ) }
 
       { skipped.length > 0 && (
         <FormKit.Panel title={ t('data-importer.ad-hoc-import.mapping.not-imported', { count: skipped.length }) }>
@@ -169,7 +239,7 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
                   column: label,
                   interpolation: { escapeValue: false }
                 }) }
-                onClick={ () => { onChange(restoreColumn(mapping, column)) } }
+                onClick={ () => { change(restoreColumn(mapping, column)) } }
                 type="link"
               >
                 { t('data-importer.ad-hoc-import.mapping.restore') }
