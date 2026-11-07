@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CreatableClassTrait;
@@ -31,13 +32,14 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
 
     // An ad hoc import keeps objects where it finds them, names new ones by their match value and cannot set the
     // object type of a class with variants
-    private const array NO_MAPPING_TARGETS = ['key', 'path', 'type'];
+    public const array NO_MAPPING_TARGETS = ['key', 'path', 'type'];
 
     public function __construct(
         private ClassDefinitionServiceInterface $classDefinitionService, // NOSONAR php:S1068 read by CreatableClassTrait
         private MappingSuggestionServiceInterface $mappingSuggestionService,
         private ClassDefinitionResolverInterface $classDefinitionResolver,
         private DefinitionResolverInterface $brickDefinitionResolver,
+        private TransformationChain $transformationChain,
     ) {
     }
 
@@ -47,10 +49,15 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
         $this->assertMayCreate($classId);
 
         $class = $this->classDefinitionResolver->getById($classId);
+        $accepted = $this->transformationChain->acceptedTypes($classId);
         $fields = [];
         foreach ($this->mappingSuggestionService->loadTargets($classId) as $target) {
             if (!in_array($target['key'], self::NO_MAPPING_TARGETS, true)) {
-                $fields[] = [...$target, 'mandatory' => $this->isMandatory($class, $target['key'])];
+                $fields[] = [
+                    ...$target,
+                    'mandatory' => $this->isMandatory($class, $target['key']),
+                    'takesColumnAsIs' => $this->transformationChain->takesColumnAsIs($accepted[$target['key']] ?? []),
+                ];
             }
         }
 

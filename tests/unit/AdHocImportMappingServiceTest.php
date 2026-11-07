@@ -14,9 +14,12 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingService;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\Objectbrick\DefinitionResolverInterface;
@@ -52,15 +55,39 @@ class AdHocImportMappingServiceTest extends Unit
         $localized->addChild($this->input('name', mandatory: true));
         $class->addFieldDefinition('localizedfields', $localized);
 
-        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, class: $class)
-            ->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, class: $class, fieldTypes: [
+            TransformationDataTypeService::DEFAULT_TYPE => ['sku', 'name', 'notes'],
+            TransformationDataTypeService::NUMERIC => ['price'],
+        ])->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
 
         $this->assertSame([
-            [...$this->target('sku'), 'mandatory' => true],
-            [...$this->target('name', localized: true), 'mandatory' => true],
-            [...$this->target('price', 'numeric'), 'mandatory' => false],
-            [...$this->target('notes'), 'mandatory' => false],
+            [...$this->target('sku'), 'mandatory' => true, 'takesColumnAsIs' => true],
+            [...$this->target('name', localized: true), 'mandatory' => true, 'takesColumnAsIs' => true],
+            [...$this->target('price', 'numeric'), 'mandatory' => false, 'takesColumnAsIs' => true],
+            [...$this->target('notes'), 'mandatory' => false, 'takesColumnAsIs' => true],
         ], $mapping->getFields());
+    }
+
+    public function testTheMappingSaysWhichFieldsTakeAColumnWithoutATransformation(): void
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([
+            $this->target('price'),
+            $this->target('image', 'asset'),
+            $this->target('weight', 'quantityValue'),
+        ]);
+        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
+
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, fieldTypes: [
+            TransformationDataTypeService::NUMERIC => ['price'],
+            TransformationDataTypeService::ASSET => ['image'],
+        ])->loadMapping(new MappingSuggestionParameters('PROD', []));
+
+        // a number is converted; an image needs its asset loaded; a quantity value needs a unit
+        $this->assertSame(
+            ['price' => true, 'image' => false, 'weight' => false],
+            array_column($mapping->getFields(), 'takesColumnAsIs', 'key')
+        );
     }
 
     public function testTheMappingSuggestsForTheColumnsAsked(): void
@@ -214,12 +241,14 @@ class AdHocImportMappingServiceTest extends Unit
     /**
      * @param string[] $creatableClasses
      * @param array<string, Definition> $bricks
+     * @param array<string, list<string>> $fieldTypes per result type the fields that take it
      */
     private function service(
         array $creatableClasses,
         MappingSuggestionServiceInterface $suggestions,
         ?ClassDefinition $class = null,
-        array $bricks = []
+        array $bricks = [],
+        array $fieldTypes = []
     ): AdHocImportMappingService {
         $classes = $this->createStub(ClassDefinitionServiceInterface::class);
         $classes->method('getClassDefinitionCollection')->willReturnCallback(
@@ -242,6 +271,20 @@ class AdHocImportMappingServiceTest extends Unit
             static fn (string $key): ?Definition => $bricks[$key] ?? null
         );
 
-        return new AdHocImportMappingService($classes, $suggestions, $classResolver, $brickResolver);
+        $types = $this->createStub(DataTypeServiceInterface::class);
+        $types->method('loadClassAttributes')->willReturnCallback(
+            static fn (string $classId, string $type): ClassAttributesResponse => new ClassAttributesResponse(array_map(
+                static fn (string $key): array => ['key' => $key, 'title' => $key, 'localized' => false],
+                $fieldTypes[$type] ?? []
+            ))
+        );
+
+        return new AdHocImportMappingService(
+            $classes,
+            $suggestions,
+            $classResolver,
+            $brickResolver,
+            AdHocTransformations::chain($types)
+        );
     }
 }

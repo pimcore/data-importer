@@ -16,15 +16,18 @@ import {
   pendingSuggestionCount,
   restoreColumn,
   rowCounts,
+  setTransformations,
   skippedRows,
   takeAllSuggestions,
   takenFields,
+  unfitRows,
   visibleRows,
   type Mapping,
   type MappingField,
   type RowFilter
 } from './mapping-state'
 import { MappingRowView } from './mapping-row'
+import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 const SEARCH_WIDTH = 240
 const FILTERS: RowFilter[] = ['all', 'mapped', 'open']
@@ -40,15 +43,20 @@ export interface MappingStepProps {
   fields: MappingField[]
   isLoading: boolean
   onChange: (mapping: Mapping) => void
+  // what the transformations of a column run on; none, no transformations
+  source: TransformationSource | null
 }
 
-export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = ({ mapping, fields, isLoading, onChange, source }: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const [filter, setFilter] = useState<RowFilter>('all')
   const [search, setSearch] = useState('')
+  // the column whose transformations are open
+  const [editing, setEditing] = useState<string | null>(null)
 
   const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
+  const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
   const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
   const mapWith = (
@@ -79,6 +87,9 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
       </Flex>
     )
   }
+
+  const editedRow = mapping.rows.find(({ column }) => column === editing)
+  const editedField = fields.find(({ key }) => key === editedRow?.choice?.field)
 
   const counts = rowCounts(mapping)
   const pending = pendingSuggestionCount(mapping)
@@ -139,6 +150,17 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
         />
       ) }
 
+      { unfit.length > 0 && (
+        <Alert
+          message={ t('data-importer.ad-hoc-import.mapping.not-fitting', {
+            columns: unfit.map(({ label }) => label).join(', '),
+            interpolation: { escapeValue: false }
+          }) }
+          showIcon
+          type="warning"
+        />
+      ) }
+
       <Flex
         aria-label={ t('data-importer.ad-hoc-import.mapping.columns') }
         gap="small"
@@ -151,6 +173,7 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
             key={ row.column }
             mapping={ mapping }
             onChange={ onChange }
+            onTransform={ source === null ? undefined : setEditing }
             row={ row }
             taken={ taken }
           />
@@ -180,6 +203,19 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange }: MappingSte
             </Flex>
           )) }
         </FormKit.Panel>
+      ) }
+
+      { source !== null && editedRow !== undefined && editedField !== undefined && (
+        <TransformationsModal
+          field={ editedField }
+          onApply={ (transformations, fits) => {
+            onChange(setTransformations(mapping, editedRow.column, transformations, fits))
+            setEditing(null)
+          } }
+          onCancel={ () => { setEditing(null) } }
+          row={ editedRow }
+          source={ source }
+        />
       ) }
     </Flex>
   )

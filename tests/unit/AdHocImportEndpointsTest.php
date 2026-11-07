@@ -22,12 +22,16 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileCo
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationParameters;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Util\Constant\CacheKeys;
@@ -55,6 +59,12 @@ class AdHocImportEndpointsTest extends Unit
             '/ad-hoc-import/match-fields',
         ],
         LoadMappingController::class => ['loadMapping', 'load_mapping', 'POST', '/ad-hoc-import/mapping'],
+        PreviewTransformationsController::class => [
+            'previewTransformations',
+            'preview_transformations',
+            'POST',
+            '/ad-hoc-import/file/{fileId}/transformations',
+        ],
     ];
 
     protected UnitTester $tester;
@@ -158,6 +168,7 @@ class AdHocImportEndpointsTest extends Unit
             'localized' => true,
             'mandatory' => true,
             'transformationResultType' => 'default',
+            'takesColumnAsIs' => true,
         ];
         $suggestion = [
             'sourceIndex' => 'Name DE',
@@ -174,6 +185,63 @@ class AdHocImportEndpointsTest extends Unit
         );
 
         $this->assertSame(['fields' => [$field], 'suggestions' => [$suggestion]], $answer);
+    }
+
+    public function testTransformationsArriveFromTheRequestWithTheFileSettings(): void
+    {
+        /** @var DenormalizerInterface $serializer */
+        $serializer = $this->tester->grabService('serializer');
+        $pipeline = [['type' => 'explode', 'settings' => ['delimiter' => ',']], ['type' => 'loadAsset']];
+
+        $parameters = $serializer->denormalize([
+            'classId' => 'PROD',
+            'column' => 'Images',
+            'field' => 'gallery',
+            'transformationPipeline' => $pipeline,
+            'delimiter' => ';',
+            'hasHeaderRow' => false,
+        ], AdHocImportTransformationParameters::class);
+
+        $this->assertSame('PROD', $parameters->getClassId());
+        $this->assertSame('Images', $parameters->getColumn());
+        $this->assertSame('gallery', $parameters->getField());
+        $this->assertSame($pipeline, $parameters->getTransformationPipeline());
+        $this->assertSame(';', $parameters->toSettingsInput()->delimiter);
+        $this->assertFalse($parameters->toSettingsInput()->hasHeaderRow);
+        $this->assertNull($parameters->toSettingsInput()->sheetName);
+    }
+
+    public function testTransformationsReachTheStudioWithTheirFieldNames(): void
+    {
+        /** @var SerializerInterface $serializer */
+        $serializer = $this->tester->grabService('serializer');
+
+        $cell = new AdHocImportTransformationCell(['Chair']);
+        $response = new AdHocImportTransformationResponse(
+            [new AdHocImportTransformationCell([' Chair '])],
+            [['type' => 'trim', 'resultType' => 'default', 'error' => null, 'values' => [$cell]]],
+            'asArray',
+            'array',
+            true,
+            [$cell, new AdHocImportTransformationCell([], true)],
+            ['trim']
+        );
+        $answer = json_decode($serializer->serialize($response, 'json'), true);
+
+        $this->assertSame([
+            'values' => [['items' => [' Chair '], 'failed' => false]],
+            'steps' => [[
+                'type' => 'trim',
+                'resultType' => 'default',
+                'error' => null,
+                'values' => [['items' => ['Chair'], 'failed' => false]],
+            ]],
+            'conversion' => 'asArray',
+            'resultType' => 'array',
+            'fits' => true,
+            'results' => [['items' => ['Chair'], 'failed' => false], ['items' => [], 'failed' => true]],
+            'offered' => ['trim'],
+        ], $answer);
     }
 
     public function testTheMigrationAddsTheRightUnlessItExistsAndRemovesItAgain(): void
