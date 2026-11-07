@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Boolean;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Date;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Gallery;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Numeric;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ConditionalConversion;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Explode;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
@@ -37,9 +38,13 @@ final class AdHocTransformations
 {
     /**
      * @param list<string> $without operator types to leave out, as if no bundle registered them
+     * @param array<string, OperatorInterface> $replacing operators that stand in for the registered ones
      */
-    public static function chain(DataTypeServiceInterface $types, array $without = []): TransformationChain
-    {
+    public static function chain(
+        DataTypeServiceInterface $types,
+        array $without = [],
+        array $replacing = []
+    ): TransformationChain {
         // the operators log nothing in a dry run
         $logger = (new \ReflectionClass(ApplicationLogger::class))->newInstanceWithoutConstructor();
 
@@ -56,7 +61,11 @@ final class AdHocTransformations
             'gallery' => new Gallery($logger),
             'boolean' => new Boolean($logger),
         ], array_flip($without));
+        $operators = [...$operators, ...$replacing];
 
-        return new TransformationChain(new MappingConfigurationFactory(new MappingConfiguration(), $operators, []), $types);
+        return new TransformationChain(
+            new MappingConfigurationFactory(new MappingConfiguration(), $operators, []),
+            $types
+        );
     }
 }

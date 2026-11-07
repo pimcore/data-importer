@@ -84,7 +84,8 @@ final readonly class AdHocImportMappingResponse
                     ),
                     new Property(
                         property: 'takesColumnAsIs',
-                        description: 'Whether a column goes into the field without a transformation, converted to its type',
+                        description: 'Whether a column goes into the field without a transformation, '
+                            . 'converted to its type',
                         type: 'boolean',
                         example: true
                     ),

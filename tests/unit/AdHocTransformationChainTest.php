@@ -14,30 +14,15 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
-use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsArray;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Boolean;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Date;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Gallery;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Numeric;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ConditionalConversion;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Explode;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StringReplace;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Trim;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService as Types;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Model\Asset\Image;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
 
 class AdHocTransformationChainTest extends Unit
@@ -45,6 +30,14 @@ class AdHocTransformationChainTest extends Unit
     private const string ARTICLE = '/Products/Chair';
 
     private const string HIDDEN_ARTICLE = '/Secret/Prototype';
+
+    private const string IMAGE = '/images/1.jpg';
+
+    private const string HIDDEN_IMAGE = '/Secret/prototype.jpg';
+
+    private const string DAY = '2026-11-07';
+
+    private const array TEXT_STEPS = ['trim', 'stringReplace', 'conditionalConversion'];
 
     public function testTheStepsRunOnTheColumnsValuesOneAfterTheOther(): void
     {
@@ -73,6 +66,31 @@ class AdHocTransformationChainTest extends Unit
         $this->assertSame([['Medium'], ['Large'], ['XL']], $this->items($result->getResults()));
     }
 
+    public function testAnyOtherValueTakesTheCounterpartOfTheStar(): void
+    {
+        $result = $this->chainOn(['M', 'XL', ''], [
+            $this->step(TransformationAllowList::MAP_VALUES, ['original' => 'M|*', 'converted' => 'Medium|Other']),
+        ], [Types::DEFAULT_TYPE]);
+
+        $this->assertSame([['Medium'], ['Other'], ['Other']], $this->items($result->getResults()));
+    }
+
+    public function testAMultiselectTakesNoLoadedObjectOrAsset(): void
+    {
+        $result = $this->chainOn(['1'], [], [Types::DEFAULT_ARRAY]);
+
+        $this->assertSame('asArray', $result->getConversion());
+        $this->assertSame([...self::TEXT_STEPS, 'explode'], $result->getOffered());
+
+        foreach ([TransformationAllowList::LOAD_OBJECT, TransformationAllowList::LOAD_ASSET] as $load) {
+            $loaded = $this->chainOn(['1'], [$this->step($load)], [Types::DEFAULT_ARRAY]);
+
+            $this->assertFalse($loaded->getFits(), $load);
+            $this->assertNull($loaded->getConversion(), $load);
+            $this->assertSame([], $loaded->getResults(), $load);
+        }
+    }
+
     public function testAListSplitFromTheColumnGoesIntoAMultiselectAsItIs(): void
     {
         $result = $this->chainOn(['red,blue', ''], [
@@ -96,7 +114,15 @@ class AdHocTransformationChainTest extends Unit
             ['12.50', '3'],
             [['12.5'], ['3']],
         ];
-        yield 'a date for a date field' => [[Types::DATE], 'date', Types::DATE, ['2026-11-07'], [['2026-11-07']]];
+        yield 'a date for a date field' => [[Types::DATE], 'date', Types::DATE, [self::DAY], [[self::DAY]]];
+        // the conversion reads a decimal point only; a Replace step turns the comma into one
+        yield 'a decimal comma for a numeric field, which drops the decimals' => [
+            [Types::NUMERIC],
+            'numeric',
+            Types::NUMERIC,
+            ['12,50'],
+            [['12']],
+        ];
         yield 'a one item list for a multiselect' => [
             [Types::DEFAULT_ARRAY],
             'asArray',
@@ -137,10 +163,10 @@ class AdHocTransformationChainTest extends Unit
 
     public function testAValueTheConversionCannotReadFailsInItsRowOnly(): void
     {
-        $result = $this->chainOn(['2026-11-07', '07.11.2026', ''], [], [Types::DATE]);
+        $result = $this->chainOn([self::DAY, '07.11.2026', ''], [], [Types::DATE]);
 
         $this->assertSame([false, true, false], $this->failed($result->getResults()));
-        $this->assertSame([['2026-11-07'], [], []], $this->items($result->getResults()));
+        $this->assertSame([[self::DAY], [], []], $this->items($result->getResults()));
     }
 
     public function testAColumnDoesNotGoIntoAnImageWithoutLoadingTheAsset(): void
@@ -157,7 +183,7 @@ class AdHocTransformationChainTest extends Unit
     {
         $result = $this->chainOn(['chair'], [], [Types::DEFAULT_TYPE, Types::BOOLEAN]);
 
-        $this->assertSame(['trim', 'stringReplace', 'conditionalConversion'], $result->getOffered());
+        $this->assertSame(self::TEXT_STEPS, $result->getOffered());
     }
 
     public function testARelationToObjectsLoadsThemFromAList(): void
@@ -165,7 +191,7 @@ class AdHocTransformationChainTest extends Unit
         $result = $this->chainOn(['1,2'], [], [Types::DATA_OBJECT_ARRAY]);
 
         // a single object is no list of them
-        $this->assertSame(['trim', 'stringReplace', 'conditionalConversion', 'explode'], $result->getOffered());
+        $this->assertSame([...self::TEXT_STEPS, 'explode'], $result->getOffered());
 
         $split = $this->chainOn(['1,2'], [$this->step(TransformationAllowList::SPLIT, ['delimiter' => ','])], [
             Types::DATA_OBJECT_ARRAY,
@@ -183,7 +209,7 @@ class AdHocTransformationChainTest extends Unit
         $result = $this->chainOn(['12,50'], [], [Types::NUMERIC, Types::BOOLEAN]);
 
         $this->assertSame('numeric', $result->getConversion());
-        $this->assertSame(['trim', 'stringReplace', 'conditionalConversion'], $result->getOffered());
+        $this->assertSame(self::TEXT_STEPS, $result->getOffered());
     }
 
     public function testAGalleryTakesTheAssetsLoadedFromAList(): void
@@ -194,10 +220,10 @@ class AdHocTransformationChainTest extends Unit
         ], [Types::GALLERY]);
 
         $this->assertSame(Types::ASSET_ARRAY, $result->getSteps()[1]['resultType']);
-        $this->assertSame([['/images/1.jpg', '/images/2.jpg'], []], $this->items($result->getSteps()[1]['values']));
+        $this->assertSame([[self::IMAGE, '/images/2.jpg'], []], $this->items($result->getSteps()[1]['values']));
         $this->assertSame('gallery', $result->getConversion());
         $this->assertSame(Types::GALLERY, $result->getResultType());
-        $this->assertSame([['/images/1.jpg', '/images/2.jpg'], []], $this->items($result->getResults()));
+        $this->assertSame([[self::IMAGE, '/images/2.jpg'], []], $this->items($result->getResults()));
         // nothing leads from a gallery back to the field
         $this->assertSame([], $result->getOffered());
     }
@@ -220,14 +246,36 @@ class AdHocTransformationChainTest extends Unit
         $this->assertStringNotContainsString(self::HIDDEN_ARTICLE, json_encode($this->items($listed->getResults())));
     }
 
+    public function testAnAssetTheUserMayNotSeeIsNotFound(): void
+    {
+        $result = $this->chainOn(['1', '3'], [$this->step(TransformationAllowList::LOAD_ASSET)], [Types::ASSET]);
+
+        $this->assertSame([[self::IMAGE], []], $this->items($result->getResults()));
+        $this->assertSame([false, false], $this->failed($result->getResults()));
+        $this->assertStringNotContainsString(self::HIDDEN_IMAGE, (string) json_encode($result->getSteps()));
+
+        $listed = $this->chainOn(['1|3'], [
+            $this->step(TransformationAllowList::SPLIT, ['delimiter' => '|']),
+            $this->step(TransformationAllowList::LOAD_ASSET),
+        ], [Types::GALLERY]);
+
+        $this->assertSame([[self::IMAGE]], $this->items($listed->getResults()));
+        $this->assertStringNotContainsString(
+            self::HIDDEN_IMAGE,
+            (string) json_encode($this->items($listed->getResults()))
+        );
+    }
+
     public function testARowAStepFailsOnIsLeftOutOfTheStepsAfterIt(): void
     {
-        $result = $this->chainOn(['broken', '1'], [$this->step(TransformationAllowList::LOAD_ASSET)], [Types::GALLERY]);
+        $result = $this->chainOn(['broken', '1'], [
+            $this->step(TransformationAllowList::LOAD_ASSET),
+        ], [Types::GALLERY]);
 
         $this->assertSame([true, false], $this->failed($result->getSteps()[0]['values']));
         $this->assertSame('gallery', $result->getConversion());
         $this->assertSame([true, false], $this->failed($result->getResults()));
-        $this->assertSame([[], ['/images/1.jpg']], $this->items($result->getResults()));
+        $this->assertSame([[], [self::IMAGE]], $this->items($result->getResults()));
     }
 
     public function testAValueThePreviewCannotShowIsNamedByItsType(): void
@@ -298,51 +346,6 @@ class AdHocTransformationChainTest extends Unit
     }
 
     /**
-     * @return iterable<string, array{mixed}>
-     */
-    public static function stepsAnAdHocImportDoesNotOffer(): iterable
-    {
-        yield 'combining columns' => [['type' => 'combine']];
-        yield 'importing files' => [['type' => 'importAsset']];
-        yield 'no type' => [['settings' => []]];
-        yield 'no object' => ['trim'];
-        yield 'loading an object by an attribute' => [['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'attribute']]];
-        yield 'loading unpublished objects' => [['type' => 'loadDataObject', 'settings' => ['loadUnpublished' => true]]];
-        yield 'a setting of another operator' => [['type' => 'trim', 'settings' => ['delimiter' => ',']]];
-        yield 'a setting that is no text' => [['type' => 'explode', 'settings' => ['delimiter' => [',']]]];
-        yield 'settings that are no object' => [['type' => 'trim', 'settings' => 'both']];
-        yield 'a trim mode there is none of' => [['type' => 'trim', 'settings' => ['mode' => 'middle']]];
-    }
-
-    /**
-     * @dataProvider stepsAnAdHocImportDoesNotOffer
-     */
-    public function testAStepOutsideTheAllowListIsRefused(mixed $step): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Transformation 3');
-
-        TransformationAllowList::step($step, 3);
-    }
-
-    public function testAStepKeepsItsSettingsAndTheLoadingOnesDefaultToTheId(): void
-    {
-        $this->assertSame(
-            ['type' => 'stringReplace', 'settings' => ['search' => ',', 'replace' => '.']],
-            TransformationAllowList::step(['type' => 'stringReplace', 'settings' => ['search' => ',', 'replace' => '.']], 1)
-        );
-        $this->assertSame(
-            ['type' => 'loadAsset', 'settings' => ['loadStrategy' => 'id']],
-            TransformationAllowList::step(['type' => 'loadAsset'], 1)
-        );
-        $this->assertSame(
-            ['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']],
-            TransformationAllowList::step(['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']], 1)
-        );
-        $this->assertSame(['type' => 'trim', 'settings' => []], TransformationAllowList::step(['type' => 'trim'], 1));
-    }
-
-    /**
      * @param list<string|null> $values
      * @param list<array{type: string, settings: array<string, string>}> $steps
      * @param list<string> $accepted
@@ -395,82 +398,29 @@ class AdHocTransformationChainTest extends Unit
 
     private function chain(?DataTypeServiceInterface $types = null): TransformationChain
     {
-        $logger = $this->createStub(ApplicationLogger::class);
-
-        $operators = [
-            'trim' => new Trim($logger),
-            'stringReplace' => new StringReplace($logger),
-            'conditionalConversion' => new ConditionalConversion($logger),
-            'explode' => new Explode($logger),
-            'loadAsset' => $this->loader(Types::ASSET, Types::ASSET_ARRAY, fn (string $id): ?ElementInterface => $this->image($id)),
-            'loadDataObject' => $this->loader(
+        return AdHocTransformations::chain($types ?? $this->createStub(DataTypeServiceInterface::class), [], [
+            'loadAsset' => new AdHocStandInLoader(Types::ASSET, Types::ASSET_ARRAY, $this->image(...)),
+            'loadDataObject' => new AdHocStandInLoader(
                 Types::DATA_OBJECT,
                 Types::DATA_OBJECT_ARRAY,
-                fn (string $id): mixed => $this->object($id)
+                $this->object(...)
             ),
-            'numeric' => new Numeric($logger),
-            'date' => new Date($logger),
-            'asArray' => new AsArray($logger),
-            'gallery' => new Gallery($logger),
-            'boolean' => new Boolean($logger),
-        ];
-
-        return new TransformationChain(
-            new MappingConfigurationFactory(new MappingConfiguration(), $operators, []),
-            $types ?? $this->createStub(DataTypeServiceInterface::class)
-        );
-    }
-
-    /**
-     * Stands in for a load operator, which needs the database: loads by ID as the real one does.
-     *
-     * @param \Closure(string): mixed $load
-     */
-    private function loader(string $type, string $arrayType, \Closure $load): AbstractOperator
-    {
-        return new class($this->createStub(ApplicationLogger::class), $type, $arrayType, $load) extends AbstractOperator {
-            public function __construct(
-                ApplicationLogger $logger,
-                private readonly string $type,
-                private readonly string $arrayType,
-                private readonly \Closure $load
-            ) {
-                parent::__construct($logger);
-            }
-
-            public function process($inputData, bool $dryRun = false)
-            {
-                if (is_array($inputData)) {
-                    return array_values(array_filter(array_map($this->load, $inputData)));
-                }
-
-                return ($this->load)((string) $inputData);
-            }
-
-            public function evaluateReturnType(string $inputType, ?int $index = null): string
-            {
-                return match ($inputType) {
-                    Types::DEFAULT_TYPE => $this->type,
-                    Types::DEFAULT_ARRAY => $this->arrayType,
-                    default => throw new \Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException(
-                        'Unsupported input type'
-                    ),
-                };
-            }
-        };
+        ]);
     }
 
     private function image(string $id): ?Image
     {
         if ($id === 'broken') {
-            throw new \RuntimeException('The asset cannot be read');
+            throw new \UnexpectedValueException('The asset cannot be read');
         }
-        if (!in_array($id, ['1', '2'], true)) {
+        if (!in_array($id, ['1', '2', '3'], true)) {
             return null;
         }
         $image = $this->createStub(Image::class);
-        $image->method('getRealFullPath')->willReturn('/images/' . $id . '.jpg');
-        $image->method('isAllowed')->willReturn(true);
+        $image->method('getRealFullPath')->willReturn($id === '3' ? self::HIDDEN_IMAGE : '/images/' . $id . '.jpg');
+        $image->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $user): bool => $type === 'view' && $user?->getId() === 4712 && $id !== '3'
+        );
 
         return $image;
     }

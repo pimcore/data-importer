@@ -59,7 +59,8 @@ final readonly class AdHocImportTransformationResponse
                     new Property(property: 'type', description: 'Operator type', type: 'string', example: 'trim'),
                     new Property(
                         property: 'resultType',
-                        description: 'Transformation result type after the step; null once a step cannot take its input',
+                        description: 'Transformation result type after the step; '
+                            . 'null once a step cannot take its input',
                         type: 'string',
                         example: 'default',
                         nullable: true

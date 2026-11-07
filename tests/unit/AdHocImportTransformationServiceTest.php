@@ -124,7 +124,10 @@ class AdHocImportTransformationServiceTest extends Unit
         $this->expectException(NotFoundHttpException::class);
         $this->expectExceptionMessage('Column Name not found');
 
-        $this->service()->previewTransformations($fileId, new AdHocImportTransformationParameters('PROD', 'Name', 'name'));
+        $this->service()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'Name', 'name')
+        );
     }
 
     /**
@@ -146,7 +149,10 @@ class AdHocImportTransformationServiceTest extends Unit
         $this->expectException(NotFoundHttpException::class);
         $this->expectExceptionMessage('Field ' . $field . ' not found');
 
-        $this->service()->previewTransformations($fileId, new AdHocImportTransformationParameters('PROD', 'name', $field));
+        $this->service()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', $field)
+        );
     }
 
     public function testTransformationsForAClassTheUserMayNotCreateAreForbidden(): void
@@ -169,7 +175,10 @@ class AdHocImportTransformationServiceTest extends Unit
         $this->expectException(NotFoundHttpException::class);
         $this->expectExceptionMessage('File ' . $fileId . ' not found');
 
-        $this->service()->previewTransformations($fileId, new AdHocImportTransformationParameters('PROD', 'name', 'name'));
+        $this->service()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', 'name')
+        );
     }
 
     public function testATransformationTheAdHocImportDoesNotOfferIsRefused(): void

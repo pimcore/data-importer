@@ -53,6 +53,11 @@ final readonly class TransformationChain
 
     private const string DATE_FORMAT = 'Y-m-d';
 
+    // asArray takes any input; only a text becomes a list of it, a loaded object or asset is no option value
+    private const array CONVERSION_INPUTS = [
+        'asArray' => [TransformationDataTypeService::DEFAULT_TYPE],
+    ];
+
     public function __construct(
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private DataTypeServiceInterface $dataTypeService,
@@ -98,33 +103,7 @@ final readonly class TransformationChain
     public function run(array $values, array $steps, array $accepted, User $user): AdHocImportTransformationResponse
     {
         $operators = $this->operators($steps);
-
-        $type = TransformationDataTypeService::DEFAULT_TYPE;
-        $data = $values;
-        $failed = array_fill(0, count($values), false);
-        $stepResults = [];
-        foreach ($operators as $position => $operator) {
-            $error = null;
-            if ($type !== null) {
-                try {
-                    $type = $operator->evaluateReturnType($type, $position + 1);
-                } catch (InvalidConfigurationException $exception) {
-                    $type = null;
-                    $error = $exception->getMessage();
-                }
-            }
-
-            if ($type !== null) {
-                [$data, $failed] = $this->process($operator, $data, $failed, $user);
-            }
-
-            $stepResults[] = [
-                'type' => $steps[$position]['type'],
-                'resultType' => $type,
-                'error' => $error,
-                'values' => $type === null ? [] : $this->cells($data, $failed),
-            ];
-        }
+        [$type, $data, $failed, $stepResults] = $this->runSteps($operators, $steps, $values, $user);
 
         // what comes next takes the steps' result, not its conversion
         $offered = $type === null ? [] : $this->offered($type, $accepted);
@@ -151,6 +130,44 @@ final readonly class TransformationChain
     }
 
     /**
+     * Runs the steps one after the other until one cannot take the result before it.
+     *
+     * @param list<OperatorInterface> $operators
+     * @param list<array{type: string, settings: array<string, string>}> $steps
+     * @param list<string|null> $values
+     *
+     * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>}
+     */
+    private function runSteps(array $operators, array $steps, array $values, User $user): array
+    {
+        $type = TransformationDataTypeService::DEFAULT_TYPE;
+        $data = $values;
+        $failed = array_fill(0, count($values), false);
+        $stepResults = [];
+        foreach ($operators as $position => $operator) {
+            $error = null;
+            if ($type !== null) {
+                try {
+                    $type = $operator->evaluateReturnType($type, $position + 1);
+                    [$data, $failed] = $this->process($operator, $data, $failed, $user);
+                } catch (InvalidConfigurationException $exception) {
+                    $type = null;
+                    $error = $exception->getMessage();
+                }
+            }
+
+            $stepResults[] = [
+                'type' => $steps[$position]['type'],
+                'resultType' => $type,
+                'error' => $error,
+                'values' => $type === null ? [] : $this->cells($data, $failed),
+            ];
+        }
+
+        return [$type, $data, $failed, $stepResults];
+    }
+
+    /**
      * The operator that converts a result of this type into the field, null if none is needed, false if none can.
      *
      * @param list<string> $accepted
@@ -162,6 +179,10 @@ final readonly class TransformationChain
         }
 
         foreach (TransformationAllowList::CONVERSIONS as $conversion) {
+            $takes = self::CONVERSION_INPUTS[$conversion] ?? null;
+            if ($takes !== null && !in_array($type, $takes, true)) {
+                continue;
+            }
             if (in_array($this->resultOf($conversion, $type), $accepted, true)) {
                 return $conversion;
             }
