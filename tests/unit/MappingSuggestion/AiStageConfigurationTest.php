@@ -30,6 +30,8 @@ class AiStageConfigurationTest extends Unit
     private const string AGENT_DEFINITION =
         __DIR__ . '/../../../src/Resources/config/agents/data-importer-mapping-suggestions.yaml';
 
+    private const string APPLICATION_AGENTS_PATH = '/app/config/agents';
+
     private function extension(string $alias): Extension
     {
         return new class($alias) extends Extension {
@@ -163,14 +165,14 @@ class AiStageConfigurationTest extends Unit
         $container->registerExtension(new PimcoreDataImporterExtension());
         $container->registerExtension($this->agentExtension());
         // the application's own config, as the agent bundle's config/pimcore/config.yaml adds its presets
-        $container->loadFromExtension('pimcore_agent', ['agents' => ['paths' => ['/app/config/agents']]]);
+        $container->loadFromExtension('pimcore_agent', ['agents' => ['paths' => [self::APPLICATION_AGENTS_PATH]]]);
 
         (new MergeExtensionConfigurationPass())->process($container);
 
         $paths = $container->getParameter('pimcore_agent.agents.paths');
         $this->assertCount(2, $paths);
-        $this->assertContains('/app/config/agents', $paths);
-        $bundlePath = array_values(array_diff($paths, ['/app/config/agents']))[0];
+        $this->assertContains(self::APPLICATION_AGENTS_PATH, $paths);
+        $bundlePath = array_values(array_diff($paths, [self::APPLICATION_AGENTS_PATH]))[0];
         $this->assertSame(
             realpath(__DIR__ . '/../../../src/Resources/config/agents'),
             realpath($bundlePath)
