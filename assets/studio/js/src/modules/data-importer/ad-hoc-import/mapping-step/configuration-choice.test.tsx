@@ -117,7 +117,7 @@ describe('the mapping with a configuration', () => {
 
     const options = Array.from(configurationSelect().options).slice(1)
     expect(options.map(({ text }) => text)).toEqual([
-      'Paths & more (it finds objects by path or not at all)',
+      'Paths & more (it does not find objects by their ID or a field in all folders)',
       'elsewhere (the file has no column EAN to match by)',
       'closed (you may not create objects in its folder)'
     ])

@@ -401,7 +401,7 @@ data-importer.ad-hoc-import.configuration.none: There is no data object import c
 data-importer.ad-hoc-import.configuration.load-failed: The configurations could not be loaded.
 data-importer.ad-hoc-import.configuration.unusable-option: '{{name}} ({{reason}})'
 data-importer.ad-hoc-import.configuration.unusable.class: you may not create objects of its class
-data-importer.ad-hoc-import.configuration.unusable.matching: it finds objects by path or not at all
+data-importer.ad-hoc-import.configuration.unusable.matching: it does not find objects by their ID or a field in all folders
 data-importer.ad-hoc-import.configuration.unusable.folder: it does not create new objects in one folder
 data-importer.ad-hoc-import.configuration.unusable.folder-missing: its folder for new objects does not exist
 data-importer.ad-hoc-import.configuration.unusable.folder-not-allowed: you may not create objects in its folder

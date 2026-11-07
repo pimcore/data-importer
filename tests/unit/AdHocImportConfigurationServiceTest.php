@@ -164,6 +164,12 @@ class AdHocImportConfigurationServiceTest extends Unit
                 ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU']]],
                 'matching',
             ],
+            'a field only within a tree path' => [
+                ['loading' => ['type' => 'attribute', 'settings' => [
+                    'dataSourceIndex' => 'SKU', 'attributeName' => 'sku', 'path' => '/Products/ShopA',
+                ]]],
+                'matching',
+            ],
             'matching without a column' => [
                 ['loading' => ['type' => 'id', 'settings' => ['dataSourceIndex' => null]]],
                 'matching',
@@ -183,6 +189,29 @@ class AdHocImportConfigurationServiceTest extends Unit
                 'folder-not-allowed',
             ],
         ];
+    }
+
+    /**
+     * @dataProvider wholeTreePaths
+     */
+    public function testAFieldMatchOverTheWholeTreeStaysUsable(string $path): void
+    {
+        $loading = ['type' => 'attribute', 'settings' => [
+            'dataSourceIndex' => 'SKU', 'attributeName' => 'sku', 'path' => $path,
+        ]];
+        [$configuration] = $this->service([$this->configuration('products', $this->config(loading: $loading))])
+            ->listConfigurations()->getConfigurations();
+
+        $this->assertNull($configuration['unusable']);
+        $this->assertSame('sku', $configuration['matchField']);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function wholeTreePaths(): array
+    {
+        return ['no path' => [''], 'the root' => ['/'], 'the root with blanks' => [' / ']];
     }
 
     /**

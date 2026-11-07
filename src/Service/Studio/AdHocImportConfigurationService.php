@@ -160,6 +160,12 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             return null;
         }
 
+        // a field match within a tree path (as the attribute strategy reads it) finds only the objects below it
+        $path = trim($this->text($settings['path'] ?? null) ?? '');
+        if ($by === 'field' && $path !== '' && $path !== '/') {
+            return null;
+        }
+
         return [
             'by' => $by,
             'field' => $by === 'field' ? $field : null,
