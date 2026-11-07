@@ -91,11 +91,18 @@ const useConfiguration = (props: StatefulProps = {}): void => {
   fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
 }
 
-const configurationSelect = (): HTMLSelectElement => screen.getByLabelText<HTMLSelectElement>('Configuration')
+const configurationList = (): HTMLElement => screen.getByRole('radiogroup', { name: 'Data Importer configurations' })
+
+const cards = (): HTMLElement[] => within(configurationList()).getAllByRole('radio')
+
+const card = (name: string): HTMLElement => within(configurationList()).getByRole('radio', { name })
 
 const choose = (name: string): void => {
-  fireEvent.change(configurationSelect(), { target: { value: name } })
+  fireEvent.click(card(name))
 }
+
+const detailOf = (shown: HTMLElement): string | null | undefined =>
+  document.getElementById(shown.getAttribute('aria-describedby') ?? '')?.textContent
 
 afterEach(() => {
   cleanup()
@@ -107,10 +114,13 @@ describe('the mapping with a configuration', () => {
 
     expect(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }).getAttribute('aria-checked')).toBe('true')
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
-    expect(Array.from(configurationSelect().options).map(({ text }) => text)).toEqual(['Choose a configuration', 'products', 'prices'])
+    expect(cards().map((shown) => shown.getAttribute('aria-label'))).toEqual(['products', 'prices'])
+    expect(cards().map(detailOf)).toEqual(['Product', 'Product'])
+    expect(screen.getByText('Only those you may read in the Data Hub')).toBeTruthy()
+    expect(screen.getByText('Choose a configuration')).toBeTruthy()
   })
 
-  it('offers one it cannot use only with the reason, unescaped', () => {
+  it('offers one it cannot use only with the reason on its second line, unescaped', () => {
     useConfiguration({
       configurations: [
         configuration({ name: 'Paths & more', unusable: 'matching' }),
@@ -119,13 +129,38 @@ describe('the mapping with a configuration', () => {
       ]
     })
 
-    const options = Array.from(configurationSelect().options).slice(1)
-    expect(options.map(({ text }) => text)).toEqual([
-      'Paths & more (it does not find objects by their ID or a field in all folders)',
-      'elsewhere (the file has no column EAN to match by)',
-      'closed (you may not create objects in its folder)'
+    expect(cards().map(detailOf)).toEqual([
+      'Product · it does not find objects by their ID or a field in all folders',
+      'Product · the file has no column EAN to match by',
+      'Product · you may not create objects in its folder'
     ])
-    expect(options.every(({ disabled }) => disabled)).toBe(true)
+    expect(cards().every((shown) => shown.getAttribute('aria-disabled') === 'true')).toBe(true)
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, -1])
+  })
+
+  it('does not choose one it cannot use', () => {
+    useConfiguration({ configurations: [configuration({ name: 'closed', unusable: 'folder-not-allowed' })] })
+    choose('closed')
+
+    expect(card('closed').getAttribute('aria-checked')).toBe('false')
+    expect(screen.queryByRole('region', { name: 'closed' })).toBeNull()
+  })
+
+  it('marks the chosen one and can be chosen by keyboard', () => {
+    useConfiguration({ configurations: [configuration(), configuration({ name: 'prices' })] })
+    choose('products')
+
+    expect(cards().map((shown) => shown.getAttribute('aria-checked'))).toEqual(['true', 'false'])
+    expect(screen.queryByText('Choose a configuration')).toBeNull()
+
+    fireEvent.keyDown(card('prices'), { key: 'Enter' })
+    expect(cards().map((shown) => shown.getAttribute('aria-checked'))).toEqual(['false', 'true'])
+
+    fireEvent.keyDown(card('products'), { key: ' ' })
+    expect(card('products').getAttribute('aria-checked')).toBe('true')
+
+    fireEvent.keyDown(card('prices'), { key: 'a' })
+    expect(card('products').getAttribute('aria-checked')).toBe('true')
   })
 
   it('shows the class, the match and the folder of the chosen one, which replace those of the file step', () => {
@@ -185,20 +220,11 @@ describe('the mapping with a configuration', () => {
     expect(screen.queryByText('There is no data object import configuration you may use.')).toBeNull()
   })
 
-  it('can be chosen again as none', () => {
-    useConfiguration({ configurations: [configuration()] })
-    choose('products')
-    choose('')
-
-    expect(screen.queryByRole('region', { name: 'products' })).toBeNull()
-    expect(configurationSelect().value).toBe('')
-  })
-
   it('shows that the configurations load', () => {
     useConfiguration({ isLoading: true })
 
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
-    expect(screen.queryByLabelText('Configuration')).toBeNull()
+    expect(screen.queryByRole('radiogroup', { name: 'Data Importer configurations' })).toBeNull()
   })
 
   it('says when there is none to use', () => {

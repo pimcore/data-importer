@@ -338,6 +338,7 @@ data-importer.ad-hoc-import.step.import: Import
 data-importer.ad-hoc-import.cancel: Cancel
 data-importer.ad-hoc-import.back: Back
 data-importer.ad-hoc-import.next: Next
+data-importer.ad-hoc-import.next-preview: 'Next: Preview'
 data-importer.ad-hoc-import.file.title: File
 data-importer.ad-hoc-import.file.drop: Drag and drop an XLSX or CSV file here, or click to choose one
 data-importer.ad-hoc-import.file.remove: Remove file
@@ -395,11 +396,12 @@ data-importer.ad-hoc-import.mapping.auto: auto
 data-importer.ad-hoc-import.mapping.not-imported: 'Not imported ({{count}})'
 data-importer.ad-hoc-import.mapping.restore: Restore
 data-importer.ad-hoc-import.mapping.restore-column: 'Restore {{column}}'
-data-importer.ad-hoc-import.configuration.label: Configuration
+data-importer.ad-hoc-import.configuration.list-title: Data Importer configurations
+data-importer.ad-hoc-import.configuration.list-hint: Only those you may read in the Data Hub
 data-importer.ad-hoc-import.configuration.choose: Choose a configuration
 data-importer.ad-hoc-import.configuration.none: There is no data object import configuration you may use.
 data-importer.ad-hoc-import.configuration.load-failed: The configurations could not be loaded.
-data-importer.ad-hoc-import.configuration.unusable-option: '{{name}} ({{reason}})'
+data-importer.ad-hoc-import.configuration.unusable-detail: '{{class}} · {{reason}}'
 data-importer.ad-hoc-import.configuration.unusable.class: you may not create objects of its class
 data-importer.ad-hoc-import.configuration.unusable.matching: it does not find objects by their ID or a field in all folders
 data-importer.ad-hoc-import.configuration.unusable.folder: it does not create new objects in one folder

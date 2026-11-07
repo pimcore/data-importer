@@ -8,10 +8,9 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo } from 'react'
+import React from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Flex, Form, FormKit, Select, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
-import { filterByLabel } from '../../utils/select-utils'
+import { Alert, Card, Flex, Form, FormKit, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
 import { type InspectedFile } from '../file-step/file-step-state'
 import {
   configurationColumnLabel,
@@ -21,12 +20,52 @@ import {
   type ImportConfiguration
 } from './configuration-state'
 
-const SELECT_WIDTH = 360
+const LIST_WIDTH = 360
+const LIST_MAX_HEIGHT = 420
 const FORM_ITEM_STYLE = { marginBottom: 0 }
 
 const useStyles = createStyles(({ token, css }) => ({
   quiet: css`
     color: ${token.colorTextTertiary};
+  `,
+  list: css`
+    flex: 0 0 ${LIST_WIDTH}px;
+    max-height: ${LIST_MAX_HEIGHT}px;
+    overflow-y: auto;
+  `,
+  detail: css`
+    flex: 1 1 0;
+    min-width: 0;
+  `,
+  card: css`
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+    }
+  `,
+  chosen: css`
+    &, &.ant-card {
+      border: 2px solid ${token.colorPrimary};
+    }
+
+    .configuration-name {
+      color: ${token.colorPrimary};
+    }
+  `,
+  unusable: css`
+    cursor: not-allowed;
+
+    &, &.ant-card {
+      background: ${token.colorBgContainerDisabled};
+    }
+
+    .configuration-name, .configuration-detail {
+      color: ${token.colorTextDisabled};
+    }
+  `,
+  detailLine: css`
+    color: ${token.colorTextSecondary};
   `
 }))
 
@@ -64,18 +103,6 @@ export const ConfigurationChoice = ({
     })
   }
 
-  const options = useMemo(() => (configurations ?? []).map((configuration) => {
-    const reason = reasonOf(configuration)
-
-    return {
-      value: configuration.name,
-      label: reason === null
-        ? configuration.name
-        : t('data-importer.ad-hoc-import.configuration.unusable-option', { name: configuration.name, reason, ...plain }),
-      disabled: reason !== null
-    }
-  }), [configurations, inspected])
-
   if (isLoading) {
     return <Skeleton active />
   }
@@ -90,7 +117,7 @@ export const ConfigurationChoice = ({
     )
   }
 
-  if (options.length === 0) {
+  if (configurations === undefined || configurations.length === 0) {
     return <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.none') }</Text>
   }
 
@@ -113,66 +140,125 @@ export const ConfigurationChoice = ({
         })
   }
 
-  return (
-    <Flex
-      gap="normal"
-      vertical
-    >
-      <Form.Item
-        htmlFor="ad-hoc-import-configuration"
-        label={ t('data-importer.ad-hoc-import.configuration.label') }
-        style={ FORM_ITEM_STYLE }
+  const card = (shown: ImportConfiguration, index: number): React.JSX.Element => {
+    const reason = reasonOf(shown)
+    const detailId = `ad-hoc-import-configuration-${index}-detail`
+    const isChosen = usable && shown.name === chosen
+    const className = shown.className ?? shown.classId ?? ''
+    const choose = (): void => {
+      if (reason === null) {
+        onChoose(shown.name)
+      }
+    }
+
+    return (
+      <Card
+        aria-checked={ isChosen }
+        aria-describedby={ detailId }
+        aria-disabled={ reason !== null }
+        aria-label={ shown.name }
+        className={ [styles.card, isChosen ? styles.chosen : '', reason === null ? '' : styles.unusable].join(' ') }
+        key={ shown.name }
+        onClick={ choose }
+        onKeyDown={ (event: React.KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            choose()
+          }
+        } }
+        role="radio"
+        tabIndex={ reason === null ? 0 : -1 }
       >
-        <Select
-          filterOption={ filterByLabel }
-          id="ad-hoc-import-configuration"
-          onChange={ (next: string) => { onChoose(next === '' ? undefined : next) } }
-          options={ options }
-          placeholder={ t('data-importer.ad-hoc-import.configuration.choose') }
-          showSearch
-          style={ { width: SELECT_WIDTH } }
-          value={ usable ? chosen : undefined }
-        />
-      </Form.Item>
+        <Flex vertical>
+          <Text
+            className="configuration-name"
+            strong
+          >
+            { shown.name }
+          </Text>
+          <Text
+            className={ `configuration-detail ${styles.detailLine}` }
+            id={ detailId }
+          >
+            { reason === null
+              ? className
+              : t('data-importer.ad-hoc-import.configuration.unusable-detail', { class: className, reason, ...plain }) }
+          </Text>
+        </Flex>
+      </Card>
+    )
+  }
 
-      { usable && (
-        <FormKit.Panel title={ configuration.name }>
+  return (
+    <Flex gap="large">
+      <Flex
+        className={ styles.list }
+        gap="small"
+        vertical
+      >
+        <Text
+          id="ad-hoc-import-configurations"
+          strong
+        >
+          { t('data-importer.ad-hoc-import.configuration.list-title') }
+        </Text>
+        <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.list-hint') }</Text>
+        <Flex
+          aria-labelledby="ad-hoc-import-configurations"
+          gap="small"
+          role="radiogroup"
+          vertical
+        >
+          { configurations.map(card) }
+        </Flex>
+      </Flex>
+
+      <Flex
+        className={ styles.detail }
+        gap="normal"
+        vertical
+      >
+        { !usable && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.choose') }</Text> }
+
+        { usable && (
+          <FormKit.Panel title={ configuration.name }>
+            <Alert
+              message={ t('data-importer.ad-hoc-import.configuration.replaces') }
+              showIcon
+              type="info"
+            />
+            <Form.Item
+              label={ t('data-importer.ad-hoc-import.objects.class') }
+              style={ FORM_ITEM_STYLE }
+            >
+              <Text>{ configuration.className ?? configuration.classId }</Text>
+            </Form.Item>
+            <Form.Item
+              label={ t('data-importer.ad-hoc-import.objects.match-by') }
+              style={ FORM_ITEM_STYLE }
+            >
+              <Text>{ match(configuration) }</Text>
+            </Form.Item>
+            <Form.Item
+              label={ t('data-importer.ad-hoc-import.objects.new-objects-in') }
+              style={ FORM_ITEM_STYLE }
+            >
+              <Text>{ configuration.newObjectsFolder }</Text>
+            </Form.Item>
+          </FormKit.Panel>
+        ) }
+
+        { missing.length > 0 && (
           <Alert
-            message={ t('data-importer.ad-hoc-import.configuration.replaces') }
+            message={ t('data-importer.ad-hoc-import.configuration.missing-columns', {
+              columns: missing.join(', '),
+              ...plain
+            }) }
             showIcon
-            type="info"
+            type="warning"
           />
-          <Form.Item
-            label={ t('data-importer.ad-hoc-import.objects.class') }
-            style={ FORM_ITEM_STYLE }
-          >
-            <Text>{ configuration.className ?? configuration.classId }</Text>
-          </Form.Item>
-          <Form.Item
-            label={ t('data-importer.ad-hoc-import.objects.match-by') }
-            style={ FORM_ITEM_STYLE }
-          >
-            <Text>{ match(configuration) }</Text>
-          </Form.Item>
-          <Form.Item
-            label={ t('data-importer.ad-hoc-import.objects.new-objects-in') }
-            style={ FORM_ITEM_STYLE }
-          >
-            <Text>{ configuration.newObjectsFolder }</Text>
-          </Form.Item>
-        </FormKit.Panel>
-      ) }
-
-      { missing.length > 0 && (
-        <Alert
-          message={ t('data-importer.ad-hoc-import.configuration.missing-columns', {
-            columns: missing.join(', '),
-            ...plain
-          }) }
-          showIcon
-          type="warning"
-        />
-      ) }
+        ) }
+      </Flex>
     </Flex>
   )
 }

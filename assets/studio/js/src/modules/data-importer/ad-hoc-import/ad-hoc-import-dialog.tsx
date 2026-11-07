@@ -251,7 +251,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
               onClick={ () => { step === 0 ? toMapping() : setStep(step + 1) } }
               type="primary"
             >
-              { t('data-importer.ad-hoc-import.next') }
+              { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
             </Button>
           ) }
         </ModalFooter>
