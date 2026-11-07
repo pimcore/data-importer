@@ -145,8 +145,9 @@ const dropAndRead = async (inspected: InspectedFile, name = 'prices.csv', size =
 
 const mappingAnswer = {
   fields: [
-    { key: 'sku', title: 'SKU', localized: false, mandatory: false, transformationResultType: 'default' },
-    { key: 'title', title: 'Title', localized: false, mandatory: false, transformationResultType: 'default' }
+    { key: 'sku', title: 'SKU', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true },
+    { key: 'title', title: 'Title', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true },
+    { key: 'image', title: 'Image', localized: false, mandatory: false, transformationResultType: 'asset', takesColumnAsIs: false }
   ],
   suggestions: [{
     sourceIndex: 'Bezeichnung',
@@ -954,6 +955,19 @@ describe('the mapping step', () => {
     fireEvent.click(nextButton())
 
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+  })
+
+  it('waits on a column whose values do not fit its field, and offers its transformations', async () => {
+    await toMapping()
+
+    select('Field for Bezeichnung', 'image')
+
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Columns whose values do not fit their field yet: Bezeichnung')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
+
+    select('Field for Bezeichnung', 'title')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('keeps the mapping when going back and on with nothing changed', async () => {

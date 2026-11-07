@@ -411,3 +411,46 @@ data-importer.ad-hoc-import.configuration.match-object-id: 'Object ID from colum
 data-importer.ad-hoc-import.configuration.match-field: '{{field}} from column {{column}}'
 data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) from column {{column}}'
 data-importer.ad-hoc-import.configuration.missing-columns: 'Columns it reads that the file does not have: {{columns}}'
+data-importer.ad-hoc-import.mapping.transformations: Transformations
+data-importer.ad-hoc-import.mapping.transformations-count: 'Transformations ({{count}})'
+data-importer.ad-hoc-import.mapping.transformations-of: 'Transformations of {{column}}'
+data-importer.ad-hoc-import.mapping.needs-transformation: Needs a transformation
+data-importer.ad-hoc-import.mapping.not-fitting: 'Columns whose values do not fit their field yet: {{columns}}'
+data-importer.ad-hoc-import.transformations.title: 'Transformations of {{column}} into {{field}}'
+data-importer.ad-hoc-import.transformations.none: The values go into the field as they are in the file.
+data-importer.ad-hoc-import.transformations.add: Add a transformation
+data-importer.ad-hoc-import.transformations.remove: 'Remove {{step}}'
+data-importer.ad-hoc-import.transformations.apply: Apply
+data-importer.ad-hoc-import.transformations.cancel: Cancel
+data-importer.ad-hoc-import.transformations.type.trim: Trim
+data-importer.ad-hoc-import.transformations.type.stringReplace: Replace text
+data-importer.ad-hoc-import.transformations.type.conditionalConversion: Map values
+data-importer.ad-hoc-import.transformations.type.explode: Split into a list
+data-importer.ad-hoc-import.transformations.type.loadDataObject: Load object
+data-importer.ad-hoc-import.transformations.type.loadAsset: Load asset
+data-importer.ad-hoc-import.transformations.trim.mode: Remove spaces
+data-importer.ad-hoc-import.transformations.trim.mode.both: At both ends
+data-importer.ad-hoc-import.transformations.trim.mode.left: At the start
+data-importer.ad-hoc-import.transformations.trim.mode.right: At the end
+data-importer.ad-hoc-import.transformations.replace.search: Find
+data-importer.ad-hoc-import.transformations.replace.replace: Replace with
+data-importer.ad-hoc-import.transformations.map.original: Values
+data-importer.ad-hoc-import.transformations.map.converted: Into
+data-importer.ad-hoc-import.transformations.map.hint: 'Separate the values with |, in the same order in both; * stands for any other value.'
+data-importer.ad-hoc-import.transformations.map.unequal: Give as many values under Into as under Values.
+data-importer.ad-hoc-import.transformations.split.delimiter: Separator
+data-importer.ad-hoc-import.transformations.load.strategy: Find by
+data-importer.ad-hoc-import.transformations.load.strategy.id: ID
+data-importer.ad-hoc-import.transformations.load.strategy.path: Full path
+data-importer.ad-hoc-import.transformations.step-error: This transformation cannot take the values of the one before it.
+data-importer.ad-hoc-import.transformations.does-not-fit: 'The values cannot go into {{field}} yet. Add a transformation that leads there, or choose another field.'
+data-importer.ad-hoc-import.transformations.conversion.numeric: Converted to a number for the field.
+data-importer.ad-hoc-import.transformations.conversion.date: Converted to a date for the field, read as year-month-day (2026-11-07).
+data-importer.ad-hoc-import.transformations.conversion.asArray: Converted to a list of one value for the field.
+data-importer.ad-hoc-import.transformations.conversion.gallery: Converted to a gallery for the field.
+data-importer.ad-hoc-import.transformations.conversion.boolean: Converted to yes or no for the field.
+data-importer.ad-hoc-import.transformations.values: Values of the first rows
+data-importer.ad-hoc-import.transformations.in-file: In the file
+data-importer.ad-hoc-import.transformations.into-field: 'Into {{field}}'
+data-importer.ad-hoc-import.transformations.empty: (empty)
+data-importer.ad-hoc-import.transformations.failed: Cannot be converted

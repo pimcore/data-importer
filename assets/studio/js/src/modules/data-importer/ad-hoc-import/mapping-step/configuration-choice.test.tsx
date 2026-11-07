@@ -21,6 +21,9 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   createStyles: () => () => ({ styles: {} })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
+// the mapping step loads the transformations modal, which no test here opens
+jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({}))
+jest.mock('../../data-importer-api-slice-enhanced', () => ({}))
 
 const inspected: InspectedFile = {
   maxRows: 5000,
@@ -40,7 +43,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const loaded: LoadedMapping = {
-  fields: [{ key: 'price', title: 'Price', localized: false, mandatory: false, transformationResultType: 'default' }],
+  fields: [{ key: 'price', title: 'Price', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true }],
   suggestions: []
 }
 
@@ -78,6 +81,7 @@ const Stateful = ({ configurations = [], isLoading = false }: StatefulProps): Re
       mapping={ mapping }
       onChange={ setMapping }
       onMapWithChange={ setMapWith }
+      source={ null }
     />
   )
 }

@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Modal, ModalFooter, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
@@ -40,6 +40,7 @@ import {
   type MappingField
 } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
+import { transformationSourceOf } from './mapping-step/transformations-modal'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 
 const DIALOG_WIDTH = 1160
@@ -213,9 +214,11 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
+  const transformationSource = useMemo(() => transformationSourceOf(phase, objects.classId), [phase, objects.classId])
+
   const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
     ? configurationMapping.canContinue
-    : mapping !== null && canContinueMapping(mapping)
+    : mapping !== null && canContinueMapping(mapping, fields)
 
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)
@@ -289,6 +292,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           mapping={ mapping }
           onChange={ setMapping }
           onMapWithChange={ configurationMapping.setMapWith }
+          source={ transformationSource }
         />
       ) }
     </Modal>

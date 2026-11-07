@@ -16,9 +16,11 @@ import {
   pendingSuggestionCount,
   restoreColumn,
   rowCounts,
+  setTransformations,
   skippedRows,
   takeAllSuggestions,
   takenFields,
+  unfitRows,
   visibleRows,
   type Mapping,
   type MappingField,
@@ -27,6 +29,7 @@ import {
 import { MappingRowView } from './mapping-row'
 import { ConfigurationChoice, type ConfigurationChoiceProps } from './configuration-choice'
 import { type MapWith } from './configuration-state'
+import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 const SEARCH_WIDTH = 240
 const FILTERS: RowFilter[] = ['all', 'mapped', 'open']
@@ -45,6 +48,8 @@ export interface MappingStepProps {
   mapWith: MapWith
   onMapWithChange: (mapWith: MapWith) => void
   configuration: ConfigurationChoiceProps
+  // what the transformations of a column run on; none, no transformations
+  source: TransformationSource | null
 }
 
 export const MappingStep = ({
@@ -54,14 +59,18 @@ export const MappingStep = ({
   onChange,
   mapWith,
   onMapWithChange,
-  configuration
+  configuration,
+  source
 }: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const [filter, setFilter] = useState<RowFilter>('all')
   const [search, setSearch] = useState('')
+  // the column whose transformations are open
+  const [editing, setEditing] = useState<string | null>(null)
 
   const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
+  const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
   const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
   const mapWithSwitch = (
@@ -105,6 +114,9 @@ export const MappingStep = ({
       </Flex>
     )
   }
+
+  const editedRow = mapping.rows.find(({ column }) => column === editing)
+  const editedField = fields.find(({ key }) => key === editedRow?.choice?.field)
 
   const counts = rowCounts(mapping)
   const pending = pendingSuggestionCount(mapping)
@@ -165,6 +177,17 @@ export const MappingStep = ({
         />
       ) }
 
+      { unfit.length > 0 && (
+        <Alert
+          message={ t('data-importer.ad-hoc-import.mapping.not-fitting', {
+            columns: unfit.map(({ label }) => label).join(', '),
+            interpolation: { escapeValue: false }
+          }) }
+          showIcon
+          type="warning"
+        />
+      ) }
+
       <Flex
         aria-label={ t('data-importer.ad-hoc-import.mapping.columns') }
         gap="small"
@@ -177,6 +200,7 @@ export const MappingStep = ({
             key={ row.column }
             mapping={ mapping }
             onChange={ onChange }
+            onTransform={ source === null ? undefined : setEditing }
             row={ row }
             taken={ taken }
           />
@@ -206,6 +230,19 @@ export const MappingStep = ({
             </Flex>
           )) }
         </FormKit.Panel>
+      ) }
+
+      { source !== null && editedRow !== undefined && editedField !== undefined && (
+        <TransformationsModal
+          field={ editedField }
+          onApply={ (transformations, fits) => {
+            onChange(setTransformations(mapping, editedRow.column, transformations, fits))
+            setEditing(null)
+          } }
+          onCancel={ () => { setEditing(null) } }
+          row={ editedRow }
+          source={ source }
+        />
       ) }
     </Flex>
   )
