@@ -58,6 +58,11 @@ final readonly class TransformationChain
         'asArray' => [TransformationDataTypeService::DEFAULT_TYPE],
     ];
 
+    // an empty cell stays empty, as in a Data Importer run that does not write empty values
+    private const array CONVERSION_SETTINGS = [
+        'numeric' => ['returnNullIfEmpty' => '1'],
+    ];
+
     public function __construct(
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private DataTypeServiceInterface $dataTypeService,
@@ -111,8 +116,11 @@ final readonly class TransformationChain
         $results = [];
         if ($conversion !== false) {
             if ($conversion !== null) {
-                $converter = $this->operators([['type' => $conversion, 'settings' => []]])[0];
+                $converter = $this->operators([
+                    ['type' => $conversion, 'settings' => self::CONVERSION_SETTINGS[$conversion] ?? []],
+                ])[0];
                 $type = $converter->evaluateReturnType($type, count($operators) + 1);
+                $failed = $this->unreadable($conversion, $data, $failed);
                 [$data, $failed] = $this->process($converter, $data, $failed, $user);
             }
             $results = $this->cells($data, $failed);
@@ -148,6 +156,7 @@ final readonly class TransformationChain
             $error = null;
             if ($type !== null) {
                 try {
+                    $this->checkSettings($steps[$position], $position + 1);
                     $type = $operator->evaluateReturnType($type, $position + 1);
                     [$data, $failed] = $this->process($operator, $data, $failed, $user);
                 } catch (InvalidConfigurationException $exception) {
@@ -165,6 +174,57 @@ final readonly class TransformationChain
         }
 
         return [$type, $data, $failed, $stepResults];
+    }
+
+    /**
+     * @param array{type: string, settings: array<string, string>} $step
+     *
+     * @throws InvalidConfigurationException for settings the operator would read wrongly
+     */
+    private function checkSettings(array $step, int $position): void
+    {
+        if ($step['type'] !== TransformationAllowList::MAP_VALUES) {
+            return;
+        }
+        // the operator takes the counterpart at the same position; a missing one would clear the value
+        $original = explode('|', $step['settings']['original'] ?? '');
+        $converted = explode('|', $step['settings']['converted'] ?? '');
+        if (count($original) !== count($converted)) {
+            throw new InvalidConfigurationException(sprintf(
+                'The lists of the map values operator at transformation position %d differ in length (%d and %d).',
+                $position,
+                count($original),
+                count($converted)
+            ));
+        }
+    }
+
+    /**
+     * Marks the rows whose value the conversion would read as something else: a number or yes/no it cannot read
+     * would become 0 or false instead of failing.
+     *
+     * @param list<mixed> $data
+     * @param list<bool> $failed
+     *
+     * @return list<bool>
+     */
+    private function unreadable(string $conversion, array $data, array $failed): array
+    {
+        foreach ($data as $row => $value) {
+            if (!is_string($value) || $value === '') {
+                continue;
+            }
+            $readable = match ($conversion) {
+                'numeric' => is_numeric($value),
+                'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null,
+                default => true,
+            };
+            if (!$readable) {
+                $failed[$row] = true;
+            }
+        }
+
+        return $failed;
     }
 
     /**

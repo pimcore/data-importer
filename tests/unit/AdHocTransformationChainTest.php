@@ -115,13 +115,12 @@ class AdHocTransformationChainTest extends Unit
             [['12.5'], ['3']],
         ];
         yield 'a date for a date field' => [[Types::DATE], 'date', Types::DATE, [self::DAY], [[self::DAY]]];
-        // the conversion reads a decimal point only; a Replace step turns the comma into one
-        yield 'a decimal comma for a numeric field, which drops the decimals' => [
+        yield 'an empty cell for a numeric field, which stays empty' => [
             [Types::NUMERIC],
             'numeric',
             Types::NUMERIC,
-            ['12,50'],
-            [['12']],
+            ['', null, '3'],
+            [[], [], ['3']],
         ];
         yield 'a one item list for a multiselect' => [
             [Types::DEFAULT_ARRAY],
@@ -167,6 +166,62 @@ class AdHocTransformationChainTest extends Unit
 
         $this->assertSame([false, true, false], $this->failed($result->getResults()));
         $this->assertSame([[self::DAY], [], []], $this->items($result->getResults()));
+    }
+
+    /**
+     * @return iterable<string, array{list<string>, list<string|null>, list<bool>, list<list<string>>}>
+     */
+    public static function valuesAConversionCannotRead(): iterable
+    {
+        // the conversion reads a decimal point only; a Replace step turns the comma into one
+        yield 'a decimal comma for a numeric field' => [
+            [Types::NUMERIC],
+            ['12,50', '12.50'],
+            [true, false],
+            [[], ['12.5']],
+        ];
+        yield 'a text for a numeric field' => [[Types::NUMERIC], ['n/a', ''], [true, false], [[], []]];
+        yield 'a yes or no in another language for a checkbox' => [
+            [Types::BOOLEAN],
+            ['Ja', 'X', 'yes', 'off', ''],
+            [true, true, false, false, false],
+            [[], [], ['true'], ['false'], ['false']],
+        ];
+    }
+
+    /**
+     * @dataProvider valuesAConversionCannotRead
+     *
+     * @param list<string> $accepted
+     * @param list<string|null> $values
+     * @param list<bool> $failed
+     * @param list<list<string>> $results
+     */
+    public function testANumberOrYesNoTheConversionCannotReadFailsInItsRow(
+        array $accepted,
+        array $values,
+        array $failed,
+        array $results
+    ): void {
+        $result = $this->chainOn($values, [], $accepted);
+
+        $this->assertTrue($result->getFits());
+        $this->assertSame($failed, $this->failed($result->getResults()));
+        $this->assertSame($results, $this->items($result->getResults()));
+    }
+
+    public function testMapValuesWithListsOfDifferentLengthStopsTheChain(): void
+    {
+        $result = $this->chainOn(['L'], [
+            $this->step(TransformationAllowList::MAP_VALUES, ['original' => 'S|M|L', 'converted' => 'small|medium']),
+        ], [Types::DEFAULT_TYPE]);
+
+        [$map] = $result->getSteps();
+        $this->assertNull($map['resultType']);
+        $this->assertStringContainsString('position 1 differ in length (3 and 2)', $map['error']);
+        $this->assertSame([], $map['values']);
+        $this->assertFalse($result->getFits());
+        $this->assertSame([], $result->getResults());
     }
 
     public function testAColumnDoesNotGoIntoAnImageWithoutLoadingTheAsset(): void
