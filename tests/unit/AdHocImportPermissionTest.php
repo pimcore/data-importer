@@ -18,9 +18,11 @@ use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StaticResolverBundle\Db\DbResolver;
 use Pimcore\Bundle\StaticResolverBundle\Lib\CacheResolver;
+use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolver;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
@@ -253,7 +255,9 @@ class AdHocImportPermissionTest extends Unit
             $this->security(),
             new DataObjectResolver(),
             $this->createStub(DataTypeServiceInterface::class),
-            $this->createStub(ClassDefinitionServiceInterface::class)
+            $this->createStub(ClassDefinitionServiceInterface::class),
+            $this->createStub(MappingSuggestionServiceInterface::class),
+            $this->createStub(ClassDefinitionResolverInterface::class)
         );
     }
 }
