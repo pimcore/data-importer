@@ -28,7 +28,6 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Pimcore\Model\UserInterface;
-use PHPUnit\Framework\Attributes\DataProvider;
 
 class AdHocImportConfigurationServiceTest extends Unit
 {
@@ -137,9 +136,10 @@ class AdHocImportConfigurationServiceTest extends Unit
     }
 
     /**
+     * @dataProvider unusableConfigurations
+     *
      * @param array<string, mixed> $resolver
      */
-    #[DataProvider('unusableConfigurations')]
     public function testWhyAnAdHocImportCannotUseAConfiguration(array $resolver, string $reason): void
     {
         [$configuration] = $this->service([$this->configuration('products', $this->config(...$resolver))])
@@ -186,9 +186,10 @@ class AdHocImportConfigurationServiceTest extends Unit
     }
 
     /**
+     * @dataProvider columnKeys
+     *
      * @param array<string, mixed> $interpreter
      */
-    #[DataProvider('columnKeys')]
     public function testItSaysWhetherItsColumnsAreNamedByTheHeaderRowOrByPosition(
         array $interpreter,
         string $columnsBy
