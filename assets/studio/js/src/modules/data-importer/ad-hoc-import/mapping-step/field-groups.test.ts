@@ -12,7 +12,7 @@ import { buildFieldGroups } from './field-groups'
 import { type MappingField } from './mapping-state'
 
 const field = (key: string, group: string[]): MappingField =>
-  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', group, classificationStore: false })
+  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group, classificationStore: false })
 
 const toItem = (item: MappingField): { key: string, label: string, meta: MappingField } => ({ key: item.key, label: item.key.toUpperCase(), meta: item })
 

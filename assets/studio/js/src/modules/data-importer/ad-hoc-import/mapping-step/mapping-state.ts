@@ -32,6 +32,12 @@ export interface FieldChoice {
   key?: StoreKey
 }
 
+// a step of the Data Importer's transformation pipeline, among those the server allows for an ad hoc import
+export interface TransformationStep {
+  type: string
+  settings: Record<string, string>
+}
+
 export interface MappingRow {
   column: string
   label: string
@@ -45,6 +51,9 @@ export interface MappingRow {
   suggestion?: FieldChoice & { score: number }
   // the column finds the objects; its field is the one they are matched by, or none for the object ID
   isMatch: boolean
+  transformations: TransformationStep[]
+  // the server's answer whether the transformations lead into the field; unknown until they are applied
+  fits?: boolean
 }
 
 export interface Mapping {
@@ -97,7 +106,8 @@ export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping
 const isOpen = (row: MappingRow): boolean => !row.isMatch && !row.skipped && row.choice === undefined
 
 /**
- * Takes the suggestions of the open columns, the surest first, each as long as no other column has its field.
+ * Takes the suggestions of the open columns, the surest first, each as long as no other column has its field. A field
+ * taken comes without transformations, as one chosen by hand.
  */
 const takeSuggestions = (rows: MappingRow[], minScore: number): MappingRow[] => {
   const next = [...rows]
@@ -109,7 +119,7 @@ const takeSuggestions = (rows: MappingRow[], minScore: number): MappingRow[] => 
   for (const { row, position } of surestFirst) {
     const { field, language } = row.suggestion!
     if (!isTaken(next, { field, language })) {
-      next[position] = { ...row, choice: { field, language }, auto: true }
+      next[position] = { ...row, choice: { field, language }, auto: true, transformations: [], fits: undefined }
     }
   }
 
@@ -139,97 +149,68 @@ export const createMapping = (
       auto: false,
       skipped: false,
       suggestion: isMatch ? undefined : suggestionOf.get(dataIndex),
-      isMatch
+      isMatch,
+      transformations: []
     }
   })
 
   return { basis: mappingBasis(inspected, objects), rows: takeSuggestions(rows, AUTO_SCORE) }
 }
 
-const changeRow = (mapping: Mapping, column: string, change: (row: MappingRow) => MappingRow): Mapping => ({
+export const changeRow = (mapping: Mapping, column: string, change: (row: MappingRow) => MappingRow): Mapping => ({
   ...mapping,
   rows: mapping.rows.map((row) => row.column === column && !row.isMatch ? change(row) : row)
 })
 
 /**
- * A field chosen by hand is no suggestion any more, even the suggested one. The language stays only with its field.
+ * A field chosen by hand is no suggestion any more, even the suggested one. The language and the transformations stay
+ * only with their field: another field takes other types.
  */
 export const chooseField = (mapping: Mapping, column: string, field: string | undefined): Mapping =>
-  changeRow(mapping, column, (row) => ({
-    ...row,
-    choice: field === undefined
-      ? undefined
-      : { field, language: row.choice?.field === field ? row.choice.language : null },
-    auto: false
-  }))
+  changeRow(mapping, column, (row) => {
+    const same = field !== undefined && row.choice?.field === field
 
-/**
- * A classification store goes in by one of its keys, one column per key (and language); the language stays while the
- * store does, unless another column holds the key in it: then the first language free for the key.
- */
-export const chooseStoreKey = (
+    return {
+      ...row,
+      choice: field === undefined ? undefined : { field, language: same ? row.choice!.language : null },
+      auto: false,
+      transformations: same ? row.transformations : [],
+      fits: same ? row.fits : undefined
+    }
+  })
+
+export const setTransformations = (
   mapping: Mapping,
   column: string,
-  field: string,
-  key: StoreKey,
-  languages: string[] = []
-): Mapping =>
-  changeRow(mapping, column, (row) => {
-    const free = (language: string | null): boolean => !isTaken(mapping.rows, { field, language, key }, column)
-    const kept = row.choice?.field === field ? row.choice.language : null
-    const language = free(kept) ? kept : kept === null ? undefined : languages.find(free)
-
-    return language === undefined
-      ? row
-      : { ...row, choice: { field, language, key }, auto: false }
-  })
-
-const languageTaken = (rows: MappingRow[], row: MappingRow, language: string): boolean =>
-  row.choice !== undefined && isTaken(rows, { ...row.choice, language }, row.column)
+  transformations: TransformationStep[],
+  fits: boolean
+): Mapping => changeRow(mapping, column, (row) => ({ ...row, transformations, fits }))
 
 /**
- * The languages the column can hold: its own and those no other column has for its field (and key).
+ * Whether the column's values can go into its field: as the server answered for its transformations, or, before any
+ * were applied, as the field takes a column.
  */
-export const freeLanguages = (rows: MappingRow[], row: MappingRow, languages: string[]): string[] =>
-  languages.filter((language) => language === row.choice?.language || !languageTaken(rows, row, language))
-
-/**
- * A language another column already has for the field (and key) is refused.
- */
-export const chooseLanguage = (mapping: Mapping, column: string, language: string): Mapping =>
-  changeRow(mapping, column, (row) => row.choice === undefined || languageTaken(mapping.rows, row, language)
-    ? row
-    : { ...row, choice: { ...row.choice, language } })
-
-/**
- * Gives each column going into a localized field without a language one: the language guessed from the column name,
- * else the first no other column has for that field, else the first.
- */
-export const withLanguages = (mapping: Mapping, fields: MappingField[], languages: string[]): Mapping => {
-  const localized = new Set(fields.filter(({ localized }) => localized).map(({ key }) => key))
-  const needsLanguage = (row: MappingRow): boolean =>
-    !row.isMatch && !row.skipped && row.choice?.language === null && localized.has(row.choice.field)
-  if (languages.length === 0 || !mapping.rows.some(needsLanguage)) {
-    return mapping
+export const fitsField = (row: MappingRow, fields: MappingField[]): boolean => {
+  if (row.isMatch || row.skipped || row.choice === undefined) {
+    return true
   }
+  const { field } = row.choice
 
-  const rows = [...mapping.rows]
-  rows.forEach((row, position) => {
-    if (!needsLanguage(row)) {
-      return
-    }
-    const choice = row.choice!
-    const free = languages.filter((language) => !isTaken(rows, { ...choice, language }, row.column))
-    const guessed = row.suggestion?.language ?? null
-    const language = guessed !== null && free.includes(guessed) ? guessed : free[0] ?? languages[0]
-    rows[position] = { ...row, choice: { ...choice, language } }
-  })
-
-  return { ...mapping, rows }
+  return row.fits ?? fields.find(({ key }) => key === field)?.takesColumnAsIs ?? true
 }
 
+export const unfitRows = (mapping: Mapping, fields: MappingField[]): MappingRow[] =>
+  importedRows(mapping).filter((row) => !fitsField(row, fields))
+
 export const skipColumn = (mapping: Mapping, column: string): Mapping =>
-  changeRow(mapping, column, (row) => ({ ...row, choice: undefined, auto: false, skipped: true }))
+  changeRow(mapping, column, (row) => ({
+    ...row,
+    choice: undefined,
+    auto: false,
+    skipped: true,
+    transformations: [],
+    fits: undefined
+  }))
 
 export const restoreColumn = (mapping: Mapping, column: string): Mapping =>
   changeRow(mapping, column, (row) => ({ ...row, skipped: false }))
@@ -284,7 +265,8 @@ export const missingRequiredFields = (mapping: Mapping, fields: MappingField[]):
 }
 
 /**
- * Something to import beside the column that finds the objects.
+ * Something to import beside the column that finds the objects, and every column fitting its field.
  */
-export const canContinueMapping = (mapping: Mapping): boolean =>
-  mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined)
+export const canContinueMapping = (mapping: Mapping, fields: MappingField[]): boolean =>
+  mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined) &&
+  unfitRows(mapping, fields).length === 0

@@ -21,6 +21,8 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 let mockLanguages = ['en', 'de', 'fr']
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: mockLanguages }) }))
+// opens only with a file to run the transformations on, which these tests do not give
+jest.mock('./transformations-modal', () => ({ TransformationsModal: () => null }))
 // the key dialog loads its keys from the server; here it offers one key to take, and a way out
 jest.mock('./store-key-dialog', () => ({
   StoreKeyDialog: ({ fieldName, onSelect, onClose, takenKeyIds }: { fieldName: string, onSelect: (key: { id: string, label: string }) => void, onClose: () => void, takenKeyIds?: string[] }) => (
@@ -64,7 +66,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, title: string, given: Partial<LoadedMapping['fields'][number]> = {}): LoadedMapping['fields'][number] =>
-  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', group: ['Product'], classificationStore: false, ...given })
+  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false, ...given })
 
 const loaded: LoadedMapping = {
   fields: [
@@ -92,6 +94,7 @@ const Stateful = ({ initial, isLoading = false }: { initial: Mapping | null, isL
       isLoading={ isLoading }
       mapping={ mapping }
       onChange={ setMapping }
+      source={ null }
     />
   )
 }

@@ -14,25 +14,27 @@ import { Alert, Button, Flex, FormKit, SearchInput, Segmented, Skeleton, Text } 
 import { FieldPanel } from './field-panel'
 import {
   chooseField,
-  chooseStoreKey,
   missingRequiredFields,
   pendingSuggestionCount,
   restoreColumn,
   rowCounts,
+  setTransformations,
   skippedRows,
   takeAllSuggestions,
+  unfitRows,
   visibleRows,
-  withLanguages,
   type Mapping,
   type MappingField,
   type MappingRow,
   type RowFilter
 } from './mapping-state'
+import { chooseStoreKey, withLanguages } from './mapping-choices'
 import { takenFields } from './taken-fields'
 import { MappingRowView } from './mapping-row'
 import { StoreKeyDialog } from './store-key-dialog'
 import { takenStoreKeys } from './taken-store-keys'
 import { useLanguages } from './use-languages'
+import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 const SEARCH_WIDTH = 240
 const PANEL_WIDTH = 320
@@ -59,9 +61,11 @@ export interface MappingStepProps {
   fields: MappingField[]
   isLoading: boolean
   onChange: (mapping: Mapping) => void
+  // what the transformations of a column run on; none, no transformations
+  source: TransformationSource | null
 }
 
-export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, source }: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const languages = useLanguages()
@@ -73,8 +77,11 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
 
   // a column going into a localized field always holds a language
   const change = (next: Mapping): void => { onChange(withLanguages(next, fields, languages)) }
+  // the column whose transformations are open
+  const [editing, setEditing] = useState<string | null>(null)
 
   const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
+  const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
   const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
   const mapWith = (
@@ -117,6 +124,9 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
     }
     change(chooseField(mapping, row.column, field.key))
   }
+
+  const editedRow = mapping.rows.find(({ column }) => column === editing)
+  const editedField = fields.find(({ key }) => key === editedRow?.choice?.field)
 
   const counts = rowCounts(mapping)
   const pending = pendingSuggestionCount(mapping)
@@ -177,6 +187,17 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
         />
       ) }
 
+      { unfit.length > 0 && (
+        <Alert
+          message={ t('data-importer.ad-hoc-import.mapping.not-fitting', {
+            columns: unfit.map(({ label }) => label).join(', '),
+            interpolation: { escapeValue: false }
+          }) }
+          showIcon
+          type="warning"
+        />
+      ) }
+
       <Flex
         align="flex-start"
         gap="normal"
@@ -198,6 +219,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
               onActivate={ setActiveColumn }
               onChange={ change }
               onPickStoreKey={ (column, field) => { setStoreKeyFor({ column, field }) } }
+              onTransform={ source === null ? undefined : setEditing }
               row={ row }
               taken={ taken }
             />
@@ -250,6 +272,19 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
             </Flex>
           )) }
         </FormKit.Panel>
+      ) }
+
+      { source !== null && editedRow !== undefined && editedField !== undefined && (
+        <TransformationsModal
+          field={ editedField }
+          onApply={ (transformations, fits) => {
+            onChange(setTransformations(mapping, editedRow.column, transformations, fits))
+            setEditing(null)
+          } }
+          onCancel={ () => { setEditing(null) } }
+          row={ editedRow }
+          source={ source }
+        />
       ) }
     </Flex>
   )

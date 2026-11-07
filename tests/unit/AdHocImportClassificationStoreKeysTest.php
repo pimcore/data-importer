@@ -158,7 +158,8 @@ class AdHocImportClassificationStoreKeysTest extends Unit
             $suggestions,
             $classResolver,
             $dataTypes,
-            $this->createStub(DefinitionResolverInterface::class)
+            $this->createStub(DefinitionResolverInterface::class),
+            AdHocTransformations::chain($dataTypes)
         );
     }
 }

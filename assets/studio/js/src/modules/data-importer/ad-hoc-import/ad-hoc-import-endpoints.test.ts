@@ -107,12 +107,35 @@ describe('the ad hoc import endpoints', () => {
     }])
   })
 
+  it('post a column\'s transformations with the file\'s settings to the file', async () => {
+    const parameters = {
+      classId: 'CAR',
+      column: 'Images',
+      field: 'gallery',
+      transformationPipeline: [{ type: 'explode', settings: { delimiter: ',' } }],
+      delimiter: ';',
+      hasHeaderRow: true
+    }
+
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportPreviewTransformations.initiate({
+      fileId: 'id-1',
+      bundleDataImporterAdHocImportTransformationParameters: parameters
+    }))
+
+    expect(sent).toEqual([{
+      url: `${FILE_URL}/id-1/transformations`,
+      method: 'POST',
+      body: parameters
+    }])
+  })
+
   it('are exported as hooks', () => {
     const inspect = api.endpoints.bundleDataImporterAdHocImportInspectFile.useMutation
     const remove = api.endpoints.bundleDataImporterAdHocImportDeleteFile.useMutation
     const matchFields = api.endpoints.bundleDataImporterAdHocImportLoadMatchFields.useQuery
     const mapping = api.endpoints.bundleDataImporterAdHocImportLoadMapping.useMutation
     const storeKeys = api.endpoints.bundleDataImporterAdHocImportLoadClassificationStoreKeys.useQuery
+    const transformations = api.endpoints.bundleDataImporterAdHocImportPreviewTransformations.useMutation
 
     expect(generated.useBundleDataImporterAdHocImportUploadFileMutation).toBe(api.endpoints.bundleDataImporterAdHocImportUploadFile.useMutation)
     expect(enhanced.useBundleDataImporterConnectionListQuery).toBe(api.endpoints.bundleDataImporterConnectionList.useQuery)
@@ -122,6 +145,7 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportLoadMatchFieldsQuery).toBe(matchFields)
       expect(hooks.useBundleDataImporterAdHocImportLoadMappingMutation).toBe(mapping)
       expect(hooks.useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery).toBe(storeKeys)
+      expect(hooks.useBundleDataImporterAdHocImportPreviewTransformationsMutation).toBe(transformations)
     }
   })
 })

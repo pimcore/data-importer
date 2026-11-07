@@ -20,15 +20,19 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileC
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationParameters;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportTransformationServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -131,6 +135,21 @@ class AdHocImportControllersTest extends Unit
 
         $response = (new LoadClassificationStoreKeysController($this->serializer($answer), $service))
             ->loadClassificationStoreKeys('PROD', 'attributes', 'wid', 20, 10);
+
+        $this->assertSame(self::ANSWER, $response->getContent());
+    }
+
+    public function testTransformationsArePreviewedForTheFileAndTheColumn(): void
+    {
+        $parameters = new AdHocImportTransformationParameters('PROD', 'name', 'name', [['type' => 'trim']]);
+        $answer = new AdHocImportTransformationResponse([], [], null, 'default', true, [], []);
+
+        $service = $this->createMock(AdHocImportTransformationServiceInterface::class);
+        $service->expects($this->once())->method('previewTransformations')->with('file-1', $parameters)
+            ->willReturn($answer);
+
+        $response = (new PreviewTransformationsController($this->serializer($answer), $service))
+            ->previewTransformations('file-1', $parameters);
 
         $this->assertSame(self::ANSWER, $response->getContent());
     }

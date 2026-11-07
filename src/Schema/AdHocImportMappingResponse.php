@@ -24,6 +24,7 @@ use OpenApi\Attributes\Schema;
  *     localized: bool,
  *     mandatory: bool,
  *     transformationResultType: string,
+ *     takesColumnAsIs: bool,
  *     group: list<string>,
  *     classificationStore: bool
  * }
@@ -62,6 +63,7 @@ final readonly class AdHocImportMappingResponse
                     'localized',
                     'mandatory',
                     'transformationResultType',
+                    'takesColumnAsIs',
                     'group',
                     'classificationStore',
                 ],
@@ -90,6 +92,13 @@ final readonly class AdHocImportMappingResponse
                         description: 'Transformation result type that writes the field',
                         type: 'string',
                         example: 'default'
+                    ),
+                    new Property(
+                        property: 'takesColumnAsIs',
+                        description: 'Whether a column goes into the field without a transformation, '
+                            . 'converted to its type',
+                        type: 'boolean',
+                        example: true
                     ),
                     new Property(
                         property: 'group',

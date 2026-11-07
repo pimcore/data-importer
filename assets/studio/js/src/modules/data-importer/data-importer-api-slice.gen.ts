@@ -331,6 +331,17 @@ const injectedRtkApi = api
                     }),
                     providesTags: ["Bundle Data Importer"],
                 }),
+            bundleDataImporterAdHocImportPreviewTransformations: build.mutation<
+                BundleDataImporterAdHocImportPreviewTransformationsApiResponse,
+                BundleDataImporterAdHocImportPreviewTransformationsApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/transformations`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterAdHocImportTransformationParameters,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -547,6 +558,13 @@ export type BundleDataImporterAdHocImportLoadClassificationStoreKeysApiArg = {
     start?: number;
     /** Maximum number of results */
     limit?: number;
+};
+export type BundleDataImporterAdHocImportPreviewTransformationsApiResponse =
+    /** status 200 The values after each transformation, whether the result fits the field, and the transformations that can come next */ BundleDataImporterAdHocImportTransformationResponse;
+export type BundleDataImporterAdHocImportPreviewTransformationsApiArg = {
+    /** FileId of the file */
+    fileId: string;
+    bundleDataImporterAdHocImportTransformationParameters: BundleDataImporterAdHocImportTransformationParameters;
 };
 export type BundleDataImporterClassAttributesResponse = {
     /** AdditionalAttributes */
@@ -905,6 +923,8 @@ export type BundleDataImporterAdHocImportMappingResponse = {
         mandatory: boolean;
         /** Transformation result type that writes the field */
         transformationResultType: string;
+        /** Whether a column goes into the field without a transformation, converted to its type */
+        takesColumnAsIs: boolean;
         /** Where the field is in the class layout, outermost first, as the grid groups it */
         group: string[];
         /** Whether the field is a classification store, whose key is chosen with the field */
@@ -927,6 +947,62 @@ export type BundleDataImporterAdHocImportMappingResponse = {
         /** Language guessed from the column name, for a localized field */
         language: string | null;
     }[];
+};
+export type BundleDataImporterAdHocImportTransformationParameters = {
+    /** The ID of the data object class to import into */
+    classId: string;
+    /** Data index of the column */
+    column: string;
+    /** Key of the field the column goes into */
+    field: string;
+    /** The transformations of the column, in order */
+    transformationPipeline: {
+        /** Operator type */
+        type: string;
+        /** The operator's settings */
+        settings?: object;
+    }[];
+    /** CSV: the delimiter; empty for the detected one */
+    delimiter?: string | null;
+    /** CSV: the enclosure */
+    enclosure?: string | null;
+    /** CSV: the escape character */
+    escape?: string | null;
+    /** Whether the first row holds the column names */
+    hasHeaderRow?: boolean;
+    /** XLSX: the sheet; empty for the first one */
+    sheetName?: string | null;
+};
+export type BundleDataImporterAdHocImportTransformationCell = {
+    /** The value as text, one item per entry of a list; none for an empty value */
+    items: string[];
+    /** Whether a step failed on this row's value */
+    failed: boolean;
+};
+export type BundleDataImporterAdHocImportTransformationResponse = {
+    /** The column's values in the first rows of the file */
+    values: BundleDataImporterAdHocImportTransformationCell[];
+    /** Each transformation with the values after it */
+    steps: {
+        /** Operator type */
+        type: string;
+        /** Transformation result type after the step; null once a step cannot take its input */
+        resultType: string | null;
+        /** Why the step cannot take the result of the steps before it */
+        error: string | null;
+        /** One value per row of the first rows */
+        values: BundleDataImporterAdHocImportTransformationCell[];
+    }[];
+    /** The operator added to convert the result to the field's type; null when it fits as it is */
+    conversion: string | null;
+    /** Transformation result type that goes into the field; null once a step cannot take its input */
+    resultType: string | null;
+    /** Whether the result can go into the field */
+    fits: boolean;
+    /** The values that go into the field, converted */
+    results: BundleDataImporterAdHocImportTransformationCell[];
+    /** The operator types that can be added next and still lead to the field */
+    offered: string[];
 };
 export const {
     useBundleDataImporterClassificationstoreLoadAttributesQuery,
@@ -958,4 +1034,5 @@ export const {
     useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
     useBundleDataImporterAdHocImportLoadMappingMutation,
     useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery,
+    useBundleDataImporterAdHocImportPreviewTransformationsMutation,
 } = injectedRtkApi;

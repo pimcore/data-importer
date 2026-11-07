@@ -11,16 +11,14 @@
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import {
   chooseField,
-  chooseLanguage,
-  chooseStoreKey,
   createMapping,
-  freeLanguages,
+  setTransformations,
   skipColumn,
-  withLanguages,
   type LoadedMapping,
   type Mapping,
   type MappingField
 } from './mapping-state'
+import { chooseLanguage, chooseStoreKey, freeLanguages, withLanguages } from './mapping-choices'
 import { canGoInto, isTaken, takenFields } from './taken-fields'
 import { takenStoreKeys } from './taken-store-keys'
 
@@ -44,7 +42,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, given: Partial<MappingField> = {}): MappingField =>
-  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', group: ['Product'], classificationStore: false, ...given })
+  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false, ...given })
 
 const fields = [field('sku', { mandatory: true }), field('name', { localized: true, mandatory: true }), field('price'), field('ean', { mandatory: true })]
 
@@ -101,6 +99,15 @@ describe('a classification store', () => {
 
   it('never changes the match column', () => {
     expect(chooseStoreKey(mapping, 'Artikelnr', 'attributes', width)).toEqual(mapping)
+  })
+
+  it('keeps the transformations only for the same key', () => {
+    const steps = [{ type: 'trim', settings: {} }]
+    const transformed = setTransformations(chooseStoreKey(mapping, 'Notiz', 'attributes', width), 'Notiz', steps, true)
+
+    expect(rowOf(chooseStoreKey(transformed, 'Notiz', 'attributes', width), 'Notiz')).toMatchObject({ transformations: steps, fits: true })
+    expect(rowOf(chooseStoreKey(transformed, 'Notiz', 'attributes', height), 'Notiz')).toMatchObject({ transformations: [], fits: undefined })
+    expect(rowOf(chooseStoreKey(transformed, 'Notiz', 'features', width), 'Notiz')).toMatchObject({ transformations: [], fits: undefined })
   })
 
   it('refuses a key another column goes into', () => {

@@ -14,13 +14,13 @@ import { Button, Flex, LanguageSelection, Select, Tag, Text } from '@pimcore/stu
 import { filterByLabel } from '../../utils/select-utils'
 import {
   chooseField,
-  chooseLanguage,
-  freeLanguages,
+  fitsField,
   skipColumn,
   type Mapping,
   type MappingField,
   type MappingRow
 } from './mapping-state'
+import { chooseLanguage, freeLanguages } from './mapping-choices'
 import { canGoInto, type TakenFields } from './taken-fields'
 
 const COLUMN_WIDTH = 280
@@ -55,6 +55,8 @@ export interface MappingRowViewProps {
   onChange: (mapping: Mapping) => void
   // a classification store goes in by a key chosen in its own dialog
   onPickStoreKey: (column: string, field: string) => void
+  // opens the column's transformations; none without a file to run them on
+  onTransform?: (column: string) => void
 }
 
 type ChoiceDetailsProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'languages' | 'onChange' | 'onPickStoreKey'>
@@ -166,11 +168,12 @@ export const MappingRowView = ({
   isActive,
   onActivate,
   onChange,
-  onPickStoreKey
+  onPickStoreKey,
+  onTransform
 }: MappingRowViewProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { column, label, sample, auto, isMatch } = row
+  const { column, label, sample, choice, auto, isMatch, transformations } = row
 
   return (
     <Flex
@@ -223,6 +226,18 @@ export const MappingRowView = ({
             row={ row }
           />
           ) }
+
+      { !isMatch && choice !== undefined && choice.key === undefined && onTransform !== undefined && (
+        <Button
+          aria-label={ t('data-importer.ad-hoc-import.mapping.transformations-of', { column: label, interpolation: { escapeValue: false } }) }
+          onClick={ () => { onTransform(column) } }
+        >
+          { transformations.length === 0
+            ? t('data-importer.ad-hoc-import.mapping.transformations')
+            : t('data-importer.ad-hoc-import.mapping.transformations-count', { count: transformations.length }) }
+        </Button>
+      ) }
+      { !fitsField(row, fields) && <Tag color="warning">{ t('data-importer.ad-hoc-import.mapping.needs-transformation') }</Tag> }
       { auto && <Tag color="purple">{ t('data-importer.ad-hoc-import.mapping.auto') }</Tag> }
     </Flex>
   )

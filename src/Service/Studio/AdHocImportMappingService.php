@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ClassLayoutGroups;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyParameters;
@@ -37,7 +38,7 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
 
     // An ad hoc import keeps objects where it finds them, names new ones by their match value and cannot set the
     // object type of a class with variants
-    private const array NO_MAPPING_TARGETS = ['key', 'path', 'type'];
+    public const array NO_MAPPING_TARGETS = ['key', 'path', 'type'];
 
     public function __construct(
         private ClassDefinitionServiceInterface $classDefinitionService, // NOSONAR php:S1068 read by CreatableClassTrait
@@ -45,6 +46,7 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
         private ClassDefinitionResolverInterface $classDefinitionResolver,
         private DataTypeServiceInterface $dataTypeService,
         private DefinitionResolverInterface $brickDefinitionResolver,
+        private TransformationChain $transformationChain,
     ) {
     }
 
@@ -55,12 +57,14 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
 
         $class = $this->classDefinitionResolver->getById($classId);
         $groups = $class === null ? null : ClassLayoutGroups::of($class);
+        $accepted = $this->transformationChain->acceptedTypes($classId);
         $fields = [];
         foreach ($this->mappingSuggestionService->loadTargets($classId) as $target) {
             if (!in_array($target['key'], self::NO_MAPPING_TARGETS, true)) {
                 $fields[] = [
                     ...$target,
                     'mandatory' => $this->isMandatory($class, $target['key']),
+                    'takesColumnAsIs' => $this->transformationChain->takesColumnAsIs($accepted[$target['key']] ?? []),
                     'group' => $groups?->groupOf($target['key']) ?? [],
                     'classificationStore' => false,
                 ];
@@ -78,6 +82,8 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
                     'mandatory' => (bool) $definition->getMandatory(),
                     'group' => $groups?->groupOf($key) ?? [],
                     'classificationStore' => true,
+                    // no transformations: the preview knows no key's type
+                    'takesColumnAsIs' => true,
                 ];
             }
         }
