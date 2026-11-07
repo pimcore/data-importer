@@ -18,6 +18,7 @@ use Pimcore\Model\DataObject\ClassDefinition\Data\Language;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
 use Pimcore\Model\DataObject\ClassDefinition\Data\User;
 use Pimcore\Model\Element\ValidationException;
+use Pimcore\Model\User as UserModel;
 
 /**
  * The check of a value to match a text field by: one the field cannot hold finds nothing and would only fail when the
@@ -52,8 +53,12 @@ final class TextMatchValue
             return false;
         }
 
+        if ($field instanceof User) {
+            return self::isUser($value);
+        }
+
         // core lists these only in admin, and for them no options means no value is valid, not that any is
-        if ($field instanceof User || $field instanceof Language) {
+        if ($field instanceof Language) {
             if (!$field->getOptions()) {
                 $field->configureOptions();
             }
@@ -72,6 +77,17 @@ final class TextMatchValue
         }
 
         return self::isAmong($value, $options);
+    }
+
+    /**
+     * Asked per value because the field object is shared and outlives a file in a worker, so options kept on it would
+     * miss users created since. Not the field's checkValidity(), which reads 12abc as 12 and accepts the system user.
+     */
+    private static function isUser(string $value): bool
+    {
+        $id = (int) $value;
+
+        return $id > 0 && (string) $id === $value && UserModel::getById($id) !== null;
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Matching;
 
 use Codeception\Test\Unit;
+use Pimcore\Cache\RuntimeCache;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\TextMatchValue;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\RowMatcherOptionsProvider;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Country;
@@ -24,6 +25,7 @@ use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Textarea;
 use Pimcore\Model\DataObject\ClassDefinition\Data\User as UserField;
 use Pimcore\Model\User;
+use Pimcore\Model\User\Role;
 
 class TextMatchValueTest extends Unit
 {
@@ -148,6 +150,40 @@ class TextMatchValueTest extends Unit
             $this->assertFalse(TextMatchValue::fits($id . '0000', $this->named(new UserField())));
         } finally {
             $user->delete();
+        }
+    }
+
+    public function testAUserFieldSeesUsersCreatedAndDeletedAfterItsFirstCheck(): void
+    {
+        $field = $this->named(new UserField());
+        $this->assertFalse(TextMatchValue::fits('abc', $field));
+
+        $user = (new User())->setName('text-match-value-' . uniqid());
+        $user->save();
+        $id = (string) $user->getId();
+
+        try {
+            $this->assertTrue(TextMatchValue::fits($id, $field));
+        } finally {
+            $user->delete();
+        }
+
+        // what a worker does between two messages
+        RuntimeCache::clear();
+        $this->assertFalse(TextMatchValue::fits($id, $field));
+    }
+
+    public function testAUserFieldTakesNeitherARoleNorTheSystemUser(): void
+    {
+        $role = (new Role())->setName('text-match-value-' . uniqid());
+        $role->save();
+
+        try {
+            $this->assertFalse(TextMatchValue::fits((string) $role->getId(), $this->named(new UserField())));
+            $this->assertFalse(TextMatchValue::fits('0', $this->named(new UserField())));
+            $this->assertFalse(TextMatchValue::fits('-1', $this->named(new UserField())));
+        } finally {
+            $role->delete();
         }
     }
 
