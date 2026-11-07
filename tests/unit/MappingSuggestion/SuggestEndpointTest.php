@@ -97,7 +97,7 @@ class SuggestEndpointTest extends Unit
         );
     }
 
-    public function testTheAiRouteTakesAGetForAnIdAndNeedsTheDataImporterConfigPermission(): void
+    public function testTheAiRouteTakesAGetForAnIdAndLeavesTheRightToTheService(): void
     {
         $method = new ReflectionMethod(LoadAiController::class, 'load');
 
@@ -107,10 +107,7 @@ class SuggestEndpointTest extends Unit
         $this->assertMatchesRegularExpression('/^' . $route['requirements']['requestId'] . '$/', str_repeat('a', 32));
         $this->assertDoesNotMatchRegularExpression('/^' . $route['requirements']['requestId'] . '$/', '../secret');
 
-        $this->assertSame(
-            PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG,
-            $method->getAttributes(IsGranted::class)[0]->newInstance()->attribute
-        );
+        $this->assertSame([], $method->getAttributes(IsGranted::class));
     }
 
     public function testTheAiAnswerIsTheStagesStatusAndItsSuggestionsAsJson(): void

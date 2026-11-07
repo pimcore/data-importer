@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 use Pimcore\Contracts\PimcoreAgent\AgentTaskRequest;
@@ -323,6 +324,37 @@ class MappingSuggestionServiceAiTest extends MappingSuggestionServiceTestCase
         $this->expectException(NotFoundException::class);
 
         $this->service($attributes, aiStage: $stage, userId: self::USER_ID + 1)->loadAi((string) $requestId);
+    }
+
+    public function testAnAdHocUserLoadsTheAgentsSuggestionsOfTheirOwnRequest(): void
+    {
+        $service = $this->service(
+            ['default' => [$this->attribute('color')]],
+            aiStage: $this->aiStage($this->agent(['mappings' => [
+                ['column' => 'col_0', 'field' => 'color', 'language' => null, 'confidence' => 0.9],
+            ]])),
+            rights: [PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT],
+            creatableClasses: ['Product']
+        );
+
+        $requestId = (string) $service->suggest($this->parameters('Farbe'))->getAiRequestId();
+        $loaded = $service->loadAi($requestId);
+
+        $this->assertSame('finished', $loaded->getAiStatus());
+        $this->assertSame(['color'], array_column($loaded->getSuggestions(), 'targetFieldName'));
+    }
+
+    public function testAUserWithNeitherRightCannotLoadARequest(): void
+    {
+        $stage = $this->aiStage($this->agent());
+        $attributes = ['default' => [$this->attribute('color')]];
+        $requestId = (string) $this->service($attributes, aiStage: $stage)
+            ->suggest($this->parameters('Farbe'))
+            ->getAiRequestId();
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->service($attributes, aiStage: $stage, rights: [])->loadAi($requestId);
     }
 
     public function testLoadingTheAgentsSuggestionsDispatchesTheEvent(): void

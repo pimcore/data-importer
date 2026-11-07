@@ -82,13 +82,7 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
     public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse
     {
         $classId = $parameters->getClassId();
-        $user = $this->resolveCurrentUser();
-        $mayConfigure = $user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG);
-
-        // Studio's voter refuses on the first missing right, so either right is checked here and not on the route.
-        if (!$mayConfigure && !$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT)) {
-            throw new ForbiddenException('Access denied to mapping suggestions');
-        }
+        $mayConfigure = $this->assertMaySuggest();
 
         if ($this->classDefinitionResolver->getById($classId) === null) {
             throw new NotFoundException('Class', $classId);
@@ -112,12 +106,29 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
 
     public function loadAi(string $requestId): MappingSuggestionsResponse
     {
+        $this->assertMaySuggest();
         $result = $this->aiStage->read($requestId, $this->resolveCurrentUser()->getId());
         if ($result === null) {
             throw new NotFoundException('Mapping suggestion request', $requestId);
         }
 
         return $this->respond($result->suggestions, $result->status, $requestId);
+    }
+
+    /**
+     * Studio's voter refuses on the first missing right, so either right is checked here and not on the routes.
+     *
+     * @return bool whether the user has the configuration right
+     */
+    private function assertMaySuggest(): bool
+    {
+        $user = $this->resolveCurrentUser();
+        $mayConfigure = $user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG);
+        if (!$mayConfigure && !$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT)) {
+            throw new ForbiddenException('Access denied to mapping suggestions');
+        }
+
+        return $mayConfigure;
     }
 
     /**

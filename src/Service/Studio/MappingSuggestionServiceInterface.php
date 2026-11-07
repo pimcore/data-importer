@@ -41,6 +41,7 @@ interface MappingSuggestionServiceInterface
     /**
      * Where the AI stage of an earlier suggest() stands, with its suggestions once it finished.
      *
+     * @throws ForbiddenException without the data importer's configuration right or the ad hoc import's right
      * @throws NotFoundException when the request is unknown or was started by another user
      * @throws EnvironmentException when the current user cannot be resolved
      */
