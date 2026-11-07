@@ -15,7 +15,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherFactory;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
+use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportConfigurationService;
+use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
@@ -25,6 +29,10 @@ use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Checkbox;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Pimcore\Model\UserInterface;
@@ -34,6 +42,10 @@ class AdHocImportConfigurationServiceTest extends Unit
     private const string FOLDER = '/Products/Imported';
 
     private const string LOCKED_FOLDER = '/Products/Locked';
+
+    private const string CREATE_ONLY_FOLDER = '/Products/CreateOnly';
+
+    private const string AN_OBJECT = '/Products/Imported/Car 1';
 
     private const string CLASS_ID = 'PROD';
 
@@ -211,6 +223,32 @@ class AdHocImportConfigurationServiceTest extends Unit
                 ['location' => ['type' => 'staticPath', 'settings' => ['path' => self::LOCKED_FOLDER]]],
                 'folder-not-allowed',
             ],
+            'a folder the user may create in but not save in' => [
+                ['location' => ['type' => 'staticPath', 'settings' => ['path' => self::CREATE_ONLY_FOLDER]]],
+                'folder-not-allowed',
+            ],
+            'an object, not a folder' => [
+                ['location' => ['type' => 'staticPath', 'settings' => ['path' => self::AN_OBJECT]]],
+                'folder-missing',
+            ],
+            'a field the class no longer has' => [
+                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'gone']]],
+                'matching',
+            ],
+            'a field the matcher cannot compare' => [
+                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'active']]],
+                'matching',
+            ],
+            'a localized field without a language' => [
+                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'name']]],
+                'matching',
+            ],
+            'a localized field in a language that does not exist' => [
+                ['loading' => ['type' => 'attribute', 'settings' => [
+                    'dataSourceIndex' => 'SKU', 'attributeName' => 'name', 'language' => 'en_xx-nope',
+                ]]],
+                'matching',
+            ],
         ];
     }
 
@@ -370,8 +408,7 @@ class AdHocImportConfigurationServiceTest extends Unit
             )] : []
         );
 
-        $class = new ClassDefinition();
-        $class->setName('Product');
+        $class = $this->productClass();
         $classResolver = $this->createStub(ClassDefinitionResolverInterface::class);
         $classResolver->method('getById')->willReturnCallback(
             static fn (string $id): ?ClassDefinition => in_array($id, [self::CLASS_ID, 'CAR'], true) ? $class : null
@@ -380,22 +417,58 @@ class AdHocImportConfigurationServiceTest extends Unit
         $open = $folder ?? $this->createStub(Folder::class);
         if ($folder === null) {
             $open->method('isAllowed')->willReturnCallback(
-                fn (string $type, ?User $user = null): bool => $type === 'create' && $user === $this->user
+                fn (string $type, ?User $user = null): bool => in_array($type, ['create', 'save'], true)
+                    && $user === $this->user
             );
         }
         $locked = $this->createStub(Folder::class);
         $locked->method('isAllowed')->willReturn(false);
+        $createOnly = $this->createStub(Folder::class);
+        $createOnly->method('isAllowed')->willReturnCallback(static fn (string $type): bool => $type === 'create');
+        $object = $this->createStub(Concrete::class);
+        $object->method('isAllowed')->willReturn(true);
+        $elements = [
+            self::FOLDER => $open,
+            self::LOCKED_FOLDER => $locked,
+            self::CREATE_ONLY_FOLDER => $createOnly,
+            self::AN_OBJECT => $object,
+        ];
         $objects = $this->createStub(DataObjectResolverInterface::class);
-        $objects->method('getByPath')->willReturnCallback(
-            static fn (string $path): ?Folder => [self::FOLDER => $open, self::LOCKED_FOLDER => $locked][$path] ?? null
-        );
+        $objects->method('getByPath')->willReturnCallback(static fn (string $path) => $elements[$path] ?? null);
 
         return new AdHocImportConfigurationService(
             $security,
             $classes,
             $classResolver,
             $objects,
+            new RowMatcherFactory(new ResolverFactory(new Resolver(), [], [], [], []), new DataObjectLoader()),
             static fn (): array => $configurations,
         );
+    }
+
+    /**
+     * Product with `sku` to match by, a checkbox `active` the matcher cannot compare and a localized `name`.
+     */
+    private function productClass(): ClassDefinition
+    {
+        $field = static function (string $name, ClassDefinition\Data $definition): ClassDefinition\Data {
+            $definition->setName($name);
+
+            return $definition;
+        };
+
+        $localized = new Localizedfields();
+        $localized->setName('localizedfields');
+        $localized->addChild($field('name', new Input()));
+
+        $class = new ClassDefinition();
+        $class->setName('Product');
+        $class->setFieldDefinitions([
+            'sku' => $field('sku', new Input()),
+            'active' => $field('active', new Checkbox()),
+            'localizedfields' => $localized,
+        ]);
+
+        return $class;
     }
 }

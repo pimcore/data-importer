@@ -15,6 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Closure;
 use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ColumnKeying;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConfigurationUnusableReason;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherFactory;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportConfigurationsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
@@ -22,6 +26,8 @@ use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolve
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 
 /**
@@ -33,26 +39,12 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
 {
     use CurrentUserResolverTrait;
 
-    public const string UNUSABLE_CLASS = 'class';
-
-    public const string UNUSABLE_MATCHING = 'matching';
-
-    public const string UNUSABLE_FOLDER = 'folder';
-
-    public const string UNUSABLE_FOLDER_MISSING = 'folder-missing';
-
-    public const string UNUSABLE_FOLDER_NOT_ALLOWED = 'folder-not-allowed';
-
     private const string ADAPTER_TYPE = 'dataImporterDataObject';
 
     // the strategies whose result an ad hoc import can take: by the object ID or a field, into one folder
     private const array LOADING_BY = ['id' => 'id', 'attribute' => 'field'];
 
     private const string STATIC_PATH = 'staticPath';
-
-    public const string COLUMNS_BY_NAME = 'name';
-
-    public const string COLUMNS_BY_POSITION = 'position';
 
     /**
      * @var Closure(): iterable<Configuration>
@@ -68,6 +60,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         private ClassDefinitionServiceInterface $classDefinitionService,
         private ClassDefinitionResolverInterface $classDefinitionResolver,
         private DataObjectResolverInterface $dataObjectResolver,
+        private RowMatcherFactory $rowMatcherFactory,
         ?Closure $listConfigurations = null,
     ) {
         $this->listConfigurations = $listConfigurations ?? static fn (): array => Configuration::getList();
@@ -115,10 +108,12 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             is_array($resolver['createLocationStrategy'] ?? null) ? $resolver['createLocationStrategy'] : []
         );
 
+        $class = $classId === null ? null : $this->classDefinitionResolver->getById($classId);
+
         $unusable = match (true) {
-            $classId === null || !isset($creatable[$classId]) => self::UNUSABLE_CLASS,
-            $match === null => self::UNUSABLE_MATCHING,
-            $folder === null => self::UNUSABLE_FOLDER,
+            $class === null || !isset($creatable[$classId]) => ConfigurationUnusableReason::ClassNotCreatable,
+            $match === null || !$this->matchable($class, $match) => ConfigurationUnusableReason::Matching,
+            $folder === null => ConfigurationUnusableReason::Folder,
             default => $this->folderUnusable($folder, $user),
         };
 
@@ -130,7 +125,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         return [
             'name' => (string)$configuration->getName(),
             'classId' => $classId,
-            'className' => $classId === null ? null : $this->classDefinitionResolver->getById($classId)?->getName(),
+            'className' => $class?->getName(),
             'matchBy' => $match['by'] ?? null,
             'matchField' => $match['field'] ?? null,
             'matchLanguage' => $match['language'] ?? null,
@@ -139,8 +134,8 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             'columns' => $columns,
             'columnsBy' => $this->columnsBy(
                 is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []
-            ),
-            'unusable' => $unusable,
+            )->value,
+            'unusable' => $unusable?->value,
         ];
     }
 
@@ -175,6 +170,23 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
     }
 
     /**
+     * Whether the ad hoc matcher accepts the field and language, read-only: a removed or unsupported field, or a
+     * localized one without a valid language, would fail only once the import starts.
+     *
+     * @param array{by: 'id'|'field', field: string|null, language: string|null, column: string} $match
+     */
+    private function matchable(ClassDefinition $class, array $match): bool
+    {
+        try {
+            $this->rowMatcherFactory->assertMatchable($class, $match['field'], $match['language'] ?? '');
+        } catch (InvalidConfigurationException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @param array<mixed> $strategy
      */
     private function folder(array $strategy): ?string
@@ -192,28 +204,31 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
      *
      * @param array<mixed> $interpreter
      */
-    private function columnsBy(array $interpreter): string
+    private function columnsBy(array $interpreter): ColumnKeying
     {
         $settings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
 
         return match ($interpreter['type'] ?? null) {
-            'xlsx' => self::COLUMNS_BY_POSITION,
+            'xlsx' => ColumnKeying::Position,
             // read as the CSV interpreter's bool properties read them
             'csv' => (bool)($settings['skipFirstRow'] ?? false) && (bool)($settings['saveHeaderName'] ?? false)
-                ? self::COLUMNS_BY_NAME
-                : self::COLUMNS_BY_POSITION,
-            default => self::COLUMNS_BY_NAME,
+                ? ColumnKeying::Name
+                : ColumnKeying::Position,
+            default => ColumnKeying::Name,
         };
     }
 
-    private function folderUnusable(string $path, User $user): ?string
+    private function folderUnusable(string $path, User $user): ?ConfigurationUnusableReason
     {
+        // the ad hoc import places new objects only in a folder (as the upload checks), never below another object
         $folder = $this->dataObjectResolver->getByPath($path);
-        if ($folder === null) {
-            return self::UNUSABLE_FOLDER_MISSING;
+        if (!$folder instanceof Folder) {
+            return ConfigurationUnusableReason::FolderMissing;
         }
 
-        return $folder->isAllowed('create', $user) ? null : self::UNUSABLE_FOLDER_NOT_ALLOWED;
+        return $folder->isAllowed('create', $user) && $folder->isAllowed('save', $user)
+            ? null
+            : ConfigurationUnusableReason::FolderNotAllowed;
     }
 
     /**
