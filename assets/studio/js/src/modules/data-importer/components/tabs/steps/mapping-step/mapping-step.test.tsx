@@ -41,7 +41,8 @@ jest.mock('@pimcore/studio-ui-bundle/utils', () => ({ uuid: () => crypto.randomU
 // the factory runs before this file's constants exist, so it reaches initiate lazily
 jest.mock('../../../../data-importer-api-slice-enhanced', () => ({
   api: { endpoints: { bundleDataImporterDataTypeLoadClassAttributes: { initiate: (...args: Parameters<typeof initiate>) => initiate(...args) } } },
-  useBundleDataImporterMappingSuggestionSuggestMutation: () => [async (request: unknown) => await suggestMappings(request), { isLoading: isSuggesting }]
+  useBundleDataImporterMappingSuggestionSuggestMutation: () => [async (request: unknown) => await suggestMappings(request), { isLoading: isSuggesting }],
+  useBundleDataImporterMappingSuggestionLoadAiQuery: () => ({ isError: false })
 }))
 jest.mock('../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery: jest.fn(),

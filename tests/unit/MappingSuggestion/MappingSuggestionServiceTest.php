@@ -12,78 +12,12 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\MappingSuggestion;
 
-use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\MappingSuggestionsEvent;
-use Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydrator;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\ColumnMatcher;
-use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionService;
-use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
-use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
-use Pimcore\Model\DataObject\ClassDefinition;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-class MappingSuggestionServiceTest extends Unit
+class MappingSuggestionServiceTest extends MappingSuggestionServiceTestCase
 {
-    /**
-     * @param array<string, list<array<string, mixed>>> $attributesByType
-     */
-    private function service(
-        array $attributesByType,
-        ?EventDispatcherInterface $dispatcher = null,
-        bool $classExists = true,
-        array &$requests = []
-    ): MappingSuggestionService {
-        $dataTypes = $this->createStub(DataTypeServiceInterface::class);
-        $dataTypes->method('loadClassAttributes')->willReturnCallback(
-            static function (
-                string $classId,
-                string|array $type,
-                bool $read,
-                bool $write,
-                bool $advanced
-            ) use ($attributesByType, &$requests): ClassAttributesResponse {
-                $requests[] = [$classId, $type, $read, $write, $advanced];
-
-                return new ClassAttributesResponse($attributesByType[is_array($type) ? $type[0] : $type] ?? []);
-            }
-        );
-
-        $classes = $this->createStub(ClassDefinitionResolverInterface::class);
-        $classes->method('getById')->willReturn($classExists ? new ClassDefinition() : null);
-
-        $tool = $this->createStub(ToolResolverInterface::class);
-        $tool->method('getValidLanguages')->willReturn(['de', 'en']);
-
-        return new MappingSuggestionService(
-            $dataTypes,
-            $classes,
-            $tool,
-            new ColumnMatcher(),
-            new MappingSuggestionHydrator(),
-            $dispatcher ?? new EventDispatcher()
-        );
-    }
-
-    private function parameters(string ...$labels): MappingSuggestionParameters
-    {
-        $columns = [];
-        foreach ($labels as $index => $label) {
-            $columns[] = ['index' => 'col_' . $index, 'label' => $label];
-        }
-
-        return new MappingSuggestionParameters('Product', $columns);
-    }
-
-    private function attribute(string $key, bool $localized = false): array
-    {
-        return ['key' => $key, 'title' => $key . ' [' . $key . ']', 'localized' => $localized];
-    }
-
     public function testItSuggestsFromTheClassAttributesWithTheLanguageGuessedFromTheColumnName(): void
     {
         $response = $this->service([
@@ -99,6 +33,7 @@ class MappingSuggestionServiceTest extends Unit
                 'transformationResultType' => 'default',
                 'score' => 100,
                 'language' => 'de',
+                'source' => 'name',
             ],
             [
                 'sourceIndex' => 'col_1',
@@ -108,6 +43,7 @@ class MappingSuggestionServiceTest extends Unit
                 'transformationResultType' => 'default',
                 'score' => 100,
                 'language' => null,
+                'source' => 'name',
             ],
         ], $response->getSuggestions());
     }

@@ -27,7 +27,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion;
  *     targetFieldLabel: string,
  *     transformationResultType: string,
  *     score: int,
- *     language: string|null
+ *     language: string|null,
+ *     source: string
  * }
  * @phpstan-type Name array{normalized: string, tokens: array<array-key, int>, bigrams: array<array-key, int>}
  * @phpstan-type Candidate array{target: Target, names: list<Name>}
@@ -67,7 +68,7 @@ final readonly class ColumnMatcher
 
         $suggestions = [];
         foreach ($columns as $column) {
-            if (mb_strlen($column['label']) > self::MAX_LABEL_LENGTH) {
+            if (!$this->acceptsLabel($column['label'])) {
                 continue;
             }
 
@@ -84,12 +85,18 @@ final readonly class ColumnMatcher
                 'transformationResultType' => $best['target']['transformationResultType'],
                 'score' => $best['score'],
                 'language' => $best['language'],
+                'source' => SuggestionSource::Name->value,
             ];
         }
 
         usort($suggestions, static fn (array $a, array $b): int => $b['score'] <=> $a['score']);
 
         return $suggestions;
+    }
+
+    public function acceptsLabel(string $label): bool
+    {
+        return mb_strlen($label) <= self::MAX_LABEL_LENGTH;
     }
 
     /**

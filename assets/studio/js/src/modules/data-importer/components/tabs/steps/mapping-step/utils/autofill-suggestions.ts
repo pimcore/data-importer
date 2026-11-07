@@ -22,6 +22,7 @@ export interface MappingSuggestion {
   transformationResultType: string
   score: number
   language: string | null
+  source: 'name' | 'ai'
   previewResult: string | null
 }
 

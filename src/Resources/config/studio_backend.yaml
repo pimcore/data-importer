@@ -55,6 +55,21 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\ColumnMatcher: ~
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\SampleValuePicker: ~
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\SampleValueReader: ~
+
+    # the agent bundle is optional: without it, suggestions come from the name comparison alone
+    Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage:
+        arguments:
+            $tasks: '@?Pimcore\Contracts\PimcoreAgent\AgentTaskServiceInterface'
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationLookupInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\ConfigurationLookup
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsService
+
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
 

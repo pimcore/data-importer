@@ -27,9 +27,13 @@ import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import { useTheme } from 'antd-style'
 import { FieldWidthProvider } from '@pimcore/studio-ui-bundle/modules/element'
 import { type MappingConfigItem } from '../../../../types'
-import { useBundleDataImporterMappingSuggestionSuggestMutation } from '../../../../data-importer-api-slice-enhanced'
+import {
+  type BundleDataImporterMappingSuggestionsResponse,
+  useBundleDataImporterMappingSuggestionSuggestMutation
+} from '../../../../data-importer-api-slice-enhanced'
 import { normalizeDataRow } from '../../../../utils/normalize-data-row'
 import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
+import { useMappingSource } from '../mapping-source/mapping-source'
 import { useStyles } from './mapping-step.styles'
 import { SourcesPanel } from './sources-panel/sources-panel'
 import { MappingsPanel } from './mappings-panel/mappings-panel'
@@ -40,6 +44,7 @@ import { ensureMappingIdAtIndex } from './utils/mapping-identity'
 import { PanelArrowIcon } from './panel-arrow-icon.inline'
 import { MappingItemContextProvider } from './mapping-item-context'
 import { type MappingSuggestion, collectUnmappedColumns, toMappingSuggestions } from './utils/autofill-suggestions'
+import { useAiSuggestions } from './hooks/use-ai-suggestions'
 import { AutofillSuggestionsPanel, applySelectedSuggestions } from './autofill-suggestions-panel'
 
 function isMappingDebugEnabled (): boolean {
@@ -68,8 +73,10 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
     hasPreviewError,
     attributesMap,
     classId,
-    getMappingConfig
+    getMappingConfig,
+    getSourcePreviewConfig
   } = useMappingStepLoader(isActive)
+  const { configName } = useMappingSource()
 
   const {
     dataPreview: autofillPreviewData,
@@ -85,6 +92,7 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
   const [suggestions, setSuggestions] = useState<MappingSuggestion[] | null>(null)
   const [suggestMappings, { isLoading: isSuggestingMappings }] = useBundleDataImporterMappingSuggestionSuggestMutation()
   const [selectedSuggestionIds, setSelectedSuggestionIds] = useState<Set<string>>(new Set())
+  const [aiRequestId, setAiRequestId] = useState<string | null>(null)
   const autoExpandNewKeysRef = useRef(true)
   const prevLoaderTypeRef = useRef<string | undefined>(loaderConfigType)
   const prevInterpreterTypeRef = useRef<string | undefined>(interpreterConfigType)
@@ -322,10 +330,15 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
 
     const columns = collectUnmappedColumns(columnHeaderOptions, getMappingConfig())
     let computed: MappingSuggestion[] = []
+    let startedAiRequestId: string | null = null
 
     if (classId !== undefined && classId !== '' && columns.length > 0) {
       const result = await suggestMappings({
-        bundleDataImporterMappingSuggestionParameters: { classId, columns }
+        bundleDataImporterMappingSuggestionParameters: {
+          classId,
+          columns,
+          ...(configName !== undefined && { configName, currentConfig: getSourcePreviewConfig() })
+        }
       })
 
       if (result.data === undefined) {
@@ -334,12 +347,23 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
       }
 
       computed = toMappingSuggestions(result.data.suggestions, sourceRows)
+      startedAiRequestId = result.data.aiStatus === 'running' ? result.data.aiRequestId as string : null
     }
 
     setSuggestions(computed)
     setSelectedSuggestionIds(new Set(computed.map((s) => s.id)))
+    setAiRequestId(startedAiRequestId)
     loadAutofillPreviewRecord(0)
-  }, [isSuggestingMappings, getMappingConfig, columnHeaderOptions, classId, sourceRows, suggestMappings, message, t, loadAutofillPreviewRecord])
+  }, [isSuggestingMappings, getMappingConfig, columnHeaderOptions, classId, configName, getSourcePreviewConfig, sourceRows, suggestMappings, message, t, loadAutofillPreviewRecord])
+
+  const handleAiSuggestionsSettled = useCallback((aiSuggestions: BundleDataImporterMappingSuggestionsResponse['suggestions']): void => {
+    const added = toMappingSuggestions(aiSuggestions, sourceRows)
+    setAiRequestId(null)
+    setSuggestions((current) => current === null ? null : [...current, ...added])
+    setSelectedSuggestionIds((current) => new Set([...current, ...added.map((s) => s.id)]))
+  }, [sourceRows])
+
+  const isLoadingAiSuggestions = useAiSuggestions(aiRequestId, handleAiSuggestionsSettled)
 
   const handleOpenAutofillSuggestions = useCallback((): void => {
     void loadAutofillSuggestions()
@@ -368,6 +392,7 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
 
   const handleCloseSuggestionsModal = useCallback((): void => {
     setSuggestions(null)
+    setAiRequestId(null)
     setSelectedSuggestionIds(new Set())
   }, [])
 
@@ -393,6 +418,7 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
 
     form.setFieldValue('mappingConfig', [...currentItems, ...newItems], { triggerChange: true })
     setSuggestions(null)
+    setAiRequestId(null)
     setSelectedSuggestionIds(new Set())
   }, [suggestions, selectedSuggestionIds, getMappingConfig, form])
 
@@ -552,6 +578,7 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
         { suggestions !== null && (
           <AutofillSuggestionsPanel
             hasPrevRow={ autofillRecordIndex > 0 }
+            isLoadingAiSuggestions={ isLoadingAiSuggestions }
             isLoadingPreviewRow={ isAutofillPreviewFetching }
             onNextRow={ handleNextPreviewRow }
             onPrevRow={ handlePrevPreviewRow }

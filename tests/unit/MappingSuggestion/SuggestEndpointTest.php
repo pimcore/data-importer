@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\MappingSuggestion;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\MappingSuggestion\LoadAiController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\MappingSuggestion\SuggestController;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
@@ -46,6 +47,7 @@ class SuggestEndpointTest extends Unit
         'transformationResultType' => 'default',
         'score' => 100,
         'language' => 'de',
+        'source' => 'name',
     ];
 
     private function violations(MappingSuggestionParameters $parameters): int
@@ -95,6 +97,50 @@ class SuggestEndpointTest extends Unit
         );
     }
 
+    public function testTheAiRouteTakesAGetForAnIdAndNeedsTheDataImporterConfigPermission(): void
+    {
+        $method = new ReflectionMethod(LoadAiController::class, 'load');
+
+        $route = $method->getAttributes(Route::class)[0]->getArguments();
+        $this->assertSame('/mapping-suggestions/ai/{requestId}', $route['path']);
+        $this->assertSame(['GET'], $route['methods']);
+        $this->assertMatchesRegularExpression('/^' . $route['requirements']['requestId'] . '$/', str_repeat('a', 32));
+        $this->assertDoesNotMatchRegularExpression('/^' . $route['requirements']['requestId'] . '$/', '../secret');
+
+        $this->assertSame(
+            PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG,
+            $method->getAttributes(IsGranted::class)[0]->newInstance()->attribute
+        );
+    }
+
+    public function testTheAiAnswerIsTheStagesStatusAndItsSuggestionsAsJson(): void
+    {
+        $requestId = str_repeat('a', 32);
+
+        $service = $this->createMock(MappingSuggestionServiceInterface::class);
+        $service->expects($this->once())
+            ->method('loadAi')
+            ->with($requestId)
+            ->willReturn(new MappingSuggestionsResponse([self::SUGGESTION], 'finished', $requestId));
+
+        $controller = new LoadAiController(new Serializer([new ObjectNormalizer()], [new JsonEncoder()]), $service);
+
+        $answer = json_decode($controller->load($requestId)->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->assertSame([self::SUGGESTION], $answer['suggestions']);
+        $this->assertSame('finished', $answer['aiStatus']);
+        $this->assertSame($requestId, $answer['aiRequestId']);
+    }
+
+    public function testARequestMayNameAConfigurationForItsPreviewFile(): void
+    {
+        $parameters = new MappingSuggestionParameters('Product', [], 'products', ['interpreterConfig' => []]);
+
+        $this->assertSame(0, $this->violations($parameters));
+        $this->assertSame('products', $parameters->getConfigName());
+        $this->assertSame(['interpreterConfig' => []], $parameters->getCurrentConfig());
+    }
+
     /**
      * What the ad-hoc import and the mapping step share: a class and column names, no stored configuration.
      */
@@ -138,7 +184,14 @@ class SuggestEndpointTest extends Unit
         $operation = $snapshot['paths']['/pimcore-studio/api/bundle/data-importer/mapping-suggestions']['post'];
         $this->assertSame('bundle_data_importer_mapping_suggestion_suggest', $operation['operationId']);
 
+        $aiPath = '/pimcore-studio/api/bundle/data-importer/mapping-suggestions/ai/{requestId}';
+        $this->assertSame(
+            'bundle_data_importer_mapping_suggestion_load_ai',
+            $snapshot['paths'][$aiPath]['get']['operationId']
+        );
+
         $response = $snapshot['components']['schemas']['BundleDataImporterMappingSuggestionsResponse'];
+        $this->assertSame(['suggestions', 'aiStatus', 'aiRequestId'], $response['required']);
         $this->assertSame(
             array_keys(self::SUGGESTION),
             array_keys($response['properties']['suggestions']['items']['properties'])
@@ -146,6 +199,7 @@ class SuggestEndpointTest extends Unit
 
         $client = file_get_contents(self::GENERATED_CLIENT_PATH);
         $this->assertStringContainsString('useBundleDataImporterMappingSuggestionSuggestMutation', $client);
+        $this->assertStringContainsString('useBundleDataImporterMappingSuggestionLoadAiQuery', $client);
         foreach (array_keys(self::SUGGESTION) as $property) {
             $this->assertStringContainsString($property . ':', $client);
         }
