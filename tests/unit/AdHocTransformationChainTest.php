@@ -37,6 +37,8 @@ class AdHocTransformationChainTest extends Unit
 
     private const string DAY = '2026-11-07';
 
+    private const string LAST_DAY_OF_FEBRUARY = '2026-02-28';
+
     private const array TEXT_STEPS = ['trim', 'stringReplace', 'conditionalConversion'];
 
     public function testTheStepsRunOnTheColumnsValuesOneAfterTheOther(): void
@@ -162,18 +164,18 @@ class AdHocTransformationChainTest extends Unit
 
     public function testADayTheMonthDoesNotHaveIsNotConvertedToAnotherDate(): void
     {
-        $result = $this->chainOn(['2026-02-30', '2026-02-28'], [], [Types::DATE]);
+        $result = $this->chainOn(['2026-02-30', self::LAST_DAY_OF_FEBRUARY], [], [Types::DATE]);
 
         $this->assertSame([true, false], $this->failed($result->getResults()));
-        $this->assertSame([[], ['2026-02-28']], $this->items($result->getResults()));
+        $this->assertSame([[], [self::LAST_DAY_OF_FEBRUARY]], $this->items($result->getResults()));
 
-        $listed = $this->chainOn(['2026-02-28,2026-02-30', '2026-02-28'], [
+        $listed = $this->chainOn(['2026-02-28,2026-02-30', self::LAST_DAY_OF_FEBRUARY], [
             $this->step(TransformationAllowList::SPLIT, ['delimiter' => ',']),
         ], [Types::DATE_ARRAY]);
 
         $this->assertSame('date', $listed->getConversion());
         $this->assertSame([true, false], $this->failed($listed->getResults()));
-        $this->assertSame([[], ['2026-02-28']], $this->items($listed->getResults()));
+        $this->assertSame([[], [self::LAST_DAY_OF_FEBRUARY]], $this->items($listed->getResults()));
     }
 
     public function testAValueTheConversionCannotReadFailsInItsRowOnly(): void

@@ -251,12 +251,22 @@ final readonly class TransformationChain
      */
     private function unreadable(string $conversion, array $data, array $failed): array
     {
-        return $this->markRows($data, $failed, fn (string $value): bool => match ($conversion) {
-            'numeric' => is_numeric($value),
-            'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null,
-            'date' => $this->isDate($value),
-            default => true,
-        });
+        $readable = static function (string $value) use ($conversion): bool {
+            if ($conversion !== 'date') {
+                return match ($conversion) {
+                    'numeric' => is_numeric($value),
+                    'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null,
+                    default => true,
+                };
+            }
+            $date = \DateTimeImmutable::createFromFormat('!' . self::DATE_FORMAT, $value);
+            // a warning names a day the month does not have, which the parser would carry into the next month
+            $errors = \DateTimeImmutable::getLastErrors();
+
+            return $date !== false && ($errors === false || $errors['warning_count'] === 0);
+        };
+
+        return $this->markRows($data, $failed, $readable);
     }
 
     /**
@@ -281,15 +291,6 @@ final readonly class TransformationChain
         }
 
         return $failed;
-    }
-
-    private function isDate(string $value): bool
-    {
-        $date = \DateTimeImmutable::createFromFormat('!' . self::DATE_FORMAT, $value);
-        // a warning names a day the month does not have, which the parser would carry into the next month
-        $errors = \DateTimeImmutable::getLastErrors();
-
-        return $date !== false && ($errors === false || $errors['warning_count'] === 0);
     }
 
     /**
