@@ -220,7 +220,7 @@ export const TransformationsModal = ({ row, field, source, onApply, onCancel }: 
 
         <Select
           aria-label={ t(`${PREFIX}.add`) }
-          disabled={ offered.length === 0 }
+          disabled={ !settled || offered.length === 0 }
           onChange={ (type: string) => { if (type !== '') { add(type) } } }
           options={ offered.map((type) => ({ value: type, label: label(type) })) }
           placeholder={ t(`${PREFIX}.add`) }

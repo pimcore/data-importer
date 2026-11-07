@@ -177,6 +177,18 @@ describe('the transformations of a column', () => {
     expect(lastPipeline()).toEqual([{ type: 'loadAsset', settings: { loadStrategy: 'path' } }])
   })
 
+  it('offers no transformation until the steps added last have their answer', async () => {
+    mockPreview.mockResolvedValue({ data: answer({ offered: ['trim', 'loadAsset'] }) })
+    renderModal()
+    await settle()
+
+    addStep('Load asset')
+    expect(screen.getByLabelText<HTMLSelectElement>('Add a transformation').disabled).toBe(true)
+
+    await settle()
+    expect(screen.getByLabelText<HTMLSelectElement>('Add a transformation').disabled).toBe(false)
+  })
+
   it('runs the values again once typing pauses', async () => {
     renderModal({ transformations: [{ type: 'stringReplace', settings: { search: '', replace: '' } }] })
     await settle()
