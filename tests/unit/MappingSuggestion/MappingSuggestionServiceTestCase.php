@@ -23,9 +23,14 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\SampleValueReader;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
+use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\User;
 use Psr\Log\NullLogger;
@@ -40,6 +45,8 @@ abstract class MappingSuggestionServiceTestCase extends Unit
 
     /**
      * @param array<string, list<array<string, mixed>>> $attributesByType
+     * @param string[] $rights
+     * @param string[] $creatableClasses
      */
     protected function service(
         array $attributesByType,
@@ -48,7 +55,9 @@ abstract class MappingSuggestionServiceTestCase extends Unit
         array &$requests = [],
         ?AiSuggestionStage $aiStage = null,
         ?PreviewRowsServiceInterface $previewRows = null,
-        int $userId = self::USER_ID
+        int $userId = self::USER_ID,
+        array $rights = [PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG],
+        array $creatableClasses = []
     ): MappingSuggestionService {
         $dataTypes = $this->createStub(DataTypeServiceInterface::class);
         $dataTypes->method('loadClassAttributes')->willReturnCallback(
@@ -71,6 +80,19 @@ abstract class MappingSuggestionServiceTestCase extends Unit
         $tool = $this->createStub(ToolResolverInterface::class);
         $tool->method('getValidLanguages')->willReturn(['de', 'en']);
 
+        $classService = $this->createStub(ClassDefinitionServiceInterface::class);
+        $classService->method('getClassDefinitionCollection')->willReturnCallback(
+            static fn (bool $creatableOnly = false): array => $creatableOnly ? array_map(
+                static fn (string $id): ClassDefinitionList => new ClassDefinitionList(
+                    $id,
+                    $id,
+                    $id,
+                    new ElementIcon(ElementIconTypes::NAME->value, 'class')
+                ),
+                $creatableClasses
+            ) : []
+        );
+
         return new MappingSuggestionService(
             $dataTypes,
             $classes,
@@ -84,14 +106,24 @@ abstract class MappingSuggestionServiceTestCase extends Unit
                 $previewRows ?? $this->createStub(PreviewRowsServiceInterface::class),
                 new NullLogger()
             ),
-            $this->security($userId)
+            $this->security($userId, $rights),
+            $classService
         );
     }
 
-    protected function security(int $userId): SecurityServiceInterface
-    {
+    /**
+     * @param string[] $rights
+     */
+    protected function security(
+        int $userId,
+        array $rights = [PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG]
+    ): SecurityServiceInterface {
         $user = new User();
         $user->setId($userId);
+        $user->setAdmin(false);
+        foreach ($rights as $right) {
+            $user->setPermission($right, true);
+        }
 
         $security = $this->createStub(SecurityServiceInterface::class);
         $security->method('getCurrentUser')->willReturn($user);

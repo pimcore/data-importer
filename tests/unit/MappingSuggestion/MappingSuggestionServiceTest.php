@@ -13,6 +13,8 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\MappingSuggestion;
 
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\MappingSuggestionsEvent;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -126,5 +128,79 @@ class MappingSuggestionServiceTest extends MappingSuggestionServiceTestCase
         $response = $this->service([], $dispatcher)->suggest($this->parameters('name'));
 
         $this->assertSame($response, $seen);
+    }
+
+    /**
+     * One case per role: the endpoint has no route-level right, so these are its access rules.
+     *
+     * @dataProvider roles
+     *
+     * @param string[] $rights
+     * @param string[] $creatableClasses
+     */
+    public function testWhoGetsSuggestions(array $rights, array $creatableClasses, bool $allowed): void
+    {
+        $requests = [];
+        $service = $this->service(
+            ['default' => [$this->attribute('sku')]],
+            null,
+            true,
+            $requests,
+            rights: $rights,
+            creatableClasses: $creatableClasses
+        );
+
+        if (!$allowed) {
+            try {
+                $service->suggest($this->parameters('SKU'));
+                $this->fail('expected a ForbiddenException');
+            } catch (ForbiddenException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+            $this->assertSame([], $requests, 'a refused request reads no class field');
+
+            return;
+        }
+
+        $suggestions = $service->suggest($this->parameters('SKU'))->getSuggestions();
+        $this->assertSame([[
+            'sourceIndex' => 'col_0',
+            'sourceLabel' => 'SKU',
+            'targetFieldName' => 'sku',
+            'targetFieldLabel' => 'sku [sku]',
+            'transformationResultType' => 'default',
+            'score' => 100,
+            'language' => null,
+        ]], $suggestions);
+    }
+
+    public function roles(): array
+    {
+        $config = PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG;
+        $adHoc = PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT;
+
+        return [
+            'neither right' => [[], ['Product'], false],
+            'another data hub right only' => [[PermissionConstants::PLUGIN_DATA_IMPORTER_ADAPTER], ['Product'], false],
+            'only the ad hoc right, a class it may create' => [[$adHoc], ['Product'], true],
+            'only the ad hoc right, a class it may not create' => [[$adHoc], ['Category'], false],
+            'only the configuration right, any class' => [[$config], [], true],
+            'both rights, any class' => [[$config, $adHoc], [], true],
+        ];
+    }
+
+    public function testAnAdHocUserAskingForAnUnknownClassIsNotFound(): void
+    {
+        $requests = [];
+        $this->expectException(NotFoundException::class);
+
+        $this->service(
+            [],
+            null,
+            false,
+            $requests,
+            rights: [PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT],
+            creatableClasses: ['Product']
+        )->suggest($this->parameters('SKU'));
     }
 }

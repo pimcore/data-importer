@@ -18,7 +18,6 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\MappingSuggestion\Sugges
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use ReflectionMethod;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -59,7 +58,11 @@ class SuggestEndpointTest extends Unit
             ->count();
     }
 
-    public function testTheRouteTakesAPostAndNeedsTheDataImporterConfigPermission(): void
+    /**
+     * Studio's voter refuses on the first right a user lacks, so a route-level right would shut out the other caller;
+     * the service checks either right (MappingSuggestionServiceTest).
+     */
+    public function testTheRouteTakesAPostAndLeavesTheRightToTheService(): void
     {
         $method = new ReflectionMethod(SuggestController::class, 'suggest');
 
@@ -67,10 +70,7 @@ class SuggestEndpointTest extends Unit
         $this->assertSame('/mapping-suggestions', $route['path']);
         $this->assertSame(['POST'], $route['methods']);
 
-        $this->assertSame(
-            PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG,
-            $method->getAttributes(IsGranted::class)[0]->newInstance()->attribute
-        );
+        $this->assertSame([], $method->getAttributes(IsGranted::class));
     }
 
     public function testTheAnswerIsTheServicesSuggestionsAsJson(): void

@@ -29,6 +29,8 @@ interface MappingSuggestionServiceInterface
     /**
      * Answers with the name comparison's suggestions at once; with the AI stage on, its task starts in the background.
      *
+     * @throws ForbiddenException without the data importer's configuration right or the ad hoc import's right,
+     *                             or with only the latter for a class the user may not create
      * @throws NotFoundException when the class does not exist
      * @throws NotFoundHttpException when sample values are on and the named configuration does not exist
      * @throws ForbiddenException when sample values are on and the user may not read the named configuration

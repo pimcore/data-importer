@@ -23,8 +23,12 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
+use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StaticResolverBundle\Lib\ToolResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
+use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -70,16 +74,28 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         private EventDispatcherInterface $eventDispatcher,
         private AiSuggestionStage $aiStage,
         private SampleValueReader $sampleValueReader,
-        private SecurityServiceInterface $securityService // NOSONAR php:S1068 read by CurrentUserResolverTrait
+        private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
+        private ClassDefinitionServiceInterface $classDefinitionService
     ) {
     }
 
     public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse
     {
         $classId = $parameters->getClassId();
+        $user = $this->resolveCurrentUser();
+        $mayConfigure = $user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG);
+
+        // Studio's voter refuses on the first missing right, so either right is checked here and not on the route.
+        if (!$mayConfigure && !$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT)) {
+            throw new ForbiddenException('Access denied to mapping suggestions');
+        }
 
         if ($this->classDefinitionResolver->getById($classId) === null) {
             throw new NotFoundException('Class', $classId);
+        }
+
+        if (!$mayConfigure) {
+            $this->assertMayCreate($classId);
         }
 
         $targets = $this->loadTargets($classId);
@@ -221,6 +237,20 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
             $parameters->getCurrentConfig(),
             array_column($columns, 'index')
         );
+    }
+
+    /**
+     * The ad hoc import offers only the classes its user may create, so it sees no other class's fields.
+     */
+    private function assertMayCreate(string $classId): void
+    {
+        $creatable = array_map(
+            static fn (ClassDefinitionList $class): string => $class->getId(),
+            $this->classDefinitionService->getClassDefinitionCollection(creatableOnly: true)
+        );
+        if (!in_array($classId, $creatable, true)) {
+            throw new ForbiddenException(sprintf('Access denied to class %s', $classId));
+        }
     }
 
     /**
