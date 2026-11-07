@@ -163,13 +163,17 @@ class PreviewRowsServiceTest extends Unit
             match ($row['sku']) {
                 'A-1' => $event->setRows([['sku' => 'A-1', 'color' => 'RED', 'origin' => 'DE']]),
                 'A-2' => $event->skipRow(),
-                default => $event->setRows([['sku' => 'A-3a', 'color' => 'green'], ['sku' => 'A-3b', 'color' => 'teal']]),
+                default => $event->setRows([
+                    ['sku' => 'A-3a', 'color' => 'green'],
+                    ['sku' => 'A-3b', 'color' => 'teal'],
+                ]),
             };
         });
         $seen = [];
-        $eventDispatcher->addListener(PreQueueRowEvent::class, static function (PreQueueRowEvent $event) use (&$seen): void {
+        $recordSeen = static function (PreQueueRowEvent $event) use (&$seen): void {
             $seen[] = [$event->getConfigName(), $event->isPreview()];
-        });
+        };
+        $eventDispatcher->addListener(PreQueueRowEvent::class, $recordSeen);
 
         $service = $this->service(
             $this->previewFile($this->writeFile("sku;color\nA-1;red\nA-2;blue\nA-3;green\n", 'csv')),

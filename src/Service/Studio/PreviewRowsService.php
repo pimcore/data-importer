@@ -81,7 +81,8 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
 
     /**
      * A workbook loads whole, before any row limit applies, and running out of memory cannot be caught. Its size is
-     * read without loading a cell, first its unpacked size, then its cells. Every other format that reads rows reads them one at a time.
+     * read without loading a cell, first its unpacked size, then its cells. Every other format that reads rows
+     * reads them one at a time.
      *
      * @param array<string, mixed> $interpreterConfig
      */
