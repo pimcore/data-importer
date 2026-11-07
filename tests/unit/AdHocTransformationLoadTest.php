@@ -63,7 +63,7 @@ class AdHocTransformationLoadTest extends Unit
         $path = $this->object->getRealFullPath();
 
         $this->assertSame(
-            [[$path], [$path], []],
+            [[$path], [], []],
             $this->results(
                 TransformationAllowList::LOAD_OBJECT,
                 'id',
