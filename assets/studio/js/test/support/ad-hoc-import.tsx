@@ -135,6 +135,17 @@ export const components = {
     </dialog>
   ),
   ModalFooter: ({ children }: WithChildren) => <footer>{ children }</footer>,
+  Pagination: ({ current = 1, total = 0, defaultPageSize = 10, showTotal, onChange }: { current?: number, total?: number, defaultPageSize?: number, showTotal?: (total: number) => string, onChange?: (page: number, pageSize: number) => void }) => (
+    <nav aria-label="pages">
+      <span>{ showTotal?.(total) }</span>
+      <span>{ `${current} / ${Math.max(1, Math.ceil(total / defaultPageSize))}` }</span>
+      <button
+        aria-label="next page"
+        onClick={ () => { onChange?.(current + 1, defaultPageSize) } }
+        type="button"
+      />
+    </nav>
+  ),
   Progress: ({ percent }: { percent?: number }) => (
     <progress
       max={ 100 }

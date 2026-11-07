@@ -48,7 +48,8 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportDeleteFileMutation: () => [mockDeleteFile],
   useBundleDataImporterAdHocImportLoadMatchFieldsQuery: (...args: unknown[]) => mockLoadMatchFields(...args),
   useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping],
-  useBundleDataImporterAdHocImportListConfigurationsQuery: (...args: unknown[]) => mockListConfigurations(...args)
+  useBundleDataImporterAdHocImportListConfigurationsQuery: (...args: unknown[]) => mockListConfigurations(...args),
+  useBundleDataImporterAdHocImportDryRunMutation: () => [mockDryRun]
 }))
 
 const mockTrackError = jest.fn()
@@ -59,6 +60,7 @@ const mockDeleteFile = jest.fn()
 const mockLoadMatchFields = jest.fn()
 const mockLoadMapping = jest.fn()
 const mockListConfigurations = jest.fn()
+const mockDryRun = jest.fn()
 
 const csv: InspectedFile = {
   maxRows: 5000,
@@ -176,6 +178,25 @@ const productsConfiguration = {
 
 const closedConfiguration = { ...productsConfiguration, name: 'closed', unusable: 'folder-not-allowed' }
 
+const dryRunAnswer = {
+  matchColumn: 'Artikelnr',
+  newObjectsFolder: '/Products/Outdoor',
+  fields: [{ key: 'title', language: null, label: 'Title' }],
+  rows: [
+    { row: 2, matchValue: 'NH-1001', action: 'update', error: null, values: [{ old: 'Jacket', new: 'Trail jacket' }], invalid: [] },
+    { row: 3, matchValue: 'NH-1002', action: 'create', error: null, values: [{ old: null, new: 'Fleece' }], invalid: [] },
+    {
+      row: 4,
+      matchValue: 'NH-1003',
+      action: 'update',
+      error: null,
+      values: [{ old: 'Cap', new: 'x'.repeat(300) }],
+      invalid: [{ field: 0, label: 'Title', value: 'x'.repeat(300), message: 'Title is too long' }]
+    },
+    { row: 5, matchValue: 'NH-1001', action: null, error: 'SKU NH-1001 is in the file twice (row 2)', values: [{ old: null, new: 'Again' }], invalid: [] }
+  ]
+}
+
 const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
@@ -195,6 +216,7 @@ beforeEach(() => {
   })
   mockDeleteFile.mockResolvedValue({ data: undefined })
   mockLoadMapping.mockResolvedValue({ data: mappingAnswer })
+  mockDryRun.mockResolvedValue({ data: dryRunAnswer })
   mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
     ? { data: undefined, isFetching: false, isError: false }
     : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false, isError: false })
@@ -952,7 +974,7 @@ describe('the mapping step', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Restore Bezeichnung' }))
     select('Field for Bezeichnung', 'title')
-    fireEvent.click(nextButton())
+    await act(async () => { fireEvent.click(nextButton()) })
 
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
   })
@@ -1101,7 +1123,7 @@ describe('the mapping step with a configuration', () => {
 
     select('Configuration', 'products')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
-    fireEvent.click(nextButton())
+    await act(async () => { fireEvent.click(nextButton()) })
 
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
   })
@@ -1144,5 +1166,108 @@ describe('the mapping step with a configuration', () => {
     expect(screen.queryByText('There is no data object import configuration you may use.')).toBeNull()
     expect(mockTrackError).toHaveBeenCalledWith(expect.objectContaining({ details: failure }))
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+describe('the preview step', () => {
+  const toPreview = async (): Promise<void> => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    await act(async () => { fireEvent.click(nextButton()) })
+  }
+
+  const importButton = (): HTMLButtonElement => screen.getByRole<HTMLButtonElement>('button', { name: /^Import \d+ objects$/ })
+
+  it('checks every row of the file with the mapping as it stands and shows what the import would do', async () => {
+    await toPreview()
+
+    expect(mockDryRun).toHaveBeenCalledWith({
+      fileId: 'file-1',
+      bundleDataImporterAdHocImportDryRunParameters: {
+        delimiter: ';',
+        enclosure: '"',
+        escape: '\\',
+        hasHeaderRow: true,
+        sheetName: undefined,
+        folderId: 77,
+        classId: 'PROD',
+        matchBy: 'field',
+        matchColumn: 'Artikelnr',
+        matchField: 'sku',
+        matchLanguage: null,
+        newObjectsFolder: null,
+        columns: [
+          { column: 'Artikelnr', field: 'sku', language: null, transformationPipeline: [] },
+          { column: 'Bezeichnung', field: 'title', language: null, transformationPipeline: [] }
+        ]
+      }
+    })
+    expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+    expect(screen.getByText('All 4 rows checked')).toBeTruthy()
+    expect(screen.getByText('SKU NH-1001 is in the file twice (row 2)')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
+    expect(importButton().textContent).toBe('Import 2 objects')
+    expect(importButton().disabled).toBe(true)
+  })
+
+  it('imports the rows with invalid values without them when so chosen', async () => {
+    await toPreview()
+    expect(screen.getByLabelText<HTMLSelectElement>('Rows with errors').value).toBe('skip')
+
+    select('Rows with errors', 'values')
+
+    expect(importButton().textContent).toBe('Import 3 objects')
+    expect(screen.getByText('update, without Title')).toBeTruthy()
+  })
+
+  it('checks with the chosen configuration instead of the columns mapped here', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+    select('Configuration', 'products')
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(mockDryRun.mock.calls[0][0].bundleDataImporterAdHocImportDryRunParameters).toMatchObject({
+      configuration: 'products',
+      configurationColumns: { Artikelnr: 'Artikelnr', Bezeichnung: 'Bezeichnung' },
+      newObjectsFolder: '/Products/Imported'
+    })
+  })
+
+  it('reports a check that failed and imports nothing', async () => {
+    const failure = { status: 422, data: { message: 'Field color cannot be imported into.' } }
+    mockDryRun.mockResolvedValue({ error: failure })
+
+    await toPreview()
+
+    expect(screen.getByText('The file could not be checked.')).toBeTruthy()
+    expect(mockTrackError).toHaveBeenCalledWith(expect.objectContaining({ details: failure }))
+    expect(importButton().textContent).toBe('Import 0 objects')
+  })
+
+  it('forgets a check whose step was left, and checks again on the way back', async () => {
+    let answer: (value: unknown) => void = () => {}
+    mockDryRun.mockReturnValueOnce(new Promise((resolve) => { answer = resolve }))
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    fireEvent.click(nextButton())
+
+    expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await act(async () => { answer({ error: { status: 500, data: {} } }) })
+
+    expect(mockTrackError).not.toHaveBeenCalled()
+    expect(screen.getByText('Mapping', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(mockDryRun).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('All 4 rows checked')).toBeTruthy()
   })
 })
