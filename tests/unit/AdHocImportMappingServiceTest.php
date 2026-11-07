@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\Objectbrick\DefinitionResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
@@ -30,6 +31,8 @@ use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
+use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 class AdHocImportMappingServiceTest extends Unit
 {
@@ -127,18 +130,55 @@ class AdHocImportMappingServiceTest extends Unit
      */
     public function testTheMappingNeitherOffersNorSuggestsAField(string $key): void
     {
-        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $parameters = new MappingSuggestionParameters('PROD', []);
+        $suggestions = $this->createMock(MappingSuggestionServiceInterface::class);
         $suggestions->method('loadTargets')->willReturn([$this->target($key), $this->target('name')]);
-        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([
-            $this->suggestion('Pfad', $key),
-            $this->suggestion('Name', 'name'),
-        ]));
+        // left out before matching, so that a column it would have won gets its next best field
+        $suggestions->expects($this->once())->method('suggest')
+            ->with($parameters, $this->callback(static fn (array $excluded): bool => in_array($key, $excluded, true)))
+            ->willReturn(new MappingSuggestionsResponse([$this->suggestion('Name', 'name')]));
 
-        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions)
-            ->loadMapping(new MappingSuggestionParameters('PROD', []));
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions)->loadMapping($parameters);
 
         $this->assertSame(['name'], array_column($mapping->getFields(), 'key'));
         $this->assertSame(['name'], array_column($mapping->getSuggestions(), 'targetFieldName'));
+    }
+
+    public function testABrickFieldTheBrickRequiresIsRequired(): void
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([
+            $this->target('attributes.Dimensions.width'),
+            $this->target('attributes.Dimensions.depth'),
+            $this->target('attributes.Other.width'),
+        ]);
+        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
+
+        // setAllowedTypes() would load the brick definitions from disk
+        $bricks = $this->createStub(Objectbricks::class);
+        $bricks->method('getName')->willReturn('attributes');
+        $bricks->method('getAllowedTypes')->willReturn(['Dimensions']);
+        $class = new ClassDefinition();
+        $class->addFieldDefinition('attributes', $bricks);
+
+        $dimensions = new Definition();
+        $dimensions->addFieldDefinition('width', $this->input('width', mandatory: true));
+        $dimensions->addFieldDefinition('depth', $this->input('depth', mandatory: false));
+        $other = new Definition();
+        $other->addFieldDefinition('width', $this->input('width', mandatory: true));
+
+        $mapping = $this->service(
+            creatableClasses: ['PROD'],
+            suggestions: $suggestions,
+            class: $class,
+            bricks: ['Dimensions' => $dimensions, 'Other' => $other]
+        )->loadMapping(new MappingSuggestionParameters('PROD', []));
+
+        // a brick the container does not allow writes nothing, so nothing of it is required
+        $this->assertSame(
+            ['attributes.Dimensions.width' => true, 'attributes.Dimensions.depth' => false, 'attributes.Other.width' => false],
+            array_column($mapping->getFields(), 'mandatory', 'key')
+        );
     }
 
     public function testTheMappingOfAClassTheUserMayNotCreateIsForbidden(): void
@@ -196,12 +236,14 @@ class AdHocImportMappingServiceTest extends Unit
 
     /**
      * @param string[] $creatableClasses
+     * @param array<string, Definition> $bricks
      * @param array<string, list<string>> $fieldTypes per result type the fields that take it
      */
     private function service(
         array $creatableClasses,
         MappingSuggestionServiceInterface $suggestions,
         ?ClassDefinition $class = null,
+        array $bricks = [],
         array $fieldTypes = []
     ): AdHocImportMappingService {
         $classes = $this->createStub(ClassDefinitionServiceInterface::class);
@@ -220,6 +262,9 @@ class AdHocImportMappingServiceTest extends Unit
         $classResolver = $this->createStub(ClassDefinitionResolverInterface::class);
         $classResolver->method('getById')->willReturn($class);
 
+        $brickResolver = $this->createStub(DefinitionResolverInterface::class);
+        $brickResolver->method('getByKey')->willReturnCallback(static fn (string $key): ?Definition => $bricks[$key] ?? null);
+
         $types = $this->createStub(DataTypeServiceInterface::class);
         $types->method('loadClassAttributes')->willReturnCallback(
             static fn (string $classId, string $type): ClassAttributesResponse => new ClassAttributesResponse(array_map(
@@ -232,6 +277,7 @@ class AdHocImportMappingServiceTest extends Unit
             $classes,
             $suggestions,
             $classResolver,
+            $brickResolver,
             AdHocTransformations::chain($types)
         );
     }

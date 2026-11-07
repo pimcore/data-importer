@@ -973,6 +973,53 @@ describe('the mapping step', () => {
     expect(screen.getByText('Finds the objects')).toBeTruthy()
   })
 
+  describe('of a workbook read again from another sheet', () => {
+    const sku = { dataIndex: '0', label: 'sku' }
+    const name = { dataIndex: '1', label: 'name' }
+    const toSheetMapping = async (first: InspectedFile): Promise<void> => {
+      renderDialog()
+      await dropAndRead(first, 'northhike-autumn.xlsx')
+      select('Field', 'sku')
+      select('from column', '0')
+      await act(async () => { fireEvent.click(nextButton()) })
+      select('Field for name', 'title')
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    }
+
+    it('keeps the choices for the same column names and shows the values of that sheet', async () => {
+      const products = { ...xlsx, columns: [sku, name], firstRows: [['NH-1', 'Trail jacket']] }
+      mockInspectFile.mockResolvedValue({ data: { ...products, sheetName: 'Prices', firstRows: [['NH-1', 'Rain coat']] } })
+      await toSheetMapping(products)
+
+      await act(async () => { select('Sheet', 'Prices') })
+      await act(async () => { fireEvent.click(nextButton()) })
+
+      expect(mockLoadMapping).toHaveBeenCalledTimes(1)
+      expect(screen.getByLabelText<HTMLSelectElement>('Field for name').value).toBe('title')
+      expect(screen.getByText('Rain coat')).toBeTruthy()
+      expect(screen.queryByText('Trail jacket')).toBeNull()
+    })
+
+    it('makes a new mapping when the columns have no names, even for the same match column', async () => {
+      const headerless = { ...xlsx, hasHeaderRow: false, columns: [{ dataIndex: '0', label: '0' }, { dataIndex: '1', label: '1' }] }
+      mockInspectFile.mockResolvedValue({ data: { ...headerless, sheetName: 'Prices' } })
+      renderDialog()
+      await dropAndRead(headerless, 'northhike-autumn.xlsx')
+      select('Field', 'sku')
+      select('from column', '0')
+      await act(async () => { fireEvent.click(nextButton()) })
+      select('Field for 1', 'title')
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+      await act(async () => { select('Sheet', 'Prices') })
+      select('from column', '0')
+      await act(async () => { fireEvent.click(nextButton()) })
+
+      expect(mockLoadMapping).toHaveBeenCalledTimes(2)
+      expect(screen.getByLabelText<HTMLSelectElement>('Field for 1').value).toBe('')
+    })
+  })
+
   it('takes only the answer to the mapping asked for last', async () => {
     const answers: Array<(value: unknown) => void> = []
     mockLoadMapping.mockImplementation(async () => await new Promise((resolve) => { answers.push(resolve) }))

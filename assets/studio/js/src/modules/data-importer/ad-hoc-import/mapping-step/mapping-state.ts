@@ -55,9 +55,18 @@ export interface Mapping {
 
 export type RowFilter = 'all' | 'mapped' | 'open'
 
+/**
+ * Columns are known as the file step knows them (keepMatchColumn): by their names, so the same names on another sheet
+ * keep the mapping; without a header row only by their position, so another sheet or way of splitting the rows is
+ * another mapping.
+ */
 export const mappingBasis = (inspected: InspectedFile, objects: ObjectsSettings): string => JSON.stringify([
   inspected.fileId,
   inspected.columns,
+  inspected.hasHeaderRow,
+  inspected.hasHeaderRow
+    ? null
+    : [inspected.sheetName ?? null, inspected.delimiter ?? null, inspected.enclosure ?? null, inspected.escape ?? null],
   objects.classId,
   objects.matchBy,
   objects.matchBy === 'field' ? objects.matchField : null,
@@ -70,6 +79,46 @@ const sampleOf = (inspected: InspectedFile, position: number): string | undefine
     .find((value): value is string => value !== null && value !== undefined && value !== '')
 
 const sameChoice = (a: FieldChoice, b: FieldChoice): boolean => a.field === b.field && a.language === b.language
+
+/**
+ * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now.
+ */
+export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping => {
+  const positionOf = new Map(inspected.columns.map(({ dataIndex }, position) => [dataIndex, position]))
+
+  return {
+    ...mapping,
+    rows: mapping.rows.map((row) => {
+      const position = positionOf.get(row.column)
+
+      return { ...row, sample: position === undefined ? undefined : sampleOf(inspected, position) }
+    })
+  }
+}
+
+export interface TakenFields {
+  // whether another column than this one already goes into the field
+  has: (choice: FieldChoice, column?: string) => boolean
+}
+
+const choiceKey = ({ field, language }: FieldChoice): string => JSON.stringify([field, language])
+
+/**
+ * Which columns go into which field, built once per mapping so that each field option is looked up, not searched.
+ */
+export const takenFields = (rows: MappingRow[]): TakenFields => {
+  const columnsOf = new Map<string, string[]>()
+  for (const row of rows) {
+    if (!row.skipped && row.choice !== undefined) {
+      const key = choiceKey(row.choice)
+      columnsOf.set(key, [...(columnsOf.get(key) ?? []), row.column])
+    }
+  }
+
+  return {
+    has: (choice, column) => (columnsOf.get(choiceKey(choice)) ?? []).some((other) => other !== column)
+  }
+}
 
 /**
  * Whether another column than this one already goes into the field; one column per field, and per language for a

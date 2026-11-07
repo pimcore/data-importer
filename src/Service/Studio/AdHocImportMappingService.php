@@ -18,8 +18,10 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CreatableClassTrait;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
+use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\Objectbrick\DefinitionResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
 
 /**
  * @internal
@@ -36,6 +38,7 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
         private ClassDefinitionServiceInterface $classDefinitionService, // NOSONAR php:S1068 read by CreatableClassTrait
         private MappingSuggestionServiceInterface $mappingSuggestionService,
         private ClassDefinitionResolverInterface $classDefinitionResolver,
+        private DefinitionResolverInterface $brickDefinitionResolver,
         private TransformationChain $transformationChain,
     ) {
     }
@@ -58,21 +61,30 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
             }
         }
 
-        $suggestions = array_values(array_filter(
-            $this->mappingSuggestionService->suggest($parameters)->getSuggestions(),
-            static fn (array $suggestion): bool => !in_array(
-                $suggestion['targetFieldName'],
-                self::NO_MAPPING_TARGETS,
-                true
-            )
-        ));
-
-        return new AdHocImportMappingResponse($fields, $suggestions);
+        return new AdHocImportMappingResponse(
+            $fields,
+            $this->mappingSuggestionService->suggest($parameters, self::NO_MAPPING_TARGETS)->getSuggestions()
+        );
     }
 
-    // a localized field is found among the class's localized fields
+    // a localized field is found among the class's localized fields, a brick field (`container.brick.field`) in its brick
     private function isMandatory(?ClassDefinition $class, string $key): bool
     {
-        return $class?->getFieldDefinition($key)?->getMandatory() ?? false;
+        $parts = explode('.', $key);
+        if (count($parts) !== 3) {
+            return $class?->getFieldDefinition($key)?->getMandatory() ?? false;
+        }
+
+        [$container, $brickType, $field] = $parts;
+        $containerDefinition = $class?->getFieldDefinition($container);
+        if (
+            !$containerDefinition instanceof Objectbricks
+            || !in_array($brickType, $containerDefinition->getAllowedTypes(), true)
+        ) {
+            return false;
+        }
+
+        return $this->brickDefinitionResolver->getByKey($brickType)?->getFieldDefinition($field)?->getMandatory()
+            ?? false;
     }
 }

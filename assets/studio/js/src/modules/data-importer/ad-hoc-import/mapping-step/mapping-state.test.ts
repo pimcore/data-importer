@@ -25,8 +25,10 @@ import {
   skipColumn,
   skippedRows,
   takeAllSuggestions,
+  takenFields,
   unfitRows,
   visibleRows,
+  withSamples,
   type LoadedMapping,
   type Mapping,
   type MappingField
@@ -206,6 +208,29 @@ describe('which field is taken', () => {
   })
 })
 
+describe('the fields taken, looked up', () => {
+  const rows = skipColumn(createMapping(inspected, objects, loaded), 'Name EN').rows
+  const taken = takenFields(rows)
+  it('are those found by searching the rows, without the column asking or a skipped one', () => {
+    for (const choice of [{ field: 'name', language: 'de' }, { field: 'name', language: 'en' }, { field: 'sku', language: null }]) {
+      for (const column of [undefined, 'Name DE', 'Artikelnr']) {
+        expect(taken.has(choice, column)).toBe(isTaken(rows, choice, column))
+      }
+    }
+    expect([taken.has({ field: 'name', language: 'de' }), taken.has({ field: 'name', language: 'de' }, 'Name DE')]).toEqual([true, false])
+  })
+})
+
+describe('the same columns read again', () => {
+  it('keep their choices and show the first values read now', () => {
+    const mapping = chooseField(createMapping(inspected, objects, loaded), 'Notiz', 'price')
+    const again = withSamples(mapping, { ...inspected, sheetName: 'Prices', firstRows: [['NH-9', 'Mantel', '', '99', 'z']] })
+
+    expect(again.rows.map(({ choice }) => choice)).toEqual(mapping.rows.map(({ choice }) => choice))
+    expect(again.rows.map(({ sample }) => sample)).toEqual(['NH-9', 'Mantel', undefined, '99', 'z'])
+  })
+})
+
 describe('filtering the rows', () => {
   const mapping = skipColumn(createMapping(inspected, objects, loaded), 'Notiz')
 
@@ -330,6 +355,17 @@ describe('the basis of a mapping', () => {
     expect(mappingBasis(inspected, { ...objects, matchBy: 'id' })).not.toBe(basis)
     expect(mappingBasis(inspected, { ...objects, matchField: 'ean' })).not.toBe(basis)
     expect(mappingBasis(inspected, { ...objects, matchColumn: 'Notiz' })).not.toBe(basis)
+  })
+
+  it('changes with the header row, and without one with the sheet or the way of splitting the rows', () => {
+    const headerless: InspectedFile = { ...inspected, hasHeaderRow: false, sheetName: 'Products', delimiter: ';', enclosure: '"', escape: '\\' }
+    const headerlessBasis = mappingBasis(headerless, objects)
+
+    expect(headerlessBasis).not.toBe(basis)
+    for (const changed of [{ sheetName: 'Prices' }, { delimiter: ',' }, { enclosure: "'" }, { escape: '' }]) {
+      expect(mappingBasis({ ...headerless, ...changed }, objects)).not.toBe(headerlessBasis)
+    }
+    expect(mappingBasis({ ...inspected, sheetName: 'Prices' }, objects)).toBe(mappingBasis({ ...inspected, sheetName: 'Products' }, objects))
   })
 
   it('stays with the folder for new objects and the rows read', () => {
