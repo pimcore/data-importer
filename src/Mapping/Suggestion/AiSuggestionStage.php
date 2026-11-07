@@ -122,20 +122,20 @@ final readonly class AiSuggestionStage
             $this->logger->warning('Mapping suggestions: the agent task could not be stored', [
                 'taskId' => $task->id,
             ]);
-            $this->cancelUnreadable($task->id);
+            $this->cancelQuietly($task->id);
         } catch (Throwable $exception) {
             $this->logger->warning('Mapping suggestions: the agent task could not start', [
                 'exception' => $exception,
             ]);
             if ($taskId !== null) {
-                $this->cancelUnreadable($taskId);
+                $this->cancelQuietly($taskId);
             }
         }
 
         return null;
     }
 
-    private function cancelUnreadable(string $taskId): void
+    private function cancelQuietly(string $taskId): void
     {
         try {
             $this->tasks?->cancel($taskId);
@@ -194,7 +194,7 @@ final readonly class AiSuggestionStage
             return new AiSuggestionResult(AiSuggestionStatus::Running);
         }
 
-        $this->tasks?->cancel($taskId);
+        $this->cancelQuietly($taskId);
 
         return new AiSuggestionResult(AiSuggestionStatus::Failed);
     }

@@ -406,6 +406,28 @@ class AiSuggestionStageTest extends Unit
         );
     }
 
+    public function testATaskPastItsDeadlineThatCannotBeCancelledStillReadsAsFailedAndIsLogged(): void
+    {
+        $this->storeRequest(time() - 3 * 60 - 61);
+
+        $tasks = $this->createStub(AgentTaskServiceInterface::class);
+        $tasks->method('waitFor')->willThrowException(new TaskWaitTimeoutException('running'));
+        $tasks->method('cancel')->willThrowException(new TaskDispatchException('down'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with(
+                'Mapping suggestions: the agent task could not be cancelled',
+                $this->callback(static fn (array $context): bool => $context['taskId'] === 'task-1')
+            );
+
+        $this->assertSame(
+            AiSuggestionStatus::Failed,
+            $this->stage($tasks, logger: $logger)->read(self::REQUEST_ID, self::USER_ID)->status
+        );
+    }
+
     public function testATaskThatCannotBeReadIsFailedAndLogged(): void
     {
         $this->storeRequest();
