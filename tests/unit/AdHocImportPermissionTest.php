@@ -17,7 +17,6 @@ use Codeception\Test\Unit;
 use Doctrine\DBAL\Schema\Schema;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
-use Pimcore\Bundle\DataHubBundle\Installer as DataHubInstaller;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
@@ -73,6 +72,11 @@ class AdHocImportPermissionTest extends Unit
 
     private bool $cacheWroteImmediately;
 
+    /**
+     * @var array<string, mixed>|false
+     */
+    private array|false $definition;
+
     protected function _before(): void
     {
         $this->cacheWasEnabled = Cache::isEnabled();
@@ -91,6 +95,10 @@ class AdHocImportPermissionTest extends Unit
         $this->folder->save();
 
         // the install as it was before the migration
+        $this->definition = Db::get()->fetchAssociative(
+            'SELECT `key`, `category` FROM users_permission_definitions WHERE `key` = ?',
+            [self::RIGHT]
+        );
         Db::get()->executeStatement('DELETE FROM users_permission_definitions WHERE `key` = ?', [self::RIGHT]);
 
         $this->importer = $this->saveUser('ad-hoc-importer', [self::RIGHT]);
@@ -102,10 +110,13 @@ class AdHocImportPermissionTest extends Unit
         $this->importer->delete();
         $this->withoutRight->delete();
         $this->folder->delete();
-        Db::get()->executeStatement(
-            'INSERT IGNORE INTO users_permission_definitions (`key`, `category`) VALUES (?, ?)',
-            [self::RIGHT, DataHubInstaller::DATAHUB_PERMISSION_CATEGORY]
-        );
+        Db::get()->executeStatement('DELETE FROM users_permission_definitions WHERE `key` = ?', [self::RIGHT]);
+        if ($this->definition !== false) {
+            Db::get()->executeStatement(
+                'INSERT INTO users_permission_definitions (`key`, `category`) VALUES (?, ?)',
+                [$this->definition['key'], $this->definition['category']]
+            );
+        }
         Cache::remove(CacheKeys::USER_PERMISSIONS->value);
         Cache::setForceImmediateWrite($this->cacheWroteImmediately);
         if (!$this->cacheWasEnabled) {
