@@ -15,14 +15,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Doctrine\DBAL\Schema\Schema;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Local\LocalFilesystemAdapter;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
@@ -255,13 +247,9 @@ class AdHocImportPermissionTest extends Unit
 
     private function service(): AdHocImportService
     {
-        $factory = new InterpreterFactory([
-            'csv' => (new \ReflectionClass(CsvFileInterpreter::class))->newInstanceWithoutConstructor(),
-        ]);
-
         return new AdHocImportService(
-            new FileStore(new Filesystem(new LocalFilesystemAdapter($this->storage))),
-            new FileInspector(new SourceFileReader($factory), $factory, new CsvDelimiterDetector()),
+            AdHocCsvFiles::store($this->storage),
+            AdHocCsvFiles::inspector(),
             $this->security(),
             new DataObjectResolver(),
             $this->createStub(DataTypeServiceInterface::class),
