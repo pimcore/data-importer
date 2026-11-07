@@ -25,6 +25,11 @@ export const DEFAULT_SETTINGS: Record<string, Record<string, string>> = {
   loadAsset: { loadStrategy: 'id' }
 }
 
+// map values takes the counterpart at the same position, so both lists need as many values
+export const mapListsDiffer = ({ type, settings }: TransformationStep): boolean =>
+  type === 'conditionalConversion' &&
+  (settings.original ?? '').split('|').length !== (settings.converted ?? '').split('|').length
+
 const TRIM_MODES = ['both', 'left', 'right']
 const LOAD_STRATEGIES = ['id', 'path']
 

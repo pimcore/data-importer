@@ -20,7 +20,7 @@ import {
   type BundleDataImporterAdHocImportTransformationResponse
 } from '../../data-importer-api-slice.gen'
 import { type MappingField, type MappingRow, type TransformationStep } from './mapping-state'
-import { DEFAULT_SETTINGS, TransformationSettings } from './transformation-settings'
+import { DEFAULT_SETTINGS, mapListsDiffer, TransformationSettings } from './transformation-settings'
 
 const MODAL_WIDTH = 960
 // a pause in typing before the values are run again
@@ -208,7 +208,7 @@ export const TransformationsModal = ({ row, field, source, onApply, onCancel }: 
                 />
                 { error !== null && error !== undefined && (
                   <Alert
-                    message={ t(`${PREFIX}.step-error`) }
+                    message={ t(mapListsDiffer(step) ? `${PREFIX}.map.unequal` : `${PREFIX}.step-error`) }
                     showIcon
                     type="error"
                   />

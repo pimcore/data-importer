@@ -248,6 +248,22 @@ describe('the transformations of a column', () => {
     expect(screen.getByLabelText<HTMLSelectElement>('Add a transformation').disabled).toBe(true)
   })
 
+  it('says when the lists of map values differ in length', async () => {
+    mockPreview.mockResolvedValue({
+      data: answer({
+        steps: [{ type: 'conditionalConversion', resultType: null, error: 'differ in length', values: [] }],
+        fits: false,
+        resultType: null,
+        results: [],
+        offered: []
+      })
+    })
+    renderModal({ transformations: [{ type: 'conditionalConversion', settings: { original: 'S|M|L', converted: 'small|medium' } }] })
+    await settle()
+
+    expect(screen.getAllByRole('alert')[0].textContent).toBe('Give as many values under Into as under Values.')
+  })
+
   it('applies the transformations with the server\'s answer whether they fit', async () => {
     mockPreview.mockResolvedValue({ data: answer({ fits: false }) })
     renderModal()

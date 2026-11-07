@@ -421,6 +421,7 @@ data-importer.ad-hoc-import.transformations.replace.replace: Replace with
 data-importer.ad-hoc-import.transformations.map.original: Values
 data-importer.ad-hoc-import.transformations.map.converted: Into
 data-importer.ad-hoc-import.transformations.map.hint: 'Separate the values with |, in the same order in both; * stands for any other value.'
+data-importer.ad-hoc-import.transformations.map.unequal: Give as many values under Into as under Values.
 data-importer.ad-hoc-import.transformations.split.delimiter: Separator
 data-importer.ad-hoc-import.transformations.load.strategy: Find by
 data-importer.ad-hoc-import.transformations.load.strategy.id: ID
