@@ -251,6 +251,15 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportListConfigurations: build.query<
+                BundleDataImporterAdHocImportListConfigurationsApiResponse,
+                BundleDataImporterAdHocImportListConfigurationsApiArg
+            >({
+                query: () => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/configurations`,
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
             bundleDataImporterUtilityCheckCrontab: build.query<
                 BundleDataImporterUtilityCheckCrontabApiResponse,
                 BundleDataImporterUtilityCheckCrontabApiArg
@@ -528,6 +537,9 @@ export type BundleDataImporterAdHocImportLoadMappingApiResponse =
 export type BundleDataImporterAdHocImportLoadMappingApiArg = {
     bundleDataImporterMappingSuggestionParameters: BundleDataImporterMappingSuggestionParameters;
 };
+export type BundleDataImporterAdHocImportListConfigurationsApiResponse =
+    /** status 200 The configurations, by name */ BundleDataImporterAdHocImportConfigurationsResponse;
+export type BundleDataImporterAdHocImportListConfigurationsApiArg = void;
 export type BundleDataImporterAdHocImportPreviewTransformationsApiResponse =
     /** status 200 The values after each transformation, whether the result fits the field, and the transformations that can come next */ BundleDataImporterAdHocImportTransformationResponse;
 export type BundleDataImporterAdHocImportPreviewTransformationsApiArg = {
@@ -863,6 +875,8 @@ export type BundleDataImporterAdHocImportFileResponse = {
     columns: {
         dataIndex: string;
         label: string;
+        /** CSV with a header row: the column's place in the file, from 0; columns keyed by position have none */
+        position?: number;
     }[];
     /** The first rows, their values in the order of the columns */
     firstRows: (string | null)[][];
@@ -911,6 +925,33 @@ export type BundleDataImporterAdHocImportMappingResponse = {
         score: number;
         /** Language guessed from the column name, for a localized field */
         language: string | null;
+    }[];
+};
+export type BundleDataImporterAdHocImportConfigurationsResponse = {
+    /** The data object import configurations the user may read, by name */
+    configurations: {
+        /** Name of the configuration */
+        name: string;
+        /** ID of the class it imports */
+        classId: string | null;
+        /** Name of the class it imports */
+        className: string | null;
+        /** What it finds objects by: the object ID or a field */
+        matchBy: "id" | "field" | null;
+        /** The field it finds objects by */
+        matchField: string | null;
+        /** The language of a localized field it finds objects by */
+        matchLanguage: string | null;
+        /** The column holding the value it finds objects by */
+        matchColumn: string | null;
+        /** Path of the folder it creates new objects in */
+        newObjectsFolder: string | null;
+        /** The columns it reads */
+        columns: string[];
+        /** What its columns are named by: the header row's names or the position */
+        columnsBy: "name" | "position";
+        /** Why an ad hoc import cannot use it: class, matching, folder, folder-missing or folder-not-allowed; null if it can */
+        unusable: string | null;
     }[];
 };
 export type BundleDataImporterAdHocImportTransformationParameters = {
@@ -998,5 +1039,6 @@ export const {
     useBundleDataImporterAdHocImportDeleteFileMutation,
     useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
     useBundleDataImporterAdHocImportLoadMappingMutation,
+    useBundleDataImporterAdHocImportListConfigurationsQuery,
     useBundleDataImporterAdHocImportPreviewTransformationsMutation,
 } = injectedRtkApi;

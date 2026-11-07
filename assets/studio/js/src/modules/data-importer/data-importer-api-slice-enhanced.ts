@@ -108,6 +108,9 @@ export const api = baseApi.enhanceEndpoints({
     bundleDataImporterAdHocImportLoadMapping: {
       invalidatesTags: []
     },
+    bundleDataImporterAdHocImportListConfigurations: {
+      providesTags: []
+    },
     bundleDataImporterAdHocImportPreviewTransformations: {
       invalidatesTags: []
     }
@@ -127,6 +130,7 @@ export const {
   useBundleDataImporterAdHocImportDeleteFileMutation,
   useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
   useBundleDataImporterAdHocImportLoadMappingMutation,
+  useBundleDataImporterAdHocImportListConfigurationsQuery,
   useBundleDataImporterAdHocImportPreviewTransformationsMutation
 } = api
 
