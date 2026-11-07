@@ -171,6 +171,7 @@ class MappingSuggestionServiceTest extends MappingSuggestionServiceTestCase
             'transformationResultType' => 'default',
             'score' => 100,
             'language' => null,
+            'source' => 'name',
         ]], $suggestions);
     }
 
