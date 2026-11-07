@@ -40,7 +40,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * @phpstan-import-type Suggestion from ColumnMatcher
  * @phpstan-import-type Target from ColumnMatcher
  */
-final readonly class MappingSuggestionService implements MappingSuggestionServiceInterface
+final readonly class MappingSuggestionService implements MappingSuggestionServiceInterface // NOSONAR php:S1200 one entry point for the matcher and the AI stage
 {
     use CurrentUserResolverTrait;
 
