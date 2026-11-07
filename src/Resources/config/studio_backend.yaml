@@ -47,6 +47,14 @@ services:
     Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydratorInterface:
         class: Pimcore\Bundle\DataImporterBundle\Hydrator\ConnectionHydrator
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionService
+
+    Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydratorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydrator
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\ColumnMatcher: ~
+
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
 
