@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Resolver\Matching;
 
 use Pimcore\Model\DataObject\ClassDefinition\Data;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Language;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
+use Pimcore\Model\DataObject\ClassDefinition\Data\User;
 use Pimcore\Model\Element\ValidationException;
 
 /**
@@ -50,6 +52,15 @@ final class TextMatchValue
             return false;
         }
 
+        // core lists these only in admin, and for them no options means no value is valid, not that any is
+        if ($field instanceof User || $field instanceof Language) {
+            if (!$field->getOptions()) {
+                $field->configureOptions();
+            }
+
+            return self::isAmong($value, $field->getOptions() ?? []);
+        }
+
         if ($field->getOptions() === null) {
             $field->enrichFieldDefinition();
         }
@@ -60,6 +71,14 @@ final class TextMatchValue
             return true;
         }
 
+        return self::isAmong($value, $options);
+    }
+
+    /**
+     * @param array<int, array{key: string, value: mixed}> $options
+     */
+    private static function isAmong(string $value, array $options): bool
+    {
         return in_array($value, array_map(strval(...), array_column($options, 'value')), true);
     }
 }

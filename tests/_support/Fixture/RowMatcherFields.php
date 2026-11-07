@@ -55,6 +55,9 @@ final class RowMatcherFields
         $state->setOptions([['key' => 'red', 'value' => 'red']]);
         self::add($panel, $state, 'state');
 
+        self::add($panel, new Data\User(), 'owner');
+        self::add($panel, new Data\Language(), 'contentLanguage');
+
         self::add($panel, new Data\QuantityValue(), 'weight');
         self::add($panel, new Data\Numeric(), 'articleNo');
 

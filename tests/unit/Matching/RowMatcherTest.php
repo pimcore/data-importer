@@ -649,6 +649,8 @@ class RowMatcherTest extends Unit
             'an input against its regex' => ['shortCode', 'abc'],
             'a textarea longer than its maximum' => ['notes', 'more than ten characters'],
             'a select option it does not have' => ['state', self::NOT_AN_OPTION],
+            'a user that does not exist' => ['owner', 'abc'],
+            'a language that does not exist' => ['contentLanguage', 'xx'],
         ];
     }
 
@@ -979,6 +981,8 @@ class RowMatcherTest extends Unit
                 'notes',
                 'shortCode',
                 'state',
+                'owner',
+                'contentLanguage',
                 'articleNo',
                 'stock',
                 'price',

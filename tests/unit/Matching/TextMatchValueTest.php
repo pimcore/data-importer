@@ -16,10 +16,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Matching;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\TextMatchValue;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\RowMatcherOptionsProvider;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Country;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Language;
 use Pimcore\Model\DataObject\ClassDefinition\Data\OptionsProviderInterface;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Textarea;
+use Pimcore\Model\DataObject\ClassDefinition\Data\User as UserField;
+use Pimcore\Model\User;
 
 class TextMatchValueTest extends Unit
 {
@@ -127,6 +131,43 @@ class TextMatchValueTest extends Unit
         $field->dynamicOptions = true;
 
         $this->assertTrue(TextMatchValue::fits(self::NOT_ALLOWED, $field));
+    }
+
+    public function testAUserFieldTakesOnlyTheIdOfAUserThatExists(): void
+    {
+        $user = (new User())->setName('text-match-value-' . uniqid());
+        $user->save();
+
+        try {
+            $id = (string) $user->getId();
+
+            $this->assertTrue(TextMatchValue::fits($id, $this->named(new UserField())));
+            $this->assertFalse(TextMatchValue::fits('abc', $this->named(new UserField())));
+            $this->assertFalse(TextMatchValue::fits($id . 'abc', $this->named(new UserField())));
+            $this->assertFalse(TextMatchValue::fits('0' . $id, $this->named(new UserField())));
+            $this->assertFalse(TextMatchValue::fits($id . '0000', $this->named(new UserField())));
+        } finally {
+            $user->delete();
+        }
+    }
+
+    public function testALanguageFieldTakesOnlyALanguage(): void
+    {
+        $this->assertTrue(TextMatchValue::fits('en', $this->named(new Language())));
+        $this->assertFalse(TextMatchValue::fits('xx', $this->named(new Language())));
+    }
+
+    public function testACountryFieldTakesOnlyACountry(): void
+    {
+        $this->assertTrue(TextMatchValue::fits('AT', $this->named(new Country())));
+        $this->assertFalse(TextMatchValue::fits('XX', $this->named(new Country())));
+    }
+
+    private function named(Select $field): Select
+    {
+        $field->setName('field');
+
+        return $field;
     }
 
     private function select(): Select
