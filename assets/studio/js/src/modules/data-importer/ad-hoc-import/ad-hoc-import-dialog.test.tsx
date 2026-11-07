@@ -169,6 +169,7 @@ const productsConfiguration = {
   matchColumn: 'Artikelnr',
   newObjectsFolder: '/Products/Imported',
   columns: ['Artikelnr', 'Bezeichnung'],
+  columnsBy: 'name',
   unusable: null
 }
 
@@ -194,8 +195,8 @@ beforeEach(() => {
   mockDeleteFile.mockResolvedValue({ data: undefined })
   mockLoadMapping.mockResolvedValue({ data: mappingAnswer })
   mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
-    ? { data: undefined, isFetching: false }
-    : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false })
+    ? { data: undefined, isFetching: false, isError: false }
+    : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false, isError: false })
 })
 
 afterEach(() => {
@@ -1068,5 +1069,19 @@ describe('the mapping step with a configuration', () => {
 
     expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('shows and reports a failed listing instead of saying there is none', async () => {
+    const failure = { status: 500, data: { message: 'listing failed' } }
+    mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
+      ? { data: undefined, isFetching: false, isError: false }
+      : { data: undefined, error: failure, isFetching: false, isError: true })
+
+    await toConfiguration()
+
+    expect(screen.getByText('The configurations could not be loaded.')).toBeTruthy()
+    expect(screen.queryByText('There is no data object import configuration you may use.')).toBeNull()
+    expect(mockTrackError).toHaveBeenCalledWith(expect.objectContaining({ details: failure }))
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
   })
 })

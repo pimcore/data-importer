@@ -46,6 +46,8 @@ class AdHocImportEndpointsTest extends Unit
 {
     private const ROUTE_PREFIX = 'pimcore_studio_api_data_importer_ad_hoc_import_';
 
+    private const NAME_COLUMN = 'Name DE';
+
     private const ENDPOINTS = [
         UploadFileController::class => ['uploadFile', 'upload_file', 'POST', '/ad-hoc-import/file'],
         InspectFileController::class => ['inspectFile', 'inspect_file', 'POST', '/ad-hoc-import/file/{fileId}/inspect'],
@@ -168,8 +170,8 @@ class AdHocImportEndpointsTest extends Unit
             'transformationResultType' => 'default',
         ];
         $suggestion = [
-            'sourceIndex' => 'Name DE',
-            'sourceLabel' => 'Name DE',
+            'sourceIndex' => self::NAME_COLUMN,
+            'sourceLabel' => self::NAME_COLUMN,
             'targetFieldName' => 'name',
             'targetFieldLabel' => 'Name',
             'transformationResultType' => 'default',
@@ -196,9 +198,10 @@ class AdHocImportEndpointsTest extends Unit
             'matchBy' => 'field',
             'matchField' => 'name',
             'matchLanguage' => 'de',
-            'matchColumn' => 'Name DE',
+            'matchColumn' => self::NAME_COLUMN,
             'newObjectsFolder' => '/Products',
-            'columns' => ['Name DE'],
+            'columns' => [self::NAME_COLUMN],
+            'columnsBy' => 'name',
             'unusable' => null,
         ];
         $answer = json_decode(

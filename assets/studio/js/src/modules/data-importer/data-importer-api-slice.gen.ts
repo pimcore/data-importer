@@ -926,6 +926,8 @@ export type BundleDataImporterAdHocImportConfigurationsResponse = {
         newObjectsFolder: string | null;
         /** The columns it reads */
         columns: string[];
+        /** What its columns are named by: the header row's names or the position */
+        columnsBy: "name" | "position";
         /** Why an ad hoc import cannot use it: class, matching, folder, folder-missing or folder-not-allowed; null if it can */
         unusable: string | null;
     }[];

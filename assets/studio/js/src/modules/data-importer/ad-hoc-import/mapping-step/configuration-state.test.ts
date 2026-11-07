@@ -12,6 +12,8 @@ import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step
 import {
   canContinueWithConfiguration,
   columnLabel,
+  configurationColumnLabel,
+  fileColumn,
   findConfiguration,
   importObjects,
   missingColumns,
@@ -40,9 +42,28 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   matchColumn: '1',
   newObjectsFolder: '/Products/Imported',
   columns: ['1', '0'],
+  columnsBy: 'position',
   unusable: null,
   ...given
 })
+
+// keyed by name
+const csvWithHeader: InspectedFile = {
+  ...inspected,
+  type: 'csv',
+  sheets: [],
+  columns: [{ dataIndex: 'SKU', label: 'SKU' }, { dataIndex: 'Name DE ', label: 'Name DE' }]
+}
+
+// keyed by position, without names
+const xlsxWithoutHeader: InspectedFile = {
+  ...inspected,
+  hasHeaderRow: false,
+  columns: [{ dataIndex: '0', label: '0' }, { dataIndex: '1', label: '1' }]
+}
+
+const byName = (given: Partial<ImportConfiguration> = {}): ImportConfiguration =>
+  configuration({ columnsBy: 'name', matchColumn: 'SKU', columns: ['SKU', 'Name DE'], ...given })
 
 const objects: ObjectsSettings = { classId: 'CAR', matchBy: 'field', matchField: 'vin', matchColumn: '0', newObjectsFolder: null }
 
@@ -86,6 +107,61 @@ describe('a configuration', () => {
   })
 })
 
+describe('a column the configuration reads', () => {
+  it('is the same key when the configuration and the file key columns alike', () => {
+    expect(fileColumn(configuration(), inspected, '1')).toBe('1')
+    expect(fileColumn(configuration(), inspected, '2')).toBeUndefined()
+    expect(fileColumn(byName(), csvWithHeader, 'SKU')).toBe('SKU')
+    expect(fileColumn(byName(), csvWithHeader, 'Price')).toBeUndefined()
+  })
+
+  it('is found by its header name in a file keyed by position', () => {
+    expect(fileColumn(byName(), inspected, 'SKU')).toBe('0')
+    expect(fileColumn(byName(), inspected, 'Name DE ')).toBe('1')
+    expect(fileColumn(byName(), inspected, 'Price')).toBeUndefined()
+  })
+
+  it('is not found by name in a file without a header row', () => {
+    expect(fileColumn(byName(), xlsxWithoutHeader, 'SKU')).toBeUndefined()
+    expect(fileColumn(byName(), xlsxWithoutHeader, '0')).toBeUndefined()
+  })
+
+  it('is found by its position in a file keyed by name', () => {
+    expect(fileColumn(configuration(), csvWithHeader, '0')).toBe('SKU')
+    expect(fileColumn(configuration(), csvWithHeader, '1')).toBe('Name DE ')
+    expect(fileColumn(configuration(), csvWithHeader, '2')).toBeUndefined()
+    expect(fileColumn(configuration(), csvWithHeader, '01')).toBeUndefined()
+    expect(fileColumn(configuration(), csvWithHeader, 'SKU')).toBeUndefined()
+  })
+
+  it('is named by its label in the file, or as the configuration names it', () => {
+    expect(configurationColumnLabel(byName(), inspected, 'SKU')).toBe('SKU')
+    expect(configurationColumnLabel(configuration(), csvWithHeader, '1')).toBe('Name DE')
+    expect(configurationColumnLabel(configuration(), csvWithHeader, '7')).toBe('7')
+    expect(configurationColumnLabel(configuration(), undefined, '1')).toBe('1')
+  })
+})
+
+describe('a configuration keying columns otherwise than the file', () => {
+  it('can be used with an XLSX file that has its match column by name', () => {
+    expect(unusableReason(byName(), inspected)).toBeNull()
+    expect(missingColumns(byName({ columns: ['SKU', 'Name DE', 'Price'] }), inspected)).toEqual(['Price'])
+  })
+
+  it('can be used by position with a CSV file that has a header row', () => {
+    expect(unusableReason(configuration({ matchColumn: '0' }), csvWithHeader)).toBeNull()
+    expect(missingColumns(configuration({ columns: ['0', '1', '4'] }), csvWithHeader)).toEqual(['4'])
+  })
+
+  it('cannot be used when the file has no column at its match position', () => {
+    expect(unusableReason(configuration({ matchColumn: '5' }), csvWithHeader)).toBe('match-column')
+  })
+
+  it('cannot match by name in a file without a header row', () => {
+    expect(unusableReason(byName(), xlsxWithoutHeader)).toBe('match-column')
+  })
+})
+
 describe('a column', () => {
   it('is named by its label in the file, or by itself when the file lacks it', () => {
     expect(columnLabel(inspected, '1')).toBe('Name DE')
@@ -95,15 +171,16 @@ describe('a column', () => {
 
 describe('what the import works with', () => {
   it('is the file step\'s objects when the columns are mapped here', () => {
-    expect(importObjects(objects, 'here', configuration())).toEqual({ ...objects, matchLanguage: null })
+    expect(importObjects(objects, 'here', configuration(), inspected)).toEqual({ ...objects, matchLanguage: null })
   })
 
   it('is the file step\'s objects while no configuration is chosen', () => {
-    expect(importObjects(objects, 'configuration', undefined)).toEqual({ ...objects, matchLanguage: null })
+    expect(importObjects(objects, 'configuration', undefined, inspected)).toEqual({ ...objects, matchLanguage: null })
+    expect(importObjects(objects, 'configuration', configuration(), undefined)).toEqual({ ...objects, matchLanguage: null })
   })
 
   it('takes the class, the match and the folder of a chosen configuration instead', () => {
-    expect(importObjects(objects, 'configuration', configuration())).toEqual({
+    expect(importObjects(objects, 'configuration', configuration(), inspected)).toEqual({
       classId: 'PROD',
       matchBy: 'field',
       matchField: 'name',
@@ -120,7 +197,7 @@ describe('what the import works with', () => {
       matchLanguage: null,
       classId: null,
       matchColumn: null
-    }))).toEqual({
+    }), inspected)).toEqual({
       classId: undefined,
       matchBy: 'id',
       matchField: undefined,
@@ -128,5 +205,10 @@ describe('what the import works with', () => {
       matchColumn: undefined,
       newObjectsFolder: '/Products/Imported'
     })
+  })
+
+  it('matches by the key the file has for the match column of the configuration', () => {
+    expect(importObjects(objects, 'configuration', byName(), inspected).matchColumn).toBe('0')
+    expect(importObjects(objects, 'configuration', configuration({ matchColumn: '1' }), csvWithHeader).matchColumn).toBe('Name DE ')
   })
 })

@@ -38,6 +38,8 @@ class AdHocImportConfigurationServiceTest extends Unit
 
     private const string CLASS_ID = 'PROD';
 
+    private const string NAME_COLUMN = 'Name DE';
+
     private User $user;
 
     protected function _before(): void
@@ -81,11 +83,12 @@ class AdHocImportConfigurationServiceTest extends Unit
     {
         [$configuration] = $this->service([$this->configuration('products', $this->config(
             loading: ['type' => 'attribute', 'settings' => [
-                'dataSourceIndex' => 'Name DE',
+                'dataSourceIndex' => self::NAME_COLUMN,
                 'attributeName' => 'name',
                 'language' => 'de',
             ]],
-            mapping: [['dataSourceIndex' => ['Name DE']], ['dataSourceIndex' => ['Price']]]
+            mapping: [['dataSourceIndex' => [self::NAME_COLUMN]], ['dataSourceIndex' => ['Price']]],
+            interpreter: ['type' => 'csv', 'settings' => ['skipFirstRow' => true, 'saveHeaderName' => true]]
         ))])->listConfigurations()->getConfigurations();
 
         $this->assertSame([
@@ -95,9 +98,10 @@ class AdHocImportConfigurationServiceTest extends Unit
             'matchBy' => 'field',
             'matchField' => 'name',
             'matchLanguage' => 'de',
-            'matchColumn' => 'Name DE',
+            'matchColumn' => self::NAME_COLUMN,
             'newObjectsFolder' => self::FOLDER,
-            'columns' => ['Name DE', 'Price'],
+            'columns' => [self::NAME_COLUMN, 'Price'],
+            'columnsBy' => 'name',
             'unusable' => null,
         ], $configuration);
     }
@@ -181,6 +185,44 @@ class AdHocImportConfigurationServiceTest extends Unit
         ];
     }
 
+    /**
+     * @param array<string, mixed> $interpreter
+     */
+    #[DataProvider('columnKeys')]
+    public function testItSaysWhetherItsColumnsAreNamedByTheHeaderRowOrByPosition(
+        array $interpreter,
+        string $columnsBy
+    ): void {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(interpreter: $interpreter))])
+            ->listConfigurations()->getConfigurations();
+
+        $this->assertSame($columnsBy, $configuration['columnsBy']);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function columnKeys(): array
+    {
+        return [
+            'a CSV keeping the header names' => [
+                ['type' => 'csv', 'settings' => ['skipFirstRow' => true, 'saveHeaderName' => true]],
+                'name',
+            ],
+            'a CSV skipping the header row only' => [
+                ['type' => 'csv', 'settings' => ['skipFirstRow' => true, 'saveHeaderName' => false]],
+                'position',
+            ],
+            'a CSV naming nothing without skipping the header row' => [
+                ['type' => 'csv', 'settings' => ['saveHeaderName' => '1']],
+                'position',
+            ],
+            'a CSV without settings' => [['type' => 'csv'], 'position'],
+            'an XLSX with a header row' => [['type' => 'xlsx', 'settings' => ['skipFirstRow' => true]], 'position'],
+            'a JSON source' => [['type' => 'json', 'settings' => []], 'name'],
+        ];
+    }
+
     public function testAConfigurationWithoutAResolverIsListedAsUnusable(): void
     {
         [$configuration] = $this->service([$this->configuration('empty', ['resolverConfig' => 'broken'])])
@@ -196,6 +238,7 @@ class AdHocImportConfigurationServiceTest extends Unit
             'matchColumn' => null,
             'newObjectsFolder' => null,
             'columns' => [],
+            'columnsBy' => 'name',
             'unusable' => 'class',
         ], $configuration);
     }
@@ -204,6 +247,7 @@ class AdHocImportConfigurationServiceTest extends Unit
      * @param array<string, mixed>|null $loading
      * @param array<string, mixed>|null $location
      * @param array<mixed> $mapping
+     * @param array<string, mixed>|null $interpreter
      *
      * @return array<string, mixed>
      */
@@ -212,8 +256,10 @@ class AdHocImportConfigurationServiceTest extends Unit
         ?array $loading = null,
         ?array $location = null,
         array $mapping = [],
+        ?array $interpreter = null,
     ): array {
         return [
+            'interpreterConfig' => $interpreter ?? ['type' => 'csv', 'settings' => []],
             'resolverConfig' => [
                 'elementType' => 'dataObject',
                 'dataObjectClassId' => $classId,

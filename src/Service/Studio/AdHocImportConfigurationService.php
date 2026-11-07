@@ -50,6 +50,10 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
 
     private const string STATIC_PATH = 'staticPath';
 
+    public const string COLUMNS_BY_NAME = 'name';
+
+    public const string COLUMNS_BY_POSITION = 'position';
+
     /**
      * @var Closure(): iterable<Configuration>
      */
@@ -133,6 +137,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             'matchColumn' => $match['column'] ?? null,
             'newObjectsFolder' => $folder,
             'columns' => $columns,
+            'columnsBy' => $this->columnsBy(is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []),
             'unusable' => $unusable,
         ];
     }
@@ -171,6 +176,26 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         }
 
         return $this->text(is_array($strategy['settings'] ?? null) ? ($strategy['settings']['path'] ?? null) : null);
+    }
+
+    /**
+     * How the configuration's rows key their columns: a CSV by the header row's names only when it keeps them, an XLSX
+     * always by position; other sources by their field names.
+     *
+     * @param array<mixed> $interpreter
+     */
+    private function columnsBy(array $interpreter): string
+    {
+        $settings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
+
+        return match ($interpreter['type'] ?? null) {
+            'xlsx' => self::COLUMNS_BY_POSITION,
+            // read as the CSV interpreter's bool properties read them
+            'csv' => (bool)($settings['skipFirstRow'] ?? false) && (bool)($settings['saveHeaderName'] ?? false)
+                ? self::COLUMNS_BY_NAME
+                : self::COLUMNS_BY_POSITION,
+            default => self::COLUMNS_BY_NAME,
+        };
     }
 
     private function folderUnusable(string $path, User $user): ?string

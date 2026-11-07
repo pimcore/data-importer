@@ -398,6 +398,7 @@ data-importer.ad-hoc-import.mapping.restore-column: 'Restore {{column}}'
 data-importer.ad-hoc-import.configuration.label: Configuration
 data-importer.ad-hoc-import.configuration.choose: Choose a configuration
 data-importer.ad-hoc-import.configuration.none: There is no data object import configuration you may use.
+data-importer.ad-hoc-import.configuration.load-failed: The configurations could not be loaded.
 data-importer.ad-hoc-import.configuration.unusable-option: '{{name}} ({{reason}})'
 data-importer.ad-hoc-import.configuration.unusable.class: you may not create objects of its class
 data-importer.ad-hoc-import.configuration.unusable.matching: it finds objects by path or not at all

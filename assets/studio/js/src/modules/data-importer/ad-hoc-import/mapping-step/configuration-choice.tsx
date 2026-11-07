@@ -14,7 +14,7 @@ import { Alert, Flex, Form, FormKit, Select, Skeleton, Text } from '@pimcore/stu
 import { filterByLabel } from '../../utils/select-utils'
 import { type InspectedFile } from '../file-step/file-step-state'
 import {
-  columnLabel,
+  configurationColumnLabel,
   findConfiguration,
   missingColumns,
   unusableReason,
@@ -34,6 +34,8 @@ export interface ConfigurationChoiceProps {
   inspected?: InspectedFile
   configurations?: ImportConfiguration[]
   isLoading: boolean
+  // the configurations could not be listed
+  isError?: boolean
   chosen?: string
   onChoose: (name: string | undefined) => void
 }
@@ -42,6 +44,7 @@ export const ConfigurationChoice = ({
   inspected,
   configurations,
   isLoading,
+  isError = false,
   chosen,
   onChoose
 }: ConfigurationChoiceProps): React.JSX.Element => {
@@ -77,6 +80,16 @@ export const ConfigurationChoice = ({
     return <Skeleton active />
   }
 
+  if (isError) {
+    return (
+      <Alert
+        message={ t('data-importer.ad-hoc-import.configuration.load-failed') }
+        showIcon
+        type="error"
+      />
+    )
+  }
+
   if (options.length === 0) {
     return <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.none') }</Text>
   }
@@ -84,10 +97,8 @@ export const ConfigurationChoice = ({
   const configuration = findConfiguration(configurations, chosen)
   const usable = configuration !== undefined && reasonOf(configuration) === null
   const missing = usable && inspected !== undefined ? missingColumns(configuration, inspected) : []
-  const label = (column: string): string => inspected === undefined ? column : columnLabel(inspected, column)
-
   const match = (shown: ImportConfiguration): string => {
-    const column = label(shown.matchColumn ?? '')
+    const column = configurationColumnLabel(shown, inspected, shown.matchColumn ?? '')
     if (shown.matchBy === 'id') {
       return t('data-importer.ad-hoc-import.configuration.match-object-id', { column, ...plain })
     }

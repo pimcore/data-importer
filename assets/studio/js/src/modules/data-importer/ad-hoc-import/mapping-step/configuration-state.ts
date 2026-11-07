@@ -23,10 +23,51 @@ export interface ImportObjects extends ObjectsSettings {
   matchLanguage: string | null
 }
 
-const columnsOf = (inspected: InspectedFile): Set<string> => new Set(inspected.columns.map(({ dataIndex }) => dataIndex))
+const POSITION = /^(0|[1-9]\d*)$/
+
+// a CSV with a header row keys its columns by name; an XLSX, or a CSV without one, by position
+const keysByName = (inspected: InspectedFile): boolean => inspected.type === 'csv' && inspected.hasHeaderRow
+
+const hasKey = (inspected: InspectedFile, column: string): boolean =>
+  inspected.columns.some(({ dataIndex }) => dataIndex === column)
+
+/**
+ * The file's key of a column the configuration reads, or undefined if the file lacks it. The two may key columns
+ * differently, so a name is found by the file's header and a position by the column's place.
+ */
+export const fileColumn = (
+  configuration: ImportConfiguration,
+  inspected: InspectedFile,
+  column: string
+): string | undefined => {
+  if ((configuration.columnsBy === 'name') === keysByName(inspected)) {
+    return hasKey(inspected, column) ? column : undefined
+  }
+
+  if (configuration.columnsBy === 'name') {
+    return inspected.hasHeaderRow
+      ? inspected.columns.find(({ label }) => label === column.trim())?.dataIndex
+      : undefined
+  }
+
+  return POSITION.test(column) ? inspected.columns[Number(column)]?.dataIndex : undefined
+}
 
 export const columnLabel = (inspected: InspectedFile, column: string): string =>
   inspected.columns.find(({ dataIndex }) => dataIndex === column)?.label ?? column
+
+/**
+ * How the step names a column the configuration reads: by its label in the file, or as the configuration names it.
+ */
+export const configurationColumnLabel = (
+  configuration: ImportConfiguration,
+  inspected: InspectedFile | undefined,
+  column: string
+): string => {
+  const key = inspected === undefined ? undefined : fileColumn(configuration, inspected, column)
+
+  return inspected === undefined || key === undefined ? column : columnLabel(inspected, key)
+}
 
 /**
  * Why the import cannot use the configuration with this file, or null if it can.
@@ -36,7 +77,7 @@ export const unusableReason = (configuration: ImportConfiguration, inspected: In
     return configuration.unusable
   }
 
-  return configuration.matchColumn !== null && !columnsOf(inspected).has(configuration.matchColumn)
+  return configuration.matchColumn !== null && fileColumn(configuration, inspected, configuration.matchColumn) === undefined
     ? MATCH_COLUMN_MISSING
     : null
 }
@@ -44,11 +85,8 @@ export const unusableReason = (configuration: ImportConfiguration, inspected: In
 /**
  * The columns the configuration reads that the file does not have; it imports nothing from them.
  */
-export const missingColumns = (configuration: ImportConfiguration, inspected: InspectedFile): string[] => {
-  const columns = columnsOf(inspected)
-
-  return configuration.columns.filter((column) => !columns.has(column))
-}
+export const missingColumns = (configuration: ImportConfiguration, inspected: InspectedFile): string[] =>
+  configuration.columns.filter((column) => fileColumn(configuration, inspected, column) === undefined)
 
 export const findConfiguration = (
   configurations: ImportConfiguration[] | undefined,
@@ -61,9 +99,10 @@ export const findConfiguration = (
 export const importObjects = (
   objects: ObjectsSettings,
   mapWith: MapWith,
-  configuration: ImportConfiguration | undefined
+  configuration: ImportConfiguration | undefined,
+  inspected: InspectedFile | undefined
 ): ImportObjects => {
-  if (mapWith === 'here' || configuration === undefined) {
+  if (mapWith === 'here' || configuration === undefined || inspected === undefined) {
     return { ...objects, matchLanguage: null }
   }
 
@@ -72,7 +111,10 @@ export const importObjects = (
     matchBy: configuration.matchBy === 'id' ? 'id' : 'field',
     matchField: configuration.matchField ?? undefined,
     matchLanguage: configuration.matchLanguage,
-    matchColumn: configuration.matchColumn ?? undefined,
+    // the file's key: the import reads the file's rows
+    matchColumn: configuration.matchColumn === null
+      ? undefined
+      : fileColumn(configuration, inspected, configuration.matchColumn),
     newObjectsFolder: configuration.newObjectsFolder
   }
 }

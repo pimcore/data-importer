@@ -15,7 +15,6 @@ import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/mo
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
   useBundleDataImporterAdHocImportInspectFileMutation,
-  useBundleDataImporterAdHocImportListConfigurationsQuery,
   useBundleDataImporterAdHocImportLoadMappingMutation
 } from '../data-importer-api-slice-enhanced'
 import { type BundleDataImporterAdHocImportFileSettings } from '../data-importer-api-slice.gen'
@@ -35,6 +34,7 @@ import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './f
 import { canContinueMapping, createMapping, mappingBasis, type Mapping, type MappingField } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
 import { canContinueWithConfiguration, findConfiguration, type MapWith } from './mapping-step/configuration-state'
+import { useImportConfigurations } from './mapping-step/use-import-configurations'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -67,8 +67,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
-  const listed = useBundleDataImporterAdHocImportListConfigurationsQuery(undefined, { skip: mapWith !== 'configuration' })
-  const configurations = listed.data?.configurations
+  const { configurations, isFetching: isListing, isError: isListingFailed } = useImportConfigurations(mapWith === 'configuration')
 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
@@ -283,7 +282,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           configuration={ {
             inspected,
             configurations,
-            isLoading: listed.isFetching,
+            isLoading: isListing,
+            isError: isListingFailed,
             chosen: configurationName,
             onChoose: setConfigurationName
           } }

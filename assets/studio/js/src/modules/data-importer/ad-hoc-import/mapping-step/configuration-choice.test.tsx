@@ -12,6 +12,7 @@ import React, { useState } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import { type ImportConfiguration, type MapWith } from './configuration-state'
+import { ConfigurationChoice } from './configuration-choice'
 import { createMapping, type LoadedMapping } from './mapping-state'
 import { MappingStep } from './mapping-step'
 
@@ -49,6 +50,7 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   matchColumn: 'Name DE',
   newObjectsFolder: '/Products & more/Imported',
   columns: ['Name DE', 'Preis'],
+  columnsBy: 'name',
   unusable: null,
   ...given
 })
@@ -151,6 +153,28 @@ describe('the mapping with a configuration', () => {
     choose('products')
 
     expect(screen.getByText('Columns it reads that the file does not have: EAN, Weight & size')).toBeTruthy()
+  })
+
+  it('finds the columns of one that names them by position in a file with a header row', () => {
+    useConfiguration({ configurations: [configuration({ columnsBy: 'position', matchColumn: '1', columns: ['1', '2', '7'] })] })
+    choose('products')
+
+    expect(screen.getByText('name (de) from column Name DE')).toBeTruthy()
+    expect(screen.getByText('Columns it reads that the file does not have: 7')).toBeTruthy()
+  })
+
+  it('shows a failed listing instead of saying there is none', () => {
+    render(
+      <ConfigurationChoice
+        inspected={ inspected }
+        isError
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    expect(screen.getByText('The configurations could not be loaded.')).toBeTruthy()
+    expect(screen.queryByText('There is no data object import configuration you may use.')).toBeNull()
   })
 
   it('can be chosen again as none', () => {

@@ -28,6 +28,7 @@ use OpenApi\Attributes\Schema;
  *     matchColumn: string|null,
  *     newObjectsFolder: string|null,
  *     columns: list<string>,
+ *     columnsBy: 'name'|'position',
  *     unusable: string|null
  * }
  *
@@ -59,6 +60,7 @@ final readonly class AdHocImportConfigurationsResponse
                     'matchColumn',
                     'newObjectsFolder',
                     'columns',
+                    'columnsBy',
                     'unusable',
                 ],
                 properties: [
@@ -124,6 +126,13 @@ final readonly class AdHocImportConfigurationsResponse
                         type: 'array',
                         items: new Items(type: 'string'),
                         example: ['SKU', 'Name']
+                    ),
+                    new Property(
+                        property: 'columnsBy',
+                        description: 'What its columns are named by: the header row\'s names or the position',
+                        type: 'string',
+                        enum: ['name', 'position'],
+                        example: 'name'
                     ),
                     new Property(
                         property: 'unusable',
