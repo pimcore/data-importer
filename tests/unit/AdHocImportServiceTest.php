@@ -449,19 +449,20 @@ class AdHocImportServiceTest extends Unit
             ->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
 
         $this->assertSame([
-            ['key' => 'sku', 'title' => 'sku', 'localized' => false, 'transformationResultType' => 'default', 'mandatory' => true],
-            ['key' => 'name', 'title' => 'name', 'localized' => true, 'transformationResultType' => 'default', 'mandatory' => true],
-            ['key' => 'price', 'title' => 'price', 'localized' => false, 'transformationResultType' => 'numeric', 'mandatory' => false],
-            ['key' => 'notes', 'title' => 'notes', 'localized' => false, 'transformationResultType' => 'default', 'mandatory' => false],
+            [...$this->target('sku'), 'mandatory' => true],
+            [...$this->target('name', localized: true), 'mandatory' => true],
+            [...$this->target('price', 'numeric'), 'mandatory' => false],
+            [...$this->target('notes'), 'mandatory' => false],
         ], $mapping->getFields());
     }
 
     public function testTheMappingSuggestsForTheColumnsAsked(): void
     {
-        $parameters = new MappingSuggestionParameters('PROD', [['index' => 'Bezeichnung DE', 'label' => 'Bezeichnung DE']]);
+        $column = 'Bezeichnung DE';
+        $parameters = new MappingSuggestionParameters('PROD', [['index' => $column, 'label' => $column]]);
         $suggestion = [
-            'sourceIndex' => 'Bezeichnung DE',
-            'sourceLabel' => 'Bezeichnung DE',
+            'sourceIndex' => $column,
+            'sourceLabel' => $column,
             'targetFieldName' => 'bezeichnung',
             'targetFieldLabel' => 'Bezeichnung',
             'transformationResultType' => 'default',
@@ -530,7 +531,15 @@ class AdHocImportServiceTest extends Unit
     }
 
     /**
-     * @return array{sourceIndex: string, sourceLabel: string, targetFieldName: string, targetFieldLabel: string, transformationResultType: string, score: int, language: null}
+     * @return array{
+     *     sourceIndex: string,
+     *     sourceLabel: string,
+     *     targetFieldName: string,
+     *     targetFieldLabel: string,
+     *     transformationResultType: string,
+     *     score: int,
+     *     language: null
+     * }
      */
     private function suggestion(string $column, string $field): array
     {

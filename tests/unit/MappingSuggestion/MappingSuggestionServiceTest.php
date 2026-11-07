@@ -195,7 +195,12 @@ class MappingSuggestionServiceTest extends Unit
 
         $this->assertSame([
             ['key' => 'name', 'title' => 'name [name]', 'localized' => true, 'transformationResultType' => 'default'],
-            ['key' => 'validFrom', 'title' => 'validFrom [validFrom]', 'localized' => false, 'transformationResultType' => 'date'],
+            [
+                'key' => 'validFrom',
+                'title' => 'validFrom [validFrom]',
+                'localized' => false,
+                'transformationResultType' => 'date',
+            ],
         ], $targets);
     }
 

@@ -100,8 +100,18 @@ final readonly class AdHocImportMappingResponse
                     'language',
                 ],
                 properties: [
-                    new Property(property: 'sourceIndex', description: 'Column data index', type: 'string', example: 'sku'),
-                    new Property(property: 'sourceLabel', description: 'Column name', type: 'string', example: 'Name DE'),
+                    new Property(
+                        property: 'sourceIndex',
+                        description: 'Column data index',
+                        type: 'string',
+                        example: 'sku'
+                    ),
+                    new Property(
+                        property: 'sourceLabel',
+                        description: 'Column name',
+                        type: 'string',
+                        example: 'Name DE'
+                    ),
                     new Property(
                         property: 'targetFieldName',
                         description: 'Key of the suggested field',

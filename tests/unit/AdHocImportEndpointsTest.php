@@ -152,7 +152,13 @@ class AdHocImportEndpointsTest extends Unit
         /** @var SerializerInterface $serializer */
         $serializer = $this->tester->grabService('serializer');
 
-        $field = ['key' => 'name', 'title' => 'Name', 'localized' => true, 'mandatory' => true, 'transformationResultType' => 'default'];
+        $field = [
+            'key' => 'name',
+            'title' => 'Name',
+            'localized' => true,
+            'mandatory' => true,
+            'transformationResultType' => 'default',
+        ];
         $suggestion = [
             'sourceIndex' => 'Name DE',
             'sourceLabel' => 'Name DE',
