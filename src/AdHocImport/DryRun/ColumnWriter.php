@@ -1,0 +1,72 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
+
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConvertedColumn;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct;
+use Pimcore\Model\DataObject\Concrete;
+
+/**
+ * Writes one column of the file, transformed and converted beforehand, into its field.
+ *
+ * @internal
+ */
+final readonly class ColumnWriter implements FieldWriter
+{
+    private Direct $target;
+
+    public function __construct(
+        private ImportField $field,
+        private int|string $column,
+        private ConvertedColumn $converted,
+    ) {
+        $this->target = new Direct();
+        // an empty cell clears the field, as in a Data Importer run
+        $this->target->setSettings([
+            'fieldName' => (string) $field->key,
+            'language' => $field->language,
+            'writeIfSourceIsEmpty' => true,
+            'writeIfTargetIsNotEmpty' => true,
+        ]);
+    }
+
+    public function field(): ImportField
+    {
+        return $this->field;
+    }
+
+    public function write(Concrete $object, int $index, array $row): ?ValueError
+    {
+        if ($this->converted->failed[$index] ?? true) {
+            return ($this->converted->failedInSteps[$index] ?? true)
+                ? ValueError::Invalid
+                : ValueError::ofConversion($this->converted->conversion);
+        }
+
+        try {
+            $this->target->assignData($object, $this->converted->values[$index]);
+        } catch (\Throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
+            return ValueError::Invalid;
+        }
+
+        return null;
+    }
+
+    public function fileValue(array $row): ?string
+    {
+        $value = $row[$this->column] ?? null;
+
+        return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+    }
+}

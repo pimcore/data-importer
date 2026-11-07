@@ -66,6 +66,44 @@ final readonly class FileInspector
         };
     }
 
+    /**
+     * Every row of a file inspect() accepted, read under the settings it settled on and keyed by the dataIndex of its
+     * columns.
+     *
+     * @return iterable<int, array<int|string, mixed>>
+     *
+     * @throws InvalidInputException if the file cannot be read
+     */
+    public function readRows(string $path, FileType $type, FileInspection $inspection): iterable
+    {
+        $settings = $inspection->settings;
+        $hasHeaderRow = $settings['hasHeaderRow'];
+
+        return $this->sourceFileReader->readRows(
+            match ($type) {
+                FileType::Csv => [
+                    'type' => FileType::Csv->value,
+                    'settings' => [
+                        'delimiter' => $settings['delimiter'] ?? ',',
+                        'enclosure' => $settings['enclosure'] ?? '"',
+                        'escape' => $settings['escape'] ?? '\\',
+                        'skipFirstRow' => $hasHeaderRow,
+                        'saveHeaderName' => $hasHeaderRow,
+                    ],
+                ],
+                FileType::Xlsx => [
+                    'type' => FileType::Xlsx->value,
+                    'settings' => [
+                        'skipFirstRow' => $hasHeaderRow,
+                        'sheetName' => $settings['sheetName'] ?? '',
+                        'onlyChosenSheet' => true,
+                    ],
+                ],
+            },
+            $path
+        );
+    }
+
     private function inspectCsv(string $path, SettingsInput $input): FileInspection
     {
         $detectedDelimiter = $this->csvDelimiterDetector->detect($path);

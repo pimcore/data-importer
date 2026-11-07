@@ -19,7 +19,8 @@ use Pimcore\Helper\TemporaryFileHelperTrait;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Uploaded files until their import ran, each reachable only by the user who uploaded it.
+ * Uploaded files until their import ran, and the rows a dry run would skip, each reachable only by the user who
+ * uploaded it.
  *
  * @internal
  */
@@ -81,9 +82,32 @@ final class FileStore
         );
     }
 
+    /**
+     * Deletes the file and the skipped rows of its last dry run.
+     */
     public function delete(int $userId, string $fileId, FileType $type): void
     {
         $this->pimcoreDataImporterAdHocStorage->delete($this->path($userId, $fileId, $type));
+        $this->pimcoreDataImporterAdHocStorage->delete($this->skippedRowsPath($userId, $fileId));
+    }
+
+    /**
+     * Keeps the rows the last dry run of a file would skip, replacing those of an earlier one, until the file is
+     * deleted or abandoned.
+     */
+    public function storeSkippedRows(int $userId, string $fileId, string $content): void
+    {
+        $this->pimcoreDataImporterAdHocStorage->write($this->skippedRowsPath($userId, $fileId), $content);
+    }
+
+    public function readSkippedRows(int $userId, string $fileId): ?string
+    {
+        $path = $this->skippedRowsPath($userId, $fileId);
+        if (!Uuid::isValid($fileId) || !$this->pimcoreDataImporterAdHocStorage->fileExists($path)) {
+            return null;
+        }
+
+        return $this->pimcoreDataImporterAdHocStorage->read($path);
     }
 
     private function removeAbandoned(int $userId): void
@@ -101,5 +125,10 @@ final class FileStore
     private function path(int $userId, string $fileId, FileType $type): string
     {
         return $userId . '/' . $fileId . '.' . $type->value;
+    }
+
+    private function skippedRowsPath(int $userId, string $fileId): string
+    {
+        return $userId . '/' . $fileId . '.skipped.json';
     }
 }

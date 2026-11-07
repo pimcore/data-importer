@@ -454,3 +454,44 @@ data-importer.ad-hoc-import.configuration.match-object-id: 'Object ID from colum
 data-importer.ad-hoc-import.configuration.match-field: '{{field}} from column {{column}}'
 data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) from column {{column}}'
 data-importer.ad-hoc-import.configuration.missing-columns: 'Columns it reads that the file does not have: {{columns}}'
+data-importer.ad-hoc-import.check.object-id: Object ID
+data-importer.ad-hoc-import.check.column.row: Row
+data-importer.ad-hoc-import.check.column.error: Error
+data-importer.ad-hoc-import.check.empty-value: '{{field}} is empty'
+data-importer.ad-hoc-import.check.invalid-match-value: '{{field}} “{{value}}” is no value objects can be matched by'
+data-importer.ad-hoc-import.check.duplicate-in-file: '{{field}} {{value}} is in the file twice (row {{row}})'
+data-importer.ad-hoc-import.check.several-matches: '{{count}} objects have {{field}} {{value}}'
+data-importer.ad-hoc-import.check.found-outside-target-folder: 'Found in {{path}}, outside {{folder}}'
+data-importer.ad-hoc-import.check.outside-target-folder: 'Found outside {{folder}}'
+data-importer.ad-hoc-import.check.unknown-object-id: 'No object has the ID {{value}}'
+data-importer.ad-hoc-import.check.other-class: 'The ID {{value}} belongs to a folder or an object of another class'
+data-importer.ad-hoc-import.check.key-taken: '{{folder}} already holds an object named {{key}}'
+data-importer.ad-hoc-import.check.key-taken-in-file: 'Row {{row}} already creates an object named {{key}}'
+data-importer.ad-hoc-import.check.value.not-a-number: '{{field}} “{{value}}” is no number'
+data-importer.ad-hoc-import.check.value.not-a-date: '{{field}} “{{value}}” is no date'
+data-importer.ad-hoc-import.check.value.not-yes-no: '{{field}} “{{value}}” is neither yes nor no'
+data-importer.ad-hoc-import.check.value.not-an-option: '{{field}} “{{value}}” is no option of {{field}}'
+data-importer.ad-hoc-import.check.value.required: '{{field}} is required'
+data-importer.ad-hoc-import.check.value.invalid: '{{field}} “{{value}}” does not fit the field'
+data-importer.ad-hoc-import.preview.updated: will be updated
+data-importer.ad-hoc-import.preview.created: 'will be created in {{folder}}'
+data-importer.ad-hoc-import.preview.with-errors.skip: 'rows with errors: skipped, downloadable afterwards'
+data-importer.ad-hoc-import.preview.with-errors.values: 'rows with errors: invalid values left out; rows that cannot be matched are skipped'
+data-importer.ad-hoc-import.preview.checked: 'All {{count}} rows checked'
+data-importer.ad-hoc-import.preview.old-new: '· old value → new value'
+data-importer.ad-hoc-import.preview.errors-only: Errors only
+data-importer.ad-hoc-import.preview.column.row: Row
+data-importer.ad-hoc-import.preview.column.action: Action
+data-importer.ad-hoc-import.preview.column.message: Message
+data-importer.ad-hoc-import.preview.action.update: update
+data-importer.ad-hoc-import.preview.action.create: create
+data-importer.ad-hoc-import.preview.action.skipped: skipped
+data-importer.ad-hoc-import.preview.action.update-without: 'update, without {{fields}}'
+data-importer.ad-hoc-import.preview.action.create-without: 'create, without {{fields}}'
+data-importer.ad-hoc-import.preview.left-unchanged: '{{field}} “{{value}}” → left unchanged'
+data-importer.ad-hoc-import.preview.total: 'Total {{total}} items'
+data-importer.ad-hoc-import.preview.rows-with-errors: Rows with errors
+data-importer.ad-hoc-import.preview.error-mode.skip: Skip them
+data-importer.ad-hoc-import.preview.error-mode.values: Import them without the invalid values
+data-importer.ad-hoc-import.preview.import: 'Import {{count}} objects'
+data-importer.ad-hoc-import.preview.failed: The file could not be checked.

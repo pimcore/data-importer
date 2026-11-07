@@ -21,6 +21,7 @@ use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInte
 use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
@@ -28,6 +29,7 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Pimcore\Model\UserInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AdHocImportConfigurationServiceTest extends Unit
 {
@@ -57,6 +59,59 @@ class AdHocImportConfigurationServiceTest extends Unit
         ])->listConfigurations()->getConfigurations();
 
         $this->assertSame(['Products-a', 'products-b'], array_column($listed, 'name'));
+    }
+
+    public function testAConfigurationToMapWithGivesWhatTheListSaysAndItsMapping(): void
+    {
+        $mapping = [['label' => 'Name', 'dataSourceIndex' => ['Name'], 'dataTarget' => ['type' => 'direct']]];
+
+        $loaded = $this->service([
+            $this->configuration('other', $this->config(classId: 'CAR')),
+            $this->configuration('products', $this->config(mapping: $mapping)),
+        ])->loadConfiguration('products');
+
+        $this->assertSame($mapping, $loaded['mapping']);
+        $this->assertSame('products', $loaded['configuration']['name']);
+        $this->assertSame(self::CLASS_ID, $loaded['configuration']['classId']);
+        $this->assertSame('sku', $loaded['configuration']['matchField']);
+        $this->assertSame('SKU', $loaded['configuration']['matchColumn']);
+        $this->assertSame(self::FOLDER, $loaded['configuration']['newObjectsFolder']);
+    }
+
+    /**
+     * @dataProvider configurationsNotToMapWith
+     */
+    public function testAConfigurationTheUserMayNotReadOrThatIsNoDataObjectImportIsNotFound(
+        string $name,
+        bool $readable,
+        string $type
+    ): void {
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->service([$this->configuration('products', $this->config(), $readable, $type)])
+            ->loadConfiguration($name);
+    }
+
+    public static function configurationsNotToMapWith(): array
+    {
+        return [
+            'unknown name' => ['others', true, 'dataImporterDataObject'],
+            'not readable' => ['products', false, 'dataImporterDataObject'],
+            'another adapter' => ['products', true, 'graphql'],
+        ];
+    }
+
+    public function testAConfigurationAnAdHocImportCannotUseIsRefusedWithWhy(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('folder-not-allowed');
+
+        $this->service([
+            $this->configuration('locked', $this->config(location: [
+                'type' => 'staticPath',
+                'settings' => ['path' => self::LOCKED_FOLDER],
+            ])),
+        ])->loadConfiguration('locked');
     }
 
     public function testReadingIsAskedForTheCurrentUser(): void

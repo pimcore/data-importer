@@ -67,7 +67,12 @@ services:
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportConfigurationServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportConfigurationService
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunService
+
     Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunner: ~

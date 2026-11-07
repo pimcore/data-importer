@@ -115,14 +115,7 @@ final readonly class TransformationChain
         $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
         $results = [];
         if ($conversion !== false) {
-            if ($conversion !== null) {
-                $converter = $this->operators([
-                    ['type' => $conversion, 'settings' => self::CONVERSION_SETTINGS[$conversion] ?? []],
-                ])[0];
-                $type = $converter->evaluateReturnType($type, count($operators) + 1);
-                $failed = $this->unreadable($conversion, $data, $failed);
-                [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
-            }
+            [$type, $data, $failed] = $this->convert($conversion, $type, count($operators) + 1, $data, $failed, $user);
             $results = $this->cells($data, $failed);
         }
 
@@ -135,6 +128,68 @@ final readonly class TransformationChain
             $results,
             $offered
         );
+    }
+
+    /**
+     * The column's values as its field takes them: the steps and the conversion to the field's type run on every
+     * value. Null if they do not lead into the field.
+     *
+     * @param list<string|null> $values
+     * @param list<array{type: string, settings: array<string, string>}> $steps checked against the allow list
+     * @param list<string> $accepted the result types the field takes
+     * @param User $user loaded objects and assets the user may not see are not found
+     *
+     * @throws InvalidConfigurationException
+     */
+    public function convertColumn(array $values, array $steps, array $accepted, User $user): ?ConvertedColumn
+    {
+        $operators = $this->operators($steps);
+        [$type, $data, $failed] = $this->runSteps($operators, $steps, $values, $user);
+        $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
+        if ($type === null || $conversion === false) {
+            return null;
+        }
+
+        [, $converted, $failedConversion] = $this->convert(
+            $conversion,
+            $type,
+            count($operators) + 1,
+            $data,
+            $failed,
+            $user
+        );
+
+        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion);
+    }
+
+    /**
+     * @param list<mixed> $data
+     * @param list<bool> $failed
+     *
+     * @return array{0: string, 1: list<mixed>, 2: list<bool>}
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function convert(
+        ?string $conversion,
+        string $type,
+        int $position,
+        array $data,
+        array $failed,
+        User $user
+    ): array {
+        if ($conversion === null) {
+            return [$type, $data, $failed];
+        }
+
+        $converter = $this->operators([
+            ['type' => $conversion, 'settings' => self::CONVERSION_SETTINGS[$conversion] ?? []],
+        ])[0];
+        $type = $converter->evaluateReturnType($type, $position);
+        $failed = $this->unreadable($conversion, $data, $failed);
+        [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
+
+        return [$type, $data, $failed];
     }
 
     /**

@@ -24,13 +24,12 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CreatableClassTrait;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\TargetFolderTrait;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
-use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
-use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -42,6 +41,7 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
 {
     use CreatableClassTrait;
     use CurrentUserResolverTrait;
+    use TargetFolderTrait;
 
     private const int MAX_FILE_SIZE = 52428800; // 50MB, as for the preview files of a configuration
 
@@ -52,7 +52,7 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
         private FileStore $fileStore,
         private FileInspector $fileInspector,
         private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
-        private DataObjectResolverInterface $dataObjectResolver,
+        private DataObjectResolverInterface $dataObjectResolver, // NOSONAR php:S1068 read by TargetFolderTrait
         private DataTypeServiceInterface $dataTypeService,
         private ClassDefinitionServiceInterface $classDefinitionService, // NOSONAR php:S1068 read by CreatableClassTrait
     ) {
@@ -150,18 +150,6 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
             FileType::Csv => $inspection->refusal === RefusalReason::Unreadable,
             FileType::Xlsx => count($inspection->sheets) > 1,
         };
-    }
-
-    private function assertMayImportInto(int $folderId, User $user): void
-    {
-        $folder = $this->dataObjectResolver->getById($folderId);
-        if (!$folder instanceof Folder) {
-            throw new NotFoundHttpException(sprintf('Data object folder %d not found', $folderId));
-        }
-
-        if (!$folder->isAllowed('create', $user) || !$folder->isAllowed('save', $user)) {
-            throw new ForbiddenException(sprintf('Access denied to data object folder %d', $folderId));
-        }
     }
 
     private function requireType(User $user, string $fileId): FileType
