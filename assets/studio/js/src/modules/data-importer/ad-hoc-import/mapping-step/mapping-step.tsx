@@ -25,6 +25,7 @@ import {
   withLanguages,
   type Mapping,
   type MappingField,
+  type MappingRow,
   type RowFilter
 } from './mapping-state'
 import { takenFields } from './taken-fields'
@@ -109,15 +110,12 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
   const activeRow = mapping.rows.find((row) => row.column === activeColumn && !row.isMatch && !row.skipped) ??
     mapping.rows.find((row) => !row.isMatch && !row.skipped)
 
-  const pick = (field: MappingField): void => {
-    if (activeRow === undefined) {
-      return
-    }
+  const pick = (row: MappingRow, field: MappingField): void => {
     if (field.classificationStore) {
-      setStoreKeyFor({ column: activeRow.column, field: field.key })
+      setStoreKeyFor({ column: row.column, field: field.key })
       return
     }
-    change(chooseField(mapping, activeRow.column, field.key))
+    change(chooseField(mapping, row.column, field.key))
   }
 
   const counts = rowCounts(mapping)

@@ -21,7 +21,7 @@ export interface FieldPanelProps {
   mapping: Mapping
   fields: MappingField[]
   languages: string[]
-  onPick: (field: MappingField) => void
+  onPick: (row: MappingRow, field: MappingField) => void
 }
 
 export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPanelProps): React.JSX.Element => {
@@ -51,7 +51,7 @@ export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPan
           <ColumnPicker
             emptyText={ t('data-importer.ad-hoc-import.mapping.no-fields') }
             groups={ groups }
-            onSelect={ ({ meta }) => { if (meta !== undefined) { onPick(meta) } } }
+            onSelect={ ({ meta }) => { if (meta !== undefined) { onPick(row, meta) } } }
             searchPlaceholder={ t('data-importer.ad-hoc-import.mapping.find-field') }
           />
           ) }
