@@ -21,11 +21,8 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\Objectbrick\DefinitionResolverInterface;
-use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
-use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
-use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
@@ -330,15 +327,10 @@ class AdHocImportMappingServiceTest extends Unit
     ): AdHocImportMappingService {
         $classes = $this->createStub(ClassDefinitionServiceInterface::class);
         $classes->method('getClassDefinitionCollection')->willReturnCallback(
-            static fn (bool $creatableOnly = false): array => $creatableOnly ? array_map(
-                static fn (string $id): ClassDefinitionList => new ClassDefinitionList(
-                    $id,
-                    $id,
-                    $id,
-                    new ElementIcon(ElementIconTypes::NAME->value, 'class')
-                ),
-                $creatableClasses
-            ) : []
+            static fn (bool $creatableOnly = false): array => AdHocCreatableClasses::listed(
+                $creatableClasses,
+                $creatableOnly
+            )
         );
 
         $classResolver = $this->createStub(ClassDefinitionResolverInterface::class);
