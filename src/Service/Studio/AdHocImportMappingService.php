@@ -67,7 +67,8 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
         );
     }
 
-    // a localized field is found among the class's localized fields, a brick field (`container.brick.field`) in its brick
+    // a localized field is found among the class's localized fields,
+    // a brick field (`container.brick.field`) in its brick
     private function isMandatory(?ClassDefinition $class, string $key): bool
     {
         $parts = explode('.', $key);
