@@ -41,7 +41,15 @@ final class RowMatcherFields
         self::add($panel, new Data\Wysiwyg(), 'description');
         self::add($panel, new Data\Slider(), 'rating');
         self::add($panel, new Data\Link(), 'website');
-        self::add($panel, new Data\Textarea(), 'notes');
+
+        $notes = new Data\Textarea();
+        $notes->setMaxLength(10);
+        self::add($panel, $notes, 'notes');
+
+        $shortCode = new Data\Input();
+        $shortCode->setColumnLength(5);
+        $shortCode->setRegex('^[A-Z]+$');
+        self::add($panel, $shortCode, 'shortCode');
 
         $state = new Data\Select();
         $state->setOptions([['key' => 'red', 'value' => 'red']]);

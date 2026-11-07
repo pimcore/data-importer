@@ -52,11 +52,10 @@ final class RowMatcherFactory
         }
 
         $this->assertLanguage($configuration->language);
-        $numericField = null;
+        $field = null;
         if ($configuration->attributeName !== null) {
             $this->assertMatchableField($class, $configuration->attributeName, $configuration->language);
             $field = $this->fieldDefinition($class, $configuration->attributeName);
-            $numericField = $field instanceof Numeric ? $field : null;
         }
 
         $targetFolder = $this->loadFolder($configuration->targetFolder);
@@ -79,7 +78,7 @@ final class RowMatcherFactory
             '\\Pimcore\\Model\\DataObject\\' . ucfirst($class->getName()),
             $this->dataObjectLoader->normalizePath($targetFolder->getRealFullPath()),
             $newObjectFolder,
-            $numericField
+            $field
         );
     }
 

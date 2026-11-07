@@ -56,6 +56,8 @@ class RowMatcherTest extends Unit
 
     private const SIGNED_NUMBER = '+12.50';
 
+    private const NOT_AN_OPTION = 'blue';
+
     private const ROOT = '/di-row-matcher';
 
     private const TARGET = self::ROOT . '/target';
@@ -640,6 +642,56 @@ class RowMatcherTest extends Unit
         $this->assertSame($object->getId(), $match->element?->getId());
     }
 
+    public static function valuesATextFieldCannotHold(): array
+    {
+        return [
+            'an input longer than its column' => ['shortCode', 'ABCDEF'],
+            'an input against its regex' => ['shortCode', 'abc'],
+            'a textarea longer than its maximum' => ['notes', 'more than ten characters'],
+            'a select option it does not have' => ['state', self::NOT_AN_OPTION],
+        ];
+    }
+
+    /**
+     * @dataProvider valuesATextFieldCannotHold
+     */
+    public function testAValueATextFieldCannotHoldIsAnErrorRowAndNoNewObject(string $field, string $value): void
+    {
+        $match = $this->matchOne($this->configuration(attributeName: $field), $value);
+
+        $this->assertSame(RowMatchOutcome::InvalidValue, $match->outcome);
+        $this->assertSame($value, $match->matchValue);
+        $this->assertNull($match->element);
+        $this->assertTrue($match->isError());
+    }
+
+    public function testAValueATextFieldHoldsIsANewObject(): void
+    {
+        $match = $this->matchOne($this->configuration(attributeName: 'shortCode'), 'ABCDE');
+
+        $this->assertSame(RowMatchOutcome::New, $match->outcome);
+        $this->assertSame('ABCDE', $match->element?->getKey());
+    }
+
+    public function testAnOptionTheFieldNoLongerHasIsAnErrorRowEvenIfAnObjectStillHoldsIt(): void
+    {
+        // the field does not enforce its options, so the object can be saved with it
+        $this->createObjectWith(self::TARGET, ['setState' => self::NOT_AN_OPTION]);
+
+        $match = $this->matchOne($this->configuration(attributeName: 'state'), self::NOT_AN_OPTION);
+
+        $this->assertSame(RowMatchOutcome::InvalidValue, $match->outcome);
+        $this->assertNull($match->element);
+    }
+
+    public function testAnInvalidTextValueTwiceInTheFileIsInvalidBothTimes(): void
+    {
+        $matcher = $this->matcher($this->configuration(attributeName: 'state'));
+
+        $this->assertSame(RowMatchOutcome::InvalidValue, $matcher->match($this->row(self::NOT_AN_OPTION), 2)->outcome);
+        $this->assertSame(RowMatchOutcome::InvalidValue, $matcher->match($this->row(self::NOT_AN_OPTION), 3)->outcome);
+    }
+
     public static function valuesANumericFieldCannotHold(): array
     {
         return [
@@ -925,6 +977,7 @@ class RowMatcherTest extends Unit
                 'name',
                 'title',
                 'notes',
+                'shortCode',
                 'state',
                 'articleNo',
                 'stock',

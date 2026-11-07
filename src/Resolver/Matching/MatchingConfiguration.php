@@ -23,7 +23,7 @@ final readonly class MatchingConfiguration
     /**
      * @param int|string $dataSourceIndex the column holding the match value
      * @param string $targetFolder path of an existing element; it and what lies below it can be matched
-     * @param string|null $attributeName the text field to match by, `<field>.<brick>.<attribute>` for an object brick
+     * @param string|null $attributeName the field to match by, `<field>.<brick>.<attribute>` for an object brick
      *                                   attribute; null matches by the Object ID
      * @param string $language the language of a localized field
      * @param string|null $newObjectFolder path of the existing element new objects go to; null is the target folder;

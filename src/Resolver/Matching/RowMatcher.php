@@ -17,6 +17,7 @@ use Collator;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Numeric;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\ElementInterface;
@@ -53,7 +54,7 @@ final class RowMatcher
 
     /**
      * @param string $targetPath the normalized path of the target folder, searched with what lies below it
-     * @param Numeric|null $numericField the field to match by, when its values need the strict check of a number
+     * @param Data|null $field the field to match by, whose rules the values are checked against; null is the Object ID
      */
     public function __construct(
         private readonly Resolver $resolver,
@@ -62,7 +63,7 @@ final class RowMatcher
         private readonly string $className,
         private readonly string $targetPath,
         private readonly ElementInterface $newObjectFolder,
-        private readonly ?Numeric $numericField = null,
+        private readonly ?Data $field = null,
     ) {
         $this->valueCollator = new Collator('root');
         $this->valueCollator->setStrength(Collator::PRIMARY);
@@ -84,9 +85,7 @@ final class RowMatcher
         }
 
         // the error row and a match report the file's spelling; the lookup and a new key use the number's own
-        $lookupValue = $this->numericField === null
-            ? $value
-            : NumericMatchValue::normalize($value, $this->numericField);
+        $lookupValue = $this->lookupValue($value);
         if ($lookupValue === null) {
             return new RowMatch(RowMatchOutcome::InvalidValue, $value);
         }
@@ -109,6 +108,15 @@ final class RowMatcher
         return $found === null
             ? $this->newObject($value, $lookupValue, $rowNumber)
             : $this->existingObject($value, $found, $rowNumber);
+    }
+
+    private function lookupValue(string $value): ?string
+    {
+        if ($this->field instanceof Numeric) {
+            return NumericMatchValue::normalize($value, $this->field);
+        }
+
+        return $this->field === null || TextMatchValue::fits($value, $this->field) ? $value : null;
     }
 
     private function findById(string $value): RowMatch|int
@@ -169,9 +177,9 @@ final class RowMatcher
         int $limit,
         bool $directlyInPath = false
     ): array {
-        $find = $this->numericField === null
-            ? $this->dataObjectLoader->findIdsByAttribute(...)
-            : $this->dataObjectLoader->findIdsByNumber(...);
+        $find = $this->field instanceof Numeric
+            ? $this->dataObjectLoader->findIdsByNumber(...)
+            : $this->dataObjectLoader->findIdsByAttribute(...);
 
         return $find(
             $this->className,
