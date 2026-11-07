@@ -54,3 +54,10 @@ services:
         class: Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydrator
 
     Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\ColumnMatcher: ~
+
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~

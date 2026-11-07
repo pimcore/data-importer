@@ -261,6 +261,48 @@ const injectedRtkApi = api
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportUploadFile: build.mutation<
+                BundleDataImporterAdHocImportUploadFileApiResponse,
+                BundleDataImporterAdHocImportUploadFileApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file`,
+                    method: "POST",
+                    body: queryArg.body,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportInspectFile: build.mutation<
+                BundleDataImporterAdHocImportInspectFileApiResponse,
+                BundleDataImporterAdHocImportInspectFileApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/inspect`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterAdHocImportFileSettings,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportDeleteFile: build.mutation<
+                BundleDataImporterAdHocImportDeleteFileApiResponse,
+                BundleDataImporterAdHocImportDeleteFileApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}`,
+                    method: "DELETE",
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportLoadMatchFields: build.query<
+                BundleDataImporterAdHocImportLoadMatchFieldsApiResponse,
+                BundleDataImporterAdHocImportLoadMatchFieldsApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/match-fields`,
+                    params: { classId: queryArg.classId },
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -429,6 +471,35 @@ export type BundleDataImporterUtilityCheckCrontabApiResponse =
 export type BundleDataImporterUtilityCheckCrontabApiArg = {
     /** The cron expression to validate */
     cronExpression?: string;
+};
+export type BundleDataImporterAdHocImportUploadFileApiResponse =
+    /** status 200 The file, its detected settings and first rows, or why it is refused */ BundleDataImporterAdHocImportFileResponse;
+export type BundleDataImporterAdHocImportUploadFileApiArg = {
+    body: {
+        /** The CSV or XLSX file */
+        file: Blob;
+        /** The data object folder the import starts from */
+        folderId: number;
+    };
+};
+export type BundleDataImporterAdHocImportInspectFileApiResponse =
+    /** status 200 The file under these settings, or why it is refused under them */ BundleDataImporterAdHocImportFileResponse;
+export type BundleDataImporterAdHocImportInspectFileApiArg = {
+    /** Name of the file */
+    fileId: string;
+    bundleDataImporterAdHocImportFileSettings: BundleDataImporterAdHocImportFileSettings;
+};
+export type BundleDataImporterAdHocImportDeleteFileApiResponse =
+    /** status 200 The file was deleted */ void;
+export type BundleDataImporterAdHocImportDeleteFileApiArg = {
+    /** Name of the file */
+    fileId: string;
+};
+export type BundleDataImporterAdHocImportLoadMatchFieldsApiResponse =
+    /** status 200 List of the fields */ BundleDataImporterClassAttributesResponse;
+export type BundleDataImporterAdHocImportLoadMatchFieldsApiArg = {
+    /** The ID of the data object class */
+    classId: string;
 };
 export type BundleDataImporterClassAttributesResponse = {
     /** AdditionalAttributes */
@@ -729,6 +800,51 @@ export type BundleDataImporterCronValidationResponse = {
     /** Error message if the cron expression is invalid, empty string otherwise */
     message: string;
 };
+export type BundleDataImporterAdHocImportFileResponse = {
+    /** Rows a file may have */
+    maxRows: number;
+    /** The stored file; null if it was refused for good and not kept */
+    fileId?: string | null;
+    /** The file type; null if it is none of the supported ones */
+    type?: ("csv" | "xlsx") | null;
+    /** Why the file cannot be imported under these settings; null if it can */
+    refusal?: ("too-many-rows" | "too-many-cells" | "unreadable" | "wrong-format") | null;
+    /** CSV: the delimiter in use */
+    delimiter?: string | null;
+    /** CSV: the delimiter detected in the file */
+    detectedDelimiter?: string | null;
+    /** CSV: the enclosure in use */
+    enclosure?: string | null;
+    /** CSV: the escape character in use */
+    escape?: string | null;
+    /** Whether the first row holds the column names */
+    hasHeaderRow: boolean;
+    /** XLSX: the sheet in use */
+    sheetName?: string | null;
+    /** XLSX: the sheets of the file */
+    sheets: string[];
+    /** Rows of data */
+    rowCount: number;
+    /** The columns; dataIndex is the key of the column in a row of an import */
+    columns: {
+        dataIndex: string;
+        label: string;
+    }[];
+    /** The first rows, their values in the order of the columns */
+    firstRows: (string | null)[][];
+};
+export type BundleDataImporterAdHocImportFileSettings = {
+    /** CSV: the delimiter; empty for the detected one */
+    delimiter?: string | null;
+    /** CSV: the enclosure */
+    enclosure?: string | null;
+    /** CSV: the escape character */
+    escape?: string | null;
+    /** Whether the first row holds the column names */
+    hasHeaderRow?: boolean;
+    /** XLSX: the sheet; empty for the first one */
+    sheetName?: string | null;
+};
 export const {
     useBundleDataImporterClassificationstoreLoadAttributesQuery,
     useBundleDataImporterClassificationstoreLoadKeyNameQuery,
@@ -753,4 +869,8 @@ export const {
     useBundleDataImporterDataTypeLoadUnitDataQuery,
     useBundleDataImporterMappingSuggestionSuggestMutation,
     useBundleDataImporterUtilityCheckCrontabQuery,
+    useBundleDataImporterAdHocImportUploadFileMutation,
+    useBundleDataImporterAdHocImportInspectFileMutation,
+    useBundleDataImporterAdHocImportDeleteFileMutation,
+    useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
 } = injectedRtkApi;
