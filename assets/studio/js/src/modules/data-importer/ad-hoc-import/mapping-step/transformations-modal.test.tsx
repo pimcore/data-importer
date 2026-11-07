@@ -13,6 +13,7 @@ import React from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type BundleDataImporterAdHocImportTransformationResponse } from '../../data-importer-api-slice.gen'
 import { type MappingField, type MappingRow } from './mapping-state'
+import { TransformationSettings } from './transformation-settings'
 import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../../test/support/ad-hoc-import'))
@@ -234,6 +235,19 @@ describe('the transformations of a column', () => {
 
     expect(lastPipeline()).toEqual([{ type: 'loadDataObject', settings: { loadStrategy: 'id' } }])
     expect(within(screen.getByRole('list', { name: 'Transformations' })).getAllByRole('listitem')).toHaveLength(1)
+  })
+
+  it('shows no settings for a type of step it has none for', () => {
+    const { container } = render(
+      <TransformationSettings
+        id="transformation-0"
+        onChange={ jest.fn() }
+        step={ { type: 'unknownOperator', settings: { mode: 'x' } } }
+      />
+    )
+
+    expect(container.textContent).toBe('')
+    expect(container.querySelectorAll('input, select, button')).toHaveLength(0)
   })
 
   it('says when the values do not fit the field and which step cannot take its input', async () => {
