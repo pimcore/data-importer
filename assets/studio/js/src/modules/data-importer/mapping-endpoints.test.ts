@@ -13,10 +13,12 @@ import {
   api,
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery,
   useBundleDataImporterMappingLoadTransformationResultQuery,
+  useBundleDataImporterMappingSuggestionLoadAiQuery,
   useBundleDataImporterMappingSuggestionSuggestMutation
 } from './data-importer-api-slice.gen'
 import {
   api as enhancedApi,
+  useBundleDataImporterMappingSuggestionLoadAiQuery as useEnhancedMappingSuggestionLoadAiQuery,
   useBundleDataImporterMappingSuggestionSuggestMutation as useEnhancedMappingSuggestionSuggestMutation
 } from './data-importer-api-slice-enhanced'
 import type * as RtkQuery from '@reduxjs/toolkit/query/react'
@@ -86,5 +88,16 @@ describe('the posted mapping endpoints', () => {
   it('export the mapping suggestion mutation hook, plain and enhanced', () => {
     expect(useBundleDataImporterMappingSuggestionSuggestMutation).toBe(api.endpoints.bundleDataImporterMappingSuggestionSuggest.useMutation)
     expect(useEnhancedMappingSuggestionSuggestMutation).toBe(enhancedApi.endpoints.bundleDataImporterMappingSuggestionSuggest.useMutation)
+  })
+
+  it('read the AI stage of a suggestion request by its id', async () => {
+    await store.dispatch(api.endpoints.bundleDataImporterMappingSuggestionLoadAi.initiate({ requestId: 'abc' }))
+
+    expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/mapping-suggestions/ai/abc' }])
+  })
+
+  it('export the AI stage query hook, plain and enhanced', () => {
+    expect(useBundleDataImporterMappingSuggestionLoadAiQuery).toBe(api.endpoints.bundleDataImporterMappingSuggestionLoadAi.useQuery)
+    expect(useEnhancedMappingSuggestionLoadAiQuery).toBe(enhancedApi.endpoints.bundleDataImporterMappingSuggestionLoadAi.useQuery)
   })
 })

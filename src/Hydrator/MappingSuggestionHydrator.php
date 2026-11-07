@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Hydrator;
 
+use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStatus;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 
 /**
@@ -20,8 +21,11 @@ use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
  */
 final readonly class MappingSuggestionHydrator implements MappingSuggestionHydratorInterface
 {
-    public function hydrate(array $suggestions): MappingSuggestionsResponse
-    {
-        return new MappingSuggestionsResponse($suggestions);
+    public function hydrate(
+        array $suggestions,
+        AiSuggestionStatus $aiStatus = AiSuggestionStatus::None,
+        ?string $aiRequestId = null
+    ): MappingSuggestionsResponse {
+        return new MappingSuggestionsResponse($suggestions, $aiStatus->value, $aiRequestId);
     }
 }

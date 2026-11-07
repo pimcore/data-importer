@@ -63,7 +63,8 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
 
         return new AdHocImportMappingResponse(
             $fields,
-            $this->mappingSuggestionService->suggest($parameters, self::NO_MAPPING_TARGETS)->getSuggestions()
+            // nothing polls the AI stage here, so it is not started
+            $this->mappingSuggestionService->suggest($parameters, self::NO_MAPPING_TARGETS, false)->getSuggestions()
         );
     }
 

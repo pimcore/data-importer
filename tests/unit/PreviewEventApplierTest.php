@@ -153,6 +153,20 @@ class PreviewEventApplierTest extends Unit
         $this->assertSame($previewData, $result);
     }
 
+    public function testAnEmptyRowPassesThroughTheRowsUnchangedAndWithoutAnEvent(): void
+    {
+        $seen = [];
+        $applier = $this->createApplier(function (PreQueueRowEvent $event) use (&$seen): void {
+            $seen[] = $event->getOriginalRow();
+            $event->setRows([['sku' => 'rewritten']]);
+        });
+
+        $rows = $applier->applyToRows('test_config', [], [[], ['sku' => 'A-1']]);
+
+        $this->assertSame([[], ['sku' => 'rewritten']], iterator_to_array($rows, false));
+        $this->assertSame([['sku' => 'A-1']], $seen, 'only the non-empty row dispatches an event');
+    }
+
     public function testFileListenerCanReplaceThePreviewPath(): void
     {
         $applier = $this->createApplier(null, function (PreInterpretFileEvent $event): void {

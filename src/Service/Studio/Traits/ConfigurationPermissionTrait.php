@@ -30,8 +30,18 @@ trait ConfigurationPermissionTrait
      */
     private function loadConfigurationWithPermission(string $name, string $permission): Configuration
     {
-        $config = Configuration::getByName($name);
+        return $this->checkConfigurationPermission(Configuration::getByName($name), $name, $permission);
+    }
 
+    /**
+     * @throws NotFoundHttpException if the configuration does not exist
+     * @throws ForbiddenException if the current user lacks the required permission
+     */
+    private function checkConfigurationPermission(
+        ?Configuration $config,
+        string $name,
+        string $permission
+    ): Configuration {
         if (!$config) {
             throw new NotFoundHttpException(
                 sprintf('Configuration with name "%s" not found', $name)
