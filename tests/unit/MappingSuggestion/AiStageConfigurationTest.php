@@ -17,7 +17,10 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DependencyInjection\PimcoreDataImporterExtension;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor;
+use Symfony\Component\DependencyInjection\Compiler\MergeExtensionConfigurationPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\Yaml\Yaml;
@@ -110,6 +113,69 @@ class AiStageConfigurationTest extends Unit
 
         $this->assertCount(1, $paths);
         $this->assertFileExists($paths[0] . '/data-importer-mapping-suggestions.yaml');
+    }
+
+    /**
+     * Mirrors the agent bundle's agents.paths node and the parameter its load() sets from it.
+     */
+    private function agentExtension(): Extension
+    {
+        return new class() extends Extension implements ConfigurationInterface {
+            public function getAlias(): string
+            {
+                return 'pimcore_agent';
+            }
+
+            public function getConfigTreeBuilder(): TreeBuilder
+            {
+                $treeBuilder = new TreeBuilder('pimcore_agent');
+                $treeBuilder->getRootNode()
+                    ->children()
+                        ->arrayNode('agents')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->arrayNode('paths')->scalarPrototype()->end()->defaultValue([])->end()
+                            ->end()
+                        ->end()
+                    ->end();
+
+                return $treeBuilder;
+            }
+
+            public function getConfiguration(array $config, ContainerBuilder $container): ConfigurationInterface
+            {
+                return $this;
+            }
+
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+                $config = $this->processConfiguration($this, $configs);
+                $container->setParameter('pimcore_agent.agents.paths', $config['agents']['paths']);
+            }
+        };
+    }
+
+    public function testTheAgentPathReachesTheAgentBundlesParameterBesideTheApplicationsPaths(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.project_dir', '/app');
+        $container->registerExtension($this->extension('pimcore_studio_backend'));
+        $container->registerExtension(new PimcoreDataImporterExtension());
+        $container->registerExtension($this->agentExtension());
+        // the application's own config, as the agent bundle's config/pimcore/config.yaml adds its presets
+        $container->loadFromExtension('pimcore_agent', ['agents' => ['paths' => ['/app/config/agents']]]);
+
+        (new MergeExtensionConfigurationPass())->process($container);
+
+        $paths = $container->getParameter('pimcore_agent.agents.paths');
+        $this->assertCount(2, $paths);
+        $this->assertContains('/app/config/agents', $paths);
+        $bundlePath = array_values(array_diff($paths, ['/app/config/agents']))[0];
+        $this->assertSame(
+            realpath(__DIR__ . '/../../../src/Resources/config/agents'),
+            realpath($bundlePath)
+        );
+        $this->assertFileExists($bundlePath . '/data-importer-mapping-suggestions.yaml');
     }
 
     public function testWithoutTheAgentBundleNothingIsRegistered(): void
