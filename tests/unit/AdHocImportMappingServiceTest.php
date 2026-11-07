@@ -149,7 +149,11 @@ class AdHocImportMappingServiceTest extends Unit
 
         // a brick the container does not allow writes nothing, so nothing of it is required
         $this->assertSame(
-            ['attributes.Dimensions.width' => true, 'attributes.Dimensions.depth' => false, 'attributes.Other.width' => false],
+            [
+                'attributes.Dimensions.width' => true,
+                'attributes.Dimensions.depth' => false,
+                'attributes.Other.width' => false,
+            ],
             array_column($mapping->getFields(), 'mandatory', 'key')
         );
     }
@@ -234,7 +238,9 @@ class AdHocImportMappingServiceTest extends Unit
         $classResolver->method('getById')->willReturn($class);
 
         $brickResolver = $this->createStub(DefinitionResolverInterface::class);
-        $brickResolver->method('getByKey')->willReturnCallback(static fn (string $key): ?Definition => $bricks[$key] ?? null);
+        $brickResolver->method('getByKey')->willReturnCallback(
+            static fn (string $key): ?Definition => $bricks[$key] ?? null
+        );
 
         return new AdHocImportMappingService($classes, $suggestions, $classResolver, $brickResolver);
     }

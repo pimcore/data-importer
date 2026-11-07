@@ -151,7 +151,10 @@ class MappingSuggestionServiceTest extends Unit
 
         $this->assertSame(
             ['key'],
-            array_column($this->service($attributes)->suggest($this->parameters('Key'))->getSuggestions(), 'targetFieldName')
+            array_column(
+                $this->service($attributes)->suggest($this->parameters('Key'))->getSuggestions(),
+                'targetFieldName'
+            )
         );
         $this->assertSame(
             ['keyCode'],
