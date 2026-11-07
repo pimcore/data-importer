@@ -48,7 +48,6 @@ export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPan
         : (
           <ColumnPicker
             emptyText={ t('data-importer.ad-hoc-import.mapping.no-fields') }
-            fillHeight
             groups={ groups }
             onSelect={ ({ meta }) => { if (meta !== undefined) { onPick(meta) } } }
             searchPlaceholder={ t('data-importer.ad-hoc-import.mapping.find-field') }
