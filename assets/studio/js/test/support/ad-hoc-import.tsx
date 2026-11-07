@@ -41,7 +41,7 @@ interface SelectProps {
   disabled?: boolean
   placeholder?: string
   value?: string
-  options?: Array<{ value: string, label: string }>
+  options?: Array<{ value: string, label: string, disabled?: boolean }>
   onChange?: (value: string) => void
   'aria-label'?: string
 }
@@ -53,8 +53,9 @@ export const components = {
       <span>{ description }</span>
     </div>
   ),
-  Button: ({ children, disabled, onClick }: WithChildren & { disabled?: boolean, onClick?: () => void }) => (
+  Button: ({ children, disabled, onClick, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, 'aria-label'?: string }) => (
     <button
+      aria-label={ label }
       disabled={ disabled }
       onClick={ onClick }
       type="button"
@@ -62,7 +63,14 @@ export const components = {
       { children }
     </button>
   ),
-  Flex: ({ children }: WithChildren) => <div>{ children }</div>,
+  Flex: ({ children, role, 'aria-label': label }: WithChildren & { role?: string, 'aria-label'?: string }) => (
+    <div
+      aria-label={ label }
+      role={ role }
+    >
+      { children }
+    </div>
+  ),
   Form: Object.assign(({ children }: WithChildren) => <form>{ children }</form>, {
     Item: ({ children, label, extra, htmlFor }: WithChildren & { label?: React.ReactNode, extra?: React.ReactNode, htmlFor?: string }) => (
       <div>
@@ -133,13 +141,14 @@ export const components = {
       value={ percent }
     />
   ),
-  Segmented: ({ options, value, onChange }: { options: Array<{ value: string, label: string }>, value: string, onChange: (value: string) => void }) => (
+  Segmented: ({ options, value, onChange }: { options: Array<{ value: string, label: string, disabled?: boolean }>, value: string, onChange?: (value: string) => void }) => (
     <div role="radiogroup">
       { options.map((option) => (
         <button
           aria-checked={ option.value === value }
+          disabled={ option.disabled }
           key={ option.value }
-          onClick={ () => { onChange(option.value) } }
+          onClick={ () => { onChange?.(option.value) } }
           role="radio"
           type="button"
         >
@@ -159,6 +168,7 @@ export const components = {
       <option value="">{ placeholder }</option>
       { options?.map((option) => (
         <option
+          disabled={ option.disabled }
           key={ option.value }
           value={ option.value }
         >
@@ -167,6 +177,16 @@ export const components = {
       )) }
     </select>
   ),
+  SearchInput: ({ value, placeholder, onChange, 'aria-label': label }: { value?: string, placeholder?: string, onChange?: React.ChangeEventHandler<HTMLInputElement>, 'aria-label'?: string }) => (
+    <input
+      aria-label={ label }
+      onChange={ onChange }
+      placeholder={ placeholder }
+      type="search"
+      value={ value }
+    />
+  ),
+  Skeleton: () => <div aria-busy="true" />,
   Space: ({ children }: WithChildren) => <div>{ children }</div>,
   Steps: ({ current, items }: { current: number, items: Array<{ title: string }> }) => (
     <ol>
@@ -180,6 +200,8 @@ export const components = {
       )) }
     </ol>
   ),
+  Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
+  Text: ({ children }: WithChildren) => <span>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>
       <input
