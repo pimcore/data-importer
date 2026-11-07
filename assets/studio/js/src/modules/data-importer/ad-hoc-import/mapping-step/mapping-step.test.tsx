@@ -8,17 +8,28 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import React, { useState } from 'react'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import { createMapping, type LoadedMapping, type Mapping } from './mapping-state'
 import { MappingStep } from './mapping-step'
+import { type TransformationSource } from './transformations-modal'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
   createStyles: () => () => ({ styles: {} })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
+jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
+  ApiError: class { constructor (readonly details: unknown) {} },
+  trackError: jest.fn()
+}))
+jest.mock('../../data-importer-api-slice-enhanced', () => ({
+  useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [mockPreview]
+}))
+
+const mockPreview = jest.fn()
 
 const inspected: InspectedFile = {
   maxRows: 5000,
@@ -39,7 +50,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, title: string, given: Partial<LoadedMapping['fields'][number]> = {}): LoadedMapping['fields'][number] =>
-  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', ...given })
+  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, ...given })
 
 const loaded: LoadedMapping = {
   fields: [
@@ -47,7 +58,8 @@ const loaded: LoadedMapping = {
     field('name', 'Name', { localized: true }),
     field('price', 'Price'),
     field('note', 'Note & remark'),
-    field('ean', 'EAN', { mandatory: true })
+    field('ean', 'EAN', { mandatory: true }),
+    field('image', 'Image', { transformationResultType: 'asset', takesColumnAsIs: false })
   ],
   suggestions: [
     { sourceIndex: 'Name DE', sourceLabel: 'Name DE', targetFieldName: 'name', targetFieldLabel: 'Name', transformationResultType: 'default', score: 100, language: 'de' },
@@ -55,7 +67,9 @@ const loaded: LoadedMapping = {
   ]
 }
 
-const Stateful = ({ initial, isLoading = false }: { initial: Mapping | null, isLoading?: boolean }): React.JSX.Element => {
+const source: TransformationSource = { fileId: 'file-1', classId: 'PROD', settings: { hasHeaderRow: true } }
+
+const Stateful = ({ initial, isLoading = false, withSource = source }: { initial: Mapping | null, isLoading?: boolean, withSource?: TransformationSource | null }): React.JSX.Element => {
   const [mapping, setMapping] = useState(initial)
 
   return (
@@ -64,6 +78,7 @@ const Stateful = ({ initial, isLoading = false }: { initial: Mapping | null, isL
       isLoading={ isLoading }
       mapping={ mapping }
       onChange={ setMapping }
+      source={ withSource }
     />
   )
 }
@@ -265,5 +280,88 @@ describe('the mapping step', () => {
 
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
+  })
+  describe('with transformations', () => {
+    const answer = (fits: boolean): unknown => ({
+      data: { values: [], steps: [], conversion: null, resultType: 'default', fits, results: [], offered: ['loadAsset'] }
+    })
+
+    const settle = async (): Promise<void> => {
+      await act(async () => {
+        jest.advanceTimersByTime(300)
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+    }
+
+    beforeEach(() => {
+      jest.useFakeTimers()
+      mockPreview.mockReset()
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
+    it('opens the transformations of a column with a field and applies them to it', async () => {
+      mockPreview.mockResolvedValue(answer(true))
+      renderStep()
+
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Transformations of Notiz' })).toBeNull()
+      choose('Notiz', 'note')
+      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
+      await settle()
+
+      expect(screen.getByRole('dialog', { name: 'Transformations of Notiz into Note & remark' })).toBeTruthy()
+      fireEvent.change(screen.getByLabelText('Add a transformation'), { target: { value: 'loadAsset' } })
+      await settle()
+      fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+
+      expect(screen.queryByRole('dialog', { name: 'Transformations of Notiz into Note & remark' })).toBeNull()
+      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }).textContent).toBe('Transformations (1)')
+    })
+
+    it('marks a column whose field does not take it until its transformations fit', async () => {
+      mockPreview.mockResolvedValue(answer(true))
+      renderStep()
+
+      choose('Notiz', 'image')
+
+      expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+      expect(screen.getByText('Columns whose values do not fit their field yet: Notiz')).toBeTruthy()
+
+      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
+      await settle()
+      fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+
+      expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+      expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
+    })
+
+    it('keeps the transformations as they were when closed without applying', async () => {
+      mockPreview.mockResolvedValue(answer(false))
+      renderStep()
+
+      choose('Notiz', 'note')
+      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
+      await settle()
+      fireEvent.change(screen.getByLabelText('Add a transformation'), { target: { value: 'loadAsset' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }).textContent).toBe('Transformations')
+      expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+    })
+
+    it('offers none for the match column, or without a file to run them on', () => {
+      renderStep()
+      expect(within(rowOf('Artikelnr')).queryByRole('button', { name: 'Transformations of Artikelnr' })).toBeNull()
+      cleanup()
+
+      render(<Stateful
+        initial={ createMapping(inspected, objects, loaded) }
+        withSource={ null }
+             />)
+      expect(within(rowOf('Name DE')).queryByRole('button', { name: 'Transformations of Name DE' })).toBeNull()
+    })
   })
 })

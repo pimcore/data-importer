@@ -8,20 +8,24 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import {
   canContinueMapping,
   chooseField,
   createMapping,
+  fitsField,
   isTaken,
   mappingBasis,
   missingRequiredFields,
   pendingSuggestionCount,
   restoreColumn,
   rowCounts,
+  setTransformations,
   skipColumn,
   skippedRows,
   takeAllSuggestions,
+  unfitRows,
   visibleRows,
   type LoadedMapping,
   type Mapping,
@@ -48,9 +52,15 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, given: Partial<MappingField> = {}): MappingField =>
-  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', ...given })
+  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, ...given })
 
-const fields = [field('sku', { mandatory: true }), field('name', { localized: true, mandatory: true }), field('price'), field('ean', { mandatory: true })]
+const fields = [
+  field('sku', { mandatory: true }),
+  field('name', { localized: true, mandatory: true }),
+  field('price'),
+  field('ean', { mandatory: true }),
+  field('image', { transformationResultType: 'asset', takesColumnAsIs: false })
+]
 
 const suggestion = (column: string, target: string, score: number, language: string | null = null): LoadedMapping['suggestions'][number] => ({
   sourceIndex: column,
@@ -233,11 +243,59 @@ describe('going on', () => {
   const mapping = createMapping(inspected, objects, loaded)
 
   it('needs a column to import beside the match column', () => {
-    expect(canContinueMapping(mapping)).toBe(true)
+    expect(canContinueMapping(mapping, fields)).toBe(true)
 
     const onlyMatch = ['Name DE', 'Name EN', 'Preis', 'Notiz'].reduce(skipColumn, mapping)
-    expect(canContinueMapping(onlyMatch)).toBe(false)
-    expect(canContinueMapping(chooseField(restoreColumn(onlyMatch, 'Notiz'), 'Notiz', 'price'))).toBe(true)
+    expect(canContinueMapping(onlyMatch, fields)).toBe(false)
+    expect(canContinueMapping(chooseField(restoreColumn(onlyMatch, 'Notiz'), 'Notiz', 'price'), fields)).toBe(true)
+  })
+
+  it('waits while a column does not fit its field', () => {
+    const image = chooseField(mapping, 'Notiz', 'image')
+    expect(canContinueMapping(image, fields)).toBe(false)
+
+    expect(canContinueMapping(setTransformations(image, 'Notiz', [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }], true), fields)).toBe(true)
+    expect(canContinueMapping(skipColumn(image, 'Notiz'), fields)).toBe(true)
+  })
+})
+
+describe('the transformations of a column', () => {
+  const mapping = chooseField(createMapping(inspected, objects, loaded), 'Notiz', 'image')
+  const loadAsset = [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }]
+
+  it('are none at first', () => {
+    expect(createMapping(inspected, objects, loaded).rows.every(({ transformations, fits }) => transformations.length === 0 && fits === undefined)).toBe(true)
+  })
+
+  it('fit as the field takes a column until the server answered for them', () => {
+    expect(fitsField(rowOf(mapping, 'Notiz'), fields)).toBe(false)
+    expect(fitsField(rowOf(mapping, 'Name DE'), fields)).toBe(true)
+    expect(unfitRows(mapping, fields).map(({ column }) => column)).toEqual(['Notiz'])
+
+    const applied = setTransformations(mapping, 'Notiz', loadAsset, true)
+    expect(rowOf(applied, 'Notiz')).toMatchObject({ transformations: loadAsset, fits: true })
+    expect(unfitRows(applied, fields)).toEqual([])
+
+    const trimmedName = setTransformations(mapping, 'Name DE', [{ type: 'loadAsset', settings: {} }], false)
+    expect(fitsField(rowOf(trimmedName, 'Name DE'), fields)).toBe(false)
+  })
+
+  it('stay with their field and go with another one', () => {
+    const applied = setTransformations(mapping, 'Notiz', loadAsset, true)
+
+    expect(rowOf(chooseField(applied, 'Notiz', 'image'), 'Notiz')).toMatchObject({ transformations: loadAsset, fits: true })
+    expect(rowOf(chooseField(applied, 'Notiz', 'price'), 'Notiz')).toMatchObject({ transformations: [], fits: undefined })
+    expect(rowOf(chooseField(applied, 'Notiz', undefined), 'Notiz')).toMatchObject({ transformations: [], fits: undefined })
+  })
+
+  it('do not hold back a column not imported, without a field or finding the objects', () => {
+    expect(fitsField(rowOf(skipColumn(mapping, 'Notiz'), 'Notiz'), fields)).toBe(true)
+    expect(fitsField(rowOf(chooseField(mapping, 'Notiz', undefined), 'Notiz'), fields)).toBe(true)
+    expect(fitsField(rowOf(mapping, 'Artikelnr'), fields)).toBe(true)
+  })
+
+  it('count a field the mapping does not know as fitting', () => {
+    expect(fitsField({ ...rowOf(mapping, 'Notiz'), choice: { field: 'gone', language: null } }, fields)).toBe(true)
   })
 })
 

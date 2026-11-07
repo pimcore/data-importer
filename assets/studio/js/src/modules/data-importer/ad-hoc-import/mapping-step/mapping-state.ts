@@ -23,6 +23,12 @@ export interface FieldChoice {
   language: string | null
 }
 
+// a step of the Data Importer's transformation pipeline, among those the server allows for an ad hoc import
+export interface TransformationStep {
+  type: string
+  settings: Record<string, string>
+}
+
 export interface MappingRow {
   column: string
   label: string
@@ -36,6 +42,9 @@ export interface MappingRow {
   suggestion?: FieldChoice & { score: number }
   // the column finds the objects; its field is the one they are matched by, or none for the object ID
   isMatch: boolean
+  transformations: TransformationStep[]
+  // the server's answer whether the transformations lead into the field; unknown until they are applied
+  fits?: boolean
 }
 
 export interface Mapping {
@@ -114,7 +123,8 @@ export const createMapping = (
       auto: false,
       skipped: false,
       suggestion: isMatch ? undefined : suggestionOf.get(dataIndex),
-      isMatch
+      isMatch,
+      transformations: []
     }
   })
 
@@ -127,16 +137,44 @@ const changeRow = (mapping: Mapping, column: string, change: (row: MappingRow) =
 })
 
 /**
- * A field chosen by hand is no suggestion any more, even the suggested one. The language stays only with its field.
+ * A field chosen by hand is no suggestion any more, even the suggested one. The language and the transformations stay
+ * only with their field: another field takes other types.
  */
 export const chooseField = (mapping: Mapping, column: string, field: string | undefined): Mapping =>
-  changeRow(mapping, column, (row) => ({
-    ...row,
-    choice: field === undefined
-      ? undefined
-      : { field, language: row.choice?.field === field ? row.choice.language : null },
-    auto: false
-  }))
+  changeRow(mapping, column, (row) => {
+    const same = field !== undefined && row.choice?.field === field
+
+    return {
+      ...row,
+      choice: field === undefined ? undefined : { field, language: same ? row.choice!.language : null },
+      auto: false,
+      transformations: same ? row.transformations : [],
+      fits: same ? row.fits : undefined
+    }
+  })
+
+export const setTransformations = (
+  mapping: Mapping,
+  column: string,
+  transformations: TransformationStep[],
+  fits: boolean
+): Mapping => changeRow(mapping, column, (row) => ({ ...row, transformations, fits }))
+
+/**
+ * Whether the column's values can go into its field: as the server answered for its transformations, or, before any
+ * were applied, as the field takes a column.
+ */
+export const fitsField = (row: MappingRow, fields: MappingField[]): boolean => {
+  if (row.isMatch || row.skipped || row.choice === undefined) {
+    return true
+  }
+  const { field } = row.choice
+
+  return row.fits ?? fields.find(({ key }) => key === field)?.takesColumnAsIs ?? true
+}
+
+export const unfitRows = (mapping: Mapping, fields: MappingField[]): MappingRow[] =>
+  importedRows(mapping).filter((row) => !fitsField(row, fields))
 
 export const skipColumn = (mapping: Mapping, column: string): Mapping =>
   changeRow(mapping, column, (row) => ({ ...row, choice: undefined, auto: false, skipped: true }))
@@ -194,7 +232,8 @@ export const missingRequiredFields = (mapping: Mapping, fields: MappingField[]):
 }
 
 /**
- * Something to import beside the column that finds the objects.
+ * Something to import beside the column that finds the objects, and every column fitting its field.
  */
-export const canContinueMapping = (mapping: Mapping): boolean =>
-  mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined)
+export const canContinueMapping = (mapping: Mapping, fields: MappingField[]): boolean =>
+  mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined) &&
+  unfitRows(mapping, fields).length === 0

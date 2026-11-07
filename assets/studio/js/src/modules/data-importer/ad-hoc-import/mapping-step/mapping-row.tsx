@@ -10,9 +10,9 @@
 
 import React, { useMemo } from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Flex, Select, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, Select, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { filterByLabel } from '../../utils/select-utils'
-import { chooseField, isTaken, skipColumn, type Mapping, type MappingField, type MappingRow } from './mapping-state'
+import { chooseField, fitsField, isTaken, skipColumn, type Mapping, type MappingField, type MappingRow } from './mapping-state'
 
 const COLUMN_WIDTH = 280
 const FIELD_WIDTH = 320
@@ -35,12 +35,14 @@ export interface MappingRowViewProps {
   mapping: Mapping
   fields: MappingField[]
   onChange: (mapping: Mapping) => void
+  // opens the column's transformations; none without a file to run them on
+  onTransform?: (column: string) => void
 }
 
-export const MappingRowView = ({ row, mapping, fields, onChange }: MappingRowViewProps): React.JSX.Element => {
+export const MappingRowView = ({ row, mapping, fields, onChange, onTransform }: MappingRowViewProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { column, label, sample, choice, auto, suggestion, isMatch } = row
+  const { column, label, sample, choice, auto, suggestion, isMatch, transformations } = row
 
   const options = useMemo(() => [
     { value: DONT_IMPORT, label: t('data-importer.ad-hoc-import.mapping.dont-import') },
@@ -116,6 +118,17 @@ export const MappingRowView = ({ row, mapping, fields, onChange }: MappingRowVie
           />
           ) }
 
+      { !isMatch && choice !== undefined && onTransform !== undefined && (
+        <Button
+          aria-label={ t('data-importer.ad-hoc-import.mapping.transformations-of', { column: label, interpolation: { escapeValue: false } }) }
+          onClick={ () => { onTransform(column) } }
+        >
+          { transformations.length === 0
+            ? t('data-importer.ad-hoc-import.mapping.transformations')
+            : t('data-importer.ad-hoc-import.mapping.transformations-count', { count: transformations.length }) }
+        </Button>
+      ) }
+      { !fitsField(row, fields) && <Tag color="warning">{ t('data-importer.ad-hoc-import.mapping.needs-transformation') }</Tag> }
       { isMatch && <Tag>{ t('data-importer.ad-hoc-import.mapping.match') }</Tag> }
       { choice?.language !== null && choice?.language !== undefined && <Tag>{ choice.language }</Tag> }
       { auto && <Tag color="purple">{ t('data-importer.ad-hoc-import.mapping.auto') }</Tag> }

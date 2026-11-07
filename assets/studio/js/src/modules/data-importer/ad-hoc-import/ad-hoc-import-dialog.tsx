@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Modal, ModalFooter, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
@@ -33,6 +33,7 @@ import {
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
 import { canContinueMapping, createMapping, mappingBasis, type Mapping, type MappingField } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
+import { type TransformationSource } from './mapping-step/transformations-modal'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -203,9 +204,19 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
+  // a column's transformations run on the stored file as it is read now
+  const transformationSource = useMemo((): TransformationSource | null => {
+    if (phase.kind !== 'inspected' || phase.inspected.fileId === undefined || phase.inspected.fileId === null ||
+      objects.classId === undefined) {
+      return null
+    }
+
+    return { fileId: phase.inspected.fileId, classId: objects.classId, settings: settingsOf(phase.inspected) }
+  }, [phase, objects.classId])
+
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)
-    : mapping !== null && canContinueMapping(mapping)
+    : mapping !== null && canContinueMapping(mapping, fields)
 
   const onRemoveFile = (): void => {
     deleteStoredFile()
@@ -272,6 +283,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           isLoading={ isLoadingMapping }
           mapping={ mapping }
           onChange={ setMapping }
+          source={ transformationSource }
         />
       ) }
     </Modal>
