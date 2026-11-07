@@ -121,7 +121,7 @@ final readonly class TransformationChain
                 ])[0];
                 $type = $converter->evaluateReturnType($type, count($operators) + 1);
                 $failed = $this->unreadable($conversion, $data, $failed);
-                [$data, $failed] = $this->process($converter, $data, $failed, $user);
+                [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
             }
             $results = $this->cells($data, $failed);
         }
@@ -156,8 +156,9 @@ final readonly class TransformationChain
             $error = null;
             if ($type !== null) {
                 try {
-                    $this->checkSettings($steps[$position], $position + 1);
+                    $this->checkStep($steps[$position], $type, $position + 1);
                     $type = $operator->evaluateReturnType($type, $position + 1);
+                    $failed = $this->malformedIds($steps[$position], $data, $failed);
                     [$data, $failed] = $this->process($operator, $data, $failed, $user);
                 } catch (InvalidConfigurationException $exception) {
                     $type = null;
@@ -179,10 +180,17 @@ final readonly class TransformationChain
     /**
      * @param array{type: string, settings: array<string, string>} $step
      *
-     * @throws InvalidConfigurationException for settings the operator would read wrongly
+     * @throws InvalidConfigurationException for an input or settings the operator would read wrongly
      */
-    private function checkSettings(array $step, int $position): void
+    private function checkStep(array $step, string $type, int $position): void
     {
+        if ($this->refuses($step['type'], $type)) {
+            throw new InvalidConfigurationException(sprintf(
+                "Unsupported input type '%s' for explode operator at transformation position %d",
+                $type,
+                $position
+            ));
+        }
         if ($step['type'] !== TransformationAllowList::MAP_VALUES) {
             return;
         }
@@ -200,8 +208,41 @@ final readonly class TransformationChain
     }
 
     /**
-     * Marks the rows whose value the conversion would read as something else: a number or yes/no it cannot read
-     * would become 0 or false instead of failing.
+     * The Data Importer's split nests the lists of a list, which no field and no step after it takes.
+     */
+    private function refuses(string $operatorType, string $type): bool
+    {
+        return $operatorType === TransformationAllowList::SPLIT
+            && $type === TransformationDataTypeService::DEFAULT_ARRAY;
+    }
+
+    /**
+     * Marks the rows whose value, or an item of it, is no ID: the loader would read `12abc` or `1,2` as the number
+     * it starts with.
+     *
+     * @param array{type: string, settings: array<string, string>} $step
+     * @param list<mixed> $data
+     * @param list<bool> $failed
+     *
+     * @return list<bool>
+     */
+    private function malformedIds(array $step, array $data, array $failed): array
+    {
+        if (!in_array($step['type'], [TransformationAllowList::LOAD_OBJECT, TransformationAllowList::LOAD_ASSET], true)
+            || ($step['settings']['loadStrategy'] ?? null) !== 'id') {
+            return $failed;
+        }
+
+        return $this->markRows(
+            $data,
+            $failed,
+            static fn (string $value): bool => ctype_digit(trim($value))
+        );
+    }
+
+    /**
+     * Marks the rows whose value, or an item of it, the conversion would read as something else: a number or yes/no
+     * it cannot read would become 0 or false, a day past the month's end a day of the next month, instead of failing.
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
@@ -210,21 +251,45 @@ final readonly class TransformationChain
      */
     private function unreadable(string $conversion, array $data, array $failed): array
     {
+        return $this->markRows($data, $failed, fn (string $value): bool => match ($conversion) {
+            'numeric' => is_numeric($value),
+            'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null,
+            'date' => $this->isDate($value),
+            default => true,
+        });
+    }
+
+    /**
+     * Marks the rows with a text, or a list with a text, that is not empty and not readable.
+     *
+     * @param list<mixed> $data
+     * @param list<bool> $failed
+     * @param \Closure(string): bool $readable
+     *
+     * @return list<bool>
+     */
+    private function markRows(array $data, array $failed, \Closure $readable): array
+    {
         foreach ($data as $row => $value) {
-            if (!is_string($value) || $value === '') {
-                continue;
-            }
-            $readable = match ($conversion) {
-                'numeric' => is_numeric($value),
-                'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== null,
-                default => true,
-            };
-            if (!$readable) {
-                $failed[$row] = true;
+            foreach (is_array($value) ? $value : [$value] as $item) {
+                if (is_string($item) && $item !== '' && !$readable($item)) {
+                    $failed[$row] = true;
+
+                    break;
+                }
             }
         }
 
         return $failed;
+    }
+
+    private function isDate(string $value): bool
+    {
+        $date = \DateTimeImmutable::createFromFormat('!' . self::DATE_FORMAT, $value);
+        // a warning names a day the month does not have, which the parser would carry into the next month
+        $errors = \DateTimeImmutable::getLastErrors();
+
+        return $date !== false && ($errors === false || $errors['warning_count'] === 0);
     }
 
     /**
@@ -293,6 +358,9 @@ final readonly class TransformationChain
 
     private function resultOf(string $operatorType, string $type): ?string
     {
+        if ($this->refuses($operatorType, $type)) {
+            return null;
+        }
         // a conversion takes no settings
         $step = in_array($operatorType, TransformationAllowList::types(), true)
             ? TransformationAllowList::step(['type' => $operatorType], 0)
@@ -326,20 +394,31 @@ final readonly class TransformationChain
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
+     * @param bool $keepEmpty an empty cell stays empty instead of becoming a No, as in a run that writes no empty value
      *
      * @return array{0: list<mixed>, 1: list<bool>}
      */
-    private function process(OperatorInterface $operator, array $data, array $failed, User $user): array
-    {
+    private function process(
+        OperatorInterface $operator,
+        array $data,
+        array $failed,
+        User $user,
+        bool $keepEmpty = false
+    ): array {
         foreach ($data as $row => $value) {
             if ($failed[$row]) {
+                continue;
+            }
+            if ($keepEmpty && ($value === null || $value === '')) {
+                $data[$row] = null;
+
                 continue;
             }
 
             try {
                 // a dry run logs no misses
                 $data[$row] = $this->visibleTo($user, $operator->process($value, true));
-            } catch (\Throwable) { // NOSONAR php:S2221 an operator may fail in any way on a value from the file
+            } catch (\Exception) { // NOSONAR php:S2221 an operator may fail on a value from the file; an Error is a bug
                 $data[$row] = null;
                 $failed[$row] = true;
             }

@@ -90,6 +90,33 @@ class AdHocTransformationLoadTest extends Unit
         );
     }
 
+    public function testAnIdThatIsNoWholeNumberLoadsNothing(): void
+    {
+        $id = (string) $this->object->getId();
+        $chain = $this->tester->grabService(TransformationChain::class);
+        $this->assertInstanceOf(TransformationChain::class, $chain);
+        $admin = new User();
+        $admin->setAdmin(true);
+
+        // the loader reads both as the number they start with
+        $result = $chain->run(
+            [' ' . $id . ' ', $id . 'abc', $id . ',' . $id],
+            [TransformationAllowList::step(['type' => TransformationAllowList::LOAD_OBJECT], 1)],
+            [Types::DATA_OBJECT],
+            $admin
+        );
+
+        $cells = $result->getResults();
+        $this->assertSame(
+            [false, true, true],
+            array_map(static fn (AdHocImportTransformationCell $cell): bool => $cell->getFailed(), $cells)
+        );
+        $this->assertSame(
+            [[$this->object->getRealFullPath()], [], []],
+            array_map(static fn (AdHocImportTransformationCell $cell): array => $cell->getItems(), $cells)
+        );
+    }
+
     /**
      * The step's values; a value that finds nothing is an empty cell, not a failed one.
      *

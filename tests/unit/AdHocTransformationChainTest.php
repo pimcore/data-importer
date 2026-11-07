@@ -160,6 +160,22 @@ class AdHocTransformationChainTest extends Unit
         $this->assertSame($results, $this->items($result->getResults()));
     }
 
+    public function testADayTheMonthDoesNotHaveIsNotConvertedToAnotherDate(): void
+    {
+        $result = $this->chainOn(['2026-02-30', '2026-02-28'], [], [Types::DATE]);
+
+        $this->assertSame([true, false], $this->failed($result->getResults()));
+        $this->assertSame([[], ['2026-02-28']], $this->items($result->getResults()));
+
+        $listed = $this->chainOn(['2026-02-28,2026-02-30', '2026-02-28'], [
+            $this->step(TransformationAllowList::SPLIT, ['delimiter' => ',']),
+        ], [Types::DATE_ARRAY]);
+
+        $this->assertSame('date', $listed->getConversion());
+        $this->assertSame([true, false], $this->failed($listed->getResults()));
+        $this->assertSame([[], ['2026-02-28']], $this->items($listed->getResults()));
+    }
+
     public function testAValueTheConversionCannotReadFailsInItsRowOnly(): void
     {
         $result = $this->chainOn([self::DAY, '07.11.2026', ''], [], [Types::DATE]);
@@ -183,9 +199,9 @@ class AdHocTransformationChainTest extends Unit
         yield 'a text for a numeric field' => [[Types::NUMERIC], ['n/a', ''], [true, false], [[], []]];
         yield 'a yes or no in another language for a checkbox' => [
             [Types::BOOLEAN],
-            ['Ja', 'X', 'yes', 'off', ''],
-            [true, true, false, false, false],
-            [[], [], ['true'], ['false'], ['false']],
+            ['Ja', 'X', 'yes', 'off', '', null, '0'],
+            [true, true, false, false, false, false, false],
+            [[], [], ['true'], ['false'], [], [], ['false']],
         ];
     }
 
@@ -254,9 +270,47 @@ class AdHocTransformationChainTest extends Unit
 
         $this->assertFalse($split->getFits());
         $this->assertSame(
-            ['trim', 'stringReplace', 'conditionalConversion', 'explode', 'loadDataObject'],
+            ['trim', 'stringReplace', 'conditionalConversion', 'loadDataObject'],
             $split->getOffered()
         );
+    }
+
+    public function testAListIsNotSplitAgain(): void
+    {
+        $result = $this->chainOn(['a,b|c'], [
+            $this->step(TransformationAllowList::SPLIT, ['delimiter' => '|']),
+            $this->step(TransformationAllowList::SPLIT, ['delimiter' => ',']),
+        ], [Types::DEFAULT_ARRAY]);
+
+        [$first, $second] = $result->getSteps();
+        $this->assertSame(Types::DEFAULT_ARRAY, $first['resultType']);
+        $this->assertNull($second['resultType']);
+        $this->assertStringContainsString('explode operator at transformation position 2', $second['error']);
+        $this->assertFalse($result->getFits());
+        $this->assertSame([], $result->getResults());
+    }
+
+    public function testAnIdThatIsNoWholeNumberFailsInItsRow(): void
+    {
+        $result = $this->chainOn(['1', '1,2', '1abc', ''], [
+            $this->step(TransformationAllowList::LOAD_OBJECT),
+        ], [Types::DATA_OBJECT]);
+
+        $this->assertSame([false, true, true, false], $this->failed($result->getResults()));
+        $this->assertSame([[self::ARTICLE], [], [], []], $this->items($result->getResults()));
+
+        $listed = $this->chainOn(['1|2x', '1|3'], [
+            $this->step(TransformationAllowList::SPLIT, ['delimiter' => '|']),
+            $this->step(TransformationAllowList::LOAD_ASSET),
+        ], [Types::GALLERY]);
+
+        $this->assertSame([true, false], $this->failed($listed->getResults()));
+
+        $byPath = $this->chainOn(['/Products/Chair'], [
+            $this->step(TransformationAllowList::LOAD_OBJECT, ['loadStrategy' => 'path']),
+        ], [Types::DATA_OBJECT]);
+
+        $this->assertSame([false], $this->failed($byPath->getResults()));
     }
 
     public function testAConvertedColumnIsStillOfferedTheTextSteps(): void
@@ -290,7 +344,7 @@ class AdHocTransformationChainTest extends Unit
         ], [Types::DATA_OBJECT]);
 
         $this->assertSame([[self::ARTICLE], [], []], $this->items($result->getResults()));
-        $this->assertSame([false, false, false], $this->failed($result->getResults()));
+        $this->assertSame([false, false, true], $this->failed($result->getResults()));
 
         $listed = $this->chainOn(['1,2'], [
             $this->step(TransformationAllowList::SPLIT, ['delimiter' => ',']),
@@ -323,7 +377,7 @@ class AdHocTransformationChainTest extends Unit
 
     public function testARowAStepFailsOnIsLeftOutOfTheStepsAfterIt(): void
     {
-        $result = $this->chainOn(['broken', '1'], [
+        $result = $this->chainOn(['13', '1'], [
             $this->step(TransformationAllowList::LOAD_ASSET),
         ], [Types::GALLERY]);
 
@@ -335,7 +389,7 @@ class AdHocTransformationChainTest extends Unit
 
     public function testAValueThePreviewCannotShowIsNamedByItsType(): void
     {
-        $result = $this->chainOn(['odd'], [$this->step(TransformationAllowList::LOAD_OBJECT)], [Types::DATA_OBJECT]);
+        $result = $this->chainOn(['99'], [$this->step(TransformationAllowList::LOAD_OBJECT)], [Types::DATA_OBJECT]);
 
         $this->assertSame([['stdClass']], $this->items($result->getResults()));
     }
@@ -465,7 +519,7 @@ class AdHocTransformationChainTest extends Unit
 
     private function image(string $id): ?Image
     {
-        if ($id === 'broken') {
+        if ($id === '13') {
             throw new \UnexpectedValueException('The asset cannot be read');
         }
         if (!in_array($id, ['1', '2', '3'], true)) {
@@ -482,7 +536,7 @@ class AdHocTransformationChainTest extends Unit
 
     private function object(string $id): mixed
     {
-        if ($id === 'odd') {
+        if ($id === '99') {
             return new \stdClass();
         }
         if (!in_array($id, ['1', '2'], true)) {
