@@ -17,6 +17,7 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
@@ -24,6 +25,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
@@ -114,6 +116,21 @@ class AdHocImportControllersTest extends Unit
         $service->expects($this->once())->method('loadMapping')->with($parameters)->willReturn($answer);
 
         $response = (new LoadMappingController($this->serializer($answer), $service))->loadMapping($parameters);
+
+        $this->assertSame(self::ANSWER, $response->getContent());
+    }
+
+    public function testTheKeysAreAskedForTheStoreOfTheClassAPageAtATime(): void
+    {
+        $answer = new ClassificationStoreKeysResponse([], 0);
+
+        $service = $this->createMock(AdHocImportMappingServiceInterface::class);
+        $service->expects($this->once())->method('loadClassificationStoreKeys')
+            ->with('PROD', 'attributes', 'wid', 20, 10)
+            ->willReturn($answer);
+
+        $response = (new LoadClassificationStoreKeysController($this->serializer($answer), $service))
+            ->loadClassificationStoreKeys('PROD', 'attributes', 'wid', 20, 10);
 
         $this->assertSame(self::ANSWER, $response->getContent());
     }

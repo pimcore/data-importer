@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 
 /**
  * @internal
@@ -28,4 +30,18 @@ interface AdHocImportMappingServiceInterface
      * @throws ForbiddenException if the user may not create objects of that class
      */
     public function loadMapping(MappingSuggestionParameters $parameters): AdHocImportMappingResponse;
+
+    /**
+     * The keys of a classification store of the class a column can be imported into, a page at a time.
+     *
+     * @throws ForbiddenException if the user may not create objects of that class
+     * @throws NotFoundException if the class has no classification store of that name
+     */
+    public function loadClassificationStoreKeys(
+        string $classId,
+        string $fieldName,
+        ?string $search,
+        int $start,
+        int $limit
+    ): ClassificationStoreKeysResponse;
 }

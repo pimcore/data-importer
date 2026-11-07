@@ -20,6 +20,7 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
@@ -55,6 +56,12 @@ class AdHocImportEndpointsTest extends Unit
             '/ad-hoc-import/match-fields',
         ],
         LoadMappingController::class => ['loadMapping', 'load_mapping', 'POST', '/ad-hoc-import/mapping'],
+        LoadClassificationStoreKeysController::class => [
+            'loadClassificationStoreKeys',
+            'load_classification_store_keys',
+            'GET',
+            '/ad-hoc-import/classification-store-keys',
+        ],
     ];
 
     protected UnitTester $tester;

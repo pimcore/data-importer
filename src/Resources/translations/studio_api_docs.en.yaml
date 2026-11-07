@@ -134,3 +134,7 @@ bundle_data_importer_ad_hoc_import_load_mapping: Load the Mapping of an Ad Hoc I
 bundle_data_importer_ad_hoc_import_load_mapping_description: Load the fields of a class the columns of a file can be imported into, and a suggested field per column
 bundle_data_importer_ad_hoc_import_load_mapping_summary: Load the Mapping of an Ad Hoc Import
 bundle_data_importer_ad_hoc_import_load_mapping_success_response: The fields and the suggested field per column
+bundle_data_importer_ad_hoc_import_load_classification_store_keys: Load the Classification Store Keys of an Ad Hoc Import
+bundle_data_importer_ad_hoc_import_load_classification_store_keys_description: Load the keys of a classification store of a class a column of a file can be imported into
+bundle_data_importer_ad_hoc_import_load_classification_store_keys_summary: Load the Classification Store Keys of an Ad Hoc Import
+bundle_data_importer_ad_hoc_import_load_classification_store_keys_success_response: A page of the keys and their total count
