@@ -153,6 +153,19 @@ class MappingSuggestionServiceTest extends Unit
         ], $requests);
     }
 
+    public function testTheTargetsAreEveryFieldOnceWithTheResultTypeThatWritesIt(): void
+    {
+        $targets = $this->service([
+            'default' => [$this->attribute('name', true)],
+            'date' => [$this->attribute('validFrom'), $this->attribute('name', true)],
+        ])->loadTargets('Product');
+
+        $this->assertSame([
+            ['key' => 'name', 'title' => 'name [name]', 'localized' => true, 'transformationResultType' => 'default'],
+            ['key' => 'validFrom', 'title' => 'validFrom [validFrom]', 'localized' => false, 'transformationResultType' => 'date'],
+        ], $targets);
+    }
+
     public function testAnAttributeWithoutTheLocalizedFlagIsNotLocalized(): void
     {
         $response = $this->service(['default' => [['key' => 'name', 'title' => 'Name']]])

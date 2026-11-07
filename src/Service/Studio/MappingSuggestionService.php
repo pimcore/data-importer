@@ -81,10 +81,7 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         return $response;
     }
 
-    /**
-     * @return list<array{key: string, title: string, localized: bool, transformationResultType: string}>
-     */
-    private function loadTargets(string $classId): array
+    public function loadTargets(string $classId): array
     {
         $targets = [];
         foreach (self::TRANSFORMATION_RESULT_TYPES as $resultType => $requestedTypes) {
