@@ -32,8 +32,12 @@ final class DataObjectLoader
 
     private const SYSTEM_KEY_ATTRIBUTE = 'key';
 
+    private const SQL_AND = ' AND ';
+
     // a field name, or `<field>.<brick>.<attribute>` for an object brick attribute
     private const ATTRIBUTE_NAME_PATTERN = '/^\w+(?:\.\w+\.\w+)?\z/';
+
+    private const NUMBER_PATTERN = '/^-?\d+(?:\.\d+)?\z/';
 
     private function isObjectBrickAttribute(string $attributeName): bool
     {
@@ -127,6 +131,102 @@ final class DataObjectLoader
         }
 
         return null;
+    }
+
+    /**
+     * The ids of the objects whose attribute has the value, published or not, at or below the given normalized path,
+     * or only directly in it (`/` is the tree root then); unlike loadByAttribute() it tells one match from several.
+     *
+     * @return list<int>
+     */
+    public function findIdsByAttribute(
+        string $className,
+        string $attributeName,
+        string $identifier,
+        string $attributeLanguage,
+        string $path,
+        int $limit,
+        bool $directlyInPath = false
+    ): array {
+        return $this->findIds(
+            $className,
+            $attributeName,
+            Db::get()->quote($identifier),
+            $attributeLanguage,
+            $path,
+            $limit,
+            $directlyInPath
+        );
+    }
+
+    /**
+     * findIdsByAttribute() for a numeric field. The number goes into the condition unquoted: a quoted one compares as
+     * a double, so `9007199254740993` would find the object with `9007199254740992`.
+     *
+     * @return list<int>
+     */
+    public function findIdsByNumber(
+        string $className,
+        string $attributeName,
+        string $number,
+        string $attributeLanguage,
+        string $path,
+        int $limit,
+        bool $directlyInPath = false
+    ): array {
+        if (preg_match(self::NUMBER_PATTERN, $number) !== 1) {
+            throw new InvalidConfigurationException(sprintf('Invalid number "%s".', $number));
+        }
+
+        return $this->findIds($className, $attributeName, $number, $attributeLanguage, $path, $limit, $directlyInPath);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function findIds(
+        string $className,
+        string $attributeName,
+        string $sqlValue,
+        string $attributeLanguage,
+        string $path,
+        int $limit,
+        bool $directlyInPath
+    ): array {
+        // the name goes into the listing condition unquoted for object brick attributes
+        if (preg_match(self::ATTRIBUTE_NAME_PATTERN, $attributeName) !== 1) {
+            throw new InvalidConfigurationException(sprintf('Invalid attribute name "%s".', $attributeName));
+        }
+
+        $db = Db::get();
+        $options = [
+            'objectTypes' => [DataObject::OBJECT_TYPE_VARIANT, DataObject::OBJECT_TYPE_OBJECT],
+            'unpublished' => true,
+            'limit' => $limit,
+        ];
+
+        $container = '';
+        if ($this->isObjectBrickAttribute($attributeName)) {
+            $objectBrickParts = $this->getObjectBrickParts($attributeName);
+            $options['objectbricks'] = [$objectBrickParts[self::BRICK_NAME]];
+            $field = $this->getAttributeNameFromParts($objectBrickParts, false);
+            // a brick can sit in several fields of a class, and its table has one row per field
+            $container = $objectBrickParts[self::BRICK_NAME] . '.fieldname = '
+                . $db->quote($objectBrickParts[self::CLASS_FIELD_NAME]) . self::SQL_AND;
+        } else {
+            $field = $db->quoteIdentifier($attributeName);
+        }
+
+        if ($attributeLanguage !== '') {
+            $options['locale'] = $attributeLanguage;
+        }
+
+        $pathCondition = $directlyInPath
+            ? self::SQL_AND . $db->quoteIdentifier('path') . ' = ' . $db->quote($path)
+            : $this->getPathCondition($path);
+        $options['condition'] = $container . $field . ' = ' . $sqlValue . $pathCondition;
+
+        return $className::getList($options)->loadIdList();
     }
 
     public function loadById(string $identifier,
@@ -248,7 +348,7 @@ final class DataObjectLoader
             return '';
         }
 
-        return ' AND ' . $this->getPathLikeCondition($path);
+        return self::SQL_AND . $this->getPathLikeCondition($path);
     }
 
     /**
