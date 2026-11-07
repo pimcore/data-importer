@@ -81,7 +81,8 @@ export const isTaken = (rows: MappingRow[], choice: FieldChoice, column?: string
 const isOpen = (row: MappingRow): boolean => !row.isMatch && !row.skipped && row.choice === undefined
 
 /**
- * Takes the suggestions of the open columns, the surest first, each as long as no other column has its field.
+ * Takes the suggestions of the open columns, the surest first, each as long as no other column has its field. A field
+ * taken comes without transformations, as one chosen by hand.
  */
 const takeSuggestions = (rows: MappingRow[], minScore: number): MappingRow[] => {
   const next = [...rows]
@@ -93,7 +94,7 @@ const takeSuggestions = (rows: MappingRow[], minScore: number): MappingRow[] => 
   for (const { row, position } of surestFirst) {
     const { field, language } = row.suggestion!
     if (!isTaken(next, { field, language })) {
-      next[position] = { ...row, choice: { field, language }, auto: true }
+      next[position] = { ...row, choice: { field, language }, auto: true, transformations: [], fits: undefined }
     }
   }
 
@@ -177,7 +178,14 @@ export const unfitRows = (mapping: Mapping, fields: MappingField[]): MappingRow[
   importedRows(mapping).filter((row) => !fitsField(row, fields))
 
 export const skipColumn = (mapping: Mapping, column: string): Mapping =>
-  changeRow(mapping, column, (row) => ({ ...row, choice: undefined, auto: false, skipped: true }))
+  changeRow(mapping, column, (row) => ({
+    ...row,
+    choice: undefined,
+    auto: false,
+    skipped: true,
+    transformations: [],
+    fits: undefined
+  }))
 
 export const restoreColumn = (mapping: Mapping, column: string): Mapping =>
   changeRow(mapping, column, (row) => ({ ...row, skipped: false }))

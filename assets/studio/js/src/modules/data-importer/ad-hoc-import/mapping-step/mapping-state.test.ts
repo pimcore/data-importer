@@ -294,6 +294,27 @@ describe('the transformations of a column', () => {
     expect(fitsField(rowOf(mapping, 'Artikelnr'), fields)).toBe(true)
   })
 
+  it('go with the column when it is not imported, so a field suggested later takes it without them', () => {
+    const notes = createMapping(inspected, objects, { ...loaded, suggestions: [...loaded.suggestions, suggestion('Notiz', 'image', 40)] })
+    const trimmed = setTransformations(chooseField(notes, 'Notiz', 'price'), 'Notiz', [{ type: 'trim', settings: {} }], true)
+
+    const skipped = skipColumn(trimmed, 'Notiz')
+    expect(rowOf(skipped, 'Notiz')).toMatchObject({ transformations: [], fits: undefined })
+
+    const suggested = rowOf(takeAllSuggestions(restoreColumn(skipped, 'Notiz')), 'Notiz')
+    expect(suggested.choice).toEqual({ field: 'image', language: null })
+    expect(suggested.transformations).toEqual([])
+    expect(fitsField(suggested, fields)).toBe(false)
+  })
+
+  it('are dropped when a suggestion gives the column its field', () => {
+    const notes = createMapping(inspected, objects, { ...loaded, suggestions: [...loaded.suggestions, suggestion('Notiz', 'image', 40)] })
+    // a row left with transformations but without a field, as an earlier state could keep it
+    const leftOver = { ...notes, rows: notes.rows.map((row) => row.column === 'Notiz' ? { ...row, transformations: [{ type: 'trim', settings: {} }], fits: true } : row) }
+
+    expect(rowOf(takeAllSuggestions(leftOver), 'Notiz')).toMatchObject({ choice: { field: 'image' }, transformations: [], fits: undefined })
+  })
+
   it('count a field the mapping does not know as fitting', () => {
     expect(fitsField({ ...rowOf(mapping, 'Notiz'), choice: { field: 'gone', language: null } }, fields)).toBe(true)
   })

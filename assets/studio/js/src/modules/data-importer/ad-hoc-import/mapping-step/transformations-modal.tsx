@@ -133,7 +133,7 @@ export const TransformationsModal = ({ row, field, source, onApply, onCancel }: 
   ]
 
   const add = (type: string): void => {
-    setSteps([...steps, { type, settings: { ...(DEFAULT_SETTINGS[type] ?? {}) } }])
+    setSteps([...steps, { type, settings: { ...DEFAULT_SETTINGS[type] } }])
   }
 
   const change = (position: number, settings: Record<string, string>): void => {
