@@ -152,6 +152,41 @@ class SampleValuePickerTest extends Unit
         $this->assertCount(2, $samples['sku']);
     }
 
+    public function testAColumnThatSendsOneValueIsLeftOutWithTheOtherOneValueColumnOfItsRow(): void
+    {
+        // the customer is in both rows, but sends one value: with the only e-mail it would be the first row's record
+        $samples = $this->picker()->pick(
+            [['customer' => 'C-1', 'email' => 'person@example.test'], ['customer' => 'C-1']],
+            ['customer', 'email']
+        );
+
+        $this->assertSame([], $samples);
+    }
+
+    public function testOneValueColumnsSharingRowsAreLeftOutWhileAColumnWithSeveralValuesStays(): void
+    {
+        $rows = [];
+        for ($number = 0; $number < 20; $number++) {
+            $rows[] = ['currency' => 'EUR', 'country' => 'DE', 'sku' => 'A-' . $number];
+        }
+
+        $samples = $this->picker()->pick($rows, ['currency', 'country', 'sku']);
+
+        $this->assertSame(['sku'], array_keys($samples));
+        $this->assertCount(3, $samples['sku']);
+    }
+
+    public function testAOneValueColumnStaysBesideColumnsWithSeveralValues(): void
+    {
+        $samples = $this->picker()->pick(
+            [['currency' => 'EUR', 'sku' => 'A-1'], ['currency' => 'EUR', 'sku' => 'A-2']],
+            ['currency', 'sku']
+        );
+
+        $this->assertSame(['EUR'], $samples['currency']);
+        $this->assertCount(2, $samples['sku']);
+    }
+
     public function testALongTextIsCutToFiftyCharactersNotBytes(): void
     {
         $samples = $this->picker()->pick(

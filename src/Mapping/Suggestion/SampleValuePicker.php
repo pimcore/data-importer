@@ -46,7 +46,7 @@ final readonly class SampleValuePicker
     {
         $samples = [];
         $seen = [];
-        $firstRow = [];
+        $rowsOf = [];
         $rowCount = 0;
         $rowsWithValues = 0;
 
@@ -54,7 +54,6 @@ final readonly class SampleValuePicker
             if ($rowCount === self::MAX_ROWS) {
                 break;
             }
-            $rowCount++;
             $hasValue = false;
 
             foreach ($columnIndexes as $index) {
@@ -64,11 +63,12 @@ final readonly class SampleValuePicker
                 }
 
                 $hasValue = true;
-                $firstRow[$index] ??= $rowCount;
+                $rowsOf[$index] = $this->withRow($rowsOf[$index] ?? '', $rowCount);
                 $seen[$index] = ($seen[$index] ?? 0) + 1;
                 $samples[$index] = $this->keep($samples[$index] ?? [], $value, $seen[$index]);
             }
 
+            $rowCount++;
             $rowsWithValues += $hasValue ? 1 : 0;
         }
 
@@ -76,40 +76,46 @@ final readonly class SampleValuePicker
             return [];
         }
 
-        $samples = array_diff_key($samples, $this->sharingTheirOnlyRow($seen, $firstRow));
+        $samples = array_map(static fn (array $values): array => array_values(array_unique($values)), $samples);
+        $samples = array_diff_key($samples, $this->singleValuesSharingARow($samples, $rowsOf));
 
-        return array_map(
-            fn (array $values): array => $this->randomizer->shuffleArray(array_values(array_unique($values))),
-            $samples
-        );
+        return array_map(fn (array $values): array => $this->randomizer->shuffleArray($values), $samples);
     }
 
     /**
-     * Columns with a value in one row only, where another such column has its value in that same row: together their
-     * values would be that row's record.
+     * Columns that send one value only, where another such column has a value in the same row: their values are
+     * certain to belong together, so together they would be part of that row's record. A column that sends several
+     * values leaves open which of them goes with another column's value.
      *
-     * @param array<string, int> $seen rows with a value, per column
-     * @param array<string, int> $firstRow the first row with a value, per column
+     * @param array<string, list<string>> $samples
+     * @param array<string, string> $rowsOf the rows with a value, per column, one bit per row
      *
      * @return array<string, true>
      */
-    private function sharingTheirOnlyRow(array $seen, array $firstRow): array
+    private function singleValuesSharingARow(array $samples, array $rowsOf): array
     {
-        $byRow = [];
-        foreach ($seen as $index => $count) {
-            if ($count === 1) {
-                $byRow[$firstRow[$index]][] = $index;
-            }
-        }
+        $single = array_keys(array_filter($samples, static fn (array $values): bool => count($values) === 1));
 
         $dropped = [];
-        foreach ($byRow as $indexes) {
-            if (count($indexes) > 1) {
-                $dropped += array_fill_keys($indexes, true);
+        foreach ($single as $position => $index) {
+            foreach (array_slice($single, $position + 1) as $other) {
+                if (trim($rowsOf[$index] & $rowsOf[$other], "\0") !== '') {
+                    $dropped[$index] = true;
+                    $dropped[$other] = true;
+                }
             }
         }
 
         return $dropped;
+    }
+
+    private function withRow(string $rows, int $row): string
+    {
+        $byte = intdiv($row, 8);
+        $rows = str_pad($rows, $byte + 1, "\0");
+        $rows[$byte] = chr(ord($rows[$byte]) | (1 << ($row % 8)));
+
+        return $rows;
     }
 
     /**
