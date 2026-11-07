@@ -93,6 +93,17 @@ export const api = baseApi.enhanceEndpoints({
     },
     bundleDataImporterUtilityCheckCrontab: {
       providesTags: []
+    },
+
+    // The file of an ad hoc import belongs to its dialog; nothing else depends on it
+    bundleDataImporterAdHocImportInspectFile: {
+      invalidatesTags: []
+    },
+    bundleDataImporterAdHocImportDeleteFile: {
+      invalidatesTags: []
+    },
+    bundleDataImporterAdHocImportLoadMatchFields: {
+      providesTags: []
     }
   }
 })
@@ -105,7 +116,10 @@ export const {
   useBundleDataImporterConfigStartImportMutation,
   useBundleDataImporterConfigCancelExecutionMutation,
   useBundleDataImporterConnectionListQuery,
-  useBundleDataImporterMappingSuggestionSuggestMutation
+  useBundleDataImporterMappingSuggestionSuggestMutation,
+  useBundleDataImporterAdHocImportInspectFileMutation,
+  useBundleDataImporterAdHocImportDeleteFileMutation,
+  useBundleDataImporterAdHocImportLoadMatchFieldsQuery
 } = api
 
 export type * from './data-importer-api-slice.gen'
