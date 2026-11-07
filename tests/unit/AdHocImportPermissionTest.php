@@ -22,7 +22,6 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService;
@@ -44,7 +43,6 @@ use Pimcore\Model\User\Workspace\DataObject as ObjectWorkspace;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Security\Core\Authentication\Token\NullToken;
-use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
 /**
  * A saved non-admin user on an install that gets the right by the migration, while Studio still has the list of
@@ -142,7 +140,7 @@ class AdHocImportPermissionTest extends Unit
 
         $this->currentUser = $this->importer;
         $this->assertSame(
-            VoterInterface::ACCESS_ABSTAIN,
+            UserPermissionVoter::ACCESS_ABSTAIN,
             $this->vote(),
             'the right is unknown to Studio before the migration'
         );
@@ -150,7 +148,7 @@ class AdHocImportPermissionTest extends Unit
         $this->migrate();
 
         $this->assertFalse(Cache::load(CacheKeys::USER_PERMISSIONS->value), 'the migration dropped the cached list');
-        $this->assertSame(VoterInterface::ACCESS_GRANTED, $this->vote());
+        $this->assertSame(UserPermissionVoter::ACCESS_GRANTED, $this->vote());
 
         $response = $this->service()->upload(
             new UploadedFile($this->csv, 'prices.csv', null, null, true),
@@ -187,7 +185,7 @@ class AdHocImportPermissionTest extends Unit
         $this->currentUser = $this->importer;
 
         try {
-            $this->assertSame(VoterInterface::ACCESS_GRANTED, $this->vote());
+            $this->assertSame(UserPermissionVoter::ACCESS_GRANTED, $this->vote());
             $this->expectException(ForbiddenException::class);
             $this->service()->upload(new UploadedFile($this->csv, 'prices.csv', null, null, true), $folder->getId());
         } finally {
@@ -259,7 +257,6 @@ class AdHocImportPermissionTest extends Unit
     {
         $factory = new InterpreterFactory([
             'csv' => (new \ReflectionClass(CsvFileInterpreter::class))->newInstanceWithoutConstructor(),
-            'xlsx' => (new \ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor(),
         ]);
 
         return new AdHocImportService(
