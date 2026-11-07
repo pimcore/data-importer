@@ -29,7 +29,11 @@ const inspected: InspectedFile = {
   hasHeaderRow: true,
   sheets: [],
   rowCount: 1,
-  columns: [{ dataIndex: 'Artikelnr', label: 'Artikelnr' }, { dataIndex: 'Name DE', label: 'Name DE' }, { dataIndex: 'Preis', label: 'Preis' }],
+  columns: [
+    { dataIndex: 'Artikelnr', label: 'Artikelnr', position: 0 },
+    { dataIndex: 'Name DE', label: 'Name DE', position: 1 },
+    { dataIndex: 'Preis', label: 'Preis', position: 2 }
+  ],
   firstRows: [['NH-1', 'Jacke', '12.50']]
 }
 

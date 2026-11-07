@@ -50,7 +50,10 @@ export const fileColumn = (
       : undefined
   }
 
-  return POSITION.test(column) ? inspected.columns[Number(column)]?.dataIndex : undefined
+  // a header row may leave a column unnamed, so the file's columns are found by their place, not their index
+  return POSITION.test(column)
+    ? inspected.columns.find(({ position }) => position === Number(column))?.dataIndex
+    : undefined
 }
 
 export const columnLabel = (inspected: InspectedFile, column: string): string =>

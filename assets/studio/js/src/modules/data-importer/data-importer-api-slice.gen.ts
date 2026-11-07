@@ -857,6 +857,8 @@ export type BundleDataImporterAdHocImportFileResponse = {
     columns: {
         dataIndex: string;
         label: string;
+        /** CSV with a header row: the column's place in the file, from 0; columns keyed by position have none */
+        position?: number;
     }[];
     /** The first rows, their values in the order of the columns */
     firstRows: (string | null)[][];

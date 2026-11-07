@@ -71,7 +71,7 @@ const csv: InspectedFile = {
   hasHeaderRow: true,
   sheets: [],
   rowCount: 312,
-  columns: [{ dataIndex: 'Artikelnr', label: 'Artikelnr' }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung' }],
+  columns: [{ dataIndex: 'Artikelnr', label: 'Artikelnr', position: 0 }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung', position: 1 }],
   firstRows: [['NH-1001', 'Trail jacket'], ['NH-1002', null]]
 }
 
@@ -1046,7 +1046,7 @@ describe('the mapping step with a configuration', () => {
   })
 
   it('cannot go on with one whose match column the file does not have', async () => {
-    await toConfiguration({ ...csv, columns: [{ dataIndex: 'SKU', label: 'SKU' }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung' }] })
+    await toConfiguration({ ...csv, columns: [{ dataIndex: 'SKU', label: 'SKU', position: 0 }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung', position: 1 }] })
     select('Configuration', 'products')
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)

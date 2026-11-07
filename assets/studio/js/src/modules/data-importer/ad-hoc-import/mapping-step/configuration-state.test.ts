@@ -52,7 +52,7 @@ const csvWithHeader: InspectedFile = {
   ...inspected,
   type: 'csv',
   sheets: [],
-  columns: [{ dataIndex: 'SKU', label: 'SKU' }, { dataIndex: 'Name DE ', label: 'Name DE' }]
+  columns: [{ dataIndex: 'SKU', label: 'SKU', position: 0 }, { dataIndex: 'Name DE ', label: 'Name DE', position: 1 }]
 }
 
 // keyed by position, without names
@@ -132,6 +132,19 @@ describe('a column the configuration reads', () => {
     expect(fileColumn(configuration(), csvWithHeader, '2')).toBeUndefined()
     expect(fileColumn(configuration(), csvWithHeader, '01')).toBeUndefined()
     expect(fileColumn(configuration(), csvWithHeader, 'SKU')).toBeUndefined()
+  })
+
+  it('is found by its place in the file when the header row leaves a column unnamed', () => {
+    // header `SKU,,Name`: the unnamed column has no key, so it is not among the columns
+    const unnamedSecond: InspectedFile = {
+      ...csvWithHeader,
+      columns: [{ dataIndex: 'SKU', label: 'SKU', position: 0 }, { dataIndex: 'Name', label: 'Name', position: 2 }]
+    }
+
+    expect(fileColumn(configuration(), unnamedSecond, '0')).toBe('SKU')
+    expect(fileColumn(configuration(), unnamedSecond, '1')).toBeUndefined()
+    expect(fileColumn(configuration(), unnamedSecond, '2')).toBe('Name')
+    expect(unusableReason(configuration({ matchColumn: '1' }), unnamedSecond)).toBe('match-column')
   })
 
   it('is named by its label in the file, or as the configuration names it', () => {
