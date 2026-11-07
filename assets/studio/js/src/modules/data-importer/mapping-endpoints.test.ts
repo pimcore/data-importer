@@ -12,8 +12,13 @@ import { configureStore } from '@reduxjs/toolkit'
 import {
   api,
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery,
-  useBundleDataImporterMappingLoadTransformationResultQuery
+  useBundleDataImporterMappingLoadTransformationResultQuery,
+  useBundleDataImporterMappingSuggestionSuggestMutation
 } from './data-importer-api-slice.gen'
+import {
+  api as enhancedApi,
+  useBundleDataImporterMappingSuggestionSuggestMutation as useEnhancedMappingSuggestionSuggestMutation
+} from './data-importer-api-slice-enhanced'
 import type * as RtkQuery from '@reduxjs/toolkit/query/react'
 
 const sent: unknown[] = []
@@ -66,5 +71,20 @@ describe('the posted mapping endpoints', () => {
   it('are exported as the hooks the posted mapping source uses', () => {
     expect(useBundleDataImporterMappingLoadTransformationResultQuery).toBe(api.endpoints.bundleDataImporterMappingLoadTransformationResult.useQuery)
     expect(useBundleDataImporterMappingCalculateTransformationResultTypeQuery).toBe(api.endpoints.bundleDataImporterMappingCalculateTransformationResultType.useQuery)
+  })
+
+  it('post the columns and the class for mapping suggestions', async () => {
+    const parameters = { classId: 'Product', columns: [{ index: '0', label: 'Article number' }] }
+
+    await store.dispatch(api.endpoints.bundleDataImporterMappingSuggestionSuggest.initiate({
+      bundleDataImporterMappingSuggestionParameters: parameters
+    }))
+
+    expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/mapping-suggestions', method: 'POST', body: parameters }])
+  })
+
+  it('export the mapping suggestion mutation hook, plain and enhanced', () => {
+    expect(useBundleDataImporterMappingSuggestionSuggestMutation).toBe(api.endpoints.bundleDataImporterMappingSuggestionSuggest.useMutation)
+    expect(useEnhancedMappingSuggestionSuggestMutation).toBe(enhancedApi.endpoints.bundleDataImporterMappingSuggestionSuggest.useMutation)
   })
 })
