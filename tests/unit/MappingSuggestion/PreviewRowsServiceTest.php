@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
+use Pimcore\Bundle\DataImporterBundle\Event\PreQueueRowEvent;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
@@ -55,7 +56,9 @@ class PreviewRowsServiceTest extends Unit
     private function service(
         PreviewService $previewService,
         ?Configuration $configuration,
-        int $maxWorkbookCells = 100
+        int $maxWorkbookCells = 100,
+        int $maxWorkbookBytes = 1024 * 1024,
+        EventDispatcher $eventDispatcher = new EventDispatcher()
     ): PreviewRowsService {
         $user = new User();
         $user->setId(self::USER_ID);
@@ -70,14 +73,15 @@ class PreviewRowsServiceTest extends Unit
             $previewService,
             $security,
             new ConfigurationPreparationService(),
-            new PreviewEventApplier(new EventDispatcher()),
+            new PreviewEventApplier($eventDispatcher),
             new SourceFileReader(new InterpreterFactory([
                 // their queue and delta check are final and reading rows uses neither
                 'csv' => (new ReflectionClass(CsvFileInterpreter::class))->newInstanceWithoutConstructor(),
                 'xlsx' => (new ReflectionClass(XlsxFileInterpreter::class))->newInstanceWithoutConstructor(),
             ])),
             $configurations,
-            $maxWorkbookCells
+            $maxWorkbookCells,
+            $maxWorkbookBytes
         );
     }
 
@@ -151,6 +155,43 @@ class PreviewRowsServiceTest extends Unit
         );
     }
 
+    public function testTheRowsAreThoseThePreviewShowsAfterItsRowListeners(): void
+    {
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(PreQueueRowEvent::class, static function (PreQueueRowEvent $event): void {
+            $row = $event->getOriginalRow();
+            match ($row['sku']) {
+                'A-1' => $event->setRows([['sku' => 'A-1', 'color' => 'RED', 'origin' => 'DE']]),
+                'A-2' => $event->skipRow(),
+                default => $event->setRows([['sku' => 'A-3a', 'color' => 'green'], ['sku' => 'A-3b', 'color' => 'teal']]),
+            };
+        });
+        $seen = [];
+        $eventDispatcher->addListener(PreQueueRowEvent::class, static function (PreQueueRowEvent $event) use (&$seen): void {
+            $seen[] = [$event->getConfigName(), $event->isPreview()];
+        });
+
+        $service = $this->service(
+            $this->previewFile($this->writeFile("sku;color\nA-1;red\nA-2;blue\nA-3;green\n", 'csv')),
+            $this->readableConfiguration(),
+            eventDispatcher: $eventDispatcher
+        );
+
+        $this->assertSame(
+            [
+                // a listener's added column and rewritten value
+                ['sku' => 'A-1', 'color' => 'RED', 'origin' => 'DE'],
+                // a skipped row stays as the preview shows it
+                ['sku' => 'A-2', 'color' => 'blue'],
+                // a fan-out gives every resulting row
+                ['sku' => 'A-3a', 'color' => 'green'],
+                ['sku' => 'A-3b', 'color' => 'teal'],
+            ],
+            iterator_to_array($service->read(self::CONFIG_NAME, $this->csvConfig()), false)
+        );
+        $this->assertSame(array_fill(0, 3, [self::CONFIG_NAME, true]), $seen);
+    }
+
     public function testAWorkbookWithinTheLimitGivesItsRows(): void
     {
         // 2 rows of 2 columns are 4 cells
@@ -186,6 +227,18 @@ class PreviewRowsServiceTest extends Unit
         );
 
         $this->assertSame([], $service->read(self::CONFIG_NAME, $this->xlsxConfig()));
+    }
+
+    public function testAWorkbookOfFewCellsButLongTextsIsNotLoaded(): void
+    {
+        $longText = str_repeat('x', 32000);
+        $path = $this->writeXlsx([[$longText . '1', $longText . '2'], [$longText . '3', $longText . '4']]);
+
+        // 4 cells are within the cell limit; their unpacked text is not within 100 KB
+        $service = $this->service($this->previewFile($path), $this->readableConfiguration(), 4, 100 * 1024);
+
+        $this->assertSame([], $service->read(self::CONFIG_NAME, $this->xlsxConfig()));
+        $this->assertLessThan(100 * 1024, filesize($path), 'the packed file alone would pass');
     }
 
     /**

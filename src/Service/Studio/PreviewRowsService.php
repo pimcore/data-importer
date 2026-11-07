@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverT
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use ZipArchive;
 
 /**
  * @internal
@@ -36,6 +37,9 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
     // about 5,000 rows of 20 columns; see fitsInMemory()
     private const int MAX_WORKBOOK_CELLS = 100000;
 
+    // the unpacked size, which bounds long texts the cell count does not
+    private const int MAX_WORKBOOK_BYTES = 32 * 1024 * 1024;
+
     public function __construct(
         private PreviewService $previewService,
         private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
@@ -43,7 +47,8 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
         private PreviewEventApplier $previewEventApplier,
         private SourceFileReader $sourceFileReader,
         private ConfigurationLookupInterface $configurations,
-        private int $maxWorkbookCells = self::MAX_WORKBOOK_CELLS
+        private int $maxWorkbookCells = self::MAX_WORKBOOK_CELLS,
+        private int $maxWorkbookBytes = self::MAX_WORKBOOK_BYTES
     ) {
     }
 
@@ -67,12 +72,16 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
             return [];
         }
 
-        return $this->sourceFileReader->readRows($interpreterConfig, $path);
+        return $this->previewEventApplier->applyToRows(
+            $configName,
+            $preparedConfig['processingConfig'],
+            $this->sourceFileReader->readRows($interpreterConfig, $path)
+        );
     }
 
     /**
      * A workbook loads whole, before any row limit applies, and running out of memory cannot be caught. Its size is
-     * read without loading a cell. Every other format that reads rows reads them one at a time.
+     * read without loading a cell, first its unpacked size, then its cells. Every other format that reads rows reads them one at a time.
      *
      * @param array<string, mixed> $interpreterConfig
      */
@@ -82,11 +91,34 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
             return true;
         }
 
+        if ($this->unpackedSize($path) > $this->maxWorkbookBytes) {
+            return false;
+        }
+
         $cells = 0;
         foreach (IOFactory::createReaderForFile($path)->listWorksheetInfo($path) as $sheet) {
             $cells += $sheet['totalRows'] * $sheet['totalColumns'];
         }
 
         return $cells <= $this->maxWorkbookCells;
+    }
+
+    /**
+     * A file that is no zip archive (an old binary workbook) is as large as it is on disk.
+     */
+    private function unpackedSize(string $path): int
+    {
+        $archive = new ZipArchive();
+        if ($archive->open($path, ZipArchive::RDONLY) !== true) {
+            return (int) filesize($path);
+        }
+
+        $size = 0;
+        for ($entry = 0; $entry < $archive->numFiles; $entry++) {
+            $size += (int) ($archive->statIndex($entry)['size'] ?? 0);
+        }
+        $archive->close();
+
+        return $size;
     }
 }

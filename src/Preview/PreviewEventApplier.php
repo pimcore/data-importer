@@ -97,6 +97,32 @@ final readonly class PreviewEventApplier
     }
 
     /**
+     * Lets PreQueueRowEvent listeners rewrite every row, as applyToPreviewData() does for the displayed record: a
+     * skipped row stays as it was, a fan-out gives all of its resulting rows, and an empty row produces no event.
+     *
+     * @param iterable<array<int|string, mixed>> $rows
+     *
+     * @return iterable<array<int|string, mixed>>
+     */
+    public function applyToRows(string $configName, array $processingConfig, iterable $rows): iterable
+    {
+        $executionType = $this->resolveExecutionType($processingConfig);
+
+        foreach ($rows as $row) {
+            if ($row === []) {
+                yield $row;
+
+                continue;
+            }
+
+            $event = new PreQueueRowEvent($configName, $executionType, $row, preview: true);
+            $this->eventDispatcher->dispatch($event);
+
+            yield from $event->getRows() === [] ? [$row] : $event->getRows();
+        }
+    }
+
+    /**
      * Restricts the original column headers to the columns the resulting rows actually
      * contain (keeping the original order) and adds labels for listener-added columns.
      *
