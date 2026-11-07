@@ -209,7 +209,7 @@ export const ConfigurationChoice = ({
           role="radiogroup"
           vertical
         >
-          { configurations.map(card) }
+          { configurations.map((shown, index) => card(shown, index)) }
         </Flex>
       </Flex>
 
