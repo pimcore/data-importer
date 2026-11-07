@@ -60,10 +60,13 @@ const Stateful = ({ initial, isLoading = false }: { initial: Mapping | null, isL
 
   return (
     <MappingStep
+      configuration={ { isLoading: false, onChoose: () => {} } }
       fields={ loaded.fields }
       isLoading={ isLoading }
+      mapWith="here"
       mapping={ mapping }
       onChange={ setMapping }
+      onMapWithChange={ () => {} }
     />
   )
 }
@@ -90,11 +93,11 @@ afterEach(() => {
 })
 
 describe('the mapping step', () => {
-  it('maps the columns here; a configuration cannot be chosen yet', () => {
+  it('maps the columns here, and a configuration can be chosen instead', () => {
     renderStep()
 
     expect(screen.getByRole('radio', { name: 'Map the columns here' }).getAttribute('aria-checked')).toBe('true')
-    expect(screen.getByRole<HTMLButtonElement>('radio', { name: 'Use a Data Importer configuration' }).disabled).toBe(true)
+    expect(screen.getByRole<HTMLButtonElement>('radio', { name: 'Use a Data Importer configuration' }).disabled).toBe(false)
   })
 
   it('shows a row per column with its first value', () => {

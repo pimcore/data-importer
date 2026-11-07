@@ -47,7 +47,8 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportInspectFileMutation: () => [mockInspectFile],
   useBundleDataImporterAdHocImportDeleteFileMutation: () => [mockDeleteFile],
   useBundleDataImporterAdHocImportLoadMatchFieldsQuery: (...args: unknown[]) => mockLoadMatchFields(...args),
-  useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping]
+  useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping],
+  useBundleDataImporterAdHocImportListConfigurationsQuery: (...args: unknown[]) => mockListConfigurations(...args)
 }))
 
 const mockTrackError = jest.fn()
@@ -57,6 +58,7 @@ const mockInspectFile = jest.fn()
 const mockDeleteFile = jest.fn()
 const mockLoadMatchFields = jest.fn()
 const mockLoadMapping = jest.fn()
+const mockListConfigurations = jest.fn()
 
 const csv: InspectedFile = {
   maxRows: 5000,
@@ -157,6 +159,21 @@ const mappingAnswer = {
   }]
 }
 
+const productsConfiguration = {
+  name: 'products',
+  classId: 'PROD',
+  className: 'Product',
+  matchBy: 'field',
+  matchField: 'sku',
+  matchLanguage: null,
+  matchColumn: 'Artikelnr',
+  newObjectsFolder: '/Products/Imported',
+  columns: ['Artikelnr', 'Bezeichnung'],
+  unusable: null
+}
+
+const closedConfiguration = { ...productsConfiguration, name: 'closed', unusable: 'folder-not-allowed' }
+
 const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
@@ -176,6 +193,9 @@ beforeEach(() => {
   })
   mockDeleteFile.mockResolvedValue({ data: undefined })
   mockLoadMapping.mockResolvedValue({ data: mappingAnswer })
+  mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
+    ? { data: undefined, isFetching: false }
+    : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false })
 })
 
 afterEach(() => {
@@ -984,5 +1004,69 @@ describe('the mapping step', () => {
     expect(mockTrackError).toHaveBeenCalled()
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+describe('the mapping step with a configuration', () => {
+  const toConfiguration = async (inspected: InspectedFile = csv): Promise<void> => {
+    renderDialog()
+    await dropAndRead(inspected)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+  }
+
+  it('loads the configurations only once they are to be used', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: true })
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+
+    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: false })
+    expect(screen.getByLabelText('Configuration')).toBeTruthy()
+  })
+
+  it('goes on to the preview only once one it can use is chosen', async () => {
+    await toConfiguration()
+
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+    select('Configuration', 'closed')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+
+    select('Configuration', 'products')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(nextButton())
+
+    expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+  })
+
+  it('cannot go on with one whose match column the file does not have', async () => {
+    await toConfiguration({ ...csv, columns: [{ dataIndex: 'SKU', label: 'SKU' }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung' }] })
+    select('Configuration', 'products')
+
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('keeps the chosen one when going back and on', async () => {
+    await toConfiguration()
+    select('Configuration', 'products')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(screen.getByLabelText<HTMLSelectElement>('Configuration').value).toBe('products')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('goes on with the columns mapped here after a switch back', async () => {
+    await toConfiguration()
+    fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
+
+    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 })

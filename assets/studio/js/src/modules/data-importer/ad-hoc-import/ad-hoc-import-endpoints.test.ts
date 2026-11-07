@@ -92,11 +92,18 @@ describe('the ad hoc import endpoints', () => {
     }])
   })
 
+  it('get the configurations to map with', async () => {
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportListConfigurations.initiate())
+
+    expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/configurations' }])
+  })
+
   it('are exported as hooks', () => {
     const inspect = api.endpoints.bundleDataImporterAdHocImportInspectFile.useMutation
     const remove = api.endpoints.bundleDataImporterAdHocImportDeleteFile.useMutation
     const matchFields = api.endpoints.bundleDataImporterAdHocImportLoadMatchFields.useQuery
     const mapping = api.endpoints.bundleDataImporterAdHocImportLoadMapping.useMutation
+    const configurations = api.endpoints.bundleDataImporterAdHocImportListConfigurations.useQuery
 
     expect(generated.useBundleDataImporterAdHocImportUploadFileMutation).toBe(api.endpoints.bundleDataImporterAdHocImportUploadFile.useMutation)
     expect(enhanced.useBundleDataImporterConnectionListQuery).toBe(api.endpoints.bundleDataImporterConnectionList.useQuery)
@@ -105,6 +112,7 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportDeleteFileMutation).toBe(remove)
       expect(hooks.useBundleDataImporterAdHocImportLoadMatchFieldsQuery).toBe(matchFields)
       expect(hooks.useBundleDataImporterAdHocImportLoadMappingMutation).toBe(mapping)
+      expect(hooks.useBundleDataImporterAdHocImportListConfigurationsQuery).toBe(configurations)
     }
   })
 })
