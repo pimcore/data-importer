@@ -245,6 +245,16 @@ class PreviewRowsServiceTest extends Unit
         $this->assertLessThan(100 * 1024, filesize($path), 'the packed file alone would pass');
     }
 
+    public function testAWorkbookThatIsNoZipArchiveCountsWithItsSizeOnDisk(): void
+    {
+        // an old binary workbook, or a broken file, under the xlsx interpreter
+        $path = $this->writeFile(str_repeat('x', 2048), 'xlsx');
+
+        $service = $this->service($this->previewFile($path), $this->readableConfiguration(), 100, 1024);
+
+        $this->assertSame([], $service->read(self::CONFIG_NAME, $this->xlsxConfig()));
+    }
+
     /**
      * @return array<string, mixed>
      */
