@@ -28,4 +28,11 @@ interface MappingSuggestionServiceInterface
      * @throws Exception
      */
     public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse;
+
+    /**
+     * The fields of an existing class a suggestion can name, each with the result type that writes it.
+     *
+     * @return list<array{key: string, title: string, localized: bool, transformationResultType: string}>
+     */
+    public function loadTargets(string $classId): array;
 }
