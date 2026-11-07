@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -22,11 +23,19 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\Numeric;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Trim;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
@@ -39,6 +48,7 @@ use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
 use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
@@ -61,6 +71,11 @@ class AdHocImportServiceTest extends Unit
     private const OTHER_USER_ID = 4713;
 
     private const CSV = "sku;name\nA-1;Chair\n";
+
+    private const TEXT_FIELDS = [
+        TransformationDataTypeService::DEFAULT_TYPE => ['sku', 'name', 'notes'],
+        TransformationDataTypeService::NUMERIC => ['price'],
+    ];
 
     private string $storage;
 
@@ -445,15 +460,166 @@ class AdHocImportServiceTest extends Unit
         $localized->addChild($this->input('name', mandatory: true));
         $class->addFieldDefinition('localizedfields', $localized);
 
-        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, class: $class)
-            ->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
+        $mapping = $this->service(
+            creatableClasses: ['PROD'],
+            suggestions: $suggestions,
+            class: $class,
+            fieldTypes: self::TEXT_FIELDS
+        )->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
 
         $this->assertSame([
-            [...$this->target('sku'), 'mandatory' => true],
-            [...$this->target('name', localized: true), 'mandatory' => true],
-            [...$this->target('price', 'numeric'), 'mandatory' => false],
-            [...$this->target('notes'), 'mandatory' => false],
+            [...$this->target('sku'), 'mandatory' => true, 'takesColumnAsIs' => true],
+            [...$this->target('name', localized: true), 'mandatory' => true, 'takesColumnAsIs' => true],
+            [...$this->target('price', 'numeric'), 'mandatory' => false, 'takesColumnAsIs' => true],
+            [...$this->target('notes'), 'mandatory' => false, 'takesColumnAsIs' => true],
         ], $mapping->getFields());
+    }
+
+    public function testTheMappingSaysWhichFieldsTakeAColumnWithoutATransformation(): void
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([
+            $this->target('price'),
+            $this->target('image', 'asset'),
+            $this->target('weight', 'quantityValue'),
+        ]);
+        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
+
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, fieldTypes: [
+            TransformationDataTypeService::NUMERIC => ['price'],
+            TransformationDataTypeService::ASSET => ['image'],
+        ])->loadMapping(new MappingSuggestionParameters('PROD', []));
+
+        // a number is converted; an image needs its asset loaded; a quantity value needs a unit
+        $this->assertSame(
+            ['price' => true, 'image' => false, 'weight' => false],
+            array_column($mapping->getFields(), 'takesColumnAsIs', 'key')
+        );
+    }
+
+    public function testTheTransformationsRunOnTheColumnInTheFirstRowsOfTheStoredFile(): void
+    {
+        $fileId = $this->storedCsv("sku;name;price\nA-1; Chair ;12.50\nA-2;Table;3\n");
+
+        $trimmed = $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', 'name', [['type' => 'trim']])
+        );
+
+        $this->assertSame([[' Chair '], ['Table']], $this->items($trimmed->getValues()));
+        $this->assertSame([['Chair'], ['Table']], $this->items($trimmed->getSteps()[0]['values']));
+        $this->assertSame([['Chair'], ['Table']], $this->items($trimmed->getResults()));
+        $this->assertTrue($trimmed->getFits());
+
+        $price = $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'price', 'price')
+        );
+
+        $this->assertSame('numeric', $price->getConversion());
+        $this->assertSame([['12.5'], ['3']], $this->items($price->getResults()));
+    }
+
+    public function testTheFileIsReadUnderTheSettingsGiven(): void
+    {
+        $fileId = $this->storedCsv("sku;name\nA-1;Chair\n");
+
+        $result = $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', '1', 'name', hasHeaderRow: false)
+        );
+
+        $this->assertSame([['name'], ['Chair']], $this->items($result->getValues()));
+    }
+
+    public function testAColumnGoesIntoAnImageOnlyOnceItsAssetIsLoaded(): void
+    {
+        $fileId = $this->storedCsv("sku;image\nA-1;/images/chair.jpg\n");
+
+        $result = $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'image', 'image')
+        );
+
+        $this->assertFalse($result->getFits());
+        $this->assertSame([], $result->getResults());
+        $this->assertSame(['trim', 'loadAsset'], $result->getOffered());
+    }
+
+    public function testAColumnTheFileDoesNotHaveIsNotFound(): void
+    {
+        $fileId = $this->storedCsv(self::CSV);
+
+        $this->expectException(NotFoundHttpException::class);
+        $this->expectExceptionMessage('Column Name not found');
+
+        $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'Name', 'name')
+        );
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function fieldsTransformationsCannotGoInto(): iterable
+    {
+        yield 'a field the class does not have' => ['colour'];
+        yield 'a field an ad hoc import does not write' => ['key'];
+    }
+
+    /**
+     * @dataProvider fieldsTransformationsCannotGoInto
+     */
+    public function testAFieldTheMappingDoesNotOfferIsNotFound(string $field): void
+    {
+        $fileId = $this->storedCsv(self::CSV);
+
+        $this->expectException(NotFoundHttpException::class);
+        $this->expectExceptionMessage('Field ' . $field . ' not found');
+
+        $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', $field)
+        );
+    }
+
+    public function testTransformationsForAClassTheUserMayNotCreateAreForbidden(): void
+    {
+        $fileId = $this->storedCsv(self::CSV);
+
+        $this->expectException(ForbiddenException::class);
+
+        $this->transformationService(['OTHER'])->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', 'name')
+        );
+    }
+
+    public function testAnotherUsersFileIsNotFoundForTransformations(): void
+    {
+        $fileId = $this->storedCsv(self::CSV);
+        $this->currentUserId = self::OTHER_USER_ID;
+
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', 'name')
+        );
+    }
+
+    public function testATransformationTheAdHocImportDoesNotOfferIsRefused(): void
+    {
+        $fileId = $this->storedCsv(self::CSV);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Transformation 2');
+
+        $this->transformationService()->previewTransformations(
+            $fileId,
+            new AdHocImportTransformationParameters('PROD', 'name', 'name', [['type' => 'trim'], ['type' => 'combine']])
+        );
     }
 
     public function testTheMappingSuggestsForTheColumnsAsked(): void
@@ -522,6 +688,67 @@ class AdHocImportServiceTest extends Unit
             ->loadMapping(new MappingSuggestionParameters('PROD', []));
     }
 
+    private function storedCsv(string $content): string
+    {
+        $fileId = $this->service()->upload($this->upload($content, 'prices.csv'), self::FOLDER_ID)->getFileId();
+        $this->assertNotNull($fileId);
+
+        return $fileId;
+    }
+
+    /**
+     * A class of a text, a numeric and an image field, besides the key no column goes into.
+     *
+     * @param string[] $creatableClasses
+     */
+    private function transformationService(array $creatableClasses = ['PROD']): AdHocImportService
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([
+            $this->target('key'),
+            $this->target('name'),
+            $this->target('price'),
+            $this->target('image', 'asset'),
+        ]);
+
+        return $this->service(creatableClasses: $creatableClasses, suggestions: $suggestions, fieldTypes: [
+            TransformationDataTypeService::DEFAULT_TYPE => ['key', 'name'],
+            TransformationDataTypeService::NUMERIC => ['price'],
+            TransformationDataTypeService::ASSET => ['image'],
+        ]);
+    }
+
+    /**
+     * @param list<AdHocImportTransformationCell> $cells
+     *
+     * @return list<list<string>>
+     */
+    private function items(array $cells): array
+    {
+        return array_map(static fn (AdHocImportTransformationCell $cell): array => $cell->getItems(), $cells);
+    }
+
+    /**
+     * @param array<string, list<string>> $fieldTypes per result type the fields that take it
+     */
+    private function chain(array $fieldTypes): TransformationChain
+    {
+        $types = $this->createStub(DataTypeServiceInterface::class);
+        $types->method('loadClassAttributes')->willReturnCallback(
+            static fn (string $classId, string $type): ClassAttributesResponse => new ClassAttributesResponse(array_map(
+                static fn (string $key): array => ['key' => $key, 'title' => $key, 'localized' => false],
+                $fieldTypes[$type] ?? []
+            ))
+        );
+        $logger = $this->createStub(ApplicationLogger::class);
+
+        return new TransformationChain(new MappingConfigurationFactory(new MappingConfiguration(), [
+            'trim' => new Trim($logger),
+            'loadAsset' => new LoadAsset($logger),
+            'numeric' => new Numeric($logger),
+        ], []), $types);
+    }
+
     /**
      * @return array{key: string, title: string, localized: bool, transformationResultType: string}
      */
@@ -565,13 +792,15 @@ class AdHocImportServiceTest extends Unit
 
     /**
      * @param string[] $creatableClasses
+     * @param array<string, list<string>> $fieldTypes per result type the fields that take it
      */
     private function service(
         mixed $folder = 'allowed',
         ?DataTypeServiceInterface $dataTypeService = null,
         array $creatableClasses = [],
         ?MappingSuggestionServiceInterface $suggestions = null,
-        ?ClassDefinition $class = null
+        ?ClassDefinition $class = null,
+        array $fieldTypes = []
     ): AdHocImportService {
         if ($folder === 'allowed') {
             $folder = $this->createStub(Folder::class);
@@ -621,7 +850,8 @@ class AdHocImportServiceTest extends Unit
             $dataTypeService ?? $this->createStub(DataTypeServiceInterface::class),
             $classes,
             $suggestions ?? $this->createStub(MappingSuggestionServiceInterface::class),
-            $classResolver
+            $classResolver,
+            $this->chain($fieldTypes)
         );
     }
 

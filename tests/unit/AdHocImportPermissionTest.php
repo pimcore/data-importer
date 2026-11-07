@@ -15,6 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Doctrine\DBAL\Schema\Schema;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
@@ -257,7 +260,11 @@ class AdHocImportPermissionTest extends Unit
             $this->createStub(DataTypeServiceInterface::class),
             $this->createStub(ClassDefinitionServiceInterface::class),
             $this->createStub(MappingSuggestionServiceInterface::class),
-            $this->createStub(ClassDefinitionResolverInterface::class)
+            $this->createStub(ClassDefinitionResolverInterface::class),
+            new TransformationChain(
+                new MappingConfigurationFactory(new MappingConfiguration(), [], []),
+                $this->createStub(DataTypeServiceInterface::class)
+            )
         );
     }
 }

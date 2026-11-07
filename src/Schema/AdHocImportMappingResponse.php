@@ -23,7 +23,8 @@ use OpenApi\Attributes\Schema;
  *     title: string,
  *     localized: bool,
  *     mandatory: bool,
- *     transformationResultType: string
+ *     transformationResultType: string,
+ *     takesColumnAsIs: bool
  * }
  * @phpstan-type Suggestion array{
  *     sourceIndex: string,
@@ -54,7 +55,7 @@ final readonly class AdHocImportMappingResponse
             description: 'The fields of the class a column can be imported into',
             type: 'array',
             items: new Items(
-                required: ['key', 'title', 'localized', 'mandatory', 'transformationResultType'],
+                required: ['key', 'title', 'localized', 'mandatory', 'transformationResultType', 'takesColumnAsIs'],
                 properties: [
                     new Property(property: 'key', description: 'Key of the field', type: 'string', example: 'name'),
                     new Property(
@@ -80,6 +81,12 @@ final readonly class AdHocImportMappingResponse
                         description: 'Transformation result type that writes the field',
                         type: 'string',
                         example: 'default'
+                    ),
+                    new Property(
+                        property: 'takesColumnAsIs',
+                        description: 'Whether a column goes into the field without a transformation, converted to its type',
+                        type: 'boolean',
+                        example: true
                     ),
                 ],
                 type: 'object'

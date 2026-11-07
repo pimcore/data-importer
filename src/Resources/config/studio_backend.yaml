@@ -61,3 +61,4 @@ services:
     Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain: ~
