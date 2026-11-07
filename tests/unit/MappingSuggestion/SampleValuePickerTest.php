@@ -127,6 +127,31 @@ class SampleValuePickerTest extends Unit
         $this->assertSame(['sku' => ['A-1'], 'color' => ['red']], $samples);
     }
 
+    public function testColumnsWhoseOnlyValuesShareOneRowAreLeftOutBecauseTogetherTheyAreThatRecord(): void
+    {
+        $samples = $this->picker()->pick(
+            [['sku' => 'A-1', 'color' => 'red', 'name' => 'Secret X'], ['sku' => 'A-2']],
+            ['sku', 'color', 'name']
+        );
+
+        $this->assertSame(['sku'], array_keys($samples));
+        $values = $samples['sku'];
+        sort($values);
+        $this->assertSame(['A-1', 'A-2'], $values);
+    }
+
+    public function testAColumnWithOneValueStaysWhenNoOtherColumnHasItsOnlyValueInThatRow(): void
+    {
+        $samples = $this->picker()->pick(
+            [['sku' => 'A-1', 'color' => 'red'], ['sku' => 'A-2', 'name' => 'Lamp']],
+            ['sku', 'color', 'name']
+        );
+
+        $this->assertSame(['red'], $samples['color']);
+        $this->assertSame(['Lamp'], $samples['name']);
+        $this->assertCount(2, $samples['sku']);
+    }
+
     public function testALongTextIsCutToFiftyCharactersNotBytes(): void
     {
         $samples = $this->picker()->pick(

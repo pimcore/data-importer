@@ -46,6 +46,7 @@ final readonly class SampleValuePicker
     {
         $samples = [];
         $seen = [];
+        $firstRow = [];
         $rowCount = 0;
         $rowsWithValues = 0;
 
@@ -63,6 +64,7 @@ final readonly class SampleValuePicker
                 }
 
                 $hasValue = true;
+                $firstRow[$index] ??= $rowCount;
                 $seen[$index] = ($seen[$index] ?? 0) + 1;
                 $samples[$index] = $this->keep($samples[$index] ?? [], $value, $seen[$index]);
             }
@@ -74,10 +76,40 @@ final readonly class SampleValuePicker
             return [];
         }
 
+        $samples = array_diff_key($samples, $this->sharingTheirOnlyRow($seen, $firstRow));
+
         return array_map(
             fn (array $values): array => $this->randomizer->shuffleArray(array_values(array_unique($values))),
             $samples
         );
+    }
+
+    /**
+     * Columns with a value in one row only, where another such column has its value in that same row: together their
+     * values would be that row's record.
+     *
+     * @param array<string, int> $seen rows with a value, per column
+     * @param array<string, int> $firstRow the first row with a value, per column
+     *
+     * @return array<string, true>
+     */
+    private function sharingTheirOnlyRow(array $seen, array $firstRow): array
+    {
+        $byRow = [];
+        foreach ($seen as $index => $count) {
+            if ($count === 1) {
+                $byRow[$firstRow[$index]][] = $index;
+            }
+        }
+
+        $dropped = [];
+        foreach ($byRow as $indexes) {
+            if (count($indexes) > 1) {
+                $dropped += array_fill_keys($indexes, true);
+            }
+        }
+
+        return $dropped;
     }
 
     /**

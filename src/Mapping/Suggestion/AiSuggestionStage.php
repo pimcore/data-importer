@@ -83,6 +83,8 @@ final readonly class AiSuggestionStage
             return null;
         }
 
+        $taskId = null;
+
         try {
             $task = $this->tasks->start(new AgentTaskRequest(
                 agentName: self::AGENT,
@@ -94,6 +96,7 @@ final readonly class AiSuggestionStage
                 origin: self::AGENT,
             ));
 
+            $taskId = $task->id;
             $requestId = bin2hex(random_bytes(16));
             $stored = $this->tmpStore->add(
                 self::STORE_PREFIX . $requestId,
@@ -119,14 +122,29 @@ final readonly class AiSuggestionStage
             $this->logger->warning('Mapping suggestions: the agent task could not be stored', [
                 'taskId' => $task->id,
             ]);
-            $this->tasks->cancel($task->id);
+            $this->cancelUnreadable($task->id);
         } catch (Throwable $exception) {
             $this->logger->warning('Mapping suggestions: the agent task could not start', [
                 'exception' => $exception,
             ]);
+            if ($taskId !== null) {
+                $this->cancelUnreadable($taskId);
+            }
         }
 
         return null;
+    }
+
+    private function cancelUnreadable(string $taskId): void
+    {
+        try {
+            $this->tasks?->cancel($taskId);
+        } catch (Throwable $exception) {
+            $this->logger->warning('Mapping suggestions: the agent task could not be cancelled', [
+                'taskId' => $taskId,
+                'exception' => $exception,
+            ]);
+        }
     }
 
     /**

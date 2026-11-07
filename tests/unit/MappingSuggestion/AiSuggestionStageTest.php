@@ -313,6 +313,41 @@ class AiSuggestionStageTest extends Unit
         $this->assertNull($stage->start($this->input(), self::USER_ID));
     }
 
+    public function testAStoreThatThrowsCancelsTheStartedTaskAndLeavesNoRequest(): void
+    {
+        $tasks = $this->createMock(AgentTaskServiceInterface::class);
+        $tasks->method('start')->willReturn(
+            new AgentTaskInfo('task-1', 'session-1', '', AgentTaskStatus::Running, null)
+        );
+        $tasks->expects($this->once())->method('cancel')->with('task-1');
+
+        $tmpStore = $this->createStub(TmpStoreResolverInterface::class);
+        $tmpStore->method('add')->willThrowException(new RuntimeException('db down'));
+
+        $stage = new AiSuggestionStage($tasks, $tmpStore, new NullLogger(), true);
+
+        $this->assertNull($stage->start($this->input(), self::USER_ID));
+    }
+
+    public function testACancelThatFailsAfterTheStoreThrewStillLeavesNoRequestAndIsLogged(): void
+    {
+        $tasks = $this->createStub(AgentTaskServiceInterface::class);
+        $tasks->method('start')->willReturn(
+            new AgentTaskInfo('task-1', 'session-1', '', AgentTaskStatus::Running, null)
+        );
+        $tasks->method('cancel')->willThrowException(new TaskDispatchException('down'));
+
+        $tmpStore = $this->createStub(TmpStoreResolverInterface::class);
+        $tmpStore->method('add')->willThrowException(new RuntimeException('db down'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(2))->method('warning');
+
+        $stage = new AiSuggestionStage($tasks, $tmpStore, $logger, true);
+
+        $this->assertNull($stage->start($this->input(), self::USER_ID));
+    }
+
     public function testAnUnknownRequestIsNull(): void
     {
         $this->assertNull(
