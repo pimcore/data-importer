@@ -20,7 +20,6 @@ use Pimcore\Bundle\DataImporterBundle\OpenApi\Config\Tags;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Request\ReferenceRequestBody;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Response\DefaultResponses;
@@ -29,7 +28,6 @@ use Pimcore\Bundle\StudioBackendBundle\Util\Constant\HttpResponseCodes;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\SerializerInterface;
 
 /**
@@ -63,7 +61,6 @@ final class SuggestController extends AbstractApiController
         description: 'bundle_data_importer_mapping_suggestion_suggest_success_response',
         content: new JsonContent(ref: MappingSuggestionsResponse::class)
     )]
-    #[IsGranted(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG)]
     #[DefaultResponses([
         HttpResponseCodes::UNAUTHORIZED,
         HttpResponseCodes::FORBIDDEN,

@@ -95,6 +95,12 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
   const activeFilterRef = useRef(activeFilter)
   activeFilterRef.current = activeFilter
 
+  // a response for an earlier class or source no longer fits the configuration it would be applied to
+  const suggestionRequestRef = useRef(0)
+  useEffect(() => {
+    suggestionRequestRef.current++
+  }, [classId, columnHeaderOptions])
+
   const activeFilterLabel = useMemo(() => {
     if (activeFilter === null) return null
     return sourceRows.find((r) => r.dataIndex === activeFilter)?.label ?? activeFilter
@@ -324,16 +330,24 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
     let computed: MappingSuggestion[] = []
 
     if (classId !== undefined && classId !== '' && columns.length > 0) {
+      const request = ++suggestionRequestRef.current
       const result = await suggestMappings({
         bundleDataImporterMappingSuggestionParameters: { classId, columns }
       })
+
+      if (request !== suggestionRequestRef.current) return
 
       if (result.data === undefined) {
         trackError(new ApiError(result.error ?? {}))
         return
       }
 
-      computed = toMappingSuggestions(result.data.suggestions, sourceRows)
+      // columns mapped while the request ran are not proposed again
+      const stillUnmapped = new Set(collectUnmappedColumns(columnHeaderOptions, getMappingConfig()).map((column) => column.index))
+      computed = toMappingSuggestions(
+        result.data.suggestions.filter((suggestion) => stillUnmapped.has(suggestion.sourceIndex)),
+        sourceRows
+      )
     }
 
     setSuggestions(computed)

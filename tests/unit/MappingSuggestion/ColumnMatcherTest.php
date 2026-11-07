@@ -146,6 +146,9 @@ class ColumnMatcherTest extends Unit
             'a valid regional language keeps its spelling' => ['bezeichnung_de_at', 'de_AT'],
             'a valid script language keeps its spelling' => ['Bezeichnung zh_HANS', 'zh_Hans'],
             'an unknown region falls back to its language' => ['bezeichnung_en_GB', 'en'],
+            'a lower case unknown region falls back to its language' => ['bezeichnung_en_gb', 'en'],
+            'a region that is a valid language too falls back to the language' => ['bezeichnung_en_DE', 'en'],
+            'a bracketed region that is a valid language too' => ['Bezeichnung (en_DE)', 'en'],
         ];
     }
 
