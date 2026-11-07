@@ -374,3 +374,25 @@ data-importer.ad-hoc-import.objects.match-hint: Found objects are updated where 
 data-importer.ad-hoc-import.objects.new-objects-in: New objects in
 data-importer.ad-hoc-import.objects.optional: (optional)
 data-importer.ad-hoc-import.objects.new-objects-hint: 'Empty: the folder you clicked.'
+data-importer.ad-hoc-import.mapping.map-with: Map with
+data-importer.ad-hoc-import.mapping.map-here: Map the columns here
+data-importer.ad-hoc-import.mapping.use-configuration: Use a Data Importer configuration
+data-importer.ad-hoc-import.mapping.filter.all: 'All ({{count}})'
+data-importer.ad-hoc-import.mapping.filter.mapped: 'Mapped ({{count}})'
+data-importer.ad-hoc-import.mapping.filter.open: 'Open ({{count}})'
+data-importer.ad-hoc-import.mapping.search: Find a column
+data-importer.ad-hoc-import.mapping.use-all-suggestions: 'Use all suggestions ({{count}})'
+data-importer.ad-hoc-import.mapping.missing-required: 'Required fields without a column: {{fields}}'
+data-importer.ad-hoc-import.mapping.columns: Columns of the file
+data-importer.ad-hoc-import.mapping.no-rows: No column to show
+data-importer.ad-hoc-import.mapping.field-of: 'Field for {{column}}'
+data-importer.ad-hoc-import.mapping.dont-import: Don't import
+data-importer.ad-hoc-import.mapping.required-field: '{{field}} (required)'
+data-importer.ad-hoc-import.mapping.choose-field: Choose a field
+data-importer.ad-hoc-import.mapping.suggested: 'Suggested: {{field}}'
+data-importer.ad-hoc-import.mapping.object-id: Object ID
+data-importer.ad-hoc-import.mapping.match: Finds the objects
+data-importer.ad-hoc-import.mapping.auto: auto
+data-importer.ad-hoc-import.mapping.not-imported: 'Not imported ({{count}})'
+data-importer.ad-hoc-import.mapping.restore: Restore
+data-importer.ad-hoc-import.mapping.restore-column: 'Restore {{column}}'

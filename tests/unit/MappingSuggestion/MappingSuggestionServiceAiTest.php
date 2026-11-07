@@ -107,6 +107,35 @@ class MappingSuggestionServiceAiTest extends MappingSuggestionServiceTestCase
         ];
     }
 
+    public function testACallerAskingWithoutTheStageStartsNoTask(): void
+    {
+        $agent = $this->agent();
+        $service = $this->service(
+            ['default' => [$this->attribute('sku'), $this->attribute('color')]],
+            aiStage: $this->aiStage($agent)
+        );
+
+        $response = $service->suggest($this->parameters('SKU', 'Farbe'), [], false);
+
+        $this->assertSame(['sku'], array_column($response->getSuggestions(), 'targetFieldName'));
+        $this->assertSame('none', $response->getAiStatus());
+        $this->assertNull($response->getAiRequestId());
+        $this->assertSame([], $agent->requests);
+    }
+
+    public function testAnExcludedFieldIsOfferedToTheAgentNeither(): void
+    {
+        $agent = $this->agent();
+        $service = $this->service(
+            ['default' => [$this->attribute('sku'), $this->attribute('color'), $this->attribute('path')]],
+            aiStage: $this->aiStage($agent)
+        );
+
+        $service->suggest($this->parameters('SKU', 'Farbe'), ['path']);
+
+        $this->assertSame(['color'], $this->outputEnum($agent->requests[0], 'field'));
+    }
+
     public function testNothingOpenStartsNoTask(): void
     {
         $agent = $this->agent();

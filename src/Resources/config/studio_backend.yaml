@@ -73,6 +73,9 @@ services:
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingService
+
     Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~

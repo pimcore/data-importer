@@ -79,8 +79,11 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
     ) {
     }
 
-    public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse
-    {
+    public function suggest(
+        MappingSuggestionParameters $parameters,
+        array $excludedTargets = [],
+        bool $withAiStage = true
+    ): MappingSuggestionsResponse {
         $classId = $parameters->getClassId();
         $mayConfigure = $this->assertMaySuggest();
 
@@ -92,10 +95,13 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
             $this->assertMayCreate($classId);
         }
 
-        $targets = $this->loadTargets($classId);
+        $targets = array_values(array_filter(
+            $this->loadTargets($classId),
+            static fn (array $target): bool => !in_array($target['key'], $excludedTargets, true)
+        ));
         $languages = $this->toolResolver->getValidLanguages();
         $suggestions = $this->columnMatcher->match($parameters->getColumns(), $targets, $languages);
-        $aiRequestId = $this->startAiStage($parameters, $suggestions, $targets, $languages);
+        $aiRequestId = $withAiStage ? $this->startAiStage($parameters, $suggestions, $targets, $languages) : null;
 
         return $this->respond(
             $suggestions,
@@ -264,10 +270,7 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         }
     }
 
-    /**
-     * @return list<array{key: string, title: string, localized: bool, transformationResultType: string}>
-     */
-    private function loadTargets(string $classId): array
+    public function loadTargets(string $classId): array
     {
         $targets = [];
         foreach (self::TRANSFORMATION_RESULT_TYPES as $resultType => $requestedTypes) {

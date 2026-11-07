@@ -109,6 +109,9 @@ export const api = baseApi.enhanceEndpoints({
     },
     bundleDataImporterAdHocImportLoadMatchFields: {
       providesTags: []
+    },
+    bundleDataImporterAdHocImportLoadMapping: {
+      invalidatesTags: []
     }
   }
 })
@@ -125,7 +128,8 @@ export const {
   useBundleDataImporterMappingSuggestionLoadAiQuery,
   useBundleDataImporterAdHocImportInspectFileMutation,
   useBundleDataImporterAdHocImportDeleteFileMutation,
-  useBundleDataImporterAdHocImportLoadMatchFieldsQuery
+  useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
+  useBundleDataImporterAdHocImportLoadMappingMutation
 } = api
 
 export type * from './data-importer-api-slice.gen'

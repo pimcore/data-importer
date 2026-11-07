@@ -27,7 +27,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 interface MappingSuggestionServiceInterface
 {
     /**
-     * Answers with the name comparison's suggestions at once; with the AI stage on, its task starts in the background.
+     * Answers with the name comparison's suggestions at once; with the AI stage on and asked for, its task starts in
+     * the background.
+     *
+     * @param list<string> $excludedTargets fields left out before matching, so a column can still get another one
+     * @param bool $withAiStage false for a caller that never polls the AI stage's answer
      *
      * @throws ForbiddenException without the data importer's configuration right or the ad hoc import's right,
      *                             or with only the latter for a class the user may not create
@@ -36,7 +40,11 @@ interface MappingSuggestionServiceInterface
      * @throws ForbiddenException when sample values are on and the user may not read the named configuration
      * @throws Exception
      */
-    public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse;
+    public function suggest(
+        MappingSuggestionParameters $parameters,
+        array $excludedTargets = [],
+        bool $withAiStage = true
+    ): MappingSuggestionsResponse;
 
     /**
      * Where the AI stage of an earlier suggest() stands, with its suggestions once it finished.
@@ -46,4 +54,11 @@ interface MappingSuggestionServiceInterface
      * @throws EnvironmentException when the current user cannot be resolved
      */
     public function loadAi(string $requestId): MappingSuggestionsResponse;
+
+    /**
+     * The fields of an existing class a suggestion can name, each with the result type that writes it.
+     *
+     * @return list<array{key: string, title: string, localized: bool, transformationResultType: string}>
+     */
+    public function loadTargets(string $classId): array;
 }

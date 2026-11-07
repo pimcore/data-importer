@@ -17,11 +17,15 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
+use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -97,6 +101,19 @@ class AdHocImportControllersTest extends Unit
         $service->expects($this->once())->method('loadMatchFields')->with('PROD')->willReturn($answer);
 
         $response = (new LoadMatchFieldsController($this->serializer($answer), $service))->loadMatchFields('PROD');
+
+        $this->assertSame(self::ANSWER, $response->getContent());
+    }
+
+    public function testTheMappingIsAskedForTheClassAndTheColumns(): void
+    {
+        $parameters = new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]);
+        $answer = new AdHocImportMappingResponse([], []);
+
+        $service = $this->createMock(AdHocImportMappingServiceInterface::class);
+        $service->expects($this->once())->method('loadMapping')->with($parameters)->willReturn($answer);
+
+        $response = (new LoadMappingController($this->serializer($answer), $service))->loadMapping($parameters);
 
         $this->assertSame(self::ANSWER, $response->getContent());
     }

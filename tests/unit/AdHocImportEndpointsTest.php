@@ -20,12 +20,14 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Util\Constant\CacheKeys;
@@ -52,6 +54,7 @@ class AdHocImportEndpointsTest extends Unit
             'GET',
             '/ad-hoc-import/match-fields',
         ],
+        LoadMappingController::class => ['loadMapping', 'load_mapping', 'POST', '/ad-hoc-import/mapping'],
     ];
 
     protected UnitTester $tester;
@@ -142,6 +145,35 @@ class AdHocImportEndpointsTest extends Unit
         $this->assertTrue($answer['hasHeaderRow']);
         $this->assertSame([['dataIndex' => 'sku', 'label' => 'SKU']], $answer['columns']);
         $this->assertSame([['A-1'], [null]], $answer['firstRows']);
+    }
+
+    public function testAMappingReachesTheStudioWithItsFieldNames(): void
+    {
+        /** @var SerializerInterface $serializer */
+        $serializer = $this->tester->grabService('serializer');
+
+        $field = [
+            'key' => 'name',
+            'title' => 'Name',
+            'localized' => true,
+            'mandatory' => true,
+            'transformationResultType' => 'default',
+        ];
+        $suggestion = [
+            'sourceIndex' => 'Name DE',
+            'sourceLabel' => 'Name DE',
+            'targetFieldName' => 'name',
+            'targetFieldLabel' => 'Name',
+            'transformationResultType' => 'default',
+            'score' => 100,
+            'language' => 'de',
+        ];
+        $answer = json_decode(
+            $serializer->serialize(new AdHocImportMappingResponse([$field], [$suggestion]), 'json'),
+            true
+        );
+
+        $this->assertSame(['fields' => [$field], 'suggestions' => [$suggestion]], $answer);
     }
 
     public function testTheMigrationAddsTheRightUnlessItExistsAndRemovesItAgain(): void
