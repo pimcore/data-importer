@@ -40,8 +40,7 @@ import {
   type MappingField
 } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
-import { canContinueWithConfiguration, findConfiguration, type MapWith } from './mapping-step/configuration-state'
-import { useImportConfigurations } from './mapping-step/use-import-configurations'
+import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -68,13 +67,11 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [mapping, setMapping] = useState<Mapping | null>(null)
   const [fields, setFields] = useState<MappingField[]>([])
   const [isLoadingMapping, setIsLoadingMapping] = useState(false)
-  const [mapWith, setMapWith] = useState<MapWith>('here')
-  const [configurationName, setConfigurationName] = useState<string | undefined>(undefined)
 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
-  const { configurations, isFetching: isListing, isError: isListingFailed } = useImportConfigurations(mapWith === 'configuration')
+  const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
@@ -216,10 +213,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
-  const inspected = phase.kind === 'inspected' ? phase.inspected : undefined
-
-  const canMapOn = (): boolean => mapWith === 'configuration'
-    ? canContinueWithConfiguration(findConfiguration(configurations, configurationName), inspected)
+  const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
+    ? configurationMapping.canContinue
     : mapping !== null && canContinueMapping(mapping)
 
   const canGoOn = step === 0
@@ -287,20 +282,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       ) }
       { step === 1 && (
         <MappingStep
-          configuration={ {
-            inspected,
-            configurations,
-            isLoading: isListing,
-            isError: isListingFailed,
-            chosen: configurationName,
-            onChoose: setConfigurationName
-          } }
+          configuration={ configurationMapping.choice }
           fields={ fields }
           isLoading={ isLoadingMapping }
-          mapWith={ mapWith }
+          mapWith={ configurationMapping.mapWith }
           mapping={ mapping }
           onChange={ setMapping }
-          onMapWithChange={ setMapWith }
+          onMapWithChange={ configurationMapping.setMapWith }
         />
       ) }
     </Modal>
