@@ -22,9 +22,9 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CreatableClassTrait;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
-use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
@@ -40,6 +40,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 final readonly class AdHocImportService implements AdHocImportServiceInterface
 {
+    use CreatableClassTrait;
     use CurrentUserResolverTrait;
 
     private const int MAX_FILE_SIZE = 52428800; // 50MB, as for the preview files of a configuration
@@ -53,7 +54,7 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
         private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
         private DataObjectResolverInterface $dataObjectResolver,
         private DataTypeServiceInterface $dataTypeService,
-        private ClassDefinitionServiceInterface $classDefinitionService,
+        private ClassDefinitionServiceInterface $classDefinitionService, // NOSONAR php:S1068 read by CreatableClassTrait
     ) {
     }
 
@@ -118,13 +119,7 @@ final readonly class AdHocImportService implements AdHocImportServiceInterface
 
     public function loadMatchFields(string $classId): ClassAttributesResponse
     {
-        $creatable = array_map(
-            static fn (ClassDefinitionList $class): string => $class->getId(),
-            $this->classDefinitionService->getClassDefinitionCollection(creatableOnly: true)
-        );
-        if (!in_array($classId, $creatable, true)) {
-            throw new ForbiddenException(sprintf('Access denied to class %s', $classId));
-        }
+        $this->assertMayCreate($classId);
 
         $attributes = $this->dataTypeService->loadClassAttributes(
             $classId,

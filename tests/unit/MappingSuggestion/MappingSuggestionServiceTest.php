@@ -145,6 +145,26 @@ class MappingSuggestionServiceTest extends Unit
         ], $response->getSuggestions());
     }
 
+    public function testAnExcludedFieldIsLeftOutBeforeMatchingSoTheColumnGetsTheNextBest(): void
+    {
+        $attributes = ['default' => [$this->attribute('key'), ['key' => 'keyCode', 'title' => 'Key code [keyCode]']]];
+
+        $this->assertSame(
+            ['key'],
+            array_column(
+                $this->service($attributes)->suggest($this->parameters('Key'))->getSuggestions(),
+                'targetFieldName'
+            )
+        );
+        $this->assertSame(
+            ['keyCode'],
+            array_column(
+                $this->service($attributes)->suggest($this->parameters('Key'), ['key'])->getSuggestions(),
+                'targetFieldName'
+            )
+        );
+    }
+
     public function testAFieldOfAnotherResultTypeIsSuggestedWithThatType(): void
     {
         $response = $this->service(['date' => [$this->attribute('validFrom')]])
@@ -184,6 +204,24 @@ class MappingSuggestionServiceTest extends Unit
             ['Product', 'dataObject', false, true, false],
             ['Product', 'dataObjectArray', false, true, false],
         ], $requests);
+    }
+
+    public function testTheTargetsAreEveryFieldOnceWithTheResultTypeThatWritesIt(): void
+    {
+        $targets = $this->service([
+            'default' => [$this->attribute('name', true)],
+            'date' => [$this->attribute('validFrom'), $this->attribute('name', true)],
+        ])->loadTargets('Product');
+
+        $this->assertSame([
+            ['key' => 'name', 'title' => 'name [name]', 'localized' => true, 'transformationResultType' => 'default'],
+            [
+                'key' => 'validFrom',
+                'title' => 'validFrom [validFrom]',
+                'localized' => false,
+                'transformationResultType' => 'date',
+            ],
+        ], $targets);
     }
 
     public function testAnAttributeWithoutTheLocalizedFlagIsNotLocalized(): void

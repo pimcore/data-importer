@@ -67,8 +67,10 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
     ) {
     }
 
-    public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse
-    {
+    public function suggest(
+        MappingSuggestionParameters $parameters,
+        array $excludedTargets = []
+    ): MappingSuggestionsResponse {
         $classId = $parameters->getClassId();
         $user = $this->resolveCurrentUser();
         $mayConfigure = $user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG);
@@ -89,7 +91,10 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         $response = $this->hydrator->hydrate(
             $this->columnMatcher->match(
                 $parameters->getColumns(),
-                $this->loadTargets($classId),
+                array_values(array_filter(
+                    $this->loadTargets($classId),
+                    static fn (array $target): bool => !in_array($target['key'], $excludedTargets, true)
+                )),
                 $this->toolResolver->getValidLanguages()
             )
         );
@@ -116,10 +121,7 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         }
     }
 
-    /**
-     * @return list<array{key: string, title: string, localized: bool, transformationResultType: string}>
-     */
-    private function loadTargets(string $classId): array
+    public function loadTargets(string $classId): array
     {
         $targets = [];
         foreach (self::TRANSFORMATION_RESULT_TYPES as $resultType => $requestedTypes) {

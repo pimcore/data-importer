@@ -46,7 +46,8 @@ jest.mock('./file-step/upload-file', () => ({
 jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportInspectFileMutation: () => [mockInspectFile],
   useBundleDataImporterAdHocImportDeleteFileMutation: () => [mockDeleteFile],
-  useBundleDataImporterAdHocImportLoadMatchFieldsQuery: (...args: unknown[]) => mockLoadMatchFields(...args)
+  useBundleDataImporterAdHocImportLoadMatchFieldsQuery: (...args: unknown[]) => mockLoadMatchFields(...args),
+  useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping]
 }))
 
 const mockTrackError = jest.fn()
@@ -55,6 +56,7 @@ const mockUploadFile = jest.fn()
 const mockInspectFile = jest.fn()
 const mockDeleteFile = jest.fn()
 const mockLoadMatchFields = jest.fn()
+const mockLoadMapping = jest.fn()
 
 const csv: InspectedFile = {
   maxRows: 5000,
@@ -139,6 +141,22 @@ const dropAndRead = async (inspected: InspectedFile, name = 'prices.csv', size =
   await act(async () => { running.resolve(inspected) })
 }
 
+const mappingAnswer = {
+  fields: [
+    { key: 'sku', title: 'SKU', localized: false, mandatory: false, transformationResultType: 'default' },
+    { key: 'title', title: 'Title', localized: false, mandatory: false, transformationResultType: 'default' }
+  ],
+  suggestions: [{
+    sourceIndex: 'Bezeichnung',
+    sourceLabel: 'Bezeichnung',
+    targetFieldName: 'title',
+    targetFieldLabel: 'Title',
+    transformationResultType: 'default',
+    score: 100,
+    language: null
+  }]
+}
+
 const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
@@ -157,6 +175,7 @@ beforeEach(() => {
     isFetching: false
   })
   mockDeleteFile.mockResolvedValue({ data: undefined })
+  mockLoadMapping.mockResolvedValue({ data: mappingAnswer })
 })
 
 afterEach(() => {
@@ -382,7 +401,7 @@ describe('a CSV the server read', () => {
     await dropAndRead(csv)
     chooseWhatToMatchBy()
 
-    fireEvent.click(nextButton())
+    await act(async () => { fireEvent.click(nextButton()) })
 
     expect(screen.getByText('Mapping', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
     expect(screen.queryByRole('region', { name: 'File' })).toBeNull()
@@ -861,5 +880,156 @@ describe('leaving', () => {
 
     expect(mockDeleteFile).not.toHaveBeenCalled()
     expect(onClose).toHaveBeenCalled()
+  })
+})
+
+describe('the mapping step', () => {
+  const toMapping = async (): Promise<void> => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+  }
+
+  it('asks for the mapping of the class with the columns of the file and shows a row per column', async () => {
+    await toMapping()
+
+    expect(mockLoadMapping).toHaveBeenCalledWith({
+      bundleDataImporterMappingSuggestionParameters: {
+        classId: 'PROD',
+        columns: [{ index: 'Artikelnr', label: 'Artikelnr' }, { index: 'Bezeichnung', label: 'Bezeichnung' }]
+      }
+    })
+    expect(within(screen.getByRole('list', { name: 'Columns of the file' })).getAllByRole('listitem')).toHaveLength(2)
+    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect(screen.getByText('auto')).toBeTruthy()
+  })
+
+  it('shows that it loads until the answer comes', async () => {
+    let answer: (value: unknown) => void = () => {}
+    mockLoadMapping.mockReturnValue(new Promise((resolve) => { answer = resolve }))
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    fireEvent.click(nextButton())
+
+    expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+
+    await act(async () => { answer({ data: mappingAnswer }) })
+
+    expect(document.querySelector('[aria-busy="true"]')).toBeNull()
+  })
+
+  it('goes on to the preview once a column is imported', async () => {
+    await toMapping()
+
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+    select('Field for Bezeichnung', '-')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore Bezeichnung' }))
+    select('Field for Bezeichnung', 'title')
+    fireEvent.click(nextButton())
+
+    expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+  })
+
+  it('keeps the mapping when going back and on with nothing changed', async () => {
+    await toMapping()
+    select('Field for Bezeichnung', '-')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(mockLoadMapping).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('region', { name: 'Not imported (1)' })).toBeTruthy()
+  })
+
+  it('makes a new mapping for another column to match by', async () => {
+    await toMapping()
+    select('Field for Bezeichnung', '-')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    select('from column', 'Bezeichnung')
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(mockLoadMapping).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('region', { name: 'Not imported (1)' })).toBeNull()
+    expect(screen.getByText('Finds the objects')).toBeTruthy()
+  })
+
+  describe('of a workbook read again from another sheet', () => {
+    const sku = { dataIndex: '0', label: 'sku' }
+    const name = { dataIndex: '1', label: 'name' }
+    const toSheetMapping = async (first: InspectedFile): Promise<void> => {
+      renderDialog()
+      await dropAndRead(first, 'northhike-autumn.xlsx')
+      select('Field', 'sku')
+      select('from column', '0')
+      await act(async () => { fireEvent.click(nextButton()) })
+      select('Field for name', 'title')
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    }
+
+    it('keeps the choices for the same column names and shows the values of that sheet', async () => {
+      const products = { ...xlsx, columns: [sku, name], firstRows: [['NH-1', 'Trail jacket']] }
+      mockInspectFile.mockResolvedValue({ data: { ...products, sheetName: 'Prices', firstRows: [['NH-1', 'Rain coat']] } })
+      await toSheetMapping(products)
+
+      await act(async () => { select('Sheet', 'Prices') })
+      await act(async () => { fireEvent.click(nextButton()) })
+
+      expect(mockLoadMapping).toHaveBeenCalledTimes(1)
+      expect(screen.getByLabelText<HTMLSelectElement>('Field for name').value).toBe('title')
+      expect(screen.getByText('Rain coat')).toBeTruthy()
+      expect(screen.queryByText('Trail jacket')).toBeNull()
+    })
+
+    it('makes a new mapping when the columns have no names, even for the same match column', async () => {
+      const headerless = { ...xlsx, hasHeaderRow: false, columns: [{ dataIndex: '0', label: '0' }, { dataIndex: '1', label: '1' }] }
+      mockInspectFile.mockResolvedValue({ data: { ...headerless, sheetName: 'Prices' } })
+      renderDialog()
+      await dropAndRead(headerless, 'northhike-autumn.xlsx')
+      select('Field', 'sku')
+      select('from column', '0')
+      await act(async () => { fireEvent.click(nextButton()) })
+      select('Field for 1', 'title')
+      fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+
+      await act(async () => { select('Sheet', 'Prices') })
+      select('from column', '0')
+      await act(async () => { fireEvent.click(nextButton()) })
+
+      expect(mockLoadMapping).toHaveBeenCalledTimes(2)
+      expect(screen.getByLabelText<HTMLSelectElement>('Field for 1').value).toBe('')
+    })
+  })
+
+  it('takes only the answer to the mapping asked for last', async () => {
+    const answers: Array<(value: unknown) => void> = []
+    mockLoadMapping.mockImplementation(async () => await new Promise((resolve) => { answers.push(resolve) }))
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    fireEvent.click(nextButton())
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    select('from column', 'Bezeichnung')
+    fireEvent.click(nextButton())
+
+    await act(async () => { answers[1]({ data: { fields: mappingAnswer.fields, suggestions: [] } }) })
+    await act(async () => { answers[0]({ data: mappingAnswer }) })
+
+    expect(screen.queryByText('auto')).toBeNull()
+    expect(screen.getByLabelText<HTMLSelectElement>('Field for Artikelnr').value).toBe('')
+  })
+
+  it('reports a mapping that could not be loaded and cannot go on', async () => {
+    mockLoadMapping.mockResolvedValue({ error: { status: 403, data: {} } })
+    await toMapping()
+
+    expect(mockTrackError).toHaveBeenCalled()
+    expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
   })
 })

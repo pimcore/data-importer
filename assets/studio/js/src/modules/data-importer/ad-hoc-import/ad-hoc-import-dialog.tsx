@@ -14,7 +14,8 @@ import { Button, Modal, ModalFooter, Steps } from '@pimcore/studio-ui-bundle/com
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
-  useBundleDataImporterAdHocImportInspectFileMutation
+  useBundleDataImporterAdHocImportInspectFileMutation,
+  useBundleDataImporterAdHocImportLoadMappingMutation
 } from '../data-importer-api-slice-enhanced'
 import { type BundleDataImporterAdHocImportFileSettings } from '../data-importer-api-slice.gen'
 import { type AdHocImportTarget } from './dialog-store'
@@ -30,6 +31,15 @@ import {
   type ObjectsSettings
 } from './file-step/file-step-state'
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
+import {
+  canContinueMapping,
+  createMapping,
+  mappingBasis,
+  withSamples,
+  type Mapping,
+  type MappingField
+} from './mapping-step/mapping-state'
+import { MappingStep } from './mapping-step/mapping-step'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -53,15 +63,21 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
   const [step, setStep] = useState(0)
   const [isInspecting, setIsInspecting] = useState(false)
+  const [mapping, setMapping] = useState<Mapping | null>(null)
+  const [fields, setFields] = useState<MappingField[]>([])
+  const [isLoadingMapping, setIsLoadingMapping] = useState(false)
 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
+  const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
   const latestInspection = useRef(0)
   // a change made while an answer is pending builds on what was asked for, not on the last answer
   const requestedSettings = useRef<BundleDataImporterAdHocImportFileSettings | null>(null)
+  // only the mapping asked for last counts
+  const latestMapping = useRef(0)
 
   const deleteStoredFile = (): void => {
     if (phase.kind === 'inspected' && phase.inspected.fileId !== undefined && phase.inspected.fileId !== null) {
@@ -157,6 +173,48 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
+  // a mapping stays while the file, the class and what to match by stay
+  const toMapping = (): void => {
+    setStep(1)
+
+    if (phase.kind !== 'inspected' || objects.classId === undefined) {
+      return
+    }
+    const { inspected } = phase
+    if (mapping?.basis === mappingBasis(inspected, objects)) {
+      setMapping(withSamples(mapping, inspected))
+      return
+    }
+
+    const request = ++latestMapping.current
+    setMapping(null)
+    setIsLoadingMapping(true)
+
+    void loadMapping({
+      bundleDataImporterMappingSuggestionParameters: {
+        classId: objects.classId,
+        columns: inspected.columns.map(({ dataIndex, label }) => ({ index: dataIndex, label }))
+      }
+    }).then((result) => {
+      if (request !== latestMapping.current) {
+        return
+      }
+      setIsLoadingMapping(false)
+
+      if ('error' in result && result.error !== undefined) {
+        trackError(new ApiError(result.error))
+        return
+      }
+
+      setFields(result.data.fields)
+      setMapping(createMapping(inspected, objects, result.data))
+    })
+  }
+
+  const canGoOn = step === 0
+    ? !isInspecting && canContinue(phase, objects)
+    : mapping !== null && canContinueMapping(mapping)
+
   const onRemoveFile = (): void => {
     deleteStoredFile()
     reset()
@@ -178,10 +236,10 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           { step === 0
             ? <Button onClick={ close }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
             : <Button onClick={ () => { setStep(step - 1) } }>{ t('data-importer.ad-hoc-import.back') }</Button> }
-          { step === 0 && (
+          { step < 2 && (
             <Button
-              disabled={ isInspecting || !canContinue(phase, objects) }
-              onClick={ () => { setStep(step + 1) } }
+              disabled={ !canGoOn }
+              onClick={ () => { step === 0 ? toMapping() : setStep(step + 1) } }
               type="primary"
             >
               { t('data-importer.ad-hoc-import.next') }
@@ -214,6 +272,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           onRemoveFile={ onRemoveFile }
           onSettingsChange={ onSettingsChange }
           phase={ phase }
+        />
+      ) }
+      { step === 1 && (
+        <MappingStep
+          fields={ fields }
+          isLoading={ isLoadingMapping }
+          mapping={ mapping }
+          onChange={ setMapping }
         />
       ) }
     </Modal>

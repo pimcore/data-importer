@@ -303,6 +303,17 @@ const injectedRtkApi = api
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportLoadMapping: build.mutation<
+                BundleDataImporterAdHocImportLoadMappingApiResponse,
+                BundleDataImporterAdHocImportLoadMappingApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/mapping`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterMappingSuggestionParameters,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -500,6 +511,11 @@ export type BundleDataImporterAdHocImportLoadMatchFieldsApiResponse =
 export type BundleDataImporterAdHocImportLoadMatchFieldsApiArg = {
     /** The ID of the data object class */
     classId: string;
+};
+export type BundleDataImporterAdHocImportLoadMappingApiResponse =
+    /** status 200 The fields and the suggested field per column */ BundleDataImporterAdHocImportMappingResponse;
+export type BundleDataImporterAdHocImportLoadMappingApiArg = {
+    bundleDataImporterMappingSuggestionParameters: BundleDataImporterMappingSuggestionParameters;
 };
 export type BundleDataImporterClassAttributesResponse = {
     /** AdditionalAttributes */
@@ -845,6 +861,38 @@ export type BundleDataImporterAdHocImportFileSettings = {
     /** XLSX: the sheet; empty for the first one */
     sheetName?: string | null;
 };
+export type BundleDataImporterAdHocImportMappingResponse = {
+    /** The fields of the class a column can be imported into */
+    fields: {
+        /** Key of the field */
+        key: string;
+        /** Title of the field */
+        title: string;
+        /** Whether the field holds a value per language */
+        localized: boolean;
+        /** Whether the class requires a value in the field */
+        mandatory: boolean;
+        /** Transformation result type that writes the field */
+        transformationResultType: string;
+    }[];
+    /** The suggested field per column, best score first; a column without a match has none */
+    suggestions: {
+        /** Column data index */
+        sourceIndex: string;
+        /** Column name */
+        sourceLabel: string;
+        /** Key of the suggested field */
+        targetFieldName: string;
+        /** Title of the suggested field */
+        targetFieldLabel: string;
+        /** Transformation result type that writes the suggested field */
+        transformationResultType: string;
+        /** How well the names match, from 0 to 100 */
+        score: number;
+        /** Language guessed from the column name, for a localized field */
+        language: string | null;
+    }[];
+};
 export const {
     useBundleDataImporterClassificationstoreLoadAttributesQuery,
     useBundleDataImporterClassificationstoreLoadKeyNameQuery,
@@ -873,4 +921,5 @@ export const {
     useBundleDataImporterAdHocImportInspectFileMutation,
     useBundleDataImporterAdHocImportDeleteFileMutation,
     useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
+    useBundleDataImporterAdHocImportLoadMappingMutation,
 } = injectedRtkApi;

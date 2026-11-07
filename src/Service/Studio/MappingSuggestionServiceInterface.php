@@ -25,10 +25,22 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\NotFoundException;
 interface MappingSuggestionServiceInterface
 {
     /**
+     * @param list<string> $excludedTargets fields left out before matching, so a column can still get another one
+     *
      * @throws ForbiddenException without the data importer's configuration right or the ad hoc import's right,
      *                             or with only the latter for a class the user may not create
      * @throws NotFoundException when the class does not exist
      * @throws Exception
      */
-    public function suggest(MappingSuggestionParameters $parameters): MappingSuggestionsResponse;
+    public function suggest(
+        MappingSuggestionParameters $parameters,
+        array $excludedTargets = []
+    ): MappingSuggestionsResponse;
+
+    /**
+     * The fields of an existing class a suggestion can name, each with the result type that writes it.
+     *
+     * @return list<array{key: string, title: string, localized: bool, transformationResultType: string}>
+     */
+    public function loadTargets(string $classId): array;
 }

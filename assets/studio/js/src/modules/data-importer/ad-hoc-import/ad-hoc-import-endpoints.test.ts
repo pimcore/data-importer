@@ -78,10 +78,25 @@ describe('the ad hoc import endpoints', () => {
     }])
   })
 
+  it('post the columns to load the mapping of a class for', async () => {
+    const parameters = { classId: 'CAR', columns: [{ index: 'Name DE', label: 'Name DE' }] }
+
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportLoadMapping.initiate({
+      bundleDataImporterMappingSuggestionParameters: parameters
+    }))
+
+    expect(sent).toEqual([{
+      url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/mapping',
+      method: 'POST',
+      body: parameters
+    }])
+  })
+
   it('are exported as hooks', () => {
     const inspect = api.endpoints.bundleDataImporterAdHocImportInspectFile.useMutation
     const remove = api.endpoints.bundleDataImporterAdHocImportDeleteFile.useMutation
     const matchFields = api.endpoints.bundleDataImporterAdHocImportLoadMatchFields.useQuery
+    const mapping = api.endpoints.bundleDataImporterAdHocImportLoadMapping.useMutation
 
     expect(generated.useBundleDataImporterAdHocImportUploadFileMutation).toBe(api.endpoints.bundleDataImporterAdHocImportUploadFile.useMutation)
     expect(enhanced.useBundleDataImporterConnectionListQuery).toBe(api.endpoints.bundleDataImporterConnectionList.useQuery)
@@ -89,6 +104,7 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportInspectFileMutation).toBe(inspect)
       expect(hooks.useBundleDataImporterAdHocImportDeleteFileMutation).toBe(remove)
       expect(hooks.useBundleDataImporterAdHocImportLoadMatchFieldsQuery).toBe(matchFields)
+      expect(hooks.useBundleDataImporterAdHocImportLoadMappingMutation).toBe(mapping)
     }
   })
 })
