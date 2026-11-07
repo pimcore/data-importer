@@ -98,6 +98,20 @@ describe('the ad hoc import endpoints', () => {
     expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/configurations' }])
   })
 
+  it('get the configurations again once a configuration is saved', async () => {
+    const listed = store.dispatch(api.endpoints.bundleDataImporterAdHocImportListConfigurations.initiate())
+    await listed
+    sent.length = 0
+
+    store.dispatch(api.util.invalidateTags(['DataHubConfigs']))
+    for (let tick = 0; tick < 10 && sent.length === 0; tick++) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    listed.unsubscribe()
+
+    expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/configurations' }])
+  })
+
   it('post a column\'s transformations with the file\'s settings to the file', async () => {
     const parameters = {
       classId: 'CAR',

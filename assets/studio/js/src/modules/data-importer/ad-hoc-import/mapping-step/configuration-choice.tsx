@@ -24,6 +24,26 @@ const LIST_WIDTH = 360
 const LIST_MAX_HEIGHT = 420
 const FORM_ITEM_STYLE = { marginBottom: 0 }
 
+const NEXT_KEYS = ['ArrowDown', 'ArrowRight']
+const PREVIOUS_KEYS = ['ArrowUp', 'ArrowLeft']
+
+/**
+ * The radio pattern's arrow keys: focus and choose the next or previous usable card, wrapping around.
+ */
+const moveFocus = (from: HTMLElement, step: number): HTMLElement | undefined => {
+  const group = from.closest('[role="radiogroup"]')
+  const usable = Array.from(group?.querySelectorAll<HTMLElement>('[role="radio"]:not([aria-disabled="true"])') ?? [])
+  if (usable.length === 0) {
+    return undefined
+  }
+
+  const index = usable.indexOf(from)
+  const target = usable[(index + step + usable.length) % usable.length]
+  target.focus()
+
+  return target
+}
+
 const useStyles = createStyles(({ token, css }) => ({
   quiet: css`
     color: ${token.colorTextTertiary};
@@ -140,6 +160,9 @@ export const ConfigurationChoice = ({
         })
   }
 
+  // one tab stop in the group: the chosen card, else the first usable one
+  const tabStop = usable ? configuration.name : configurations.find((shown) => reasonOf(shown) === null)?.name
+
   const card = (shown: ImportConfiguration, index: number): React.JSX.Element => {
     const reason = reasonOf(shown)
     const detailId = `ad-hoc-import-configuration-${index}-detail`
@@ -160,14 +183,26 @@ export const ConfigurationChoice = ({
         className={ [styles.card, isChosen ? styles.chosen : '', reason === null ? '' : styles.unusable].join(' ') }
         key={ shown.name }
         onClick={ choose }
-        onKeyDown={ (event: React.KeyboardEvent) => {
+        onKeyDown={ (event: React.KeyboardEvent<HTMLElement>) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
             choose()
+
+            return
+          }
+
+          const step = NEXT_KEYS.includes(event.key) ? 1 : PREVIOUS_KEYS.includes(event.key) ? -1 : 0
+          if (step !== 0) {
+            event.preventDefault()
+            const target = moveFocus(event.currentTarget, step)
+            const name = target?.getAttribute('aria-label')
+            if (name !== null && name !== undefined) {
+              onChoose(name)
+            }
           }
         } }
         role="radio"
-        tabIndex={ reason === null ? 0 : -1 }
+        tabIndex={ shown.name === tabStop ? 0 : -1 }
       >
         <Flex vertical>
           <Text

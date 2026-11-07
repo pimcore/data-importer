@@ -108,8 +108,9 @@ export const api = baseApi.enhanceEndpoints({
     bundleDataImporterAdHocImportLoadMapping: {
       invalidatesTags: []
     },
+    // a saved configuration changes what the list says about it
     bundleDataImporterAdHocImportListConfigurations: {
-      providesTags: []
+      providesTags: ['DataHubConfigs']
     },
     bundleDataImporterAdHocImportPreviewTransformations: {
       invalidatesTags: []

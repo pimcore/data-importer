@@ -30,7 +30,11 @@ export interface ImportConfigurations {
  * The configurations the import may be mapped with, listed only once they are to be used; a failed listing is reported.
  */
 export const useImportConfigurations = (enabled: boolean): ImportConfigurations => {
-  const listed = useBundleDataImporterAdHocImportListConfigurationsQuery(undefined, { skip: !enabled })
+  // configurations, classes and folder rights may have changed since the dialog was last open
+  const listed = useBundleDataImporterAdHocImportListConfigurationsQuery(undefined, {
+    skip: !enabled,
+    refetchOnMountOrArgChange: true
+  })
 
   useEffect(() => {
     if (listed.isError && listed.error !== undefined) {
@@ -61,6 +65,8 @@ export const useConfigurationMapping = (inspected: InspectedFile | undefined): C
     mapWith,
     setMapWith,
     choice: { inspected, configurations, isLoading: isFetching, isError, chosen, onChoose: setChosen },
-    canContinue: canContinueWithConfiguration(findConfiguration(configurations, chosen), inspected)
+    // a failed or running refresh keeps the last list, which may no longer hold
+    canContinue: !isFetching && !isError &&
+      canContinueWithConfiguration(findConfiguration(configurations, chosen), inspected)
   }
 }

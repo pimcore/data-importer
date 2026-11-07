@@ -163,6 +163,46 @@ describe('the mapping with a configuration', () => {
     expect(card('products').getAttribute('aria-checked')).toBe('true')
   })
 
+  it('is one tab stop, the chosen card or else the first usable one', () => {
+    useConfiguration({
+      configurations: [
+        configuration({ name: 'closed', unusable: 'folder-not-allowed' }),
+        configuration(),
+        configuration({ name: 'prices' })
+      ]
+    })
+
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, 0, -1])
+    choose('prices')
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, 0])
+  })
+
+  it('moves to and chooses the next or previous usable one with the arrow keys, wrapping around', () => {
+    useConfiguration({
+      configurations: [
+        configuration(),
+        configuration({ name: 'closed', unusable: 'folder-not-allowed' }),
+        configuration({ name: 'prices' })
+      ]
+    })
+    const checked = (): Array<string | null> => cards().map((shown) => shown.getAttribute('aria-checked'))
+
+    fireEvent.keyDown(card('products'), { key: 'ArrowDown' })
+    expect(checked()).toEqual(['false', 'false', 'true'])
+    expect(document.activeElement).toBe(card('prices'))
+
+    fireEvent.keyDown(card('prices'), { key: 'ArrowRight' })
+    expect(checked()).toEqual(['true', 'false', 'false'])
+    expect(document.activeElement).toBe(card('products'))
+
+    fireEvent.keyDown(card('products'), { key: 'ArrowUp' })
+    expect(checked()).toEqual(['false', 'false', 'true'])
+
+    fireEvent.keyDown(card('prices'), { key: 'ArrowLeft' })
+    expect(checked()).toEqual(['true', 'false', 'false'])
+    expect(document.activeElement).toBe(card('products'))
+  })
+
   it('shows the class, the match and the folder of the chosen one, which replace those of the file step', () => {
     useConfiguration({ configurations: [configuration()] })
     choose('products')

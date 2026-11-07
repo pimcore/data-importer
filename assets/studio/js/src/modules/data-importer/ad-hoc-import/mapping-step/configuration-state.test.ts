@@ -121,6 +121,13 @@ describe('a column the configuration reads', () => {
     expect(fileColumn(byName(), inspected, 'Price')).toBeUndefined()
   })
 
+  it('is not found by a name the header gives two columns', () => {
+    const twice: InspectedFile = { ...inspected, columns: [{ dataIndex: '0', label: 'SKU' }, { dataIndex: '1', label: 'SKU' }] }
+
+    expect(fileColumn(byName(), twice, 'SKU')).toBeUndefined()
+    expect(unusableReason(byName(), twice)).toBe('match-column')
+  })
+
   it('is not found by name in a file without a header row', () => {
     expect(fileColumn(byName(), xlsxWithoutHeader, 'SKU')).toBeUndefined()
     expect(fileColumn(byName(), xlsxWithoutHeader, '0')).toBeUndefined()

@@ -45,9 +45,10 @@ export const fileColumn = (
   }
 
   if (configuration.columnsBy === 'name') {
-    return inspected.hasHeaderRow
-      ? inspected.columns.find(({ label }) => label === column.trim())?.dataIndex
-      : undefined
+    // a header may name two columns alike (an XLSX trims its labels), and then the name points to neither
+    const named = inspected.hasHeaderRow ? inspected.columns.filter(({ label }) => label === column.trim()) : []
+
+    return named.length === 1 ? named[0].dataIndex : undefined
   }
 
   // a header row may leave a column unnamed, so the file's columns are found by their place, not their index
