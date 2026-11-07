@@ -12,7 +12,8 @@ import React, { useMemo } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { ColumnPicker, FormKit, Text } from '@pimcore/studio-ui-bundle/components'
 import { buildFieldGroups } from './field-groups'
-import { canGoInto, type Mapping, type MappingField, type MappingRow } from './mapping-state'
+import { type Mapping, type MappingField, type MappingRow } from './mapping-state'
+import { canGoInto, takenFields } from './taken-fields'
 
 export interface FieldPanelProps {
   // the column whose field is picked; none while no column can take one
@@ -25,6 +26,7 @@ export interface FieldPanelProps {
 
 export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPanelProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const taken = useMemo(() => takenFields(mapping.rows), [mapping.rows])
 
   const groups = useMemo(() => row === undefined
     ? []
@@ -33,9 +35,9 @@ export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPan
         label: field.mandatory
           ? t('data-importer.ad-hoc-import.mapping.required-field', { field: field.title, interpolation: { escapeValue: false } })
           : field.title,
-        disabled: !canGoInto(mapping.rows, field, row.column, languages),
+        disabled: !canGoInto(taken, field, row.column, languages),
         meta: field
-      })), [row, fields, mapping.rows, languages, t])
+      })), [row, fields, taken, languages, t])
 
   return (
     <FormKit.Panel

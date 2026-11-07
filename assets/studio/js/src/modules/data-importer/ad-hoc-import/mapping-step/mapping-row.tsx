@@ -15,13 +15,13 @@ import { filterByLabel } from '../../utils/select-utils'
 import {
   chooseField,
   chooseLanguage,
-  canGoInto,
   freeLanguages,
   skipColumn,
   type Mapping,
   type MappingField,
   type MappingRow
 } from './mapping-state'
+import { canGoInto, type TakenFields } from './taken-fields'
 
 const COLUMN_WIDTH = 280
 const FIELD_WIDTH = 320
@@ -48,6 +48,7 @@ export interface MappingRowViewProps {
   mapping: Mapping
   fields: MappingField[]
   languages: string[]
+  taken: TakenFields
   // the column whose field the side panel picks
   isActive: boolean
   onActivate: (column: string) => void
@@ -102,10 +103,10 @@ const selectField = (value: string | undefined, { mapping, fields, column, onCha
   onChange(chooseField(mapping, column, value === '' ? undefined : value))
 }
 
-type FieldSelectProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'onChange' | 'onPickStoreKey'>
+type FieldSelectProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'taken' | 'onChange' | 'onPickStoreKey'>
 
 // the row's field: fixed for the column that matches existing objects, else chosen from the class's fields
-const FieldSelect = ({ row, mapping, fields, languages, onChange, onPickStoreKey }: FieldSelectProps): React.JSX.Element => {
+const FieldSelect = ({ row, mapping, fields, languages, taken, onChange, onPickStoreKey }: FieldSelectProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { column, label, choice, suggestion, isMatch } = row
 
@@ -117,9 +118,9 @@ const FieldSelect = ({ row, mapping, fields, languages, onChange, onPickStoreKey
         ? t('data-importer.ad-hoc-import.mapping.required-field', { field: field.title, interpolation: { escapeValue: false } })
         : field.title,
       // a localized field takes a column per language, a classification store one per key
-      disabled: !canGoInto(mapping.rows, field, column, languages)
+      disabled: !canGoInto(taken, field, column, languages)
     }))
-  ], [fields, mapping.rows, column, languages, t])
+  ], [fields, taken, column, languages, t])
 
   const titleOf = (key: string): string => fields.find((field) => field.key === key)?.title ?? key
 
@@ -161,6 +162,7 @@ export const MappingRowView = ({
   mapping,
   fields,
   languages,
+  taken,
   isActive,
   onActivate,
   onChange,
@@ -207,6 +209,7 @@ export const MappingRowView = ({
         onChange={ onChange }
         onPickStoreKey={ onPickStoreKey }
         row={ row }
+        taken={ taken }
       />
 
       { isMatch

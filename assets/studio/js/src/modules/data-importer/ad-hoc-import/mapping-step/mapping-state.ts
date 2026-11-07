@@ -10,6 +10,7 @@
 
 import { type BundleDataImporterAdHocImportMappingResponse } from '../../data-importer-api-slice.gen'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
+import { isTaken } from './taken-fields'
 
 export type LoadedMapping = BundleDataImporterAdHocImportMappingResponse
 export type MappingField = LoadedMapping['fields'][number]
@@ -54,9 +55,18 @@ export interface Mapping {
 
 export type RowFilter = 'all' | 'mapped' | 'open'
 
+/**
+ * Columns are known as the file step knows them (keepMatchColumn): by their names, so the same names on another sheet
+ * keep the mapping; without a header row only by their position, so another sheet or way of splitting the rows is
+ * another mapping.
+ */
 export const mappingBasis = (inspected: InspectedFile, objects: ObjectsSettings): string => JSON.stringify([
   inspected.fileId,
   inspected.columns,
+  inspected.hasHeaderRow,
+  inspected.hasHeaderRow
+    ? null
+    : [inspected.sheetName ?? null, inspected.delimiter ?? null, inspected.enclosure ?? null, inspected.escape ?? null],
   objects.classId,
   objects.matchBy,
   objects.matchBy === 'field' ? objects.matchField : null,
@@ -68,29 +78,20 @@ const sampleOf = (inspected: InspectedFile, position: number): string | undefine
     .map((row) => row[position])
     .find((value): value is string => value !== null && value !== undefined && value !== '')
 
-const sameChoice = (a: FieldChoice, b: FieldChoice): boolean =>
-  a.field === b.field && a.language === b.language && a.key?.id === b.key?.id
-
 /**
- * Whether another column than this one already goes into the field; one column per field, and per language for a
- * localized one.
+ * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now.
  */
-export const isTaken = (rows: MappingRow[], choice: FieldChoice, column?: string): boolean =>
-  rows.some((row) => row.column !== column && !row.skipped && row.choice !== undefined && sameChoice(row.choice, choice))
+export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping => {
+  const positionOf = new Map(inspected.columns.map(({ dataIndex }, position) => [dataIndex, position]))
 
-/**
- * Whether the column can still go into the field: a classification store by another key, a localized field in another
- * language.
- */
-export const canGoInto = (rows: MappingRow[], field: MappingField, column: string, languages: string[]): boolean => {
-  if (field.classificationStore) {
-    return true
-  }
-  if (field.localized) {
-    return languages.length === 0 || languages.some((language) => !isTaken(rows, { field: field.key, language }, column))
-  }
+  return {
+    ...mapping,
+    rows: mapping.rows.map((row) => {
+      const position = positionOf.get(row.column)
 
-  return !isTaken(rows, { field: field.key, language: null }, column)
+      return { ...row, sample: position === undefined ? undefined : sampleOf(inspected, position) }
+    })
+  }
 }
 
 const isOpen = (row: MappingRow): boolean => !row.isMatch && !row.skipped && row.choice === undefined

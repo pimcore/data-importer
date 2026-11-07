@@ -36,6 +36,7 @@ import {
   createMapping,
   mappingBasis,
   withLanguages,
+  withSamples,
   type Mapping,
   type MappingField
 } from './mapping-step/mapping-state'
@@ -184,6 +185,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     }
     const { inspected } = phase
     if (mapping?.basis === mappingBasis(inspected, objects)) {
+      setMapping(withSamples(mapping, inspected))
       return
     }
 

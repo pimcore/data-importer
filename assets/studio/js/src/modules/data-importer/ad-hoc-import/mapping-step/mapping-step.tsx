@@ -27,6 +27,7 @@ import {
   type MappingField,
   type RowFilter
 } from './mapping-state'
+import { takenFields } from './taken-fields'
 import { MappingRowView } from './mapping-row'
 import { StoreKeyDialog } from './store-key-dialog'
 import { takenStoreKeys } from './taken-store-keys'
@@ -73,6 +74,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
   const change = (next: Mapping): void => { onChange(withLanguages(next, fields, languages)) }
 
   const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
+  const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
   const mapWith = (
     <Flex
@@ -199,6 +201,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange }: M
               onChange={ change }
               onPickStoreKey={ (column, field) => { setStoreKeyFor({ column, field }) } }
               row={ row }
+              taken={ taken }
             />
           )) }
           { rows.length === 0 && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.mapping.no-rows') }</Text> }

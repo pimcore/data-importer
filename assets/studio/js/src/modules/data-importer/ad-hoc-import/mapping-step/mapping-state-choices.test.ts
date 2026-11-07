@@ -10,19 +10,18 @@
 
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import {
-  canGoInto,
   chooseField,
   chooseLanguage,
   chooseStoreKey,
   createMapping,
   freeLanguages,
-  isTaken,
   skipColumn,
   withLanguages,
   type LoadedMapping,
   type Mapping,
   type MappingField
 } from './mapping-state'
+import { canGoInto, isTaken, takenFields } from './taken-fields'
 import { takenStoreKeys } from './taken-store-keys'
 
 const inspected: InspectedFile = {
@@ -96,6 +95,8 @@ describe('a classification store', () => {
     expect(isTaken(rows, { field: 'attributes', language: null, key: width })).toBe(true)
     expect(isTaken(rows, { field: 'attributes', language: null, key: height })).toBe(false)
     expect(isTaken(rows, { field: 'attributes', language: null })).toBe(false)
+    expect([width, height, undefined].map((key) => takenFields(rows).has({ field: 'attributes', language: null, key })))
+      .toEqual([true, false, false])
   })
 
   it('never changes the match column', () => {
@@ -230,20 +231,20 @@ describe('which field a column can still go into', () => {
   it('is a field no other column goes into', () => {
     const rows = chooseField(mapping, 'Notiz', 'price').rows
 
-    expect(canGoInto(rows, field('price'), 'Preis', languages)).toBe(false)
-    expect(canGoInto(rows, field('price'), 'Notiz', languages)).toBe(true)
-    expect(canGoInto(rows, field('ean'), 'Preis', languages)).toBe(true)
+    expect(canGoInto(takenFields(rows), field('price'), 'Preis', languages)).toBe(false)
+    expect(canGoInto(takenFields(rows), field('price'), 'Notiz', languages)).toBe(true)
+    expect(canGoInto(takenFields(rows), field('ean'), 'Preis', languages)).toBe(true)
   })
 
   it('is a localized field while one of its languages is free', () => {
-    expect(canGoInto(mapping.rows, field('name', { localized: true }), 'Notiz', languages)).toBe(false)
-    expect(canGoInto(mapping.rows, field('name', { localized: true }), 'Notiz', [...languages, 'fr'])).toBe(true)
-    expect(canGoInto(mapping.rows, field('name', { localized: true }), 'Notiz', [])).toBe(true)
+    expect(canGoInto(takenFields(mapping.rows), field('name', { localized: true }), 'Notiz', languages)).toBe(false)
+    expect(canGoInto(takenFields(mapping.rows), field('name', { localized: true }), 'Notiz', [...languages, 'fr'])).toBe(true)
+    expect(canGoInto(takenFields(mapping.rows), field('name', { localized: true }), 'Notiz', [])).toBe(true)
   })
 
   it('is always a classification store, whose keys take a column each', () => {
     const rows = chooseStoreKey(mapping, 'Notiz', 'attributes', { id: '2-4', label: 'Width' }).rows
 
-    expect(canGoInto(rows, field('attributes', { classificationStore: true }), 'Preis', languages)).toBe(true)
+    expect(canGoInto(takenFields(rows), field('attributes', { classificationStore: true }), 'Preis', languages)).toBe(true)
   })
 })
