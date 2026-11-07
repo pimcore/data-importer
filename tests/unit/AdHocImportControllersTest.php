@@ -25,6 +25,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -109,7 +110,7 @@ class AdHocImportControllersTest extends Unit
         $parameters = new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]);
         $answer = new AdHocImportMappingResponse([], []);
 
-        $service = $this->createMock(AdHocImportServiceInterface::class);
+        $service = $this->createMock(AdHocImportMappingServiceInterface::class);
         $service->expects($this->once())->method('loadMapping')->with($parameters)->willReturn($answer);
 
         $response = (new LoadMappingController($this->serializer($answer), $service))->loadMapping($parameters);

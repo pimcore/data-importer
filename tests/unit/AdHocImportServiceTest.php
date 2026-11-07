@@ -28,12 +28,8 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
-use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionsResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
-use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
@@ -43,9 +39,6 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededExceptio
 use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
-use Pimcore\Model\DataObject\ClassDefinition;
-use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
-use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
@@ -426,152 +419,13 @@ class AdHocImportServiceTest extends Unit
         $this->assertSame('a listener', $fields->getAdditionalAttribute('from'));
     }
 
-    public function testTheMappingOffersTheClassFieldsSayingWhichTheClassRequires(): void
-    {
-        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
-        $suggestions->method('loadTargets')->willReturnMap([['PROD', [
-            $this->target('sku'),
-            $this->target('name', localized: true),
-            $this->target('price', 'numeric'),
-            $this->target('notes'),
-        ]]]);
-        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
-
-        $class = new ClassDefinition();
-        $class->addFieldDefinition('sku', $this->input('sku', mandatory: true));
-        $class->addFieldDefinition('price', $this->input('price', mandatory: false));
-        $localized = new Localizedfields();
-        $localized->setName('localizedfields');
-        $localized->addChild($this->input('name', mandatory: true));
-        $class->addFieldDefinition('localizedfields', $localized);
-
-        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, class: $class)
-            ->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
-
-        $this->assertSame([
-            [...$this->target('sku'), 'mandatory' => true],
-            [...$this->target('name', localized: true), 'mandatory' => true],
-            [...$this->target('price', 'numeric'), 'mandatory' => false],
-            [...$this->target('notes'), 'mandatory' => false],
-        ], $mapping->getFields());
-    }
-
-    public function testTheMappingSuggestsForTheColumnsAsked(): void
-    {
-        $column = 'Bezeichnung DE';
-        $parameters = new MappingSuggestionParameters('PROD', [['index' => $column, 'label' => $column]]);
-        $suggestion = [
-            'sourceIndex' => $column,
-            'sourceLabel' => $column,
-            'targetFieldName' => 'bezeichnung',
-            'targetFieldLabel' => 'Bezeichnung',
-            'transformationResultType' => 'default',
-            'score' => 100,
-            'language' => 'de',
-        ];
-        $suggestions = $this->createMock(MappingSuggestionServiceInterface::class);
-        $suggestions->method('loadTargets')->willReturn([$this->target('bezeichnung', localized: true)]);
-        $suggestions->expects($this->once())->method('suggest')->with($parameters)
-            ->willReturn(new MappingSuggestionsResponse([$suggestion]));
-
-        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions)->loadMapping($parameters);
-
-        $this->assertSame([$suggestion], $mapping->getSuggestions());
-        // without the class definition nothing counts as required
-        $this->assertFalse($mapping->getFields()[0]['mandatory']);
-    }
-
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function fieldsAnAdHocImportDoesNotWrite(): iterable
-    {
-        yield 'the key, which new objects take from their match value' => ['key'];
-        yield 'the path, as objects stay where they are found' => ['path'];
-        yield 'the object type of a class with variants' => ['type'];
-    }
-
-    /**
-     * @dataProvider fieldsAnAdHocImportDoesNotWrite
-     */
-    public function testTheMappingNeitherOffersNorSuggestsAField(string $key): void
-    {
-        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
-        $suggestions->method('loadTargets')->willReturn([$this->target($key), $this->target('name')]);
-        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([
-            $this->suggestion('Pfad', $key),
-            $this->suggestion('Name', 'name'),
-        ]));
-
-        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions)
-            ->loadMapping(new MappingSuggestionParameters('PROD', []));
-
-        $this->assertSame(['name'], array_column($mapping->getFields(), 'key'));
-        $this->assertSame(['name'], array_column($mapping->getSuggestions(), 'targetFieldName'));
-    }
-
-    public function testTheMappingOfAClassTheUserMayNotCreateIsForbidden(): void
-    {
-        $suggestions = $this->createMock(MappingSuggestionServiceInterface::class);
-        $suggestions->expects($this->never())->method('loadTargets');
-        $suggestions->expects($this->never())->method('suggest');
-
-        $this->expectException(ForbiddenException::class);
-
-        $this->service(creatableClasses: ['OTHER'], suggestions: $suggestions)
-            ->loadMapping(new MappingSuggestionParameters('PROD', []));
-    }
-
-    /**
-     * @return array{key: string, title: string, localized: bool, transformationResultType: string}
-     */
-    private function target(string $key, string $type = 'default', bool $localized = false): array
-    {
-        return ['key' => $key, 'title' => $key, 'localized' => $localized, 'transformationResultType' => $type];
-    }
-
-    /**
-     * @return array{
-     *     sourceIndex: string,
-     *     sourceLabel: string,
-     *     targetFieldName: string,
-     *     targetFieldLabel: string,
-     *     transformationResultType: string,
-     *     score: int,
-     *     language: null
-     * }
-     */
-    private function suggestion(string $column, string $field): array
-    {
-        return [
-            'sourceIndex' => $column,
-            'sourceLabel' => $column,
-            'targetFieldName' => $field,
-            'targetFieldLabel' => $field,
-            'transformationResultType' => 'default',
-            'score' => 100,
-            'language' => null,
-        ];
-    }
-
-    private function input(string $name, bool $mandatory): Input
-    {
-        $input = new Input();
-        $input->setName($name);
-        $input->setMandatory($mandatory);
-
-        return $input;
-    }
-
     /**
      * @param string[] $creatableClasses
      */
     private function service(
         mixed $folder = 'allowed',
         ?DataTypeServiceInterface $dataTypeService = null,
-        array $creatableClasses = [],
-        ?MappingSuggestionServiceInterface $suggestions = null,
-        ?ClassDefinition $class = null
+        array $creatableClasses = []
     ): AdHocImportService {
         if ($folder === 'allowed') {
             $folder = $this->createStub(Folder::class);
@@ -610,18 +464,13 @@ class AdHocImportServiceTest extends Unit
             ) : []
         );
 
-        $classResolver = $this->createStub(ClassDefinitionResolverInterface::class);
-        $classResolver->method('getById')->willReturn($class);
-
         return new AdHocImportService(
             new FileStore(new Filesystem(new LocalFilesystemAdapter($this->storage))),
             new FileInspector(new SourceFileReader($factory), $factory, new CsvDelimiterDetector()),
             $security,
             $resolver,
             $dataTypeService ?? $this->createStub(DataTypeServiceInterface::class),
-            $classes,
-            $suggestions ?? $this->createStub(MappingSuggestionServiceInterface::class),
-            $classResolver
+            $classes
         );
     }
 

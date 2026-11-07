@@ -15,9 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\MaxFileSizeExceededException;
@@ -51,11 +49,4 @@ interface AdHocImportServiceInterface
      * @throws ForbiddenException if the user may not create objects of that class
      */
     public function loadMatchFields(string $classId): ClassAttributesResponse;
-
-    /**
-     * The fields the columns can be imported into, and a suggested field per column.
-     *
-     * @throws ForbiddenException if the user may not create objects of that class
-     */
-    public function loadMapping(MappingSuggestionParameters $parameters): AdHocImportMappingResponse;
 }
