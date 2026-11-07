@@ -18,6 +18,7 @@ import {
   rowCounts,
   skippedRows,
   takeAllSuggestions,
+  takenFields,
   visibleRows,
   type Mapping,
   type MappingField,
@@ -61,6 +62,7 @@ export const MappingStep = ({
   const [search, setSearch] = useState('')
 
   const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
+  const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
   const mapWithSwitch = (
     <Flex
@@ -176,6 +178,7 @@ export const MappingStep = ({
             mapping={ mapping }
             onChange={ onChange }
             row={ row }
+            taken={ taken }
           />
         )) }
         { rows.length === 0 && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.mapping.no-rows') }</Text> }

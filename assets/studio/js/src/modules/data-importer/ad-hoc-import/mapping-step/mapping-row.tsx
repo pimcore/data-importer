@@ -12,7 +12,7 @@ import React, { useMemo } from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Select, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { filterByLabel } from '../../utils/select-utils'
-import { chooseField, isTaken, skipColumn, type Mapping, type MappingField, type MappingRow } from './mapping-state'
+import { chooseField, skipColumn, type Mapping, type MappingField, type MappingRow, type TakenFields } from './mapping-state'
 
 const COLUMN_WIDTH = 280
 const FIELD_WIDTH = 320
@@ -34,10 +34,11 @@ export interface MappingRowViewProps {
   row: MappingRow
   mapping: Mapping
   fields: MappingField[]
+  taken: TakenFields
   onChange: (mapping: Mapping) => void
 }
 
-export const MappingRowView = ({ row, mapping, fields, onChange }: MappingRowViewProps): React.JSX.Element => {
+export const MappingRowView = ({ row, mapping, fields, taken, onChange }: MappingRowViewProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const { column, label, sample, choice, auto, suggestion, isMatch } = row
@@ -50,9 +51,9 @@ export const MappingRowView = ({ row, mapping, fields, onChange }: MappingRowVie
         ? t('data-importer.ad-hoc-import.mapping.required-field', { field: title, interpolation: { escapeValue: false } })
         : title,
       // a localized field takes a column per language
-      disabled: isTaken(mapping.rows, { field: key, language: choice?.field === key ? choice.language : null }, column)
+      disabled: taken.has({ field: key, language: choice?.field === key ? choice.language : null }, column)
     }))
-  ], [fields, mapping.rows, choice, column, t])
+  ], [fields, taken, choice, column, t])
 
   const titleOf = (key: string): string => fields.find((field) => field.key === key)?.title ?? key
 

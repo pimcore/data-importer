@@ -31,7 +31,14 @@ import {
   type ObjectsSettings
 } from './file-step/file-step-state'
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
-import { canContinueMapping, createMapping, mappingBasis, type Mapping, type MappingField } from './mapping-step/mapping-state'
+import {
+  canContinueMapping,
+  createMapping,
+  mappingBasis,
+  withSamples,
+  type Mapping,
+  type MappingField
+} from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
 import { canContinueWithConfiguration, findConfiguration, type MapWith } from './mapping-step/configuration-state'
 import { useImportConfigurations } from './mapping-step/use-import-configurations'
@@ -180,6 +187,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     }
     const { inspected } = phase
     if (mapping?.basis === mappingBasis(inspected, objects)) {
+      setMapping(withSamples(mapping, inspected))
       return
     }
 
