@@ -29,7 +29,7 @@ final readonly class FileInspection
      *     sheetName?: string
      * } $settings
      * @param string[] $sheets
-     * @param array<int, array{dataIndex: string, label: string}> $columns
+     * @param array<int, array{dataIndex: string, label: string, position?: int}> $columns
      * @param array<int, array<int, string|null>> $firstRows the values in the order of $columns
      */
     public function __construct(

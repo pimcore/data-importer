@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Modal, ModalFooter, Steps } from '@pimcore/studio-ui-bundle/components'
@@ -41,6 +42,8 @@ import {
 } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
 import { type TransformationSource } from './mapping-step/transformations-modal'
+import { canContinueWithConfiguration, findConfiguration, type MapWith } from './mapping-step/configuration-state'
+import { useImportConfigurations } from './mapping-step/use-import-configurations'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -67,10 +70,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [mapping, setMapping] = useState<Mapping | null>(null)
   const [fields, setFields] = useState<MappingField[]>([])
   const [isLoadingMapping, setIsLoadingMapping] = useState(false)
+  const [mapWith, setMapWith] = useState<MapWith>('here')
+  const [configurationName, setConfigurationName] = useState<string | undefined>(undefined)
 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
+  const { configurations, isFetching: isListing, isError: isListingFailed } = useImportConfigurations(mapWith === 'configuration')
 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
@@ -222,9 +228,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     return { fileId: phase.inspected.fileId, classId: objects.classId, settings: settingsOf(phase.inspected) }
   }, [phase, objects.classId])
 
+  const inspected = phase.kind === 'inspected' ? phase.inspected : undefined
+
+  const canMapOn = (): boolean => mapWith === 'configuration'
+    ? canContinueWithConfiguration(findConfiguration(configurations, configurationName), inspected)
+    : mapping !== null && canContinueMapping(mapping, fields)
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)
-    : mapping !== null && canContinueMapping(mapping, fields)
+    : canMapOn()
 
   const onRemoveFile = (): void => {
     deleteStoredFile()
@@ -287,10 +298,20 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       ) }
       { step === 1 && (
         <MappingStep
+          configuration={ {
+            inspected,
+            configurations,
+            isLoading: isListing,
+            isError: isListingFailed,
+            chosen: configurationName,
+            onChoose: setConfigurationName
+          } }
           fields={ fields }
           isLoading={ isLoadingMapping }
+          mapWith={ mapWith }
           mapping={ mapping }
           onChange={ setMapping }
+          onMapWithChange={ setMapWith }
           source={ transformationSource }
         />
       ) }

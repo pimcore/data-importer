@@ -65,9 +65,9 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(2, $inspection->rowCount);
         $this->assertSame(
             [
-                ['dataIndex' => 'Artikelnr', 'label' => 'Artikelnr'],
-                ['dataIndex' => 'Bezeichnung', 'label' => 'Bezeichnung'],
-                ['dataIndex' => 'Preis', 'label' => 'Preis'],
+                ['dataIndex' => 'Artikelnr', 'label' => 'Artikelnr', 'position' => 0],
+                ['dataIndex' => 'Bezeichnung', 'label' => 'Bezeichnung', 'position' => 1],
+                ['dataIndex' => 'Preis', 'label' => 'Preis', 'position' => 2],
             ],
             $inspection->columns
         );
@@ -150,6 +150,24 @@ class AdHocFileInspectorTest extends Unit
             [['A-1', null, null], ['A-2', 'Chair', null], ['A-3', 'Desk', '12']],
             $inspection->firstRows
         );
+    }
+
+    public function testAHeaderColumnKeepsItsPlaceInTheFileAfterAnUnnamedOne(): void
+    {
+        $inspection = $this->inspector()->inspect(
+            $this->csv("sku,,name\nA-1,x,Chair\n"),
+            FileType::Csv,
+            new SettingsInput()
+        );
+
+        $this->assertSame(
+            [
+                ['dataIndex' => 'sku', 'label' => 'sku', 'position' => 0],
+                ['dataIndex' => 'name', 'label' => 'name', 'position' => 2],
+            ],
+            $inspection->columns
+        );
+        $this->assertSame([['A-1', 'Chair']], $inspection->firstRows);
     }
 
     public function testAHeaderOnlyCsvHasItsColumnsAndNoRows(): void

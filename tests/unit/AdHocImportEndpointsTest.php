@@ -20,12 +20,14 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportConfigurationsResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
@@ -48,6 +50,8 @@ class AdHocImportEndpointsTest extends Unit
 {
     private const ROUTE_PREFIX = 'pimcore_studio_api_data_importer_ad_hoc_import_';
 
+    private const NAME_COLUMN = 'Name DE';
+
     private const ENDPOINTS = [
         UploadFileController::class => ['uploadFile', 'upload_file', 'POST', '/ad-hoc-import/file'],
         InspectFileController::class => ['inspectFile', 'inspect_file', 'POST', '/ad-hoc-import/file/{fileId}/inspect'],
@@ -64,6 +68,12 @@ class AdHocImportEndpointsTest extends Unit
             'preview_transformations',
             'POST',
             '/ad-hoc-import/file/{fileId}/transformations',
+        ],
+        ListConfigurationsController::class => [
+            'listConfigurations',
+            'list_configurations',
+            'GET',
+            '/ad-hoc-import/configurations',
         ],
     ];
 
@@ -171,8 +181,8 @@ class AdHocImportEndpointsTest extends Unit
             'takesColumnAsIs' => true,
         ];
         $suggestion = [
-            'sourceIndex' => 'Name DE',
-            'sourceLabel' => 'Name DE',
+            'sourceIndex' => self::NAME_COLUMN,
+            'sourceLabel' => self::NAME_COLUMN,
             'targetFieldName' => 'name',
             'targetFieldLabel' => 'Name',
             'transformationResultType' => 'default',
@@ -242,6 +252,32 @@ class AdHocImportEndpointsTest extends Unit
             'results' => [['items' => ['Chair'], 'failed' => false], ['items' => [], 'failed' => true]],
             'offered' => ['trim'],
         ], $answer);
+    }
+
+    public function testConfigurationsReachTheStudioWithTheirFieldNames(): void
+    {
+        /** @var SerializerInterface $serializer */
+        $serializer = $this->tester->grabService('serializer');
+
+        $configuration = [
+            'name' => 'products',
+            'classId' => 'PROD',
+            'className' => 'Product',
+            'matchBy' => 'field',
+            'matchField' => 'name',
+            'matchLanguage' => 'de',
+            'matchColumn' => self::NAME_COLUMN,
+            'newObjectsFolder' => '/Products',
+            'columns' => [self::NAME_COLUMN],
+            'columnsBy' => 'name',
+            'unusable' => null,
+        ];
+        $answer = json_decode(
+            $serializer->serialize(new AdHocImportConfigurationsResponse([$configuration]), 'json'),
+            true
+        );
+
+        $this->assertSame(['configurations' => [$configuration]], $answer);
     }
 
     public function testTheMigrationAddsTheRightUnlessItExistsAndRemovesItAgain(): void
