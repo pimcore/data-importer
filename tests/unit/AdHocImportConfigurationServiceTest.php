@@ -68,6 +68,29 @@ class AdHocImportConfigurationServiceTest extends Unit
         $this->assertSame([], $this->service([$configuration])->listConfigurations()->getConfigurations());
     }
 
+    public function testListingChangesNeitherTheConfigurationNorItsFolder(): void
+    {
+        $configuration = $this->createMock(Configuration::class);
+        $configuration->method('getName')->willReturn('products');
+        $configuration->method('getType')->willReturn('dataImporterDataObject');
+        $configuration->method('getConfiguration')->willReturn($this->config());
+        $configuration->method('isAllowed')->willReturn(true);
+        foreach (['save', 'delete', 'setConfiguration', 'setName', 'setType', 'setPath', 'setGroup'] as $write) {
+            $configuration->expects($this->never())->method($write);
+        }
+
+        $folder = $this->createMock(Folder::class);
+        $folder->method('isAllowed')->willReturn(true);
+        foreach (['save', 'delete'] as $write) {
+            $folder->expects($this->never())->method($write);
+        }
+
+        [$listed] = $this->service([$configuration], folder: $folder)->listConfigurations()->getConfigurations();
+
+        $this->assertSame(self::FOLDER, $listed['newObjectsFolder']);
+        $this->assertNull($listed['unusable']);
+    }
+
     public function testWithoutAPimcoreUserNothingIsListed(): void
     {
         $security = $this->createStub(SecurityServiceInterface::class);
@@ -329,7 +352,8 @@ class AdHocImportConfigurationServiceTest extends Unit
      */
     private function service(
         array $configurations,
-        ?SecurityServiceInterface $security = null
+        ?SecurityServiceInterface $security = null,
+        ?Folder $folder = null
     ): AdHocImportConfigurationService {
         if ($security === null) {
             $security = $this->createStub(SecurityServiceInterface::class);
@@ -353,10 +377,12 @@ class AdHocImportConfigurationServiceTest extends Unit
             static fn (string $id): ?ClassDefinition => in_array($id, [self::CLASS_ID, 'CAR'], true) ? $class : null
         );
 
-        $open = $this->createStub(Folder::class);
-        $open->method('isAllowed')->willReturnCallback(
-            fn (string $type, ?User $user = null): bool => $type === 'create' && $user === $this->user
-        );
+        $open = $folder ?? $this->createStub(Folder::class);
+        if ($folder === null) {
+            $open->method('isAllowed')->willReturnCallback(
+                fn (string $type, ?User $user = null): bool => $type === 'create' && $user === $this->user
+            );
+        }
         $locked = $this->createStub(Folder::class);
         $locked->method('isAllowed')->willReturn(false);
         $objects = $this->createStub(DataObjectResolverInterface::class);
