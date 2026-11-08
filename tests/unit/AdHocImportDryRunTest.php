@@ -528,6 +528,24 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
     }
 
+    public function testAStoreKeyOfATypeNoColumnLeadsToTakesNoValue(): void
+    {
+        [$class] = $this->storeClass('Quantity');
+        $length = $this->quantityKey('Quantity');
+        $fileId = $this->upload("sku;length\nSKU-1;3 m\nSKU-2;\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'length', 'field' => 'attributes', 'key' => $length->id()],
+        ]))->getRows();
+
+        $this->assertCount(2, $rows, 'the dry run answers instead of refusing the mapping');
+        $this->assertSame(
+            ['Basics › length “3 m” does not fit the field'],
+            array_column($rows[0]['invalid'], 'message')
+        );
+        $this->assertSame([], $rows[1]['invalid'], 'an empty cell is no error');
+    }
+
     /**
      * @dataProvider storeKeysThatCannotBeImported
      */
@@ -732,6 +750,37 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         }
 
         return [$class, ...$keys];
+    }
+
+    /**
+     * A key of type quantityValue in the variant's store, which no transformation of a column leads to.
+     */
+    private function quantityKey(string $variant): StoreKey
+    {
+        $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME . strtolower($variant));
+        $this->assertNotNull($store);
+        $group = Classificationstore\GroupConfig::getByName('Basics', $store->getId());
+        $this->assertNotNull($group);
+        $key = Classificationstore\KeyConfig::getByName('length', $store->getId());
+        if ($key === null) {
+            $definition = new ClassDefinition\Data\QuantityValue();
+            $definition->setName('length');
+            $key = new Classificationstore\KeyConfig();
+            $key->setDefinition((string) json_encode($definition));
+            $key->setStoreId($store->getId());
+            $key->setName('length');
+            $key->setEnabled(true);
+            $key->setType('quantityValue');
+            $key->save();
+        }
+        if (Classificationstore\KeyGroupRelation::getByGroupAndKeyId($group->getId(), $key->getId()) === null) {
+            $relation = new Classificationstore\KeyGroupRelation();
+            $relation->setGroupId($group->getId());
+            $relation->setKeyId($key->getId());
+            $relation->save();
+        }
+
+        return new StoreKey($group->getId(), $key->getId());
     }
 
     private function storeObject(ClassDefinition $class, string $sku): Concrete

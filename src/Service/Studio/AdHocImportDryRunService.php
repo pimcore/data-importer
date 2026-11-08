@@ -343,16 +343,22 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                 static fn (array $row): ?string => is_scalar($row[$column] ?? null) ? (string) $row[$column] : null,
                 $rows
             );
-            $converted = $this->convertedColumn(
-                $values,
-                $this->steps($entry['transformationPipeline'] ?? []),
-                $fieldAccepts,
-                $user
-            ) ?? throw new InvalidArgumentException(sprintf(
-                'Column %d does not fit field %s with its transformations.',
-                $position + 1,
-                $field->key
-            ));
+            // a store key of a type no transformation leads to: the picker offers it, its values do not fit
+            $converted = $field->storeKey !== null && $fieldAccepts === []
+                ? ConvertedColumn::unwritable($values)
+                : $this->convertedColumn(
+                    $values,
+                    $this->steps($entry['transformationPipeline'] ?? []),
+                    $fieldAccepts,
+                    $user
+                );
+            if ($converted === null) {
+                throw new InvalidArgumentException(sprintf(
+                    'Column %d does not fit field %s with its transformations.',
+                    $position + 1,
+                    $field->key
+                ));
+            }
 
             $writers[] = new ColumnWriter($field, $column, $converted);
         }

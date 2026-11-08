@@ -57,6 +57,23 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame([null, null], $object->written);
     }
 
+    public function testAnUnwritableColumnFailsEachValueAndClearsWithAnEmptyCell(): void
+    {
+        $column = ConvertedColumn::unwritable(['3 m', '', null]);
+
+        $this->assertSame([null, null, null], $column->values);
+        $this->assertSame([true, false, false], $column->failed);
+        $this->assertSame([true, false, false], $column->failedInSteps);
+        $this->assertNull($column->conversion);
+
+        $writer = new ColumnWriter(new ImportField('name', null, 'Name'), 1, $column);
+        $object = $this->writable();
+        $this->assertSame(ValueError::Invalid, $writer->write($object, 0, []), 'a value does not fit the field');
+        $this->assertNull($object->written);
+        $this->assertNull($writer->write($object, 1, []), 'an empty cell clears the field');
+        $this->assertSame([null, null], $object->written);
+    }
+
     public function testAColumnWriterSaysWhyAValueCannotGoIntoItsField(): void
     {
         $converted = new ConvertedColumn(

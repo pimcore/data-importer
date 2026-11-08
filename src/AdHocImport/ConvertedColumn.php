@@ -33,4 +33,16 @@ final readonly class ConvertedColumn
         public ?string $conversion,
     ) {
     }
+
+    /**
+     * A column whose field takes no value an import can lead to: each value fails, an empty cell clears the field.
+     *
+     * @param list<?string> $values
+     */
+    public static function unwritable(array $values): self
+    {
+        $failed = array_map(static fn (?string $value): bool => $value !== null && $value !== '', $values);
+
+        return new self(array_fill(0, count($values), null), $failed, $failed, null);
+    }
 }
