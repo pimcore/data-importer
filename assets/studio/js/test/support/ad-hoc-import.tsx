@@ -54,7 +54,7 @@ export const components = {
       <span>{ description }</span>
     </div>
   ),
-  Button: ({ children, disabled, onClick, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, 'aria-label'?: string }) => (
+  Button: ({ children, disabled, onClick, href, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, href?: string, 'aria-label'?: string }) => href !== undefined ? <a href={ href }>{ children }</a> : (
     <button
       aria-label={ label }
       disabled={ disabled }

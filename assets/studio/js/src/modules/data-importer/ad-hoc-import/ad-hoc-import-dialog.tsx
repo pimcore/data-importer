@@ -15,9 +15,12 @@ import { Alert, Button, Flex, Modal, ModalFooter, Select, Steps } from '@pimcore
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
+  useBundleDataImporterAdHocImportDiscardRunMutation,
   useBundleDataImporterAdHocImportDryRunMutation,
   useBundleDataImporterAdHocImportInspectFileMutation,
-  useBundleDataImporterAdHocImportLoadMappingMutation
+  useBundleDataImporterAdHocImportLoadMappingMutation,
+  useBundleDataImporterAdHocImportLoadRunQuery,
+  useBundleDataImporterAdHocImportStartRunMutation
 } from '../data-importer-api-slice-enhanced'
 import { type BundleDataImporterAdHocImportFileSettings } from '../data-importer-api-slice.gen'
 import { type AdHocImportTarget } from './dialog-store'
@@ -30,6 +33,7 @@ import {
   keepMatchColumn,
   refusedForFormat,
   type FilePhase,
+  type InspectedFile,
   type ObjectsSettings
 } from './file-step/file-step-state'
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
@@ -39,8 +43,10 @@ import { MappingStep } from './mapping-step/mapping-step'
 import { findConfiguration } from './mapping-step/configuration-state'
 import { transformationSourceOf } from './mapping-step/transformations-modal'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
-import { dryRunParameters, previewCounts, type DryRun, type ErrorMode } from './preview-step/preview-state'
+import { dryRunParameters, previewCounts, type DryRun, type DryRunParameters, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
+import { failedRowsUrl, isDone } from './import-step/import-state'
+import { ImportStep } from './import-step/import-step'
 import { useLanguages } from './mapping-step/use-languages'
 
 const DIALOG_WIDTH = 1160
@@ -50,6 +56,8 @@ const ERROR_MODE_ID = 'ad-hoc-import-error-mode'
 const ERROR_MODES: ErrorMode[] = ['skip', 'values']
 
 const STEPS = ['file', 'mapping', 'preview', 'import']
+const IMPORT_STEP = 3
+const RUN_POLLING_MS = 1000
 
 const titlePath = ({ folderPath, folderLabel }: AdHocImportTarget): string => {
   const path = folderPath.split('/').filter((part) => part !== '').join(' / ')
@@ -75,11 +83,21 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [dryRun, setDryRun] = useState<DryRun | null>(null)
   const [isDryRunFailed, setIsDryRunFailed] = useState(false)
   const [errorMode, setErrorMode] = useState<ErrorMode>('skip')
+  // the file of the run started, once the server has answered
+  const [runFileId, setRunFileId] = useState<string | null>(null)
+  // stops asking once the run has ended; the last answer stays
+  const [runPolling, setRunPolling] = useState(RUN_POLLING_MS)
 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
   const [runDry] = useBundleDataImporterAdHocImportDryRunMutation()
+  const [startRun] = useBundleDataImporterAdHocImportStartRunMutation()
+  const [discardRun] = useBundleDataImporterAdHocImportDiscardRunMutation()
+  const { data: run } = useBundleDataImporterAdHocImportLoadRunQuery(
+    { fileId: runFileId ?? '' },
+    { skip: runFileId === null, pollingInterval: runPolling }
+  )
   const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
@@ -224,6 +242,43 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
+  const inspectedFileId = (): string | null => phase.kind === 'inspected' ? phase.inspected.fileId ?? null : null
+
+  const parametersOfFile = (inspected: InspectedFile): DryRunParameters => dryRunParameters({
+    target,
+    inspected,
+    objects,
+    mapWith: configurationMapping.mapWith,
+    configuration: findConfiguration(configurationMapping.choice.configurations, configurationMapping.choice.chosen),
+    mapping
+  })
+
+  // the server checks the file once more and queues its rows; the dialog can be closed from now on
+  const toImport = (): void => {
+    const fileId = inspectedFileId()
+    if (phase.kind !== 'inspected' || fileId === null) {
+      return
+    }
+
+    setStep(IMPORT_STEP)
+    void startRun({
+      fileId,
+      bundleDataImporterAdHocImportRunParameters: {
+        settings: parametersOfFile(phase.inspected),
+        errorMode,
+        fileName: phase.file.name
+      }
+    }).then((result) => {
+      if ('error' in result && result.error !== undefined) {
+        trackError(new ApiError(result.error))
+        setStep(2)
+        return
+      }
+
+      setRunFileId(fileId)
+    })
+  }
+
   // every row of the file is checked as the mapping stands now; nothing is written
   const toPreview = (): void => {
     setStep(2)
@@ -237,14 +292,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
     void runDry({
       fileId: phase.inspected.fileId,
-      bundleDataImporterAdHocImportDryRunParameters: dryRunParameters({
-        target,
-        inspected: phase.inspected,
-        objects,
-        mapWith: configurationMapping.mapWith,
-        configuration: findConfiguration(configurationMapping.choice.configurations, configurationMapping.choice.chosen),
-        mapping
-      })
+      bundleDataImporterAdHocImportDryRunParameters: parametersOfFile(phase.inspected)
     }).then((result) => {
       if (request !== latestDryRun.current) {
         return
@@ -259,6 +307,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       setDryRun(result.data)
     })
   }
+
+  const importCount = dryRun === null ? 0 : previewCounts(dryRun, errorMode).imported
 
   const transformationSource = useMemo(() => transformationSourceOf(phase, objects.classId), [phase, objects.classId])
 
@@ -282,10 +332,29 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   }
 
   const close = (): void => {
+    if (step === IMPORT_STEP) {
+      // a running import goes on, with its file; once it has ended, nothing of it is needed any more
+      if (runFileId !== null && isDone(run)) {
+        void discardRun({ fileId: runFileId }).then((result) => {
+          if ('error' in result && result.error !== undefined) {
+            trackError(new ApiError(result.error))
+          }
+        })
+      }
+      onClose()
+      return
+    }
+
     deleteStoredFile()
     reset()
     onClose()
   }
+
+  useEffect(() => {
+    if (isDone(run)) {
+      setRunPolling(0)
+    }
+  }, [run?.state])
 
   // an upload does not outlive the dialog
   useEffect(() => () => { upload.current?.abort() }, [])
@@ -316,32 +385,49 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
             </Flex>
             <Flex gap="small">
               <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button>
-              { /* the import runs in the next step, which is not there yet */ }
               <Button
-                disabled
+                disabled={ importCount === 0 }
+                onClick={ toImport }
                 type="primary"
               >
-                { t('data-importer.ad-hoc-import.preview.import', {
-                  count: dryRun === null ? 0 : previewCounts(dryRun, errorMode).imported
-                }) }
+                { t('data-importer.ad-hoc-import.preview.import', { count: importCount }) }
               </Button>
             </Flex>
           </ModalFooter>
           )
-        : (
-          <ModalFooter divider>
-            { step === 0
-              ? <Button onClick={ close }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
-              : <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button> }
-            <Button
-              disabled={ !canGoOn }
-              onClick={ () => { step === 0 ? toMapping() : toPreview() } }
-              type="primary"
+        : step === IMPORT_STEP
+          ? (
+            <ModalFooter
+              divider
+              justify={ isDone(run) && run.failed > 0 ? 'space-between' : 'flex-end' }
             >
-              { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
-            </Button>
-          </ModalFooter>
-          ) }
+              { isDone(run) && run.failed > 0 && runFileId !== null && (
+                <Button href={ failedRowsUrl(runFileId) }>
+                  { t('data-importer.ad-hoc-import.result.download-failed', { count: run.failed }) }
+                </Button>
+              ) }
+              <Button
+                onClick={ close }
+                type={ isDone(run) ? 'primary' : undefined }
+              >
+                { t(isDone(run) ? 'data-importer.ad-hoc-import.result.close' : 'data-importer.ad-hoc-import.run.close-keep-running') }
+              </Button>
+            </ModalFooter>
+            )
+          : (
+            <ModalFooter divider>
+              { step === 0
+                ? <Button onClick={ close }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
+                : <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button> }
+              <Button
+                disabled={ !canGoOn }
+                onClick={ () => { step === 0 ? toMapping() : toPreview() } }
+                type="primary"
+              >
+                { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
+              </Button>
+            </ModalFooter>
+            ) }
       maskClosable={ false }
       onCancel={ close }
       open
@@ -353,7 +439,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     >
       <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
         <Steps
-          current={ step }
+          current={ isDone(run) ? STEPS.length : step }
           items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
           size="small"
         />
@@ -380,6 +466,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           onChange={ setMapping }
           onMapWithChange={ configurationMapping.setMapWith }
           source={ transformationSource }
+        />
+      ) }
+      { step === IMPORT_STEP && phase.kind === 'inspected' && (
+        <ImportStep
+          fileId={ inspectedFileId() ?? '' }
+          run={ run }
+          total={ importCount }
         />
       ) }
       { step === 2 && (isDryRunFailed

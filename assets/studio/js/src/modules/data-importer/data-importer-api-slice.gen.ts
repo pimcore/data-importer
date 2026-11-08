@@ -371,6 +371,36 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportStartRun: build.mutation<
+                BundleDataImporterAdHocImportStartRunApiResponse,
+                BundleDataImporterAdHocImportStartRunApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/run`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterAdHocImportRunParameters,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportLoadRun: build.query<
+                BundleDataImporterAdHocImportLoadRunApiResponse,
+                BundleDataImporterAdHocImportLoadRunApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/run`,
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportDiscardRun: build.mutation<
+                BundleDataImporterAdHocImportDiscardRunApiResponse,
+                BundleDataImporterAdHocImportDiscardRunApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/run`,
+                    method: "DELETE",
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -603,6 +633,24 @@ export type BundleDataImporterAdHocImportPreviewTransformationsApiArg = {
     /** FileId of the file */
     fileId: string;
     bundleDataImporterAdHocImportTransformationParameters: BundleDataImporterAdHocImportTransformationParameters;
+};
+export type BundleDataImporterAdHocImportStartRunApiResponse =
+    /** status 200 The run, as it starts */ BundleDataImporterAdHocImportRunResponse;
+export type BundleDataImporterAdHocImportStartRunApiArg = {
+    /** The file */
+    fileId: string;
+    bundleDataImporterAdHocImportRunParameters: BundleDataImporterAdHocImportRunParameters;
+};
+export type BundleDataImporterAdHocImportLoadRunApiResponse =
+    /** status 200 The run */ BundleDataImporterAdHocImportRunResponse;
+export type BundleDataImporterAdHocImportLoadRunApiArg = {
+    /** The file */
+    fileId: string;
+};
+export type BundleDataImporterAdHocImportDiscardRunApiResponse = unknown;
+export type BundleDataImporterAdHocImportDiscardRunApiArg = {
+    /** The file */
+    fileId: string;
 };
 export type BundleDataImporterAdHocImportDryRunApiResponse =
     /** status 200 Every row of the file with what its import would do */ BundleDataImporterAdHocImportDryRunResponse;
@@ -1091,6 +1139,45 @@ export type BundleDataImporterAdHocImportTransformationResponse = {
     /** The operator types that can be added next and still lead to the field */
     offered: string[];
 };
+export type BundleDataImporterAdHocImportRunParameters = {
+    settings: BundleDataImporterAdHocImportDryRunParameters;
+    /** skip: leave out every row with an error; values: import a row without its invalid values */
+    errorMode: "skip" | "values";
+    /** The name of the file, as the result names it */
+    fileName: string;
+};
+export type BundleDataImporterAdHocImportRunResponse = {
+    /** Whether the run still goes on */
+    state: "running" | "done";
+    /** The rows the run imports */
+    total: number;
+    /** The rows it has dealt with */
+    processed: number;
+    updated: number;
+    created: number;
+    /** The rows that could not be saved */
+    failed: number;
+    /** The rows left out by the choice in the preview */
+    skipped: number;
+    errorMode: "skip" | "values";
+    fileName: string;
+    /** How the column holding the match value is called */
+    matchColumn: string;
+    newObjectsFolder: string;
+    newObjectsFolderId: number;
+    /** Who runs the import */
+    userName: string;
+    /** When the run ended, as a timestamp */
+    finishedAt: number | null;
+    /** The rows not saved, once the run has ended */
+    failures: {
+        row: number;
+        matchValue: string;
+        action: "update" | "create" | null;
+        /** Why it was not saved */
+        message: string;
+    }[];
+};
 export type BundleDataImporterAdHocImportDryRunParameters = {
     /** The ID of the data object folder the import goes into */
     folderId: number;
@@ -1214,4 +1301,7 @@ export const {
     useBundleDataImporterAdHocImportListConfigurationsQuery,
     useBundleDataImporterAdHocImportPreviewTransformationsMutation,
     useBundleDataImporterAdHocImportDryRunMutation,
+    useBundleDataImporterAdHocImportStartRunMutation,
+    useBundleDataImporterAdHocImportLoadRunQuery,
+    useBundleDataImporterAdHocImportDiscardRunMutation,
 } = injectedRtkApi;
