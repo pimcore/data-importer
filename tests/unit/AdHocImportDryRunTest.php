@@ -64,6 +64,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 {
     private const string CLASS_NAME = RowMatcherModel::CLASS_NAME;
 
+    private const string OBJECT_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
+
     private const string MANDATORY_CLASS_NAME = 'DiDryRunMandatoryClass';
 
     private const string STORE_CLASS_NAME = 'DiDryRunStoreClass';
@@ -431,7 +433,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     public function testAPublishedObjectCannotLoseAMandatoryValueButANewOneMayLackIt(): void
     {
         $class = ClassDefinition::getByName(self::MANDATORY_CLASS_NAME) ?? $this->createMandatoryClass();
-        $fqcn = '\\Pimcore\\Model\\DataObject\\' . self::MANDATORY_CLASS_NAME;
+        $fqcn = self::OBJECT_NAMESPACE . self::MANDATORY_CLASS_NAME;
         /** @var Concrete $object */
         $object = new $fqcn();
         $object->setParent(DataObject::getById($this->folderId));
@@ -583,7 +585,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         ?string $price = null,
         ?string $title = null
     ): Concrete {
-        $fqcn = '\\Pimcore\\Model\\DataObject\\' . self::CLASS_NAME;
+        $fqcn = self::OBJECT_NAMESPACE . self::CLASS_NAME;
         /** @var Concrete $object */
         $object = new $fqcn();
         $object->setParent(Service::createFolderByPath($folder));
@@ -684,7 +686,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     private function storeObject(ClassDefinition $class, string $sku): Concrete
     {
-        $fqcn = '\\Pimcore\\Model\\DataObject\\' . $class->getName();
+        $fqcn = self::OBJECT_NAMESPACE . $class->getName();
         /** @var Concrete $object */
         $object = new $fqcn();
         $object->setParent(DataObject::getById($this->folderId));

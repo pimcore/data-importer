@@ -20,7 +20,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
 
@@ -533,53 +532,9 @@ final readonly class TransformationChain
     {
         $cells = [];
         foreach ($data as $row => $value) {
-            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : $this->items($value), $failed[$row]);
+            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : CellItems::of($value), $failed[$row]);
         }
 
         return $cells;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function items(mixed $value): array
-    {
-        if ($value instanceof ImageGallery) {
-            $images = [];
-            foreach ($value->getItems() as $item) {
-                $images[] = $item?->getImage();
-            }
-            $value = $images;
-        }
-
-        if (is_array($value)) {
-            $items = [];
-            foreach ($value as $item) {
-                $text = $this->text($item);
-                if ($text !== null) {
-                    $items[] = $text;
-                }
-            }
-
-            return $items;
-        }
-
-        $text = $this->text($value);
-
-        return $text === null ? [] : [$text];
-    }
-
-    private function text(mixed $value): ?string
-    {
-        return match (true) {
-            $value === null, $value === '' => null,
-            is_bool($value) => $value ? 'true' : 'false',
-            is_scalar($value) => (string) $value,
-            $value instanceof ElementInterface => $value->getRealFullPath(),
-            $value instanceof \DateTimeInterface => $value->format(self::DATE_FORMAT),
-            is_array($value) => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: null,
-            // nothing an allowed operator returns; named so a preview still shows there is a value
-            default => get_debug_type($value),
-        };
     }
 }

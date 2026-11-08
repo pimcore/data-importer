@@ -137,7 +137,9 @@ final readonly class DryRunner
      */
     private function validate(Concrete $object, ImportField $field): ?ValueError
     {
-        $definition = $field->key === null ? null : FieldAccess::definition($object->getClass(), $field->key, $field->storeKey);
+        $definition = $field->key === null
+            ? null
+            : FieldAccess::definition($object->getClass(), $field->key, $field->storeKey);
         if ($definition === null) {
             return null;
         }
