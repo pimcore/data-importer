@@ -1081,7 +1081,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
                 $options
             ));
             if ($dynamic) {
-                // the stored definition never keeps the runtime dynamicOptions flag; a provider is what makes options dynamic
+                // the stored definition never keeps the runtime dynamicOptions flag;
+                // a provider is what makes options dynamic
                 $multiselect->setOptionsProviderType(ClassDefinition\Data\OptionsProviderInterface::TYPE_CLASS);
                 $multiselect->setOptionsProviderClass(CountryOptionsProvider::class);
             }
