@@ -377,7 +377,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             throw new InvalidArgumentException(sprintf('Field %s needs a valid language, and only it.', $key));
         }
 
-        return new ImportField($target['key'], $language, $target['title']);
+        return new ImportField($target['key'], $language, $this->title($target));
     }
 
     /**
@@ -446,7 +446,11 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             ? $settings['language']
             : null;
 
-        return new ImportField($fieldName, $language, $targets[$fieldName]['title'] ?? $label);
+        return new ImportField(
+            $fieldName,
+            $language,
+            isset($targets[$fieldName]) ? $this->title($targets[$fieldName]) : $label
+        );
     }
 
     /**
@@ -483,7 +487,24 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             return $this->messages->objectIdLabel($user);
         }
 
-        return $targets[(string) $objects['matchField']]['title'] ?? (string) $objects['matchField'];
+        $field = (string) $objects['matchField'];
+
+        return isset($targets[$field]) ? $this->title($targets[$field]) : $field;
+    }
+
+    /**
+     * The field's title as the class gives it; a class attribute's title ends in its key.
+     *
+     * @param Target $target
+     */
+    private function title(array $target): string
+    {
+        $keySuffix = ' [' . $target['key'] . ']';
+        $title = str_ends_with($target['title'], $keySuffix)
+            ? substr($target['title'], 0, -strlen($keySuffix))
+            : $target['title'];
+
+        return $title === '' ? $target['key'] : $title;
     }
 
     private function firstRowNumber(FileInspection $inspection): int
