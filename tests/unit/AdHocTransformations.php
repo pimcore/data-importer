@@ -29,6 +29,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\StringReplace;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Trim;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 
 /**
@@ -65,7 +66,8 @@ final class AdHocTransformations
 
         return new TransformationChain(
             new MappingConfigurationFactory(new MappingConfiguration(), $operators, []),
-            $types
+            $types,
+            new TransformationDataTypeService()
         );
     }
 }

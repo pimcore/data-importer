@@ -128,7 +128,7 @@ final readonly class DryRunner
     {
         return $field->key === null
             ? null
-            : ValueText::of(FieldAccess::read($object, $field->key, $field->language));
+            : ValueText::of(FieldAccess::read($object, $field->key, $field->language, $field->storeKey));
     }
 
     /**
@@ -137,12 +137,12 @@ final readonly class DryRunner
      */
     private function validate(Concrete $object, ImportField $field): ?ValueError
     {
-        $definition = $field->key === null ? null : FieldAccess::definition($object->getClass(), $field->key);
+        $definition = $field->key === null ? null : FieldAccess::definition($object->getClass(), $field->key, $field->storeKey);
         if ($definition === null) {
             return null;
         }
 
-        $value = FieldAccess::read($object, $field->key, $field->language);
+        $value = FieldAccess::read($object, $field->key, $field->language, $field->storeKey);
         if ($definition->isEmpty($value)) {
             return $definition->getMandatory() && $object->isPublished() ? ValueError::Required : null;
         }

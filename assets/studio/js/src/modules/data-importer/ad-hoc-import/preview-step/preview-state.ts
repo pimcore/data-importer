@@ -80,6 +80,7 @@ export const dryRunParameters = ({
           column: row.column,
           field: row.choice.field,
           language: row.choice.language,
+          ...(row.choice.key === undefined ? {} : { key: row.choice.key.id }),
           transformationPipeline: row.transformations
         }])
   }

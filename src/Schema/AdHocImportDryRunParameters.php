@@ -87,6 +87,12 @@ final readonly class AdHocImportDryRunParameters
                         nullable: true
                     ),
                     new Property(
+                        property: 'key',
+                        description: 'For a classification store, the key the column goes into, as <group id>-<key id>',
+                        type: 'string',
+                        nullable: true
+                    ),
+                    new Property(
                         property: 'transformationPipeline',
                         description: 'The transformations of the column, in order',
                         type: 'array',

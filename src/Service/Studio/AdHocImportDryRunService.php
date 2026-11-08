@@ -25,6 +25,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspection;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -42,6 +43,10 @@ use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInter
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore;
+use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
+use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\User;
 use Pimcore\Tool;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -316,11 +321,21 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             $entry = is_array($entry) ? $entry : [];
             $column = $entry['column'] ?? null;
             $this->assertColumn($columns, $column);
-            $field = $this->field($entry['field'] ?? null, $entry['language'] ?? null, $targets);
+            if (($entry['key'] ?? null) === null) {
+                $field = $this->field($entry['field'] ?? null, $entry['language'] ?? null, $targets);
+                $fieldAccepts = $accepted[(string) $field->key] ?? [];
+            } else {
+                [$field, $fieldAccepts] = $this->storeField(
+                    $entry['field'] ?? null,
+                    $entry['key'],
+                    $entry['language'] ?? null,
+                    $classId
+                );
+            }
 
-            $key = json_encode([$field->key, $field->language]);
+            $key = json_encode([$field->key, $field->language, $field->storeKey?->id()]);
             if (isset($taken[$key])) {
-                throw new InvalidArgumentException(sprintf('Two columns go into field %s.', $field->key));
+                throw new InvalidArgumentException(sprintf('Two columns go into field %s.', $field->label));
             }
             $taken[$key] = true;
 
@@ -331,7 +346,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             $converted = $this->convertedColumn(
                 $values,
                 $this->steps($entry['transformationPipeline'] ?? []),
-                $accepted[(string) $field->key] ?? [],
+                $fieldAccepts,
                 $user
             ) ?? throw new InvalidArgumentException(sprintf(
                 'Column %d does not fit field %s with its transformations.',
@@ -395,6 +410,46 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         }
 
         return new ImportField($target['key'], $language, $this->title($target));
+    }
+
+    /**
+     * A key of one of the class's classification stores, and the result types it takes by its own type.
+     *
+     * @return array{ImportField, list<string>}
+     */
+    private function storeField(mixed $fieldName, mixed $keyId, mixed $language, string $classId): array
+    {
+        $store = is_string($fieldName) ? ClassDefinition::getById($classId)?->getFieldDefinition($fieldName) : null;
+        if (!$store instanceof Classificationstore) {
+            throw new InvalidArgumentException(sprintf(
+                'Field %s is no classification store.',
+                is_scalar($fieldName) ? (string) $fieldName : get_debug_type($fieldName)
+            ));
+        }
+
+        $storeKey = StoreKey::fromId($keyId);
+        $relation = $storeKey === null
+            ? null
+            : KeyGroupRelation::getByGroupAndKeyId($storeKey->groupId, $storeKey->keyId);
+        $group = $relation === null ? null : GroupConfig::getById($relation->getGroupId());
+        if ($storeKey === null || $relation === null || $group?->getStoreId() !== $store->getStoreId()) {
+            throw new InvalidArgumentException(sprintf(
+                'Key %s is no key of classification store %s.',
+                is_scalar($keyId) ? (string) $keyId : get_debug_type($keyId),
+                $fieldName
+            ));
+        }
+
+        // a localized store takes its default values without a language
+        $language = is_string($language) && $language !== '' ? $language : null;
+        if ($language !== null && (!$store->isLocalized() || !Tool::isValidLanguage($language))) {
+            throw new InvalidArgumentException(sprintf('Field %s needs a valid language, and only it.', $fieldName));
+        }
+
+        return [
+            new ImportField($fieldName, $language, $group->getName() . ' › ' . $relation->getName(), $storeKey),
+            $this->transformationChain->acceptedTypesOf($relation->getType()),
+        ];
     }
 
     /**

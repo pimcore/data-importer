@@ -21,6 +21,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunner;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier;
@@ -45,6 +46,7 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Classificationstore;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\User;
@@ -63,6 +65,10 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     private const string CLASS_NAME = RowMatcherModel::CLASS_NAME;
 
     private const string MANDATORY_CLASS_NAME = 'DiDryRunMandatoryClass';
+
+    private const string STORE_CLASS_NAME = 'DiDryRunStoreClass';
+
+    private const string STORE_NAME = 'di-dry-run-store';
 
     private const string ROOT = '/di-dry-run';
 
@@ -450,6 +456,79 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame([], $rows[1]['invalid']);
     }
 
+    public function testAClassificationStoreKeyIsWrittenIntoThatKey(): void
+    {
+        [$class, $weight, $height] = $this->storeClass();
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->save();
+        $fileId = $this->upload("sku;weight;height\nSKU-1;2 kg;30 cm\nSKU-2;5 kg;\n", 'products.csv');
+
+        $response = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+            ['column' => 'height', 'field' => 'attributes', 'key' => $height->id()],
+        ]));
+
+        $this->assertSame([
+            ['key' => 'attributes', 'language' => null, 'label' => 'Basics › weight'],
+            ['key' => 'attributes', 'language' => null, 'label' => 'Basics › height'],
+        ], $response->getFields());
+        [$changed, $created] = $response->getRows();
+        $this->assertSame([['old' => '1 kg', 'new' => '2 kg'], ['old' => null, 'new' => '30 cm']], $changed['values']);
+        $this->assertSame([], $changed['invalid']);
+        $this->assertSame('create', $created['action']);
+        $this->assertSame([['old' => null, 'new' => '5 kg'], ['old' => null, 'new' => null]], $created['values']);
+        $reloaded = DataObject::getById($object->getId(), ['force' => true]);
+        $this->assertInstanceOf(Concrete::class, $reloaded);
+        $this->assertSame(
+            '1 kg',
+            $reloaded->get('attributes')->getLocalizedKeyValue($weight->groupId, $weight->keyId),
+            'the dry run writes nothing'
+        );
+    }
+
+    /**
+     * @dataProvider storeKeysThatCannotBeImported
+     */
+    public function testAStoreKeyThatCannotBeImportedIsRefused(string $case): void
+    {
+        [$class, $weight] = $this->storeClass();
+        $fileId = $this->upload("sku;weight;more\nSKU-1;2 kg;3 kg\n", 'products.csv');
+        $columns = match ($case) {
+            'no key of the store' => [['column' => 'weight', 'field' => 'attributes', 'key' => '999999-999999']],
+            'a key without its group' => [
+                ['column' => 'weight', 'field' => 'attributes', 'key' => (string) $weight->keyId],
+            ],
+            'a key of a field that is no store' => [['column' => 'weight', 'field' => 'sku', 'key' => $weight->id()]],
+            'a language for a store that has none' => [
+                ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'en'],
+            ],
+            'two columns into one key' => [
+                ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+                ['column' => 'more', 'field' => 'attributes', 'key' => $weight->id()],
+            ],
+            default => [['column' => 'weight', 'field' => 'attributes']],
+        };
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->service()->dryRun($fileId, $this->storeMapping($class, $columns));
+    }
+
+    public static function storeKeysThatCannotBeImported(): array
+    {
+        $cases = [
+            'no key of the store',
+            'a key without its group',
+            'a key of a field that is no store',
+            'a language for a store that has none',
+            'two columns into one key',
+            'a store without a key',
+        ];
+
+        return array_combine($cases, array_map(static fn (string $case): array => [$case], $cases));
+    }
+
     public function testNewObjectsGoToTheFolderGivenWhichTheUserMustBeAllowedToCreateIn(): void
     {
         $fileId = $this->upload("sku;name\nSKU-9;Chair\n", 'products.csv');
@@ -537,6 +616,98 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $class->save();
 
         return $class;
+    }
+
+    /**
+     * A class with a classification store of two keys in one group; the store's configuration stays for the next test.
+     *
+     * @return array{ClassDefinition, StoreKey, StoreKey}
+     */
+    private function storeClass(): array
+    {
+        $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME);
+        if ($store === null) {
+            $store = new Classificationstore\StoreConfig();
+            $store->setName(self::STORE_NAME);
+            $store->save();
+        }
+        $group = Classificationstore\GroupConfig::getByName('Basics', $store->getId());
+        if ($group === null) {
+            $group = new Classificationstore\GroupConfig();
+            $group->setStoreId($store->getId());
+            $group->setName('Basics');
+            $group->save();
+        }
+        $keys = [];
+        foreach (['weight', 'height'] as $name) {
+            $key = Classificationstore\KeyConfig::getByName($name, $store->getId());
+            if ($key === null) {
+                $key = new Classificationstore\KeyConfig();
+                $key->setDefinition((string) json_encode(new ClassDefinition\Data\Input()));
+                $key->setStoreId($store->getId());
+                $key->setName($name);
+                $key->setEnabled(true);
+                $key->setType('input');
+                $key->save();
+            }
+            if (Classificationstore\KeyGroupRelation::getByGroupAndKeyId($group->getId(), $key->getId()) === null) {
+                $relation = new Classificationstore\KeyGroupRelation();
+                $relation->setGroupId($group->getId());
+                $relation->setKeyId($key->getId());
+                $relation->save();
+            }
+            $keys[] = new StoreKey($group->getId(), $key->getId());
+        }
+
+        $class = ClassDefinition::getByName(self::STORE_CLASS_NAME);
+        if ($class === null) {
+            $panel = new ClassDefinition\Layout\Panel();
+            $panel->setName('pimcore_root');
+            $sku = new ClassDefinition\Data\Input();
+            $sku->setName('sku');
+            $sku->setTitle('sku');
+            $panel->addChild($sku);
+            $attributes = new ClassDefinition\Data\Classificationstore();
+            $attributes->setName('attributes');
+            $attributes->setTitle('Attributes');
+            $attributes->setStoreId($store->getId());
+            $panel->addChild($attributes);
+
+            $class = new ClassDefinition();
+            $class->setName(self::STORE_CLASS_NAME);
+            $class->setLayoutDefinitions($panel);
+            $class->save();
+        }
+
+        return [$class, ...$keys];
+    }
+
+    private function storeObject(ClassDefinition $class, string $sku): Concrete
+    {
+        $fqcn = '\\Pimcore\\Model\\DataObject\\' . $class->getName();
+        /** @var Concrete $object */
+        $object = new $fqcn();
+        $object->setParent(DataObject::getById($this->folderId));
+        $object->setKey(uniqid('o', true));
+        $object->setPublished(true);
+        $object->set('sku', $sku);
+
+        return $object;
+    }
+
+    /**
+     * @param list<array<string, string>> $columns
+     */
+    private function storeMapping(ClassDefinition $class, array $columns): AdHocImportDryRunParameters
+    {
+        return new AdHocImportDryRunParameters(
+            $this->folderId,
+            $class->getId(),
+            AdHocImportDryRunParameters::MATCH_BY_FIELD,
+            'sku',
+            'sku',
+            columns: $columns
+        );
     }
 
     /**

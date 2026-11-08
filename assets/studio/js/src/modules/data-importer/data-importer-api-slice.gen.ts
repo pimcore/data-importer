@@ -1114,6 +1114,8 @@ export type BundleDataImporterAdHocImportDryRunParameters = {
         field: string;
         /** Language of a localized field */
         language?: string | null;
+        /** For a classification store, the key the column goes into, as <group id>-<key id> */
+        key?: string | null;
         /** The transformations of the column, in order */
         transformationPipeline?: object[];
     }[];

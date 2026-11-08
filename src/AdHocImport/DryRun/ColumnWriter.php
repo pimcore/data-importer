@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConvertedColumn;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct;
 use Pimcore\Model\DataObject\Concrete;
 
@@ -24,13 +26,24 @@ use Pimcore\Model\DataObject\Concrete;
  */
 final readonly class ColumnWriter implements FieldWriter
 {
-    private Direct $target;
+    private DataTargetInterface $target;
 
     public function __construct(
         private ImportField $field,
         private int|string $column,
         private ConvertedColumn $converted,
     ) {
+        if ($field->storeKey !== null) {
+            $this->target = new Classificationstore();
+            $this->target->setSettings([
+                'fieldName' => (string) $field->key,
+                'keyId' => $field->storeKey->id(),
+                'language' => $field->language ?? 'default',
+            ]);
+
+            return;
+        }
+
         $this->target = new Direct();
         // an empty cell clears the field, as in a Data Importer run
         $this->target->setSettings([

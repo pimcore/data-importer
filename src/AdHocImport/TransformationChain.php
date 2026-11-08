@@ -65,6 +65,7 @@ final readonly class TransformationChain
     public function __construct(
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private DataTypeServiceInterface $dataTypeService,
+        private TransformationDataTypeService $transformationDataTypes,
     ) {
     }
 
@@ -84,6 +85,23 @@ final readonly class TransformationChain
         }
 
         return $accepted;
+    }
+
+    /**
+     * The result types a field of this Pimcore data type takes, as for a key of a classification store.
+     *
+     * @return list<string>
+     */
+    public function acceptedTypesOf(string $dataType): array
+    {
+        return array_values(array_filter(
+            self::RESULT_TYPES,
+            fn (string $type): bool => in_array(
+                $dataType,
+                $this->transformationDataTypes->getPimcoreTypesByTransformationTargetType($type),
+                true
+            )
+        ));
     }
 
     /**

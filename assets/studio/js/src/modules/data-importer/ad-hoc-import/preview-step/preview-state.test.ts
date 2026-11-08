@@ -139,6 +139,25 @@ describe('the parameters of a dry run', () => {
     })
   })
 
+  it('send the key of a classification store a column goes into', () => {
+    const withStore: Mapping = {
+      basis: 'any',
+      rows: [
+        mappingRow({ isMatch: true, choice: { field: 'sku', language: null } }),
+        mappingRow({
+          column: 'Weight',
+          label: 'Weight',
+          choice: { field: 'attributes', language: null, key: { id: '1-2', label: 'Basics › Weight' } }
+        })
+      ]
+    }
+
+    expect(dryRunParameters({ target, inspected, objects, mapWith: 'here', configuration: undefined, mapping: withStore }).columns).toEqual([
+      { column: 'SKU', field: 'sku', language: null, transformationPipeline: [] },
+      { column: 'Weight', field: 'attributes', language: null, key: '1-2', transformationPipeline: [] }
+    ])
+  })
+
   it('send no field to match by when the objects are found by their id', () => {
     const parameters = dryRunParameters({
       target,

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
+
 /**
  * A field the import writes.
  *
@@ -23,11 +25,13 @@ final readonly class ImportField
     /**
      * @param string|null $key the field as the Direct data target names it; null for another target, whose values the
      *                         preview cannot read
+     * @param StoreKey|null $storeKey for a classification store, the key of it the field is
      */
     public function __construct(
         public ?string $key,
         public ?string $language,
         public string $label,
+        public ?StoreKey $storeKey = null,
     ) {
     }
 }

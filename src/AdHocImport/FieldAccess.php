@@ -18,6 +18,7 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
+use Pimcore\Model\DataObject\Classificationstore;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Objectbrick;
 
@@ -31,8 +32,14 @@ final class FieldAccess
 {
     private const string LOCALIZED_FIELDS = 'localizedfields';
 
-    public static function definition(ClassDefinition $class, string $field): ?Data
+    public static function definition(ClassDefinition $class, string $field, ?StoreKey $storeKey = null): ?Data
     {
+        if ($storeKey !== null) {
+            $relation = Classificationstore\KeyGroupRelation::getByGroupAndKeyId($storeKey->groupId, $storeKey->keyId);
+
+            return $relation === null ? null : Classificationstore\Service::getFieldDefinitionFromKeyConfig($relation);
+        }
+
         $parts = explode('.', $field);
         if (count($parts) === 3) {
             [$container, $brick, $attribute] = $parts;
@@ -59,12 +66,25 @@ final class FieldAccess
     /**
      * The field's value as the object holds it now, unpublished related elements included.
      */
-    public static function read(Concrete $object, string $field, ?string $language): mixed
+    public static function read(Concrete $object, string $field, ?string $language, ?StoreKey $storeKey = null): mixed
     {
         $hideUnpublished = DataObject::getHideUnpublished();
         DataObject::setHideUnpublished(false);
 
         try {
+            if ($storeKey !== null) {
+                $store = $object->get($field);
+
+                // the value of the language itself, as the import writes it, without fallback or default
+                return $store instanceof Classificationstore ? $store->getLocalizedKeyValue(
+                    $storeKey->groupId,
+                    $storeKey->keyId,
+                    $language ?? 'default',
+                    true,
+                    true
+                ) : null;
+            }
+
             $parts = explode('.', $field);
             if (count($parts) !== 3) {
                 return $object->get($field, $language);

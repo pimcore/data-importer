@@ -456,6 +456,16 @@ class AdHocTransformationChainTest extends Unit
         ], $this->chain($types)->acceptedTypes('PROD'));
     }
 
+    public function testAStoreKeyTakesTheTypesListedForItsDataType(): void
+    {
+        $chain = $this->chain();
+
+        $this->assertSame([Types::DEFAULT_TYPE, Types::BOOLEAN], $chain->acceptedTypesOf('input'));
+        $this->assertSame([Types::NUMERIC, Types::BOOLEAN], $chain->acceptedTypesOf('numeric'));
+        $this->assertSame([Types::DATE], $chain->acceptedTypesOf('datetime'));
+        $this->assertSame([], $chain->acceptedTypesOf('quantityValue'));
+    }
+
     public function testAColumnIsConvertedForItsFieldWithTheRowsItCannotTakeAndWhere(): void
     {
         $user = new User();
