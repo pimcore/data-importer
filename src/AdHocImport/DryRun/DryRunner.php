@@ -33,6 +33,8 @@ use Pimcore\Tool;
  * fails.
  *
  * @internal
+ *
+ * @phpstan-import-type Refusal from StoreGroupCheck
  */
 final readonly class DryRunner
 {
@@ -135,11 +137,16 @@ final readonly class DryRunner
         if ($object->isPublished()) {
             $refusals = $storeCheck->refusedWithout($object, $stores, $plan->writers, $leftOut, $index, $row);
             $blocked = $refusals['remaining'] !== [];
-            foreach ([...$refusals['lifted'], ...$refusals['remaining']] as $refused) {
-                if (!$this->isReported($refused, $reportedStoreKeys)) {
-                    $invalid[] = $this->refusedEntry($plan, $storeCheck, $refused, $shownAt);
-                }
-            }
+            array_push(
+                $invalid,
+                ...$this->refusedEntries(
+                    $plan,
+                    $storeCheck,
+                    [...$refusals['lifted'], ...$refusals['remaining']],
+                    $reportedStoreKeys,
+                    $shownAt
+                )
+            );
         }
 
         return new DryRunRow(
@@ -151,6 +158,30 @@ final readonly class DryRunner
             $invalid,
             $blocked
         );
+    }
+
+    /**
+     * @param list<Refusal> $refusals
+     * @param array<string, true> $reportedStoreKeys the store keys a column has already reported
+     * @param array<int, int> $shownAt
+     *
+     * @return list<array{field: int|null, label: string, value: string, message: string}>
+     */
+    private function refusedEntries(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        array $refusals,
+        array $reportedStoreKeys,
+        array $shownAt
+    ): array {
+        $entries = [];
+        foreach ($refusals as $refused) {
+            if (!$this->isReported($refused, $reportedStoreKeys)) {
+                $entries[] = $this->refusedEntry($plan, $storeCheck, $refused, $shownAt);
+            }
+        }
+
+        return $entries;
     }
 
     /**

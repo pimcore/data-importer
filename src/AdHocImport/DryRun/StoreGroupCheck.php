@@ -168,12 +168,23 @@ final class StoreGroupCheck
                 ];
             }
 
-            foreach (array_keys(array_filter($store->getActiveGroups())) as $groupId) {
-                foreach ($this->keysOf($groupId) as $key) {
-                    $refusal = $this->refusal($object, $store, $field, $definition->isLocalized(), $key);
-                    if ($refusal !== null) {
-                        $refused[] = $refusal;
-                    }
+            array_push($refused, ...$this->refusedKeys($object, $store, $field, $definition->isLocalized()));
+        }
+
+        return $refused;
+    }
+
+    /**
+     * @return list<Refusal>
+     */
+    private function refusedKeys(Concrete $object, Classificationstore $store, string $field, bool $localized): array
+    {
+        $refused = [];
+        foreach (array_keys(array_filter($store->getActiveGroups())) as $groupId) {
+            foreach ($this->keysOf($groupId) as $key) {
+                $refusal = $this->refusal($object, $store, $field, $localized, $key);
+                if ($refusal !== null) {
+                    $refused[] = $refusal;
                 }
             }
         }
