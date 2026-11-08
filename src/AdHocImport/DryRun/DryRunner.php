@@ -347,7 +347,7 @@ final readonly class DryRunner
         }
 
         $options = $definition->getOptions();
-        if (!is_array($value) || !$options || $definition->dynamicOptions) {
+        if (!is_array($value) || !$options || $definition->dynamicOptions || !$definition->useConfiguredOptions()) {
             return true;
         }
 

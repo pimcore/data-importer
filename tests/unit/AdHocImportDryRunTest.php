@@ -46,6 +46,7 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\DynamicOptionsProvider\CountryOptionsProvider;
 use Pimcore\Model\DataObject\Classificationstore;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
@@ -87,6 +88,16 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     private const string ELSEWHERE = self::ROOT . '/elsewhere';
 
     private const string NEW_FOLDER = self::ROOT . '/new';
+
+    private const string HIDDEN_FOLDER = self::TARGET . '/hidden';
+
+    private const string CLOSED_FOLDER = self::ROOT . '/closed';
+
+    private const string FOUND_OUTSIDE_TARGET = 'Found outside ' . self::TARGET;
+
+    private const string SECRET_NAME = 'Secret name';
+
+    private const string CLOSED_NAME = 'Closed name';
 
     private const int USER_ID = 4721;
 
@@ -826,18 +837,18 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             $user
         );
 
-        $this->assertSame('Found outside ' . self::TARGET, $message);
+        $this->assertSame(self::FOUND_OUTSIDE_TARGET, $message);
     }
 
     public function testAMatchedObjectTheUserMayNotViewIsAnErrorRowThatTellsNothingOfIt(): void
     {
         $this->createObject(self::TARGET, 'SKU-1', 'Chair');
-        $this->createObject(self::TARGET . '/hidden', 'SKU-HIDDEN', 'Secret name', '9.75');
+        $this->createObject(self::HIDDEN_FOLDER, 'SKU-HIDDEN', self::SECRET_NAME, '9.75');
         $this->createObject(self::ELSEWHERE, 'SKU-OUT', 'Elsewhere name');
-        $this->createObject(self::ROOT . '/closed', 'SKU-CLOSED', 'Closed name');
+        $this->createObject(self::CLOSED_FOLDER, 'SKU-CLOSED', self::CLOSED_NAME);
         $user = $this->saveUserWithWorkspaces([
             self::TARGET => ['list' => true, 'view' => true, 'create' => true, 'save' => true],
-            self::TARGET . '/hidden' => ['list' => false, 'view' => false, 'create' => true, 'save' => true],
+            self::HIDDEN_FOLDER => ['list' => false, 'view' => false, 'create' => true, 'save' => true],
             self::ELSEWHERE => ['list' => true, 'view' => true],
         ]);
         $this->users[] = $user;
@@ -854,13 +865,13 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertNull($rows[2]['action']);
         $this->assertSame('You may not view the object with sku SKU-HIDDEN', $rows[2]['error']);
         $this->assertSame([['old' => null, 'new' => 'Armchair']], $rows[2]['values'], 'only the file\'s value');
-        $this->assertStringNotContainsString('Secret name', (string) json_encode($response->getRows()));
+        $this->assertStringNotContainsString(self::SECRET_NAME, (string) json_encode($response->getRows()));
         $this->assertStringNotContainsString('hidden', (string) json_encode($rows[2]));
 
         $this->assertSame('update', $rows[3]['action'], 'an object the user may view is updated');
         $this->assertSame([['old' => 'Chair', 'new' => 'Stool']], $rows[3]['values']);
         $this->assertSame('Found in ' . self::ELSEWHERE . ', outside ' . self::TARGET, $rows[4]['error']);
-        $this->assertSame('Found outside ' . self::TARGET, $rows[5]['error']);
+        $this->assertSame(self::FOUND_OUTSIDE_TARGET, $rows[5]['error']);
 
         $skippedInEitherMode = array_map(
             fn (string $errorMode): array => array_column(
@@ -879,20 +890,20 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     public function testAUserWithoutViewRightIsToldOnlyWhyTheRowsOfHiddenObjectsFail(): void
     {
         $visible = $this->createObject(self::TARGET, 'SKU-1', 'Chair');
-        $hidden = $this->createObject(self::TARGET . '/hidden', 'SKU-SHARED', 'Secret name', '9.75');
+        $hidden = $this->createObject(self::HIDDEN_FOLDER, 'SKU-SHARED', self::SECRET_NAME, '9.75');
         $this->createObject(self::TARGET, 'SKU-SHARED', 'Shared name');
-        $closed = $this->createObject(self::ROOT . '/closed', 'SKU-CLOSED', 'Closed name');
+        $closed = $this->createObject(self::CLOSED_FOLDER, 'SKU-CLOSED', self::CLOSED_NAME);
         $otherClass = ClassDefinition::getByName(self::MANDATORY_CLASS_NAME) ?? $this->createMandatoryClass();
         $fqcn = self::OBJECT_NAMESPACE . $otherClass->getName();
         /** @var Concrete $ofOtherClass */
         $ofOtherClass = new $fqcn();
-        $ofOtherClass->setParent(Service::createFolderByPath(self::TARGET . '/hidden'));
+        $ofOtherClass->setParent(Service::createFolderByPath(self::HIDDEN_FOLDER));
         $ofOtherClass->setKey('other-class');
         $ofOtherClass->set('name', 'Other name');
         $ofOtherClass->save();
         $user = $this->saveUserWithWorkspaces([
             self::TARGET => ['list' => true, 'view' => true, 'create' => true, 'save' => true],
-            self::TARGET . '/hidden' => ['list' => false, 'view' => false, 'create' => true, 'save' => true],
+            self::HIDDEN_FOLDER => ['list' => false, 'view' => false, 'create' => true, 'save' => true],
         ]);
         $this->users[] = $user;
         $this->logInAs($user);
@@ -918,7 +929,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(
             [
                 3 => 'You may not view the object with Object ID ' . $hidden->getId(),
-                4 => 'Found outside ' . self::TARGET,
+                4 => self::FOUND_OUTSIDE_TARGET,
                 5 => 'The ID ' . $ofOtherClass->getId() . ' belongs to a folder or an object of another class',
                 6 => 'No object has the ID 999999999',
             ],
@@ -926,7 +937,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         );
         $this->assertSame([['old' => null, 'new' => 'Armchair']], $rows[3]['values'], 'only the file\'s value');
         $answer = (string) json_encode($response->getRows());
-        foreach (['Secret name', 'Closed name', 'Other name', 'closed', 'hidden'] as $told) {
+        foreach ([self::SECRET_NAME, self::CLOSED_NAME, 'Other name', 'closed', 'hidden'] as $told) {
             $this->assertStringNotContainsString($told, $answer);
         }
 
@@ -937,7 +948,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertNull($row['action']);
         $this->assertSame('2 objects have sku SKU-SHARED', $row['error'], 'the hidden match is counted');
         $this->assertSame([['old' => null, 'new' => 'Desk']], $row['values']);
-        $this->assertStringNotContainsString('Secret name', (string) json_encode($response->getRows()));
+        $this->assertStringNotContainsString(self::SECRET_NAME, (string) json_encode($response->getRows()));
         $this->assertStringNotContainsString('Shared name', (string) json_encode($response->getRows()));
     }
 
@@ -1069,7 +1080,11 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
                 static fn (string $option): array => ['key' => $option, 'value' => $option],
                 $options
             ));
-            $multiselect->dynamicOptions = $dynamic;
+            if ($dynamic) {
+                // the stored definition never keeps the runtime dynamicOptions flag; a provider is what makes options dynamic
+                $multiselect->setOptionsProviderType(ClassDefinition\Data\OptionsProviderInterface::TYPE_CLASS);
+                $multiselect->setOptionsProviderClass(CountryOptionsProvider::class);
+            }
             $panel->addChild($multiselect);
         }
 
