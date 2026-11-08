@@ -690,6 +690,7 @@ class AdHocImportDryRunTest extends Unit
             $this->tester->grabService(ClassDefinitionServiceInterface::class),
             $this->tester->grabService(ClassDefinitionResolverInterface::class),
             $this->tester->grabService(DataObjectResolverInterface::class),
+            $this->tester->grabService(RowMatcherFactory::class),
             static fn (): array => $configurations,
         );
     }
