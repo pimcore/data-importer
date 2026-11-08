@@ -1018,7 +1018,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $broken = Classificationstore\KeyConfig::getByName('broken', $store->getId());
         if ($broken === null) {
             $broken = new Classificationstore\KeyConfig();
-            $broken->setDefinition('not a definition');
+            // valid JSON for the column's check, but no definition Pimcore can build
+            $broken->setDefinition('{}');
             $broken->setStoreId($store->getId());
             $broken->setName('broken');
             $broken->setEnabled(true);
