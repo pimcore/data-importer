@@ -1004,54 +1004,6 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertFalse($rows[0]['blocked']);
     }
 
-    // a key whose stored definition cannot be read is left out of its group's check, mandatory or not
-    public function testAStoreKeyWhoseDefinitionCannotBeReadIsLeftOutOfItsGroupsCheck(): void
-    {
-        [$class, $weight] = $this->storeClass('UnreadableKey');
-        $object = $this->storeObject($class, 'SKU-1');
-        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
-        $object->get('attributes')->setActiveGroups([$weight->groupId => true]);
-        $object->save();
-        // added after the save, which Pimcore's own check of the group would refuse
-        $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME . 'unreadablekey');
-        $this->assertNotNull($store);
-        $broken = Classificationstore\KeyConfig::getByName('broken', $store->getId());
-        if ($broken === null) {
-            $broken = new Classificationstore\KeyConfig();
-            // valid JSON for the column's check, but no definition Pimcore can build
-            $broken->setDefinition('{}');
-            $broken->setStoreId($store->getId());
-            $broken->setName('broken');
-            $broken->setEnabled(true);
-            $broken->setType('input');
-            $broken->save();
-        }
-        $relation = Classificationstore\KeyGroupRelation::getByGroupAndKeyId($weight->groupId, $broken->getId());
-        if ($relation === null) {
-            $relation = new Classificationstore\KeyGroupRelation();
-            $relation->setGroupId($weight->groupId);
-            $relation->setKeyId($broken->getId());
-            $relation->setMandatory(true);
-            $relation->save();
-        }
-        $fileId = $this->upload("sku;weight\nSKU-1;2 kg\n", 'products.csv');
-
-        try {
-            $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
-                ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
-            ]))->getRows();
-        } finally {
-            // the store stays for the next run, whose save the key would break
-            $relation->delete();
-            $broken->delete();
-        }
-
-        $this->assertSame('update', $rows[0]['action']);
-        $this->assertSame([['old' => '1 kg', 'new' => '2 kg']], $rows[0]['values']);
-        $this->assertSame([], $rows[0]['invalid']);
-        $this->assertFalse($rows[0]['blocked']);
-    }
-
     /**
      * @return Concrete the object with SKU-1
      */

@@ -280,6 +280,7 @@ final readonly class DryRunner
                 (array) json_decode($relation->getDefinition(), true),
                 $relation->getType()
             );
+            // unreachable through getRelations(), whose listing always adds 'mandatory'; kept for the nullable return
             if ($definition === null) {
                 continue;
             }
