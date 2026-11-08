@@ -29,7 +29,7 @@ use Pimcore\Model\DataObject\Service;
  * @phpstan-type GroupKey array{key: StoreKey, label: string, definition: Data}
  * @phpstan-type Refusal array{
  *     field: string,
- *     key: StoreKey,
+ *     key: StoreKey|null,
  *     label: string,
  *     value: string,
  *     error: ValueError,
@@ -56,7 +56,8 @@ final class StoreGroupCheck
     }
 
     /**
-     * @return list<Refusal> one per refused key, with the languages it is refused in
+     * @return list<Refusal> one per refused key, with the languages it is refused in; without a key where the store
+     *     as a whole is refused
      */
     public function refused(Concrete $object): array
     {
@@ -66,6 +67,17 @@ final class StoreGroupCheck
             $definition = $object->getClass()->getFieldDefinition($field);
             if (!$store instanceof Classificationstore || !$definition instanceof Data\Classificationstore) {
                 continue;
+            }
+
+            if ($this->holdsTooManyGroups($store, $definition)) {
+                $refused[] = [
+                    'field' => $field,
+                    'key' => null,
+                    'label' => $definition->getTitle() ?: $field,
+                    'value' => '',
+                    'error' => ValueError::TooManyGroups,
+                    'languages' => [],
+                ];
             }
 
             foreach (array_keys(array_filter($store->getActiveGroups())) as $groupId) {
@@ -79,6 +91,16 @@ final class StoreGroupCheck
         }
 
         return $refused;
+    }
+
+    /**
+     * Pimcore counts every group of the list here, also one switched off.
+     */
+    private function holdsTooManyGroups(Classificationstore $store, Data\Classificationstore $definition): bool
+    {
+        $limit = (int) $definition->getMaxItems();
+
+        return $limit > 0 && count($store->getActiveGroups()) > $limit;
     }
 
     /**

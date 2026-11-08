@@ -481,7 +481,10 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             ['key' => 'attributes', 'language' => null, 'label' => 'Basics › height'],
         ], $response->getFields());
         [$changed, $created] = $response->getRows();
-        $this->assertSame([['old' => '1 kg', 'new' => '2 kg'], ['old' => null, 'new' => self::HEIGHT_VALUE]], $changed['values']);
+        $this->assertSame(
+            [['old' => '1 kg', 'new' => '2 kg'], ['old' => null, 'new' => self::HEIGHT_VALUE]],
+            $changed['values']
+        );
         $this->assertSame([], $changed['invalid']);
         $this->assertSame('create', $created['action']);
         $this->assertSame([['old' => null, 'new' => '5 kg'], ['old' => null, 'new' => null]], $created['values']);
@@ -548,6 +551,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
         $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
         $this->assertSame([0], array_column($rows[0]['invalid'], 'field'), 'named by its column');
+        $this->assertFalse($rows[0]['blocked'], 'left out, the key keeps its value');
     }
 
     public function testActivatingAGroupRefusesTheMandatoryKeysTheFileDoesNotName(): void
@@ -563,6 +567,10 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
         $this->assertSame(['Basics › height is required'], array_column($rows[0]['invalid'], 'message'));
         $this->assertSame([null], array_column($rows[0]['invalid'], 'field'), 'the file has no column for it');
+        $this->assertTrue($rows[0]['blocked'], 'no value of the file to leave out');
+        $this->assertSame(['2'], array_column(array_slice($this->csvRows(
+            $this->service()->skippedRows($fileId, AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES)
+        ), 1), 0));
 
         $reloaded = DataObject::getById($object->getId(), ['force' => true]);
         $this->assertInstanceOf(Concrete::class, $reloaded);
@@ -610,6 +618,58 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             'written in en only'
         );
         $this->assertSame([null, null], array_column($rows[0]['invalid'], 'field'));
+        $this->assertTrue($rows[0]['blocked'], 'the other languages stay empty');
+    }
+
+    public function testAStoreKeyItsColumnReportedIsNotReportedAgainByItsGroup(): void
+    {
+        [$class, $weight] = $this->storeClass('MandatoryQuantity');
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setActiveGroups([$weight->groupId => true]);
+        $object->save();
+        $length = $this->quantityKey('MandatoryQuantity', mandatoryInGroup: true);
+        $fileId = $this->upload("sku;length\nSKU-1;3 m\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'length', 'field' => 'attributes', 'key' => $length->id()],
+        ]))->getRows();
+
+        $this->assertSame(
+            ['Basics › length “3 m” does not fit the field'],
+            array_column($rows[0]['invalid'], 'message')
+        );
+        $this->assertTrue($rows[0]['blocked'], 'left out, the key stays empty in an active group');
+    }
+
+    public function testAStoreHoldingMoreGroupsThanItAllowsRefusesTheRow(): void
+    {
+        [$class, $weight] = $this->storeClass('OneGroup', maxItems: 1);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setActiveGroups([$weight->groupId => true]);
+        $object->save();
+        $width = $this->keyOfAnotherGroup('OneGroup');
+        $fileId = $this->upload("sku;width\nSKU-1;2 m\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'width', 'field' => 'attributes', 'key' => $width->id()],
+        ]))->getRows();
+
+        $this->assertSame('update', $rows[0]['action']);
+        $this->assertSame(
+            ['Attributes holds more groups than it allows'],
+            array_column($rows[0]['invalid'], 'message')
+        );
+        $this->assertSame([null], array_column($rows[0]['invalid'], 'field'));
+        $this->assertTrue($rows[0]['blocked']);
+
+        $reloaded = DataObject::getById($object->getId(), ['force' => true]);
+        $this->assertInstanceOf(Concrete::class, $reloaded);
+        $reloaded->get('attributes')->setLocalizedKeyValue($width->groupId, $width->keyId, '2 m');
+        $reloaded->get('attributes')->setActiveGroups([$weight->groupId => true, $width->groupId => true]);
+        $this->expectException(ValidationException::class);
+        $reloaded->save();
     }
 
     public function testAStoreKeyOfATypeNoColumnLeadsToTakesNoValue(): void
@@ -776,7 +836,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         bool $localized = false,
         bool $mandatory = false,
         bool $mandatoryInGroup = false,
-        bool $allowInherit = false
+        bool $allowInherit = false,
+        ?int $maxItems = null
     ): array {
         $storeName = self::STORE_NAME . strtolower($variant);
         $store = Classificationstore\StoreConfig::getByName($storeName);
@@ -831,6 +892,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             $attributes->setTitle('Attributes');
             $attributes->setStoreId($store->getId());
             $attributes->setLocalized($localized);
+            $attributes->setMaxItems($maxItems);
             $panel->addChild($attributes);
 
             $class = new ClassDefinition();
@@ -846,7 +908,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     /**
      * A key of type quantityValue in the variant's store, which no transformation of a column leads to.
      */
-    private function quantityKey(string $variant): StoreKey
+    private function quantityKey(string $variant, bool $mandatoryInGroup = false): StoreKey
     {
         $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME . strtolower($variant));
         $this->assertNotNull($store);
@@ -868,8 +930,39 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             $relation = new Classificationstore\KeyGroupRelation();
             $relation->setGroupId($group->getId());
             $relation->setKeyId($key->getId());
+            $relation->setMandatory($mandatoryInGroup);
             $relation->save();
         }
+
+        return new StoreKey($group->getId(), $key->getId());
+    }
+
+    /**
+     * A text key in a second group of the variant's store.
+     */
+    private function keyOfAnotherGroup(string $variant): StoreKey
+    {
+        $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME . strtolower($variant));
+        $this->assertNotNull($store);
+        $group = new Classificationstore\GroupConfig();
+        $group->setStoreId($store->getId());
+        $group->setName('Dimensions');
+        $group->save();
+
+        $definition = new ClassDefinition\Data\Input();
+        $definition->setName('width');
+        $key = new Classificationstore\KeyConfig();
+        $key->setDefinition((string) json_encode($definition));
+        $key->setStoreId($store->getId());
+        $key->setName('width');
+        $key->setEnabled(true);
+        $key->setType('input');
+        $key->save();
+
+        $relation = new Classificationstore\KeyGroupRelation();
+        $relation->setGroupId($group->getId());
+        $relation->setKeyId($key->getId());
+        $relation->save();
 
         return new StoreKey($group->getId(), $key->getId());
     }

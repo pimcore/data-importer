@@ -483,10 +483,11 @@ data-importer.ad-hoc-import.check.value.not-yes-no: '{{field}} “{{value}}” i
 data-importer.ad-hoc-import.check.value.not-an-option: '{{field}} “{{value}}” is no option of {{field}}'
 data-importer.ad-hoc-import.check.value.required: '{{field}} is required'
 data-importer.ad-hoc-import.check.value.invalid: '{{field}} “{{value}}” does not fit the field'
+data-importer.ad-hoc-import.check.value.too-many-groups: '{{field}} holds more groups than it allows'
 data-importer.ad-hoc-import.preview.updated: will be updated
 data-importer.ad-hoc-import.preview.created: 'will be created in {{folder}}'
 data-importer.ad-hoc-import.preview.with-errors.skip: 'rows with errors: skipped, downloadable afterwards'
-data-importer.ad-hoc-import.preview.with-errors.values: 'rows with errors: invalid values left out; rows that cannot be matched are skipped'
+data-importer.ad-hoc-import.preview.with-errors.values: 'rows with errors: invalid values left out; rows that cannot be matched or saved are skipped'
 data-importer.ad-hoc-import.preview.checked: 'All {{count}} rows checked'
 data-importer.ad-hoc-import.preview.old-new: '· old value → new value'
 data-importer.ad-hoc-import.preview.errors-only: Errors only

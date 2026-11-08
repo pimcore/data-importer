@@ -26,6 +26,7 @@ const row = (given: Partial<DryRunRow>): DryRunRow => ({
   error: null,
   values: [{ old: '179.90', new: '189.90' }, { old: 'red', new: 'red' }],
   invalid: [],
+  blocked: false,
   ...given
 })
 
@@ -97,9 +98,25 @@ describe('the preview step', () => {
            />)
 
     expect(screen.getByText('will be updated').previousSibling?.textContent).toBe('2')
-    expect(screen.getByText('rows with errors: invalid values left out; rows that cannot be matched are skipped')).toBeTruthy()
+    expect(screen.getByText('rows with errors: invalid values left out; rows that cannot be matched or saved are skipped')).toBeTruthy()
     expect(cells()[2]).toEqual(['4', 'NH-1003', 'update, without Price', '12,5,0', 'red', 'Price “12,5,0” → left unchanged'])
     expect(cells()[3][2]).toBe('skipped')
+  })
+
+  it('says why a row a save would refuse anyway is skipped, also when invalid values are left out', () => {
+    const blocked = row({
+      row: 6,
+      invalid: [{ field: null, label: 'Basics › height', value: '', message: 'Basics › height is required' }],
+      blocked: true
+    })
+
+    render(<PreviewStep
+      dryRun={ { ...dryRun(), rows: [blocked] } }
+      errorMode="values"
+           />)
+
+    expect(cells()[0][2]).toBe('skipped')
+    expect(cells()[0][5]).toBe('Basics › height is required')
   })
 
   it('marks the message of a skipped row as an error and of a row imported without values as a warning', () => {

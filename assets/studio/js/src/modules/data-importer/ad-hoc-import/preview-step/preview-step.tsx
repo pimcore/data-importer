@@ -14,6 +14,7 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Grid, Pagination, Skeleton, Switch } from '@pimcore/studio-ui-bundle/components'
 import {
   cellText,
+  isSkipped,
   lastPageWithin,
   PAGE_SIZE,
   pageOf,
@@ -66,7 +67,7 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
         return row.error
       }
 
-      return row.invalid.map(({ label, value, message }) => errorMode === 'skip'
+      return row.invalid.map(({ label, value, message }) => isSkipped(row, errorMode)
         ? message
         : t('data-importer.ad-hoc-import.preview.left-unchanged', {
             field: label,

@@ -89,11 +89,11 @@ export const dryRunParameters = ({
 export const hasErrors = (row: DryRunRow): boolean => row.action === null || row.invalid.length > 0
 
 /**
- * Whether the import skips the row: one that means no object always, one with values its fields cannot take only
- * when such rows are skipped.
+ * Whether the import skips the row: one that means no object or that a save would refuse anyway always, one with
+ * values its fields cannot take only when such rows are skipped.
  */
 export const isSkipped = (row: DryRunRow, mode: ErrorMode): boolean =>
-  row.action === null || (mode === 'skip' && row.invalid.length > 0)
+  row.action === null || row.blocked || (mode === 'skip' && row.invalid.length > 0)
 
 export interface PreviewCounts {
   updated: number

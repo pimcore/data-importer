@@ -186,17 +186,18 @@ const dryRunAnswer = {
   newObjectsFolder: '/Products/Outdoor',
   fields: [{ key: 'title', language: null, label: 'Title' }],
   rows: [
-    { row: 2, matchValue: 'NH-1001', action: 'update', error: null, values: [{ old: 'Jacket', new: 'Trail jacket' }], invalid: [] },
-    { row: 3, matchValue: 'NH-1002', action: 'create', error: null, values: [{ old: null, new: 'Fleece' }], invalid: [] },
+    { row: 2, matchValue: 'NH-1001', action: 'update', error: null, values: [{ old: 'Jacket', new: 'Trail jacket' }], invalid: [], blocked: false },
+    { row: 3, matchValue: 'NH-1002', action: 'create', error: null, values: [{ old: null, new: 'Fleece' }], invalid: [], blocked: false },
     {
       row: 4,
       matchValue: 'NH-1003',
       action: 'update',
       error: null,
       values: [{ old: 'Cap', new: 'x'.repeat(300) }],
-      invalid: [{ field: 0, label: 'Title', value: 'x'.repeat(300), message: 'Title is too long' }]
+      invalid: [{ field: 0, label: 'Title', value: 'x'.repeat(300), message: 'Title is too long' }],
+      blocked: false
     },
-    { row: 5, matchValue: 'NH-1001', action: null, error: 'SKU NH-1001 is in the file twice (row 2)', values: [{ old: null, new: 'Again' }], invalid: [] }
+    { row: 5, matchValue: 'NH-1001', action: null, error: 'SKU NH-1001 is in the file twice (row 2)', values: [{ old: null, new: 'Again' }], invalid: [], blocked: false }
   ]
 }
 

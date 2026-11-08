@@ -1176,6 +1176,8 @@ export type BundleDataImporterAdHocImportDryRunResponse = {
             /** What is wrong */
             message: string;
         }[];
+        /** A save would refuse the row even without its invalid values, so it is skipped in either error mode */
+        blocked: boolean;
     }[];
 };
 export const {

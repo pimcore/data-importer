@@ -31,6 +31,7 @@ final readonly class DryRunRow
      * @param list<array{old: string|null, new: string|null}> $values per field shown, the value before and after
      * @param list<array{field: int|null, label: string, value: string, message: string}> $invalid the values that
      *     cannot go into their field, which is named by its position among those shown, null for one not shown
+     * @param bool $blocked whether a save would refuse the row even without its invalid values
      */
     public function __construct(
         public int $row,
@@ -39,11 +40,20 @@ final readonly class DryRunRow
         public ?string $error = null,
         public array $values = [],
         public array $invalid = [],
+        public bool $blocked = false,
     ) {
     }
 
     public function hasErrors(): bool
     {
         return $this->action === null || $this->invalid !== [];
+    }
+
+    /**
+     * Whether "Import them without the invalid values" imports the row.
+     */
+    public function importsWithoutInvalidValues(): bool
+    {
+        return $this->action !== null && !$this->blocked;
     }
 }

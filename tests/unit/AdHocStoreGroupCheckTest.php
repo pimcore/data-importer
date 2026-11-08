@@ -28,6 +28,8 @@ class AdHocStoreGroupCheckTest extends Unit
 {
     private const int GROUP = 7;
 
+    private const int OTHER_GROUP = 8;
+
     private const int WEIGHT = 11;
 
     private const int HEIGHT = 12;
@@ -116,6 +118,32 @@ class AdHocStoreGroupCheckTest extends Unit
         $this->assertSame('heavy', $refused[0]['value']);
     }
 
+    public function testAStoreHoldingMoreGroupsThanItAllowsIsRefusedAsAWhole(): void
+    {
+        $store = $this->createMock(Classificationstore::class);
+        $store->method('getActiveGroups')->willReturn([self::GROUP => true, self::OTHER_GROUP => true]);
+        $store->method('getItems')->willReturn([]);
+
+        $refused = $this->check([$this->key(self::WEIGHT, mandatory: false)])
+            ->refused($this->object($store, maxItems: 1));
+
+        $this->assertCount(1, $refused);
+        $this->assertSame('attributes', $refused[0]['field']);
+        $this->assertNull($refused[0]['key']);
+        $this->assertSame('Attributes', $refused[0]['label']);
+        $this->assertSame(ValueError::TooManyGroups, $refused[0]['error']);
+        $this->assertSame([], $refused[0]['languages']);
+    }
+
+    public function testAStoreWithinItsLimitOrWithoutOneIsNotRefused(): void
+    {
+        $key = $this->key(self::WEIGHT, mandatory: false);
+        $store = $this->store([]);
+
+        $this->assertSame([], $this->check([$key])->refused($this->object($store, maxItems: 1)));
+        $this->assertSame([], $this->check([$key])->refused($this->object($store)));
+    }
+
     public function testAGroupsKeysAreReadOncePerRun(): void
     {
         $asked = 0;
@@ -184,10 +212,13 @@ class AdHocStoreGroupCheckTest extends Unit
     private function object(
         Classificationstore $store,
         bool $localized = false,
-        bool $allowInherit = false
+        bool $allowInherit = false,
+        ?int $maxItems = null
     ): Concrete {
         $definition = new Data\Classificationstore();
         $definition->setLocalized($localized);
+        $definition->setMaxItems($maxItems);
+        $definition->setTitle('Attributes');
         $class = new ClassDefinition();
         $class->setFieldDefinitions(['attributes' => $definition]);
         $class->setAllowInherit($allowInherit);

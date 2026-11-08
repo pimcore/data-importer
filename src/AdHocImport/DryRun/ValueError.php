@@ -27,6 +27,9 @@ enum ValueError: string
 
     // a published object cannot be saved without it
     case Required = 'required';
+
+    // a classification store holds more groups than it allows, whichever values the row leaves out
+    case TooManyGroups = 'too-many-groups';
     case Invalid = 'invalid';
 
     public static function ofConversion(?string $conversion): self

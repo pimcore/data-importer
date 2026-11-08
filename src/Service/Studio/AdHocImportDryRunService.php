@@ -172,6 +172,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                 'error' => $row->error,
                 'values' => $row->values,
                 'invalid' => $row->invalid,
+                'blocked' => $row->blocked,
             ], $results)
         );
     }
@@ -199,8 +200,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             escape: ''
         );
         foreach ($skipped['rows'] as $row) {
-            // without the invalid values a row that finds its object is imported
-            if ($errorMode === self::WITHOUT_INVALID_VALUES && $row['matched']) {
+            if ($errorMode === self::WITHOUT_INVALID_VALUES && $row['importsWithoutInvalidValues']) {
                 continue;
             }
             fputcsv($csv, [$row['row'], ...$row['values'], $row['error']], escape: '');
@@ -639,7 +639,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                     array_keys($columns)
                 ),
                 'error' => $result->error ?? implode('; ', array_column($result->invalid, 'message')),
-                'matched' => $result->action !== null,
+                'importsWithoutInvalidValues' => $result->importsWithoutInvalidValues(),
             ];
         }
 

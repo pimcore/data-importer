@@ -35,6 +35,13 @@ class AdHocDryRunWritersTest extends Unit
         ]))->hasErrors());
     }
 
+    public function testOnlyARowWithAnObjectAndNoRefusalBeyondItsValuesImportsWithoutThem(): void
+    {
+        $this->assertTrue((new DryRunRow(2, 'A-1', DryRunRow::UPDATE))->importsWithoutInvalidValues());
+        $this->assertFalse((new DryRunRow(3, 'A-2', null, 'not-found'))->importsWithoutInvalidValues());
+        $this->assertFalse((new DryRunRow(4, 'A-3', DryRunRow::UPDATE, blocked: true))->importsWithoutInvalidValues());
+    }
+
     public function testAColumnWriterWritesTheConvertedValueIntoItsField(): void
     {
         $field = new ImportField('name', 'en', 'Name');

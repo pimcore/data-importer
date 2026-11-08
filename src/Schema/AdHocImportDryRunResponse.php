@@ -25,7 +25,8 @@ use OpenApi\Attributes\Schema;
  *     action: string|null,
  *     error: string|null,
  *     values: list<array{old: string|null, new: string|null}>,
- *     invalid: list<array{field: int|null, label: string, value: string, message: string}>
+ *     invalid: list<array{field: int|null, label: string, value: string, message: string}>,
+ *     blocked: bool
  * }
  *
  * @internal
@@ -75,7 +76,7 @@ final readonly class AdHocImportDryRunResponse
             description: 'Every row of the file, in its order',
             type: 'array',
             items: new Items(
-                required: ['row', 'matchValue', 'action', 'error', 'values', 'invalid'],
+                required: ['row', 'matchValue', 'action', 'error', 'values', 'invalid', 'blocked'],
                 properties: [
                     new Property(
                         property: 'row',
@@ -129,6 +130,12 @@ final readonly class AdHocImportDryRunResponse
                             ],
                             type: 'object'
                         )
+                    ),
+                    new Property(
+                        property: 'blocked',
+                        description: 'A save would refuse the row even without its invalid values, so it is skipped '
+                            . 'in either error mode',
+                        type: 'boolean'
                     ),
                 ],
                 type: 'object'

@@ -28,6 +28,7 @@ class AdHocImportDryRunResponseTest extends Unit
             'error' => null,
             'values' => [['old' => 'Stool', 'new' => 'Chair']],
             'invalid' => [],
+            'blocked' => false,
         ]];
         $response = new AdHocImportDryRunResponse('SKU', '/Products', $fields, $rows);
 

@@ -82,6 +82,7 @@ class AdHocDryRunMessagesTest extends Unit
             'not yes or no' => [ValueError::NotYesOrNo, 'Weight “heavy” is neither yes nor no'],
             'not an option' => [ValueError::NotAnOption, 'Weight “heavy” is no option of Weight'],
             'required' => [ValueError::Required, 'Weight is required'],
+            'too many groups' => [ValueError::TooManyGroups, 'Weight holds more groups than it allows'],
             'invalid' => [ValueError::Invalid, 'Weight “heavy” does not fit the field'],
         ];
     }

@@ -128,9 +128,14 @@ final readonly class DryRunner
             ];
         }
 
+        $blocked = false;
         if ($object->isPublished()) {
-            $refused = $this->refusedByStores($plan, $storeCheck, $object, $reportedStoreKeys, $shownAt);
-            $invalid = [...$invalid, ...$refused];
+            foreach ($storeCheck->refused($object) as $refused) {
+                $blocked = $blocked || !$this->leavingValuesOutLifts($plan, $refused, $values);
+                if (!$this->isReported($refused, $reportedStoreKeys)) {
+                    $invalid[] = $this->refusedEntry($plan, $refused, $shownAt);
+                }
+            }
         }
 
         return new DryRunRow(
@@ -139,43 +144,73 @@ final readonly class DryRunner
             $isNew ? DryRunRow::CREATE : DryRunRow::UPDATE,
             null,
             array_map(static fn (int $position): array => $values[$position], $plan->shown),
-            $invalid
+            $invalid,
+            $blocked
         );
     }
 
     /**
-     * @param array<string, true> $reportedStoreKeys the store keys a column has already reported
-     * @param array<int, int> $shownAt
+     * Whether the object still holds a value for the refused key in every refused language once the file's are left
+     * out: a key the file does not write, or that was empty before, is refused either way.
      *
-     * @return list<array{field: int|null, label: string, value: string, message: string}>
+     * @param array{field: string, key: StoreKey|null, languages: list<string>} $refused
+     * @param array<int, array{old: string|null, new: string|null}> $values
      */
-    private function refusedByStores(
-        DryRunPlan $plan,
-        StoreGroupCheck $storeCheck,
-        Concrete $object,
-        array $reportedStoreKeys,
-        array $shownAt
-    ): array {
-        $invalid = [];
-        foreach ($storeCheck->refused($object) as $refused) {
-            if (isset($reportedStoreKeys[$refused['field'] . '/' . $refused['key']->id()])) {
-                continue;
-            }
-            $position = $this->writerOf($plan, $refused['field'], $refused['key'], $refused['languages']);
-            $invalid[] = [
-                'field' => $position === null ? null : ($shownAt[$position] ?? null),
-                'label' => $refused['label'],
-                'value' => $refused['value'],
-                'message' => $this->messages->valueError(
-                    $refused['error'],
-                    $refused['label'],
-                    $refused['value'],
-                    $plan->user
-                ),
-            ];
+    private function leavingValuesOutLifts(DryRunPlan $plan, array $refused, array $values): bool
+    {
+        if ($refused['key'] === null) {
+            return false;
         }
 
-        return $invalid;
+        foreach ($refused['languages'] as $language) {
+            $position = $this->writerOf($plan, $refused['field'], $refused['key'], [$language]);
+            if ($position === null || in_array($values[$position]['old'], [null, ''], true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array{field: string, key: StoreKey|null} $refused
+     * @param array<string, true> $reportedStoreKeys the store keys a column has already reported
+     */
+    private function isReported(array $refused, array $reportedStoreKeys): bool
+    {
+        return $refused['key'] !== null && isset($reportedStoreKeys[$refused['field'] . '/' . $refused['key']->id()]);
+    }
+
+    /**
+     * @param array{
+     *     field: string,
+     *     key: StoreKey|null,
+     *     label: string,
+     *     value: string,
+     *     error: ValueError,
+     *     languages: list<string>
+     * } $refused
+     * @param array<int, int> $shownAt
+     *
+     * @return array{field: int|null, label: string, value: string, message: string}
+     */
+    private function refusedEntry(DryRunPlan $plan, array $refused, array $shownAt): array
+    {
+        $position = $refused['key'] === null
+            ? null
+            : $this->writerOf($plan, $refused['field'], $refused['key'], $refused['languages']);
+
+        return [
+            'field' => $position === null ? null : ($shownAt[$position] ?? null),
+            'label' => $refused['label'],
+            'value' => $refused['value'],
+            'message' => $this->messages->valueError(
+                $refused['error'],
+                $refused['label'],
+                $refused['value'],
+                $plan->user
+            ),
+        ];
     }
 
     private function storeCheck(DryRunPlan $plan): StoreGroupCheck

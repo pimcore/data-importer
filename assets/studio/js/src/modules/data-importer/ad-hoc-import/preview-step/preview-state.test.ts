@@ -98,6 +98,7 @@ const row = (given: Partial<DryRunRow>): DryRunRow => ({
   error: null,
   values: [],
   invalid: [],
+  blocked: false,
   ...given
 })
 
@@ -207,6 +208,17 @@ describe('the preview of a dry run', () => {
 
   it('counts a row whose values its fields cannot take as imported without them, a row without an object never', () => {
     expect(previewCounts(dryRun, 'values')).toEqual({ updated: 2, created: 1, withErrors: 2, imported: 3 })
+  })
+
+  it('never counts a row a save would refuse anyway as imported', () => {
+    const blocked = row({
+      invalid: [{ field: null, label: 'Basics › height', value: '', message: 'Basics › height is required' }],
+      blocked: true
+    })
+    const counts = previewCounts({ ...dryRun, rows: [blocked] }, 'values')
+
+    expect(counts).toEqual({ updated: 0, created: 0, withErrors: 1, imported: 0 })
+    expect(rowTone(blocked, 'values')).toBe('error')
   })
 
   it('tells the rows with errors', () => {
