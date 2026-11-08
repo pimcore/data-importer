@@ -32,6 +32,7 @@ final readonly class DryRunRow
      * @param list<array{field: int|null, label: string, value: string, message: string}> $invalid the values that
      *     cannot go into their field, which is named by its position among those shown, null for one not shown
      * @param bool $blocked whether a save would refuse the row even without its invalid values
+     * @param list<int> $leftOut the positions among the plan's writers of the fields the row cannot write
      */
     public function __construct(
         public int $row,
@@ -41,6 +42,7 @@ final readonly class DryRunRow
         public array $values = [],
         public array $invalid = [],
         public bool $blocked = false,
+        public array $leftOut = [],
     ) {
     }
 

@@ -140,6 +140,22 @@ final readonly class AdHocImportDryRunParameters
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $values what toArray() gave
+     */
+    public static function fromArray(array $values): self
+    {
+        return new self(...$values);
+    }
+
+    /**
+     * @return array<string, mixed> every parameter by its name
+     */
+    public function toArray(): array
+    {
+        return get_object_vars($this);
+    }
+
     public function getFolderId(): int
     {
         return $this->folderId;

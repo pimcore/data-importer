@@ -35,6 +35,8 @@ final class FileStore
 
     private const string SKIPPED_ROWS_SUFFIX = '.skipped.json';
 
+    private const string FAILED_ROWS_SUFFIX = '.failed.json';
+
     public function __construct(
         private readonly FilesystemOperator $pimcoreDataImporterAdHocStorage,
         private readonly LockFactory $lockFactory,
@@ -103,6 +105,50 @@ final class FileStore
     }
 
     /**
+     * Deletes the upload alone, when its run ended: what the result offers for download stays.
+     */
+    public function deleteUpload(int $userId, string $fileId, FileType $type): void
+    {
+        $lock = $this->lock($userId, $fileId);
+
+        try {
+            $this->pimcoreDataImporterAdHocStorage->delete($this->path($userId, $fileId, $type));
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Deletes what a finished run left for download.
+     */
+    public function deleteRunOutput(int $userId, string $fileId): void
+    {
+        $lock = $this->lock($userId, $fileId);
+
+        try {
+            $this->pimcoreDataImporterAdHocStorage->delete($this->skippedRowsPath($userId, $fileId));
+            $this->pimcoreDataImporterAdHocStorage->delete($this->failedRowsPath($userId, $fileId));
+        } finally {
+            $lock->release();
+        }
+    }
+
+    public function storeFailedRows(int $userId, string $fileId, string $content): void
+    {
+        $this->pimcoreDataImporterAdHocStorage->write($this->failedRowsPath($userId, $fileId), $content);
+    }
+
+    public function readFailedRows(int $userId, string $fileId): ?string
+    {
+        $path = $this->failedRowsPath($userId, $fileId);
+        if (!Uuid::isValid($fileId) || !$this->pimcoreDataImporterAdHocStorage->fileExists($path)) {
+            return null;
+        }
+
+        return $this->pimcoreDataImporterAdHocStorage->read($path);
+    }
+
+    /**
      * Keeps the rows the last dry run of a file would skip, replacing those of an earlier one, until the file is
      * deleted or abandoned. A dry run still going when its file is deleted keeps nothing.
      */
@@ -148,7 +194,7 @@ final class FileStore
     private function removeWithItsSkippedRows(string $path): void
     {
         $this->pimcoreDataImporterAdHocStorage->delete($path);
-        if (!str_ends_with($path, self::SKIPPED_ROWS_SUFFIX)) {
+        if (!str_ends_with($path, self::SKIPPED_ROWS_SUFFIX) && !str_ends_with($path, self::FAILED_ROWS_SUFFIX)) {
             $this->pimcoreDataImporterAdHocStorage->delete(
                 (string) preg_replace('/\.[^.\/]+$/', self::SKIPPED_ROWS_SUFFIX, $path)
             );
@@ -166,6 +212,11 @@ final class FileStore
     private function path(int $userId, string $fileId, FileType $type): string
     {
         return $userId . '/' . $fileId . '.' . $type->value;
+    }
+
+    private function failedRowsPath(int $userId, string $fileId): string
+    {
+        return $userId . '/' . $fileId . self::FAILED_ROWS_SUFFIX;
     }
 
     private function skippedRowsPath(int $userId, string $fileId): string

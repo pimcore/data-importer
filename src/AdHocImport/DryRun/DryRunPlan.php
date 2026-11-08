@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
-use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcher;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherInterface;
 use Pimcore\Model\User;
 
 /**
@@ -32,7 +32,7 @@ final readonly class DryRunPlan
     public function __construct(
         public iterable $rows,
         public int $firstRowNumber,
-        public RowMatcher $matcher,
+        public RowMatcherInterface $matcher,
         public array $writers,
         public array $shown,
         public string $matchField,

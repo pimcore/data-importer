@@ -507,3 +507,41 @@ data-importer.ad-hoc-import.preview.error-mode.skip: Skip them
 data-importer.ad-hoc-import.preview.error-mode.values: Import them without the invalid values
 data-importer.ad-hoc-import.preview.import: 'Import {{count}} objects'
 data-importer.ad-hoc-import.preview.failed: The file could not be checked.
+data-importer.ad-hoc-import.run.importing: 'Importing {{count}} objects'
+data-importer.ad-hoc-import.run.count-of: '{{done}} of {{total}}'
+data-importer.ad-hoc-import.run.saving: Saving
+data-importer.ad-hoc-import.run.background: 'Runs in the background. You can close this window; Studio tells you when the import is done.'
+data-importer.ad-hoc-import.run.close-keep-running: 'Close, keep running'
+data-importer.ad-hoc-import.run.failed: The import could not be started.
+data-importer.ad-hoc-import.run.may-not-save: 'You may not save objects in {{folder}}'
+data-importer.ad-hoc-import.run.may-not-create: 'You may not create objects in {{folder}}'
+data-importer.ad-hoc-import.run.may-not-edit-language: 'You may not edit the language {{language}} of objects in {{folder}}'
+data-importer.ad-hoc-import.run.left-out-by-listener: A listener of the import left this row out
+data-importer.ad-hoc-import.run.cannot-go-on: The import could not go on with this file
+data-importer.ad-hoc-import.run.must-be-unique: A value must be unique, and another object holds it
+data-importer.ad-hoc-import.run.save-failed: 'Saving failed: {{reason}}'
+data-importer.ad-hoc-import.run.save-failed-unknown: Saving failed; the application log has the details
+data-importer.ad-hoc-import.run.notification.title: 'Import of {{file}} finished'
+data-importer.ad-hoc-import.run.notification.summary: '{{updated}} updated, {{created}} created in {{folder}}, {{failed}} not saved, {{skipped}} skipped in the preview.'
+data-importer.ad-hoc-import.run.notification.row: 'Row {{row}} · {{value}}: {{reason}}'
+data-importer.ad-hoc-import.run.notification.more: 'And {{count}} more.'
+data-importer.ad-hoc-import.result.complete: Import complete
+data-importer.ad-hoc-import.result.objects-from: 'objects imported from {{file}}'
+data-importer.ad-hoc-import.result.saved-as: 'Saved as {{user}} · {{time}}'
+data-importer.ad-hoc-import.result.updated: Updated
+data-importer.ad-hoc-import.result.created-in: 'Created in {{folder}}'
+data-importer.ad-hoc-import.result.skipped: Skipped in the preview
+data-importer.ad-hoc-import.result.open-folder: Open folder
+data-importer.ad-hoc-import.result.download-rows: Download rows
+data-importer.ad-hoc-import.result.history: Every object keeps its version history.
+data-importer.ad-hoc-import.result.not-saved: '{{count}} rows were not saved.'
+data-importer.ad-hoc-import.result.others-saved: The others are saved, each with its version history.
+data-importer.ad-hoc-import.result.count.updated: updated
+data-importer.ad-hoc-import.result.count.created: 'created in {{folder}}'
+data-importer.ad-hoc-import.result.count.not-saved: not saved
+data-importer.ad-hoc-import.result.count.skipped: skipped in the preview
+data-importer.ad-hoc-import.result.column.row: Row
+data-importer.ad-hoc-import.result.column.action: Action
+data-importer.ad-hoc-import.result.column.why: Why it was not saved
+data-importer.ad-hoc-import.result.download-failed: 'Download failed rows ({{count}})'
+data-importer.ad-hoc-import.result.close: Close

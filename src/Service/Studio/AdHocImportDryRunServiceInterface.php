@@ -13,10 +13,14 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\CheckedFile;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunResponse;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
+use Pimcore\Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -37,6 +41,33 @@ interface AdHocImportDryRunServiceInterface
      * @throws InvalidArgumentException if the file, its settings, the match or the mapping cannot be imported
      */
     public function dryRun(string $fileId, AdHocImportDryRunParameters $parameters): AdHocImportDryRunResponse;
+
+    /**
+     * What dryRun() does, for a caller that goes on with the file: the plan the rows were checked by and each row's
+     * result. The current user's rights are checked, as for a dry run.
+     *
+     * @throws NotFoundHttpException if the user has no such file, or the folder or configuration is not found
+     * @throws ForbiddenException if the user may not import into the folders or create objects of the class
+     * @throws InvalidArgumentException if the file, its settings, the match or the mapping cannot be imported
+     */
+    public function check(string $fileId, AdHocImportDryRunParameters $parameters, User $user): CheckedFile;
+
+    /**
+     * The plan of a run already started, built again where no current user exists; a run checks every object itself.
+     *
+     * @param array{configuration: array<mixed>, mapping: array<int|string, mixed>}|null $configuration the
+     *     configuration as it was when the run started
+     *
+     * @throws NotFoundHttpException if the folder is gone
+     * @throws InvalidArgumentException if the file or the mapping cannot be imported
+     */
+    public function planForRun(
+        string $fileId,
+        FileType $type,
+        AdHocImportDryRunParameters $parameters,
+        ?array $configuration,
+        User $user
+    ): ImportPlan;
 
     /**
      * The rows the last dry run of the file would skip, as CSV: with SKIP_ROWS every row with an error, with

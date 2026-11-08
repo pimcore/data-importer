@@ -159,3 +159,19 @@ bundle_data_importer_ad_hoc_import_download_skipped_rows: Download the Skipped R
 bundle_data_importer_ad_hoc_import_download_skipped_rows_description: Download the rows the last check of a file would skip, with why, as CSV; only for the user who uploaded the file
 bundle_data_importer_ad_hoc_import_download_skipped_rows_summary: Download the Skipped Rows
 bundle_data_importer_ad_hoc_import_download_skipped_rows_success_response: The skipped rows as CSV
+bundle_data_importer_ad_hoc_import_start_run: Import a File
+bundle_data_importer_ad_hoc_import_start_run_description: Check a file uploaded for an ad hoc import once more and import its rows in the background, each as the user who started it, with their rights on each object
+bundle_data_importer_ad_hoc_import_start_run_summary: Import a File
+bundle_data_importer_ad_hoc_import_start_run_success_response: The run, as it starts
+bundle_data_importer_ad_hoc_import_load_run: How an Import Goes
+bundle_data_importer_ad_hoc_import_load_run_description: How far the import of a file got, and once it ended what it came to, including the rows it could not save; for the user who started it only
+bundle_data_importer_ad_hoc_import_load_run_summary: How an Import Goes
+bundle_data_importer_ad_hoc_import_load_run_success_response: The run
+bundle_data_importer_ad_hoc_import_discard_run: Forget a Finished Import
+bundle_data_importer_ad_hoc_import_discard_run_description: Forget a finished import and delete the rows it left for download
+bundle_data_importer_ad_hoc_import_discard_run_summary: Forget a Finished Import
+bundle_data_importer_ad_hoc_import_discard_run_success_response: The import is forgotten
+bundle_data_importer_ad_hoc_import_download_failed_rows: Download the Rows Not Saved
+bundle_data_importer_ad_hoc_import_download_failed_rows_description: Download the rows an import could not save, with why, as CSV; only the user who started it can
+bundle_data_importer_ad_hoc_import_download_failed_rows_summary: Download the Rows Not Saved
+bundle_data_importer_ad_hoc_import_download_failed_rows_success_response: The rows not saved as CSV

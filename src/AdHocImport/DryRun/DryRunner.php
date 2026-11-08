@@ -187,7 +187,8 @@ final readonly class DryRunner
             null,
             array_map(static fn (int $position): array => $values[$position], $plan->shown),
             $invalid,
-            $blocked
+            $blocked,
+            array_keys($leftOut)
         );
     }
 
