@@ -489,6 +489,45 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         );
     }
 
+    public function testALocalizedStoreKeyIsWrittenInItsLanguageAndTheDefaultApart(): void
+    {
+        [$class, $weight] = $this->storeClass('Localized', localized: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg en', 'en');
+        $object->save();
+        $fileId = $this->upload("sku;weight;base\nSKU-1;2 kg en;3 kg\n", 'products.csv');
+
+        $response = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'en'],
+            ['column' => 'base', 'field' => 'attributes', 'key' => $weight->id()],
+        ]));
+
+        $this->assertSame(['en', null], array_column($response->getFields(), 'language'));
+        $row = $response->getRows()[0];
+        $this->assertSame(
+            [['old' => '1 kg en', 'new' => '2 kg en'], ['old' => '1 kg', 'new' => '3 kg']],
+            $row['values'],
+            'the language and the default are read and written apart'
+        );
+        $this->assertSame([], $row['invalid']);
+    }
+
+    public function testAPublishedObjectCannotLoseAMandatoryStoreKey(): void
+    {
+        [$class, $weight] = $this->storeClass('Mandatory', mandatory: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->save();
+        $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+        ]))->getRows();
+
+        $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
+    }
+
     /**
      * @dataProvider storeKeysThatCannotBeImported
      */
@@ -498,6 +537,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $fileId = $this->upload("sku;weight;more\nSKU-1;2 kg;3 kg\n", 'products.csv');
         $columns = match ($case) {
             'no key of the store' => [['column' => 'weight', 'field' => 'attributes', 'key' => '999999-999999']],
+            'a key of another store' => [
+                ['column' => 'weight', 'field' => 'attributes', 'key' => $this->storeClass('Other')[1]->id()],
+            ],
             'a key without its group' => [
                 ['column' => 'weight', 'field' => 'attributes', 'key' => (string) $weight->keyId],
             ],
@@ -521,6 +563,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     {
         $cases = [
             'no key of the store',
+            'a key of another store',
             'a key without its group',
             'a key of a field that is no store',
             'a language for a store that has none',
@@ -622,15 +665,17 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     /**
      * A class with a classification store of two keys in one group; the store's configuration stays for the next test.
+     * Each variant has a store and a class of its own.
      *
      * @return array{ClassDefinition, StoreKey, StoreKey}
      */
-    private function storeClass(): array
+    private function storeClass(string $variant = '', bool $localized = false, bool $mandatory = false): array
     {
-        $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME);
+        $storeName = self::STORE_NAME . strtolower($variant);
+        $store = Classificationstore\StoreConfig::getByName($storeName);
         if ($store === null) {
             $store = new Classificationstore\StoreConfig();
-            $store->setName(self::STORE_NAME);
+            $store->setName($storeName);
             $store->save();
         }
         $group = Classificationstore\GroupConfig::getByName('Basics', $store->getId());
@@ -645,7 +690,10 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             $key = Classificationstore\KeyConfig::getByName($name, $store->getId());
             if ($key === null) {
                 $key = new Classificationstore\KeyConfig();
-                $key->setDefinition((string) json_encode(new ClassDefinition\Data\Input()));
+                $definition = new ClassDefinition\Data\Input();
+                $definition->setName($name);
+                $definition->setMandatory($mandatory);
+                $key->setDefinition((string) json_encode($definition));
                 $key->setStoreId($store->getId());
                 $key->setName($name);
                 $key->setEnabled(true);
@@ -661,7 +709,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             $keys[] = new StoreKey($group->getId(), $key->getId());
         }
 
-        $class = ClassDefinition::getByName(self::STORE_CLASS_NAME);
+        $className = self::STORE_CLASS_NAME . $variant;
+        $class = ClassDefinition::getByName($className);
         if ($class === null) {
             $panel = new ClassDefinition\Layout\Panel();
             $panel->setName('pimcore_root');
@@ -673,10 +722,11 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             $attributes->setName('attributes');
             $attributes->setTitle('Attributes');
             $attributes->setStoreId($store->getId());
+            $attributes->setLocalized($localized);
             $panel->addChild($attributes);
 
             $class = new ClassDefinition();
-            $class->setName(self::STORE_CLASS_NAME);
+            $class->setName($className);
             $class->setLayoutDefinitions($panel);
             $class->save();
         }

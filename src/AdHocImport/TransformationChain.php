@@ -114,7 +114,7 @@ final readonly class TransformationChain
     }
 
     /**
-     * @param list<string|null> $values the column's values in the first rows
+     * @param list<?string> $values the column's values in the first rows
      * @param list<array{type: string, settings: array<string, string>}> $steps checked against the allow list
      * @param list<string> $accepted the result types the field takes
      * @param User $user loaded objects and assets the user may not see are not found
@@ -150,7 +150,7 @@ final readonly class TransformationChain
      * The column's values as its field takes them: the steps and the conversion to the field's type run on every
      * value. Null if they do not lead into the field.
      *
-     * @param list<string|null> $values
+     * @param list<?string> $values
      * @param list<array{type: string, settings: array<string, string>}> $steps checked against the allow list
      * @param list<string> $accepted the result types the field takes
      * @param User $user loaded objects and assets the user may not see are not found
@@ -213,7 +213,7 @@ final readonly class TransformationChain
      *
      * @param list<OperatorInterface> $operators
      * @param list<array{type: string, settings: array<string, string>}> $steps
-     * @param list<string|null> $values
+     * @param list<?string> $values
      *
      * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>}
      */
