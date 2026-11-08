@@ -36,4 +36,14 @@ describe('the language a column name ends in', () => {
     expect(languageOfLabel('Name -- (en_GB)', languages)).toBe('en_GB')
     expect(languageOfLabel(`${'- '.repeat(20000)}x`, languages)).toBeNull()
   })
+
+  it('reads a line break as the server does: in the name none, before the suffix a separator', () => {
+    const languages = ['en', 'de', 'en_GB']
+
+    expect(languageOfLabel('Na\nme DE', languages)).toBeNull()
+    expect(languageOfLabel('Na\nme en_GB', languages)).toBeNull()
+    expect(languageOfLabel('Name\nDE', languages)).toBe('de')
+    expect(languageOfLabel('Name \n (en_GB)', languages)).toBe('en_GB')
+    expect(languageOfLabel('_\nen', languages)).toBe('en')
+  })
 })

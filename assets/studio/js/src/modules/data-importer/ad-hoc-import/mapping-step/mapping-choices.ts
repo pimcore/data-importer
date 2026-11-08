@@ -60,11 +60,20 @@ export const chooseLanguage = (mapping: Mapping, column: string, language: strin
 // Only the suffix, so no backtracking over the name; the name before it must not be empty.
 const REGIONAL_LANGUAGE = /[\s_.-][([]?([a-z]{2})[_-]([a-z]{2,4})[)\]]?$/i
 const LANGUAGE = /[\s_.-][([]?([a-z]{2})[)\]]?$/i
+const SEPARATOR = /[\s_.-]/
 
+// The server's name part is `.+`, which takes no line break; the separators before the suffix may hold one.
 const suffix = (pattern: RegExp, name: string): RegExpExecArray | null => {
   const match = pattern.exec(name)
+  if (match === null || match.index === 0) {
+    return null
+  }
+  let end = match.index
+  while (end > 1 && SEPARATOR.test(name[end - 1])) {
+    end--
+  }
 
-  return match !== null && match.index > 0 ? match : null
+  return name.slice(0, end).includes('\n') ? null : match
 }
 
 /**
