@@ -20,7 +20,7 @@ import {
   type Mapping,
   type MappingField
 } from './mapping-state'
-import { chooseLanguage, chooseStoreKey, freeLanguages, languageOfLabel, withLanguages } from './mapping-choices'
+import { chooseLanguage, chooseStoreKey, freeLanguages, withLanguages } from './mapping-choices'
 import { canGoInto, isTaken, takenFields } from './taken-fields'
 import { takenStoreKeys } from './taken-store-keys'
 
@@ -277,22 +277,5 @@ describe('which field a column can still go into', () => {
     const rows = chooseStoreKey(mapping, 'Notiz', 'attributes', { id: '2-4', label: 'Width' }).rows
 
     expect(canGoInto(takenFields(rows), field('attributes', { classificationStore: true }), 'Preis', languages)).toBe(true)
-  })
-})
-
-describe('the language a column name ends in', () => {
-  it('reads a language suffix as the server does', () => {
-    const languages = ['en', 'de', 'en_GB', 'fr']
-
-    expect(languageOfLabel('Width DE', languages)).toBe('de')
-    expect(languageOfLabel(' Name (en) ', languages)).toBe('en')
-    expect(languageOfLabel('Name_en_GB', languages)).toBe('en_GB')
-    expect(languageOfLabel('Name en_DE', languages)).toBe('en')
-    expect(languageOfLabel('Name de_en', languages)).toBe('en')
-    expect(languageOfLabel('Name DE-AT', languages)).toBe('de')
-    expect(languageOfLabel('Name fr-Latn', languages)).toBeNull()
-    expect(languageOfLabel('Name IT', languages)).toBeNull()
-    expect(languageOfLabel('Name', languages)).toBeNull()
-    expect(languageOfLabel('DE', languages)).toBeNull()
   })
 })

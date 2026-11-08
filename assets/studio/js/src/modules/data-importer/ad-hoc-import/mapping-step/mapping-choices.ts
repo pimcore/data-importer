@@ -57,8 +57,15 @@ export const chooseLanguage = (mapping: Mapping, column: string, language: strin
     ? row
     : { ...row, choice: { ...row.choice, language } })
 
-const REGIONAL_LANGUAGE = /^.+?[\s_.-]+[([]?([a-z]{2})[_-]([a-z]{2,4})[)\]]?$/i
-const LANGUAGE = /^.+?[\s_.-]+[([]?([a-z]{2})[)\]]?$/i
+// Only the suffix, so no backtracking over the name; the name before it must not be empty.
+const REGIONAL_LANGUAGE = /[\s_.-][([]?([a-z]{2})[_-]([a-z]{2,4})[)\]]?$/i
+const LANGUAGE = /[\s_.-][([]?([a-z]{2})[)\]]?$/i
+
+const suffix = (pattern: RegExp, name: string): RegExpExecArray | null => {
+  const match = pattern.exec(name)
+
+  return match !== null && match.index > 0 ? match : null
+}
 
 /**
  * The language a column name ends in (`Width DE`, `Name en_GB`), read as the server reads it for its suggestions, so
@@ -70,7 +77,7 @@ export const languageOfLabel = (label: string, languages: string[]): string | nu
   const name = label.trim()
 
   let fallback: string | undefined
-  const regional = REGIONAL_LANGUAGE.exec(name)
+  const regional = suffix(REGIONAL_LANGUAGE, name)
   if (regional !== null) {
     const [, language, region] = regional
     const exact = byLowerCase.get(`${language}_${region}`.toLowerCase())
@@ -83,7 +90,7 @@ export const languageOfLabel = (label: string, languages: string[]): string | nu
     }
   }
 
-  const plain = LANGUAGE.exec(name)
+  const plain = suffix(LANGUAGE, name)
 
   return (plain === null ? undefined : byLowerCase.get(plain[1].toLowerCase())) ?? fallback ?? null
 }
