@@ -528,6 +528,21 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
     }
 
+    public function testAPublishedObjectCannotLoseAStoreKeyItsGroupMarksMandatory(): void
+    {
+        [$class, $weight] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->save();
+        $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+        ]))->getRows();
+
+        $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
+    }
+
     public function testAStoreKeyOfATypeNoColumnLeadsToTakesNoValue(): void
     {
         [$class] = $this->storeClass('Quantity');
@@ -687,7 +702,12 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
      *
      * @return array{ClassDefinition, StoreKey, StoreKey}
      */
-    private function storeClass(string $variant = '', bool $localized = false, bool $mandatory = false): array
+    private function storeClass(
+        string $variant = '',
+        bool $localized = false,
+        bool $mandatory = false,
+        bool $mandatoryInGroup = false
+    ): array
     {
         $storeName = self::STORE_NAME . strtolower($variant);
         $store = Classificationstore\StoreConfig::getByName($storeName);
@@ -722,6 +742,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
                 $relation = new Classificationstore\KeyGroupRelation();
                 $relation->setGroupId($group->getId());
                 $relation->setKeyId($key->getId());
+                $relation->setMandatory($mandatoryInGroup);
                 $relation->save();
             }
             $keys[] = new StoreKey($group->getId(), $key->getId());

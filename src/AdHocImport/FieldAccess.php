@@ -36,8 +36,12 @@ final class FieldAccess
     {
         if ($storeKey !== null) {
             $relation = Classificationstore\KeyGroupRelation::getByGroupAndKeyId($storeKey->groupId, $storeKey->keyId);
+            if ($relation === null) {
+                return null;
+            }
+            $definition = Classificationstore\Service::getFieldDefinitionFromKeyConfig($relation);
 
-            return $relation === null ? null : Classificationstore\Service::getFieldDefinitionFromKeyConfig($relation);
+            return $definition === null ? null : self::inGroup($definition, $relation);
         }
 
         $parts = explode('.', $field);
@@ -61,6 +65,22 @@ final class FieldAccess
         $localizedFields = $class->getFieldDefinition(self::LOCALIZED_FIELDS);
 
         return $localizedFields instanceof Localizedfields ? $localizedFields->getFieldDefinition($field) : null;
+    }
+
+    /**
+     * Saving an object also requires a key its group marks as mandatory. Pimcore caches one definition per key, and the
+     * mark differs per group, so a copy carries it.
+     */
+    public static function inGroup(Data $definition, Classificationstore\KeyGroupRelation $relation): Data
+    {
+        if (!$relation->isMandatory()) {
+            return $definition;
+        }
+
+        $definition = clone $definition;
+        $definition->setMandatory(true);
+
+        return $definition;
     }
 
     /**
