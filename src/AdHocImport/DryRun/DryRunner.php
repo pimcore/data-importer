@@ -14,14 +14,18 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FieldAccess;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ValueText;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\TextMatchValue;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Multiselect;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
+use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
+use Pimcore\Model\DataObject\Classificationstore\Service;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\ValidationException;
+use Pimcore\Tool;
 
 /**
  * Finds out what an import would do with every row of a file: which object it updates or creates, what changes and
@@ -47,10 +51,11 @@ final readonly class DryRunner
     public function run(DryRunPlan $plan): array
     {
         return $this->scope->run(null, function () use ($plan): array {
+            $storeCheck = $this->storeCheck($plan);
             $results = [];
             $index = 0;
             foreach ($plan->rows as $row) {
-                $results[] = $this->checkRow($plan, $row, $index, $plan->firstRowNumber + $index);
+                $results[] = $this->checkRow($plan, $storeCheck, $row, $index, $plan->firstRowNumber + $index);
                 ++$index;
                 if ($index % self::ROWS_BETWEEN_CLEANUPS === 0) {
                     \Pimcore::collectGarbage();
@@ -65,8 +70,13 @@ final readonly class DryRunner
     /**
      * @param array<int|string, mixed> $row
      */
-    private function checkRow(DryRunPlan $plan, array $row, int $index, int $rowNumber): DryRunRow
-    {
+    private function checkRow(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        array $row,
+        int $index,
+        int $rowNumber
+    ): DryRunRow {
         $match = $plan->matcher->match($row, $rowNumber);
         $object = $match->element;
         if (!$object instanceof Concrete) {
@@ -95,6 +105,7 @@ final readonly class DryRunner
         $shownAt = array_flip($plan->shown);
         $values = [];
         $invalid = [];
+        $reportedStoreKeys = [];
         foreach ($plan->writers as $position => $writer) {
             $field = $writer->field();
             $old = $isNew ? null : $this->read($object, $field);
@@ -107,11 +118,34 @@ final readonly class DryRunner
                     'value' => $value,
                     'message' => $this->messages->valueError($error, $field->label, $value, $plan->user),
                 ];
+                if ($field->storeKey !== null) {
+                    $reportedStoreKeys[$field->key . '/' . $field->storeKey->id()] = true;
+                }
             }
             $values[$position] = [
                 'old' => $old,
                 'new' => $error === null ? $this->read($object, $field) : $writer->fileValue($row),
             ];
+        }
+
+        if ($object->isPublished()) {
+            foreach ($storeCheck->refused($object) as $refused) {
+                if (isset($reportedStoreKeys[$refused['field'] . '/' . $refused['key']->id()])) {
+                    continue;
+                }
+                $position = $this->writerOf($plan, $refused['field'], $refused['key'], $refused['languages']);
+                $invalid[] = [
+                    'field' => $position === null ? null : ($shownAt[$position] ?? null),
+                    'label' => $refused['label'],
+                    'value' => $refused['value'],
+                    'message' => $this->messages->valueError(
+                        $refused['error'],
+                        $refused['label'],
+                        $refused['value'],
+                        $plan->user
+                    ),
+                ];
+            }
         }
 
         return new DryRunRow(
@@ -122,6 +156,72 @@ final readonly class DryRunner
             array_map(static fn (int $position): array => $values[$position], $plan->shown),
             $invalid
         );
+    }
+
+    private function storeCheck(DryRunPlan $plan): StoreGroupCheck
+    {
+        $stores = [];
+        foreach ($plan->writers as $writer) {
+            $field = $writer->field();
+            if ($field->storeKey !== null && $field->key !== null) {
+                $stores[$field->key] = true;
+            }
+        }
+
+        return new StoreGroupCheck(array_keys($stores), Tool::getValidLanguages(), $this->keysOfGroup(...));
+    }
+
+    /**
+     * The keys of a group as Pimcore's check of a save sees them: with the group's mandatory mark.
+     *
+     * @return list<array{key: StoreKey, label: string, definition: \Pimcore\Model\DataObject\ClassDefinition\Data}>
+     */
+    private function keysOfGroup(int $groupId): array
+    {
+        $group = GroupConfig::getById($groupId);
+        if ($group === null) {
+            return [];
+        }
+
+        $keys = [];
+        foreach ($group->getRelations() as $relation) {
+            $definition = Service::getFieldDefinitionFromJson(
+                (array) json_decode($relation->getDefinition(), true),
+                $relation->getType()
+            );
+            if ($definition === null) {
+                continue;
+            }
+            if ($relation->isMandatory()) {
+                $definition->setMandatory(true);
+            }
+            $keys[] = [
+                'key' => new StoreKey($groupId, $relation->getKeyId()),
+                'label' => $group->getName() . ' › ' . $relation->getName(),
+                'definition' => $definition,
+            ];
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @param list<string> $languages
+     */
+    private function writerOf(DryRunPlan $plan, string $store, StoreKey $key, array $languages): ?int
+    {
+        foreach ($plan->writers as $position => $writer) {
+            $field = $writer->field();
+            if (
+                $field->key === $store
+                && $field->storeKey?->id() === $key->id()
+                && in_array($field->language ?? 'default', $languages, true)
+            ) {
+                return $position;
+            }
+        }
+
+        return null;
     }
 
     private function read(Concrete $object, ImportField $field): ?string
@@ -146,7 +246,10 @@ final readonly class DryRunner
 
         $value = FieldAccess::read($object, $field->key, $field->language, $field->storeKey);
         if ($definition->isEmpty($value)) {
-            return $definition->getMandatory() && $object->isPublished() ? ValueError::Required : null;
+            // a store key's mark is its group's, and the group is checked once the row is written
+            return $field->storeKey === null && $definition->getMandatory() && $object->isPublished()
+                ? ValueError::Required
+                : null;
         }
 
         if ($definition instanceof Select || $definition instanceof Multiselect) {

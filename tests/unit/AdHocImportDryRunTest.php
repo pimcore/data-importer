@@ -49,6 +49,7 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Classificationstore;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
+use Pimcore\Model\Element\ValidationException;
 use Pimcore\Model\User;
 use Pimcore\Security\User\User as SecurityUser;
 use Pimcore\Tests\Support\Util\TestHelper;
@@ -513,7 +514,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame([], $row['invalid']);
     }
 
-    public function testAPublishedObjectCannotLoseAMandatoryStoreKey(): void
+    public function testAKeyMarkedMandatoryOnlyInItsOwnDefinitionMaySaveEmpty(): void
     {
         [$class, $weight] = $this->storeClass('Mandatory', mandatory: true);
         $object = $this->storeObject($class, 'SKU-1');
@@ -525,14 +526,15 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
         ]))->getRows();
 
-        $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
+        $this->assertSame([], $rows[0]['invalid'], 'Pimcore checks the key in the group by the mark of the group');
     }
 
     public function testAPublishedObjectCannotLoseAStoreKeyItsGroupMarksMandatory(): void
     {
-        [$class, $weight] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
+        [$class, $weight, $height] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
         $object = $this->storeObject($class, 'SKU-1');
         $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, '30 cm');
         $object->save();
         $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
 
@@ -541,6 +543,69 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         ]))->getRows();
 
         $this->assertSame(['Basics › weight is required'], array_column($rows[0]['invalid'], 'message'));
+        $this->assertSame([0], array_column($rows[0]['invalid'], 'field'), 'named by its column');
+    }
+
+    public function testActivatingAGroupRefusesTheMandatoryKeysTheFileDoesNotName(): void
+    {
+        [$class, $weight] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->save();
+        $fileId = $this->upload("sku;weight\nSKU-1;5 kg\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+        ]))->getRows();
+
+        $this->assertSame(['Basics › height is required'], array_column($rows[0]['invalid'], 'message'));
+        $this->assertSame([null], array_column($rows[0]['invalid'], 'field'), 'the file has no column for it');
+
+        $reloaded = DataObject::getById($object->getId(), ['force' => true]);
+        $this->assertInstanceOf(Concrete::class, $reloaded);
+        $reloaded->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '5 kg');
+        $this->expectException(ValidationException::class);
+        $reloaded->save();
+    }
+
+    public function testAnEmptyLanguageOfAGroupMandatoryKeyFollowsTheDefaultLanguageInAnInheritingClass(): void
+    {
+        [$class, $weight, $height] = $this->storeClass(
+            'MandatoryInheriting',
+            localized: true,
+            mandatoryInGroup: true,
+            allowInherit: true
+        );
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, '30 cm');
+        $object->save();
+        $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'en'],
+        ]))->getRows();
+
+        $this->assertSame([], $rows[0]['invalid'], 'the save takes the value of the default language');
+    }
+
+    public function testAGroupMandatoryKeyWrittenInOneLanguageIsRefusedForTheOthers(): void
+    {
+        [$class, $weight, $height] = $this->storeClass('MandatoryLocalized', localized: true, mandatoryInGroup: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->save();
+        $fileId = $this->upload("sku;weight;height\nSKU-1;5 kg;30 cm\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'en'],
+            ['column' => 'height', 'field' => 'attributes', 'key' => $height->id(), 'language' => 'en'],
+        ]))->getRows();
+
+        $this->assertEqualsCanonicalizing(
+            ['Basics › weight (default, de) is required', 'Basics › height (default, de) is required'],
+            array_column($rows[0]['invalid'], 'message'),
+            'written in en only'
+        );
+        $this->assertSame([null, null], array_column($rows[0]['invalid'], 'field'));
     }
 
     public function testAStoreKeyOfATypeNoColumnLeadsToTakesNoValue(): void
@@ -706,9 +771,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         string $variant = '',
         bool $localized = false,
         bool $mandatory = false,
-        bool $mandatoryInGroup = false
-    ): array
-    {
+        bool $mandatoryInGroup = false,
+        bool $allowInherit = false
+    ): array {
         $storeName = self::STORE_NAME . strtolower($variant);
         $store = Classificationstore\StoreConfig::getByName($storeName);
         if ($store === null) {
@@ -766,6 +831,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
             $class = new ClassDefinition();
             $class->setName($className);
+            $class->setAllowInherit($allowInherit);
             $class->setLayoutDefinitions($panel);
             $class->save();
         }

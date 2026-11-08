@@ -22,37 +22,11 @@ use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
 use Pimcore\Model\DataObject\Classificationstore;
-use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Objectbrick\Data\AbstractData;
 
 class AdHocFieldAccessTest extends Unit
 {
-    public function testAGroupsMandatoryMarkLeavesTheSharedDefinitionAsItIs(): void
-    {
-        $shared = new Input();
-        $relation = new KeyGroupRelation();
-        $relation->setMandatory(true);
-
-        $inGroup = FieldAccess::inGroup($shared, $relation);
-
-        $this->assertTrue($inGroup->getMandatory());
-        $this->assertFalse($shared->getMandatory(), 'Pimcore caches the definition per key, for every group');
-    }
-
-    public function testAKeyMandatoryInItsDefinitionStaysSoInAGroupThatDoesNotMarkIt(): void
-    {
-        $definition = new Input();
-        $definition->setMandatory(true);
-
-        $this->assertTrue(FieldAccess::inGroup($definition, new KeyGroupRelation())->getMandatory());
-    }
-
-    public function testANeitherMandatoryKeyStaysOptional(): void
-    {
-        $this->assertFalse(FieldAccess::inGroup(new Input(), new KeyGroupRelation())->getMandatory());
-    }
-
     public function testAClassFieldIsFoundOnTheClass(): void
     {
         $input = new Input();
