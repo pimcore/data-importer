@@ -34,7 +34,7 @@ class AdHocDryRunMessagesTest extends Unit
         string $expected,
         ?int $firstRow = null
     ): void {
-        $message = self::englishMessages()->rowError(
+        $message = static::englishMessages()->rowError(
             new RowMatch($outcome, 'A/1', firstRow: $firstRow),
             'Object ID',
             '/target',

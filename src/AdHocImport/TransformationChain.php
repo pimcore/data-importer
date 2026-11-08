@@ -313,9 +313,9 @@ final readonly class TransformationChain
                     default => true,
                 };
             }
-            $date = \DateTimeImmutable::createFromFormat('!' . self::DATE_FORMAT, $value);
+            $date = date_create_immutable_from_format('!' . self::DATE_FORMAT, $value);
             // a warning names a day the month does not have, which the parser would carry into the next month
-            $errors = \DateTimeImmutable::getLastErrors();
+            $errors = date_get_last_errors();
 
             return $date !== false && ($errors === false || $errors['warning_count'] === 0);
         };
@@ -328,11 +328,11 @@ final readonly class TransformationChain
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
-     * @param \Closure(string): bool $readable
+     * @param callable(string): bool $readable
      *
      * @return list<bool>
      */
-    private function markRows(array $data, array $failed, \Closure $readable): array
+    private function markRows(array $data, array $failed, callable $readable): array
     {
         foreach ($data as $row => $value) {
             foreach (is_array($value) ? $value : [$value] as $item) {
