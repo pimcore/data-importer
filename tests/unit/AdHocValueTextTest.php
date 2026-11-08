@@ -26,10 +26,12 @@ use Pimcore\Model\DataObject\Data\ObjectMetadata;
 
 class AdHocValueTextTest extends Unit
 {
+    private const string OBJECT_PATH = '/Products/Chair';
+
     public function testAValueIsOneLineOfText(): void
     {
         $object = $this->createStub(Concrete::class);
-        $object->method('getRealFullPath')->willReturn('/Products/Chair');
+        $object->method('getRealFullPath')->willReturn(self::OBJECT_PATH);
         $image = $this->createStub(Image::class);
         $image->method('getRealFullPath')->willReturn('/images/chair.jpg');
         $metadata = $this->createStub(ObjectMetadata::class);
@@ -50,8 +52,8 @@ class AdHocValueTextTest extends Unit
         $this->assertSame('12.5', ValueText::of(12.5));
         $this->assertSame('true', ValueText::of(true));
         $this->assertSame('false', ValueText::of(false));
-        $this->assertSame('/Products/Chair', ValueText::of($object));
-        $this->assertSame('/Products/Chair', ValueText::of($metadata));
+        $this->assertSame(self::OBJECT_PATH, ValueText::of($object));
+        $this->assertSame(self::OBJECT_PATH, ValueText::of($metadata));
         $this->assertSame('2026-11-07', ValueText::of(Carbon::parse('2026-11-07 10:00')));
         $this->assertSame('red, blue', ValueText::of(['red', null, '', 'blue']));
         $this->assertSame('/images/chair.jpg', ValueText::of(new Hotspotimage($image)));

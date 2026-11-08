@@ -54,13 +54,11 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Translation\Loader\YamlFileLoader;
-use Symfony\Component\Translation\Translator;
 
 /**
  * The dry run over real objects, as the container wires it, with the bundle's English texts.
  */
-class AdHocImportDryRunTest extends Unit
+class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for the dry run over real objects
 {
     private const string CLASS_NAME = RowMatcherModel::CLASS_NAME;
 
@@ -89,6 +87,8 @@ class AdHocImportDryRunTest extends Unit
         . "SKU-OUT;Desk;1;\n"
         . ";Nameless;1;\n"
         . "SKU-FOLDER;Box;1;\n";
+
+    private const string ONE_ROW = "sku;name\nSKU-1;Chair\n";
 
     protected UnitTester $tester;
 
@@ -237,7 +237,7 @@ class AdHocImportDryRunTest extends Unit
 
     public function testAFileWithoutADryRunHasNoSkippedRows(): void
     {
-        $fileId = $this->upload("sku;name\nSKU-1;Chair\n", 'products.csv');
+        $fileId = $this->upload(self::ONE_ROW, 'products.csv');
 
         $this->expectException(NotFoundHttpException::class);
 
@@ -257,7 +257,7 @@ class AdHocImportDryRunTest extends Unit
 
     public function testAnotherUsersFileIsNotFound(): void
     {
-        $fileId = $this->upload("sku;name\nSKU-1;Chair\n", 'products.csv');
+        $fileId = $this->upload(self::ONE_ROW, 'products.csv');
         $this->logIn(self::OTHER_USER_ID);
 
         $this->expectException(NotFoundHttpException::class);
@@ -267,7 +267,7 @@ class AdHocImportDryRunTest extends Unit
 
     public function testAUserWhoMayNotCreateInTheFolderIsRefused(): void
     {
-        $fileId = $this->upload("sku;name\nSKU-1;Chair\n", 'products.csv');
+        $fileId = $this->upload(self::ONE_ROW, 'products.csv');
         $this->logIn(self::USER_ID, admin: false);
 
         $this->expectException(ForbiddenException::class);
@@ -298,7 +298,7 @@ class AdHocImportDryRunTest extends Unit
 
     public function testMatchingByAFieldNeedsTheField(): void
     {
-        $fileId = $this->upload("sku;name\nSKU-1;Chair\n", 'products.csv');
+        $fileId = $this->upload(self::ONE_ROW, 'products.csv');
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -442,42 +442,6 @@ class AdHocImportDryRunTest extends Unit
         );
 
         $this->assertSame('Found outside ' . self::TARGET, $message);
-    }
-
-    /**
-     * @dataProvider otherRowErrors
-     */
-    public function testEveryOtherRowErrorIsSaid(RowMatchOutcome $outcome, string $expected, ?int $firstRow = null): void
-    {
-        $message = $this->messages()->rowError(
-            new RowMatch($outcome, 'A/1', firstRow: $firstRow),
-            'Object ID',
-            self::TARGET,
-            self::NEW_FOLDER,
-            $this->user
-        );
-
-        $this->assertSame($expected, $message);
-    }
-
-    public static function otherRowErrors(): array
-    {
-        return [
-            'invalid match value' => [
-                RowMatchOutcome::InvalidValue,
-                'Object ID “A/1” is no value objects can be matched by',
-            ],
-            'unknown object id' => [RowMatchOutcome::UnknownObjectId, 'No object has the ID A/1'],
-            'other class' => [
-                RowMatchOutcome::OtherClass,
-                'The ID A/1 belongs to a folder or an object of another class',
-            ],
-            'key taken in the file' => [
-                RowMatchOutcome::KeyTaken,
-                'Row 3 already creates an object named A-1',
-                3,
-            ],
-        ];
     }
 
     /**
@@ -715,16 +679,7 @@ class AdHocImportDryRunTest extends Unit
 
     private function messages(): DryRunMessages
     {
-        $translator = new Translator('en');
-        $translator->addLoader('yaml', new YamlFileLoader());
-        $translator->addResource(
-            'yaml',
-            __DIR__ . '/../../src/Resources/translations/studio.en.yaml',
-            'en',
-            'studio'
-        );
-
-        return new DryRunMessages($translator);
+        return AdHocDryRunMessagesTest::englishMessages();
     }
 
     private function uploadService(): AdHocImportServiceInterface

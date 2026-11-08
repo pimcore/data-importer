@@ -20,7 +20,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
@@ -528,10 +527,11 @@ final readonly class TransformationChain
     private function items(mixed $value): array
     {
         if ($value instanceof ImageGallery) {
-            $value = array_map(
-                static fn (?Hotspotimage $item): mixed => $item?->getImage(),
-                $value->getItems()
-            );
+            $images = [];
+            foreach ($value->getItems() as $item) {
+                $images[] = $item?->getImage();
+            }
+            $value = $images;
         }
 
         if (is_array($value)) {

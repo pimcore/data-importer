@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConvertedColumn;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ColumnWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ConfigurationItemWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
@@ -58,7 +59,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *
  * @internal
  */
-final readonly class AdHocImportDryRunService implements AdHocImportDryRunServiceInterface
+final readonly class AdHocImportDryRunService implements AdHocImportDryRunServiceInterface // NOSONAR php:S1200 one entry point for the dry run
 {
     use CreatableClassTrait;
     use CurrentUserResolverTrait;
@@ -323,36 +324,52 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             }
             $taken[$key] = true;
 
-            $pipeline = $entry['transformationPipeline'] ?? [];
-            $steps = [];
-            foreach (is_array($pipeline) ? array_values($pipeline) : [null] as $stepPosition => $step) {
-                $steps[] = TransformationAllowList::step($step, $stepPosition + 1);
-            }
-
-            try {
-                $converted = $this->transformationChain->convertColumn(
-                    array_map(static fn (array $row): ?string => is_scalar($row[$column] ?? null)
-                        ? (string) $row[$column]
-                        : null, $rows),
-                    $steps,
-                    $accepted[(string) $field->key] ?? [],
-                    $user
-                );
-            } catch (InvalidConfigurationException $exception) {
-                throw new InvalidArgumentException($exception->getMessage(), $exception);
-            }
-            if ($converted === null) {
-                throw new InvalidArgumentException(sprintf(
-                    'Column %d does not fit field %s with its transformations.',
-                    $position + 1,
-                    $field->key
-                ));
-            }
+            $values = array_map(
+                static fn (array $row): ?string => is_scalar($row[$column] ?? null) ? (string) $row[$column] : null,
+                $rows
+            );
+            $converted = $this->convertedColumn(
+                $values,
+                $this->steps($entry['transformationPipeline'] ?? []),
+                $accepted[(string) $field->key] ?? [],
+                $user
+            ) ?? throw new InvalidArgumentException(sprintf(
+                'Column %d does not fit field %s with its transformations.',
+                $position + 1,
+                $field->key
+            ));
 
             $writers[] = new ColumnWriter($field, $column, $converted);
         }
 
         return $writers;
+    }
+
+    /**
+     * @return list<array{type: string, settings: array<string, string>}>
+     */
+    private function steps(mixed $pipeline): array
+    {
+        $steps = [];
+        foreach (is_array($pipeline) ? array_values($pipeline) : [null] as $position => $step) {
+            $steps[] = TransformationAllowList::step($step, $position + 1);
+        }
+
+        return $steps;
+    }
+
+    /**
+     * @param list<string|null> $values
+     * @param list<array{type: string, settings: array<string, string>}> $steps
+     * @param list<string> $accepted
+     */
+    private function convertedColumn(array $values, array $steps, array $accepted, User $user): ?ConvertedColumn
+    {
+        try {
+            return $this->transformationChain->convertColumn($values, $steps, $accepted, $user);
+        } catch (InvalidConfigurationException $exception) {
+            throw new InvalidArgumentException($exception->getMessage(), $exception);
+        }
     }
 
     /**
@@ -401,11 +418,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             if (!is_array($item)) {
                 continue;
             }
-            $read = [];
-            foreach ((array) ($item['dataSourceIndex'] ?? []) as $source) {
-                $column = is_scalar($source) ? $fileColumns[(string) $source] ?? null : null;
-                $read[] = is_string($column) ? $column : null;
-            }
+            $read = $this->readColumns($item['dataSourceIndex'] ?? [], $fileColumns);
             $found = array_values(array_filter($read, static fn (?string $column): bool => $column !== null));
             if ($found === []) {
                 continue;
@@ -425,6 +438,24 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         }
 
         return $writers;
+    }
+
+    /**
+     * Per source the item reads, the file's column; null where the file lacks it.
+     *
+     * @param array<mixed> $fileColumns
+     *
+     * @return list<string|null>
+     */
+    private function readColumns(mixed $sources, array $fileColumns): array
+    {
+        $read = [];
+        foreach ((array) $sources as $source) {
+            $column = is_scalar($source) ? $fileColumns[(string) $source] ?? null : null;
+            $read[] = is_string($column) ? $column : null;
+        }
+
+        return $read;
     }
 
     /**

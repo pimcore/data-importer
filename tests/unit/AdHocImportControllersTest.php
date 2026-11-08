@@ -16,8 +16,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
-use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadSkippedRowsController;
-use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DryRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
@@ -25,8 +23,6 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFie
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportConfigurationsResponse;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunParameters;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
@@ -35,7 +31,6 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportConfigurationServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportTransformationServiceInterface;
@@ -155,36 +150,6 @@ class AdHocImportControllersTest extends Unit
             ->previewTransformations('file-1', $parameters);
 
         $this->assertSame(self::ANSWER, $response->getContent());
-    }
-
-    public function testADryRunIsAskedForTheFileAndItsParameters(): void
-    {
-        $parameters = new AdHocImportDryRunParameters(7, 'PROD', AdHocImportDryRunParameters::MATCH_BY_FIELD, '0', 'sku');
-        $answer = new AdHocImportDryRunResponse('SKU', '/Products', [], []);
-
-        $service = $this->createMock(AdHocImportDryRunServiceInterface::class);
-        $service->expects($this->once())->method('dryRun')->with('file-1', $parameters)->willReturn($answer);
-
-        $response = (new DryRunController($this->serializer($answer), $service))->dryRun('file-1', $parameters);
-
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame(self::ANSWER, $response->getContent());
-    }
-
-    public function testTheSkippedRowsAreDownloadedAsACsvAttachment(): void
-    {
-        $service = $this->createMock(AdHocImportDryRunServiceInterface::class);
-        $service->expects($this->once())->method('skippedRows')
-            ->with('file-1', AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES)
-            ->willReturn("sku;name\nSKU-1;Chair\n");
-
-        $response = (new DownloadSkippedRowsController($this->serializer(), $service))
-            ->downloadSkippedRows('file-1', AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES);
-
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame("sku;name\nSKU-1;Chair\n", $response->getContent());
-        $this->assertSame('text/csv; charset=UTF-8', $response->headers->get('Content-Type'));
-        $this->assertSame('attachment; filename=skipped-rows.csv', $response->headers->get('Content-Disposition'));
     }
 
     public function testTheSettingsShowWhatWasGiven(): void
