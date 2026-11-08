@@ -27,7 +27,14 @@ use Pimcore\Model\DataObject\Service;
  * @internal
  *
  * @phpstan-type GroupKey array{key: StoreKey, label: string, definition: Data}
- * @phpstan-type Refusal array{field: string, key: StoreKey, label: string, value: string, error: ValueError, languages: list<string>}
+ * @phpstan-type Refusal array{
+ *     field: string,
+ *     key: StoreKey,
+ *     label: string,
+ *     value: string,
+ *     error: ValueError,
+ *     languages: list<string>
+ * }
  */
 final class StoreGroupCheck
 {
@@ -79,7 +86,9 @@ final class StoreGroupCheck
      */
     private function keysOf(int $groupId): array
     {
-        return $this->keys[$groupId] ??= ($this->keysOfGroup)($groupId);
+        $this->keys[$groupId] ??= ($this->keysOfGroup)($groupId);
+
+        return $this->keys[$groupId];
     }
 
     /**

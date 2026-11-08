@@ -65,6 +65,10 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 {
     private const string CLASS_NAME = RowMatcherModel::CLASS_NAME;
 
+    private const string HEIGHT_VALUE = '30 cm';
+
+    private const string FILE_WITHOUT_WEIGHT = "sku;weight\nSKU-1;\n";
+
     private const string OBJECT_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
 
     private const string MANDATORY_CLASS_NAME = 'DiDryRunMandatoryClass';
@@ -477,7 +481,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             ['key' => 'attributes', 'language' => null, 'label' => 'Basics › height'],
         ], $response->getFields());
         [$changed, $created] = $response->getRows();
-        $this->assertSame([['old' => '1 kg', 'new' => '2 kg'], ['old' => null, 'new' => '30 cm']], $changed['values']);
+        $this->assertSame([['old' => '1 kg', 'new' => '2 kg'], ['old' => null, 'new' => self::HEIGHT_VALUE]], $changed['values']);
         $this->assertSame([], $changed['invalid']);
         $this->assertSame('create', $created['action']);
         $this->assertSame([['old' => null, 'new' => '5 kg'], ['old' => null, 'new' => null]], $created['values']);
@@ -520,7 +524,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $object = $this->storeObject($class, 'SKU-1');
         $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
         $object->save();
-        $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
+        $fileId = $this->upload(self::FILE_WITHOUT_WEIGHT, 'products.csv');
 
         $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
             ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
@@ -534,9 +538,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         [$class, $weight, $height] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
         $object = $this->storeObject($class, 'SKU-1');
         $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
-        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, '30 cm');
+        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, self::HEIGHT_VALUE);
         $object->save();
-        $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
+        $fileId = $this->upload(self::FILE_WITHOUT_WEIGHT, 'products.csv');
 
         $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
             ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
@@ -577,9 +581,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         );
         $object = $this->storeObject($class, 'SKU-1');
         $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
-        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, '30 cm');
+        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, self::HEIGHT_VALUE);
         $object->save();
-        $fileId = $this->upload("sku;weight\nSKU-1;\n", 'products.csv');
+        $fileId = $this->upload(self::FILE_WITHOUT_WEIGHT, 'products.csv');
 
         $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
             ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'en'],

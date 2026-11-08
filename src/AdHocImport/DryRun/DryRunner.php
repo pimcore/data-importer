@@ -129,23 +129,8 @@ final readonly class DryRunner
         }
 
         if ($object->isPublished()) {
-            foreach ($storeCheck->refused($object) as $refused) {
-                if (isset($reportedStoreKeys[$refused['field'] . '/' . $refused['key']->id()])) {
-                    continue;
-                }
-                $position = $this->writerOf($plan, $refused['field'], $refused['key'], $refused['languages']);
-                $invalid[] = [
-                    'field' => $position === null ? null : ($shownAt[$position] ?? null),
-                    'label' => $refused['label'],
-                    'value' => $refused['value'],
-                    'message' => $this->messages->valueError(
-                        $refused['error'],
-                        $refused['label'],
-                        $refused['value'],
-                        $plan->user
-                    ),
-                ];
-            }
+            $refused = $this->refusedByStores($plan, $storeCheck, $object, $reportedStoreKeys, $shownAt);
+            $invalid = [...$invalid, ...$refused];
         }
 
         return new DryRunRow(
@@ -156,6 +141,41 @@ final readonly class DryRunner
             array_map(static fn (int $position): array => $values[$position], $plan->shown),
             $invalid
         );
+    }
+
+    /**
+     * @param array<string, true> $reportedStoreKeys the store keys a column has already reported
+     * @param array<int, int> $shownAt
+     *
+     * @return list<array{field: int|null, label: string, value: string, message: string}>
+     */
+    private function refusedByStores(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        Concrete $object,
+        array $reportedStoreKeys,
+        array $shownAt
+    ): array {
+        $invalid = [];
+        foreach ($storeCheck->refused($object) as $refused) {
+            if (isset($reportedStoreKeys[$refused['field'] . '/' . $refused['key']->id()])) {
+                continue;
+            }
+            $position = $this->writerOf($plan, $refused['field'], $refused['key'], $refused['languages']);
+            $invalid[] = [
+                'field' => $position === null ? null : ($shownAt[$position] ?? null),
+                'label' => $refused['label'],
+                'value' => $refused['value'],
+                'message' => $this->messages->valueError(
+                    $refused['error'],
+                    $refused['label'],
+                    $refused['value'],
+                    $plan->user
+                ),
+            ];
+        }
+
+        return $invalid;
     }
 
     private function storeCheck(DryRunPlan $plan): StoreGroupCheck

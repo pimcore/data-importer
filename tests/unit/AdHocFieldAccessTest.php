@@ -40,7 +40,9 @@ class AdHocFieldAccessTest extends Unit
         $localized = $this->createMock(Localizedfields::class);
         $localized->method('getFieldDefinition')->with('title')->willReturn($input);
 
-        $this->assertSame($input, FieldAccess::definition($this->classWith(['localizedfields' => $localized]), 'title'));
+        $class = $this->classWith(['localizedfields' => $localized]);
+
+        $this->assertSame($input, FieldAccess::definition($class, 'title'));
     }
 
     public function testAFieldNoneHoldsHasNoDefinition(): void
@@ -94,7 +96,9 @@ class AdHocFieldAccessTest extends Unit
 
     public function testAStoreKeyOfAnObjectWithoutTheStoreReadsAsNothing(): void
     {
-        $this->assertNull(FieldAccess::read($this->createMock(Concrete::class), 'attributes', 'en', new StoreKey(3, 7)));
+        $object = $this->createMock(Concrete::class);
+
+        $this->assertNull(FieldAccess::read($object, 'attributes', 'en', new StoreKey(3, 7)));
     }
 
     public function testUnpublishedElementsAreReadAndTheSettingIsRestored(): void

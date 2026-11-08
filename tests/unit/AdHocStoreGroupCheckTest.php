@@ -162,7 +162,11 @@ class AdHocStoreGroupCheckTest extends Unit
             $definition->setMandatory($mandatory);
         }
 
-        return ['key' => new StoreKey(self::GROUP, $keyId), 'label' => 'Basics › ' . $name, 'definition' => $definition];
+        return [
+            'key' => new StoreKey(self::GROUP, $keyId),
+            'label' => 'Basics › ' . $name,
+            'definition' => $definition,
+        ];
     }
 
     /**
