@@ -203,6 +203,21 @@ describe('the mapping with a configuration', () => {
     expect(document.activeElement).toBe(card('products'))
   })
 
+  it('chooses nothing with the arrow keys when no configuration is usable', () => {
+    useConfiguration({
+      configurations: [
+        configuration({ name: 'closed', unusable: 'folder-not-allowed' }),
+        configuration({ name: 'locked', unusable: 'folder-not-allowed' })
+      ]
+    })
+
+    fireEvent.keyDown(card('closed'), { key: 'ArrowDown' })
+    fireEvent.keyDown(card('locked'), { key: 'ArrowUp' })
+
+    expect(cards().map((shown) => shown.getAttribute('aria-checked'))).toEqual(['false', 'false'])
+    expect(screen.queryAllByRole('region')).toHaveLength(0)
+  })
+
   it('shows the class, the match and the folder of the chosen one, which replace those of the file step', () => {
     useConfiguration({ configurations: [configuration()] })
     choose('products')
