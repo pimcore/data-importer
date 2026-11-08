@@ -206,6 +206,42 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame($before, $this->snapshot(), 'nothing is written');
     }
 
+    // the largest file the import takes is answered in one dry run, every row of it, within a bounded memory
+    public function testAFileOfTheMostRowsTakenIsCheckedInFull(): void
+    {
+        $this->createObjects();
+        $before = $this->snapshot();
+        $csv = "sku;name;price\nSKU-1;Armchair;2.50\n";
+        for ($row = 3; $row <= FileInspector::MAX_ROWS + 1; $row++) {
+            $csv .= sprintf("BULK-%d;Item %d;%s\n", $row, $row, $row % 1000 === 0 ? 'many' : '1.25');
+        }
+        $fileId = $this->upload($csv, 'products.csv');
+
+        memory_reset_peak_usage();
+        $baseline = memory_get_usage();
+        $rows = $this->byRow($this->service()->dryRun(
+            $fileId,
+            $this->mappedHere(['sku' => 'sku', 'name' => 'name', 'price' => 'price'])
+        ));
+        $peak = memory_get_peak_usage() - $baseline;
+
+        $this->assertCount(FileInspector::MAX_ROWS, $rows);
+        $this->assertSame('update', $rows[2]['action']);
+        $this->assertSame(
+            [FileInspector::MAX_ROWS - 1, 0],
+            [
+                count(array_filter($rows, static fn (array $row): bool => $row['action'] === 'create')),
+                count(array_filter($rows, static fn (array $row): bool => $row['error'] !== null)),
+            ]
+        );
+        $this->assertSame(
+            [1000, 2000, 3000, 4000, 5000],
+            array_keys(array_filter($rows, static fn (array $row): bool => $row['invalid'] !== []))
+        );
+        $this->assertLessThan(256 * 1024 * 1024, $peak, sprintf('peak %.1f MB', $peak / 1024 / 1024));
+        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+    }
+
     public function testTheSkippedRowsAreKeptPerErrorModeForTheUploaderOnly(): void
     {
         $this->createObjects();
