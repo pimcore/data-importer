@@ -15,7 +15,7 @@ import { type DryRun, type DryRunRow } from './preview-state'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: {} })
+  createStyles: () => () => ({ styles: { error: 'error', warning: 'warning' } })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 
@@ -100,6 +100,24 @@ describe('the preview step', () => {
     expect(screen.getByText('rows with errors: invalid values left out; rows that cannot be matched are skipped')).toBeTruthy()
     expect(cells()[2]).toEqual(['4', 'NH-1003', 'update, without Price', '12,5,0', 'red', 'Price “12,5,0” → left unchanged'])
     expect(cells()[3][2]).toBe('skipped')
+  })
+
+  it('marks the message of a skipped row as an error and of a row imported without values as a warning', () => {
+    const tones = (): Array<string | null> => within(screen.getByRole('table')).getAllByRole('row').slice(1)
+      .map((tableRow) => within(tableRow).getAllByRole('cell')[5].querySelector('span')?.getAttribute('class') ?? null)
+
+    render(<PreviewStep
+      dryRun={ dryRun() }
+      errorMode="skip"
+           />)
+    expect(tones()).toEqual([null, null, 'error', 'error'])
+    cleanup()
+
+    render(<PreviewStep
+      dryRun={ dryRun() }
+      errorMode="values"
+           />)
+    expect(tones()).toEqual([null, null, 'warning', 'error'])
   })
 
   it('shows only the rows with errors when asked to', () => {

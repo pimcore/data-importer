@@ -87,14 +87,32 @@ export const components = {
       <section aria-label={ title }>{ children }</section>
     )
   },
-  Grid: ({ columns, data, isLoading }: { columns: Array<{ id: string, header: string, accessorFn: (row: unknown) => string }>, data: unknown[], isLoading?: boolean }) => (
+  Grid: ({ columns, data, isLoading, setRowId }: {
+    columns: Array<{
+      id: string
+      header: string
+      accessorFn: (row: unknown) => string
+      cell?: (context: { getValue: () => string, row: { original: unknown } }) => React.ReactNode
+    }>
+    data: unknown[]
+    isLoading?: boolean
+    setRowId?: (row: unknown) => string
+  }) => (
     <table aria-busy={ isLoading }>
       <thead>
         <tr>{ columns.map((column) => <th key={ column.id }>{ column.header }</th>) }</tr>
       </thead>
       <tbody>
         { data.map((row) => (
-          <tr key={ JSON.stringify(row) }>{ columns.map((column) => <td key={ column.id }>{ column.accessorFn(row) }</td>) }</tr>
+          <tr key={ setRowId === undefined ? JSON.stringify(row) : setRowId(row) }>
+            { columns.map((column) => (
+              <td key={ column.id }>
+                { column.cell === undefined
+                  ? column.accessorFn(row)
+                  : column.cell({ getValue: () => column.accessorFn(row), row: { original: row } }) }
+              </td>
+            )) }
+          </tr>
         )) }
       </tbody>
     </table>
