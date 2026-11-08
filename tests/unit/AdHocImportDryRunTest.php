@@ -51,6 +51,7 @@ use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Element\ValidationException;
 use Pimcore\Model\User;
+use Pimcore\Model\User\Workspace\DataObject as ObjectWorkspace;
 use Pimcore\Security\User\User as SecurityUser;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -117,6 +118,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     private User $user;
 
+    /** @var list<User> */
+    private array $users = [];
+
     protected function _before(): void
     {
         $this->class = ClassDefinition::getByName(self::CLASS_NAME) ?? RowMatcherModel::createClass();
@@ -138,6 +142,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             @unlink($file);
         }
         $this->tokenStorage()->setToken(null);
+        foreach ($this->users as $user) {
+            $user->delete();
+        }
         TestHelper::cleanUp();
     }
 
@@ -273,8 +280,18 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['4', '7', '8', '9', '10'], array_column(array_slice($unmatched, 1), 0));
 
         $this->logIn(self::OTHER_USER_ID);
-        $this->expectException(NotFoundHttpException::class);
-        $service->skippedRows($fileId, AdHocImportDryRunServiceInterface::SKIP_ROWS);
+        $answers = [];
+        foreach ([
+            AdHocImportDryRunServiceInterface::SKIP_ROWS,
+            AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES,
+        ] as $errorMode) {
+            try {
+                $answers[$errorMode] = $service->skippedRows($fileId, $errorMode);
+            } catch (NotFoundHttpException) {
+                $answers[$errorMode] = 404;
+            }
+        }
+        $this->assertSame(['skip' => 404, 'values' => 404], $answers);
     }
 
     public function testAnotherErrorModeIsRefused(): void
@@ -810,6 +827,52 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame('Found outside ' . self::TARGET, $message);
     }
 
+    public function testAMatchedObjectTheUserMayNotViewIsAnErrorRowThatTellsNothingOfIt(): void
+    {
+        $this->createObject(self::TARGET, 'SKU-1', 'Chair');
+        $this->createObject(self::TARGET . '/hidden', 'SKU-HIDDEN', 'Secret name', '9.75');
+        $this->createObject(self::ELSEWHERE, 'SKU-OUT', 'Elsewhere name');
+        $this->createObject(self::ROOT . '/closed', 'SKU-CLOSED', 'Closed name');
+        $user = $this->saveUserWithWorkspaces([
+            self::TARGET => ['list' => true, 'view' => true, 'create' => true, 'save' => true],
+            self::TARGET . '/hidden' => ['list' => false, 'view' => false, 'create' => true, 'save' => true],
+            self::ELSEWHERE => ['list' => true, 'view' => true],
+        ]);
+        $this->users[] = $user;
+        $this->logInAs($user);
+        $fileId = $this->upload(
+            "sku;name\nSKU-HIDDEN;Armchair\nSKU-1;Stool\nSKU-OUT;Desk\nSKU-CLOSED;Bench\n",
+            'products.csv'
+        );
+
+        $service = $this->service();
+        $response = $service->dryRun($fileId, $this->mappedHere(['sku' => 'sku', 'name' => 'name']));
+
+        $rows = $this->byRow($response);
+        $this->assertNull($rows[2]['action']);
+        $this->assertSame('You may not view the object with sku SKU-HIDDEN', $rows[2]['error']);
+        $this->assertSame([['old' => null, 'new' => 'Armchair']], $rows[2]['values'], 'only the file\'s value');
+        $this->assertStringNotContainsString('Secret name', (string) json_encode($response->getRows()));
+        $this->assertStringNotContainsString('hidden', (string) json_encode($rows[2]));
+
+        $this->assertSame('update', $rows[3]['action'], 'an object the user may view is updated');
+        $this->assertSame([['old' => 'Chair', 'new' => 'Stool']], $rows[3]['values']);
+        $this->assertSame('Found in ' . self::ELSEWHERE . ', outside ' . self::TARGET, $rows[4]['error']);
+        $this->assertSame('Found outside ' . self::TARGET, $rows[5]['error']);
+
+        $skippedInEitherMode = array_map(
+            fn (string $errorMode): array => array_column(
+                array_slice($this->csvRows($service->skippedRows($fileId, $errorMode)), 1),
+                0
+            ),
+            [
+                AdHocImportDryRunServiceInterface::SKIP_ROWS,
+                AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES,
+            ]
+        );
+        $this->assertSame([['2', '4', '5'], ['2', '4', '5']], $skippedInEitherMode);
+    }
+
     /**
      * @return Concrete the object with SKU-1
      */
@@ -1237,11 +1300,42 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $user->setId($id);
         $user->setName('ad-hoc-dry-run-' . $id);
         $user->setAdmin($admin);
+        $this->logInAs($user);
+
+        return $user;
+    }
+
+    private function logInAs(User $user): void
+    {
         $securityUser = new SecurityUser($user);
         $this->tokenStorage()->setToken(
             new UsernamePasswordToken($securityUser, 'pimcore_studio', $securityUser->getRoles())
         );
         $this->user = $user;
+    }
+
+    /**
+     * @param array<string, array<string, bool>> $rights per folder path its rights
+     */
+    private function saveUserWithWorkspaces(array $rights): User
+    {
+        $workspaces = [];
+        foreach ($rights as $path => $folderRights) {
+            $workspace = new ObjectWorkspace();
+            $workspace->setCid((int) Service::createFolderByPath($path)->getId());
+            $workspace->setCpath($path);
+            $workspace->setValues($folderRights);
+            $workspaces[] = $workspace;
+        }
+
+        $user = new User();
+        $user->setParentId(0);
+        $user->setName(uniqid('ad-hoc-dry-run-', true));
+        $user->setActive(true);
+        $user->setAdmin(false);
+        $user->setPermission('objects', true);
+        $user->setWorkspacesObject($workspaces);
+        $user->save();
 
         return $user;
     }

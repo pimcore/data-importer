@@ -72,6 +72,14 @@ final readonly class DryRunMessages
         };
     }
 
+    /**
+     * @param string $matchField how the field the rows are matched by is called
+     */
+    public function notViewable(string $matchField, string $value, User $user): string
+    {
+        return $this->say($user, 'not-viewable', ['{{field}}' => $matchField, '{{value}}' => $value]);
+    }
+
     public function valueError(ValueError $error, string $field, string $value, User $user): string
     {
         return $this->say($user, 'value.' . $error->value, ['{{field}}' => $field, '{{value}}' => $value]);

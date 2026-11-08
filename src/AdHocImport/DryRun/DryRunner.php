@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FieldAccess;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ValueText;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\TextMatchValue;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Multiselect;
@@ -82,24 +83,23 @@ final readonly class DryRunner
         $match = $plan->matcher->match($row, $rowNumber);
         $object = $match->element;
         if (!$object instanceof Concrete) {
-            return new DryRunRow(
-                $rowNumber,
-                $match->matchValue,
-                null,
-                $this->messages->rowError(
-                    $match,
-                    $plan->matchField,
-                    $plan->targetFolder,
-                    $plan->newObjectFolder,
-                    $plan->user
-                ),
-                array_map(
-                    static fn (int $position): array => [
-                        'old' => null,
-                        'new' => $plan->writers[$position]->fileValue($row),
-                    ],
-                    $plan->shown
-                )
+            return $this->errorRow($plan, $match, $row, $this->messages->rowError(
+                $match,
+                $plan->matchField,
+                $plan->targetFolder,
+                $plan->newObjectFolder,
+                $plan->user
+            ), $rowNumber);
+        }
+
+        // what an object the user may not see holds, or where it lies, is not told
+        if ($match->outcome === RowMatchOutcome::Existing && !$object->isAllowed('view', $plan->user)) {
+            return $this->errorRow(
+                $plan,
+                $match,
+                $row,
+                $this->messages->notViewable($plan->matchField, $match->matchValue, $plan->user),
+                $rowNumber
             );
         }
 
@@ -157,6 +157,28 @@ final readonly class DryRunner
             array_map(static fn (int $position): array => $values[$position], $plan->shown),
             $invalid,
             $blocked
+        );
+    }
+
+    /**
+     * A row that means no object: it shows only what the file says.
+     *
+     * @param array<int|string, mixed> $row
+     */
+    private function errorRow(DryRunPlan $plan, RowMatch $match, array $row, string $error, int $rowNumber): DryRunRow
+    {
+        return new DryRunRow(
+            $rowNumber,
+            $match->matchValue,
+            null,
+            $error,
+            array_map(
+                static fn (int $position): array => [
+                    'old' => null,
+                    'new' => $plan->writers[$position]->fileValue($row),
+                ],
+                $plan->shown
+            )
         );
     }
 

@@ -473,6 +473,7 @@ data-importer.ad-hoc-import.check.duplicate-in-file: '{{field}} {{value}} is in 
 data-importer.ad-hoc-import.check.several-matches: '{{count}} objects have {{field}} {{value}}'
 data-importer.ad-hoc-import.check.found-outside-target-folder: 'Found in {{path}}, outside {{folder}}'
 data-importer.ad-hoc-import.check.outside-target-folder: 'Found outside {{folder}}'
+data-importer.ad-hoc-import.check.not-viewable: 'You may not view the object with {{field}} {{value}}'
 data-importer.ad-hoc-import.check.unknown-object-id: 'No object has the ID {{value}}'
 data-importer.ad-hoc-import.check.other-class: 'The ID {{value}} belongs to a folder or an object of another class'
 data-importer.ad-hoc-import.check.key-taken: '{{folder}} already holds an object named {{key}}'

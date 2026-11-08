@@ -95,6 +95,14 @@ class AdHocDryRunMessagesTest extends Unit
         );
     }
 
+    public function testAnObjectTheUserMayNotViewIsSaidWithoutWhereItLies(): void
+    {
+        $this->assertSame(
+            'You may not view the object with sku A/1',
+            static::englishMessages()->notViewable('sku', 'A/1', new User())
+        );
+    }
+
     public function testTheObjectIdAndColumnLabelsAreSaid(): void
     {
         $messages = static::englishMessages();
