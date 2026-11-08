@@ -332,6 +332,23 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportLoadClassificationStoreKeys:
+                build.query<
+                    BundleDataImporterAdHocImportLoadClassificationStoreKeysApiResponse,
+                    BundleDataImporterAdHocImportLoadClassificationStoreKeysApiArg
+                >({
+                    query: (queryArg) => ({
+                        url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/classification-store-keys`,
+                        params: {
+                            classId: queryArg.classId,
+                            fieldName: queryArg.fieldName,
+                            searchfilter: queryArg.searchfilter,
+                            start: queryArg.start,
+                            limit: queryArg.limit,
+                        },
+                    }),
+                    providesTags: ["Bundle Data Importer"],
+                }),
             bundleDataImporterAdHocImportPreviewTransformations: build.mutation<
                 BundleDataImporterAdHocImportPreviewTransformationsApiResponse,
                 BundleDataImporterAdHocImportPreviewTransformationsApiArg
@@ -551,6 +568,20 @@ export type BundleDataImporterAdHocImportLoadMappingApiResponse =
     /** status 200 The fields and the suggested field per column */ BundleDataImporterAdHocImportMappingResponse;
 export type BundleDataImporterAdHocImportLoadMappingApiArg = {
     bundleDataImporterMappingSuggestionParameters: BundleDataImporterMappingSuggestionParameters;
+};
+export type BundleDataImporterAdHocImportLoadClassificationStoreKeysApiResponse =
+    /** status 200 A page of the keys and their total count */ BundleDataImporterClassificationStoreKeysResponse;
+export type BundleDataImporterAdHocImportLoadClassificationStoreKeysApiArg = {
+    /** The ID of the data object class */
+    classId: string;
+    /** The classification store field name */
+    fieldName: string;
+    /** Search string to filter keys by name, group name, or description */
+    searchfilter?: string;
+    /** Pagination offset */
+    start?: number;
+    /** Maximum number of results */
+    limit?: number;
 };
 export type BundleDataImporterAdHocImportListConfigurationsApiResponse =
     /** status 200 The configurations, by name */ BundleDataImporterAdHocImportConfigurationsResponse;
@@ -936,6 +967,10 @@ export type BundleDataImporterAdHocImportMappingResponse = {
         transformationResultType: string;
         /** Whether a column goes into the field without a transformation, converted to its type */
         takesColumnAsIs: boolean;
+        /** Where the field is in the class layout, outermost first, as the grid groups it */
+        group: string[];
+        /** Whether the field is a classification store, whose key is chosen with the field */
+        classificationStore: boolean;
     }[];
     /** The suggested field per column, best score first; a column without a match has none */
     suggestions: {
@@ -1068,6 +1103,7 @@ export const {
     useBundleDataImporterAdHocImportDeleteFileMutation,
     useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
     useBundleDataImporterAdHocImportLoadMappingMutation,
+    useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery,
     useBundleDataImporterAdHocImportListConfigurationsQuery,
     useBundleDataImporterAdHocImportPreviewTransformationsMutation,
 } = injectedRtkApi;

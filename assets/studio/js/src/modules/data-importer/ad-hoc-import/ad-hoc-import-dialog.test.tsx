@@ -24,11 +24,14 @@ jest.mock('@pimcore/studio-ui-bundle/utils', () => ({ formatDataUnit: jest.requi
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   ApiError: class { constructor (readonly details: unknown) {} },
   GeneralError: class { constructor (readonly message: string) {} },
-  trackError: (...args: unknown[]) => mockTrackError(...args)
+  trackError: (...args: unknown[]) => mockTrackError(...args),
+  useSettings: () => ({ validLanguages: ['en', 'de'] })
 }))
 jest.mock('@pimcore/studio-ui-bundle/api/class-definition', () => ({
   api: { endpoints: { classDefinitionCollectionCreatable: { useQuery: () => mockClasses() } } }
 }))
+// loads its keys from the server, which the mapping step's own test stands in for
+jest.mock('./mapping-step/store-key-dialog', () => ({ StoreKeyDialog: () => null }))
 // picks a file at once: what the real one does with a dropped file has a test of its own
 jest.mock('./file-step/file-drop-zone', () => ({
   FileDropZone: ({ onFile }: { onFile: (file: File) => void }) => (
@@ -145,9 +148,9 @@ const dropAndRead = async (inspected: InspectedFile, name = 'prices.csv', size =
 
 const mappingAnswer = {
   fields: [
-    { key: 'sku', title: 'SKU', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true },
-    { key: 'title', title: 'Title', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true },
-    { key: 'image', title: 'Image', localized: false, mandatory: false, transformationResultType: 'asset', takesColumnAsIs: false }
+    { key: 'sku', title: 'SKU', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false },
+    { key: 'title', title: 'Title', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false },
+    { key: 'image', title: 'Image', localized: false, mandatory: false, transformationResultType: 'asset', takesColumnAsIs: false, group: ['Product'], classificationStore: false }
   ],
   suggestions: [{
     sourceIndex: 'Bezeichnung',

@@ -15,7 +15,6 @@ import {
   chooseField,
   createMapping,
   fitsField,
-  isTaken,
   mappingBasis,
   missingRequiredFields,
   pendingSuggestionCount,
@@ -25,7 +24,6 @@ import {
   skipColumn,
   skippedRows,
   takeAllSuggestions,
-  takenFields,
   unfitRows,
   visibleRows,
   withSamples,
@@ -33,6 +31,7 @@ import {
   type Mapping,
   type MappingField
 } from './mapping-state'
+import { isTaken, takenFields } from './taken-fields'
 
 const inspected: InspectedFile = {
   maxRows: 5000,
@@ -54,7 +53,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, given: Partial<MappingField> = {}): MappingField =>
-  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, ...given })
+  ({ key, title: key, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false, ...given })
 
 const fields = [
   field('sku', { mandatory: true }),

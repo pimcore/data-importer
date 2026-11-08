@@ -21,6 +21,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
@@ -63,6 +64,12 @@ class AdHocImportEndpointsTest extends Unit
             '/ad-hoc-import/match-fields',
         ],
         LoadMappingController::class => ['loadMapping', 'load_mapping', 'POST', '/ad-hoc-import/mapping'],
+        LoadClassificationStoreKeysController::class => [
+            'loadClassificationStoreKeys',
+            'load_classification_store_keys',
+            'GET',
+            '/ad-hoc-import/classification-store-keys',
+        ],
         ListConfigurationsController::class => [
             'listConfigurations',
             'list_configurations',
@@ -179,6 +186,8 @@ class AdHocImportEndpointsTest extends Unit
             'mandatory' => true,
             'transformationResultType' => 'default',
             'takesColumnAsIs' => true,
+            'group' => ['Base data'],
+            'classificationStore' => false,
         ];
         $suggestion = [
             'sourceIndex' => self::NAME_COLUMN,
