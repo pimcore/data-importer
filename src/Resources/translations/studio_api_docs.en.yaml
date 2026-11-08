@@ -151,3 +151,11 @@ bundle_data_importer_ad_hoc_import_preview_transformations: Preview the Transfor
 bundle_data_importer_ad_hoc_import_preview_transformations_description: Run the transformations of one column of an ad hoc import on its values in the first rows of the file, with the conversion to the type of its field and the transformations that can come next
 bundle_data_importer_ad_hoc_import_preview_transformations_summary: Preview the Transformations of a Column
 bundle_data_importer_ad_hoc_import_preview_transformations_success_response: The values after each transformation, whether the result fits the field, and the transformations that can come next
+bundle_data_importer_ad_hoc_import_dry_run: Check a File Without Importing It
+bundle_data_importer_ad_hoc_import_dry_run_description: Check every row of a file uploaded for an ad hoc import as its import would take it - the object it updates or creates, the values before and after, and why a row or value cannot be imported - without writing anything; the rows it would skip are kept for the uploading user to download
+bundle_data_importer_ad_hoc_import_dry_run_summary: Check a File Without Importing It
+bundle_data_importer_ad_hoc_import_dry_run_success_response: Every row of the file with what its import would do
+bundle_data_importer_ad_hoc_import_download_skipped_rows: Download the Skipped Rows
+bundle_data_importer_ad_hoc_import_download_skipped_rows_description: Download the rows the last check of a file would skip, with why, as CSV; only for the user who uploaded the file
+bundle_data_importer_ad_hoc_import_download_skipped_rows_summary: Download the Skipped Rows
+bundle_data_importer_ad_hoc_import_download_skipped_rows_success_response: The skipped rows as CSV

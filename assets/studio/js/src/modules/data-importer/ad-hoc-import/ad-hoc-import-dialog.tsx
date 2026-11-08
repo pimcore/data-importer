@@ -8,12 +8,14 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Modal, ModalFooter, Steps } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Flex, Modal, ModalFooter, Select, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
+  useBundleDataImporterAdHocImportDryRunMutation,
   useBundleDataImporterAdHocImportInspectFileMutation,
   useBundleDataImporterAdHocImportLoadMappingMutation
 } from '../data-importer-api-slice-enhanced'
@@ -34,12 +36,18 @@ import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './f
 import { canContinueMapping, createMapping, mappingBasis, withSamples, type Mapping, type MappingField } from './mapping-step/mapping-state'
 import { withLanguages } from './mapping-step/mapping-choices'
 import { MappingStep } from './mapping-step/mapping-step'
+import { findConfiguration } from './mapping-step/configuration-state'
 import { transformationSourceOf } from './mapping-step/transformations-modal'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
+import { dryRunParameters, previewCounts, type DryRun, type ErrorMode } from './preview-step/preview-state'
+import { PreviewStep } from './preview-step/preview-step'
 import { useLanguages } from './mapping-step/use-languages'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
+const ERROR_MODE_WIDTH = 260
+const ERROR_MODE_ID = 'ad-hoc-import-error-mode'
+const ERROR_MODES: ErrorMode[] = ['skip', 'values']
 
 const STEPS = ['file', 'mapping', 'preview', 'import']
 
@@ -64,10 +72,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [mapping, setMapping] = useState<Mapping | null>(null)
   const [fields, setFields] = useState<MappingField[]>([])
   const [isLoadingMapping, setIsLoadingMapping] = useState(false)
+  const [dryRun, setDryRun] = useState<DryRun | null>(null)
+  const [isDryRunFailed, setIsDryRunFailed] = useState(false)
+  const [errorMode, setErrorMode] = useState<ErrorMode>('skip')
 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
+  const [runDry] = useBundleDataImporterAdHocImportDryRunMutation()
   const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
@@ -77,6 +89,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const requestedSettings = useRef<BundleDataImporterAdHocImportFileSettings | null>(null)
   // only the mapping asked for last counts
   const latestMapping = useRef(0)
+  // only the dry run asked for last counts
+  const latestDryRun = useRef(0)
 
   const deleteStoredFile = (): void => {
     if (phase.kind === 'inspected' && phase.inspected.fileId !== undefined && phase.inspected.fileId !== null) {
@@ -210,6 +224,42 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
+  // every row of the file is checked as the mapping stands now; nothing is written
+  const toPreview = (): void => {
+    setStep(2)
+
+    const request = ++latestDryRun.current
+    setDryRun(null)
+    setIsDryRunFailed(false)
+    if (phase.kind !== 'inspected' || phase.inspected.fileId === undefined || phase.inspected.fileId === null) {
+      return
+    }
+
+    void runDry({
+      fileId: phase.inspected.fileId,
+      bundleDataImporterAdHocImportDryRunParameters: dryRunParameters({
+        target,
+        inspected: phase.inspected,
+        objects,
+        mapWith: configurationMapping.mapWith,
+        configuration: findConfiguration(configurationMapping.choice.configurations, configurationMapping.choice.chosen),
+        mapping
+      })
+    }).then((result) => {
+      if (request !== latestDryRun.current) {
+        return
+      }
+
+      if ('error' in result && result.error !== undefined) {
+        trackError(new ApiError(result.error))
+        setIsDryRunFailed(true)
+        return
+      }
+
+      setDryRun(result.data)
+    })
+  }
+
   const transformationSource = useMemo(() => transformationSourceOf(phase, objects.classId), [phase, objects.classId])
 
   const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
@@ -225,6 +275,12 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     reset()
   }
 
+  const back = (): void => {
+    // an answer still on its way belongs to the step left
+    latestDryRun.current += 1
+    setStep(step - 1)
+  }
+
   const close = (): void => {
     deleteStoredFile()
     reset()
@@ -236,22 +292,56 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   return (
     <Modal
-      footer={ (
-        <ModalFooter divider>
-          { step === 0
-            ? <Button onClick={ close }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
-            : <Button onClick={ () => { setStep(step - 1) } }>{ t('data-importer.ad-hoc-import.back') }</Button> }
-          { step < 2 && (
+      footer={ step === 2
+        ? (
+          <ModalFooter
+            divider
+            justify="space-between"
+          >
+            <Flex
+              align="center"
+              gap="small"
+            >
+              <label htmlFor={ ERROR_MODE_ID }>{ t('data-importer.ad-hoc-import.preview.rows-with-errors') }</label>
+              <Select
+                id={ ERROR_MODE_ID }
+                onChange={ (value: ErrorMode) => { setErrorMode(value) } }
+                options={ ERROR_MODES.map((mode) => ({
+                  value: mode,
+                  label: t(`data-importer.ad-hoc-import.preview.error-mode.${mode}`)
+                })) }
+                value={ errorMode }
+                width={ ERROR_MODE_WIDTH }
+              />
+            </Flex>
+            <Flex gap="small">
+              <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button>
+              { /* the import runs in the next step, which is not there yet */ }
+              <Button
+                disabled
+                type="primary"
+              >
+                { t('data-importer.ad-hoc-import.preview.import', {
+                  count: dryRun === null ? 0 : previewCounts(dryRun, errorMode).imported
+                }) }
+              </Button>
+            </Flex>
+          </ModalFooter>
+          )
+        : (
+          <ModalFooter divider>
+            { step === 0
+              ? <Button onClick={ close }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
+              : <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button> }
             <Button
               disabled={ !canGoOn }
-              onClick={ () => { step === 0 ? toMapping() : setStep(step + 1) } }
+              onClick={ () => { step === 0 ? toMapping() : toPreview() } }
               type="primary"
             >
               { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
             </Button>
+          </ModalFooter>
           ) }
-        </ModalFooter>
-      ) }
       maskClosable={ false }
       onCancel={ close }
       open
@@ -292,6 +382,20 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           source={ transformationSource }
         />
       ) }
+      { step === 2 && (isDryRunFailed
+        ? (
+          <Alert
+            message={ t('data-importer.ad-hoc-import.preview.failed') }
+            showIcon
+            type="error"
+          />
+          )
+        : (
+          <PreviewStep
+            dryRun={ dryRun }
+            errorMode={ errorMode }
+          />
+          )) }
     </Modal>
   )
 }

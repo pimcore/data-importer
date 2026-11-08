@@ -136,6 +136,7 @@ final class LoadDataObject extends AbstractOperator
             }
 
             [$object, $logMessage, $data] = $this->loadByStrategy($data);
+            $object = $this->visibleReference($object);
             if ($object instanceof DataObject) {
                 $objects[] = $object;
             } elseif (!$dryRun && !empty($data)) {

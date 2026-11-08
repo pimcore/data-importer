@@ -50,6 +50,22 @@ trait MappingApplicationScopeAwareTrait
         return true;
     }
 
+    /**
+     * @template T of ElementInterface
+     *
+     * @param T|null $element
+     *
+     * @return T|null the element, or null where the caller's lookup does not let the mapping read it
+     */
+    private function visibleReference(?ElementInterface $element): ?ElementInterface
+    {
+        $lookup = $this->mappingApplicationScope?->getReferenceLookup();
+
+        return $element !== null && $lookup instanceof ReferenceVisibilityInterface && !$lookup->isVisible($element)
+            ? null
+            : $element;
+    }
+
     private function hasReferenceLookup(): bool
     {
         return $this->mappingApplicationScope?->getReferenceLookup() !== null;

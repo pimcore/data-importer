@@ -1,0 +1,399 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
+
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FieldAccess;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ValueText;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\TextMatchValue;
+use Pimcore\Cache\RuntimeCache;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Datetime;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Multiselect;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
+use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\Element\Service as ElementService;
+use Pimcore\Model\Element\ValidationException;
+use Pimcore\Model\User;
+use Pimcore\Tool;
+
+/**
+ * Finds out what an import would do with every row of a file: which object it updates or creates, what changes and
+ * which rows or values it cannot take. Saves nothing: the objects change in memory only, and a save tried meanwhile
+ * fails.
+ *
+ * @internal
+ *
+ * @phpstan-import-type Refusal from StoreGroupCheck
+ */
+final readonly class DryRunner
+{
+    // the objects a file changes in memory are dropped from the runtime cache now and then, so they stay few
+    private const int ROWS_BETWEEN_CLEANUPS = 100;
+
+    public function __construct(
+        private MappingApplicationScope $scope,
+        private DryRunMessages $messages,
+    ) {
+    }
+
+    /**
+     * @return list<DryRunRow> in the order of the file
+     */
+    public function run(DryRunPlan $plan): array
+    {
+        return $this->scope->run(null, function () use ($plan): array {
+            $storeCheck = $this->storeCheck($plan);
+            $finalWriters = $this->finalWriters($plan->writers);
+            $results = [];
+            $index = 0;
+
+            try {
+                foreach ($plan->rows as $row) {
+                    $results[] = $this->checkRow(
+                        $plan,
+                        $storeCheck,
+                        $finalWriters,
+                        $row,
+                        $index,
+                        $plan->firstRowNumber + $index
+                    );
+                    ++$index;
+                    if ($index % self::ROWS_BETWEEN_CLEANUPS === 0) {
+                        \Pimcore::collectGarbage();
+                    }
+                }
+            } finally {
+                \Pimcore::collectGarbage();
+            }
+
+            return $results;
+        });
+    }
+
+    /**
+     * @param list<FieldWriter> $writers
+     *
+     * @return array<int, true> the positions of the last writer of each field: a save sees only what that one leaves
+     */
+    private function finalWriters(array $writers): array
+    {
+        $lastOfField = [];
+        foreach ($writers as $position => $writer) {
+            $field = $writer->field();
+            $lastOfField[json_encode([$field->key, $field->language, $field->storeKey?->id()])] = $position;
+        }
+
+        return array_fill_keys(array_values($lastOfField), true);
+    }
+
+    /**
+     * @param array<int, true> $finalWriters
+     * @param array<int|string, mixed> $row
+     */
+    private function checkRow(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        array $finalWriters,
+        array $row,
+        int $index,
+        int $rowNumber
+    ): DryRunRow {
+        $match = $plan->matcher->match($row, $rowNumber);
+        $object = $match->element;
+        if (!$object instanceof Concrete) {
+            return $this->errorRow($plan, $match, $row, $this->messages->rowError(
+                $match,
+                $plan->matchField,
+                $plan->targetFolder,
+                $plan->newObjectFolder,
+                $plan->user
+            ), $rowNumber);
+        }
+
+        // what an object the user may not see holds, or where it lies, is not told
+        if ($match->outcome === RowMatchOutcome::Existing && !$object->isAllowed('view', $plan->user)) {
+            return $this->errorRow(
+                $plan,
+                $match,
+                $row,
+                $this->messages->notViewable($plan->matchField, $match->matchValue, $plan->user),
+                $rowNumber
+            );
+        }
+
+        $isNew = $match->outcome === RowMatchOutcome::New;
+        $shownAt = array_flip($plan->shown);
+        $values = [];
+        $invalid = [];
+        $leftOut = [];
+        $stores = $storeCheck->stores($object);
+        foreach ($plan->writers as $position => $writer) {
+            $field = $writer->field();
+            $old = $isNew ? null : $this->read($object, $field, $plan->user);
+            $error = $writer->write($object, $index, $row)
+                ?? (isset($finalWriters[$position]) ? $this->validate($object, $field) : null);
+            if ($error !== null) {
+                $leftOut[$position] = true;
+                $value = $writer->fileValue($row) ?? '';
+                $invalid[] = [
+                    'field' => $shownAt[$position] ?? null,
+                    'label' => $field->label,
+                    'value' => $value,
+                    'message' => $this->messages->valueError($error, $field->label, $value, $plan->user),
+                ];
+            }
+            $values[$position] = [
+                'old' => $old,
+                'new' => $error === null ? $this->read($object, $field, $plan->user) : $writer->fileValue($row),
+            ];
+        }
+
+        $blocked = false;
+        if ($object->isPublished()) {
+            $refusals = $storeCheck->refusedWithout($object, $stores, $plan->writers, $leftOut, $index, $row);
+            $blocked = $refusals['remaining'] !== [];
+            array_push(
+                $invalid,
+                ...$this->refusedEntries(
+                    $plan,
+                    $storeCheck,
+                    [...$refusals['lifted'], ...$refusals['remaining']],
+                    $this->reportedStoreKeys($plan->writers, $leftOut),
+                    $shownAt
+                )
+            );
+        }
+
+        $this->forget($object);
+
+        return new DryRunRow(
+            $rowNumber,
+            $match->matchValue,
+            $isNew ? DryRunRow::CREATE : DryRunRow::UPDATE,
+            null,
+            array_map(static fn (int $position): array => $values[$position], $plan->shown),
+            $invalid,
+            $blocked
+        );
+    }
+
+    /**
+     * @param list<FieldWriter> $writers
+     * @param array<int, true> $leftOut the positions of the writers whose value was refused
+     *
+     * @return array<string, true> the store keys a column has already reported
+     */
+    private function reportedStoreKeys(array $writers, array $leftOut): array
+    {
+        $reported = [];
+        foreach (array_keys($leftOut) as $position) {
+            $field = $writers[$position]->field();
+            if ($field->storeKey !== null) {
+                $reported[$field->key . '/' . $field->storeKey->id()] = true;
+            }
+        }
+
+        return $reported;
+    }
+
+    /**
+     * What a row wrote stays in memory, so the next row that reads this object, as a parent or a reference, loads it
+     * as it is saved.
+     */
+    private function forget(Concrete $object): void
+    {
+        if ($object->getId() !== null) {
+            RuntimeCache::set(ElementService::getElementCacheTag('object', $object->getId()), null);
+        }
+    }
+
+    /**
+     * A row that means no object: it shows only what the file says.
+     *
+     * @param array<int|string, mixed> $row
+     */
+    private function errorRow(DryRunPlan $plan, RowMatch $match, array $row, string $error, int $rowNumber): DryRunRow
+    {
+        return new DryRunRow(
+            $rowNumber,
+            $match->matchValue,
+            null,
+            $error,
+            array_map(
+                static fn (int $position): array => [
+                    'old' => null,
+                    'new' => $plan->writers[$position]->fileValue($row),
+                ],
+                $plan->shown
+            )
+        );
+    }
+
+    /**
+     * @param list<Refusal> $refusals
+     * @param array<string, true> $reportedStoreKeys the store keys a column has already reported
+     * @param array<int, int> $shownAt
+     *
+     * @return list<array{field: int|null, label: string, value: string, message: string}>
+     */
+    private function refusedEntries(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        array $refusals,
+        array $reportedStoreKeys,
+        array $shownAt
+    ): array {
+        $entries = [];
+        foreach ($refusals as $refused) {
+            if (!$this->isReported($refused, $reportedStoreKeys)) {
+                array_push($entries, ...$this->refusedEntriesOf($plan, $storeCheck, $refused, $shownAt));
+            }
+        }
+
+        return $entries;
+    }
+
+    /**
+     * @param array{field: string, key: StoreKey|null} $refused
+     * @param array<string, true> $reportedStoreKeys the store keys a column has already reported
+     */
+    private function isReported(array $refused, array $reportedStoreKeys): bool
+    {
+        return $refused['key'] !== null && isset($reportedStoreKeys[$refused['field'] . '/' . $refused['key']->id()]);
+    }
+
+    /**
+     * @param array{
+     *     field: string,
+     *     key: StoreKey|null,
+     *     label: string,
+     *     value: string,
+     *     error: ValueError,
+     *     languages: list<string>
+     * } $refused
+     * @param array<int, int> $shownAt
+     *
+     * @return list<array{field: int|null, label: string, value: string, message: string}> one per column it marks
+     */
+    private function refusedEntriesOf(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        array $refused,
+        array $shownAt
+    ): array {
+        $fields = array_map(
+            static fn (int $position): ?int => $shownAt[$position] ?? null,
+            array_keys($storeCheck->writersOf($plan->writers, $refused))
+        );
+        $message = $this->messages->valueError($refused['error'], $refused['label'], $refused['value'], $plan->user);
+
+        return array_map(
+            static fn (?int $field): array => [
+                'field' => $field,
+                'label' => $refused['label'],
+                'value' => $refused['value'],
+                'message' => $message,
+            ],
+            array_values(array_unique($fields === [] ? [null] : $fields))
+        );
+    }
+
+    private function storeCheck(DryRunPlan $plan): StoreGroupCheck
+    {
+        $stores = [];
+        foreach ($plan->writers as $writer) {
+            $field = $writer->field();
+            if ($field->storeKey !== null && $field->key !== null) {
+                $stores[$field->key] = true;
+            }
+        }
+
+        return new StoreGroupCheck(array_keys($stores), Tool::getValidLanguages(), StoreGroupKeys::of(...));
+    }
+
+    private function read(Concrete $object, ImportField $field, User $user): ?string
+    {
+        if ($field->key === null) {
+            return null;
+        }
+
+        $value = FieldAccess::read($object, $field->key, $field->language, $field->storeKey);
+
+        return $value instanceof \DateTimeInterface
+            && FieldAccess::definition($object->getClass(), $field->key, $field->storeKey) instanceof Datetime
+            ? ValueText::ofDateTime($value)
+            : ValueText::of($value, $user);
+    }
+
+    /**
+     * What saving the object would refuse about the field's new value. Pimcore checks an unpublished object, as a new
+     * one is, without its mandatory fields and lengths.
+     */
+    private function validate(Concrete $object, ImportField $field): ?ValueError
+    {
+        $definition = $field->key === null
+            ? null
+            : FieldAccess::definition($object->getClass(), $field->key, $field->storeKey);
+        if ($definition === null) {
+            return null;
+        }
+
+        $value = FieldAccess::read($object, $field->key, $field->language, $field->storeKey);
+        if ($definition->isEmpty($value)) {
+            // a store key's mark is its group's, and the group is checked once the row is written
+            return $field->storeKey === null && $definition->getMandatory() && $object->isPublished()
+                ? ValueError::Required
+                : null;
+        }
+
+        if ($definition instanceof Select || $definition instanceof Multiselect) {
+            return $this->areOptions($value, $definition) ? null : ValueError::NotAnOption;
+        }
+
+        try {
+            $definition->checkValidity($value, !$object->isPublished(), ['object' => $object]);
+        } catch (ValidationException) {
+            return ValueError::Invalid;
+        }
+
+        return null;
+    }
+
+    /**
+     * Not the field's checkValidity(), which looks at the options only if the field enforces them.
+     */
+    private function areOptions(mixed $value, Select|Multiselect $definition): bool
+    {
+        if ($definition instanceof Select) {
+            return !is_string($value) || TextMatchValue::fits($value, $definition);
+        }
+
+        $options = $definition->getOptions();
+        if (!is_array($value) || !$options || $definition->dynamicOptions || !$definition->useConfiguredOptions()) {
+            return true;
+        }
+
+        $allowed = array_map(strval(...), array_column($options, 'value'));
+        foreach ($value as $item) {
+            if (!in_array((string) $item, $allowed, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

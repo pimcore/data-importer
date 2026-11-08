@@ -19,6 +19,8 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadSkippedRowsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DryRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
@@ -81,6 +83,13 @@ class AdHocImportEndpointsTest extends Unit
             'preview_transformations',
             'POST',
             '/ad-hoc-import/file/{fileId}/transformations',
+        ],
+        DryRunController::class => ['dryRun', 'dry_run', 'POST', '/ad-hoc-import/file/{fileId}/dry-run'],
+        DownloadSkippedRowsController::class => [
+            'downloadSkippedRows',
+            'download_skipped_rows',
+            'GET',
+            '/ad-hoc-import/file/{fileId}/skipped-rows',
         ],
     ];
 

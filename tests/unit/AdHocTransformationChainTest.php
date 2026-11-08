@@ -456,6 +456,57 @@ class AdHocTransformationChainTest extends Unit
         ], $this->chain($types)->acceptedTypes('PROD'));
     }
 
+    public function testAStoreKeyTakesTheTypesListedForItsDataType(): void
+    {
+        $chain = $this->chain();
+
+        $this->assertSame([Types::DEFAULT_TYPE, Types::BOOLEAN], $chain->acceptedTypesOf('input'));
+        $this->assertSame([Types::NUMERIC, Types::BOOLEAN], $chain->acceptedTypesOf('numeric'));
+        $this->assertSame([Types::DATE], $chain->acceptedTypesOf('datetime'));
+        $this->assertSame([], $chain->acceptedTypesOf('quantityValue'));
+    }
+
+    public function testAColumnIsConvertedForItsFieldWithTheRowsItCannotTakeAndWhere(): void
+    {
+        $user = new User();
+        $user->setId(4712);
+
+        $converted = $this->chain()->convertColumn(
+            ['1', '12abc', '', '2'],
+            [$this->step('loadDataObject', ['loadStrategy' => 'id'])],
+            [Types::DATA_OBJECT],
+            $user
+        );
+
+        $this->assertNotNull($converted);
+        $this->assertNull($converted->conversion);
+        $this->assertInstanceOf(Concrete::class, $converted->values[0]);
+        $this->assertSame([false, true, false, false], $converted->failedInSteps);
+        $this->assertSame([false, true, false, false], $converted->failed);
+
+        $numbers = $this->chain()->convertColumn(['1.5', '12,5,0', ''], [], [Types::NUMERIC], $user);
+        $this->assertNotNull($numbers);
+        $this->assertSame('numeric', $numbers->conversion);
+        $this->assertSame(1.5, $numbers->values[0]);
+        $this->assertNull($numbers->values[2], 'an empty cell stays empty');
+        $this->assertSame([false, false, false], $numbers->failedInSteps);
+        $this->assertSame([false, true, false], $numbers->failed);
+    }
+
+    public function testAColumnThatCannotReachItsFieldIsNotConverted(): void
+    {
+        $user = new User();
+        $user->setId(4712);
+
+        $this->assertNull($this->chain()->convertColumn(['1'], [], [Types::DATA_OBJECT], $user));
+        $this->assertNull($this->chain()->convertColumn(
+            ['a,b'],
+            [$this->step('explode', ['delimiter' => ',']), $this->step('explode', ['delimiter' => ','])],
+            [Types::DEFAULT_ARRAY],
+            $user
+        ));
+    }
+
     /**
      * @param list<string|null> $values
      * @param list<array{type: string, settings: array<string, string>}> $steps

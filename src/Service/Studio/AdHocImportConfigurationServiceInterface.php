@@ -15,8 +15,12 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportConfigurationsResponse;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
+ * @phpstan-import-type ImportConfiguration from AdHocImportConfigurationsResponse
+ *
  * @internal
  */
 interface AdHocImportConfigurationServiceInterface
@@ -28,4 +32,15 @@ interface AdHocImportConfigurationServiceInterface
      * @throws EnvironmentException if the current user cannot be resolved
      */
     public function listConfigurations(): AdHocImportConfigurationsResponse;
+
+    /**
+     * The configuration an ad hoc import maps with: what listConfigurations() tells about it, and its mapping.
+     *
+     * @return array{configuration: ImportConfiguration, mapping: array<int|string, mixed>}
+     *
+     * @throws EnvironmentException if the current user cannot be resolved
+     * @throws NotFoundHttpException if the user may read no data object import configuration of that name
+     * @throws InvalidArgumentException if an ad hoc import cannot use it
+     */
+    public function loadConfiguration(string $name): array;
 }

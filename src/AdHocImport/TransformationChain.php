@@ -20,8 +20,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Model\DataObject\Data\Hotspotimage;
-use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
 
@@ -66,6 +64,7 @@ final readonly class TransformationChain
     public function __construct(
         private MappingConfigurationFactory $mappingConfigurationFactory,
         private DataTypeServiceInterface $dataTypeService,
+        private TransformationDataTypeService $transformationDataTypes,
     ) {
     }
 
@@ -88,6 +87,23 @@ final readonly class TransformationChain
     }
 
     /**
+     * The result types a field of this Pimcore data type takes, as for a key of a classification store.
+     *
+     * @return list<string>
+     */
+    public function acceptedTypesOf(string $dataType): array
+    {
+        return array_values(array_filter(
+            self::RESULT_TYPES,
+            fn (string $type): bool => in_array(
+                $dataType,
+                $this->transformationDataTypes->getPimcoreTypesByTransformationTargetType($type),
+                true
+            )
+        ));
+    }
+
+    /**
      * Whether a column goes into a field taking these types without a transformation.
      *
      * @param list<string> $accepted
@@ -98,7 +114,7 @@ final readonly class TransformationChain
     }
 
     /**
-     * @param list<string|null> $values the column's values in the first rows
+     * @param list<?string> $values the column's values in the first rows
      * @param list<array{type: string, settings: array<string, string>}> $steps checked against the allow list
      * @param list<string> $accepted the result types the field takes
      * @param User $user loaded objects and assets the user may not see are not found
@@ -115,14 +131,7 @@ final readonly class TransformationChain
         $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
         $results = [];
         if ($conversion !== false) {
-            if ($conversion !== null) {
-                $converter = $this->operators([
-                    ['type' => $conversion, 'settings' => self::CONVERSION_SETTINGS[$conversion] ?? []],
-                ])[0];
-                $type = $converter->evaluateReturnType($type, count($operators) + 1);
-                $failed = $this->unreadable($conversion, $data, $failed);
-                [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
-            }
+            [$type, $data, $failed] = $this->convert($conversion, $type, count($operators) + 1, $data, $failed, $user);
             $results = $this->cells($data, $failed);
         }
 
@@ -138,11 +147,73 @@ final readonly class TransformationChain
     }
 
     /**
+     * The column's values as its field takes them: the steps and the conversion to the field's type run on every
+     * value. Null if they do not lead into the field.
+     *
+     * @param list<?string> $values
+     * @param list<array{type: string, settings: array<string, string>}> $steps checked against the allow list
+     * @param list<string> $accepted the result types the field takes
+     * @param User $user loaded objects and assets the user may not see are not found
+     *
+     * @throws InvalidConfigurationException
+     */
+    public function convertColumn(array $values, array $steps, array $accepted, User $user): ?ConvertedColumn
+    {
+        $operators = $this->operators($steps);
+        [$type, $data, $failed] = $this->runSteps($operators, $steps, $values, $user);
+        $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
+        if ($type === null || $conversion === false) {
+            return null;
+        }
+
+        [, $converted, $failedConversion] = $this->convert(
+            $conversion,
+            $type,
+            count($operators) + 1,
+            $data,
+            $failed,
+            $user
+        );
+
+        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion);
+    }
+
+    /**
+     * @param list<mixed> $data
+     * @param list<bool> $failed
+     *
+     * @return array{0: string, 1: list<mixed>, 2: list<bool>}
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function convert(
+        ?string $conversion,
+        string $type,
+        int $position,
+        array $data,
+        array $failed,
+        User $user
+    ): array {
+        if ($conversion === null) {
+            return [$type, $data, $failed];
+        }
+
+        $converter = $this->operators([
+            ['type' => $conversion, 'settings' => self::CONVERSION_SETTINGS[$conversion] ?? []],
+        ])[0];
+        $type = $converter->evaluateReturnType($type, $position);
+        $failed = $this->unreadable($conversion, $data, $failed);
+        [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
+
+        return [$type, $data, $failed];
+    }
+
+    /**
      * Runs the steps one after the other until one cannot take the result before it.
      *
      * @param list<OperatorInterface> $operators
      * @param list<array{type: string, settings: array<string, string>}> $steps
-     * @param list<string|null> $values
+     * @param list<?string> $values
      *
      * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>}
      */
@@ -259,9 +330,9 @@ final readonly class TransformationChain
                     default => true,
                 };
             }
-            $date = \DateTimeImmutable::createFromFormat('!' . self::DATE_FORMAT, $value);
+            $date = date_create_immutable_from_format('!' . self::DATE_FORMAT, $value);
             // a warning names a day the month does not have, which the parser would carry into the next month
-            $errors = \DateTimeImmutable::getLastErrors();
+            $errors = date_get_last_errors();
 
             return $date !== false && ($errors === false || $errors['warning_count'] === 0);
         };
@@ -274,11 +345,11 @@ final readonly class TransformationChain
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
-     * @param \Closure(string): bool $readable
+     * @param callable(string): bool $readable
      *
      * @return list<bool>
      */
-    private function markRows(array $data, array $failed, \Closure $readable): array
+    private function markRows(array $data, array $failed, callable $readable): array
     {
         foreach ($data as $row => $value) {
             foreach (is_array($value) ? $value : [$value] as $item) {
@@ -461,52 +532,9 @@ final readonly class TransformationChain
     {
         $cells = [];
         foreach ($data as $row => $value) {
-            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : $this->items($value), $failed[$row]);
+            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : CellItems::of($value), $failed[$row]);
         }
 
         return $cells;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function items(mixed $value): array
-    {
-        if ($value instanceof ImageGallery) {
-            $value = array_map(
-                static fn (?Hotspotimage $item): mixed => $item?->getImage(),
-                $value->getItems()
-            );
-        }
-
-        if (is_array($value)) {
-            $items = [];
-            foreach ($value as $item) {
-                $text = $this->text($item);
-                if ($text !== null) {
-                    $items[] = $text;
-                }
-            }
-
-            return $items;
-        }
-
-        $text = $this->text($value);
-
-        return $text === null ? [] : [$text];
-    }
-
-    private function text(mixed $value): ?string
-    {
-        return match (true) {
-            $value === null, $value === '' => null,
-            is_bool($value) => $value ? 'true' : 'false',
-            is_scalar($value) => (string) $value,
-            $value instanceof ElementInterface => $value->getRealFullPath(),
-            $value instanceof \DateTimeInterface => $value->format(self::DATE_FORMAT),
-            is_array($value) => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: null,
-            // nothing an allowed operator returns; named so a preview still shows there is a value
-            default => get_debug_type($value),
-        };
     }
 }

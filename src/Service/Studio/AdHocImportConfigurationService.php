@@ -25,10 +25,12 @@ use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\DataObjectResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
+use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * @phpstan-import-type ImportConfiguration from AdHocImportConfigurationsResponse
@@ -69,11 +71,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
     public function listConfigurations(): AdHocImportConfigurationsResponse
     {
         $user = $this->resolveCurrentUser();
-
-        $creatable = [];
-        foreach ($this->classDefinitionService->getClassDefinitionCollection(creatableOnly: true) as $class) {
-            $creatable[$class->getId()] = true;
-        }
+        $creatable = $this->creatableClasses();
 
         $configurations = [];
         foreach (($this->listConfigurations)() as $configuration) {
@@ -90,6 +88,50 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         );
 
         return new AdHocImportConfigurationsResponse($configurations);
+    }
+
+    public function loadConfiguration(string $name): array
+    {
+        $user = $this->resolveCurrentUser();
+
+        foreach (($this->listConfigurations)() as $configuration) {
+            if ($configuration->getName() !== $name
+                || $configuration->getType() !== self::ADAPTER_TYPE
+                || !$configuration->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_PERMISSION_READ, $user)
+            ) {
+                continue;
+            }
+
+            $described = $this->describe($configuration, $this->creatableClasses(), $user);
+            if ($described['unusable'] !== null) {
+                throw new InvalidArgumentException(sprintf(
+                    'An ad hoc import cannot use configuration %s: %s',
+                    $name,
+                    $described['unusable']
+                ));
+            }
+            $data = $configuration->getConfiguration();
+
+            return [
+                'configuration' => $described,
+                'mapping' => is_array($data['mappingConfig'] ?? null) ? $data['mappingConfig'] : [],
+            ];
+        }
+
+        throw new NotFoundHttpException(sprintf('Configuration %s not found', $name));
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function creatableClasses(): array
+    {
+        $creatable = [];
+        foreach ($this->classDefinitionService->getClassDefinitionCollection(creatableOnly: true) as $class) {
+            $creatable[$class->getId()] = true;
+        }
+
+        return $creatable;
     }
 
     /**

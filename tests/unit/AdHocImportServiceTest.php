@@ -14,13 +14,10 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Local\LocalFilesystemAdapter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
@@ -465,7 +462,7 @@ class AdHocImportServiceTest extends Unit
         );
 
         return new AdHocImportService(
-            new FileStore(new Filesystem(new LocalFilesystemAdapter($this->storage))),
+            AdHocCsvFiles::store($this->storage),
             new FileInspector(new SourceFileReader($factory), $factory, new CsvDelimiterDetector()),
             $security,
             $resolver,

@@ -149,6 +149,17 @@ describe('the ad hoc import endpoints', () => {
     }])
   })
 
+  it('post the mapping to check every row of a file by', async () => {
+    const parameters = { folderId: 7, classId: 'CAR', matchBy: 'field' as const, matchColumn: '0', matchField: 'sku' }
+
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportDryRun.initiate({
+      fileId: 'id-1',
+      bundleDataImporterAdHocImportDryRunParameters: parameters
+    }))
+
+    expect(sent).toEqual([{ url: `${FILE_URL}/id-1/dry-run`, method: 'POST', body: parameters }])
+  })
+
   it('are exported as hooks', () => {
     const inspect = api.endpoints.bundleDataImporterAdHocImportInspectFile.useMutation
     const remove = api.endpoints.bundleDataImporterAdHocImportDeleteFile.useMutation
@@ -157,6 +168,7 @@ describe('the ad hoc import endpoints', () => {
     const storeKeys = api.endpoints.bundleDataImporterAdHocImportLoadClassificationStoreKeys.useQuery
     const configurations = api.endpoints.bundleDataImporterAdHocImportListConfigurations.useQuery
     const transformations = api.endpoints.bundleDataImporterAdHocImportPreviewTransformations.useMutation
+    const dryRun = api.endpoints.bundleDataImporterAdHocImportDryRun.useMutation
 
     expect(generated.useBundleDataImporterAdHocImportUploadFileMutation).toBe(api.endpoints.bundleDataImporterAdHocImportUploadFile.useMutation)
     expect(enhanced.useBundleDataImporterConnectionListQuery).toBe(api.endpoints.bundleDataImporterConnectionList.useQuery)
@@ -168,6 +180,7 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery).toBe(storeKeys)
       expect(hooks.useBundleDataImporterAdHocImportListConfigurationsQuery).toBe(configurations)
       expect(hooks.useBundleDataImporterAdHocImportPreviewTransformationsMutation).toBe(transformations)
+      expect(hooks.useBundleDataImporterAdHocImportDryRunMutation).toBe(dryRun)
     }
   })
 })

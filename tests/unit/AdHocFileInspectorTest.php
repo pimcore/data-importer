@@ -703,6 +703,42 @@ class AdHocFileInspectorTest extends Unit
         $this->assertSame(RefusalReason::Unreadable, $inspection->refusal);
     }
 
+    public function testEveryRowIsReadUnderTheSettingsTheInspectionSettledOnKeyedLikeItsColumns(): void
+    {
+        $path = $this->csv("sku;name\nA-1;Chair\nB-2;Table\n");
+        $inspection = $this->inspector()->inspect($path, FileType::Csv, new SettingsInput());
+
+        $rows = [...$this->inspector()->readRows($path, FileType::Csv, $inspection)];
+
+        $this->assertSame(['sku', 'name'], array_column($inspection->columns, 'dataIndex'));
+        $this->assertSame([['sku' => 'A-1', 'name' => 'Chair'], ['sku' => 'B-2', 'name' => 'Table']], $rows);
+    }
+
+    public function testWithoutAHeaderRowEveryRowIsReadAndKeyedByPosition(): void
+    {
+        $path = $this->csv("A-1,Chair\nB-2,Table\n");
+        $inspection = $this->inspector()->inspect($path, FileType::Csv, new SettingsInput(hasHeaderRow: false));
+
+        $rows = [...$this->inspector()->readRows($path, FileType::Csv, $inspection)];
+
+        $this->assertSame(['0', '1'], array_column($inspection->columns, 'dataIndex'));
+        $this->assertSame([['A-1', 'Chair'], ['B-2', 'Table']], $rows);
+    }
+
+    public function testEveryRowOfTheChosenSheetIsReadWithoutItsHeaderRow(): void
+    {
+        $path = $this->xlsx([
+            'Notes' => [['note'], ['ignore me']],
+            'Products' => [['sku', 'name'], ['A-1', 'Chair'], ['B-2', 'Table']],
+        ]);
+        $inspection = $this->inspector()->inspect($path, FileType::Xlsx, new SettingsInput(sheetName: 'Products'));
+
+        $rows = [...$this->inspector()->readRows($path, FileType::Xlsx, $inspection)];
+
+        $this->assertSame(['0', '1'], array_column($inspection->columns, 'dataIndex'));
+        $this->assertSame([['A-1', 'Chair'], ['B-2', 'Table']], $rows);
+    }
+
     public function testAnXlsxIsReadable(): void
     {
         $this->assertTrue($this->inspector()->isReadable($this->xlsx(['Products' => [['a']]]), FileType::Xlsx));

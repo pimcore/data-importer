@@ -77,6 +77,7 @@ final class LoadAsset extends AbstractAssetOperator
                 throw new InvalidConfigurationException("Unknown load strategy '{ $this->loadStrategy }'");
             }
 
+            $asset = $this->visibleReference($asset);
             if ($asset instanceof Asset) {
                 $assets[] = $asset;
             } elseif (!$dryRun && !empty($data)) {

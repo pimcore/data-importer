@@ -12,6 +12,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import React from 'react'
+import { PickerGroupView, type PickerGroup, type PickerItem } from './ad-hoc-import-picker'
 
 const catalogue: Record<string, string> = Object.fromEntries(
   fs.readFileSync(path.resolve(__dirname, '../../../../../src/Resources/translations/studio.en.yaml'), 'utf8')
@@ -45,49 +46,6 @@ interface SelectProps {
   onChange?: (value: string) => void
   'aria-label'?: string
 }
-
-interface PickerItem {
-  key: string
-  label: string
-  disabled?: boolean
-  meta?: unknown
-}
-
-interface PickerGroup {
-  key: string
-  label: string
-  items: PickerItem[]
-  children?: PickerGroup[]
-}
-
-// a group of the column picker as a labelled list of its subgroups and items
-const PickerGroupView = ({ group, onSelect }: { group: PickerGroup, onSelect: (item: PickerItem) => void }): React.JSX.Element => (
-  <fieldset aria-label={ group.label }>
-    <ul>
-      { (group.children ?? []).map((child) => (
-        <li key={ child.key }>
-          <PickerGroupView
-            group={ child }
-            onSelect={ onSelect }
-          />
-        </li>
-      )) }
-      { group.items.map((item) => (
-        <li key={ item.key }>
-          <button
-            aria-selected={ false }
-            disabled={ item.disabled }
-            onClick={ () => { onSelect(item) } }
-            role="treeitem"
-            type="button"
-          >
-            { item.label }
-          </button>
-        </li>
-      )) }
-    </ul>
-  </fieldset>
-)
 
 export const components = {
   Alert: ({ message, description }: { message: string, description?: string }) => (
@@ -146,14 +104,32 @@ export const components = {
       <section aria-label={ title }>{ children }</section>
     )
   },
-  Grid: ({ columns, data, isLoading }: { columns: Array<{ id: string, header: string, accessorFn: (row: unknown) => string }>, data: unknown[], isLoading?: boolean }) => (
+  Grid: ({ columns, data, isLoading, setRowId }: {
+    columns: Array<{
+      id: string
+      header: string
+      accessorFn: (row: unknown) => string
+      cell?: (context: { getValue: () => string, row: { original: unknown } }) => React.ReactNode
+    }>
+    data: unknown[]
+    isLoading?: boolean
+    setRowId?: (row: unknown) => string
+  }) => (
     <table aria-busy={ isLoading }>
       <thead>
         <tr>{ columns.map((column) => <th key={ column.id }>{ column.header }</th>) }</tr>
       </thead>
       <tbody>
         { data.map((row) => (
-          <tr key={ JSON.stringify(row) }>{ columns.map((column) => <td key={ column.id }>{ column.accessorFn(row) }</td>) }</tr>
+          <tr key={ setRowId === undefined ? JSON.stringify(row) : setRowId(row) }>
+            { columns.map((column) => (
+              <td key={ column.id }>
+                { column.cell === undefined
+                  ? column.accessorFn(row)
+                  : column.cell({ getValue: () => column.accessorFn(row), row: { original: row } }) }
+              </td>
+            )) }
+          </tr>
         )) }
       </tbody>
     </table>
@@ -212,6 +188,17 @@ export const components = {
     </dialog>
   ),
   ModalFooter: ({ children }: WithChildren) => <footer>{ children }</footer>,
+  Pagination: ({ current = 1, total = 0, defaultPageSize = 10, showTotal, onChange }: { current?: number, total?: number, defaultPageSize?: number, showTotal?: (total: number) => string, onChange?: (page: number, pageSize: number) => void }) => (
+    <nav aria-label="pages">
+      <span>{ showTotal?.(total) }</span>
+      <span>{ `${current} / ${Math.max(1, Math.ceil(total / defaultPageSize))}` }</span>
+      <button
+        aria-label="next page"
+        onClick={ () => { onChange?.(current + 1, defaultPageSize) } }
+        type="button"
+      />
+    </nav>
+  ),
   Progress: ({ percent }: { percent?: number }) => (
     <progress
       max={ 100 }

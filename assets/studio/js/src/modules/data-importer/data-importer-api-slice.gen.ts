@@ -360,6 +360,17 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportDryRun: build.mutation<
+                BundleDataImporterAdHocImportDryRunApiResponse,
+                BundleDataImporterAdHocImportDryRunApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/dry-run`,
+                    method: "POST",
+                    body: queryArg.bundleDataImporterAdHocImportDryRunParameters,
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -592,6 +603,13 @@ export type BundleDataImporterAdHocImportPreviewTransformationsApiArg = {
     /** FileId of the file */
     fileId: string;
     bundleDataImporterAdHocImportTransformationParameters: BundleDataImporterAdHocImportTransformationParameters;
+};
+export type BundleDataImporterAdHocImportDryRunApiResponse =
+    /** status 200 Every row of the file with what its import would do */ BundleDataImporterAdHocImportDryRunResponse;
+export type BundleDataImporterAdHocImportDryRunApiArg = {
+    /** FileId of the file */
+    fileId: string;
+    bundleDataImporterAdHocImportDryRunParameters: BundleDataImporterAdHocImportDryRunParameters;
 };
 export type BundleDataImporterClassAttributesResponse = {
     /** AdditionalAttributes */
@@ -1073,6 +1091,95 @@ export type BundleDataImporterAdHocImportTransformationResponse = {
     /** The operator types that can be added next and still lead to the field */
     offered: string[];
 };
+export type BundleDataImporterAdHocImportDryRunParameters = {
+    /** The ID of the data object folder the import goes into */
+    folderId: number;
+    /** The ID of the data object class to import into */
+    classId: string;
+    /** Match existing objects by their Object ID or by a field */
+    matchBy: "id" | "field";
+    /** Data index of the column holding the match value */
+    matchColumn: string;
+    /** Key of the field to match by */
+    matchField?: string | null;
+    /** Language of a localized field to match by */
+    matchLanguage?: string | null;
+    /** Path of the folder new objects go to; empty for the folder the import goes into */
+    newObjectsFolder?: string | null;
+    /** The columns mapped here, each into one field; the column matched by goes into its field too */
+    columns?: {
+        /** Data index of the column */
+        column: string;
+        /** Key of the field */
+        field: string;
+        /** Language of a localized field */
+        language?: string | null;
+        /** For a classification store, the key the column goes into, as <group id>-<key id> */
+        key?: string | null;
+        /** The transformations of the column, in order */
+        transformationPipeline?: object[];
+    }[];
+    /** Name of the Data Importer configuration to map with instead */
+    configuration?: string | null;
+    /** Per column the configuration reads, the data index of that column in the file */
+    configurationColumns?: {
+        [key: string]: string;
+    };
+    /** CSV: the delimiter; empty for the detected one */
+    delimiter?: string | null;
+    /** CSV: the enclosure */
+    enclosure?: string | null;
+    /** CSV: the escape character */
+    escape?: string | null;
+    /** Whether the first row holds the column names */
+    hasHeaderRow?: boolean;
+    /** XLSX: the sheet; empty for the first one */
+    sheetName?: string | null;
+};
+export type BundleDataImporterAdHocImportDryRunResponse = {
+    /** How the column holding the match value is called */
+    matchColumn: string;
+    /** Path of the folder new objects go to */
+    newObjectsFolder: string;
+    /** The fields the import writes and the preview shows, beside the field matched by */
+    fields: {
+        /** Key of the field; null for a target the preview cannot read */
+        key: string | null;
+        /** Language of a localized field */
+        language: string | null;
+        /** How the field is called */
+        label: string;
+    }[];
+    /** Every row of the file, in its order */
+    rows: {
+        /** Number of the row in the file, the header row counted */
+        row: number;
+        /** The value matched by */
+        matchValue: string;
+        /** update or create; null for a row that means no object and is skipped */
+        action: ("update" | "create") | null;
+        /** Why the row means no object */
+        error: string | null;
+        /** Per field, the value before and after the import */
+        values: {
+            old: string | null;
+            new: string | null;
+        }[];
+        /** The values that cannot go into their field; skipping the row or leaving the field unchanged */
+        invalid: {
+            /** Position of the field among fields; null for the field matched by */
+            field: number | null;
+            /** How the field is called */
+            label: string;
+            /** The value in the file */
+            value: string;
+            /** What is wrong */
+            message: string;
+        }[];
+        /** A save would refuse the row even without its invalid values, so it is skipped in either error mode */
+        blocked: boolean;
+    }[];
+};
 export const {
     useBundleDataImporterClassificationstoreLoadAttributesQuery,
     useBundleDataImporterClassificationstoreLoadKeyNameQuery,
@@ -1106,4 +1213,5 @@ export const {
     useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery,
     useBundleDataImporterAdHocImportListConfigurationsQuery,
     useBundleDataImporterAdHocImportPreviewTransformationsMutation,
+    useBundleDataImporterAdHocImportDryRunMutation,
 } = injectedRtkApi;

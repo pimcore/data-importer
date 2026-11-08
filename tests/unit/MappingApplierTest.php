@@ -28,6 +28,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLoadStrategy;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceLookupInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceType;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadAsset;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject;
@@ -495,6 +496,40 @@ class MappingApplierTest extends Unit
         $this->assertSame([], $logged->getArrayCopy());
     }
 
+    public function testAnElementTheLookupDoesNotAcceptCountsAsNotFound(): void
+    {
+        $scope = $this->tester->grabService(MappingApplicationScope::class);
+        $logger = $this->createMock(ApplicationLogger::class);
+        $objectFolder = DataObject\Service::createFolderByPath(self::ASSET_FOLDER);
+        $assetFolder = Asset\Service::createFolderByPath(self::ASSET_FOLDER);
+
+        $loadDataObject = new LoadDataObject($logger);
+        $loadDataObject->setDataObjectLoader($this->tester->grabService(DataObjectLoader::class));
+        $loadDataObject->setSettings(['loadStrategy' => 'path']);
+        $loadAsset = new LoadAsset($logger);
+        $loadAsset->setSettings(['loadStrategy' => 'path']);
+        $objectField = new ObjectField($logger);
+        $objectField->setSettings(['attribute' => 'parent']);
+        foreach ([$loadDataObject, $loadAsset, $objectField] as $operator) {
+            $operator->setMappingApplicationScope($scope);
+        }
+
+        $results = fn (bool $visible): array => $scope->run(
+            $this->visibility($visible),
+            static fn (): array => [
+                $loadDataObject->process(self::ASSET_FOLDER),
+                $loadAsset->process(self::ASSET_FOLDER),
+                $objectField->process($objectFolder),
+            ]
+        );
+
+        [$object, $asset, $parentPath] = $results(true);
+        $this->assertSame($objectFolder->getId(), $object?->getId());
+        $this->assertSame($assetFolder->getId(), $asset?->getId());
+        $this->assertSame('/', $parentPath);
+        $this->assertSame([null, null, null], $results(false));
+    }
+
     /**
      * Imports run the operators outside of apply(), so they keep logging.
      */
@@ -759,6 +794,25 @@ class MappingApplierTest extends Unit
             ],
             'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'file']],
         ];
+    }
+
+    private function visibility(bool $visible): ReferenceVisibilityInterface
+    {
+        return new class($visible) implements ReferenceVisibilityInterface {
+            public function __construct(private readonly bool $visible)
+            {
+            }
+
+            public function find(ReferenceQuery $query): ?ElementInterface
+            {
+                return null;
+            }
+
+            public function isVisible(ElementInterface $element): bool
+            {
+                return $this->visible;
+            }
+        };
     }
 
     /**
