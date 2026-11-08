@@ -13,6 +13,7 @@ import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import { createMapping, type LoadedMapping, type Mapping } from './mapping-state'
+import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
 import { type TransformationSource } from './transformations-modal'
 
@@ -22,9 +23,12 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
+  useSettings: () => ({ validLanguages: ['en', 'de', 'fr'] }),
   ApiError: class { constructor (readonly details: unknown) {} },
   trackError: jest.fn()
 }))
+// loads its keys from the server, which the field panel's test stands in for
+jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [mockPreview]
 }))
@@ -50,7 +54,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const field = (key: string, title: string, given: Partial<LoadedMapping['fields'][number]> = {}): LoadedMapping['fields'][number] =>
-  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, ...given })
+  ({ key, title, localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false, ...given })
 
 const loaded: LoadedMapping = {
   fields: [
@@ -74,6 +78,7 @@ const Stateful = ({ initial, isLoading = false, withSource = source }: { initial
 
   return (
     <MappingStep
+      classId="PROD"
       configuration={ { isLoading: false, onChoose: () => {} } }
       fields={ loaded.fields }
       isLoading={ isLoading }
@@ -365,6 +370,15 @@ describe('the mapping step', () => {
         withSource={ null }
              />)
       expect(within(rowOf('Name DE')).queryByRole('button', { name: 'Transformations of Name DE' })).toBeNull()
+    })
+
+    it('offers none for a column going into a classification store key', () => {
+      const store = field('attributes', 'Attributes', { classificationStore: true })
+      const mapping = createMapping(inspected, objects, { ...loaded, fields: [...loaded.fields, store] })
+      render(<Stateful initial={ chooseStoreKey(mapping, 'Notiz', 'attributes', { id: '2-4', label: 'Dimensions › Width' }) } />)
+
+      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Change the key for Notiz' })).toBeTruthy()
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Transformations of Notiz' })).toBeNull()
     })
   })
 })

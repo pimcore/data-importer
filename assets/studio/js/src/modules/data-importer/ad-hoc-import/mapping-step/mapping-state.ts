@@ -10,6 +10,7 @@
 
 import { type BundleDataImporterAdHocImportMappingResponse } from '../../data-importer-api-slice.gen'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
+import { isTaken } from './taken-fields'
 
 export type LoadedMapping = BundleDataImporterAdHocImportMappingResponse
 export type MappingField = LoadedMapping['fields'][number]
@@ -17,10 +18,18 @@ export type MappingField = LoadedMapping['fields'][number]
 // A suggestion this sure is taken at once; a weaker one waits for "Use all suggestions"
 export const AUTO_SCORE = 100
 
+// a key of a classification store, as `<group id>-<key id>`
+export interface StoreKey {
+  id: string
+  label: string
+}
+
 export interface FieldChoice {
   field: string
   // for a localized field: the language the column holds
   language: string | null
+  // for a classification store: the key the column goes into
+  key?: StoreKey
 }
 
 // a step of the Data Importer's transformation pipeline, among those the server allows for an ad hoc import
@@ -78,8 +87,6 @@ const sampleOf = (inspected: InspectedFile, position: number): string | undefine
     .map((row) => row[position])
     .find((value): value is string => value !== null && value !== undefined && value !== '')
 
-const sameChoice = (a: FieldChoice, b: FieldChoice): boolean => a.field === b.field && a.language === b.language
-
 /**
  * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now.
  */
@@ -95,37 +102,6 @@ export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping
     })
   }
 }
-
-export interface TakenFields {
-  // whether another column than this one already goes into the field
-  has: (choice: FieldChoice, column?: string) => boolean
-}
-
-const choiceKey = ({ field, language }: FieldChoice): string => JSON.stringify([field, language])
-
-/**
- * Which columns go into which field, built once per mapping so that each field option is looked up, not searched.
- */
-export const takenFields = (rows: MappingRow[]): TakenFields => {
-  const columnsOf = new Map<string, string[]>()
-  for (const row of rows) {
-    if (!row.skipped && row.choice !== undefined) {
-      const key = choiceKey(row.choice)
-      columnsOf.set(key, [...(columnsOf.get(key) ?? []), row.column])
-    }
-  }
-
-  return {
-    has: (choice, column) => (columnsOf.get(choiceKey(choice)) ?? []).some((other) => other !== column)
-  }
-}
-
-/**
- * Whether another column than this one already goes into the field; one column per field, and per language for a
- * localized one.
- */
-export const isTaken = (rows: MappingRow[], choice: FieldChoice, column?: string): boolean =>
-  rows.some((row) => row.column !== column && !row.skipped && row.choice !== undefined && sameChoice(row.choice, choice))
 
 const isOpen = (row: MappingRow): boolean => !row.isMatch && !row.skipped && row.choice === undefined
 
@@ -181,7 +157,7 @@ export const createMapping = (
   return { basis: mappingBasis(inspected, objects), rows: takeSuggestions(rows, AUTO_SCORE) }
 }
 
-const changeRow = (mapping: Mapping, column: string, change: (row: MappingRow) => MappingRow): Mapping => ({
+export const changeRow = (mapping: Mapping, column: string, change: (row: MappingRow) => MappingRow): Mapping => ({
   ...mapping,
   rows: mapping.rows.map((row) => row.column === column && !row.isMatch ? change(row) : row)
 })
@@ -241,8 +217,11 @@ export const restoreColumn = (mapping: Mapping, column: string): Mapping =>
 
 export const takeAllSuggestions = (mapping: Mapping): Mapping => ({ ...mapping, rows: takeSuggestions(mapping.rows, 0) })
 
-export const pendingSuggestionCount = (mapping: Mapping): number => {
-  const taken = takeAllSuggestions(mapping).rows
+/**
+ * The suggestions "Use all suggestions" would take, after `settle` (the languages, say) has had its say on them.
+ */
+export const pendingSuggestionCount = (mapping: Mapping, settle: (next: Mapping) => Mapping = (next) => next): number => {
+  const taken = settle(takeAllSuggestions(mapping)).rows
 
   return taken.filter((row, position) => row.choice !== mapping.rows[position].choice).length
 }

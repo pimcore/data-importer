@@ -23,19 +23,22 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionServiceInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ClassDefinitionResolverInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\Objectbrick\DefinitionResolverInterface;
-use Pimcore\Bundle\StudioBackendBundle\Class\Schema\ClassDefinitionList;
 use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInterface;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
-use Pimcore\Bundle\StudioBackendBundle\Response\ElementIcon;
-use Pimcore\Bundle\StudioBackendBundle\Util\Constant\ElementIconTypes;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Objectbricks;
+use Pimcore\Model\DataObject\ClassDefinition\Layout\Fieldset;
+use Pimcore\Model\DataObject\ClassDefinition\Layout\Panel;
+use Pimcore\Model\DataObject\ClassDefinition\Layout\Tabpanel;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 class AdHocImportMappingServiceTest extends Unit
 {
+    private const BASE_DATA = 'Base data';
+
     public function testTheMappingOffersTheClassFieldsSayingWhichTheClassRequires(): void
     {
         $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
@@ -48,6 +51,7 @@ class AdHocImportMappingServiceTest extends Unit
         $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
 
         $class = new ClassDefinition();
+        $class->setName('Product');
         $class->addFieldDefinition('sku', $this->input('sku', mandatory: true));
         $class->addFieldDefinition('price', $this->input('price', mandatory: false));
         $localized = new Localizedfields();
@@ -60,12 +64,88 @@ class AdHocImportMappingServiceTest extends Unit
             TransformationDataTypeService::NUMERIC => ['price'],
         ])->loadMapping(new MappingSuggestionParameters('PROD', [['index' => 'sku', 'label' => 'SKU']]));
 
+        // a class without a layout groups every field by its name
+        $grouped = ['group' => ['Product'], 'classificationStore' => false];
         $this->assertSame([
-            [...$this->target('sku'), 'mandatory' => true, 'takesColumnAsIs' => true],
-            [...$this->target('name', localized: true), 'mandatory' => true, 'takesColumnAsIs' => true],
-            [...$this->target('price', 'numeric'), 'mandatory' => false, 'takesColumnAsIs' => true],
-            [...$this->target('notes'), 'mandatory' => false, 'takesColumnAsIs' => true],
+            [...$this->target('sku'), 'mandatory' => true, 'takesColumnAsIs' => true, ...$grouped],
+            [...$this->target('name', localized: true), 'mandatory' => true, 'takesColumnAsIs' => true, ...$grouped],
+            [...$this->target('price', 'numeric'), 'mandatory' => false, 'takesColumnAsIs' => true, ...$grouped],
+            [...$this->target('notes'), 'mandatory' => false, 'takesColumnAsIs' => true, ...$grouped],
         ], $mapping->getFields());
+    }
+
+    public function testTheFieldsAreGroupedByTheClassLayoutAsInTheGrid(): void
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([
+            $this->target('sku'),
+            $this->target('name', localized: true),
+            $this->target('price', 'numeric'),
+            $this->target('notes'),
+            $this->target('technical.Engine.power', 'numeric'),
+            $this->target('unknown'),
+        ]);
+        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
+
+        $localized = new Localizedfields();
+        $localized->setName('localizedfields');
+        $localized->addChild($this->input('name', mandatory: false));
+        $bricks = new Objectbricks();
+        $bricks->setName('technical');
+        $class = $this->classWithLayout($this->layout(Panel::class, '', [
+            $this->layout(Tabpanel::class, '', [
+                $this->layout(Panel::class, self::BASE_DATA, [
+                    $this->input('sku', mandatory: false),
+                    // a titled layout below a titled one does not group again
+                    $this->layout(Fieldset::class, 'Texts', [$localized]),
+                ]),
+                $this->layout(Panel::class, 'Technical', [$bricks, $this->input('price', mandatory: false)]),
+            ]),
+            $this->input('notes', mandatory: false),
+        ]));
+
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, class: $class)
+            ->loadMapping(new MappingSuggestionParameters('PROD', []));
+
+        $this->assertSame([
+            'sku' => [self::BASE_DATA],
+            'name' => [self::BASE_DATA],
+            'price' => ['Technical'],
+            'notes' => ['Product'],
+            'technical.Engine.power' => ['Technical', 'technical', 'Engine'],
+            'unknown' => ['Product'],
+        ], array_column($mapping->getFields(), 'group', 'key'));
+    }
+
+    public function testAClassificationStoreIsOfferedAsAFieldWhoseKeyIsChosenApart(): void
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([$this->target('sku')]);
+        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
+
+        $store = new Classificationstore();
+        $store->setName('attributes');
+        $store->setTitle('Attributes');
+        $store->setLocalized(true);
+        $class = $this->classWithLayout($this->layout(Panel::class, '', [
+            $this->input('sku', mandatory: false),
+            $this->layout(Panel::class, 'Specification', [$store]),
+        ]));
+
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions, class: $class)
+            ->loadMapping(new MappingSuggestionParameters('PROD', []));
+
+        $this->assertSame([
+            'key' => 'attributes',
+            'title' => 'Attributes [attributes]',
+            'localized' => true,
+            'transformationResultType' => 'default',
+            'mandatory' => false,
+            'group' => ['Specification'],
+            'classificationStore' => true,
+            'takesColumnAsIs' => true,
+        ], $mapping->getFields()[1]);
+        $this->assertFalse($mapping->getFields()[0]['classificationStore']);
     }
 
     public function testTheMappingSaysWhichFieldsTakeAColumnWithoutATransformation(): void
@@ -198,6 +278,29 @@ class AdHocImportMappingServiceTest extends Unit
             ->loadMapping(new MappingSuggestionParameters('PROD', []));
     }
 
+    private function classWithLayout(ClassDefinition\Layout $layout): ClassDefinition
+    {
+        $class = new ClassDefinition();
+        $class->setName('Product');
+        $class->setLayoutDefinitions($layout);
+
+        return $class;
+    }
+
+    /**
+     * @param class-string<ClassDefinition\Layout> $type
+     * @param list<ClassDefinition\Layout|ClassDefinition\Data> $children
+     */
+    private function layout(string $type, string $title, array $children): ClassDefinition\Layout
+    {
+        $layout = new $type();
+        $layout->setName($title === '' ? 'untitled' : $title);
+        $layout->setTitle($title);
+        $layout->setChildren($children);
+
+        return $layout;
+    }
+
     /**
      * @return array{key: string, title: string, localized: bool, transformationResultType: string}
      */
@@ -248,20 +351,16 @@ class AdHocImportMappingServiceTest extends Unit
         array $creatableClasses,
         MappingSuggestionServiceInterface $suggestions,
         ?ClassDefinition $class = null,
+        ?DataTypeServiceInterface $dataTypes = null,
         array $bricks = [],
         array $fieldTypes = []
     ): AdHocImportMappingService {
         $classes = $this->createStub(ClassDefinitionServiceInterface::class);
         $classes->method('getClassDefinitionCollection')->willReturnCallback(
-            static fn (bool $creatableOnly = false): array => $creatableOnly ? array_map(
-                static fn (string $id): ClassDefinitionList => new ClassDefinitionList(
-                    $id,
-                    $id,
-                    $id,
-                    new ElementIcon(ElementIconTypes::NAME->value, 'class')
-                ),
-                $creatableClasses
-            ) : []
+            static fn (bool $creatableOnly = false): array => AdHocCreatableClasses::listed(
+                $creatableClasses,
+                $creatableOnly
+            )
         );
 
         $classResolver = $this->createStub(ClassDefinitionResolverInterface::class);
@@ -284,6 +383,7 @@ class AdHocImportMappingServiceTest extends Unit
             $classes,
             $suggestions,
             $classResolver,
+            $dataTypes ?? $types,
             $brickResolver,
             AdHocTransformations::chain($types)
         );

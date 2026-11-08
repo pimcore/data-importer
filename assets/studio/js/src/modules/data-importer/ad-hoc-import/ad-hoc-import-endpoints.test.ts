@@ -92,6 +92,21 @@ describe('the ad hoc import endpoints', () => {
     }])
   })
 
+  it('ask for a page of the keys of a classification store', async () => {
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportLoadClassificationStoreKeys.initiate({
+      classId: 'CAR',
+      fieldName: 'attributes',
+      searchfilter: 'wid',
+      start: 10,
+      limit: 10
+    }))
+
+    expect(sent).toEqual([{
+      url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/classification-store-keys',
+      params: { classId: 'CAR', fieldName: 'attributes', searchfilter: 'wid', start: 10, limit: 10 }
+    }])
+  })
+
   it('get the configurations to map with', async () => {
     await store.dispatch(api.endpoints.bundleDataImporterAdHocImportListConfigurations.initiate())
 
@@ -150,6 +165,7 @@ describe('the ad hoc import endpoints', () => {
     const remove = api.endpoints.bundleDataImporterAdHocImportDeleteFile.useMutation
     const matchFields = api.endpoints.bundleDataImporterAdHocImportLoadMatchFields.useQuery
     const mapping = api.endpoints.bundleDataImporterAdHocImportLoadMapping.useMutation
+    const storeKeys = api.endpoints.bundleDataImporterAdHocImportLoadClassificationStoreKeys.useQuery
     const configurations = api.endpoints.bundleDataImporterAdHocImportListConfigurations.useQuery
     const transformations = api.endpoints.bundleDataImporterAdHocImportPreviewTransformations.useMutation
     const dryRun = api.endpoints.bundleDataImporterAdHocImportDryRun.useMutation
@@ -161,6 +177,7 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportDeleteFileMutation).toBe(remove)
       expect(hooks.useBundleDataImporterAdHocImportLoadMatchFieldsQuery).toBe(matchFields)
       expect(hooks.useBundleDataImporterAdHocImportLoadMappingMutation).toBe(mapping)
+      expect(hooks.useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery).toBe(storeKeys)
       expect(hooks.useBundleDataImporterAdHocImportListConfigurationsQuery).toBe(configurations)
       expect(hooks.useBundleDataImporterAdHocImportPreviewTransformationsMutation).toBe(transformations)
       expect(hooks.useBundleDataImporterAdHocImportDryRunMutation).toBe(dryRun)

@@ -20,11 +20,15 @@ import {
   Text
 } from '@pimcore/studio-ui-bundle/components'
 import { createColumnHelper, type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
-import { useBundleDataImporterClassificationstoreLoadKeysQuery } from '../../../../../../data-importer-api-slice.gen'
+import {
+  useBundleDataImporterClassificationstoreLoadKeysQuery,
+  type BundleDataImporterClassificationstoreLoadKeysApiArg,
+  type BundleDataImporterClassificationStoreKeysResponse
+} from '../../../../../../data-importer-api-slice.gen'
 import { api } from '../../../../../../data-importer-api-slice-enhanced'
 import { useStyles } from './classification-store-key-modal.styles'
 
-interface ClassificationStoreKeyRow {
+export interface ClassificationStoreKeyRow {
   id?: string
   keyId?: number
   groupId?: number
@@ -39,8 +43,18 @@ export interface ClassificationStoreKeyModalProps {
   fieldName: string
   transformationResultType: string
   onClose: () => void
-  onSelect: (keyId: string) => void
+  onSelect: (keyId: string, row?: ClassificationStoreKeyRow) => void
+  // where the keys come from; the configuration's endpoint unless a caller has its own
+  useKeysQuery?: ClassificationStoreKeysQuery
+  // keys that can't be chosen here, with the reason shown when one is selected
+  takenKeyIds?: string[]
+  takenKeyHint?: string
 }
+
+export type ClassificationStoreKeysQuery = (
+  arg: BundleDataImporterClassificationstoreLoadKeysApiArg,
+  options: { skip: boolean }
+) => { data?: BundleDataImporterClassificationStoreKeysResponse, isFetching: boolean }
 
 const columnHelper = createColumnHelper<ClassificationStoreKeyRow>()
 
@@ -50,7 +64,10 @@ export const ClassificationStoreKeyModal = ({
   fieldName,
   transformationResultType,
   onClose,
-  onSelect
+  onSelect,
+  useKeysQuery = useBundleDataImporterClassificationstoreLoadKeysQuery,
+  takenKeyIds = [],
+  takenKeyHint
 }: ClassificationStoreKeyModalProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -72,7 +89,7 @@ export const ClassificationStoreKeyModal = ({
 
   const start = (page - 1) * pageSize
 
-  const { data, isFetching } = useBundleDataImporterClassificationstoreLoadKeysQuery(
+  const { data, isFetching } = useKeysQuery(
     {
       classId,
       fieldName,
@@ -105,6 +122,7 @@ export const ClassificationStoreKeyModal = ({
   )
 
   const selectedRows: RowSelectionState = selectedRowId === null ? {} : { [selectedRowId]: true }
+  const selectionTaken = selectedRowId !== null && takenKeyIds.includes(selectedRowId)
 
   return (
     <Modal
@@ -177,6 +195,7 @@ export const ClassificationStoreKeyModal = ({
         gap="extra-small"
         justify="flex-end"
       >
+        { selectionTaken && takenKeyHint !== undefined && <Text type="secondary">{ takenKeyHint }</Text> }
         <Button
           onClick={ onClose }
           type="default"
@@ -184,7 +203,7 @@ export const ClassificationStoreKeyModal = ({
           { t('cancel') }
         </Button>
         <Button
-          disabled={ selectedRowId === null }
+          disabled={ selectedRowId === null || selectionTaken }
           onClick={ () => {
             if (selectedRowId !== null) {
               // Pre-seed the key-name cache from the row we already have, so the
@@ -203,7 +222,7 @@ export const ClassificationStoreKeyModal = ({
                   )
                 )
               }
-              onSelect(selectedRowId)
+              onSelect(selectedRowId, selectedRow)
             }
           } }
           type="primary"

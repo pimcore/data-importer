@@ -397,6 +397,13 @@ data-importer.ad-hoc-import.mapping.auto: auto
 data-importer.ad-hoc-import.mapping.not-imported: 'Not imported ({{count}})'
 data-importer.ad-hoc-import.mapping.restore: Restore
 data-importer.ad-hoc-import.mapping.restore-column: 'Restore {{column}}'
+data-importer.ad-hoc-import.mapping.fields: Fields
+data-importer.ad-hoc-import.mapping.fields-for: 'Fields for {{column}}'
+data-importer.ad-hoc-import.mapping.pick-a-column: Pick a column to choose its field here
+data-importer.ad-hoc-import.mapping.find-field: Find a field
+data-importer.ad-hoc-import.mapping.no-fields: No field found
+data-importer.ad-hoc-import.mapping.change-key: 'Change the key for {{column}}'
+data-importer.ad-hoc-import.mapping.key-taken: 'Another column already goes into this key'
 data-importer.ad-hoc-import.configuration.list-title: Data Importer configurations
 data-importer.ad-hoc-import.configuration.list-hint: Only those you may read in the Data Hub
 data-importer.ad-hoc-import.configuration.choose: Choose a configuration

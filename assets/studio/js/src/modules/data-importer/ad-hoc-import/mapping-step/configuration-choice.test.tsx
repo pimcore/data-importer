@@ -21,8 +21,9 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   createStyles: () => () => ({ styles: {} })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
-// the mapping step loads the transformations modal, which no test here opens
-jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({}))
+// the mapping step loads the transformations modal and the store key dialog, which no test here opens
+jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en'] }) }))
+jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({}))
 
 const inspected: InspectedFile = {
@@ -43,7 +44,7 @@ const inspected: InspectedFile = {
 const objects: ObjectsSettings = { classId: 'PROD', matchBy: 'field', matchField: 'sku', matchColumn: 'Artikelnr', newObjectsFolder: null }
 
 const loaded: LoadedMapping = {
-  fields: [{ key: 'price', title: 'Price', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true }],
+  fields: [{ key: 'price', title: 'Price', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: [], classificationStore: false }],
   suggestions: []
 }
 
@@ -74,6 +75,7 @@ const Stateful = ({ configurations = [], isLoading = false }: StatefulProps): Re
 
   return (
     <MappingStep
+      classId="PROD"
       configuration={ { inspected, configurations, isLoading, chosen, onChoose: setChosen } }
       fields={ loaded.fields }
       isLoading={ false }
@@ -97,12 +99,9 @@ const cards = (): HTMLElement[] => within(configurationList()).getAllByRole('rad
 
 const card = (name: string): HTMLElement => within(configurationList()).getByRole('radio', { name })
 
-const choose = (name: string): void => {
-  fireEvent.click(card(name))
-}
+const choose = (name: string): void => { fireEvent.click(card(name)) }
 
-const detailOf = (shown: HTMLElement): string | null | undefined =>
-  document.getElementById(shown.getAttribute('aria-describedby') ?? '')?.textContent
+const detailOf = (shown: HTMLElement): string | null | undefined => document.getElementById(shown.getAttribute('aria-describedby') ?? '')?.textContent
 
 afterEach(() => {
   cleanup()

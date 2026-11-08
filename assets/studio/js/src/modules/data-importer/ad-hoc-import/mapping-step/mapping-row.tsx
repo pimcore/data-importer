@@ -10,9 +10,18 @@
 
 import React, { useMemo } from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Flex, Select, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, LanguageSelection, Select, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { filterByLabel } from '../../utils/select-utils'
-import { chooseField, fitsField, skipColumn, type Mapping, type MappingField, type MappingRow, type TakenFields } from './mapping-state'
+import {
+  chooseField,
+  fitsField,
+  skipColumn,
+  type Mapping,
+  type MappingField,
+  type MappingRow
+} from './mapping-state'
+import { chooseLanguage, freeLanguages } from './mapping-choices'
+import { canGoInto, type TakenFields } from './taken-fields'
 
 const COLUMN_WIDTH = 280
 const FIELD_WIDTH = 320
@@ -27,6 +36,10 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   quiet: css`
     color: ${token.colorTextTertiary};
+  `,
+  active: css`
+    background: ${token.controlItemBgActive};
+    border-radius: ${token.borderRadius}px;
   `
 }))
 
@@ -34,43 +47,142 @@ export interface MappingRowViewProps {
   row: MappingRow
   mapping: Mapping
   fields: MappingField[]
+  languages: string[]
   taken: TakenFields
+  // the column whose field the side panel picks
+  isActive: boolean
+  onActivate: (column: string) => void
   onChange: (mapping: Mapping) => void
+  // a classification store goes in by a key chosen in its own dialog
+  onPickStoreKey: (column: string, field: string) => void
   // opens the column's transformations; none without a file to run them on
   onTransform?: (column: string) => void
 }
 
-export const MappingRowView = ({ row, mapping, fields, taken, onChange, onTransform }: MappingRowViewProps): React.JSX.Element => {
+type ChoiceDetailsProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'languages' | 'onChange' | 'onPickStoreKey'>
+
+// the store key and the language of the row's choice, each changeable; a language another column has is not offered
+const ChoiceDetails = ({ row, mapping, languages, onChange, onPickStoreKey }: ChoiceDetailsProps): React.JSX.Element | null => {
   const { t } = useTranslation()
-  const { styles } = useStyles()
-  const { column, label, sample, choice, auto, suggestion, isMatch, transformations } = row
+  const { column, label, choice } = row
+  if (choice === undefined) {
+    return null
+  }
+
+  return (
+    <>
+      { choice.key !== undefined && (
+        <Button
+          aria-label={ t('data-importer.ad-hoc-import.mapping.change-key', { column: label, interpolation: { escapeValue: false } }) }
+          onClick={ () => { onPickStoreKey(column, choice.field) } }
+          type="link"
+        >
+          { choice.key.label }
+        </Button>
+      ) }
+      { choice.language !== null && (
+        <LanguageSelection
+          languages={ freeLanguages(mapping.rows, row, languages) }
+          onSelectLanguage={ (language) => { onChange(chooseLanguage(mapping, column, language)) } }
+          selectedLanguage={ choice.language }
+        />
+      ) }
+    </>
+  )
+}
+
+type SelectFieldContext = Pick<MappingRowViewProps, 'mapping' | 'fields' | 'onChange' | 'onPickStoreKey'> & { column: string }
+
+const selectField = (value: string | undefined, { mapping, fields, column, onChange, onPickStoreKey }: SelectFieldContext): void => {
+  if (value === DONT_IMPORT) {
+    onChange(skipColumn(mapping, column))
+    return
+  }
+  if (fields.some(({ key, classificationStore }) => key === value && classificationStore)) {
+    onPickStoreKey(column, value!)
+    return
+  }
+  onChange(chooseField(mapping, column, value === '' ? undefined : value))
+}
+
+type FieldSelectProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'taken' | 'onChange' | 'onPickStoreKey'>
+
+// the row's field: fixed for the column that matches existing objects, else chosen from the class's fields
+const FieldSelect = ({ row, mapping, fields, languages, taken, onChange, onPickStoreKey }: FieldSelectProps): React.JSX.Element => {
+  const { t } = useTranslation()
+  const { column, label, choice, suggestion, isMatch } = row
 
   const options = useMemo(() => [
     { value: DONT_IMPORT, label: t('data-importer.ad-hoc-import.mapping.dont-import') },
-    ...fields.map(({ key, title, mandatory }) => ({
-      value: key,
-      label: mandatory
-        ? t('data-importer.ad-hoc-import.mapping.required-field', { field: title, interpolation: { escapeValue: false } })
-        : title,
-      // a localized field takes a column per language
-      disabled: taken.has({ field: key, language: choice?.field === key ? choice.language : null }, column)
+    ...fields.map((field) => ({
+      value: field.key,
+      label: field.mandatory
+        ? t('data-importer.ad-hoc-import.mapping.required-field', { field: field.title, interpolation: { escapeValue: false } })
+        : field.title,
+      // a localized field takes a column per language, a classification store one per key
+      disabled: !canGoInto(taken, field, column, languages)
     }))
-  ], [fields, taken, choice, column, t])
+  ], [fields, taken, column, languages, t])
 
   const titleOf = (key: string): string => fields.find((field) => field.key === key)?.title ?? key
 
   const onSelect = (value?: string): void => {
-    if (value === DONT_IMPORT) {
-      onChange(skipColumn(mapping, column))
-      return
-    }
-    onChange(chooseField(mapping, column, value === '' ? undefined : value))
+    selectField(value, { mapping, fields, column, onChange, onPickStoreKey })
   }
+
+  if (isMatch) {
+    return (
+      <Select
+        aria-label={ t('data-importer.ad-hoc-import.mapping.field-of', { column: label, interpolation: { escapeValue: false } }) }
+        disabled
+        options={ [{ value: choice?.field ?? '', label: choice === undefined ? t('data-importer.ad-hoc-import.mapping.object-id') : titleOf(choice.field) }] }
+        style={ { width: FIELD_WIDTH } }
+        value={ choice?.field ?? '' }
+      />
+    )
+  }
+
+  return (
+    <Select
+      allowClear
+      aria-label={ t('data-importer.ad-hoc-import.mapping.field-of', { column: label, interpolation: { escapeValue: false } }) }
+      filterOption={ filterByLabel }
+      onChange={ onSelect }
+      options={ options }
+      placeholder={ suggestion === undefined
+        ? t('data-importer.ad-hoc-import.mapping.choose-field')
+        : t('data-importer.ad-hoc-import.mapping.suggested', { field: titleOf(suggestion.field), interpolation: { escapeValue: false } }) }
+      showSearch
+      style={ { width: FIELD_WIDTH } }
+      value={ choice?.field }
+    />
+  )
+}
+
+export const MappingRowView = ({
+  row,
+  mapping,
+  fields,
+  languages,
+  taken,
+  isActive,
+  onActivate,
+  onChange,
+  onPickStoreKey,
+  onTransform
+}: MappingRowViewProps): React.JSX.Element => {
+  const { t } = useTranslation()
+  const { styles } = useStyles()
+  const { column, label, sample, choice, auto, isMatch, transformations } = row
 
   return (
     <Flex
       align="center"
+      aria-current={ isActive ? 'true' : undefined }
+      className={ isActive ? styles.active : undefined }
       gap="small"
+      onClick={ isMatch ? undefined : () => { onActivate(column) } }
+      onFocus={ isMatch ? undefined : () => { onActivate(column) } }
       role="listitem"
     >
       <Flex
@@ -93,33 +205,29 @@ export const MappingRowView = ({ row, mapping, fields, taken, onChange, onTransf
         ) }
       </Flex>
 
+      <FieldSelect
+        fields={ fields }
+        languages={ languages }
+        mapping={ mapping }
+        onChange={ onChange }
+        onPickStoreKey={ onPickStoreKey }
+        row={ row }
+        taken={ taken }
+      />
+
       { isMatch
-        ? (
-          <Select
-            aria-label={ t('data-importer.ad-hoc-import.mapping.field-of', { column: label, interpolation: { escapeValue: false } }) }
-            disabled
-            options={ [{ value: choice?.field ?? '', label: choice === undefined ? t('data-importer.ad-hoc-import.mapping.object-id') : titleOf(choice.field) }] }
-            style={ { width: FIELD_WIDTH } }
-            value={ choice?.field ?? '' }
-          />
-          )
+        ? <Tag>{ t('data-importer.ad-hoc-import.mapping.match') }</Tag>
         : (
-          <Select
-            allowClear
-            aria-label={ t('data-importer.ad-hoc-import.mapping.field-of', { column: label, interpolation: { escapeValue: false } }) }
-            filterOption={ filterByLabel }
-            onChange={ onSelect }
-            options={ options }
-            placeholder={ suggestion === undefined
-              ? t('data-importer.ad-hoc-import.mapping.choose-field')
-              : t('data-importer.ad-hoc-import.mapping.suggested', { field: titleOf(suggestion.field), interpolation: { escapeValue: false } }) }
-            showSearch
-            style={ { width: FIELD_WIDTH } }
-            value={ choice?.field }
+          <ChoiceDetails
+            languages={ languages }
+            mapping={ mapping }
+            onChange={ onChange }
+            onPickStoreKey={ onPickStoreKey }
+            row={ row }
           />
           ) }
 
-      { !isMatch && choice !== undefined && onTransform !== undefined && (
+      { !isMatch && choice !== undefined && choice.key === undefined && onTransform !== undefined && (
         <Button
           aria-label={ t('data-importer.ad-hoc-import.mapping.transformations-of', { column: label, interpolation: { escapeValue: false } }) }
           onClick={ () => { onTransform(column) } }
@@ -130,8 +238,6 @@ export const MappingRowView = ({ row, mapping, fields, taken, onChange, onTransf
         </Button>
       ) }
       { !fitsField(row, fields) && <Tag color="warning">{ t('data-importer.ad-hoc-import.mapping.needs-transformation') }</Tag> }
-      { isMatch && <Tag>{ t('data-importer.ad-hoc-import.mapping.match') }</Tag> }
-      { choice?.language !== null && choice?.language !== undefined && <Tag>{ choice.language }</Tag> }
       { auto && <Tag color="purple">{ t('data-importer.ad-hoc-import.mapping.auto') }</Tag> }
     </Flex>
   )

@@ -12,6 +12,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import React from 'react'
+import { PickerGroupView, type PickerGroup, type PickerItem } from './ad-hoc-import-picker'
 
 const catalogue: Record<string, string> = Object.fromEntries(
   fs.readFileSync(path.resolve(__dirname, '../../../../../src/Resources/translations/studio.en.yaml'), 'utf8')
@@ -64,10 +65,26 @@ export const components = {
     </button>
   ),
   Card: ({ children, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement>) => <div { ...props }>{ children }</div>,
-  Flex: ({ children, role, 'aria-label': label, 'aria-labelledby': labelledBy }: WithChildren & { role?: string, 'aria-label'?: string, 'aria-labelledby'?: string }) => (
+  ColumnPicker: ({ groups, onSelect, emptyText }: { groups: PickerGroup[], onSelect: (item: PickerItem) => void, emptyText?: string }) => (
+    <div role="tree">
+      { groups.length === 0 && <span>{ emptyText }</span> }
+      { groups.map((group) => (
+        <PickerGroupView
+          group={ group }
+          key={ group.key }
+          onSelect={ onSelect }
+        />
+      )) }
+    </div>
+  ),
+  Flex: ({ children, role, onClick, onFocus, 'aria-label': label, 'aria-labelledby': labelledBy, 'aria-current': current }: WithChildren & { role?: string, onClick?: () => void, onFocus?: () => void, 'aria-label'?: string, 'aria-labelledby'?: string, 'aria-current'?: 'true' }) => (
     <div
+      aria-current={ current }
       aria-label={ label }
       aria-labelledby={ labelledBy }
+      onClick={ onClick }
+      onFocus={ onFocus }
+      onKeyDown={ onClick }
       role={ role }
     >
       { children }
@@ -124,6 +141,22 @@ export const components = {
       onClick={ onClick }
       type="button"
     />
+  ),
+  LanguageSelection: ({ languages, selectedLanguage, onSelectLanguage }: { languages: string[], selectedLanguage: string, onSelectLanguage: (language: string) => void }) => (
+    <select
+      aria-label="Language"
+      onChange={ (event) => { onSelectLanguage(event.target.value) } }
+      value={ selectedLanguage }
+    >
+      { languages.map((language) => (
+        <option
+          key={ language }
+          value={ language }
+        >
+          { language }
+        </option>
+      )) }
+    </select>
   ),
   Input: ({ id, value, onBlur, onChange }: { id?: string, value?: string, onBlur?: React.FocusEventHandler<HTMLInputElement>, onChange?: React.ChangeEventHandler<HTMLInputElement> }) => (
     <input

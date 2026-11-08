@@ -55,7 +55,7 @@ const row: MappingRow = {
   transformations: []
 }
 
-const field: MappingField = { key: 'name', title: 'Name <en>', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true }
+const field: MappingField = { key: 'name', title: 'Name <en>', localized: false, mandatory: false, transformationResultType: 'default', takesColumnAsIs: true, group: ['Product'], classificationStore: false }
 
 const source: TransformationSource = { fileId: 'file-1', classId: 'PROD', settings: { delimiter: ';', hasHeaderRow: true } }
 
