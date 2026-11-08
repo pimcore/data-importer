@@ -74,6 +74,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     private const string MANDATORY_CLASS_NAME = 'DiDryRunMandatoryClass';
 
+    private const string OPTIONS_CLASS_NAME = 'DiDryRunOptionsClass';
+
     private const string STORE_CLASS_NAME = 'DiDryRunStoreClass';
 
     private const string STORE_NAME = 'di-dry-run-store';
@@ -873,6 +875,124 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame([['2', '4', '5'], ['2', '4', '5']], $skippedInEitherMode);
     }
 
+    // each row tells why it fails, never what a hidden object holds or where it lies
+    public function testAUserWithoutViewRightIsToldOnlyWhyTheRowsOfHiddenObjectsFail(): void
+    {
+        $visible = $this->createObject(self::TARGET, 'SKU-1', 'Chair');
+        $hidden = $this->createObject(self::TARGET . '/hidden', 'SKU-SHARED', 'Secret name', '9.75');
+        $this->createObject(self::TARGET, 'SKU-SHARED', 'Shared name');
+        $closed = $this->createObject(self::ROOT . '/closed', 'SKU-CLOSED', 'Closed name');
+        $otherClass = ClassDefinition::getByName(self::MANDATORY_CLASS_NAME) ?? $this->createMandatoryClass();
+        $fqcn = self::OBJECT_NAMESPACE . $otherClass->getName();
+        /** @var Concrete $ofOtherClass */
+        $ofOtherClass = new $fqcn();
+        $ofOtherClass->setParent(Service::createFolderByPath(self::TARGET . '/hidden'));
+        $ofOtherClass->setKey('other-class');
+        $ofOtherClass->set('name', 'Other name');
+        $ofOtherClass->save();
+        $user = $this->saveUserWithWorkspaces([
+            self::TARGET => ['list' => true, 'view' => true, 'create' => true, 'save' => true],
+            self::TARGET . '/hidden' => ['list' => false, 'view' => false, 'create' => true, 'save' => true],
+        ]);
+        $this->users[] = $user;
+        $this->logInAs($user);
+
+        $byId = $this->upload($this->xlsx([
+            ['ID', 'Title'],
+            [(string) $visible->getId(), 'Stool'],
+            [(string) $hidden->getId(), 'Armchair'],
+            [(string) $closed->getId(), 'Bench'],
+            [(string) $ofOtherClass->getId(), 'Crate'],
+            ['999999999', 'Ghost'],
+        ]), 'products.xlsx');
+        $response = $this->service()->dryRun($byId, new AdHocImportDryRunParameters(
+            $this->folderId,
+            $this->class->getId(),
+            AdHocImportDryRunParameters::MATCH_BY_ID,
+            '0',
+            columns: [['column' => '1', 'field' => 'name']]
+        ));
+
+        $rows = $this->byRow($response);
+        $this->assertSame('update', $rows[2]['action'], 'an object the user may view is updated');
+        $this->assertSame(
+            [
+                3 => 'You may not view the object with Object ID ' . $hidden->getId(),
+                4 => 'Found outside ' . self::TARGET,
+                5 => 'The ID ' . $ofOtherClass->getId() . ' belongs to a folder or an object of another class',
+                6 => 'No object has the ID 999999999',
+            ],
+            array_map(static fn (array $row): ?string => $row['error'], array_slice($rows, 1, null, true))
+        );
+        $this->assertSame([['old' => null, 'new' => 'Armchair']], $rows[3]['values'], 'only the file\'s value');
+        $answer = (string) json_encode($response->getRows());
+        foreach (['Secret name', 'Closed name', 'Other name', 'closed', 'hidden'] as $told) {
+            $this->assertStringNotContainsString($told, $answer);
+        }
+
+        $bySku = $this->upload("sku;name\nSKU-SHARED;Desk\n", 'products.csv');
+        $response = $this->service()->dryRun($bySku, $this->mappedHere(['sku' => 'sku', 'name' => 'name']));
+
+        $row = $response->getRows()[0];
+        $this->assertNull($row['action']);
+        $this->assertSame('2 objects have sku SKU-SHARED', $row['error'], 'the hidden match is counted');
+        $this->assertSame([['old' => null, 'new' => 'Desk']], $row['values']);
+        $this->assertStringNotContainsString('Secret name', (string) json_encode($response->getRows()));
+        $this->assertStringNotContainsString('Shared name', (string) json_encode($response->getRows()));
+    }
+
+    // whether a multiselect's options are known only at runtime, or it has none, any value fits
+    public function testAMultiselectWithDynamicOrNoOptionsTakesAnyValue(): void
+    {
+        $class = ClassDefinition::getByName(self::OPTIONS_CLASS_NAME) ?? $this->createOptionsClass();
+        $fileId = $this->upload("sku;open;dynamic;fixed\nSKU-1;any,thing;XL;XL\n", 'products.csv');
+        $explode = [['type' => 'explode', 'settings' => ['delimiter' => ',']]];
+
+        $rows = $this->service()->dryRun($fileId, new AdHocImportDryRunParameters(
+            $this->folderId,
+            $class->getId(),
+            AdHocImportDryRunParameters::MATCH_BY_FIELD,
+            'sku',
+            'sku',
+            columns: [
+                ['column' => 'open', 'field' => 'open', 'transformationPipeline' => $explode],
+                ['column' => 'dynamic', 'field' => 'dynamic', 'transformationPipeline' => $explode],
+                ['column' => 'fixed', 'field' => 'fixed', 'transformationPipeline' => $explode],
+            ]
+        ))->getRows();
+
+        $this->assertSame('create', $rows[0]['action']);
+        $this->assertSame(
+            [['field' => 2, 'label' => 'fixed', 'value' => 'XL', 'message' => 'fixed “XL” is no option of fixed']],
+            $rows[0]['invalid'],
+            'only the multiselect with static options refuses a value it does not offer'
+        );
+    }
+
+    // a group deleted since an object activated it has no keys left to check
+    public function testAStoreGroupDeletedSinceTheObjectActivatedItIsNotChecked(): void
+    {
+        [$class, $weight] = $this->storeClass('DeletedGroup');
+        $width = $this->keyOfAnotherGroup('DeletedGroup');
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setActiveGroups([$weight->groupId => true, $width->groupId => true]);
+        $object->save();
+        $deleted = Classificationstore\GroupConfig::getById($width->groupId);
+        $this->assertNotNull($deleted);
+        $deleted->delete();
+        $fileId = $this->upload("sku;weight\nSKU-1;2 kg\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+        ]))->getRows();
+
+        $this->assertSame('update', $rows[0]['action']);
+        $this->assertSame([['old' => '1 kg', 'new' => '2 kg']], $rows[0]['values']);
+        $this->assertSame([], $rows[0]['invalid']);
+        $this->assertFalse($rows[0]['blocked']);
+    }
+
     /**
      * @return Concrete the object with SKU-1
      */
@@ -926,6 +1046,35 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
         $class = new ClassDefinition();
         $class->setName(self::MANDATORY_CLASS_NAME);
+        $class->setLayoutDefinitions($panel);
+        $class->save();
+
+        return $class;
+    }
+
+    private function createOptionsClass(): ClassDefinition
+    {
+        $panel = new ClassDefinition\Layout\Panel();
+        $panel->setName('pimcore_root');
+        $sku = new ClassDefinition\Data\Input();
+        $sku->setName('sku');
+        $sku->setTitle('sku');
+        $panel->addChild($sku);
+        foreach (['open' => [false, []], 'dynamic' => [true, ['S']], 'fixed' => [false, ['S']]] as $name => $kind) {
+            [$dynamic, $options] = $kind;
+            $multiselect = new ClassDefinition\Data\Multiselect();
+            $multiselect->setName($name);
+            $multiselect->setTitle($name);
+            $multiselect->setOptions(array_map(
+                static fn (string $option): array => ['key' => $option, 'value' => $option],
+                $options
+            ));
+            $multiselect->dynamicOptions = $dynamic;
+            $panel->addChild($multiselect);
+        }
+
+        $class = new ClassDefinition();
+        $class->setName(self::OPTIONS_CLASS_NAME);
         $class->setLayoutDefinitions($panel);
         $class->save();
 
