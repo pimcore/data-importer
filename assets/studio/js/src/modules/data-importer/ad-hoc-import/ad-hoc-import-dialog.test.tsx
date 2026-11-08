@@ -1261,7 +1261,7 @@ describe('the preview step', () => {
     chooseWhatToMatchBy()
     await act(async () => { fireEvent.click(nextButton()) })
     fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
-    select('Configuration', 'products')
+    fireEvent.click(screen.getByRole('radio', { name: 'products' }))
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(mockDryRun.mock.calls[0][0].bundleDataImporterAdHocImportDryRunParameters).toMatchObject({
