@@ -321,17 +321,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             $entry = is_array($entry) ? $entry : [];
             $column = $entry['column'] ?? null;
             $this->assertColumn($columns, $column);
-            if (($entry['key'] ?? null) === null) {
-                $field = $this->field($entry['field'] ?? null, $entry['language'] ?? null, $targets);
-                $fieldAccepts = $accepted[(string) $field->key] ?? [];
-            } else {
-                [$field, $fieldAccepts] = $this->storeField(
-                    $entry['field'] ?? null,
-                    $entry['key'],
-                    $entry['language'] ?? null,
-                    $classId
-                );
-            }
+            [$field, $fieldAccepts] = $this->mappedField($entry, $targets, $accepted, $classId);
 
             $key = json_encode([$field->key, $field->language, $field->storeKey?->id()]);
             if (isset($taken[$key])) {
@@ -364,6 +354,23 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         }
 
         return $writers;
+    }
+
+    /**
+     * @param array<mixed> $entry
+     * @param array<string, Target> $targets
+     * @param array<string, list<string>> $accepted
+     *
+     * @return array{ImportField, list<string>}
+     */
+    private function mappedField(array $entry, array $targets, array $accepted, string $classId): array
+    {
+        if (($entry['key'] ?? null) !== null) {
+            return $this->storeField($entry['field'] ?? null, $entry['key'], $entry['language'] ?? null, $classId);
+        }
+        $field = $this->field($entry['field'] ?? null, $entry['language'] ?? null, $targets);
+
+        return [$field, $accepted[(string) $field->key] ?? []];
     }
 
     /**
