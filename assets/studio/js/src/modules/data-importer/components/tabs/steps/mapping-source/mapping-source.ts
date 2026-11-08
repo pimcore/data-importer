@@ -48,6 +48,8 @@ export type TransformationResultRequest = BundleDataImporterLoadPreviewParameter
 export interface MappingSource {
   // names the source in debug output
   id: string
+  // the stored configuration behind the source, whose preview file the server can read; none for a posted source
+  configName?: string
   // the configuration the step starts from
   configuration: BackendConfiguration | undefined
   isConfigurationLoaded: boolean

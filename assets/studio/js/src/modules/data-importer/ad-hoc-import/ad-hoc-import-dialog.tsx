@@ -8,7 +8,6 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-/* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Button, Flex, Modal, ModalFooter, Select, Steps } from '@pimcore/studio-ui-bundle/components'
@@ -42,9 +41,9 @@ import {
   type MappingField
 } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
-import { type TransformationSource } from './mapping-step/transformations-modal'
-import { canContinueWithConfiguration, findConfiguration, type MapWith } from './mapping-step/configuration-state'
-import { useImportConfigurations } from './mapping-step/use-import-configurations'
+import { findConfiguration } from './mapping-step/configuration-state'
+import { transformationSourceOf } from './mapping-step/transformations-modal'
+import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 import { dryRunParameters, previewCounts, type DryRun, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
 
@@ -76,8 +75,6 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [mapping, setMapping] = useState<Mapping | null>(null)
   const [fields, setFields] = useState<MappingField[]>([])
   const [isLoadingMapping, setIsLoadingMapping] = useState(false)
-  const [mapWith, setMapWith] = useState<MapWith>('here')
-  const [configurationName, setConfigurationName] = useState<string | undefined>(undefined)
   const [dryRun, setDryRun] = useState<DryRun | null>(null)
   const [isDryRunFailed, setIsDryRunFailed] = useState(false)
   const [errorMode, setErrorMode] = useState<ErrorMode>('skip')
@@ -86,7 +83,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
   const [runDry] = useBundleDataImporterAdHocImportDryRunMutation()
-  const { configurations, isFetching: isListing, isError: isListingFailed } = useImportConfigurations(mapWith === 'configuration')
+  const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
@@ -247,8 +244,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
         target,
         inspected: phase.inspected,
         objects,
-        mapWith,
-        configuration: findConfiguration(configurations, configurationName),
+        mapWith: configurationMapping.mapWith,
+        configuration: findConfiguration(configurationMapping.choice.configurations, configurationMapping.choice.chosen),
         mapping
       })
     }).then((result) => {
@@ -266,21 +263,12 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
-  // a column's transformations run on the stored file as it is read now
-  const transformationSource = useMemo((): TransformationSource | null => {
-    if (phase.kind !== 'inspected' || phase.inspected.fileId === undefined || phase.inspected.fileId === null ||
-      objects.classId === undefined) {
-      return null
-    }
+  const transformationSource = useMemo(() => transformationSourceOf(phase, objects.classId), [phase, objects.classId])
 
-    return { fileId: phase.inspected.fileId, classId: objects.classId, settings: settingsOf(phase.inspected) }
-  }, [phase, objects.classId])
-
-  const inspected = phase.kind === 'inspected' ? phase.inspected : undefined
-
-  const canMapOn = (): boolean => mapWith === 'configuration'
-    ? canContinueWithConfiguration(findConfiguration(configurations, configurationName), inspected)
+  const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
+    ? configurationMapping.canContinue
     : mapping !== null && canContinueMapping(mapping, fields)
+
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)
     : canMapOn()
@@ -353,7 +341,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
               onClick={ () => { step === 0 ? toMapping() : toPreview() } }
               type="primary"
             >
-              { t('data-importer.ad-hoc-import.next') }
+              { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
             </Button>
           </ModalFooter>
           ) }
@@ -386,20 +374,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       ) }
       { step === 1 && (
         <MappingStep
-          configuration={ {
-            inspected,
-            configurations,
-            isLoading: isListing,
-            isError: isListingFailed,
-            chosen: configurationName,
-            onChoose: setConfigurationName
-          } }
+          configuration={ configurationMapping.choice }
           fields={ fields }
           isLoading={ isLoadingMapping }
-          mapWith={ mapWith }
+          mapWith={ configurationMapping.mapWith }
           mapping={ mapping }
           onChange={ setMapping }
-          onMapWithChange={ setMapWith }
+          onMapWithChange={ configurationMapping.setMapWith }
           source={ transformationSource }
         />
       ) }

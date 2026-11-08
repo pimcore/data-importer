@@ -51,6 +51,7 @@ class ColumnMatcherTest extends Unit
             'transformationResultType' => 'array',
             'score' => 100,
             'language' => null,
+            'source' => 'name',
         ], $suggestion);
     }
 

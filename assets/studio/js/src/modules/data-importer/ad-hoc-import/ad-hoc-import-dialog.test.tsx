@@ -201,7 +201,7 @@ const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
 
-const nextButton = (): HTMLElement => screen.getByRole('button', { name: 'Next' })
+const nextButton = (): HTMLElement => screen.getByRole('button', { name: /^Next(: Preview)?$/ })
 
 const chooseWhatToMatchBy = (): void => {
   select('Field', 'sku')
@@ -1092,6 +1092,10 @@ describe('the mapping step', () => {
 })
 
 describe('the mapping step with a configuration', () => {
+  const chooseConfiguration = (name: string): void => {
+    fireEvent.click(screen.getByRole('radio', { name }))
+  }
+
   const toConfiguration = async (inspected: InspectedFile = csv): Promise<void> => {
     renderDialog()
     await dropAndRead(inspected)
@@ -1106,43 +1110,72 @@ describe('the mapping step with a configuration', () => {
     chooseWhatToMatchBy()
     await act(async () => { fireEvent.click(nextButton()) })
 
-    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: true })
+    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: true, refetchOnMountOrArgChange: true })
 
     fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
 
-    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: false })
-    expect(screen.getByLabelText('Configuration')).toBeTruthy()
+    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: false, refetchOnMountOrArgChange: true })
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
+  })
+
+  it('names the preview as the next step on the mapping step', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+
+    expect(screen.getByRole('button', { name: 'Next' })).toBeTruthy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    expect(screen.getByRole('button', { name: 'Next: Preview' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
   })
 
   it('goes on to the preview only once one it can use is chosen', async () => {
     await toConfiguration()
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
-    select('Configuration', 'closed')
+    chooseConfiguration('closed')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
 
-    select('Configuration', 'products')
+    chooseConfiguration('products')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
   })
 
+  it('cannot go on with the chosen one while the list is refreshed or after the refresh failed', async () => {
+    await toConfiguration()
+    chooseConfiguration('products')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+
+    const kept = { data: { configurations: [productsConfiguration, closedConfiguration] } }
+    mockListConfigurations.mockImplementation(() => ({ ...kept, isFetching: true, isError: false }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+
+    mockListConfigurations.mockImplementation(() => ({ ...kept, error: { status: 500 }, isFetching: false, isError: true }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+    expect(screen.getByText('The configurations could not be loaded.')).toBeTruthy()
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+
   it('cannot go on with one whose match column the file does not have', async () => {
     await toConfiguration({ ...csv, columns: [{ dataIndex: 'SKU', label: 'SKU', position: 0 }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung', position: 1 }] })
-    select('Configuration', 'products')
+    chooseConfiguration('products')
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('keeps the chosen one when going back and on', async () => {
     await toConfiguration()
-    select('Configuration', 'products')
+    chooseConfiguration('products')
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     await act(async () => { fireEvent.click(nextButton()) })
 
-    expect(screen.getByLabelText<HTMLSelectElement>('Configuration').value).toBe('products')
+    expect(screen.getByRole('radio', { name: 'products' }).getAttribute('aria-checked')).toBe('true')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 

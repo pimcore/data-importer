@@ -27,9 +27,9 @@ import {
   type RowFilter
 } from './mapping-state'
 import { MappingRowView } from './mapping-row'
-import { TransformationsModal, type TransformationSource } from './transformations-modal'
 import { ConfigurationChoice, type ConfigurationChoiceProps } from './configuration-choice'
 import { type MapWith } from './configuration-state'
+import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 const SEARCH_WIDTH = 240
 const FILTERS: RowFilter[] = ['all', 'mapped', 'open']
@@ -45,11 +45,11 @@ export interface MappingStepProps {
   fields: MappingField[]
   isLoading: boolean
   onChange: (mapping: Mapping) => void
-  // what the transformations of a column run on; none, no transformations
-  source: TransformationSource | null
   mapWith: MapWith
   onMapWithChange: (mapWith: MapWith) => void
   configuration: ConfigurationChoiceProps
+  // what the transformations of a column run on; none, no transformations
+  source: TransformationSource | null
 }
 
 export const MappingStep = ({
@@ -57,10 +57,10 @@ export const MappingStep = ({
   fields,
   isLoading,
   onChange,
-  source,
   mapWith,
   onMapWithChange,
-  configuration
+  configuration,
+  source
 }: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()

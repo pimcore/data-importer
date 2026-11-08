@@ -25,6 +25,7 @@ export interface AutofillSuggestionsPanelProps {
   previewRow: Record<string, string | null>
   hasPrevRow: boolean
   isLoadingPreviewRow: boolean
+  isLoadingAiSuggestions?: boolean
   onPrevRow: () => void
   onNextRow: () => void
 }
@@ -42,6 +43,7 @@ export const AutofillSuggestionsPanel = ({
   previewRow,
   hasPrevRow,
   isLoadingPreviewRow,
+  isLoadingAiSuggestions = false,
   onPrevRow,
   onNextRow
 }: AutofillSuggestionsPanelProps): React.JSX.Element => {
@@ -52,7 +54,14 @@ export const AutofillSuggestionsPanel = ({
   if (suggestions.length === 0) {
     return (
       <div className={ styles.emptyState }>
-        <NoContent text={ t('data-importer.mapping.autofill-suggestions.empty') } />
+        { isLoadingAiSuggestions
+          ? (
+            <Spin
+              size="small"
+              type="classic"
+            />
+            )
+          : <NoContent text={ t('data-importer.mapping.autofill-suggestions.empty') } /> }
       </div>
     )
   }
@@ -163,6 +172,11 @@ export const AutofillSuggestionsPanel = ({
                 { suggestion.language }
               </Tag>
             ) }
+            { suggestion.source === 'ai' && (
+              <Tag className={ styles.localeTag }>
+                { t('data-importer.mapping.autofill-suggestions.source-ai') }
+              </Tag>
+            ) }
           </Flex>
           <div className={ styles.resultCell }>
             { isLoadingPreviewRow
@@ -177,6 +191,18 @@ export const AutofillSuggestionsPanel = ({
           </div>
         </Flex>
       )) }
+
+      { isLoadingAiSuggestions && (
+        <Flex
+          className={ styles.tableRow }
+          justify="center"
+        >
+          <Spin
+            size="small"
+            type="classic"
+          />
+        </Flex>
+      ) }
     </Flex>
   )
 }

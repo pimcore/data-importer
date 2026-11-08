@@ -125,6 +125,18 @@ class AdHocImportControllersTest extends Unit
         $this->assertSame(self::ANSWER, $response->getContent());
     }
 
+    public function testTheConfigurationsAreListedByTheService(): void
+    {
+        $answer = new AdHocImportConfigurationsResponse([]);
+
+        $service = $this->createMock(AdHocImportConfigurationServiceInterface::class);
+        $service->expects($this->once())->method('listConfigurations')->willReturn($answer);
+
+        $response = (new ListConfigurationsController($this->serializer($answer), $service))->listConfigurations();
+
+        $this->assertSame(self::ANSWER, $response->getContent());
+    }
+
     public function testTransformationsArePreviewedForTheFileAndTheColumn(): void
     {
         $parameters = new AdHocImportTransformationParameters('PROD', 'name', 'name', [['type' => 'trim']]);
@@ -136,18 +148,6 @@ class AdHocImportControllersTest extends Unit
 
         $response = (new PreviewTransformationsController($this->serializer($answer), $service))
             ->previewTransformations('file-1', $parameters);
-
-        $this->assertSame(self::ANSWER, $response->getContent());
-    }
-
-    public function testTheConfigurationsAreListedByTheService(): void
-    {
-        $answer = new AdHocImportConfigurationsResponse([]);
-
-        $service = $this->createMock(AdHocImportConfigurationServiceInterface::class);
-        $service->expects($this->once())->method('listConfigurations')->willReturn($answer);
-
-        $response = (new ListConfigurationsController($this->serializer($answer), $service))->listConfigurations();
 
         $this->assertSame(self::ANSWER, $response->getContent());
     }

@@ -51,6 +51,10 @@ bundle_data_importer_mapping_suggestion_suggest: Suggest Mappings
 bundle_data_importer_mapping_suggestion_suggest_description: Suggest a field of a data object class for each given source column, by comparing their names and guessing the language from the column name
 bundle_data_importer_mapping_suggestion_suggest_summary: Suggest Mappings
 bundle_data_importer_mapping_suggestion_suggest_success_response: The suggested field per column, best score first
+bundle_data_importer_mapping_suggestion_load_ai: Load AI Mapping Suggestions
+bundle_data_importer_mapping_suggestion_load_ai_description: Load the suggestions of the AI stage a suggestion request started; only the user who started it can
+bundle_data_importer_mapping_suggestion_load_ai_summary: Load AI Mapping Suggestions
+bundle_data_importer_mapping_suggestion_load_ai_success_response: Where the AI stage stands, with its suggestions once it finished
 bundle_data_importer_classificationstore_load_attributes: Load Classification Store Attributes
 bundle_data_importer_classificationstore_load_attributes_description: Load available classification store field definitions for a given data object class
 bundle_data_importer_classificationstore_load_attributes_summary: Load Classification Store Attributes
@@ -110,6 +114,7 @@ pimcore_studio_api_data_importer_utility_check_crontab: Validate Cron Expression
 pimcore_studio_api_data_importer_data_type_load_class_attributes: Load Class Attributes
 pimcore_studio_api_data_importer_data_type_load_unit_data: Load Unit Data
 pimcore_studio_api_data_importer_mapping_suggestion_suggest: Suggest Mappings
+pimcore_studio_api_data_importer_mapping_suggestion_load_ai: Load AI Mapping Suggestions
 pimcore_studio_api_data_importer_classificationstore_load_attributes: Load Classification Store Attributes
 pimcore_studio_api_data_importer_classificationstore_load_keys: Load Classification Store Keys
 pimcore_studio_api_data_importer_classificationstore_load_key_name: Load Classification Store Key Name
@@ -134,14 +139,14 @@ bundle_data_importer_ad_hoc_import_load_mapping: Load the Mapping of an Ad Hoc I
 bundle_data_importer_ad_hoc_import_load_mapping_description: Load the fields of a class the columns of a file can be imported into, and a suggested field per column
 bundle_data_importer_ad_hoc_import_load_mapping_summary: Load the Mapping of an Ad Hoc Import
 bundle_data_importer_ad_hoc_import_load_mapping_success_response: The fields and the suggested field per column
-bundle_data_importer_ad_hoc_import_preview_transformations: Preview the Transformations of a Column
-bundle_data_importer_ad_hoc_import_preview_transformations_description: Run the transformations of one column of an ad hoc import on its values in the first rows of the file, with the conversion to the type of its field and the transformations that can come next
-bundle_data_importer_ad_hoc_import_preview_transformations_summary: Preview the Transformations of a Column
-bundle_data_importer_ad_hoc_import_preview_transformations_success_response: The values after each transformation, whether the result fits the field, and the transformations that can come next
 bundle_data_importer_ad_hoc_import_list_configurations: List the Configurations for an Ad Hoc Import
 bundle_data_importer_ad_hoc_import_list_configurations_description: List the data object import configurations the user may read, with the class, match and folder an ad hoc import takes from each, or why it cannot use it
 bundle_data_importer_ad_hoc_import_list_configurations_summary: List the Configurations for an Ad Hoc Import
 bundle_data_importer_ad_hoc_import_list_configurations_success_response: The configurations, by name
+bundle_data_importer_ad_hoc_import_preview_transformations: Preview the Transformations of a Column
+bundle_data_importer_ad_hoc_import_preview_transformations_description: Run the transformations of one column of an ad hoc import on its values in the first rows of the file, with the conversion to the type of its field and the transformations that can come next
+bundle_data_importer_ad_hoc_import_preview_transformations_summary: Preview the Transformations of a Column
+bundle_data_importer_ad_hoc_import_preview_transformations_success_response: The values after each transformation, whether the result fits the field, and the transformations that can come next
 bundle_data_importer_ad_hoc_import_dry_run: Check a File Without Importing It
 bundle_data_importer_ad_hoc_import_dry_run_description: Check every row of a file uploaded for an ad hoc import as its import would take it - the object it updates or creates, the values before and after, and why a row or value cannot be imported - without writing anything; the rows it would skip are kept for the uploading user to download
 bundle_data_importer_ad_hoc_import_dry_run_summary: Check a File Without Importing It

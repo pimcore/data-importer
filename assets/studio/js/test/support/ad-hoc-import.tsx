@@ -63,9 +63,11 @@ export const components = {
       { children }
     </button>
   ),
-  Flex: ({ children, role, 'aria-label': label }: WithChildren & { role?: string, 'aria-label'?: string }) => (
+  Card: ({ children, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement>) => <div { ...props }>{ children }</div>,
+  Flex: ({ children, role, 'aria-label': label, 'aria-labelledby': labelledBy }: WithChildren & { role?: string, 'aria-label'?: string, 'aria-labelledby'?: string }) => (
     <div
       aria-label={ label }
+      aria-labelledby={ labelledBy }
       role={ role }
     >
       { children }
@@ -212,7 +214,7 @@ export const components = {
     </ol>
   ),
   Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
-  Text: ({ children }: WithChildren) => <span>{ children }</span>,
+  Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>
       <input

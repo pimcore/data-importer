@@ -65,17 +65,17 @@ class AdHocImportEndpointsTest extends Unit
             '/ad-hoc-import/match-fields',
         ],
         LoadMappingController::class => ['loadMapping', 'load_mapping', 'POST', '/ad-hoc-import/mapping'],
-        PreviewTransformationsController::class => [
-            'previewTransformations',
-            'preview_transformations',
-            'POST',
-            '/ad-hoc-import/file/{fileId}/transformations',
-        ],
         ListConfigurationsController::class => [
             'listConfigurations',
             'list_configurations',
             'GET',
             '/ad-hoc-import/configurations',
+        ],
+        PreviewTransformationsController::class => [
+            'previewTransformations',
+            'preview_transformations',
+            'POST',
+            '/ad-hoc-import/file/{fileId}/transformations',
         ],
         DryRunController::class => ['dryRun', 'dry_run', 'POST', '/ad-hoc-import/file/{fileId}/dry-run'],
         DownloadSkippedRowsController::class => [
@@ -206,6 +206,32 @@ class AdHocImportEndpointsTest extends Unit
         $this->assertSame(['fields' => [$field], 'suggestions' => [$suggestion]], $answer);
     }
 
+    public function testConfigurationsReachTheStudioWithTheirFieldNames(): void
+    {
+        /** @var SerializerInterface $serializer */
+        $serializer = $this->tester->grabService('serializer');
+
+        $configuration = [
+            'name' => 'products',
+            'classId' => 'PROD',
+            'className' => 'Product',
+            'matchBy' => 'field',
+            'matchField' => 'name',
+            'matchLanguage' => 'de',
+            'matchColumn' => self::NAME_COLUMN,
+            'newObjectsFolder' => '/Products',
+            'columns' => [self::NAME_COLUMN],
+            'columnsBy' => 'name',
+            'unusable' => null,
+        ];
+        $answer = json_decode(
+            $serializer->serialize(new AdHocImportConfigurationsResponse([$configuration]), 'json'),
+            true
+        );
+
+        $this->assertSame(['configurations' => [$configuration]], $answer);
+    }
+
     public function testTransformationsArriveFromTheRequestWithTheFileSettings(): void
     {
         /** @var DenormalizerInterface $serializer */
@@ -261,32 +287,6 @@ class AdHocImportEndpointsTest extends Unit
             'results' => [['items' => ['Chair'], 'failed' => false], ['items' => [], 'failed' => true]],
             'offered' => ['trim'],
         ], $answer);
-    }
-
-    public function testConfigurationsReachTheStudioWithTheirFieldNames(): void
-    {
-        /** @var SerializerInterface $serializer */
-        $serializer = $this->tester->grabService('serializer');
-
-        $configuration = [
-            'name' => 'products',
-            'classId' => 'PROD',
-            'className' => 'Product',
-            'matchBy' => 'field',
-            'matchField' => 'name',
-            'matchLanguage' => 'de',
-            'matchColumn' => self::NAME_COLUMN,
-            'newObjectsFolder' => '/Products',
-            'columns' => [self::NAME_COLUMN],
-            'columnsBy' => 'name',
-            'unusable' => null,
-        ];
-        $answer = json_decode(
-            $serializer->serialize(new AdHocImportConfigurationsResponse([$configuration]), 'json'),
-            true
-        );
-
-        $this->assertSame(['configurations' => [$configuration]], $answer);
     }
 
     public function testTheMigrationAddsTheRightUnlessItExistsAndRemovesItAgain(): void
