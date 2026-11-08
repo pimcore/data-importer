@@ -26,9 +26,11 @@ use Pimcore\Model\Element\ElementInterface;
  */
 class ObjectFieldReferenceVisibilityTest extends Unit
 {
+    private const PARENT_PATH = '/shared/parent';
+
     public function testTheFullPathOfAnElementTheLookupLetsViewIsRead(): void
     {
-        $this->assertSame('/shared/parent', $this->parentPath(visible: true));
+        $this->assertSame(self::PARENT_PATH, $this->parentPath(visible: true));
     }
 
     public function testAnElementTheLookupDoesNotLetViewIsLeftOut(): void
@@ -40,7 +42,7 @@ class ObjectFieldReferenceVisibilityTest extends Unit
     {
         $operator = $this->operator();
 
-        $this->assertSame('/shared/parent', $operator->process($this->child()));
+        $this->assertSame(self::PARENT_PATH, $operator->process($this->child()));
     }
 
     private function parentPath(bool $visible): mixed
@@ -80,7 +82,7 @@ class ObjectFieldReferenceVisibilityTest extends Unit
     private function child(): ElementInterface
     {
         $parent = $this->createMock(ElementInterface::class);
-        $parent->method('getFullPath')->willReturn('/shared/parent');
+        $parent->method('getFullPath')->willReturn(self::PARENT_PATH);
         $child = $this->createMock(ElementInterface::class);
         $child->method('getParent')->willReturn($parent);
 
