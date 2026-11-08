@@ -69,7 +69,11 @@ final readonly class ColumnWriter implements FieldWriter
 
         try {
             $this->target->assignData($object, $this->converted->values[$index]);
-        } catch (\Throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
+            if ($throwable instanceof \Error && !$throwable instanceof \TypeError) {
+                throw $throwable;
+            }
+
             return ValueError::Invalid;
         }
 

@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\MappingApplicationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
 use Pimcore\Model\DataObject\Concrete;
 
 /**
@@ -32,6 +33,7 @@ final readonly class ConfigurationItemWriter implements FieldWriter
         private ImportField $field,
         private PreparedMapping $mapping,
         private array $columns,
+        private ReferenceVisibilityInterface $references,
     ) {
     }
 
@@ -44,7 +46,7 @@ final readonly class ConfigurationItemWriter implements FieldWriter
     {
         try {
             // a warning is what an import would log, e.g. a reference it could not find
-            return $this->mapping->apply($object, $row) === [] ? null : ValueError::Invalid;
+            return $this->mapping->apply($object, $row, $this->references) === [] ? null : ValueError::Invalid;
         } catch (MappingApplicationException) {
             return ValueError::Invalid;
         }

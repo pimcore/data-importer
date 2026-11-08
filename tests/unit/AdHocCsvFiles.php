@@ -21,6 +21,8 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 /**
  * The real file store and a CSV-only inspector, as the container wires them.
@@ -29,7 +31,7 @@ final class AdHocCsvFiles
 {
     public static function store(string $directory): FileStore
     {
-        return new FileStore(new Filesystem(new LocalFilesystemAdapter($directory)));
+        return new FileStore(new Filesystem(new LocalFilesystemAdapter($directory)), new LockFactory(new InMemoryStore()));
     }
 
     public static function inspector(): FileInspector

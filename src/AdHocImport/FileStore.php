@@ -16,6 +16,8 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
 use Pimcore\Helper\TemporaryFileHelperTrait;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\LockInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
@@ -31,8 +33,11 @@ final class FileStore
     // a dialog closed without its Cancel (browser closed, session ended) leaves its file behind
     private const int ABANDONED_AFTER_SECONDS = 86400;
 
+    private const string SKIPPED_ROWS_SUFFIX = '.skipped.json';
+
     public function __construct(
         private readonly FilesystemOperator $pimcoreDataImporterAdHocStorage,
+        private readonly LockFactory $lockFactory,
     ) {
     }
 
@@ -87,17 +92,31 @@ final class FileStore
      */
     public function delete(int $userId, string $fileId, FileType $type): void
     {
-        $this->pimcoreDataImporterAdHocStorage->delete($this->path($userId, $fileId, $type));
-        $this->pimcoreDataImporterAdHocStorage->delete($this->skippedRowsPath($userId, $fileId));
+        $lock = $this->lock($userId, $fileId);
+
+        try {
+            $this->pimcoreDataImporterAdHocStorage->delete($this->path($userId, $fileId, $type));
+            $this->pimcoreDataImporterAdHocStorage->delete($this->skippedRowsPath($userId, $fileId));
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
      * Keeps the rows the last dry run of a file would skip, replacing those of an earlier one, until the file is
-     * deleted or abandoned.
+     * deleted or abandoned. A dry run still going when its file is deleted keeps nothing.
      */
     public function storeSkippedRows(int $userId, string $fileId, string $content): void
     {
-        $this->pimcoreDataImporterAdHocStorage->write($this->skippedRowsPath($userId, $fileId), $content);
+        $lock = $this->lock($userId, $fileId);
+
+        try {
+            if ($this->findType($userId, $fileId) !== null) {
+                $this->pimcoreDataImporterAdHocStorage->write($this->skippedRowsPath($userId, $fileId), $content);
+            }
+        } finally {
+            $lock->release();
+        }
     }
 
     public function readSkippedRows(int $userId, string $fileId): ?string
@@ -114,12 +133,34 @@ final class FileStore
     {
         $oldest = time() - self::ABANDONED_AFTER_SECONDS;
 
-        /** @var StorageAttributes $item */
-        foreach ($this->pimcoreDataImporterAdHocStorage->listContents((string)$userId) as $item) {
+        /** @var list<StorageAttributes> $items */
+        $items = $this->pimcoreDataImporterAdHocStorage->listContents((string)$userId)->toArray();
+        foreach ($items as $item) {
             if ($item->isFile() && $item->lastModified() !== null && $item->lastModified() < $oldest) {
-                $this->pimcoreDataImporterAdHocStorage->delete($item->path());
+                $this->removeWithItsSkippedRows($item->path());
             }
         }
+    }
+
+    /**
+     * A later dry run makes the skipped rows younger than the upload they go with.
+     */
+    private function removeWithItsSkippedRows(string $path): void
+    {
+        $this->pimcoreDataImporterAdHocStorage->delete($path);
+        if (!str_ends_with($path, self::SKIPPED_ROWS_SUFFIX)) {
+            $this->pimcoreDataImporterAdHocStorage->delete(
+                (string) preg_replace('/\.[^.\/]+$/', self::SKIPPED_ROWS_SUFFIX, $path)
+            );
+        }
+    }
+
+    private function lock(int $userId, string $fileId): LockInterface
+    {
+        $lock = $this->lockFactory->createLock('data_importer_ad_hoc_file_' . $userId . '_' . $fileId);
+        $lock->acquire(true);
+
+        return $lock;
     }
 
     private function path(int $userId, string $fileId, FileType $type): string
@@ -129,6 +170,6 @@ final class FileStore
 
     private function skippedRowsPath(int $userId, string $fileId): string
     {
-        return $userId . '/' . $fileId . '.skipped.json';
+        return $userId . '/' . $fileId . self::SKIPPED_ROWS_SUFFIX;
     }
 }

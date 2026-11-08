@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
 use Pimcore\Model\DataObject\Concrete;
 
 class AdHocDryRunWritersTest extends Unit
@@ -116,6 +117,28 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame(ValueError::Invalid, $writer->write($object, 0, ['A-1', 'many']));
     }
 
+    public function testAnErrorThatIsNoRefusedValueIsNotReportedAsAnInvalidCell(): void
+    {
+        $column = new ConvertedColumn(['Chair'], [false], [false], null);
+        $writer = new ColumnWriter(new ImportField('name', null, 'Name'), 1, $column);
+        $object = new class() extends Concrete {
+            public function setName(mixed $name, ?string $language = null): static
+            {
+                throw new \LogicException('caught as a refused value');
+            }
+        };
+        $this->assertSame(ValueError::Invalid, $writer->write($object, 0, ['A-1', 'Chair']));
+
+        $broken = new class() extends Concrete {
+            public function setName(mixed $name, ?string $language = null): static
+            {
+                throw new \Error('a bug in the setter');
+            }
+        };
+        $this->expectException(\Error::class);
+        $writer->write($broken, 0, ['A-1', 'Chair']);
+    }
+
     public function testAClassificationStoreColumnSaysWhyAValueCannotGoIntoItsKey(): void
     {
         $field = new ImportField('specs', 'de', 'Dimensions › Width', new StoreKey(3, 7));
@@ -141,7 +164,8 @@ class AdHocDryRunWritersTest extends Unit
     {
         $field = new ImportField(null, null, 'Price');
         $mapping = (new \ReflectionClass(PreparedMapping::class))->newInstanceWithoutConstructor();
-        $writer = new ConfigurationItemWriter($field, $mapping, [1, 'currency', 3]);
+        $references = $this->createStub(ReferenceVisibilityInterface::class);
+        $writer = new ConfigurationItemWriter($field, $mapping, [1, 'currency', 3], $references);
 
         $this->assertSame($field, $writer->field());
         $this->assertSame('12.5 · EUR', $writer->fileValue([1 => '12.5', 'currency' => 'EUR', 3 => '']));

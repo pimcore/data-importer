@@ -79,7 +79,7 @@ final class ObjectField extends AbstractOperator
 
         // this expands paths
         if ($value instanceof ElementInterface) {
-            $value = $value->getFullPath();
+            $value = $this->visibleReference($value)?->getFullPath();
         }
 
         return $value;

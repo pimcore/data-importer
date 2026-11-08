@@ -22,9 +22,11 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\FieldWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspection;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\SpreadsheetCell;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
@@ -47,6 +49,7 @@ use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
+use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Pimcore\Tool;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -71,6 +74,11 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
     use TargetFolderTrait;
 
     private const string DIRECT_TARGET = 'direct';
+
+    private const string STORE_TARGET = 'classificationstore';
+
+    // what the Classificationstore data target calls the values without a language
+    private const string STORE_DEFAULT_LANGUAGE = 'default';
 
     // no file names a column so: an item reads it as empty
     private const string MISSING_COLUMN = "\0";
@@ -140,7 +148,9 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                 $configuration['mapping'],
                 $parameters->getConfigurationColumns(),
                 $columns,
-                $targets
+                $targets,
+                $objects['classId'],
+                $user
             );
         $shown = $this->shown($writers, $objects);
 
@@ -194,7 +204,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             $csv,
             [
                 $this->messages->columnName('row', $user),
-                ...$skipped['columns'],
+                ...array_map(SpreadsheetCell::safe(...), $skipped['columns']),
                 $this->messages->columnName('error', $user),
             ],
             escape: ''
@@ -203,7 +213,15 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             if ($errorMode === self::WITHOUT_INVALID_VALUES && $row['importsWithoutInvalidValues']) {
                 continue;
             }
-            fputcsv($csv, [$row['row'], ...$row['values'], $row['error']], escape: '');
+            fputcsv(
+                $csv,
+                [
+                    $row['row'],
+                    ...array_map(SpreadsheetCell::safe(...), $row['values']),
+                    SpreadsheetCell::safe($row['error']),
+                ],
+                escape: ''
+            );
         }
         rewind($csv);
         $content = (string) stream_get_contents($csv);
@@ -276,8 +294,10 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             return $targetPath;
         }
 
-        $folder = $this->dataObjectResolver->getByPath($folderPath)
-            ?? throw new NotFoundHttpException(sprintf('Data object folder %s not found', $folderPath));
+        $folder = $this->dataObjectResolver->getByPath($folderPath);
+        if (!$folder instanceof Folder) {
+            throw new NotFoundHttpException(sprintf('Data object folder %s not found', $folderPath));
+        }
         if (!$folder->isAllowed('create', $user)) {
             throw new ForbiddenException(sprintf('Access denied to data object folder %s', $folderPath));
         }
@@ -475,12 +495,19 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      *
      * @return list<FieldWriter>
      */
-    private function configurationWriters(array $mapping, array $fileColumns, array $columns, array $targets): array
-    {
+    private function configurationWriters(
+        array $mapping,
+        array $fileColumns,
+        array $columns,
+        array $targets,
+        string $classId,
+        User $user
+    ): array {
         foreach ($fileColumns as $fileColumn) {
             $this->assertColumn($columns, $fileColumn);
         }
 
+        $references = new UserReferenceVisibility($user);
         $writers = [];
         foreach ($mapping as $index => $item) {
             if (!is_array($item)) {
@@ -502,7 +529,12 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                 throw new InvalidArgumentException($exception->getMessage(), $exception);
             }
 
-            $writers[] = new ConfigurationItemWriter($this->configurationField($item, $targets), $prepared, $found);
+            $writers[] = new ConfigurationItemWriter(
+                $this->configurationField($item, $targets, $classId),
+                $prepared,
+                $found,
+                $references
+            );
         }
 
         return $writers;
@@ -530,12 +562,23 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      * @param array<mixed> $item
      * @param array<string, Target> $targets
      */
-    private function configurationField(array $item, array $targets): ImportField
+    private function configurationField(array $item, array $targets, string $classId): ImportField
     {
         $target = is_array($item['dataTarget'] ?? null) ? $item['dataTarget'] : [];
         $settings = is_array($target['settings'] ?? null) ? $target['settings'] : [];
         $fieldName = is_string($settings['fieldName'] ?? null) ? $settings['fieldName'] : null;
         $label = is_string($item['label'] ?? null) && $item['label'] !== '' ? $item['label'] : (string) $fieldName;
+
+        if (($target['type'] ?? null) === self::STORE_TARGET) {
+            $language = $settings['language'] ?? null;
+
+            return $this->storeField(
+                $fieldName,
+                $settings['keyId'] ?? null,
+                $language === self::STORE_DEFAULT_LANGUAGE ? null : $language,
+                $classId
+            )[0];
+        }
 
         if (($target['type'] ?? null) !== self::DIRECT_TARGET || $fieldName === null) {
             return new ImportField(null, null, $label);
@@ -638,7 +681,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                         : '',
                     array_keys($columns)
                 ),
-                'error' => $result->error ?? implode('; ', array_column($result->invalid, 'message')),
+                'error' => $result->error ?? implode('; ', array_unique(array_column($result->invalid, 'message'))),
                 'importsWithoutInvalidValues' => $result->importsWithoutInvalidValues(),
             ];
         }

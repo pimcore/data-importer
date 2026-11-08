@@ -23,6 +23,7 @@ use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\DataObject\Data\Link;
 use Pimcore\Model\DataObject\Data\ObjectMetadata;
+use Pimcore\Model\User;
 
 class AdHocValueTextTest extends Unit
 {
@@ -64,6 +65,39 @@ class AdHocValueTextTest extends Unit
         $this->assertSame('https://example.org/chair', ValueText::of($link));
         $this->assertSame('3 kg', ValueText::of($stringable));
         $this->assertSame('stdClass', ValueText::of(new \stdClass()));
+    }
+
+    public function testAnElementTheViewerMayNotSeeIsLeftOut(): void
+    {
+        $viewer = new User();
+        $hidden = $this->createStub(Concrete::class);
+        $hidden->method('isAllowed')->willReturn(false);
+        $hidden->method('getRealFullPath')->willReturn('/restricted/Chair');
+        $visible = $this->createStub(Concrete::class);
+        $visible->method('isAllowed')->willReturn(true);
+        $visible->method('getRealFullPath')->willReturn(self::OBJECT_PATH);
+        $hiddenImage = $this->createStub(Image::class);
+        $hiddenImage->method('isAllowed')->willReturn(false);
+        $hiddenImage->method('getRealFullPath')->willReturn('/restricted/chair.jpg');
+        $metadata = $this->createStub(ObjectMetadata::class);
+        $metadata->method('getObject')->willReturn($hidden);
+        $link = $this->createStub(Link::class);
+        $link->method('getElement')->willReturn($hidden);
+        $link->method('getHref')->willReturn('/restricted/Chair');
+
+        $this->assertNull(ValueText::of($hidden, $viewer));
+        $this->assertSame(self::OBJECT_PATH, ValueText::of($visible, $viewer));
+        $this->assertSame(self::OBJECT_PATH, ValueText::of([$hidden, $visible], $viewer), 'the others of a list stay');
+        $this->assertNull(ValueText::of($metadata, $viewer));
+        $this->assertNull(ValueText::of(new Hotspotimage($hiddenImage), $viewer));
+        $this->assertNull(ValueText::of(new ImageGallery([new Hotspotimage($hiddenImage)]), $viewer));
+        $this->assertNull(ValueText::of($link, $viewer));
+        $this->assertSame('/restricted/Chair', ValueText::of($hidden), 'without a viewer nothing is left out');
+    }
+
+    public function testADateTimeKeepsItsTime(): void
+    {
+        $this->assertSame('2026-11-07 10:00:00', ValueText::ofDateTime(Carbon::parse('2026-11-07 10:00')));
     }
 
     public function testAConversionTellsWhatTheValueIsNot(): void

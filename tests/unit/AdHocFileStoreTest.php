@@ -87,6 +87,35 @@ class AdHocFileStoreTest extends Unit
         );
     }
 
+    public function testSkippedRowsNewerThanTheirAbandonedFileGoWithIt(): void
+    {
+        $store = AdHocCsvFiles::store($this->storage);
+        $fileId = $this->storeFile($store);
+        $store->storeSkippedRows(self::USER_ID, $fileId, '{}');
+        touch($this->storage . '/' . self::USER_ID . '/' . $fileId . '.csv', time() - 25 * 3600);
+        touch($this->storage . '/' . self::USER_ID . '/' . $fileId . '.skipped.json', time() - 3600);
+
+        $next = $this->storeFile($store);
+
+        $this->assertNull($store->readSkippedRows(self::USER_ID, $fileId));
+        $this->assertSame(
+            [$this->storage . '/' . self::USER_ID . '/' . $next . '.csv'],
+            glob($this->storage . '/' . self::USER_ID . '/*')
+        );
+    }
+
+    public function testADryRunThatEndsAfterItsFileWasDeletedKeepsNoSkippedRows(): void
+    {
+        $store = AdHocCsvFiles::store($this->storage);
+        $fileId = $this->storeFile($store);
+        $store->delete(self::USER_ID, $fileId, FileType::Csv);
+
+        $store->storeSkippedRows(self::USER_ID, $fileId, '{"rows":[1]}');
+
+        $this->assertNull($store->readSkippedRows(self::USER_ID, $fileId));
+        $this->assertSame([], glob($this->storage . '/' . self::USER_ID . '/*'));
+    }
+
     private function storeFile(FileStore $store): string
     {
         $path = $this->storage . '/upload.csv';

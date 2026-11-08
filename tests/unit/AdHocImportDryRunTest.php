@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
+use Carbon\Carbon;
 use Codeception\Test\Unit;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -76,6 +77,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     private const string MANDATORY_CLASS_NAME = 'DiDryRunMandatoryClass';
 
     private const string OPTIONS_CLASS_NAME = 'DiDryRunOptionsClass';
+
+    private const string DATE_TIME_CLASS_NAME = 'DiDryRunDateTimeClass';
 
     private const string STORE_CLASS_NAME = 'DiDryRunStoreClass';
 
@@ -823,6 +826,198 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->service()->dryRun($fileId, $this->mappedHere(['name' => 'name'], self::ROOT . '/missing'));
     }
 
+    public function testNewObjectsCannotGoBelowAnObject(): void
+    {
+        $object = $this->createObject(self::TARGET, 'SKU-1');
+        $fileId = $this->upload("sku;name\nSKU-9;Chair\n", 'products.csv');
+
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->service()->dryRun($fileId, $this->mappedHere(['name' => 'name'], $object->getRealFullPath()));
+    }
+
+    public function testASkippedRowsDownloadMarksFormulasAsText(): void
+    {
+        $fileId = $this->upload("sku;=total;name\n;=HYPERLINK(1);-12.5\n", 'products.csv');
+        $service = $this->service();
+        $service->dryRun($fileId, $this->mappedHere(['sku' => 'sku']));
+
+        $skipped = $this->csvRows($service->skippedRows($fileId, AdHocImportDryRunServiceInterface::SKIP_ROWS));
+
+        $this->assertSame(['Row', 'sku', "'=total", 'name', 'Error'], $skipped[0]);
+        $this->assertSame(["'=HYPERLINK(1)", '-12.5'], array_slice($skipped[1], 2, 2));
+    }
+
+    public function testAConfigurationCannotReadAnObjectTheUserMayNotView(): void
+    {
+        $withHidden = $this->createObject(self::TARGET, 'SKU-1', 'Chair');
+        $withVisible = $this->createObject(self::TARGET, 'SKU-2', 'Table');
+        $hidden = $this->createObject(self::HIDDEN_FOLDER, 'SKU-HIDDEN', self::SECRET_NAME);
+        $visible = $this->createObject(self::TARGET, 'SKU-3', 'Lamp');
+        $user = $this->saveUserWithWorkspaces([
+            self::TARGET => ['list' => true, 'view' => true, 'create' => true, 'save' => true],
+            self::HIDDEN_FOLDER => ['list' => false, 'view' => false],
+        ]);
+        $this->users[] = $user;
+        $this->logInAs($user);
+        $fileId = $this->upload(
+            sprintf(
+                "ID;Reference\n%d;%d\n%d;%d\n",
+                $withHidden->getId(),
+                $hidden->getId(),
+                $withVisible->getId(),
+                $visible->getId()
+            ),
+            'products.csv'
+        );
+
+        $rows = $this->byRow($this->configuredDryRun($fileId, $this->class, [[
+            'label' => 'Name',
+            'dataSourceIndex' => ['Reference'],
+            'transformationPipeline' => [
+                ['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'id']],
+                ['type' => 'objectField', 'settings' => ['attribute' => 'name']],
+            ],
+            'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name', 'language' => '']],
+        ]], ['ID', 'Reference']));
+
+        $this->assertCount(1, $rows[2]['invalid'], 'a hidden object counts as not found');
+        $this->assertStringNotContainsString(self::SECRET_NAME, (string) json_encode($rows));
+        $this->assertSame([], $rows[3]['invalid']);
+        $this->assertSame([['old' => 'Table', 'new' => 'Lamp']], $rows[3]['values']);
+    }
+
+    public function testARelationToAnObjectTheUserMayNotViewIsNotShown(): void
+    {
+        $hidden = $this->createObject(self::HIDDEN_FOLDER, 'SKU-HIDDEN');
+        $visible = $this->createObject(self::TARGET, 'SKU-2');
+        $this->createObject(self::TARGET, 'SKU-1', fields: ['related' => $hidden]);
+        $user = $this->saveUserWithWorkspaces([
+            self::TARGET => ['list' => true, 'view' => true, 'create' => true, 'save' => true],
+            self::HIDDEN_FOLDER => ['list' => false, 'view' => false],
+        ]);
+        $this->users[] = $user;
+        $this->logInAs($user);
+        $fileId = $this->upload("sku;reference\nSKU-1;" . $visible->getRealFullPath() . "\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->mappedHere(['reference' => [
+            'field' => 'related',
+            'transformationPipeline' => [['type' => 'loadDataObject', 'settings' => ['loadStrategy' => 'path']]],
+        ]]))->getRows();
+
+        $this->assertSame([['old' => null, 'new' => $visible->getRealFullPath()]], $rows[0]['values']);
+        $this->assertStringNotContainsString('hidden', (string) json_encode($rows));
+    }
+
+    public function testAFieldAConfigurationWritesTwiceIsCheckedOnItsLastValue(): void
+    {
+        $class = ClassDefinition::getByName(self::MANDATORY_CLASS_NAME) ?? $this->createMandatoryClass();
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->set('name', 'Chair');
+        $object->save();
+        $fileId = $this->upload("ID;Empty;Title\n" . $object->getId() . ";;Stool\n", 'products.csv');
+        $name = ['type' => 'direct', 'settings' => ['fieldName' => 'name', 'language' => '']];
+
+        $rows = $this->configuredDryRun($fileId, $class, [
+            ['label' => 'Empty', 'dataSourceIndex' => ['Empty'], 'transformationPipeline' => [], 'dataTarget' => $name],
+            ['label' => 'Title', 'dataSourceIndex' => ['Title'], 'transformationPipeline' => [], 'dataTarget' => $name],
+        ], ['ID', 'Empty', 'Title'])->getRows();
+
+        $this->assertSame([], $rows[0]['invalid'], 'the save sees the last value only');
+        $this->assertSame('Stool', $rows[0]['values'][1]['new']);
+    }
+
+    public function testALaterRowDoesNotSeeWhatAnEarlierRowChanged(): void
+    {
+        $class = ClassDefinition::getByName(RowMatcherModel::INHERITING_CLASS_NAME)
+            ?? RowMatcherModel::createClassNamed(RowMatcherModel::INHERITING_CLASS_NAME);
+        $parent = $this->storeObject($class, 'SKU-PARENT');
+        $parent->set('name', 'Stored name');
+        $parent->save();
+        $child = $this->storeObject($class, 'SKU-CHILD');
+        $child->setParent($parent);
+        $child->save();
+        \Pimcore::collectGarbage();
+        $fileId = $this->upload("sku;name\nSKU-PARENT;Changed name\nSKU-CHILD;Own name\n", 'products.csv');
+
+        $rows = Service::useInheritedValues(true, fn (): array => $this->byRow($this->service()->dryRun(
+            $fileId,
+            $this->storeMapping($class, [['column' => 'name', 'field' => 'name']])
+        )));
+
+        $this->assertSame('Changed name', $rows[2]['values'][0]['new']);
+        $this->assertSame('Stored name', $rows[3]['values'][0]['old'], 'as saved, not as the row before left it');
+    }
+
+    public function testADateTimeFieldShowsAChangeOfTheTimeOfOneDay(): void
+    {
+        $class = ClassDefinition::getByName(self::DATE_TIME_CLASS_NAME) ?? $this->createDateTimeClass();
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->set('starts', Carbon::parse('2026-11-07 10:00'));
+        $object->save();
+        $fileId = $this->upload("ID;Starts\n" . $object->getId() . ";2026-11-07 00:00\n", 'products.csv');
+
+        $rows = $this->configuredDryRun($fileId, $class, [[
+            'label' => 'Starts',
+            'dataSourceIndex' => ['Starts'],
+            'transformationPipeline' => [['type' => 'date', 'settings' => ['format' => 'Y-m-d H:i']]],
+            'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'starts', 'language' => '']],
+        ]], ['ID', 'Starts'])->getRows();
+
+        $this->assertSame(
+            [['old' => '2026-11-07 10:00:00', 'new' => '2026-11-07 00:00:00']],
+            $rows[0]['values']
+        );
+    }
+
+    public function testAStoreKeyRefusedInSeveralLanguagesMarksEachOfItsColumns(): void
+    {
+        [$class, $weight] = $this->storeClass('MandatoryLocalized', localized: true, mandatoryInGroup: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->save();
+        $fileId = $this->upload("sku;english;german\nSKU-1;;\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'english', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'en'],
+            ['column' => 'german', 'field' => 'attributes', 'key' => $weight->id(), 'language' => 'de'],
+        ]))->getRows();
+
+        $this->assertSame([0, 1], array_column($rows[0]['invalid'], 'field'));
+        $this->assertCount(1, array_unique(array_column($rows[0]['invalid'], 'message')));
+    }
+
+    public function testAStoreKeyOfAConfigurationIsCheckedLikeAColumn(): void
+    {
+        [$class, $weight] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->save();
+        $fileId = $this->upload("ID;Weight\n" . $object->getId() . ";5 kg\n", 'products.csv');
+        $mapping = [[
+            'label' => 'Weight',
+            'dataSourceIndex' => ['Weight'],
+            'transformationPipeline' => [],
+            'dataTarget' => [
+                'type' => 'classificationstore',
+                'settings' => ['fieldName' => 'attributes', 'keyId' => $weight->id(), 'language' => 'default'],
+            ],
+        ]];
+
+        $response = $this->configuredDryRun($fileId, $class, $mapping, ['ID', 'Weight']);
+
+        $this->assertSame(
+            [['key' => 'attributes', 'language' => null, 'label' => 'Basics › weight']],
+            $response->getFields()
+        );
+        $row = $response->getRows()[0];
+        $this->assertSame([['old' => null, 'new' => '5 kg']], $row['values']);
+        $this->assertSame(['Basics › height is required'], array_column($row['invalid'], 'message'));
+        $this->assertTrue($row['blocked'], 'the group the key activates is checked');
+
+        $mapping[0]['dataTarget']['settings']['keyId'] = '999999-999999';
+        $this->expectException(InvalidArgumentException::class);
+        $this->configuredDryRun($fileId, $class, $mapping, ['ID', 'Weight']);
+    }
+
     public function testWhereAnObjectTheUserMayNotSeeLiesIsNotTold(): void
     {
         $outside = $this->createObject(self::ELSEWHERE, 'SKU-OUT');
@@ -1026,7 +1221,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         string $sku,
         ?string $name = null,
         ?string $price = null,
-        ?string $title = null
+        ?string $title = null,
+        array $fields = []
     ): Concrete {
         $fqcn = self::OBJECT_NAMESPACE . self::CLASS_NAME;
         /** @var Concrete $object */
@@ -1038,6 +1234,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $object->set('name', $name);
         $object->set('price', $price);
         $object->set('title', $title, 'en');
+        foreach ($fields as $field => $value) {
+            $object->set($field, $value);
+        }
         $object->save();
 
         return $object;
@@ -1057,6 +1256,27 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
         $class = new ClassDefinition();
         $class->setName(self::MANDATORY_CLASS_NAME);
+        $class->setLayoutDefinitions($panel);
+        $class->save();
+
+        return $class;
+    }
+
+    private function createDateTimeClass(): ClassDefinition
+    {
+        $panel = new ClassDefinition\Layout\Panel();
+        $panel->setName('pimcore_root');
+        $sku = new ClassDefinition\Data\Input();
+        $sku->setName('sku');
+        $sku->setTitle('sku');
+        $panel->addChild($sku);
+        $starts = new ClassDefinition\Data\Datetime();
+        $starts->setName('starts');
+        $starts->setTitle('starts');
+        $panel->addChild($starts);
+
+        $class = new ClassDefinition();
+        $class->setName(self::DATE_TIME_CLASS_NAME);
         $class->setLayoutDefinitions($panel);
         $class->save();
 
@@ -1385,6 +1605,45 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             static fn (string $line): array => str_getcsv($line, ',', '"', ''),
             $lines
         ));
+    }
+
+    /**
+     * A dry run of the file with a configuration of the class that matches by the file's ID column.
+     *
+     * @param list<array<string, mixed>> $mapping
+     * @param list<string> $columns the file's columns
+     */
+    private function configuredDryRun(
+        string $fileId,
+        ClassDefinition $class,
+        array $mapping,
+        array $columns
+    ): AdHocImportDryRunResponse {
+        $configuration = $this->createStub(Configuration::class);
+        $configuration->method('getName')->willReturn('by-id');
+        $configuration->method('getType')->willReturn('dataImporterDataObject');
+        $configuration->method('isAllowed')->willReturn(true);
+        $configuration->method('getConfiguration')->willReturn([
+            'interpreterConfig' => ['type' => 'csv', 'settings' => []],
+            'resolverConfig' => [
+                'dataObjectClassId' => $class->getId(),
+                'loadingStrategy' => ['type' => 'id', 'settings' => ['dataSourceIndex' => 'ID']],
+                'createLocationStrategy' => ['type' => 'staticPath', 'settings' => ['path' => self::TARGET]],
+            ],
+            'mappingConfig' => $mapping,
+        ]);
+
+        return $this->service($this->configurationService([$configuration]))->dryRun(
+            $fileId,
+            new AdHocImportDryRunParameters(
+                $this->folderId,
+                'ignored',
+                AdHocImportDryRunParameters::MATCH_BY_FIELD,
+                'ignored',
+                configuration: 'by-id',
+                configurationColumns: array_combine($columns, $columns),
+            )
+        );
     }
 
     private function idConfiguration(): Configuration

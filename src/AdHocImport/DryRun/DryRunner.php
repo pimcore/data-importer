@@ -20,12 +20,16 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\TextMatchValue;
+use Pimcore\Cache\RuntimeCache;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Datetime;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Multiselect;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
 use Pimcore\Model\DataObject\Classificationstore\Service;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Model\Element\ValidationException;
+use Pimcore\Model\User;
 use Pimcore\Tool;
 
 /**
@@ -55,27 +59,57 @@ final readonly class DryRunner
     {
         return $this->scope->run(null, function () use ($plan): array {
             $storeCheck = $this->storeCheck($plan);
+            $finalWriters = $this->finalWriters($plan->writers);
             $results = [];
             $index = 0;
-            foreach ($plan->rows as $row) {
-                $results[] = $this->checkRow($plan, $storeCheck, $row, $index, $plan->firstRowNumber + $index);
-                ++$index;
-                if ($index % self::ROWS_BETWEEN_CLEANUPS === 0) {
-                    \Pimcore::collectGarbage();
+
+            try {
+                foreach ($plan->rows as $row) {
+                    $results[] = $this->checkRow(
+                        $plan,
+                        $storeCheck,
+                        $finalWriters,
+                        $row,
+                        $index,
+                        $plan->firstRowNumber + $index
+                    );
+                    ++$index;
+                    if ($index % self::ROWS_BETWEEN_CLEANUPS === 0) {
+                        \Pimcore::collectGarbage();
+                    }
                 }
+            } finally {
+                \Pimcore::collectGarbage();
             }
-            \Pimcore::collectGarbage();
 
             return $results;
         });
     }
 
     /**
+     * @param list<FieldWriter> $writers
+     *
+     * @return array<int, true> the positions of the last writer of each field: a save sees only what that one leaves
+     */
+    private function finalWriters(array $writers): array
+    {
+        $lastOfField = [];
+        foreach ($writers as $position => $writer) {
+            $field = $writer->field();
+            $lastOfField[json_encode([$field->key, $field->language, $field->storeKey?->id()])] = $position;
+        }
+
+        return array_fill_keys(array_values($lastOfField), true);
+    }
+
+    /**
+     * @param array<int, true> $finalWriters
      * @param array<int|string, mixed> $row
      */
     private function checkRow(
         DryRunPlan $plan,
         StoreGroupCheck $storeCheck,
+        array $finalWriters,
         array $row,
         int $index,
         int $rowNumber
@@ -112,8 +146,9 @@ final readonly class DryRunner
         $stores = $storeCheck->stores($object);
         foreach ($plan->writers as $position => $writer) {
             $field = $writer->field();
-            $old = $isNew ? null : $this->read($object, $field);
-            $error = $writer->write($object, $index, $row) ?? $this->validate($object, $field);
+            $old = $isNew ? null : $this->read($object, $field, $plan->user);
+            $error = $writer->write($object, $index, $row)
+                ?? (isset($finalWriters[$position]) ? $this->validate($object, $field) : null);
             if ($error !== null) {
                 $leftOut[$position] = true;
                 $value = $writer->fileValue($row) ?? '';
@@ -129,7 +164,7 @@ final readonly class DryRunner
             }
             $values[$position] = [
                 'old' => $old,
-                'new' => $error === null ? $this->read($object, $field) : $writer->fileValue($row),
+                'new' => $error === null ? $this->read($object, $field, $plan->user) : $writer->fileValue($row),
             ];
         }
 
@@ -149,6 +184,8 @@ final readonly class DryRunner
             );
         }
 
+        $this->forget($object);
+
         return new DryRunRow(
             $rowNumber,
             $match->matchValue,
@@ -158,6 +195,17 @@ final readonly class DryRunner
             $invalid,
             $blocked
         );
+    }
+
+    /**
+     * What a row wrote stays in memory, so the next row that reads this object, as a parent or a reference, loads it
+     * as it is saved.
+     */
+    private function forget(Concrete $object): void
+    {
+        if ($object->getId() !== null) {
+            RuntimeCache::set(ElementService::getElementCacheTag('object', $object->getId()), null);
+        }
     }
 
     /**
@@ -199,7 +247,7 @@ final readonly class DryRunner
         $entries = [];
         foreach ($refusals as $refused) {
             if (!$this->isReported($refused, $reportedStoreKeys)) {
-                $entries[] = $this->refusedEntry($plan, $storeCheck, $refused, $shownAt);
+                array_push($entries, ...$this->refusedEntriesOf($plan, $storeCheck, $refused, $shownAt));
             }
         }
 
@@ -226,27 +274,29 @@ final readonly class DryRunner
      * } $refused
      * @param array<int, int> $shownAt
      *
-     * @return array{field: int|null, label: string, value: string, message: string}
+     * @return list<array{field: int|null, label: string, value: string, message: string}> one per column it marks
      */
-    private function refusedEntry(
+    private function refusedEntriesOf(
         DryRunPlan $plan,
         StoreGroupCheck $storeCheck,
         array $refused,
         array $shownAt
     ): array {
-        $position = array_key_first($storeCheck->writersOf($plan->writers, $refused));
+        $fields = array_map(
+            static fn (int $position): ?int => $shownAt[$position] ?? null,
+            array_keys($storeCheck->writersOf($plan->writers, $refused))
+        );
+        $message = $this->messages->valueError($refused['error'], $refused['label'], $refused['value'], $plan->user);
 
-        return [
-            'field' => $position === null ? null : ($shownAt[$position] ?? null),
-            'label' => $refused['label'],
-            'value' => $refused['value'],
-            'message' => $this->messages->valueError(
-                $refused['error'],
-                $refused['label'],
-                $refused['value'],
-                $plan->user
-            ),
-        ];
+        return array_map(
+            static fn (?int $field): array => [
+                'field' => $field,
+                'label' => $refused['label'],
+                'value' => $refused['value'],
+                'message' => $message,
+            ],
+            array_values(array_unique($fields === [] ? [null] : $fields))
+        );
     }
 
     private function storeCheck(DryRunPlan $plan): StoreGroupCheck
@@ -297,11 +347,18 @@ final readonly class DryRunner
         return $keys;
     }
 
-    private function read(Concrete $object, ImportField $field): ?string
+    private function read(Concrete $object, ImportField $field, User $user): ?string
     {
-        return $field->key === null
-            ? null
-            : ValueText::of(FieldAccess::read($object, $field->key, $field->language, $field->storeKey));
+        if ($field->key === null) {
+            return null;
+        }
+
+        $value = FieldAccess::read($object, $field->key, $field->language, $field->storeKey);
+
+        return $value instanceof \DateTimeInterface
+            && FieldAccess::definition($object->getClass(), $field->key, $field->storeKey) instanceof Datetime
+            ? ValueText::ofDateTime($value)
+            : ValueText::of($value, $user);
     }
 
     /**
