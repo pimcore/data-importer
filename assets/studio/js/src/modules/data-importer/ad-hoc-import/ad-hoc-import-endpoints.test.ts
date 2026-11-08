@@ -107,6 +107,26 @@ describe('the ad hoc import endpoints', () => {
     }])
   })
 
+  it('get the configurations to map with', async () => {
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportListConfigurations.initiate())
+
+    expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/configurations' }])
+  })
+
+  it('get the configurations again once a configuration is saved', async () => {
+    const listed = store.dispatch(api.endpoints.bundleDataImporterAdHocImportListConfigurations.initiate())
+    await listed
+    sent.length = 0
+
+    store.dispatch(api.util.invalidateTags(['DataHubConfigs']))
+    for (let tick = 0; tick < 10 && sent.length === 0; tick++) {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    listed.unsubscribe()
+
+    expect(sent).toEqual([{ url: '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/configurations' }])
+  })
+
   it('post a column\'s transformations with the file\'s settings to the file', async () => {
     const parameters = {
       classId: 'CAR',
@@ -135,6 +155,7 @@ describe('the ad hoc import endpoints', () => {
     const matchFields = api.endpoints.bundleDataImporterAdHocImportLoadMatchFields.useQuery
     const mapping = api.endpoints.bundleDataImporterAdHocImportLoadMapping.useMutation
     const storeKeys = api.endpoints.bundleDataImporterAdHocImportLoadClassificationStoreKeys.useQuery
+    const configurations = api.endpoints.bundleDataImporterAdHocImportListConfigurations.useQuery
     const transformations = api.endpoints.bundleDataImporterAdHocImportPreviewTransformations.useMutation
 
     expect(generated.useBundleDataImporterAdHocImportUploadFileMutation).toBe(api.endpoints.bundleDataImporterAdHocImportUploadFile.useMutation)
@@ -145,6 +166,7 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportLoadMatchFieldsQuery).toBe(matchFields)
       expect(hooks.useBundleDataImporterAdHocImportLoadMappingMutation).toBe(mapping)
       expect(hooks.useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery).toBe(storeKeys)
+      expect(hooks.useBundleDataImporterAdHocImportListConfigurationsQuery).toBe(configurations)
       expect(hooks.useBundleDataImporterAdHocImportPreviewTransformationsMutation).toBe(transformations)
     }
   })

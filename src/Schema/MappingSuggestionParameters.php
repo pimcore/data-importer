@@ -68,6 +68,23 @@ final readonly class MappingSuggestionParameters
             ]),
         ])]
         private array $columns,
+        #[Property(
+            description: 'A stored configuration whose preview file may give sample values for the AI stage',
+            type: 'string',
+            example: 'products',
+            nullable: true
+        )]
+        private ?string $configName = null,
+        #[Property(
+            description: 'Its unsaved in-progress settings, if any, to read the preview file with',
+            properties: [
+                new Property(property: 'loaderConfig', type: 'object'),
+                new Property(property: 'interpreterConfig', type: 'object'),
+            ],
+            type: 'object',
+            nullable: true
+        )]
+        private ?array $currentConfig = null,
     ) {
     }
 
@@ -82,5 +99,18 @@ final readonly class MappingSuggestionParameters
     public function getColumns(): array
     {
         return $this->columns;
+    }
+
+    public function getConfigName(): ?string
+    {
+        return $this->configName;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getCurrentConfig(): ?array
+    {
+        return $this->currentConfig;
     }
 }

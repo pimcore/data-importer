@@ -19,6 +19,8 @@ import {
   type BundleDataImporterAdHocImportTransformationCell,
   type BundleDataImporterAdHocImportTransformationResponse
 } from '../../data-importer-api-slice.gen'
+import { settingsOf } from '../file-step/file-settings'
+import { type FilePhase } from '../file-step/file-step-state'
 import { type MappingField, type MappingRow, type TransformationStep } from './mapping-state'
 import { DEFAULT_SETTINGS, mapListsDiffer, TransformationSettings } from './transformation-settings'
 
@@ -33,6 +35,16 @@ export interface TransformationSource {
   fileId: string
   classId: string
   settings: BundleDataImporterAdHocImportFileSettings
+}
+
+// a column's transformations run on the stored file as it is read now
+export const transformationSourceOf = (phase: FilePhase, classId: string | undefined): TransformationSource | null => {
+  if (phase.kind !== 'inspected' || phase.inspected.fileId === undefined || phase.inspected.fileId === null ||
+    classId === undefined) {
+    return null
+  }
+
+  return { fileId: phase.inspected.fileId, classId, settings: settingsOf(phase.inspected) }
 }
 
 type Answer = BundleDataImporterAdHocImportTransformationResponse

@@ -17,11 +17,13 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SettingsInput;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportConfigurationsResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportFileSettings;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportMappingResponse;
@@ -30,6 +32,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportTransformationServiceInterface;
@@ -135,6 +138,18 @@ class AdHocImportControllersTest extends Unit
 
         $response = (new LoadClassificationStoreKeysController($this->serializer($answer), $service))
             ->loadClassificationStoreKeys('PROD', 'attributes', 'wid', 20, 10);
+
+        $this->assertSame(self::ANSWER, $response->getContent());
+    }
+
+    public function testTheConfigurationsAreListedByTheService(): void
+    {
+        $answer = new AdHocImportConfigurationsResponse([]);
+
+        $service = $this->createMock(AdHocImportConfigurationServiceInterface::class);
+        $service->expects($this->once())->method('listConfigurations')->willReturn($answer);
+
+        $response = (new ListConfigurationsController($this->serializer($answer), $service))->listConfigurations();
 
         $this->assertSame(self::ANSWER, $response->getContent());
     }

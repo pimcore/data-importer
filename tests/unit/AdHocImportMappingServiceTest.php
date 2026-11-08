@@ -185,7 +185,8 @@ class AdHocImportMappingServiceTest extends Unit
         ];
         $suggestions = $this->createMock(MappingSuggestionServiceInterface::class);
         $suggestions->method('loadTargets')->willReturn([$this->target('bezeichnung', localized: true)]);
-        $suggestions->expects($this->once())->method('suggest')->with($parameters)
+        // nothing here polls the AI stage, so it is not asked to start
+        $suggestions->expects($this->once())->method('suggest')->with($parameters, $this->anything(), false)
             ->willReturn(new MappingSuggestionsResponse([$suggestion]));
 
         $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions)->loadMapping($parameters);

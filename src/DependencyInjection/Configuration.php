@@ -54,6 +54,35 @@ final class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
             ->end()
+            ->arrayNode('mapping_suggestions')
+                ->addDefaultsIfNotSet()
+                ->info('Configure the suggestions of mapping fields for source columns')
+                ->children()
+                    ->arrayNode('ai')
+                        ->addDefaultsIfNotSet()
+                        ->info(
+                            'Let the Pimcore agent suggest fields for the columns the name comparison leaves open. ' .
+                            'Needs the agent bundle.'
+                        )
+                        ->children()
+                            ->booleanNode('enabled')
+                                ->defaultFalse()
+                                ->info(
+                                    'Send the headers of open columns and the fields of the class ' .
+                                    'to the agent\'s model.'
+                                )
+                            ->end()
+                            ->booleanNode('send_sample_values')
+                                ->defaultFalse()
+                                ->info(
+                                    'Also send a few values per open column, each column drawn on its own ' .
+                                    'from random rows and cut to 50 characters, so they form no record.'
+                                )
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end()
         ->end();
 
         return $treeBuilder;

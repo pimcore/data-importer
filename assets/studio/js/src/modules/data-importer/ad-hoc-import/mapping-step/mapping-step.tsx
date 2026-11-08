@@ -10,7 +10,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Flex, FormKit, SearchInput, Segmented, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Flex, SearchInput, Segmented, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
 import { FieldPanel } from './field-panel'
 import {
   chooseField,
@@ -34,6 +34,10 @@ import { MappingRowView } from './mapping-row'
 import { StoreKeyDialog } from './store-key-dialog'
 import { takenStoreKeys } from './taken-store-keys'
 import { useLanguages } from './use-languages'
+import { ConfigurationChoice, type ConfigurationChoiceProps } from './configuration-choice'
+import { type MapWith } from './configuration-state'
+import { MapWithSwitch } from './map-with-switch'
+import { NotImportedPanel } from './not-imported-panel'
 import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 const SEARCH_WIDTH = 240
@@ -61,11 +65,24 @@ export interface MappingStepProps {
   fields: MappingField[]
   isLoading: boolean
   onChange: (mapping: Mapping) => void
+  mapWith: MapWith
+  onMapWithChange: (mapWith: MapWith) => void
+  configuration: ConfigurationChoiceProps
   // what the transformations of a column run on; none, no transformations
   source: TransformationSource | null
 }
 
-export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, source }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = ({
+  classId,
+  mapping,
+  fields,
+  isLoading,
+  onChange,
+  mapWith,
+  onMapWithChange,
+  configuration,
+  source
+}: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const languages = useLanguages()
@@ -85,22 +102,25 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, sou
   const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
   const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
-  const mapWith = (
-    <Flex
-      align="center"
-      gap="small"
-    >
-      <Text>{ t('data-importer.ad-hoc-import.mapping.map-with') }</Text>
-      <Segmented
-        options={ [
-          { value: 'here', label: t('data-importer.ad-hoc-import.mapping.map-here') },
-          // chosen in a step of its own once a configuration can be selected
-          { value: 'configuration', label: t('data-importer.ad-hoc-import.mapping.use-configuration'), disabled: true }
-        ] }
-        value="here"
-      />
-    </Flex>
+  const mapWithSwitch = (
+    <MapWithSwitch
+      onChange={ onMapWithChange }
+      value={ mapWith }
+    />
   )
+
+  // the mapping made here stays for a switch back
+  if (mapWith === 'configuration') {
+    return (
+      <Flex
+        gap="normal"
+        vertical
+      >
+        { mapWithSwitch }
+        <ConfigurationChoice { ...configuration } />
+      </Flex>
+    )
+  }
 
   if (mapping === null) {
     return (
@@ -108,7 +128,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, sou
         gap="normal"
         vertical
       >
-        { mapWith }
+        { mapWithSwitch }
         { isLoading && <Skeleton active /> }
       </Flex>
     )
@@ -139,7 +159,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, sou
       gap="normal"
       vertical
     >
-      { mapWith }
+      { mapWithSwitch }
 
       <Flex
         align="center"
@@ -252,27 +272,10 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, sou
       ) }
 
       { skipped.length > 0 && (
-        <FormKit.Panel title={ t('data-importer.ad-hoc-import.mapping.not-imported', { count: skipped.length }) }>
-          { skipped.map(({ column, label }) => (
-            <Flex
-              align="center"
-              gap="small"
-              key={ column }
-            >
-              <Text>{ label }</Text>
-              <Button
-                aria-label={ t('data-importer.ad-hoc-import.mapping.restore-column', {
-                  column: label,
-                  interpolation: { escapeValue: false }
-                }) }
-                onClick={ () => { change(restoreColumn(mapping, column)) } }
-                type="link"
-              >
-                { t('data-importer.ad-hoc-import.mapping.restore') }
-              </Button>
-            </Flex>
-          )) }
-        </FormKit.Panel>
+        <NotImportedPanel
+          onRestore={ (column) => { change(restoreColumn(mapping, column)) } }
+          skipped={ skipped }
+        />
       ) }
 
       { source !== null && editedRow !== undefined && editedField !== undefined && (

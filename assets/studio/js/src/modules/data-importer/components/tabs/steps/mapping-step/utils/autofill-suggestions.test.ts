@@ -46,7 +46,8 @@ describe('toMappingSuggestions', () => {
     targetFieldLabel: 'Bezeichnung [bezeichnung]',
     transformationResultType: 'default',
     score: 100,
-    language: 'de'
+    language: 'de',
+    source: 'name' as const
   }
 
   it('keeps what the server suggested and adds the value of the preview row', () => {

@@ -60,6 +60,11 @@ export const api = baseApi.enhanceEndpoints({
       invalidatesTags: []
     },
 
+    // Every request has its own id, and nothing refetches it but its own polling
+    bundleDataImporterMappingSuggestionLoadAi: {
+      providesTags: []
+    },
+
     // Saving a config should only refresh config lists, not detail/preview/helper endpoints
     bundleDataImporterConfigSave: {
       invalidatesTags: ['DataHubConfigs']
@@ -111,6 +116,10 @@ export const api = baseApi.enhanceEndpoints({
     bundleDataImporterAdHocImportLoadClassificationStoreKeys: {
       providesTags: []
     },
+    // a saved configuration changes what the list says about it
+    bundleDataImporterAdHocImportListConfigurations: {
+      providesTags: ['DataHubConfigs']
+    },
     bundleDataImporterAdHocImportPreviewTransformations: {
       invalidatesTags: []
     }
@@ -126,11 +135,13 @@ export const {
   useBundleDataImporterConfigCancelExecutionMutation,
   useBundleDataImporterConnectionListQuery,
   useBundleDataImporterMappingSuggestionSuggestMutation,
+  useBundleDataImporterMappingSuggestionLoadAiQuery,
   useBundleDataImporterAdHocImportInspectFileMutation,
   useBundleDataImporterAdHocImportDeleteFileMutation,
   useBundleDataImporterAdHocImportLoadMatchFieldsQuery,
   useBundleDataImporterAdHocImportLoadMappingMutation,
   useBundleDataImporterAdHocImportLoadClassificationStoreKeysQuery,
+  useBundleDataImporterAdHocImportListConfigurationsQuery,
   useBundleDataImporterAdHocImportPreviewTransformationsMutation
 } = api
 

@@ -106,6 +106,7 @@ export const components = {
       { children }
     </button>
   ),
+  Card: ({ children, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement>) => <div { ...props }>{ children }</div>,
   ColumnPicker: ({ groups, onSelect, emptyText }: { groups: PickerGroup[], onSelect: (item: PickerItem) => void, emptyText?: string }) => (
     <div role="tree">
       { groups.length === 0 && <span>{ emptyText }</span> }
@@ -118,10 +119,11 @@ export const components = {
       )) }
     </div>
   ),
-  Flex: ({ children, role, onClick, onFocus, 'aria-label': label, 'aria-current': current }: WithChildren & { role?: string, onClick?: () => void, onFocus?: () => void, 'aria-label'?: string, 'aria-current'?: 'true' }) => (
+  Flex: ({ children, role, onClick, onFocus, 'aria-label': label, 'aria-labelledby': labelledBy, 'aria-current': current }: WithChildren & { role?: string, onClick?: () => void, onFocus?: () => void, 'aria-label'?: string, 'aria-labelledby'?: string, 'aria-current'?: 'true' }) => (
     <div
       aria-current={ current }
       aria-label={ label }
+      aria-labelledby={ labelledBy }
       onClick={ onClick }
       onFocus={ onFocus }
       onKeyDown={ onClick }
@@ -276,7 +278,7 @@ export const components = {
     </ol>
   ),
   Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
-  Text: ({ children }: WithChildren) => <span>{ children }</span>,
+  Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>
       <input

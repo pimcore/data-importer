@@ -14,7 +14,8 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { type BundleDataImporterAdHocImportTransformationResponse } from '../../data-importer-api-slice.gen'
 import { type MappingField, type MappingRow } from './mapping-state'
 import { TransformationSettings } from './transformation-settings'
-import { TransformationsModal, type TransformationSource } from './transformations-modal'
+import { TransformationsModal, transformationSourceOf, type TransformationSource } from './transformations-modal'
+import { type InspectedFile } from '../file-step/file-step-state'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../../test/support/ad-hoc-import'))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
@@ -342,5 +343,36 @@ describe('the transformations of a column', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(onCancel).toHaveBeenCalledTimes(1)
     expect(onApply).not.toHaveBeenCalled()
+  })
+})
+
+describe('what the transformations of a column run on', () => {
+  const file = { name: 'products.csv', size: 10 }
+  const inspected: InspectedFile = {
+    maxRows: 5000,
+    fileId: 'file-1',
+    type: 'csv',
+    delimiter: ';',
+    enclosure: '"',
+    escape: '\\',
+    hasHeaderRow: true,
+    sheets: [],
+    rowCount: 1,
+    columns: [],
+    firstRows: []
+  }
+
+  it('is the stored file under its settings, for the class chosen', () => {
+    expect(transformationSourceOf({ kind: 'inspected', file, inspected }, 'PROD')).toEqual({
+      fileId: 'file-1',
+      classId: 'PROD',
+      settings: { delimiter: ';', enclosure: '"', escape: '\\', hasHeaderRow: true, sheetName: undefined }
+    })
+  })
+
+  it('is nothing without a stored file or a class', () => {
+    expect(transformationSourceOf({ kind: 'empty' }, 'PROD')).toBeNull()
+    expect(transformationSourceOf({ kind: 'inspected', file, inspected: { ...inspected, fileId: null } }, 'PROD')).toBeNull()
+    expect(transformationSourceOf({ kind: 'inspected', file, inspected }, undefined)).toBeNull()
   })
 })

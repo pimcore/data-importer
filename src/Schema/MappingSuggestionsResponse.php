@@ -25,7 +25,7 @@ use Pimcore\Bundle\StudioBackendBundle\Util\Trait\AdditionalAttributesTrait;
 #[Schema(
     schema: 'BundleDataImporterMappingSuggestionsResponse',
     title: 'Bundle Data Importer Mapping Suggestions Response',
-    required: ['suggestions'],
+    required: ['suggestions', 'aiStatus', 'aiRequestId'],
     type: 'object'
 )]
 final class MappingSuggestionsResponse implements AdditionalAttributesInterface
@@ -40,7 +40,8 @@ final class MappingSuggestionsResponse implements AdditionalAttributesInterface
      *     targetFieldLabel: string,
      *     transformationResultType: string,
      *     score: int,
-     *     language: string|null
+     *     language: string|null,
+     *     source: string
      * }> $suggestions
      */
     public function __construct(
@@ -56,6 +57,7 @@ final class MappingSuggestionsResponse implements AdditionalAttributesInterface
                     'transformationResultType',
                     'score',
                     'language',
+                    'source',
                 ],
                 properties: [
                     new Property(
@@ -101,11 +103,32 @@ final class MappingSuggestionsResponse implements AdditionalAttributesInterface
                         example: 'de',
                         nullable: true
                     ),
+                    new Property(
+                        property: 'source',
+                        description: 'Where the suggestion comes from: the name comparison or the AI stage',
+                        type: 'string',
+                        enum: ['name', 'ai'],
+                        example: 'name'
+                    ),
                 ],
                 type: 'object'
             )
         )]
         private readonly array $suggestions,
+        #[Property(
+            description: 'Where the AI stage stands; while it is running, load its suggestions with the request id',
+            type: 'string',
+            enum: ['none', 'running', 'finished', 'failed'],
+            example: 'none'
+        )]
+        private readonly string $aiStatus = 'none',
+        #[Property(
+            description: 'The id to load the suggestions of the AI stage with; null when it started no task',
+            type: 'string',
+            example: null,
+            nullable: true
+        )]
+        private readonly ?string $aiRequestId = null,
     ) {
     }
 
@@ -117,11 +140,22 @@ final class MappingSuggestionsResponse implements AdditionalAttributesInterface
      *     targetFieldLabel: string,
      *     transformationResultType: string,
      *     score: int,
-     *     language: string|null
+     *     language: string|null,
+     *     source: string
      * }>
      */
     public function getSuggestions(): array
     {
         return $this->suggestions;
+    }
+
+    public function getAiStatus(): string
+    {
+        return $this->aiStatus;
+    }
+
+    public function getAiRequestId(): ?string
+    {
+        return $this->aiRequestId;
     }
 }

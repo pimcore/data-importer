@@ -90,10 +90,13 @@ const Stateful = ({ initial, isLoading = false }: { initial: Mapping | null, isL
   return (
     <MappingStep
       classId="PROD"
+      configuration={ { isLoading: false, onChoose: () => {} } }
       fields={ loaded.fields }
       isLoading={ isLoading }
+      mapWith="here"
       mapping={ mapping }
       onChange={ setMapping }
+      onMapWithChange={ () => {} }
       source={ null }
     />
   )

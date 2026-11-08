@@ -15,6 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\MappingSuggestionsEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\MappingSuggestionHydratorInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionInput;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStatus;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\ColumnMatcher;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\MappingSuggestionParameters;
@@ -32,10 +35,17 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @internal
+ *
+ * @phpstan-import-type Column from ColumnMatcher
+ * @phpstan-import-type Suggestion from ColumnMatcher
+ * @phpstan-import-type Target from ColumnMatcher
  */
-final readonly class MappingSuggestionService implements MappingSuggestionServiceInterface
+final readonly class MappingSuggestionService implements MappingSuggestionServiceInterface // NOSONAR php:S1200 one entry point for the matcher and the AI stage
 {
     use CurrentUserResolverTrait;
+
+    // keeps a header row a wrong delimiter split into thousands of columns from becoming a huge task
+    private const int MAX_AI_COLUMNS = 200;
 
     // Result types a suggestion can write. A field offered by several keeps the first, so simple fields stay on the
     // default one.
@@ -62,6 +72,8 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         private ColumnMatcher $columnMatcher,
         private MappingSuggestionHydratorInterface $hydrator,
         private EventDispatcherInterface $eventDispatcher,
+        private AiSuggestionStage $aiStage,
+        private SampleValueReader $sampleValueReader,
         private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
         private ClassDefinitionServiceInterface $classDefinitionService
     ) {
@@ -69,16 +81,11 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
 
     public function suggest(
         MappingSuggestionParameters $parameters,
-        array $excludedTargets = []
+        array $excludedTargets = [],
+        bool $withAiStage = true
     ): MappingSuggestionsResponse {
         $classId = $parameters->getClassId();
-        $user = $this->resolveCurrentUser();
-        $mayConfigure = $user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG);
-
-        // Studio's voter refuses on the first missing right, so either right is checked here and not on the route.
-        if (!$mayConfigure && !$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT)) {
-            throw new ForbiddenException('Access denied to mapping suggestions');
-        }
+        $mayConfigure = $this->assertMaySuggest();
 
         if ($this->classDefinitionResolver->getById($classId) === null) {
             throw new NotFoundException('Class', $classId);
@@ -88,16 +95,57 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
             $this->assertMayCreate($classId);
         }
 
-        $response = $this->hydrator->hydrate(
-            $this->columnMatcher->match(
-                $parameters->getColumns(),
-                array_values(array_filter(
-                    $this->loadTargets($classId),
-                    static fn (array $target): bool => !in_array($target['key'], $excludedTargets, true)
-                )),
-                $this->toolResolver->getValidLanguages()
-            )
+        $targets = array_values(array_filter(
+            $this->loadTargets($classId),
+            static fn (array $target): bool => !in_array($target['key'], $excludedTargets, true)
+        ));
+        $languages = $this->toolResolver->getValidLanguages();
+        $suggestions = $this->columnMatcher->match($parameters->getColumns(), $targets, $languages);
+        $aiRequestId = $withAiStage ? $this->startAiStage($parameters, $suggestions, $targets, $languages) : null;
+
+        return $this->respond(
+            $suggestions,
+            $aiRequestId === null ? AiSuggestionStatus::None : AiSuggestionStatus::Running,
+            $aiRequestId
         );
+    }
+
+    public function loadAi(string $requestId): MappingSuggestionsResponse
+    {
+        $this->assertMaySuggest();
+        $result = $this->aiStage->read($requestId, $this->resolveCurrentUser()->getId());
+        if ($result === null) {
+            throw new NotFoundException('Mapping suggestion request', $requestId);
+        }
+
+        return $this->respond($result->suggestions, $result->status, $requestId);
+    }
+
+    /**
+     * Studio's voter refuses on the first missing right, so either right is checked here and not on the routes.
+     *
+     * @return bool whether the user has the configuration right
+     */
+    private function assertMaySuggest(): bool
+    {
+        $user = $this->resolveCurrentUser();
+        $mayConfigure = $user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_CONFIG);
+        if (!$mayConfigure && !$user->isAllowed(PermissionConstants::PLUGIN_DATA_IMPORTER_AD_HOC_IMPORT)) {
+            throw new ForbiddenException('Access denied to mapping suggestions');
+        }
+
+        return $mayConfigure;
+    }
+
+    /**
+     * @param list<Suggestion> $suggestions
+     */
+    private function respond(
+        array $suggestions,
+        AiSuggestionStatus $aiStatus,
+        ?string $aiRequestId
+    ): MappingSuggestionsResponse {
+        $response = $this->hydrator->hydrate($suggestions, $aiStatus, $aiRequestId);
 
         $this->eventDispatcher->dispatch(
             new MappingSuggestionsEvent($response),
@@ -105,6 +153,107 @@ final readonly class MappingSuggestionService implements MappingSuggestionServic
         );
 
         return $response;
+    }
+
+    /**
+     * @param list<Suggestion> $suggestions
+     * @param list<Target> $targets
+     * @param list<string> $languages
+     */
+    private function startAiStage(
+        MappingSuggestionParameters $parameters,
+        array $suggestions,
+        array $targets,
+        array $languages
+    ): ?string {
+        if (!$this->aiStage->isActive()) {
+            return null;
+        }
+
+        $columns = $this->openColumns($parameters->getColumns(), $suggestions);
+        $openTargets = $this->openTargets($targets, $suggestions);
+        if ($columns === [] || $openTargets === []) {
+            return null;
+        }
+
+        $samples = $this->sampleValues($parameters, $columns);
+        // a column with neither a header nor a value gives the agent nothing to go on
+        $columns = array_values(array_filter(
+            $columns,
+            static fn (array $column): bool => trim($column['label']) !== '' || isset($samples[$column['index']])
+        ));
+        if ($columns === []) {
+            return null;
+        }
+
+        $taken = [];
+        foreach ($suggestions as $suggestion) {
+            $taken[] = ['field' => $suggestion['targetFieldName'], 'language' => $suggestion['language']];
+        }
+
+        return $this->aiStage->start(
+            new AiSuggestionInput($parameters->getClassId(), $columns, $openTargets, $languages, $samples, $taken),
+            $this->resolveCurrentUser()->getId()
+        );
+    }
+
+    /**
+     * What the caller asked about and the name comparison left open. A caller sends no column that is mapped or left
+     * out already, so none of those reaches the agent.
+     *
+     * @param list<Column> $columns
+     * @param list<Suggestion> $suggestions
+     *
+     * @return list<Column>
+     */
+    private function openColumns(array $columns, array $suggestions): array
+    {
+        $suggested = array_flip(array_column($suggestions, 'sourceIndex'));
+        $open = [];
+        foreach ($columns as $column) {
+            if (!isset($suggested[$column['index']]) && $this->columnMatcher->acceptsLabel($column['label'])) {
+                $open[$column['index']] = $column;
+            }
+        }
+
+        return array_slice(array_values($open), 0, self::MAX_AI_COLUMNS);
+    }
+
+    /**
+     * A localized field stays open: another column may hold its other languages.
+     *
+     * @param list<Target> $targets
+     * @param list<Suggestion> $suggestions
+     *
+     * @return list<Target>
+     */
+    private function openTargets(array $targets, array $suggestions): array
+    {
+        $suggested = array_flip(array_column($suggestions, 'targetFieldName'));
+
+        return array_values(array_filter(
+            $targets,
+            static fn (array $target): bool => $target['localized'] || !isset($suggested[$target['key']])
+        ));
+    }
+
+    /**
+     * @param list<Column> $columns
+     *
+     * @return array<string, list<string>>
+     */
+    private function sampleValues(MappingSuggestionParameters $parameters, array $columns): array
+    {
+        $configName = $parameters->getConfigName();
+        if ($configName === null || !$this->aiStage->sendsSampleValues()) {
+            return [];
+        }
+
+        return $this->sampleValueReader->read(
+            $configName,
+            $parameters->getCurrentConfig(),
+            array_column($columns, 'index')
+        );
     }
 
     /**
