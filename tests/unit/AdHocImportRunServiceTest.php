@@ -151,6 +151,8 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertSame('running', $response->getState());
         $this->assertSame(2, $response->getTotal());
         $this->assertSame(2, $response->getSkipped());
+        $this->assertSame([0, 0, 0], [$response->getUpdated(), $response->getCreated(), $response->getFailed()]);
+        $this->assertSame(AdHocImportDryRunServiceInterface::SKIP_ROWS, $response->getErrorMode());
         $this->assertSame(0, $response->getProcessed());
         $this->assertSame('autumn.csv', $response->getFileName());
         $this->assertSame('/Products/New', $response->getNewObjectsFolder());
@@ -175,6 +177,18 @@ class AdHocImportRunServiceTest extends Unit
         $this->expectException(InvalidArgumentException::class);
 
         $this->service([new DryRunRow(2, 'SKU-1', null, 'no match')])->start(
+            $this->fileId,
+            $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
+        );
+    }
+
+    public function testAFileGoneBeforeItsRowsAreQueuedIsNotFound(): void
+    {
+        $this->files->delete(AdHocRunFixtures::USER_ID, $this->fileId, FileType::Csv);
+
+        $this->expectException(NotFoundHttpException::class);
+
+        $this->service($this->results())->start(
             $this->fileId,
             $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
         );

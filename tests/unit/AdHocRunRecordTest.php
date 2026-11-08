@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowFailure;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowOutcome;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 
@@ -52,6 +53,13 @@ class AdHocRunRecordTest extends Unit
 
         $this->assertEquals($run, RunRecord::fromArray($run->toArray()));
         $this->assertSame(FileType::Csv->value, $run->toArray()['type'], 'stored as a plain value');
+    }
+
+    public function testAFailureSurvivesBeingStored(): void
+    {
+        $failure = new RowFailure(41, 'SKU-1', 'create', 'no', ['SKU-1', 'Chair']);
+
+        $this->assertEquals($failure, RowFailure::fromArray($failure->toArray()));
     }
 
     public function testAQueueItemNamesItsFileWithinTheColumnsLength(): void

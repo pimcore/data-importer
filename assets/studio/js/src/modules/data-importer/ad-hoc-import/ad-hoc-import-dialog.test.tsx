@@ -1380,6 +1380,17 @@ describe('the preview step', () => {
       expect(onClose).toHaveBeenCalled()
     })
 
+    it('tells the user when forgetting the run fails', async () => {
+      mockLoadRun.mockReturnValue({ data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
+      mockDiscardRun.mockResolvedValue({ error: { status: 500 } })
+      await startImport()
+
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Close' })) })
+
+      expect(mockTrackError).toHaveBeenCalled()
+      expect(onClose).toHaveBeenCalled()
+    })
+
     it('offers the failed rows for download', async () => {
       mockLoadRun.mockReturnValue({
         data: runAnswer({

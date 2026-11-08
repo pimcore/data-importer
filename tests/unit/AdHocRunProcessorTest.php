@@ -278,6 +278,23 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame([], $stored['rows'][0]['values']);
     }
 
+    public function testARowThatBreaksTheLookupCountsAsFailedAndTheRunEnds(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $plan = AdHocRunFixtures::plan([new \RuntimeException('database gone')], [], $user);
+
+        $this->processor($plan, $user)->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame(1, $run->failed);
+        $this->assertFalse($run->isRunning());
+        $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
+        $this->assertStringContainsString('cannot-go-on', $stored['rows'][0]['message']);
+        $this->assertStringNotContainsString('database', $stored['rows'][0]['message']);
+    }
+
     public function testAQueueItemOfAnEndedOrUnknownRunIsIgnored(): void
     {
         $fileId = $this->storedFile();

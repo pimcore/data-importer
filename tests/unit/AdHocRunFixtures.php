@@ -74,21 +74,26 @@ final class AdHocRunFixtures
     }
 
     /**
-     * @param list<RowMatch> $matches what the rows find, in order
+     * @param list<RowMatch|\Exception> $matches what the rows find, in order; an exception is thrown
      * @param list<FieldWriter> $writers
      * @param list<array<int|string, mixed>> $rows
      */
     public static function plan(array $matches, array $writers, ?User $user = null, array $rows = [[]]): ImportPlan
     {
         $matcher = new class($matches) implements RowMatcherInterface {
-            /** @param list<RowMatch> $matches */
+            /** @param list<RowMatch|\Exception> $matches */
             public function __construct(private array $matches)
             {
             }
 
             public function match(array $row, int $rowNumber): RowMatch
             {
-                return array_shift($this->matches);
+                $match = array_shift($this->matches);
+                if ($match instanceof \Exception) {
+                    throw $match;
+                }
+
+                return $match;
             }
         };
 
