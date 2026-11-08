@@ -57,9 +57,41 @@ export const chooseLanguage = (mapping: Mapping, column: string, language: strin
     ? row
     : { ...row, choice: { ...row.choice, language } })
 
+const REGIONAL_LANGUAGE = /^.+?[\s_.-]+[([]?([a-z]{2})[_-]([a-z]{2,4})[)\]]?$/i
+const LANGUAGE = /^.+?[\s_.-]+[([]?([a-z]{2})[)\]]?$/i
+
+/**
+ * The language a column name ends in (`Width DE`, `Name en_GB`), read as the server reads it for its suggestions, so
+ * that a column without a suggestion is known by its language too. A region unknown as a language falls back to its
+ * language; spelled like a locale (`en_DE`) that fallback wins, otherwise of two languages (`de_en`) the last one.
+ */
+export const languageOfLabel = (label: string, languages: string[]): string | null => {
+  const byLowerCase = new Map(languages.map((language) => [language.toLowerCase(), language]))
+  const name = label.trim()
+
+  let fallback: string | undefined
+  const regional = REGIONAL_LANGUAGE.exec(name)
+  if (regional !== null) {
+    const [, language, region] = regional
+    const exact = byLowerCase.get(`${language}_${region}`.toLowerCase())
+    if (exact !== undefined) {
+      return exact
+    }
+    fallback = region.length === 2 ? byLowerCase.get(language.toLowerCase()) : undefined
+    if (fallback !== undefined && language === language.toLowerCase() && region === region.toUpperCase()) {
+      return fallback
+    }
+  }
+
+  const plain = LANGUAGE.exec(name)
+
+  return (plain === null ? undefined : byLowerCase.get(plain[1].toLowerCase())) ?? fallback ?? null
+}
+
 /**
  * Gives each column going into a localized field without a language one: the language guessed from the column name,
- * else the first no other column has for that field, else the first.
+ * else the first no other column has for that field. A column picked by hand then takes the first language; a
+ * suggestion no language is left for is not taken.
  */
 export const withLanguages = (mapping: Mapping, fields: MappingField[], languages: string[]): Mapping => {
   const localized = new Set(fields.filter(({ localized }) => localized).map(({ key }) => key))
@@ -76,9 +108,13 @@ export const withLanguages = (mapping: Mapping, fields: MappingField[], language
     }
     const choice = row.choice!
     const free = languages.filter((language) => !isTaken(rows, { ...choice, language }, row.column))
-    const guessed = row.suggestion?.language ?? null
-    const language = guessed !== null && free.includes(guessed) ? guessed : free[0] ?? languages[0]
-    rows[position] = { ...row, choice: { ...choice, language } }
+    const guessed = row.suggestion?.language ?? languageOfLabel(row.label, languages)
+    const language = guessed !== null && free.includes(guessed) ? guessed : free[0]
+    if (language === undefined && row.auto) {
+      rows[position] = { ...row, choice: undefined, auto: false }
+      return
+    }
+    rows[position] = { ...row, choice: { ...choice, language: language ?? languages[0] } }
   })
 
   return { ...mapping, rows }

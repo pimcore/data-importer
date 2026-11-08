@@ -12,13 +12,15 @@ import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step
 import {
   chooseField,
   createMapping,
+  pendingSuggestionCount,
   setTransformations,
   skipColumn,
+  takeAllSuggestions,
   type LoadedMapping,
   type Mapping,
   type MappingField
 } from './mapping-state'
-import { chooseLanguage, chooseStoreKey, freeLanguages, withLanguages } from './mapping-choices'
+import { chooseLanguage, chooseStoreKey, freeLanguages, languageOfLabel, withLanguages } from './mapping-choices'
 import { canGoInto, isTaken, takenFields } from './taken-fields'
 import { takenStoreKeys } from './taken-store-keys'
 
@@ -195,11 +197,33 @@ describe('giving localized fields a language', () => {
   })
 
   it('takes the first language no other column has for the field', () => {
-    const both = chooseField(chooseField(noGuess, 'Name DE', 'name'), 'Name EN', 'name')
+    const both = chooseField(chooseField(noGuess, 'Notiz', 'name'), 'Preis', 'name')
     const next = withLanguages(both, fields, languages)
 
-    expect(rowOf(next, 'Name DE').choice?.language).toBe('en')
-    expect(rowOf(next, 'Name EN').choice?.language).toBe('de')
+    expect(rowOf(next, 'Preis').choice?.language).toBe('en')
+    expect(rowOf(next, 'Notiz').choice?.language).toBe('de')
+  })
+
+  it('reads the language from the column name of a column without a suggestion', () => {
+    expect(rowOf(withLanguages(chooseField(noGuess, 'Name DE', 'name'), fields, ['en', 'de']), 'Name DE').choice?.language).toBe('de')
+    const keyed = withLanguages(chooseStoreKey(noGuess, 'Name DE', 'attributes', { id: '2-4', label: 'Width' }), fieldsWithStore, ['en', 'de'])
+    expect(rowOf(keyed, 'Name DE').choice?.language).toBe('de')
+  })
+
+  it('does not take a suggestion no language is left for', () => {
+    const suggestions = [suggestion('Name EN', 'name', 100, 'en'), suggestion('Notiz', 'name', 100)]
+    const settle = (next: Mapping): Mapping => withLanguages(next, fields, ['en'])
+    const initial = settle(createMapping(inspected, objects, { fields, suggestions }))
+
+    expect(rowOf(initial, 'Name EN').choice).toEqual({ field: 'name', language: 'en' })
+    expect(rowOf(initial, 'Notiz')).toMatchObject({ choice: undefined, auto: false })
+    expect(pendingSuggestionCount(initial, settle)).toBe(0)
+    expect(pendingSuggestionCount(initial)).toBe(1)
+
+    const weak = createMapping(inspected, objects, { fields, suggestions: suggestions.map((given) => ({ ...given, score: 50 })) })
+    const all = settle(takeAllSuggestions(weak))
+    expect(rowOf(all, 'Name EN').choice).toEqual({ field: 'name', language: 'en' })
+    expect(rowOf(all, 'Notiz').choice).toBeUndefined()
   })
 
   it('takes the first free language when the guessed one is taken', () => {
@@ -253,5 +277,22 @@ describe('which field a column can still go into', () => {
     const rows = chooseStoreKey(mapping, 'Notiz', 'attributes', { id: '2-4', label: 'Width' }).rows
 
     expect(canGoInto(takenFields(rows), field('attributes', { classificationStore: true }), 'Preis', languages)).toBe(true)
+  })
+})
+
+describe('the language a column name ends in', () => {
+  it('reads a language suffix as the server does', () => {
+    const languages = ['en', 'de', 'en_GB', 'fr']
+
+    expect(languageOfLabel('Width DE', languages)).toBe('de')
+    expect(languageOfLabel(' Name (en) ', languages)).toBe('en')
+    expect(languageOfLabel('Name_en_GB', languages)).toBe('en_GB')
+    expect(languageOfLabel('Name en_DE', languages)).toBe('en')
+    expect(languageOfLabel('Name de_en', languages)).toBe('en')
+    expect(languageOfLabel('Name DE-AT', languages)).toBe('de')
+    expect(languageOfLabel('Name fr-Latn', languages)).toBeNull()
+    expect(languageOfLabel('Name IT', languages)).toBeNull()
+    expect(languageOfLabel('Name', languages)).toBeNull()
+    expect(languageOfLabel('DE', languages)).toBeNull()
   })
 })

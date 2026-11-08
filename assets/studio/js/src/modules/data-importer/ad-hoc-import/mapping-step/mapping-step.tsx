@@ -76,7 +76,8 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, sou
   const [storeKeyFor, setStoreKeyFor] = useState<{ column: string, field: string } | null>(null)
 
   // a column going into a localized field always holds a language
-  const change = (next: Mapping): void => { onChange(withLanguages(next, fields, languages)) }
+  const settle = (next: Mapping): Mapping => withLanguages(next, fields, languages)
+  const change = (next: Mapping): void => { onChange(settle(next)) }
   // the column whose transformations are open
   const [editing, setEditing] = useState<string | null>(null)
 
@@ -129,7 +130,7 @@ export const MappingStep = ({ classId, mapping, fields, isLoading, onChange, sou
   const editedField = fields.find(({ key }) => key === editedRow?.choice?.field)
 
   const counts = rowCounts(mapping)
-  const pending = pendingSuggestionCount(mapping)
+  const pending = pendingSuggestionCount(mapping, settle)
   const rows = visibleRows(mapping, filter, search)
   const skipped = skippedRows(mapping)
 

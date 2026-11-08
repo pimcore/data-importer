@@ -217,8 +217,11 @@ export const restoreColumn = (mapping: Mapping, column: string): Mapping =>
 
 export const takeAllSuggestions = (mapping: Mapping): Mapping => ({ ...mapping, rows: takeSuggestions(mapping.rows, 0) })
 
-export const pendingSuggestionCount = (mapping: Mapping): number => {
-  const taken = takeAllSuggestions(mapping).rows
+/**
+ * The suggestions "Use all suggestions" would take, after `settle` (the languages, say) has had its say on them.
+ */
+export const pendingSuggestionCount = (mapping: Mapping, settle: (next: Mapping) => Mapping = (next) => next): number => {
+  const taken = settle(takeAllSuggestions(mapping)).rows
 
   return taken.filter((row, position) => row.choice !== mapping.rows[position].choice).length
 }
