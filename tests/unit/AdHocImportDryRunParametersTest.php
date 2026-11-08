@@ -61,7 +61,13 @@ class AdHocImportDryRunParametersTest extends Unit
         $settings = $parameters->toSettingsInput();
         $this->assertSame(
             [';', "'", '\\', false, 'Products'],
-            [$settings->delimiter, $settings->enclosure, $settings->escape, $settings->hasHeaderRow, $settings->sheetName]
+            [
+                $settings->delimiter,
+                $settings->enclosure,
+                $settings->escape,
+                $settings->hasHeaderRow,
+                $settings->sheetName,
+            ]
         );
     }
 
@@ -72,7 +78,13 @@ class AdHocImportDryRunParametersTest extends Unit
 
         $this->assertSame(
             [null, null, null, true, null],
-            [$settings->delimiter, $settings->enclosure, $settings->escape, $settings->hasHeaderRow, $settings->sheetName]
+            [
+                $settings->delimiter,
+                $settings->enclosure,
+                $settings->escape,
+                $settings->hasHeaderRow,
+                $settings->sheetName,
+            ]
         );
     }
 }

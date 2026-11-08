@@ -90,7 +90,7 @@ class AdHocDryRunMessagesTest extends Unit
     {
         $this->assertSame(
             array_map(static fn (ValueError $error): string => $error->name, ValueError::cases()),
-            array_map(static fn (array $case): string => $case[0]->name, array_values(self::valueErrors()))
+            array_map(static fn (array $case): string => $case[0]->name, array_values(static::valueErrors()))
         );
     }
 
