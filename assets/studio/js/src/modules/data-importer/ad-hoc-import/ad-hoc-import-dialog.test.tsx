@@ -47,7 +47,8 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportInspectFileMutation: () => [mockInspectFile],
   useBundleDataImporterAdHocImportDeleteFileMutation: () => [mockDeleteFile],
   useBundleDataImporterAdHocImportLoadMatchFieldsQuery: (...args: unknown[]) => mockLoadMatchFields(...args),
-  useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping]
+  useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping],
+  useBundleDataImporterAdHocImportListConfigurationsQuery: (...args: unknown[]) => mockListConfigurations(...args)
 }))
 
 const mockTrackError = jest.fn()
@@ -57,6 +58,7 @@ const mockInspectFile = jest.fn()
 const mockDeleteFile = jest.fn()
 const mockLoadMatchFields = jest.fn()
 const mockLoadMapping = jest.fn()
+const mockListConfigurations = jest.fn()
 
 const csv: InspectedFile = {
   maxRows: 5000,
@@ -69,7 +71,7 @@ const csv: InspectedFile = {
   hasHeaderRow: true,
   sheets: [],
   rowCount: 312,
-  columns: [{ dataIndex: 'Artikelnr', label: 'Artikelnr' }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung' }],
+  columns: [{ dataIndex: 'Artikelnr', label: 'Artikelnr', position: 0 }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung', position: 1 }],
   firstRows: [['NH-1001', 'Trail jacket'], ['NH-1002', null]]
 }
 
@@ -158,11 +160,27 @@ const mappingAnswer = {
   }]
 }
 
+const productsConfiguration = {
+  name: 'products',
+  classId: 'PROD',
+  className: 'Product',
+  matchBy: 'field',
+  matchField: 'sku',
+  matchLanguage: null,
+  matchColumn: 'Artikelnr',
+  newObjectsFolder: '/Products/Imported',
+  columns: ['Artikelnr', 'Bezeichnung'],
+  columnsBy: 'name',
+  unusable: null
+}
+
+const closedConfiguration = { ...productsConfiguration, name: 'closed', unusable: 'folder-not-allowed' }
+
 const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
 
-const nextButton = (): HTMLElement => screen.getByRole('button', { name: 'Next' })
+const nextButton = (): HTMLElement => screen.getByRole('button', { name: /^Next(: Preview)?$/ })
 
 const chooseWhatToMatchBy = (): void => {
   select('Field', 'sku')
@@ -177,6 +195,9 @@ beforeEach(() => {
   })
   mockDeleteFile.mockResolvedValue({ data: undefined })
   mockLoadMapping.mockResolvedValue({ data: mappingAnswer })
+  mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
+    ? { data: undefined, isFetching: false, isError: false }
+    : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false, isError: false })
 })
 
 afterEach(() => {
@@ -1044,6 +1065,117 @@ describe('the mapping step', () => {
 
     expect(mockTrackError).toHaveBeenCalled()
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+describe('the mapping step with a configuration', () => {
+  const chooseConfiguration = (name: string): void => {
+    fireEvent.click(screen.getByRole('radio', { name }))
+  }
+
+  const toConfiguration = async (inspected: InspectedFile = csv): Promise<void> => {
+    renderDialog()
+    await dropAndRead(inspected)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+  }
+
+  it('loads the configurations only once they are to be used', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: true, refetchOnMountOrArgChange: true })
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+
+    expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: false, refetchOnMountOrArgChange: true })
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
+  })
+
+  it('names the preview as the next step on the mapping step', async () => {
+    renderDialog()
+    await dropAndRead(csv)
+    chooseWhatToMatchBy()
+
+    expect(screen.getByRole('button', { name: 'Next' })).toBeTruthy()
+    await act(async () => { fireEvent.click(nextButton()) })
+    expect(screen.getByRole('button', { name: 'Next: Preview' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
+  })
+
+  it('goes on to the preview only once one it can use is chosen', async () => {
+    await toConfiguration()
+
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+    chooseConfiguration('closed')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+
+    chooseConfiguration('products')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(nextButton())
+
+    expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+  })
+
+  it('cannot go on with the chosen one while the list is refreshed or after the refresh failed', async () => {
+    await toConfiguration()
+    chooseConfiguration('products')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+
+    const kept = { data: { configurations: [productsConfiguration, closedConfiguration] } }
+    mockListConfigurations.mockImplementation(() => ({ ...kept, isFetching: true, isError: false }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+
+    mockListConfigurations.mockImplementation(() => ({ ...kept, error: { status: 500 }, isFetching: false, isError: true }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
+    expect(screen.getByText('The configurations could not be loaded.')).toBeTruthy()
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('cannot go on with one whose match column the file does not have', async () => {
+    await toConfiguration({ ...csv, columns: [{ dataIndex: 'SKU', label: 'SKU', position: 0 }, { dataIndex: 'Bezeichnung', label: 'Bezeichnung', position: 1 }] })
+    chooseConfiguration('products')
+
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('keeps the chosen one when going back and on', async () => {
+    await toConfiguration()
+    chooseConfiguration('products')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await act(async () => { fireEvent.click(nextButton()) })
+
+    expect(screen.getByRole('radio', { name: 'products' }).getAttribute('aria-checked')).toBe('true')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('goes on with the columns mapped here after a switch back', async () => {
+    await toConfiguration()
+    fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
+
+    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('shows and reports a failed listing instead of saying there is none', async () => {
+    const failure = { status: 500, data: { message: 'listing failed' } }
+    mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
+      ? { data: undefined, isFetching: false, isError: false }
+      : { data: undefined, error: failure, isFetching: false, isError: true })
+
+    await toConfiguration()
+
+    expect(screen.getByText('The configurations could not be loaded.')).toBeTruthy()
+    expect(screen.queryByText('There is no data object import configuration you may use.')).toBeNull()
+    expect(mockTrackError).toHaveBeenCalledWith(expect.objectContaining({ details: failure }))
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
   })
 })

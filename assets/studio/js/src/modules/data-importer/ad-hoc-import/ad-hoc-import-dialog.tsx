@@ -40,7 +40,8 @@ import {
   type MappingField
 } from './mapping-step/mapping-state'
 import { MappingStep } from './mapping-step/mapping-step'
-import { type TransformationSource } from './mapping-step/transformations-modal'
+import { transformationSourceOf } from './mapping-step/transformations-modal'
+import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
@@ -71,6 +72,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
   const [loadMapping] = useBundleDataImporterAdHocImportLoadMappingMutation()
+  const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
   // only the answer to the latest settings counts
@@ -212,19 +214,15 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
-  // a column's transformations run on the stored file as it is read now
-  const transformationSource = useMemo((): TransformationSource | null => {
-    if (phase.kind !== 'inspected' || phase.inspected.fileId === undefined || phase.inspected.fileId === null ||
-      objects.classId === undefined) {
-      return null
-    }
+  const transformationSource = useMemo(() => transformationSourceOf(phase, objects.classId), [phase, objects.classId])
 
-    return { fileId: phase.inspected.fileId, classId: objects.classId, settings: settingsOf(phase.inspected) }
-  }, [phase, objects.classId])
+  const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
+    ? configurationMapping.canContinue
+    : mapping !== null && canContinueMapping(mapping, fields)
 
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)
-    : mapping !== null && canContinueMapping(mapping, fields)
+    : canMapOn()
 
   const onRemoveFile = (): void => {
     deleteStoredFile()
@@ -253,7 +251,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
               onClick={ () => { step === 0 ? toMapping() : setStep(step + 1) } }
               type="primary"
             >
-              { t('data-importer.ad-hoc-import.next') }
+              { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
             </Button>
           ) }
         </ModalFooter>
@@ -287,10 +285,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       ) }
       { step === 1 && (
         <MappingStep
+          configuration={ configurationMapping.choice }
           fields={ fields }
           isLoading={ isLoadingMapping }
+          mapWith={ configurationMapping.mapWith }
           mapping={ mapping }
           onChange={ setMapping }
+          onMapWithChange={ configurationMapping.setMapWith }
           source={ transformationSource }
         />
       ) }

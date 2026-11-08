@@ -139,6 +139,10 @@ bundle_data_importer_ad_hoc_import_load_mapping: Load the Mapping of an Ad Hoc I
 bundle_data_importer_ad_hoc_import_load_mapping_description: Load the fields of a class the columns of a file can be imported into, and a suggested field per column
 bundle_data_importer_ad_hoc_import_load_mapping_summary: Load the Mapping of an Ad Hoc Import
 bundle_data_importer_ad_hoc_import_load_mapping_success_response: The fields and the suggested field per column
+bundle_data_importer_ad_hoc_import_list_configurations: List the Configurations for an Ad Hoc Import
+bundle_data_importer_ad_hoc_import_list_configurations_description: List the data object import configurations the user may read, with the class, match and folder an ad hoc import takes from each, or why it cannot use it
+bundle_data_importer_ad_hoc_import_list_configurations_summary: List the Configurations for an Ad Hoc Import
+bundle_data_importer_ad_hoc_import_list_configurations_success_response: The configurations, by name
 bundle_data_importer_ad_hoc_import_preview_transformations: Preview the Transformations of a Column
 bundle_data_importer_ad_hoc_import_preview_transformations_description: Run the transformations of one column of an ad hoc import on its values in the first rows of the file, with the conversion to the type of its field and the transformations that can come next
 bundle_data_importer_ad_hoc_import_preview_transformations_summary: Preview the Transformations of a Column

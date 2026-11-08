@@ -144,30 +144,30 @@ final readonly class FileInspector
     /**
      * @param array{delimiter: string, enclosure: string, escape: string} $format
      *
-     * @return array<int, array{dataIndex: string, label: string}>|null null if two columns share a name: an import
-     *                                                                  keeps only one of them
+     * @return list<array{dataIndex: string, label: string, position: int}>|null null if two columns share a name: an
+     *                                                                         import keeps only one of them
      */
     private function csvHeaderColumns(string $path, array $format): ?array
     {
-        $names = [];
+        $columns = [];
         $source = ['type' => FileType::Csv->value, 'settings' => $format];
         foreach ($this->sourceFileReader->readRows($source, $path) as $row) {
-            $names = array_values(array_filter(
-                $row,
-                static fn (?string $name): bool => $name !== null && $name !== ''
-            ));
+            foreach (array_values($row) as $position => $name) {
+                $name = (string)$name;
+                if ($name !== '') {
+                    $columns[] = ['dataIndex' => $name, 'label' => trim($name), 'position' => $position];
+                }
+            }
 
             break;
         }
 
+        $names = array_column($columns, 'dataIndex');
         if (count($names) !== count(array_unique($names))) {
             return null;
         }
 
-        return array_map(
-            static fn (string $name): array => ['dataIndex' => $name, 'label' => trim($name)],
-            $names
-        );
+        return $columns;
     }
 
     private function inspectXlsx(string $path, SettingsInput $input): FileInspection
@@ -317,7 +317,7 @@ final readonly class FileInspector
 
     /**
      * @param array<int|string, mixed> $row
-     * @param array<int, array{dataIndex: string, label: string}> $columns
+     * @param array<int, array{dataIndex: string, label: string, position?: int}> $columns
      *
      * @return array<int, string|null>
      */

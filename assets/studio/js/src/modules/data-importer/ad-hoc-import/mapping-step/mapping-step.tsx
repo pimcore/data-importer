@@ -27,6 +27,8 @@ import {
   type RowFilter
 } from './mapping-state'
 import { MappingRowView } from './mapping-row'
+import { ConfigurationChoice, type ConfigurationChoiceProps } from './configuration-choice'
+import { type MapWith } from './configuration-state'
 import { TransformationsModal, type TransformationSource } from './transformations-modal'
 
 const SEARCH_WIDTH = 240
@@ -43,11 +45,23 @@ export interface MappingStepProps {
   fields: MappingField[]
   isLoading: boolean
   onChange: (mapping: Mapping) => void
+  mapWith: MapWith
+  onMapWithChange: (mapWith: MapWith) => void
+  configuration: ConfigurationChoiceProps
   // what the transformations of a column run on; none, no transformations
   source: TransformationSource | null
 }
 
-export const MappingStep = ({ mapping, fields, isLoading, onChange, source }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = ({
+  mapping,
+  fields,
+  isLoading,
+  onChange,
+  mapWith,
+  onMapWithChange,
+  configuration,
+  source
+}: MappingStepProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const [filter, setFilter] = useState<RowFilter>('all')
@@ -59,22 +73,35 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange, source }: Ma
   const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
   const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
-  const mapWith = (
+  const mapWithSwitch = (
     <Flex
       align="center"
       gap="small"
     >
       <Text>{ t('data-importer.ad-hoc-import.mapping.map-with') }</Text>
       <Segmented
+        onChange={ (next) => { onMapWithChange(next as MapWith) } }
         options={ [
           { value: 'here', label: t('data-importer.ad-hoc-import.mapping.map-here') },
-          // chosen in a step of its own once a configuration can be selected
-          { value: 'configuration', label: t('data-importer.ad-hoc-import.mapping.use-configuration'), disabled: true }
+          { value: 'configuration', label: t('data-importer.ad-hoc-import.mapping.use-configuration') }
         ] }
-        value="here"
+        value={ mapWith }
       />
     </Flex>
   )
+
+  // the mapping made here stays for a switch back
+  if (mapWith === 'configuration') {
+    return (
+      <Flex
+        gap="normal"
+        vertical
+      >
+        { mapWithSwitch }
+        <ConfigurationChoice { ...configuration } />
+      </Flex>
+    )
+  }
 
   if (mapping === null) {
     return (
@@ -82,7 +109,7 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange, source }: Ma
         gap="normal"
         vertical
       >
-        { mapWith }
+        { mapWithSwitch }
         { isLoading && <Skeleton active /> }
       </Flex>
     )
@@ -101,7 +128,7 @@ export const MappingStep = ({ mapping, fields, isLoading, onChange, source }: Ma
       gap="normal"
       vertical
     >
-      { mapWith }
+      { mapWithSwitch }
 
       <Flex
         align="center"

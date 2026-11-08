@@ -51,12 +51,10 @@ final class RowMatcherFactory
             throw new InvalidConfigurationException("Class `{$configuration->classId}` not found.");
         }
 
-        $this->assertLanguage($configuration->language);
-        $field = null;
-        if ($configuration->attributeName !== null) {
-            $this->assertMatchableField($class, $configuration->attributeName, $configuration->language);
-            $field = $this->fieldDefinition($class, $configuration->attributeName);
-        }
+        $this->assertMatchable($class, $configuration->attributeName, $configuration->language);
+        $field = $configuration->attributeName === null
+            ? null
+            : $this->fieldDefinition($class, $configuration->attributeName);
 
         $targetFolder = $this->loadFolder($configuration->targetFolder);
         $newObjectFolder = $configuration->newObjectFolder === null
@@ -80,6 +78,20 @@ final class RowMatcherFactory
             $newObjectFolder,
             $field
         );
+    }
+
+    /**
+     * Checks without loading anything that objects of the class can be matched by this field (the object ID when null)
+     * in this language, as create() requires.
+     *
+     * @throws InvalidConfigurationException if they cannot
+     */
+    public function assertMatchable(ClassDefinition $class, ?string $attributeName, string $language): void
+    {
+        $this->assertLanguage($language);
+        if ($attributeName !== null) {
+            $this->assertMatchableField($class, $attributeName, $language);
+        }
     }
 
     private function loadFolder(string $path): ElementInterface

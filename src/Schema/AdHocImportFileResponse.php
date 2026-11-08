@@ -34,7 +34,7 @@ final class AdHocImportFileResponse implements AdditionalAttributesInterface
 
     /**
      * @param string[] $sheets
-     * @param array<int, array{dataIndex: string, label: string}> $columns
+     * @param array<int, array{dataIndex: string, label: string, position?: int}> $columns
      * @param array<int, array<int, string|null>> $firstRows
      */
     public function __construct(
@@ -92,6 +92,13 @@ final class AdHocImportFileResponse implements AdditionalAttributesInterface
                 properties: [
                     new Property(property: 'dataIndex', type: 'string', example: 'Artikelnr'),
                     new Property(property: 'label', type: 'string', example: 'Artikelnr'),
+                    new Property(
+                        property: 'position',
+                        description: 'CSV with a header row: the column\'s place in the file, from 0; columns keyed '
+                            . 'by position have none',
+                        type: 'integer',
+                        example: 0
+                    ),
                 ],
                 type: 'object'
             )
