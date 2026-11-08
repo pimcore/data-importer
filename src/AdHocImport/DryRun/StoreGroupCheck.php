@@ -56,6 +56,94 @@ final class StoreGroupCheck
     }
 
     /**
+     * The object's stores as they are now, to call before a row is written.
+     *
+     * @return array<string, Classificationstore>
+     */
+    public function stores(Concrete $object): array
+    {
+        $stores = [];
+        foreach ($this->fields as $field) {
+            $store = $object->get($field);
+            if ($store instanceof Classificationstore) {
+                $stores[$field] = clone $store;
+            }
+        }
+
+        return $stores;
+    }
+
+    /**
+     * What a save would refuse once the written row's unusable values are left out. Those are undone in the object
+     * (and with them a group only they activated), then the values of the keys refused here, as far as the file
+     * writes them, until no more can be left out.
+     *
+     * @param array<string, Classificationstore> $before the row's stores from stores()
+     * @param array<int, FieldWriter> $writers
+     * @param array<int, true> $leftOut the writers whose value their field cannot take
+     * @param array<int|string, mixed> $row
+     *
+     * @return array{lifted: list<Refusal>, remaining: list<Refusal>} lifted by leaving the file's values out, and
+     *     refused whatever the row leaves out
+     */
+    public function refusedWithout(
+        Concrete $object,
+        array $before,
+        array $writers,
+        array $leftOut,
+        int $index,
+        array $row
+    ): array {
+        $lifted = [];
+        do {
+            $this->leaveOut($object, $before, $writers, $leftOut, $index, $row);
+            $refused = $this->refused($object);
+            $more = [];
+            foreach ($refused as $refusal) {
+                $positions = array_diff_key($this->writersOf($writers, $refusal), $leftOut);
+                if ($positions !== []) {
+                    $lifted[$this->idOf($refusal)] ??= $refusal;
+                    $more += $positions;
+                }
+            }
+            $leftOut += $more;
+        } while ($more !== []);
+
+        foreach ($refused as $refusal) {
+            unset($lifted[$this->idOf($refusal)]);
+        }
+
+        return ['lifted' => array_values($lifted), 'remaining' => $refused];
+    }
+
+    /**
+     * @param array<int, FieldWriter> $writers
+     * @param Refusal $refusal
+     *
+     * @return array<int, true> the writers of the refused key in the languages it is refused in
+     */
+    public function writersOf(array $writers, array $refusal): array
+    {
+        if ($refusal['key'] === null) {
+            return [];
+        }
+
+        $positions = [];
+        foreach ($writers as $position => $writer) {
+            $field = $writer->field();
+            if (
+                $field->key === $refusal['field']
+                && $field->storeKey?->id() === $refusal['key']->id()
+                && in_array($field->language ?? self::DEFAULT_LANGUAGE, $refusal['languages'], true)
+            ) {
+                $positions[$position] = true;
+            }
+        }
+
+        return $positions;
+    }
+
+    /**
      * @return list<Refusal> one per refused key, with the languages it is refused in; without a key where the store
      *     as a whole is refused
      */
@@ -91,6 +179,47 @@ final class StoreGroupCheck
         }
 
         return $refused;
+    }
+
+    /**
+     * @param array<string, Classificationstore> $before
+     * @param array<int, FieldWriter> $writers
+     * @param array<int, true> $leftOut
+     * @param array<int|string, mixed> $row
+     */
+    private function leaveOut(
+        Concrete $object,
+        array $before,
+        array $writers,
+        array $leftOut,
+        int $index,
+        array $row
+    ): void {
+        $stores = [];
+        foreach (array_keys($leftOut) as $position) {
+            $field = $writers[$position]->field();
+            if ($field->storeKey !== null && isset($before[$field->key])) {
+                $stores[$field->key] = true;
+            }
+        }
+
+        foreach (array_keys($stores) as $store) {
+            $object->set($store, clone $before[$store]);
+        }
+        foreach ($writers as $position => $writer) {
+            $field = $writer->field();
+            if ($field->storeKey !== null && isset($stores[$field->key]) && !isset($leftOut[$position])) {
+                $writer->write($object, $index, $row);
+            }
+        }
+    }
+
+    /**
+     * @param Refusal $refusal
+     */
+    private function idOf(array $refusal): string
+    {
+        return $refusal['field'] . '/' . $refusal['key']?->id();
     }
 
     /**

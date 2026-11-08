@@ -106,11 +106,14 @@ final readonly class DryRunner
         $values = [];
         $invalid = [];
         $reportedStoreKeys = [];
+        $leftOut = [];
+        $stores = $storeCheck->stores($object);
         foreach ($plan->writers as $position => $writer) {
             $field = $writer->field();
             $old = $isNew ? null : $this->read($object, $field);
             $error = $writer->write($object, $index, $row) ?? $this->validate($object, $field);
             if ($error !== null) {
+                $leftOut[$position] = true;
                 $value = $writer->fileValue($row) ?? '';
                 $invalid[] = [
                     'field' => $shownAt[$position] ?? null,
@@ -130,10 +133,11 @@ final readonly class DryRunner
 
         $blocked = false;
         if ($object->isPublished()) {
-            foreach ($storeCheck->refused($object) as $refused) {
-                $blocked = $blocked || !$this->leavingValuesOutLifts($plan, $refused, $values);
+            $refusals = $storeCheck->refusedWithout($object, $stores, $plan->writers, $leftOut, $index, $row);
+            $blocked = $refusals['remaining'] !== [];
+            foreach ([...$refusals['lifted'], ...$refusals['remaining']] as $refused) {
                 if (!$this->isReported($refused, $reportedStoreKeys)) {
-                    $invalid[] = $this->refusedEntry($plan, $refused, $shownAt);
+                    $invalid[] = $this->refusedEntry($plan, $storeCheck, $refused, $shownAt);
                 }
             }
         }
@@ -147,29 +151,6 @@ final readonly class DryRunner
             $invalid,
             $blocked
         );
-    }
-
-    /**
-     * Whether the object still holds a value for the refused key in every refused language once the file's are left
-     * out: a key the file does not write, or that was empty before, is refused either way.
-     *
-     * @param array{field: string, key: StoreKey|null, languages: list<string>} $refused
-     * @param array<int, array{old: string|null, new: string|null}> $values
-     */
-    private function leavingValuesOutLifts(DryRunPlan $plan, array $refused, array $values): bool
-    {
-        if ($refused['key'] === null) {
-            return false;
-        }
-
-        foreach ($refused['languages'] as $language) {
-            $position = $this->writerOf($plan, $refused['field'], $refused['key'], [$language]);
-            if ($position === null || in_array($values[$position]['old'], [null, ''], true)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -194,11 +175,13 @@ final readonly class DryRunner
      *
      * @return array{field: int|null, label: string, value: string, message: string}
      */
-    private function refusedEntry(DryRunPlan $plan, array $refused, array $shownAt): array
-    {
-        $position = $refused['key'] === null
-            ? null
-            : $this->writerOf($plan, $refused['field'], $refused['key'], $refused['languages']);
+    private function refusedEntry(
+        DryRunPlan $plan,
+        StoreGroupCheck $storeCheck,
+        array $refused,
+        array $shownAt
+    ): array {
+        $position = array_key_first($storeCheck->writersOf($plan->writers, $refused));
 
         return [
             'field' => $position === null ? null : ($shownAt[$position] ?? null),
@@ -258,25 +241,6 @@ final readonly class DryRunner
         }
 
         return $keys;
-    }
-
-    /**
-     * @param list<string> $languages
-     */
-    private function writerOf(DryRunPlan $plan, string $store, StoreKey $key, array $languages): ?int
-    {
-        foreach ($plan->writers as $position => $writer) {
-            $field = $writer->field();
-            if (
-                $field->key === $store
-                && $field->storeKey?->id() === $key->id()
-                && in_array($field->language ?? 'default', $languages, true)
-            ) {
-                return $position;
-            }
-        }
-
-        return null;
     }
 
     private function read(Concrete $object, ImportField $field): ?string

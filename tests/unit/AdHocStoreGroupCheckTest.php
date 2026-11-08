@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\FieldWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\StoreGroupCheck;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
@@ -168,6 +170,102 @@ class AdHocStoreGroupCheckTest extends Unit
         $this->assertSame([], $this->check([$this->key(self::WEIGHT)])->refused($object));
     }
 
+    public function testAnOptionalKeyEmptyBeforeIsNotRefusedOnceItsUnusableValueIsLeftOut(): void
+    {
+        $definition = new Input();
+        $definition->setRegex('^\d+$');
+        $keys = [$this->key(self::WEIGHT, definition: $definition)];
+        $object = $this->objectHolding($this->realStore([], [self::GROUP => true]));
+        $writer = $this->writer(self::GROUP, self::WEIGHT, 'heavy');
+        $check = $this->check($keys);
+        $before = $check->stores($object);
+        $writer->write($object, 0, []);
+
+        $this->assertCount(1, $check->refused($object), 'written, the value is refused');
+
+        $outcome = $check->refusedWithout($object, $before, [$writer], [0 => true], 0, []);
+        $this->assertSame(['lifted' => [], 'remaining' => []], $outcome);
+    }
+
+    public function testAGroupOnlyAnUnusableValueActivatesCountsForNothingOnceThatValueIsLeftOut(): void
+    {
+        $object = $this->objectHolding($this->realStore([], [self::GROUP => true]), maxItems: 1);
+        $check = $this->check([$this->key(self::WEIGHT, mandatory: false)]);
+        $writer = $this->writer(self::OTHER_GROUP, self::HEIGHT, 'wide');
+        $before = $check->stores($object);
+        $writer->write($object, 0, []);
+
+        $this->assertSame(ValueError::TooManyGroups, $check->refused($object)[0]['error'], 'written, two groups');
+
+        $outcome = $check->refusedWithout($object, $before, [$writer], [0 => true], 0, []);
+        $this->assertSame(['lifted' => [], 'remaining' => []], $outcome);
+    }
+
+    public function testARefusalOfAValueTheColumnsKeptStaysWhenAnotherValueIsLeftOut(): void
+    {
+        $object = $this->objectHolding($this->realStore([], [self::GROUP => true]), maxItems: 1);
+        $check = $this->check([$this->key(self::WEIGHT, mandatory: false)]);
+        $left = $this->writer(self::GROUP, self::WEIGHT, 'bad');
+        $kept = $this->writer(self::OTHER_GROUP, self::HEIGHT, 'wide');
+        $before = $check->stores($object);
+        $left->write($object, 0, []);
+        $kept->write($object, 0, []);
+
+        $outcome = $check->refusedWithout($object, $before, [$left, $kept], [0 => true], 0, []);
+
+        $this->assertSame([], $outcome['lifted']);
+        $this->assertCount(1, $outcome['remaining'], 'the other group is still activated by the kept value');
+        $this->assertSame(ValueError::TooManyGroups, $outcome['remaining'][0]['error']);
+        $this->assertNull($object->get('attributes')->getItems()[self::GROUP][self::WEIGHT]['default'] ?? null);
+    }
+
+    public function testAKeyTheFileEmptiesIsLiftedWhenTheOldValueComesBack(): void
+    {
+        $object = $this->objectHolding($this->realStore(
+            [self::GROUP => [self::WEIGHT => ['default' => '1 kg']]],
+            [self::GROUP => true]
+        ));
+        $check = $this->check([$this->key(self::WEIGHT)]);
+        $writer = $this->writer(self::GROUP, self::WEIGHT, null);
+        $before = $check->stores($object);
+        $writer->write($object, 0, []);
+
+        $outcome = $check->refusedWithout($object, $before, [$writer], [], 0, []);
+
+        $this->assertSame([], $outcome['remaining']);
+        $this->assertCount(1, $outcome['lifted']);
+        $this->assertSame(ValueError::Required, $outcome['lifted'][0]['error']);
+    }
+
+    public function testAKeyEmptyBeforeInAnActiveGroupRemainsRefusedAndIsNotCountedAsLifted(): void
+    {
+        $object = $this->objectHolding($this->realStore([], [self::GROUP => true]));
+        $check = $this->check([$this->key(self::WEIGHT)]);
+        $writer = $this->writer(self::GROUP, self::WEIGHT, null);
+        $before = $check->stores($object);
+        $writer->write($object, 0, []);
+
+        $outcome = $check->refusedWithout($object, $before, [$writer], [], 0, []);
+
+        $this->assertSame([], $outcome['lifted'], 'it is refused either way');
+        $this->assertCount(1, $outcome['remaining']);
+        $this->assertSame([0 => true], $check->writersOf([$writer], $outcome['remaining'][0]));
+    }
+
+    public function testARefusalOfTheWholeStoreHasNoWriter(): void
+    {
+        $writer = $this->writer(self::GROUP, self::WEIGHT, 'x');
+
+        $this->assertSame([], $this->check([])->writersOf([$writer], [
+            'field' => 'attributes',
+            'key' => null,
+            'label' => 'Attributes',
+            'value' => '',
+            'error' => ValueError::TooManyGroups,
+            'languages' => [],
+        ]));
+    }
+
     /**
      * @param list<array{key: StoreKey, label: string, definition: Data}> $keys
      */
@@ -207,6 +305,78 @@ class AdHocStoreGroupCheckTest extends Unit
         $store->method('getItems')->willReturn($items);
 
         return $store;
+    }
+
+    /**
+     * A store that keeps what is written into it, without the key definitions a real write loads.
+     *
+     * @param array<int, array<int, array<string, mixed>>> $items
+     * @param array<int, bool> $activeGroups
+     */
+    private function realStore(array $items, array $activeGroups): Classificationstore
+    {
+        $store = new Classificationstore();
+        $store->setItems($items);
+        $store->setActiveGroups($activeGroups);
+
+        return $store;
+    }
+
+    private function objectHolding(Classificationstore $store, ?int $maxItems = null): Concrete
+    {
+        $definition = new Data\Classificationstore();
+        $definition->setMaxItems($maxItems);
+        $definition->setTitle('Attributes');
+        $class = new ClassDefinition();
+        $class->setFieldDefinitions(['attributes' => $definition]);
+
+        $object = $this->createMock(Concrete::class);
+        $object->method('getClass')->willReturn($class);
+        $object->method('get')->willReturnCallback(static function () use (&$store): Classificationstore {
+            return $store;
+        });
+        $object->method('set')->willReturnCallback(
+            static function (string $field, Classificationstore $value) use (&$store, $object): Concrete {
+                $store = $value;
+
+                return $object;
+            }
+        );
+
+        return $object;
+    }
+
+    private function writer(int $group, int $key, ?string $value): FieldWriter
+    {
+        return new class($group, $key, $value) implements FieldWriter {
+            public function __construct(private int $group, private int $key, private ?string $value)
+            {
+            }
+
+            public function field(): ImportField
+            {
+                return new ImportField('attributes', null, 'column', new StoreKey($this->group, $this->key));
+            }
+
+            public function write(Concrete $object, int $index, array $row): ?ValueError
+            {
+                $store = $object->get('attributes');
+                $items = $store->getItems();
+                unset($items[$this->group][$this->key]);
+                if ($this->value !== null) {
+                    $items[$this->group][$this->key]['default'] = $this->value;
+                }
+                $store->setItems($items);
+                $store->setActiveGroups($store->getActiveGroups() + [$this->group => true]);
+
+                return null;
+            }
+
+            public function fileValue(array $row): ?string
+            {
+                return $this->value;
+            }
+        };
     }
 
     private function object(

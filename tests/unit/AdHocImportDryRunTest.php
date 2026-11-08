@@ -672,6 +672,50 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $reloaded->save();
     }
 
+    public function testAnOptionalStoreKeyEmptyBeforeOnlyLosesItsInvalidValue(): void
+    {
+        [$class] = $this->storeClass('OptionalKey');
+        $width = $this->keyOfAnotherGroup('OptionalKey', '^\d+$');
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setActiveGroups([$width->groupId => true]);
+        $object->save();
+        $fileId = $this->upload("sku;width\nSKU-1;wide\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'width', 'field' => 'attributes', 'key' => $width->id()],
+        ]))->getRows();
+
+        $this->assertSame(['Dimensions › width “wide” does not fit the field'], array_column(
+            $rows[0]['invalid'],
+            'message'
+        ));
+        $this->assertFalse($rows[0]['blocked'], 'left out, the optional key stays empty, which a save accepts');
+        $this->assertSame([], array_slice($this->csvRows(
+            $this->service()->skippedRows($fileId, AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES)
+        ), 1));
+    }
+
+    public function testAGroupOnlyAnInvalidValueWouldActivateDoesNotRefuseTheRow(): void
+    {
+        [$class, $weight] = $this->storeClass('OneGroupInvalid', maxItems: 1);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setActiveGroups([$weight->groupId => true]);
+        $object->save();
+        $width = $this->keyOfAnotherGroup('OneGroupInvalid', '^\d+$');
+        $fileId = $this->upload("sku;width\nSKU-1;wide\n", 'products.csv');
+
+        $rows = $this->service()->dryRun($fileId, $this->storeMapping($class, [
+            ['column' => 'width', 'field' => 'attributes', 'key' => $width->id()],
+        ]))->getRows();
+
+        $this->assertSame(['Dimensions › width “wide” does not fit the field'], array_column(
+            $rows[0]['invalid'],
+            'message'
+        ));
+        $this->assertFalse($rows[0]['blocked'], 'without the value the second group is never activated');
+    }
+
     public function testAStoreKeyOfATypeNoColumnLeadsToTakesNoValue(): void
     {
         [$class] = $this->storeClass('Quantity');
@@ -940,7 +984,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     /**
      * A text key in a second group of the variant's store.
      */
-    private function keyOfAnotherGroup(string $variant): StoreKey
+    private function keyOfAnotherGroup(string $variant, ?string $regex = null): StoreKey
     {
         $store = Classificationstore\StoreConfig::getByName(self::STORE_NAME . strtolower($variant));
         $this->assertNotNull($store);
@@ -951,6 +995,9 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
         $definition = new ClassDefinition\Data\Input();
         $definition->setName('width');
+        if ($regex !== null) {
+            $definition->setRegex($regex);
+        }
         $key = new Classificationstore\KeyConfig();
         $key->setDefinition((string) json_encode($definition));
         $key->setStoreId($store->getId());
