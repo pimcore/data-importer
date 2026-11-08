@@ -48,7 +48,8 @@ class AdHocDryRunWritersTest extends Unit
 
     public function testAColumnWriterWritesAnEmptyCellAsNull(): void
     {
-        $writer = new ColumnWriter(new ImportField('name', null, 'Name'), 1, new ConvertedColumn([null], [false], [false], null));
+        $column = new ConvertedColumn([null], [false], [false], null);
+        $writer = new ColumnWriter(new ImportField('name', null, 'Name'), 1, $column);
         $object = $this->writable();
         $object->written = ['Old', null];
 
@@ -58,7 +59,12 @@ class AdHocDryRunWritersTest extends Unit
 
     public function testAColumnWriterSaysWhyAValueCannotGoIntoItsField(): void
     {
-        $converted = new ConvertedColumn([null, null, null, 'x'], [true, false, false, false], [true, true, true, false], 'numeric');
+        $converted = new ConvertedColumn(
+            [null, null, null, 'x'],
+            [true, false, false, false],
+            [true, true, true, false],
+            'numeric'
+        );
         $writer = new ColumnWriter(new ImportField('name', null, 'Name'), 1, $converted);
         $object = $this->writable();
 
@@ -68,12 +74,14 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertNull($object->written, 'a failed value leaves the field as it was');
 
         $dates = new ConvertedColumn([null], [false], [true], 'date');
-        $this->assertSame(ValueError::NotADate, (new ColumnWriter(new ImportField('name', null, 'Name'), 1, $dates))->write($object, 0, []));
+        $dateWriter = new ColumnWriter(new ImportField('name', null, 'Name'), 1, $dates);
+        $this->assertSame(ValueError::NotADate, $dateWriter->write($object, 0, []));
     }
 
     public function testAColumnWriterSaysInvalidWhenTheFieldRefusesTheValue(): void
     {
-        $writer = new ColumnWriter(new ImportField('count', null, 'Count'), 1, new ConvertedColumn(['many'], [false], [false], null));
+        $column = new ConvertedColumn(['many'], [false], [false], null);
+        $writer = new ColumnWriter(new ImportField('count', null, 'Count'), 1, $column);
         $object = new class() extends Concrete {
             public function setCount(int $count, ?string $language = null): static
             {
