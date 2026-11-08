@@ -512,7 +512,6 @@ data-importer.ad-hoc-import.run.count-of: '{{done}} of {{total}}'
 data-importer.ad-hoc-import.run.saving: Saving
 data-importer.ad-hoc-import.run.background: 'Runs in the background. You can close this window; Studio tells you when the import is done.'
 data-importer.ad-hoc-import.run.close-keep-running: 'Close, keep running'
-data-importer.ad-hoc-import.run.failed: The import could not be started.
 data-importer.ad-hoc-import.run.may-not-save: 'You may not save objects in {{folder}}'
 data-importer.ad-hoc-import.run.may-not-create: 'You may not create objects in {{folder}}'
 data-importer.ad-hoc-import.run.may-not-edit-language: 'You may not edit the language {{language}} of objects in {{folder}}'
