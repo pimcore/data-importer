@@ -31,7 +31,10 @@ final class AdHocCsvFiles
 {
     public static function store(string $directory): FileStore
     {
-        return new FileStore(new Filesystem(new LocalFilesystemAdapter($directory)), new LockFactory(new InMemoryStore()));
+        return new FileStore(
+            new Filesystem(new LocalFilesystemAdapter($directory)),
+            new LockFactory(new InMemoryStore())
+        );
     }
 
     public static function inspector(): FileInspector

@@ -24,8 +24,6 @@ use Pimcore\Cache\RuntimeCache;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Datetime;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Multiselect;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Select;
-use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
-use Pimcore\Model\DataObject\Classificationstore\Service;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Model\Element\ValidationException;
@@ -141,7 +139,6 @@ final readonly class DryRunner
         $shownAt = array_flip($plan->shown);
         $values = [];
         $invalid = [];
-        $reportedStoreKeys = [];
         $leftOut = [];
         $stores = $storeCheck->stores($object);
         foreach ($plan->writers as $position => $writer) {
@@ -158,9 +155,6 @@ final readonly class DryRunner
                     'value' => $value,
                     'message' => $this->messages->valueError($error, $field->label, $value, $plan->user),
                 ];
-                if ($field->storeKey !== null) {
-                    $reportedStoreKeys[$field->key . '/' . $field->storeKey->id()] = true;
-                }
             }
             $values[$position] = [
                 'old' => $old,
@@ -178,7 +172,7 @@ final readonly class DryRunner
                     $plan,
                     $storeCheck,
                     [...$refusals['lifted'], ...$refusals['remaining']],
-                    $reportedStoreKeys,
+                    $this->reportedStoreKeys($plan->writers, $leftOut),
                     $shownAt
                 )
             );
@@ -195,6 +189,25 @@ final readonly class DryRunner
             $invalid,
             $blocked
         );
+    }
+
+    /**
+     * @param list<FieldWriter> $writers
+     * @param array<int, true> $leftOut the positions of the writers whose value was refused
+     *
+     * @return array<string, true> the store keys a column has already reported
+     */
+    private function reportedStoreKeys(array $writers, array $leftOut): array
+    {
+        $reported = [];
+        foreach (array_keys($leftOut) as $position) {
+            $field = $writers[$position]->field();
+            if ($field->storeKey !== null) {
+                $reported[$field->key . '/' . $field->storeKey->id()] = true;
+            }
+        }
+
+        return $reported;
     }
 
     /**
@@ -309,42 +322,7 @@ final readonly class DryRunner
             }
         }
 
-        return new StoreGroupCheck(array_keys($stores), Tool::getValidLanguages(), $this->keysOfGroup(...));
-    }
-
-    /**
-     * The keys of a group as Pimcore's check of a save sees them: with the group's mandatory mark.
-     *
-     * @return list<array{key: StoreKey, label: string, definition: \Pimcore\Model\DataObject\ClassDefinition\Data}>
-     */
-    private function keysOfGroup(int $groupId): array
-    {
-        $group = GroupConfig::getById($groupId);
-        if ($group === null) {
-            return [];
-        }
-
-        $keys = [];
-        foreach ($group->getRelations() as $relation) {
-            $definition = Service::getFieldDefinitionFromJson(
-                (array) json_decode($relation->getDefinition(), true),
-                $relation->getType()
-            );
-            // unreachable through getRelations(), whose listing always adds 'mandatory'; kept for the nullable return
-            if ($definition === null) {
-                continue;
-            }
-            if ($relation->isMandatory()) {
-                $definition->setMandatory(true);
-            }
-            $keys[] = [
-                'key' => new StoreKey($groupId, $relation->getKeyId()),
-                'label' => $group->getName() . ' › ' . $relation->getName(),
-                'definition' => $definition,
-            ];
-        }
-
-        return $keys;
+        return new StoreGroupCheck(array_keys($stores), Tool::getValidLanguages(), StoreGroupKeys::of(...));
     }
 
     private function read(Concrete $object, ImportField $field, User $user): ?string

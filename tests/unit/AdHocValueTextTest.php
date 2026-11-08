@@ -29,6 +29,8 @@ class AdHocValueTextTest extends Unit
 {
     private const string OBJECT_PATH = '/Products/Chair';
 
+    private const string HIDDEN_OBJECT_PATH = '/restricted/Chair';
+
     public function testAValueIsOneLineOfText(): void
     {
         $object = $this->createStub(Concrete::class);
@@ -72,7 +74,7 @@ class AdHocValueTextTest extends Unit
         $viewer = new User();
         $hidden = $this->createStub(Concrete::class);
         $hidden->method('isAllowed')->willReturn(false);
-        $hidden->method('getRealFullPath')->willReturn('/restricted/Chair');
+        $hidden->method('getRealFullPath')->willReturn(self::HIDDEN_OBJECT_PATH);
         $visible = $this->createStub(Concrete::class);
         $visible->method('isAllowed')->willReturn(true);
         $visible->method('getRealFullPath')->willReturn(self::OBJECT_PATH);
@@ -83,7 +85,7 @@ class AdHocValueTextTest extends Unit
         $metadata->method('getObject')->willReturn($hidden);
         $link = $this->createStub(Link::class);
         $link->method('getElement')->willReturn($hidden);
-        $link->method('getHref')->willReturn('/restricted/Chair');
+        $link->method('getHref')->willReturn(self::HIDDEN_OBJECT_PATH);
 
         $this->assertNull(ValueText::of($hidden, $viewer));
         $this->assertSame(self::OBJECT_PATH, ValueText::of($visible, $viewer));
@@ -92,7 +94,7 @@ class AdHocValueTextTest extends Unit
         $this->assertNull(ValueText::of(new Hotspotimage($hiddenImage), $viewer));
         $this->assertNull(ValueText::of(new ImageGallery([new Hotspotimage($hiddenImage)]), $viewer));
         $this->assertNull(ValueText::of($link, $viewer));
-        $this->assertSame('/restricted/Chair', ValueText::of($hidden), 'without a viewer nothing is left out');
+        $this->assertSame(self::HIDDEN_OBJECT_PATH, ValueText::of($hidden), 'without a viewer nothing is left out');
     }
 
     public function testADateTimeKeepsItsTime(): void
