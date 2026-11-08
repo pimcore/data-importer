@@ -232,15 +232,21 @@ class AdHocImportConfigurationServiceTest extends Unit
                 'folder-missing',
             ],
             'a field the class no longer has' => [
-                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'gone']]],
+                ['loading' => ['type' => 'attribute', 'settings' => [
+                    'dataSourceIndex' => 'SKU', 'attributeName' => 'gone',
+                ]]],
                 'matching',
             ],
             'a field the matcher cannot compare' => [
-                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'active']]],
+                ['loading' => ['type' => 'attribute', 'settings' => [
+                    'dataSourceIndex' => 'SKU', 'attributeName' => 'active',
+                ]]],
                 'matching',
             ],
             'a localized field without a language' => [
-                ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU', 'attributeName' => 'name']]],
+                ['loading' => ['type' => 'attribute', 'settings' => [
+                    'dataSourceIndex' => 'SKU', 'attributeName' => 'name',
+                ]]],
                 'matching',
             ],
             'a localized field in a language that does not exist' => [
