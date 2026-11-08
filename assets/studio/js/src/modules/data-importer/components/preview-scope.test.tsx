@@ -9,14 +9,16 @@
  */
 
 import React from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
+import { cleanup, render } from '@testing-library/react'
 import { PreviewScopeProvider, usePreviewContext, usePreviewScope } from './preview-scope'
 
 const Probe = (): React.JSX.Element => <span>{ `${usePreviewScope() ?? '-'}|${usePreviewContext() ?? '-'}` }</span>
 
+afterEach(cleanup)
+
 describe('preview scope', () => {
   it('carries the change set and the context it is kept in to the requests below', () => {
-    const markup = renderToStaticMarkup(
+    const { container } = render(
       <PreviewScopeProvider
         context="agent-session:7"
         scope="cs-1"
@@ -25,10 +27,10 @@ describe('preview scope', () => {
       </PreviewScopeProvider>
     )
 
-    expect(markup).toBe('<span>cs-1|agent-session:7</span>')
+    expect(container.innerHTML).toBe('<span>cs-1|agent-session:7</span>')
   })
 
   it('is empty outside a review', () => {
-    expect(renderToStaticMarkup(<Probe />)).toBe('<span>-|-</span>')
+    expect(render(<Probe />).container.innerHTML).toBe('<span>-|-</span>')
   })
 })

@@ -15,7 +15,6 @@ import { PreviewPanel } from '../preview-panel/preview-panel'
 import { useStyles } from './step-source.styles'
 
 export interface StepSourceProps {
-  configName: string
   dataSourceIndex: string[]
   forceRefreshToken: number
   columnHeaderOptions: Array<{ value: string, label: string }>
@@ -23,7 +22,6 @@ export interface StepSourceProps {
 }
 
 export const StepSource = ({
-  configName,
   dataSourceIndex,
   forceRefreshToken,
   columnHeaderOptions,
@@ -71,7 +69,6 @@ export const StepSource = ({
         vertical
       >
         <PreviewPanel
-          configName={ configName }
           forceRefreshToken={ forceRefreshToken }
           mode="import"
           selectedDataSourceIndex={ dataSourceIndex }

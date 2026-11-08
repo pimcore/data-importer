@@ -76,7 +76,6 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
     error: previewError,
     load: fetchPreview
   } = usePreviewRecordQuery({
-    configName,
     enabled: isActive,
     getCurrentConfig: getBackendConfig
   })

@@ -45,12 +45,12 @@ function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
 }
 
+// reads its source data from the surrounding MappingSourceContext
 export interface MappingStepProps {
-  configName: string
   isActive: boolean
 }
 
-export const MappingStep = React.memo(({ configName, isActive }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JSX.Element => {
   const { styles } = useStyles()
   const { t } = useTranslation()
   const theme = useTheme()
@@ -70,7 +70,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     classId,
     getMappingConfig,
     getBackendConfig
-  } = useMappingStepLoader(configName, isActive)
+  } = useMappingStepLoader(isActive)
 
   const {
     dataPreview: autofillPreviewData,
@@ -79,7 +79,7 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
     load: loadAutofillPreviewRecord
   // the suggestions read the form's own loader and interpreter, not the stored configuration's:
   // under a proposal the two differ, and a proposed-only configuration has no stored one
-  } = usePreviewRecordQuery({ configName, enabled: isActive, getCurrentConfig: getBackendConfig })
+  } = usePreviewRecordQuery({ enabled: isActive, getCurrentConfig: getBackendConfig })
 
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<number> | 'all'>(new Set())
   const [expandAllPending, setExpandAllPending] = useState(false)
@@ -103,8 +103,8 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
   }, [activeFilter, sourceRows])
 
   const mappingItemContextValue = useMemo(
-    () => ({ configName, classId, columnHeaderOptions, attributesMap, sourceRows }),
-    [configName, classId, columnHeaderOptions, attributesMap, sourceRows]
+    () => ({ classId, columnHeaderOptions, attributesMap, sourceRows }),
+    [classId, columnHeaderOptions, attributesMap, sourceRows]
   )
 
   useEffect(() => {
@@ -486,7 +486,6 @@ export const MappingStep = React.memo(({ configName, isActive }: MappingStepProp
           <div className={ styles.mappingLayoutLeft }>
             <SourcesPanel
               activeFilter={ activeFilter }
-              configName={ configName }
               hasPreviewError={ hasPreviewError }
               onAddMappingFromSource={ handleAddMappingFromSource }
               onSetFilter={ setActiveFilter }

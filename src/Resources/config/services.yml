@@ -119,6 +119,8 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory: ~
     Pimcore\Bundle\DataImporterBundle\Resolver\Resolver: ~
+    Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherFactory:
+        public: true
 
     Pimcore\Bundle\DataImporterBundle\Resolver\Load\IdStrategy:
         tags:

@@ -10,6 +10,12 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ElementWriteGuard: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplier:
+        public: true
+    Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader:
+        public: true
 
     # -------------------
     # simple operators

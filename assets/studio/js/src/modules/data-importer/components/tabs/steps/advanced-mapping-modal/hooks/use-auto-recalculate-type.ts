@@ -9,31 +9,18 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react'
-import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, parseAttrMapKey, DEFAULT_ATTR_MAP_KEY } from '../../../../../types'
+import { type MappingConfigItem, type ClassAttribute, resolveAttrMapKey, parseAttrMapKey } from '../../../../../types'
 import { useBundleDataImporterDataTypeLoadClassAttributesQuery } from '../../../../../data-importer-api-slice.gen'
 import { parseClassAttribute } from '../../mapping-step/hooks/use-mapping-step-loader.types'
-import { usePreviewContext, usePreviewScope } from '../../../../preview-scope'
+import { type TransformationResultTypeRequest } from '../../mapping-source/mapping-source'
 
 interface UseAutoRecalculateTypeArgs {
   open: boolean
-  configName: string
   classId?: string
   localItem: MappingConfigItem
   localItemRef: React.RefObject<MappingConfigItem>
   attributesMap: Record<string, ClassAttribute[]>
-  setCalculateTypeRequest: (request: {
-    name: string
-    bundleDataImporterCalculateTransformationResultTypeParameters: {
-      previewScope?: string
-      previewContext?: string
-      currentConfig: {
-        label?: string
-        dataSourceIndex?: string[]
-        transformationPipeline?: object[]
-        dataTarget?: object
-      }
-    }
-  }) => void
+  setCalculateTypeRequest: (request: TransformationResultTypeRequest) => void
 }
 
 interface UseAutoRecalculateTypeResult {
@@ -43,7 +30,6 @@ interface UseAutoRecalculateTypeResult {
 
 export function useAutoRecalculateType ({
   open,
-  configName,
   classId,
   localItem,
   localItemRef,
@@ -53,8 +39,6 @@ export function useAutoRecalculateType ({
   const pipelineKey = JSON.stringify(localItem.transformationPipeline ?? [])
   const dataSourceKey = JSON.stringify(localItem.dataSourceIndex ?? [])
   const isInitialOpenRef = useRef(true)
-  const previewScope = usePreviewScope()
-  const previewContext = usePreviewContext()
 
   useEffect(() => {
     if (!open) {
@@ -68,22 +52,18 @@ export function useAutoRecalculateType ({
 
     const current = localItemRef.current ?? {}
     setCalculateTypeRequest({
-      name: configName,
-      bundleDataImporterCalculateTransformationResultTypeParameters: {
-        previewScope,
-        previewContext,
-        currentConfig: {
-          label: current.label,
-          dataSourceIndex: current.dataSourceIndex,
-          transformationPipeline: current.transformationPipeline as object[] | undefined,
-          dataTarget: current.dataTarget as object | undefined
-        }
+      currentConfig: {
+        label: current.label,
+        dataSourceIndex: current.dataSourceIndex,
+        transformationPipeline: current.transformationPipeline as object[] | undefined,
+        dataTarget: current.dataTarget as object | undefined
       }
     })
-  }, [pipelineKey, dataSourceKey, open, configName, previewScope, previewContext, localItemRef, setCalculateTypeRequest])
+  }, [pipelineKey, dataSourceKey, open, localItemRef, setCalculateTypeRequest])
 
   const currentAttrMapKey = resolveAttrMapKey(localItem.transformationResultType, localItem.dataTarget?.type)
-  const needsAttrFetch = currentAttrMapKey !== DEFAULT_ATTR_MAP_KEY && attributesMap[currentAttrMapKey] === undefined
+  // a host without the mapping step's attribute map gets the default attributes here too
+  const needsAttrFetch = attributesMap[currentAttrMapKey] === undefined
   const { data: extraAttrData, isFetching: isFetchingExtraAttributes } = useBundleDataImporterDataTypeLoadClassAttributesQuery(
     {
       classId: classId ?? '',
