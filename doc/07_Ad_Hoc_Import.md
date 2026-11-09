@@ -77,7 +77,7 @@ values) and every error, with its row and column. **Errors only** shows the rows
 - an Object ID that does not exist or belongs to a folder or an object of another class;
 - a key for a new object that the folder or another row of the file already uses;
 - a value that does not fit its field: no number, no date, neither yes nor no, no option of the field, or a required
-  field left empty.
+  field left empty on an object that is published.
 
 Choose what happens with the rows with errors: **Skip them**, or **Import them without the invalid values**, which
 leaves the invalid values unchanged and still skips rows that cannot be matched or saved. Skipped rows can be
@@ -115,4 +115,4 @@ the objects.
   For an ad hoc import their configuration name is an empty string. A `PreSaveEvent` listener that skips the element
   leaves its row out of the import.
 - **Files:** an uploaded file is deleted after its import ran or its dialog was cancelled. A file whose dialog was
-  closed without cancelling is removed after a day.
+  closed without cancelling is removed once it is a day old, the next time the same user uploads a file.
