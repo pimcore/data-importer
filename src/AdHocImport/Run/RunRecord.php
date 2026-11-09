@@ -22,7 +22,14 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
  */
 final readonly class RunRecord
 {
+    // its rows are being written
     public const string RUNNING = 'running';
+
+    // its branch is being checked and merged
+    public const string MERGING = 'merging';
+
+    // rows cannot be saved, and nothing is merged: the user chooses how to go on
+    public const string DECISION = 'decision';
 
     public const string DONE = 'done';
 
@@ -35,6 +42,13 @@ final readonly class RunRecord
      *     configuration as it was when the run started, so a later change does not touch the run
      * @param int $total the rows the run imports
      * @param int $skipped the rows the preview's choice left out
+     * @param string|null $branch the branch the rows are written into, when Change Control takes the writes
+     * @param int $mergeTotal the objects the merge covers, while it runs
+     * @param int $mergeDone the objects the merge has written so far
+     * @param int|null $waitingSince when the merge last got on, or since when the run waits for a decision
+     * @param string|null $notice what went wrong that belongs to no row, in the user's words
+     * @param list<string> $columns the file's columns, for the rows a later step finds it cannot save
+     * @param int|null $checkedAt when it was last looked how the merge goes
      */
     public function __construct(
         public int $userId,
@@ -55,6 +69,14 @@ final readonly class RunRecord
         public int $failed = 0,
         public string $state = self::RUNNING,
         public ?int $finishedAt = null,
+        public string $targetFolder = '',
+        public ?string $branch = null,
+        public int $mergeTotal = 0,
+        public int $mergeDone = 0,
+        public ?int $waitingSince = null,
+        public ?string $notice = null,
+        public array $columns = [],
+        public ?int $checkedAt = null,
     ) {
     }
 
@@ -78,6 +100,69 @@ final readonly class RunRecord
         return $this->state === self::RUNNING;
     }
 
+    /**
+     * Rows are being written, or the merge runs: the file is in use.
+     */
+    public function isBusy(): bool
+    {
+        return $this->state === self::RUNNING || $this->state === self::MERGING;
+    }
+
+    public function isWaitingForDecision(): bool
+    {
+        return $this->state === self::DECISION;
+    }
+
+    public function throughBranch(): bool
+    {
+        return $this->branch !== null;
+    }
+
+    public function withBranch(string $branch): self
+    {
+        return self::fromArray([...$this->toArray(), 'branch' => $branch]);
+    }
+
+    /**
+     * The merge goes on: the time only moves when it wrote more, so a merge nobody drives shows as stalled.
+     */
+    public function merging(int $total, int $done, int $time): self
+    {
+        $moved = $this->state !== self::MERGING || $done !== $this->mergeDone || $this->waitingSince === null;
+
+        return self::fromArray([
+            ...$this->toArray(),
+            'state' => self::MERGING,
+            'mergeTotal' => $total,
+            'mergeDone' => $done,
+            'waitingSince' => $moved ? $time : $this->waitingSince,
+            'checkedAt' => $time,
+        ]);
+    }
+
+    public function stalled(int $time, int $limit): bool
+    {
+        return $this->state === self::MERGING && $this->waitingSince !== null && $time - $this->waitingSince >= $limit;
+    }
+
+    public function waitingForDecision(int $time): self
+    {
+        return self::fromArray([...$this->toArray(), 'state' => self::DECISION, 'waitingSince' => $time]);
+    }
+
+    /**
+     * @param list<string> $columns
+     */
+    public function withColumns(array $columns): self
+    {
+        return self::fromArray([...$this->toArray(), 'columns' => $columns]);
+    }
+
+    public function withNotice(?string $notice): self
+    {
+        return self::fromArray([...$this->toArray(), 'notice' => $notice]);
+    }
+
     public function isComplete(): bool
     {
         return $this->processed() >= $this->total;
@@ -93,7 +178,15 @@ final readonly class RunRecord
      */
     public function failedAtClose(RowFailure $failure): self
     {
-        $written = $failure->action === 'create' ? RowOutcome::CREATED : RowOutcome::UPDATED;
+        return $this->failedAfterWrite($failure->action);
+    }
+
+    /**
+     * A row counted as written that the merge did not write: it moves, so the counts add up.
+     */
+    public function failedAfterWrite(?string $action): self
+    {
+        $written = $action === 'create' ? RowOutcome::CREATED : RowOutcome::UPDATED;
 
         return self::fromArray([
             ...$this->toArray(),
@@ -102,9 +195,27 @@ final readonly class RunRecord
         ]);
     }
 
+    /**
+     * Rows written into a branch that was never merged count as not saved.
+     */
+    public function nothingSaved(): self
+    {
+        return self::fromArray([
+            ...$this->toArray(),
+            RowOutcome::UPDATED => 0,
+            RowOutcome::CREATED => 0,
+            RowOutcome::FAILED => $this->processed(),
+        ]);
+    }
+
     public function finished(int $time): self
     {
-        return self::fromArray([...$this->toArray(), 'state' => self::DONE, 'finishedAt' => $time]);
+        return self::fromArray([
+            ...$this->toArray(),
+            'state' => self::DONE,
+            'finishedAt' => $time,
+            'waitingSince' => null,
+        ]);
     }
 
     /**

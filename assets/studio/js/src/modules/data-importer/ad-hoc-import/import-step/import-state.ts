@@ -19,10 +19,31 @@ const fileUrl = (fileId: string): string => `${getPrefix()}/bundle/data-importer
 
 export const isDone = (run: ImportRun | undefined): run is ImportRun => run?.state === 'done'
 
-// what the bar shows: all of it once nothing is left, however many rows failed
-export const percentOf = (run: ImportRun): number => run.total === 0 ? 100 : Math.floor((run.processed / run.total) * 100)
+// rows cannot be saved and nothing is merged: the user chooses how to go on
+export const isDeciding = (run: ImportRun | undefined): boolean => run?.state === 'decision'
+
+// nothing goes on by itself any more, so there is nothing to ask the server about
+export const isSettled = (run: ImportRun | undefined): boolean => isDone(run) || isDeciding(run)
+
+const percent = (done: number, total: number): number => total === 0 ? 100 : Math.floor((done / total) * 100)
+
+// what the bar shows: all of it once nothing is left, however many rows failed; through a branch, then the merge
+export const percentOf = (run: ImportRun): number => run.state === 'merging'
+  ? percent(run.mergeDone, run.mergeTotal)
+  : percent(run.processed, run.total)
 
 export const importedCount = (run: ImportRun): number => run.updated + run.created
+
+export type BranchStep = 'written' | 'checking' | 'merging'
+
+// the merge reports only what it has written, so checking is all it does until then
+export const branchStepOf = (run: ImportRun): BranchStep => {
+  if (run.state !== 'merging') {
+    return 'written'
+  }
+
+  return run.mergeDone > 0 ? 'merging' : 'checking'
+}
 
 export const failedRowsUrl = (fileId: string): string => `${fileUrl(fileId)}/failed-rows`
 

@@ -13,15 +13,15 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvText;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\FailedRowsCsv;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\SpreadsheetCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
@@ -52,6 +52,7 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
         private RowWriterInterface $writer,
         private DryRunMessages $messages,
         private LockFactory $lockFactory,
+        private ?BranchMergeInterface $branchMerge = null,
     ) {
     }
 
@@ -79,13 +80,14 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
         string $fileId,
         AdHocImportRunParameters $parameters
     ): AdHocImportRunResponse {
-        if ($this->runs->find($user->getId(), $fileId)?->isRunning()) {
+        $earlier = $this->runs->find($user->getId(), $fileId);
+        if ($earlier !== null && $earlier->state !== RunRecord::DONE) {
             throw $this->beingImported($fileId);
         }
 
         $settings = $parameters->getSettings();
         $checked = $this->dryRunService->check($fileId, $settings, $user);
-        $imported = $this->importedRows($checked->results, $parameters->getErrorMode());
+        $imported = $checked->importedRows($parameters->getErrorMode());
         if ($imported === []) {
             throw new InvalidArgumentException(sprintf('File %s has no row to import.', $fileId));
         }
@@ -105,16 +107,19 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             $checked->plan->matchColumn,
             $checked->plan->dryRun->newObjectFolder,
             $checked->plan->newObjectFolderId,
-            trim($user->getFirstname() . ' ' . $user->getLastname()) ?: $user->getName()
+            trim($user->getFirstname() . ' ' . $user->getLastname()) ?: $user->getName(),
+            targetFolder: $checked->plan->dryRun->targetFolder
         );
 
         $this->runs->save($run);
 
         try {
-            $this->writer->open($run);
+            $run = $this->writer->open($run, $user);
+            $this->runs->save($run);
             $this->queue->enqueue($run, $imported);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 whatever stopped it, a run short of rows never ends
             $this->runs->delete($user->getId(), $fileId);
+            $this->closeOpenedBranch($run, $user);
 
             throw $throwable;
         }
@@ -138,57 +143,132 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             throw new NotFoundHttpException(sprintf('No failed rows of file %s found', $fileId));
         }
 
-        $lines = [[
+        return FailedRowsCsv::of(
+            $failed['columns'],
+            $failed['rows'],
             $this->messages->columnName('row', $user),
-            ...array_map(SpreadsheetCell::safe(...), $failed['columns']),
-            $this->messages->columnName('error', $user),
-        ]];
-        foreach ($failed['rows'] as $row) {
-            $lines[] = [
-                $row['row'],
-                ...array_map(SpreadsheetCell::safe(...), $row['values']),
-                SpreadsheetCell::safe($row['message']),
-            ];
-        }
-
-        return CsvText::of($lines);
+            $this->messages->columnName('error', $user)
+        );
     }
 
     public function discard(string $fileId): void
     {
         $user = $this->resolveCurrentUser();
-        if ($this->requireRun($user, $fileId)->isRunning()) {
+        $this->deciding($user, $fileId, function () use ($user, $fileId): void {
+            $run = $this->requireRun($user, $fileId);
+            if ($run->isBusy()) {
+                throw $this->beingImported($fileId);
+            }
+
+            if ($run->isWaitingForDecision()) {
+                $this->closeBranch($run, $user);
+                $this->files->delete($user->getId(), $fileId, $run->type);
+            }
+            $this->runs->delete($user->getId(), $fileId);
+            $this->files->deleteRunOutput($user->getId(), $fileId);
+        });
+    }
+
+    public function mergeLeavingOut(string $fileId): AdHocImportRunResponse
+    {
+        $user = $this->resolveCurrentUser();
+
+        return $this->deciding($user, $fileId, function () use ($user, $fileId): AdHocImportRunResponse {
+            $run = $this->branchMerge()->mergeLeavingOut($this->requireDecision($user, $fileId), $user);
+
+            return $this->response($run, $this->failures($user, $fileId)['rows']);
+        });
+    }
+
+    public function withdraw(string $fileId): void
+    {
+        $user = $this->resolveCurrentUser();
+        $this->deciding($user, $fileId, function () use ($user, $fileId): void {
+            $run = $this->requireDecision($user, $fileId);
+
+            $this->closeBranch($run, $user);
+            $this->runs->delete($user->getId(), $fileId);
+            $this->files->deleteRunOutput($user->getId(), $fileId);
+        });
+    }
+
+    public function waitingRuns(int $folderId): array
+    {
+        $user = $this->resolveCurrentUser();
+        $waiting = array_filter(
+            $this->runs->inState(RunRecord::DECISION),
+            static fn (RunRecord $run): bool => $run->userId === $user->getId()
+                && (int) ($run->parameters['folderId'] ?? 0) === $folderId
+        );
+
+        return array_values(array_map(
+            static fn (RunRecord $run): array => ['fileId' => $run->fileId, 'fileName' => $run->fileName],
+            $waiting
+        ));
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $decide reads the run itself: what was read before the lock may be out of date
+     *
+     * @return T
+     */
+    private function deciding(User $user, string $fileId, callable $decide): mixed
+    {
+        $lock = DecisionLock::of($this->lockFactory, $user->getId(), $fileId);
+        if (!$lock->acquire()) {
             throw $this->beingImported($fileId);
         }
 
-        $this->runs->delete($user->getId(), $fileId);
-        $this->files->deleteRunOutput($user->getId(), $fileId);
+        try {
+            return $decide();
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function requireDecision(User $user, string $fileId): RunRecord
+    {
+        $run = $this->requireRun($user, $fileId);
+        if (!$run->isWaitingForDecision()) {
+            throw new InvalidArgumentException(sprintf('The import of %s waits for no decision.', $fileId));
+        }
+
+        return $run;
+    }
+
+    private function closeBranch(RunRecord $run, User $user): void
+    {
+        if ($run->throughBranch()) {
+            $this->branchMerge()->discard($run, $user);
+        }
+    }
+
+    /**
+     * A start that failed leaves no branch open: nothing else knows of it any more.
+     */
+    private function closeOpenedBranch(RunRecord $run, User $user): void
+    {
+        if (!$run->throughBranch() || $this->branchMerge === null) {
+            return;
+        }
+
+        try {
+            $this->branchMerge->discard($run, $user);
+        } catch (\Throwable) { // NOSONAR php:S2221 the user learns what stopped the start, not what kept the branch
+            // the branch stays open; what stopped the start is thrown on
+        }
+    }
+
+    private function branchMerge(): BranchMergeInterface
+    {
+        return $this->branchMerge ?? throw new InvalidArgumentException('Change Control is not installed.');
     }
 
     private function beingImported(string $fileId): InvalidArgumentException
     {
         return new InvalidArgumentException(sprintf('File %s is being imported.', $fileId));
-    }
-
-    /**
-     * @param list<DryRunRow> $results
-     *
-     * @return array<int, list<int>> per position in the file of the rows to import, the writers it goes without
-     */
-    private function importedRows(array $results, string $errorMode): array
-    {
-        $imported = [];
-        foreach ($results as $index => $result) {
-            if ($errorMode === AdHocImportDryRunServiceInterface::SKIP_ROWS) {
-                if (!$result->hasErrors()) {
-                    $imported[$index] = [];
-                }
-            } elseif ($result->importsWithoutInvalidValues()) {
-                $imported[$index] = $result->leftOut;
-            }
-        }
-
-        return $imported;
     }
 
     private function requireRun(User $user, string $fileId): RunRecord
@@ -243,6 +323,10 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             $run->newObjectsFolderId,
             $run->userName,
             $run->finishedAt,
+            $run->throughBranch(),
+            $run->mergeTotal,
+            $run->mergeDone,
+            $run->notice,
             array_map(static fn (array $row): array => [
                 'row' => $row['row'],
                 'matchValue' => $row['matchValue'],

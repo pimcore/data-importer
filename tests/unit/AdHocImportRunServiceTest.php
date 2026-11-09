@@ -18,7 +18,11 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\CheckedFile;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWrite;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
@@ -29,6 +33,7 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInt
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Model\User;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -37,6 +42,10 @@ use Symfony\Component\Lock\Store\InMemoryStore;
 
 class AdHocImportRunServiceTest extends Unit
 {
+    private const string STORE_DOWN = 'the database went away';
+    private const string MUST_FAIL = 'the user must learn that the import did not start';
+    private const string DISCARD = 'discard ';
+
     private string $storage;
 
     private FileStore $files;
@@ -84,7 +93,8 @@ class AdHocImportRunServiceTest extends Unit
         int $checks = 1,
         ?RunQueueInterface $failingQueue = null,
         ?RowWriterInterface $writer = null,
-        ?\Closure $duringCheck = null
+        ?\Closure $duringCheck = null,
+        ?BranchMergeInterface $branchMerge = null
     ): AdHocImportRunService
     {
         $dryRun = $this->createMock(AdHocImportDryRunServiceInterface::class);
@@ -120,8 +130,61 @@ class AdHocImportRunServiceTest extends Unit
             $failingQueue ?? $queue,
             $writer ?? new DirectRowWriter(new EventDispatcher(), new NullLogger()),
             AdHocRunFixtures::dryRunMessages(),
-            $this->locks
+            $this->locks,
+            $branchMerge
         );
+    }
+
+    /** @var list<string> what the branch merge was asked to do */
+    private array $merges = [];
+
+    private function branchMerge(): BranchMergeInterface
+    {
+        return new class($this->merges) implements BranchMergeInterface {
+            /** @param list<string> $calls */
+            public function __construct(private array &$calls)
+            {
+            }
+
+            public function rowsWritten(RunRecord $run, ?ImportPlan $plan, ?User $user, array $failures): void
+            {
+                $this->calls[] = 'rows written';
+            }
+
+            public function follow(int $userId, string $fileId): void
+            {
+                $this->calls[] = 'follow';
+            }
+
+            public function mergeLeavingOut(RunRecord $run, User $user): RunRecord
+            {
+                $this->calls[] = 'merge leaving out ' . $run->fileId;
+
+                return $run->merging(3, 0, 1);
+            }
+
+            public function discard(RunRecord $run, User $user): void
+            {
+                $this->calls[] = 'discard ' . $run->branch;
+            }
+        };
+    }
+
+    private function waitingRun(
+        int $folderId = 3,
+        int $userId = AdHocRunFixtures::USER_ID,
+        ?string $fileId = null
+    ): RunRecord
+    {
+        $run = AdHocRunFixtures::run([
+            'fileId' => $fileId ?? $this->fileId,
+            'userId' => $userId,
+            'branch' => AdHocFakeBranches::BRANCH,
+            'parameters' => ['folderId' => $folderId],
+        ])->waitingForDecision(1);
+        $this->runs->save($run);
+
+        return $run;
     }
 
     /**
@@ -162,7 +225,7 @@ class AdHocImportRunServiceTest extends Unit
 
     public function testAQueueThatFailsLeavesNoRunThatNeverEnds(): void
     {
-        $failure = new \RuntimeException('the database went away');
+        $failure = new \RuntimeException(self::STORE_DOWN);
         $queue = $this->createStub(RunQueueInterface::class);
         $queue->method('enqueue')->willThrowException($failure);
 
@@ -171,7 +234,7 @@ class AdHocImportRunServiceTest extends Unit
                 $this->fileId,
                 $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
             );
-            $this->fail('the user must learn that the import did not start');
+            $this->fail(self::MUST_FAIL);
         } catch (\RuntimeException $caught) {
             $this->assertSame($failure, $caught);
         }
@@ -206,7 +269,7 @@ class AdHocImportRunServiceTest extends Unit
         $parameters = $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS);
         $queue = $this->createStub(RunQueueInterface::class);
         $queue->method('enqueue')->willReturnOnConsecutiveCalls(
-            $this->throwException(new \RuntimeException('the database went away')),
+            $this->throwException(new \RuntimeException(self::STORE_DOWN)),
             null
         );
         $service = $this->service($this->results(), 2, $queue);
@@ -227,8 +290,10 @@ class AdHocImportRunServiceTest extends Unit
     {
         $steps = [];
         $writer = $this->createStub(RowWriterInterface::class);
-        $writer->method('open')->willReturnCallback(static function (RunRecord $run) use (&$steps): void {
+        $writer->method('open')->willReturnCallback(static function (RunRecord $run) use (&$steps): RunRecord {
             $steps[] = 'open ' . $run->fileId;
+
+            return $run;
         });
         $queue = $this->createStub(RunQueueInterface::class);
         $queue->method('enqueue')->willReturnCallback(static function (RunRecord $run) use (&$steps): void {
@@ -243,6 +308,51 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertSame(['open ' . $this->fileId, 'queue ' . $this->fileId], $steps);
     }
 
+    public function testAStartThatFailsAfterTheBranchIsOpenClosesItsBranch(): void
+    {
+        $failure = new \RuntimeException(self::STORE_DOWN);
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willThrowException($failure);
+        $writer = $this->createStub(RowWriterInterface::class);
+        $writer->method('open')->willReturnCallback(
+            static fn (RunRecord $run): RunRecord => $run->withBranch(AdHocFakeBranches::BRANCH)
+        );
+
+        try {
+            $this->service($this->results(), failingQueue: $queue, writer: $writer, branchMerge: $this->branchMerge())
+                ->start($this->fileId, $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS));
+            $this->fail(self::MUST_FAIL);
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertSame([self::DISCARD . AdHocFakeBranches::BRANCH], $this->merges, 'nothing else would close it');
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
+    public function testAStartWhoseBranchCannotBeClosedTellsWhatStoppedTheStart(): void
+    {
+        $failure = new \RuntimeException(self::STORE_DOWN);
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willThrowException($failure);
+        $writer = $this->createStub(RowWriterInterface::class);
+        $writer->method('open')->willReturnCallback(
+            static fn (RunRecord $run): RunRecord => $run->withBranch(AdHocFakeBranches::BRANCH)
+        );
+        $branchMerge = $this->createMock(BranchMergeInterface::class);
+        $branchMerge->expects($this->once())->method('discard')->willThrowException(new \LogicException('gone'));
+
+        try {
+            $this->service($this->results(), failingQueue: $queue, writer: $writer, branchMerge: $branchMerge)
+                ->start($this->fileId, $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS));
+            $this->fail(self::MUST_FAIL);
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
     public function testAWriterThatCannotOpenQueuesNothingAndLeavesNoRun(): void
     {
         $failure = new \RuntimeException('no branch to write to');
@@ -254,7 +364,7 @@ class AdHocImportRunServiceTest extends Unit
                 $this->fileId,
                 $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
             );
-            $this->fail('the user must learn that the import did not start');
+            $this->fail(self::MUST_FAIL);
         } catch (\RuntimeException $caught) {
             $this->assertSame($failure, $caught);
         }
@@ -348,7 +458,8 @@ class AdHocImportRunServiceTest extends Unit
     public function testTheStateOfARunNamesItsFailuresWithoutTheirCells(): void
     {
         $this->runs->save(
-            AdHocRunFixtures::run(['fileId' => $this->fileId, 'failed' => 1, 'updated' => 1])->finished(9)
+            AdHocRunFixtures::run(['fileId' => $this->fileId, 'failed' => 1, 'updated' => 1, 'notice' => 'Not merged'])
+                ->finished(9)
         );
         $this->files->storeFailedRows(AdHocRunFixtures::USER_ID, $this->fileId, (string) json_encode([
             'columns' => ['SKU'],
@@ -362,6 +473,7 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertSame('done', $response->getState());
         $this->assertSame(2, $response->getProcessed());
         $this->assertSame(9, $response->getFinishedAt());
+        $this->assertSame('Not merged', $response->getNotice(), 'what belongs to no row is told above the table');
         $this->assertSame(
             [['row' => 2, 'matchValue' => 'SKU-1', 'action' => 'update', 'message' => 'no']],
             $response->getFailures()
@@ -428,6 +540,186 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
         $this->assertNull($this->files->readFailedRows(AdHocRunFixtures::USER_ID, $this->fileId));
         $this->assertNull($this->files->readSkippedRows(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
+    public function testARunOpensItsBranchAndKeepsItBeforeItsRowsAreQueued(): void
+    {
+        $writer = new class() implements RowWriterInterface {
+            public function open(RunRecord $run, User $user): RunRecord
+            {
+                return $run->withBranch(AdHocFakeBranches::BRANCH);
+            }
+
+            public function write(RowWrite $write): void
+            {
+                // nothing is written here
+            }
+
+            public function close(RunRecord $run): array
+            {
+                return [];
+            }
+        };
+
+        $this->service($this->results(), writer: $writer)->start(
+            $this->fileId,
+            $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
+        );
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId);
+        $this->assertSame(AdHocFakeBranches::BRANCH, $run?->branch, 'a worker writes into it');
+        $this->assertSame('/Products', $run->targetFolder);
+    }
+
+    public function testAFileWaitingForADecisionIsNotImportedAgain(): void
+    {
+        $this->waitingRun();
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $this->service(checks: 0)->start(
+            $this->fileId,
+            $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
+        );
+    }
+
+    public function testDiscardingARunWaitingForADecisionClosesItsBranchAndDeletesItsFile(): void
+    {
+        $this->waitingRun();
+        $this->files->storeFailedRows(AdHocRunFixtures::USER_ID, $this->fileId, '{}');
+
+        $this->service(checks: 0, branchMerge: $this->branchMerge())->discard($this->fileId);
+
+        $this->assertSame([self::DISCARD . AdHocFakeBranches::BRANCH], $this->merges);
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
+        $this->assertNull(
+            $this->files->findType(AdHocRunFixtures::USER_ID, $this->fileId),
+            'nothing is left to import'
+        );
+        $this->assertNull($this->files->readFailedRows(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
+    public function testGoingBackToTheMappingClosesTheBranchAndKeepsTheFile(): void
+    {
+        $this->waitingRun();
+        $this->files->storeFailedRows(AdHocRunFixtures::USER_ID, $this->fileId, '{}');
+
+        $this->service(checks: 0, branchMerge: $this->branchMerge())->withdraw($this->fileId);
+
+        $this->assertSame(
+            [self::DISCARD . AdHocFakeBranches::BRANCH],
+            $this->merges,
+            'the next run opens a branch of its own'
+        );
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
+        $this->assertSame(FileType::Csv, $this->files->findType(AdHocRunFixtures::USER_ID, $this->fileId));
+        $this->assertNull($this->files->readFailedRows(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
+    public function testMergingWithoutTheFailedRowsAnswersWithTheMergingRun(): void
+    {
+        $this->waitingRun();
+
+        $answer = $this->service(checks: 0, branchMerge: $this->branchMerge())->mergeLeavingOut($this->fileId);
+
+        $this->assertSame(['merge leaving out ' . $this->fileId], $this->merges);
+        $this->assertSame(['merging', true, 3, 0], [
+            $answer->getState(),
+            $answer->isThroughBranch(),
+            $answer->getMergeTotal(),
+            $answer->getMergeDone(),
+        ]);
+    }
+
+    public function testOnlyARunWaitingForADecisionIsDecidedOn(): void
+    {
+        $this->runs->save(AdHocRunFixtures::run(['fileId' => $this->fileId])->finished(1));
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        foreach ([$service->mergeLeavingOut(...), $service->withdraw(...)] as $decide) {
+            try {
+                $decide($this->fileId);
+                $this->fail('a finished run has nothing to decide');
+            } catch (InvalidArgumentException) {
+                $this->assertSame([], $this->merges);
+            }
+        }
+    }
+
+    public function testOneDecisionAtATime(): void
+    {
+        $waiting = $this->waitingRun();
+        $lock = DecisionLock::of($this->locks, AdHocRunFixtures::USER_ID, $this->fileId);
+        $lock->acquire();
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        foreach ([$service->mergeLeavingOut(...), $service->withdraw(...), $service->discard(...)] as $decide) {
+            try {
+                $decide($this->fileId);
+                $this->fail('another decision is being taken');
+            } catch (InvalidArgumentException $refused) {
+                $this->assertStringContainsString('is being imported', $refused->getMessage());
+            }
+        }
+
+        $this->assertSame([], $this->merges);
+        $this->assertSame($waiting->state, $this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId)?->state);
+
+        $lock->release();
+        $service->withdraw($this->fileId);
+
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId), 'the lock is free again');
+    }
+
+    public function testADecisionTakenLeavesTheNextOneFree(): void
+    {
+        $this->waitingRun();
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        $service->mergeLeavingOut($this->fileId);
+
+        $this->assertTrue(
+            DecisionLock::of($this->locks, AdHocRunFixtures::USER_ID, $this->fileId)->acquire(),
+            'the lock is released'
+        );
+    }
+
+    public function testADecisionGoesByWhatTheRunIsOnceItHasTheLock(): void
+    {
+        $this->waitingRun();
+        $this->locks = AdHocRunFixtures::locksThatFirst(function (): void {
+            $this->runs->save(AdHocRunFixtures::run([
+                'fileId' => $this->fileId,
+                'branch' => AdHocFakeBranches::BRANCH,
+            ])->merging(3, 0, time()));
+        });
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        try {
+            $service->mergeLeavingOut($this->fileId);
+            $this->fail('the other request has started the merge');
+        } catch (InvalidArgumentException $refused) {
+            $this->assertStringContainsString('waits for no decision', $refused->getMessage());
+        }
+
+        $this->assertSame([], $this->merges);
+        $this->assertSame(
+            RunRecord::MERGING,
+            $this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId)?->state
+        );
+    }
+
+    public function testTheRunsWaitingInAFolderAreTheUsersOnly(): void
+    {
+        $this->waitingRun();
+        $this->waitingRun(4, AdHocRunFixtures::USER_ID, 'other-folder');
+        $this->waitingRun(3, 8, 'other-user');
+        $this->runs->save(AdHocRunFixtures::run(['fileId' => 'running']));
+
+        $this->assertSame(
+            [['fileId' => $this->fileId, 'fileName' => 'autumn.csv']],
+            $this->service(checks: 0)->waitingRuns(3)
+        );
     }
 
     public function testARunStillGoingCannotBeDiscarded(): void

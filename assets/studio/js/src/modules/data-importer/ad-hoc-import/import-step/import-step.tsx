@@ -8,13 +8,15 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo } from 'react'
-import { type ColumnDef } from '@tanstack/react-table'
+import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Card, Grid, Progress } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Card, Progress } from '@pimcore/studio-ui-bundle/components'
 import { useElementHelper } from '@pimcore/studio-ui-bundle/modules/element'
 import { useStyles as usePreviewStyles } from '../preview-step/preview-step.styles'
-import { importedCount, isDone, percentOf, skippedRowsUrl, type ImportRun, type ImportRunFailure } from './import-state'
+import { BranchRunning } from './branch-running'
+import { Decision } from './decision'
+import { FailuresTable, Notice } from './failures-table'
+import { importedCount, isDeciding, isDone, percentOf, skippedRowsUrl, type ImportRun } from './import-state'
 import { useStyles } from './import-step.styles'
 
 const CARD_PADDING = { x: 'extra-large', y: 'large' } as const
@@ -25,11 +27,16 @@ export interface ImportStepProps {
   run: ImportRun | undefined
   // how many rows the import takes, known from the preview while the first answer is on its way
   total: number
+  // the file of an import the dialog was opened again for, which waits for the user's decision
+  waitingFile?: string
 }
 
 const Running = ({ run, total }: { run: ImportRun | undefined, total: number }): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  if (run?.throughBranch === true) {
+    return <BranchRunning run={ run } />
+  }
   const count = run?.total ?? total
   const done = run?.processed ?? 0
   const progress = t('data-importer.ad-hoc-import.run.count-of', { done, total: count })
@@ -79,7 +86,7 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
               }) }
             </div>
             <div className={ styles.muted }>
-              { t('data-importer.ad-hoc-import.result.saved-as', {
+              { t(run.throughBranch ? 'data-importer.ad-hoc-import.result.merged-as' : 'data-importer.ad-hoc-import.result.saved-as', {
                 user: run.userName,
                 time: run.finishedAt === null ? '' : new Date(run.finishedAt * 1000).toLocaleString(),
                 interpolation: { escapeValue: false }
@@ -131,33 +138,9 @@ const WithFailures = ({ run }: { run: ImportRun }): React.JSX.Element => {
   const { styles } = useStyles()
   const { styles: previewStyles } = usePreviewStyles()
 
-  const columns = useMemo<Array<ColumnDef<ImportRunFailure>>>(() => [
-    {
-      id: 'row',
-      header: t('data-importer.ad-hoc-import.result.column.row'),
-      accessorFn: (failure) => String(failure.row),
-      size: 64
-    },
-    {
-      id: 'match',
-      header: run.matchColumn,
-      accessorFn: (failure) => failure.matchValue
-    },
-    {
-      id: 'action',
-      header: t('data-importer.ad-hoc-import.result.column.action'),
-      accessorFn: (failure) => failure.action === null ? '' : t(`data-importer.ad-hoc-import.preview.action.${failure.action}`)
-    },
-    {
-      id: 'why',
-      header: t('data-importer.ad-hoc-import.result.column.why'),
-      accessorFn: (failure) => failure.message,
-      cell: ({ getValue }) => <span className={ styles.error }>{ getValue<string>() }</span>
-    }
-  ], [run.matchColumn, styles.error, t])
-
   return (
     <div>
+      <Notice run={ run } />
       <Alert
         className={ styles.notSaved }
         description={ t('data-importer.ad-hoc-import.result.others-saved') }
@@ -188,17 +171,24 @@ const WithFailures = ({ run }: { run: ImportRun }): React.JSX.Element => {
           <span className={ previewStyles.label }>{ t('data-importer.ad-hoc-import.result.count.skipped') }</span>
         </div>
       </div>
-      <Grid
-        autoWidth
-        columns={ columns }
-        data={ run.failures }
-        setRowId={ (failure: ImportRunFailure) => String(failure.row) }
+      <FailuresTable
+        run={ run }
+        why={ t('data-importer.ad-hoc-import.result.column.why') }
       />
     </div>
   )
 }
 
-export const ImportStep = ({ fileId, run, total }: ImportStepProps): React.JSX.Element => {
+export const ImportStep = ({ fileId, run, total, waitingFile }: ImportStepProps): React.JSX.Element => {
+  if (run !== undefined && isDeciding(run)) {
+    return (
+      <Decision
+        run={ run }
+        waitingFile={ waitingFile }
+      />
+    )
+  }
+
   if (!isDone(run)) {
     return (
       <Running

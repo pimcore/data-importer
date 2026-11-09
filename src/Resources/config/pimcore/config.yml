@@ -25,6 +25,7 @@ framework:
 
         routing:
             'Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage': pimcore_data_import
+            'Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\MergeFollowMessage': pimcore_data_import
 
 pimcore_data_hub:
     supported_types:

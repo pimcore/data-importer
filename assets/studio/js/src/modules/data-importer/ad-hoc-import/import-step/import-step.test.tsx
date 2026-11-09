@@ -40,6 +40,10 @@ const run = (given: Partial<ImportRun>): ImportRun => ({
   newObjectsFolderId: 7,
   userName: 'Jo Doe',
   finishedAt: 1_800_000_000,
+  throughBranch: false,
+  mergeTotal: 0,
+  mergeDone: 0,
+  notice: null,
   failures: [],
   ...given
 })
@@ -166,5 +170,100 @@ describe('an import with rows that were not saved', () => {
     expect(within(row).getByText('You may not save objects in /Products/Outdoor/Archive').className).toBe('error')
     expect(within(screen.getByText('SB-310').closest('tr') as HTMLElement).queryByText('update')).toBeNull()
     expect(screen.queryByText('Import complete')).toBeNull()
+  })
+})
+
+describe('an import through a branch', () => {
+  it('shows the rows written into the branch while they are written', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ state: 'running', throughBranch: true, total: 306, processed: 184 }) }
+      total={ 306 }
+           />)
+
+    expect(screen.getByText('Written into a branch').parentElement!.getAttribute('aria-current')).toBe('step')
+    expect(within(screen.getByText('Written into a branch').parentElement!).getByText('184 of 306')).toBeTruthy()
+    expect(screen.getByText('Checking: rights, keys, values').parentElement!.getAttribute('aria-current')).toBeNull()
+    expect(screen.getByText('Merging as Jo Doe')).toBeTruthy()
+    expect(screen.queryByText('Saving')).toBeNull()
+  })
+
+  it('checks the branch until the merge writes, then counts what it wrote', () => {
+    const merging = run({ state: 'merging', throughBranch: true, total: 306, processed: 306, mergeTotal: 306, mergeDone: 0 })
+    render(<ImportStep
+      fileId="file-1"
+      run={ merging }
+      total={ 306 }
+           />)
+
+    expect(within(screen.getByText('Written into a branch').parentElement!).getByText('306 objects')).toBeTruthy()
+    expect(screen.getByText('Checking: rights, keys, values').parentElement!.getAttribute('aria-current')).toBe('step')
+
+    cleanup()
+    render(<ImportStep
+      fileId="file-1"
+      run={ { ...merging, mergeDone: 184 } }
+      total={ 306 }
+           />)
+
+    expect(screen.getByText('Merging as Jo Doe').parentElement!.getAttribute('aria-current')).toBe('step')
+    expect(within(screen.getByText('Merging as Jo Doe').parentElement!).getByText('184 of 306')).toBeTruthy()
+  })
+
+  it('names the merge in the result', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ throughBranch: true }) }
+      total={ 309 }
+           />)
+
+    expect(screen.getByText(/^Merged as Jo Doe · /)).toBeTruthy()
+  })
+
+  it('lists the rows that cannot be saved, with nothing merged yet', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({
+        state: 'decision',
+        throughBranch: true,
+        updated: 300,
+        created: 5,
+        failed: 4,
+        failures: [{ row: 41, matchValue: 'NH-1090', action: 'create', message: '/Products/Outdoor already holds an object named NH-1090' }]
+      }) }
+      total={ 309 }
+           />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert.textContent).toContain('4 rows cannot be saved.')
+    expect(alert.textContent).toContain('Nothing is merged yet; the other rows are ready in the branch.')
+    expect(within(screen.getByText('ready to merge').parentElement!).getByText('305')).toBeTruthy()
+    expect(within(screen.getByText('cannot be saved').parentElement!).getByText('4')).toBeTruthy()
+    expect(within(screen.getByText('skipped in the preview').parentElement!).getByText('3')).toBeTruthy()
+    expect(screen.getByRole('columnheader', { name: 'Why it cannot be saved' })).toBeTruthy()
+    expect(screen.getByText('/Products/Outdoor already holds an object named NH-1090').className).toBe('error')
+  })
+
+  it('says which import waits when the dialog opened on it, and what concerns no row', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ state: 'decision', throughBranch: true, failed: 1, notice: 'The import could not be merged: The object no longer exists' }) }
+      total={ 309 }
+      waitingFile="autumn.xlsx"
+           />)
+
+    const alerts = screen.getAllByRole('alert').map((alert) => alert.textContent)
+    expect(alerts[0]).toContain('An import of autumn.xlsx into this folder is waiting for your decision.')
+    expect(alerts[1]).toContain('The import could not be merged: The object no longer exists')
+  })
+
+  it('tells what concerns no row when rows were not saved', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ failed: 2, throughBranch: true, notice: 'The merge did not finish in time.' }) }
+      total={ 309 }
+           />)
+
+    expect(screen.getAllByRole('alert')[0].textContent).toContain('The merge did not finish in time.')
   })
 })

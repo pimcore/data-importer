@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\Run;
 
+use Pimcore\Model\User;
+
 /**
  * Where a run's rows are written: straight to the objects, or into a branch that is merged at the end, so open() and
  * close() frame the writes. Rights, the mapping and PreSaveEvent come before this seam; PostSaveEvent comes behind it,
@@ -24,8 +26,10 @@ interface RowWriterInterface
 {
     /**
      * Before the first row.
+     *
+     * @return RunRecord the run, with what the writes go into
      */
-    public function open(RunRecord $run): void;
+    public function open(RunRecord $run, User $user): RunRecord;
 
     /**
      * Writes one row.

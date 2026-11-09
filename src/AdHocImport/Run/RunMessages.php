@@ -32,6 +32,8 @@ final readonly class RunMessages
 
     private const string CHECK = 'data-importer.ad-hoc-import.check.';
 
+    private const string MERGE = 'data-importer.ad-hoc-import.merge.';
+
     // what a notification lists before it only counts, so a failed run stays readable
     private const int NOTIFIED_ROWS = 20;
 
@@ -86,6 +88,73 @@ final readonly class RunMessages
         return $this->say($user, self::RUN . 'save-failed-unknown', []);
     }
 
+    public function branchName(RunRecord $run, User $user): string
+    {
+        return $this->say($user, self::MERGE . 'branch-name', [
+            '{{file}}' => $run->fileName,
+            '{{folder}}' => $run->targetFolder,
+        ]);
+    }
+
+    /**
+     * Why the merge did not write a row, by the kind of problem: what Change Control says itself can hold an
+     * exception's text, so it goes to the log only.
+     */
+    public function mergeProblem(string $code, ?RecordedRow $row, User $user): string
+    {
+        return match ($code) {
+            'not_allowed' => $row?->isNew()
+                ? $this->mayNotCreate((string) $row->folder, $user)
+                : $this->mayNotSave((string) $row?->folder, $user),
+            'object_gone' => $this->say($user, self::MERGE . 'object-gone', []),
+            'invalid_value' => $this->say($user, self::MERGE . 'invalid-value', []),
+            'missing_new_object' => $this->say($user, self::MERGE . 'missing-new-object', []),
+            'invalid_place' => $row?->isNew()
+                ? $this->say($user, self::CHECK . 'key-taken', ['{{key}}' => $row->key, '{{folder}}' => $row->folder])
+                : $this->say($user, self::RUN . 'save-failed-unknown', []),
+            'interrupted' => $this->mergeInterrupted($user),
+            default => $this->say($user, self::RUN . 'save-failed-unknown', []),
+        };
+    }
+
+    public function mergeInterrupted(User $user): string
+    {
+        return $this->say($user, self::MERGE . 'interrupted', []);
+    }
+
+    /**
+     * A problem of the merge as a whole, which no row of the file shows.
+     */
+    public function mergeNotice(string $code, User $user): string
+    {
+        return $this->say($user, self::MERGE . 'notice', ['{{reason}}' => $this->mergeProblem($code, null, $user)]);
+    }
+
+    public function mergeTimedOut(User $user): string
+    {
+        return $this->say($user, self::MERGE . 'timed-out', []);
+    }
+
+    public function decisionTitle(RunRecord $run, User $user): string
+    {
+        return $this->say($user, self::MERGE . 'decision.title', ['{{file}}' => $run->fileName]);
+    }
+
+    /**
+     * @param list<RowFailure> $failures
+     */
+    public function decisionText(RunRecord $run, array $failures, User $user): string
+    {
+        return implode("\n", [
+            $this->say($user, self::MERGE . 'decision.summary', [
+                '{{ready}}' => (string) ($run->updated + $run->created),
+                '{{failed}}' => (string) $run->failed,
+                '{{folder}}' => $run->targetFolder,
+            ]),
+            ...$this->rowLines($failures, $user),
+        ]);
+    }
+
     public function notificationTitle(RunRecord $run, User $user): string
     {
         return $this->say($user, self::RUN . 'notification.title', ['{{file}}' => $run->fileName]);
@@ -103,7 +172,21 @@ final readonly class RunMessages
             '{{failed}}' => (string) $run->failed,
             '{{skipped}}' => (string) $run->skipped,
         ])];
+        if ($run->notice !== null) {
+            $lines[] = $run->notice;
+        }
 
+        return implode("\n", [...$lines, ...$this->rowLines($failures, $user)]);
+    }
+
+    /**
+     * @param list<RowFailure> $failures
+     *
+     * @return list<string>
+     */
+    private function rowLines(array $failures, User $user): array
+    {
+        $lines = [];
         foreach (array_slice($failures, 0, self::NOTIFIED_ROWS) as $failure) {
             $lines[] = $this->say($user, self::RUN . 'notification.row', [
                 '{{row}}' => (string) $failure->row,
@@ -118,7 +201,7 @@ final readonly class RunMessages
             ]);
         }
 
-        return implode("\n", $lines);
+        return $lines;
     }
 
     /**

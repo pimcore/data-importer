@@ -5,6 +5,9 @@ parameters:
         - src
     bootstrapFiles:
         - phpstan-bootstrap.php
+    # core's contract, until the core this bundle requires ships it
+    scanDirectories:
+        - tests/CoreContract
     excludePaths:
         - src/Command/DummyDataCommand.php
         - src/Command/ParallelizationAbstractCommand.php

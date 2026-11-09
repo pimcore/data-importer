@@ -23,6 +23,10 @@ use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListWaitingRunsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\MergeLeavingOutController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\WithdrawRunController;
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportWaitingRunsResponse;
 
 class AdHocImportRunControllersTest extends Unit
 {
@@ -44,6 +48,10 @@ class AdHocImportRunControllersTest extends Unit
             '/Products',
             4,
             'Jo Doe',
+            null,
+            false,
+            0,
+            0,
             null,
             []
         );
@@ -115,5 +123,48 @@ class AdHocImportRunControllersTest extends Unit
         $this->assertSame("row;error\n", $response->getContent());
         $this->assertSame('text/csv; charset=UTF-8', $response->headers->get('Content-Type'));
         $this->assertSame('attachment; filename=failed-rows.csv', $response->headers->get('Content-Disposition'));
+    }
+
+    public function testARunWaitingForADecisionIsMergedWithoutTheRowsThatCannotBeSaved(): void
+    {
+        $answer = $this->answer();
+        $service = $this->createMock(AdHocImportRunServiceInterface::class);
+        $service->expects($this->once())->method('mergeLeavingOut')->with('file-1')->willReturn($answer);
+
+        $response = (new MergeLeavingOutController($this->serializer($answer), $service))->mergeLeavingOut('file-1');
+
+        $this->assertSame(self::ANSWER, $response->getContent());
+    }
+
+    public function testARunWaitingForADecisionIsTakenBackAndAnswersNothing(): void
+    {
+        $service = $this->createMock(AdHocImportRunServiceInterface::class);
+        $service->expects($this->once())->method('withdraw')->with('file-1');
+
+        $response = (new WithdrawRunController($this->createStub(SerializerInterface::class), $service))
+            ->withdrawRun('file-1');
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('', $response->getContent());
+    }
+
+    public function testTheRunsWaitingInAFolderAreListed(): void
+    {
+        $waiting = [['fileId' => 'file-1', 'fileName' => 'autumn.csv']];
+        $service = $this->createMock(AdHocImportRunServiceInterface::class);
+        $service->expects($this->once())->method('waitingRuns')->with(3)->willReturn($waiting);
+        $serializer = $this->createStub(SerializerInterface::class);
+        $serializer->method('serialize')->willReturnCallback(
+            function (mixed $data) use ($waiting): string {
+                $this->assertInstanceOf(AdHocImportWaitingRunsResponse::class, $data);
+                $this->assertSame($waiting, $data->getItems());
+
+                return self::ANSWER;
+            }
+        );
+
+        $response = (new ListWaitingRunsController($serializer, $service))->listWaitingRuns(3);
+
+        $this->assertSame(self::ANSWER, $response->getContent());
     }
 }

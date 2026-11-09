@@ -401,6 +401,35 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportMergeLeavingOut: build.mutation<
+                BundleDataImporterAdHocImportMergeLeavingOutApiResponse,
+                BundleDataImporterAdHocImportMergeLeavingOutApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/run/merge`,
+                    method: "POST",
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportWithdrawRun: build.mutation<
+                BundleDataImporterAdHocImportWithdrawRunApiResponse,
+                BundleDataImporterAdHocImportWithdrawRunApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/run/withdraw`,
+                    method: "POST",
+                }),
+                invalidatesTags: ["Bundle Data Importer"],
+            }),
+            bundleDataImporterAdHocImportListWaitingRuns: build.query<
+                BundleDataImporterAdHocImportListWaitingRunsApiResponse,
+                BundleDataImporterAdHocImportListWaitingRunsApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/folder/${queryArg.folderId}/waiting-runs`,
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -651,6 +680,23 @@ export type BundleDataImporterAdHocImportDiscardRunApiResponse = unknown;
 export type BundleDataImporterAdHocImportDiscardRunApiArg = {
     /** The file */
     fileId: string;
+};
+export type BundleDataImporterAdHocImportMergeLeavingOutApiResponse =
+    /** status 200 The run, as its merge starts */ BundleDataImporterAdHocImportRunResponse;
+export type BundleDataImporterAdHocImportMergeLeavingOutApiArg = {
+    /** The file */
+    fileId: string;
+};
+export type BundleDataImporterAdHocImportWithdrawRunApiResponse = unknown;
+export type BundleDataImporterAdHocImportWithdrawRunApiArg = {
+    /** The file */
+    fileId: string;
+};
+export type BundleDataImporterAdHocImportListWaitingRunsApiResponse =
+    /** status 200 The imports waiting for a decision */ BundleDataImporterAdHocImportWaitingRunsResponse;
+export type BundleDataImporterAdHocImportListWaitingRunsApiArg = {
+    /** The folder */
+    folderId: number;
 };
 export type BundleDataImporterAdHocImportDryRunApiResponse =
     /** status 200 Every row of the file with what its import would do */ BundleDataImporterAdHocImportDryRunResponse;
@@ -1147,8 +1193,8 @@ export type BundleDataImporterAdHocImportRunParameters = {
     fileName: string;
 };
 export type BundleDataImporterAdHocImportRunResponse = {
-    /** Whether the run still goes on */
-    state: "running" | "done";
+    /** Whether its rows are being written, its branch is being merged, the user has to decide on rows that cannot be saved, or it ended */
+    state: "running" | "merging" | "decision" | "done";
     /** The rows the run imports */
     total: number;
     /** The rows it has dealt with */
@@ -1169,6 +1215,14 @@ export type BundleDataImporterAdHocImportRunResponse = {
     userName: string;
     /** When the run ended, as a timestamp */
     finishedAt: number | null;
+    /** Whether the rows go into a Change Control branch that is merged */
+    throughBranch: boolean;
+    /** The objects the merge covers */
+    mergeTotal: number;
+    /** The objects the merge has written so far */
+    mergeDone: number;
+    /** What went wrong that concerns no row of the file */
+    notice: string | null;
     /** The rows not saved, once the run has ended */
     failures: {
         row: number;
@@ -1176,6 +1230,15 @@ export type BundleDataImporterAdHocImportRunResponse = {
         action: "update" | "create" | null;
         /** Why it was not saved */
         message: string;
+    }[];
+};
+export type BundleDataImporterAdHocImportWaitingRunsResponse = {
+    /** The imports into the folder that wait for a decision of the user */
+    items: {
+        /** ID of the imported file */
+        fileId: string;
+        /** Name of the imported file */
+        fileName: string;
     }[];
 };
 export type BundleDataImporterAdHocImportDryRunParameters = {
@@ -1304,4 +1367,7 @@ export const {
     useBundleDataImporterAdHocImportStartRunMutation,
     useBundleDataImporterAdHocImportLoadRunQuery,
     useBundleDataImporterAdHocImportDiscardRunMutation,
+    useBundleDataImporterAdHocImportMergeLeavingOutMutation,
+    useBundleDataImporterAdHocImportWithdrawRunMutation,
+    useBundleDataImporterAdHocImportListWaitingRunsQuery,
 } = injectedRtkApi;
