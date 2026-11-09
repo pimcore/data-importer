@@ -227,6 +227,20 @@ describe('what the import works with', () => {
     })
   })
 
+  it('creates every row of a configuration that matches nothing, keyed by the file step\'s column', () => {
+    const none = configuration({ matchBy: 'none', matchField: null, matchLanguage: null, matchColumn: null })
+
+    expect(unusableReason(none, inspected)).toBeNull()
+    expect(importObjects(objects, 'configuration', none, inspected)).toEqual({
+      classId: 'PROD',
+      matchBy: 'none',
+      matchField: undefined,
+      matchLanguage: null,
+      matchColumn: '0',
+      newObjectsFolder: '/Products/Imported'
+    })
+  })
+
   it('matches by the key the file has for the match column of the configuration', () => {
     expect(importObjects(objects, 'configuration', byName(), inspected).matchColumn).toBe('0')
     expect(importObjects(objects, 'configuration', configuration({ matchColumn: '1' }), csvWithHeader).matchColumn).toBe('Name DE ')

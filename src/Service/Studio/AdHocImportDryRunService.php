@@ -195,7 +195,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
     {
         return $configuration === null
             ? $this->objectsOf($parameters)
-            : $this->objectsOfConfiguration($configuration['configuration'], $parameters->getConfigurationColumns());
+            : $this->objectsOfConfiguration($configuration['configuration'], $parameters);
     }
 
     /**
@@ -328,7 +328,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
 
     /**
      * A configuration's class, match and folder replace those of the file step; its match column is found in the
-     * file as the caller found it.
+     * file as the caller found it. One that matches nothing keys new objects by the file step's column.
      *
      * @param array{
      *     classId: string|null,
@@ -338,13 +338,14 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      *     matchColumn: string|null,
      *     newObjectsFolder: string|null
      * } $configuration
-     * @param array<mixed> $fileColumns
      *
      * @return Objects
      */
-    private function objectsOfConfiguration(array $configuration, array $fileColumns): array
+    private function objectsOfConfiguration(array $configuration, AdHocImportDryRunParameters $parameters): array
     {
-        $matchColumn = $fileColumns[$configuration['matchColumn'] ?? ''] ?? null;
+        $matchColumn = $configuration['matchBy'] === AdHocImportDryRunParameters::MATCH_BY_NONE
+            ? $parameters->getMatchColumn()
+            : $parameters->getConfigurationColumns()[$configuration['matchColumn'] ?? ''] ?? null;
         if (!is_string($matchColumn) || $configuration['classId'] === null || $configuration['matchBy'] === null) {
             throw new InvalidArgumentException('The file lacks the column the configuration matches by.');
         }

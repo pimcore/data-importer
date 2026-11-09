@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import React, { useState } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
@@ -243,6 +244,16 @@ describe('the mapping with a configuration', () => {
     const summary = within(screen.getByRole('region', { name: 'by-id' }))
     expect(summary.getByText('Object ID from column Artikelnr')).toBeTruthy()
     expect(summary.getByText('PROD')).toBeTruthy()
+  })
+
+  it('says that one matching nothing creates every row, keyed by the file step\'s column', () => {
+    useConfiguration({
+      configurations: [configuration({ name: 'new-only', matchBy: 'none', matchField: null, matchLanguage: null, matchColumn: null })]
+    })
+    choose('new-only')
+
+    const summary = within(screen.getByRole('region', { name: 'new-only' }))
+    expect(summary.getByText('Every row creates a new object, keyed by the file step\'s column')).toBeTruthy()
   })
 
   it('warns of the columns it reads that the file does not have, unescaped', () => {

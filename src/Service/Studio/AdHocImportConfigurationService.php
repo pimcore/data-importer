@@ -46,6 +46,9 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
     // the strategies whose result an ad hoc import can take: by the object ID or a field, into one folder
     private const array LOADING_BY = ['id' => 'id', 'attribute' => 'field'];
 
+    // loads nothing: every row creates an object, keyed by the column the file step chose
+    private const string NOT_LOAD = 'notLoad';
+
     private const string STATIC_PATH = 'staticPath';
 
     /**
@@ -160,7 +163,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         };
 
         $columns = $this->mappedColumns(is_array($data['mappingConfig'] ?? null) ? $data['mappingConfig'] : []);
-        if ($match !== null) {
+        if ($match !== null && $match['column'] !== null) {
             $columns = array_values(array_unique([$match['column'], ...$columns]));
         }
 
@@ -184,10 +187,14 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
     /**
      * @param array<mixed> $strategy
      *
-     * @return array{by: 'id'|'field', field: string|null, language: string|null, column: string}|null
+     * @return array{by: 'id'|'field'|'none', field: string|null, language: string|null, column: string|null}|null
      */
     private function match(array $strategy): ?array
     {
+        if (($strategy['type'] ?? null) === self::NOT_LOAD) {
+            return ['by' => 'none', 'field' => null, 'language' => null, 'column' => null];
+        }
+
         $by = self::LOADING_BY[$strategy['type'] ?? ''] ?? null;
         $settings = is_array($strategy['settings'] ?? null) ? $strategy['settings'] : [];
         $column = $this->text($settings['dataSourceIndex'] ?? null);
@@ -215,10 +222,14 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
      * Whether the ad hoc matcher accepts the field and language, read-only: a removed or unsupported field, or a
      * localized one without a valid language, would fail only once the import starts.
      *
-     * @param array{by: 'id'|'field', field: string|null, language: string|null, column: string} $match
+     * @param array{by: 'id'|'field'|'none', field: string|null, language: string|null, column: string|null} $match
      */
     private function matchable(ClassDefinition $class, array $match): bool
     {
+        if ($match['by'] === 'none') {
+            return true;
+        }
+
         try {
             $this->rowMatcherFactory->assertMatchable($class, $match['field'], $match['language'] ?? '');
         } catch (InvalidConfigurationException) {

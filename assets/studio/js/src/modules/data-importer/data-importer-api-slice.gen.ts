@@ -1065,13 +1065,13 @@ export type BundleDataImporterAdHocImportConfigurationsResponse = {
         classId: string | null;
         /** Name of the class it imports */
         className: string | null;
-        /** What it finds objects by: the object ID or a field */
-        matchBy: "id" | "field" | null;
+        /** What it finds objects by: the object ID or a field, or none to create every row */
+        matchBy: "id" | "field" | "none" | null;
         /** The field it finds objects by */
         matchField: string | null;
         /** The language of a localized field it finds objects by */
         matchLanguage: string | null;
-        /** The column holding the value it finds objects by */
+        /** The column holding the value it finds objects by; null when it finds none */
         matchColumn: string | null;
         /** Path of the folder it creates new objects in */
         newObjectsFolder: string | null;

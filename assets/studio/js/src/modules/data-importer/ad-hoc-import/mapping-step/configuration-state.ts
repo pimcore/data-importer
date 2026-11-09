@@ -98,7 +98,8 @@ export const findConfiguration = (
 ): ImportConfiguration | undefined => configurations?.find((configuration) => configuration.name === name)
 
 /**
- * What the import works with: a chosen configuration's class, match and folder replace those of the file step.
+ * What the import works with: a chosen configuration's class, match and folder replace those of the file step. One that
+ * matches nothing keys new objects by the file step's column.
  */
 export const importObjects = (
   objects: ObjectsSettings,
@@ -108,6 +109,17 @@ export const importObjects = (
 ): ImportObjects => {
   if (mapWith === 'here' || configuration === undefined || inspected === undefined) {
     return { ...objects, matchLanguage: null }
+  }
+
+  if (configuration.matchBy === 'none') {
+    return {
+      classId: configuration.classId ?? undefined,
+      matchBy: 'none',
+      matchField: undefined,
+      matchLanguage: null,
+      matchColumn: objects.matchColumn,
+      newObjectsFolder: configuration.newObjectsFolder
+    }
   }
 
   return {

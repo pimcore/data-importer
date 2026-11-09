@@ -423,6 +423,7 @@ data-importer.ad-hoc-import.configuration.replaces: Its class, its match and its
 data-importer.ad-hoc-import.configuration.match-object-id: 'Object ID from column {{column}}'
 data-importer.ad-hoc-import.configuration.match-field: '{{field}} from column {{column}}'
 data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) from column {{column}}'
+data-importer.ad-hoc-import.configuration.match-none: Every row creates a new object, keyed by the file step's column
 data-importer.ad-hoc-import.configuration.missing-columns: 'Columns it reads that the file does not have: {{columns}}'
 data-importer.ad-hoc-import.mapping.transformations: Transformations
 data-importer.ad-hoc-import.mapping.transformations-count: 'Transformations ({{count}})'
