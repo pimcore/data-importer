@@ -230,6 +230,12 @@ final class RunProcessor implements AdHocRowProcessorInterface
      */
     private function endUnmerged(RunRecord $run, ?ImportPlan $plan, ?User $user, array $failures): void
     {
+        if ($user instanceof User) {
+            // the rows in the branch are not saved either: they stay in the failed rows, to be imported again
+            $this->attempt($run, function () use ($run, $user, &$failures): void {
+                $failures = $this->withRecordedRows($run, $failures, $this->messages->cannotGoOn($user));
+            });
+        }
         $this->attempt($run, function () use ($run, $user): void {
             if ($user instanceof User) {
                 $this->branchMerge?->discard($run, $user);
@@ -257,6 +263,25 @@ final class RunProcessor implements AdHocRowProcessorInterface
                 $this->notifier->notify($run, $failures, $user);
             });
         }
+    }
+
+    /**
+     * @param list<RowFailure> $failures
+     *
+     * @return list<RowFailure> one per row, by their row; a row that failed before the branch keeps its reason
+     */
+    private function withRecordedRows(RunRecord $run, array $failures, string $message): array
+    {
+        $byRow = [];
+        foreach ($this->runs->recorded($run) as $row) {
+            $byRow[$row->row] = $row->failure($message);
+        }
+        foreach ($failures as $failure) {
+            $byRow[$failure->row] = $failure;
+        }
+        ksort($byRow);
+
+        return array_values($byRow);
     }
 
     /**

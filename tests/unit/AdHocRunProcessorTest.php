@@ -660,7 +660,9 @@ class AdHocRunProcessorTest extends Unit
     public function testTheRowsOfABranchRunAreHandedToTheMergeOnceTheLastIsWritten(): void
     {
         $fileId = $this->storedFile();
-        $this->runs->save(AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']));
+        $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']);
+        $this->runs->save($run);
+        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
         $user = AdHocRunFixtures::user();
         $plan = AdHocRunFixtures::plan(
             [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()), new \RuntimeException('lookup failed')],
@@ -702,7 +704,9 @@ class AdHocRunProcessorTest extends Unit
     public function testABranchRunWhoseMergeFailsUnexpectedlyClosesItsBranchAndKeepsItsFailures(): void
     {
         $fileId = $this->storedFile();
-        $this->runs->save(AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']));
+        $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']);
+        $this->runs->save($run);
+        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
         $user = AdHocRunFixtures::user();
         $plan = AdHocRunFixtures::plan(
             [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()), new \RuntimeException('lookup failed')],
@@ -721,7 +725,9 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame([RunRecord::DONE, 0, 2], [$run?->state, $run?->updated, $run?->failed]);
         $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
         $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
-        $this->assertSame([3], array_column($stored['rows'] ?? [], 'row'), 'the row that failed before the branch is kept');
+        $rows = array_column($stored['rows'] ?? [], 'message', 'row');
+        $this->assertSame([2, 3], array_keys($rows), 'the row in the branch is not saved either');
+        $this->assertSame(AdHocRunFixtures::runMessages()->cannotGoOn($user), $rows[2]);
         $this->assertCount(1, $this->notifications);
     }
 
