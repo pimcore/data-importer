@@ -100,7 +100,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [discardRun] = useBundleDataImporterAdHocImportDiscardRunMutation()
   const [mergeLeavingOut] = useBundleDataImporterAdHocImportMergeLeavingOutMutation()
   const [withdrawRun] = useBundleDataImporterAdHocImportWithdrawRunMutation()
-  const { data: run, refetch: refetchRun } = useBundleDataImporterAdHocImportLoadRunQuery(
+  const { data: run, fulfilledTimeStamp: runAnsweredAt, refetch: refetchRun } = useBundleDataImporterAdHocImportLoadRunQuery(
     { fileId: runFileId ?? '' },
     { skip: runFileId === null, pollingInterval: runPolling }
   )
@@ -458,11 +458,12 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     )
   }
 
+  // every answer counts: a merge refused again answers 'decision' as before
   useEffect(() => {
     if (isSettled(run)) {
       setRunPolling(0)
     }
-  }, [run?.state])
+  }, [run?.state, runAnsweredAt])
 
   // an import into this folder waits for the user's decision: the dialog opens on it
   useEffect(() => {
