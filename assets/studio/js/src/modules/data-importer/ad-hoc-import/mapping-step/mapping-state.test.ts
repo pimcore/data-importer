@@ -303,6 +303,14 @@ describe('going on', () => {
     expect(canContinueMapping(setTransformations(image, 'Notiz', [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }], true), fields)).toBe(true)
     expect(canContinueMapping(skipColumn(image, 'Notiz'), fields)).toBe(true)
   })
+
+  it('waits for the answer to steps not answered yet', () => {
+    const steps = [{ type: 'trim', settings: { mode: 'both' } }]
+    const pending = setTransformations(chooseField(mapping, 'Notiz', 'price'), 'Notiz', steps, undefined)
+    expect(canContinueMapping(pending, fields)).toBe(false)
+    expect(canContinueMapping(setTransformations(pending, 'Notiz', steps, true), fields)).toBe(true)
+    expect(canContinueMapping(setTransformations(pending, 'Notiz', [], undefined), fields)).toBe(true)
+  })
 })
 
 describe('the transformations of a column', () => {

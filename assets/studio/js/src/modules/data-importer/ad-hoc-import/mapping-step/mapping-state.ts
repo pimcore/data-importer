@@ -200,6 +200,9 @@ export const fitsField = (row: MappingRow, fields: MappingField[]): boolean => {
   return row.fits ?? fields.find(({ key }) => key === field)?.takesColumnAsIs ?? true
 }
 
+// steps the server has not answered for yet: until then no one knows whether the column reaches its field
+export const awaitsFit = (row: MappingRow): boolean => row.fits === undefined && row.transformations.length > 0
+
 export const unfitRows = (mapping: Mapping, fields: MappingField[]): MappingRow[] =>
   importedRows(mapping).filter((row) => !fitsField(row, fields))
 
@@ -276,8 +279,9 @@ export const requiredFields = (mapping: Mapping, fields: MappingField[]): Requir
 }
 
 /**
- * Something to import beside the column that finds the objects, and every column fitting its field.
+ * Something to import beside the column that finds the objects, and every column known to fit its field.
  */
 export const canContinueMapping = (mapping: Mapping, fields: MappingField[]): boolean =>
   mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined) &&
-  unfitRows(mapping, fields).length === 0
+  unfitRows(mapping, fields).length === 0 &&
+  !mapping.rows.some(awaitsFit)

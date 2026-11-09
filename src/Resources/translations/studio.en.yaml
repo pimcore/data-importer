@@ -430,6 +430,7 @@ data-importer.ad-hoc-import.mapping.panel.close: Close
 data-importer.ad-hoc-import.mapping.panel.first-value: '“{{value}}”'
 data-importer.ad-hoc-import.mapping.panel.choose-field: choose a field below
 data-importer.ad-hoc-import.mapping.panel.field-first: Choose a field first.
+data-importer.ad-hoc-import.mapping.panel.store-key-no-transformations: A classification store key takes no transformations.
 data-importer.ad-hoc-import.mapping.panel.tab.field: Field
 data-importer.ad-hoc-import.mapping.panel.tab.transformations: Transformations
 data-importer.ad-hoc-import.mapping.panel.tab.transformations-count: 'Transformations ({{count}})'

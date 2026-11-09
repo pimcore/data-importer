@@ -43,6 +43,7 @@ import { MappingSummary } from './mapping-summary'
 import { NotImportedPanel } from './not-imported-panel'
 import { useStyles } from './mapping-step.styles'
 import { type TransformationSource } from './transformations-editor'
+import { useLeftColumnFits } from './use-left-column-fits'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
 
@@ -79,6 +80,8 @@ export const MappingStep = ({
   const [panel, setPanel] = useState<{ column: string, tab: ColumnPanelTab } | null>(null)
   // the column and store whose key is being chosen
   const [storeKeyFor, setStoreKeyFor] = useState<{ column: string, field: string } | null>(null)
+
+  useLeftColumnFits({ mapping, source, openColumn: panel?.column, onChange })
 
   // a column going into a localized field always holds a language
   const settle = (next: Mapping): Mapping => withLanguages(next, fields, languages)

@@ -33,6 +33,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     width: ${PANEL_WIDTH}px;
     background: ${token.colorBgContainer};
     box-shadow: -6px 0 16px rgba(0, 0, 0, 0.12);
+    outline: none;
   `,
   head: css`
     display: flex;

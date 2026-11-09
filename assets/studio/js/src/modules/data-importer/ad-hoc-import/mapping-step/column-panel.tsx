@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, IconButton, Tabs, Text } from '@pimcore/studio-ui-bundle/components'
 import { useStyles } from './column-panel.styles'
@@ -16,6 +16,7 @@ import { FieldPanel } from './field-panel'
 import { type Mapping, type MappingField, type MappingRow, type TransformationStep } from './mapping-state'
 import {
   cellText,
+  firstValueRow,
   type TransformationPreview,
   TransformationsEditor,
   type TransformationSource,
@@ -23,6 +24,7 @@ import {
 } from './transformations-editor'
 
 const PANEL = 'data-importer.ad-hoc-import.mapping.panel'
+const DIALOG = '[role="dialog"]'
 
 export type ColumnPanelTab = 'field' | 'transformations'
 
@@ -36,7 +38,8 @@ interface ValueChainProps {
 const ValueChain = ({ row, field, preview: { answer } }: ValueChainProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const result = answer?.results[0]
+  const valueRow = firstValueRow(answer)
+  const result = answer?.results[valueRow]
   const steps = answer?.steps ?? []
   const fieldName = row.choice?.language === null || row.choice?.language === undefined
     ? field?.title
@@ -48,7 +51,7 @@ const ValueChain = ({ row, field, preview: { answer } }: ValueChainProps): React
       { steps.map((step, position) => (
         <React.Fragment key={ position }>
           <span aria-hidden>→</span>
-          <span className={ styles.chip }>{ cellText(t, step.values[0]) }</span>
+          <span className={ styles.chip }>{ cellText(t, step.values[valueRow]) }</span>
         </React.Fragment>
       )) }
       <span aria-hidden>→</span>
@@ -103,7 +106,8 @@ export const ColumnPanel = ({
   const { styles } = useStyles()
   const field = fields.find(({ key }) => key === row.choice?.field)
   // a classification store key has no transformations: the server knows no type for a key here
-  const transformable = field !== undefined && row.choice?.key === undefined && source !== null
+  const onStoreKey = row.choice?.key !== undefined
+  const transformable = field !== undefined && !onStoreKey && source !== null
   const steps = row.transformations
   const preview = useTransformationPreview({ row, field: transformable ? field : undefined, source, steps })
 
@@ -114,21 +118,34 @@ export const ColumnPanel = ({
     }
   }, [preview.answer, preview.isLoading])
 
+  const panelElement = useRef<HTMLElement>(null)
+
+  // the focus goes with the panel; moved on to the next column, the button that had it is gone
+  useEffect(() => {
+    panelElement.current?.focus({ preventScroll: true })
+  }, [])
+
+  // Escape leaves the panel, not the whole dialog, wherever in that dialog the focus is; a dialog over the panel has its own
+  useEffect(() => {
+    const leave = (event: KeyboardEvent): void => {
+      const target = event.target as Element
+      if (event.key === 'Escape' && (target === document.body || target.closest(DIALOG) === panelElement.current?.closest(DIALOG))) {
+        event.stopPropagation()
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', leave, true)
+
+    return () => { window.removeEventListener('keydown', leave, true) }
+  }, [onClose])
+
   const stepsLabel = steps.length === 0
     ? t(`${PANEL}.tab.transformations`)
     : t(`${PANEL}.tab.transformations-count`, { count: steps.length })
 
   return (
-    <div
-      // Escape leaves the panel, not the whole dialog
-      onKeyDown={ (event) => {
-        if (event.key === 'Escape') {
-          event.stopPropagation()
-          onClose()
-        }
-      } }
-      role="presentation"
-    >
+    <>
       <button
         aria-label={ t(`${PANEL}.close`) }
         className={ styles.backdrop }
@@ -139,6 +156,8 @@ export const ColumnPanel = ({
       <aside
         aria-label={ t(`${PANEL}.aria`, { column: row.label, interpolation: { escapeValue: false } }) }
         className={ styles.panel }
+        ref={ panelElement }
+        tabIndex={ -1 }
       >
         <div className={ styles.head }>
           <Flex
@@ -205,7 +224,7 @@ export const ColumnPanel = ({
                     steps={ steps }
                   />
                   )
-                : <Text type="warning">{ t(`${PANEL}.field-first`) }</Text>
+                : <Text type={ onStoreKey ? 'secondary' : 'warning' }>{ t(`${PANEL}.${onStoreKey ? 'store-key-no-transformations' : 'field-first'}`) }</Text>
             }
           ] }
           onChange={ (next: string) => { onTabChange(next as ColumnPanelTab) } }
@@ -222,6 +241,6 @@ export const ColumnPanel = ({
           </Button>
         </div>
       </aside>
-    </div>
+    </>
   )
 }

@@ -12,7 +12,8 @@
 import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
-import { createMapping, type LoadedMapping, type Mapping } from './mapping-state'
+import { Modal } from 'antd'
+import { canContinueMapping, createMapping, type LoadedMapping, type Mapping } from './mapping-state'
 import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
 import { type TransformationSource } from './transformations-editor'
@@ -77,17 +78,20 @@ const Stateful = ({ initial, isLoading = false, withSource = source }: { initial
   const [mapping, setMapping] = useState(initial)
 
   return (
-    <MappingStep
-      classId="PROD"
-      configuration={ { isLoading: false, onChoose: () => {} } }
-      fields={ loaded.fields }
-      isLoading={ isLoading }
-      mapWith="here"
-      mapping={ mapping }
-      onChange={ setMapping }
-      onMapWithChange={ () => {} }
-      source={ withSource }
-    />
+    <>
+      <MappingStep
+        classId="PROD"
+        configuration={ { isLoading: false, onChoose: () => {} } }
+        fields={ loaded.fields }
+        isLoading={ isLoading }
+        mapWith="here"
+        mapping={ mapping }
+        onChange={ setMapping }
+        onMapWithChange={ () => {} }
+        source={ withSource }
+      />
+      <span data-testid="can-continue">{ String(mapping !== null && canContinueMapping(mapping, loaded.fields)) }</span>
+    </>
   )
 }
 
@@ -333,6 +337,72 @@ describe('the mapping step', () => {
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
   })
+  describe('Escape in the import dialog', () => {
+    const onCancel = jest.fn()
+
+    const renderInDialog = (): void => {
+      render(
+        <Modal
+          footer={ null }
+          onCancel={ onCancel }
+          open
+          title="Import"
+        >
+          <Stateful initial={ createMapping(inspected, objects, loaded) } />
+        </Modal>
+      )
+    }
+
+    const pressEscape = (): void => {
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+    }
+
+    const openFromItsButton = (column: string): void => {
+      const button = screen.getByRole('button', { name: `Field for ${column}` })
+      button.focus()
+      fireEvent.click(button)
+    }
+
+    beforeEach(() => {
+      onCancel.mockReset()
+      mockPreview.mockReset()
+      mockPreview.mockResolvedValue({ data: { values: [], steps: [], conversion: null, resultType: 'default', fits: true, results: [], offered: [] } })
+    })
+
+    it('closes only the panel, opened from the button of a row', () => {
+      renderInDialog()
+      openFromItsButton('Notiz')
+
+      pressEscape()
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+
+    it('closes only the panel after moving on to the next column', () => {
+      renderInDialog()
+      openFromItsButton('Name DE')
+      fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: 'Next column ›' }))
+
+      pressEscape()
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+
+    it('closes only the panel with the focus on a row behind it', () => {
+      renderInDialog()
+      openFromItsButton('Notiz')
+
+      const behind = screen.getByRole('button', { name: 'Field for Preis' })
+      behind.focus()
+      fireEvent.keyDown(behind, { key: 'Escape' })
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+  })
+
   describe('with transformations', () => {
     const answer = (fits: boolean): unknown => ({
       data: { values: [], steps: [], conversion: null, resultType: 'default', fits, results: [], offered: ['loadAsset'] }
@@ -389,6 +459,119 @@ describe('the mapping step', () => {
 
       expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
       expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
+    })
+
+    describe('a column left before the answer', () => {
+      const canContinue = (): string | null => screen.getByTestId('can-continue').textContent
+
+      const addStepInPanel = async (column: string, target: string): Promise<void> => {
+        choose(column, target)
+        await settle()
+        fireEvent.click(transformationsOf(column))
+        await settle()
+        fireEvent.click(within(panelOf(column)).getByRole('button', { name: '+ Load asset' }))
+      }
+
+      it('still gets its answer after the panel closed, and cannot be continued with until then', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockClear()
+        mockPreview.mockResolvedValue(answer(false))
+
+        closePanel('Notiz')
+        expect(canContinue()).toBe('false')
+        await settle()
+
+        expect(mockPreview).toHaveBeenCalledTimes(1)
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(canContinue()).toBe('false')
+      })
+
+      it('still gets its answer after moving on to the next column', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockResolvedValue(answer(false))
+
+        fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Next column ›' }))
+        await settle()
+
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+      })
+
+      it('fits a field that does not take it as it is, once the answer says so', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        openPanel('Notiz')
+        fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
+        await settle()
+        fireEvent.click(within(panelOf('Notiz')).getByRole('tab', { name: 'Transformations' }))
+        fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: '+ Load asset' }))
+
+        closePanel('Notiz')
+        await settle()
+
+        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+        expect(canContinue()).toBe('true')
+      })
+
+      it('does not count as fitting when the server gives no answer', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockResolvedValue({ error: { status: 500 } })
+
+        closePanel('Notiz')
+        await settle()
+
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(canContinue()).toBe('false')
+      })
+
+      it('keeps the answers of two columns that arrive together', async () => {
+        const answers = new Map<string, (value: unknown) => void>()
+        mockPreview.mockImplementation(async ({ bundleDataImporterAdHocImportTransformationParameters: { column, transformationPipeline } }: { bundleDataImporterAdHocImportTransformationParameters: { column: string, transformationPipeline: unknown[] } }) =>
+          transformationPipeline.length === 0 ? answer(true) : await new Promise((resolve) => { answers.set(column, resolve) }))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        closePanel('Notiz')
+        fireEvent.click(transformationsOf('Name DE'))
+        await settle()
+        fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: '+ Load asset' }))
+        closePanel('Name DE')
+
+        await act(async () => {
+          answers.get('Notiz')!(answer(false))
+          answers.get('Name DE')!(answer(false))
+          await Promise.resolve()
+          await Promise.resolve()
+        })
+
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Name DE')).getByText('Needs a transformation')).toBeTruthy()
+      })
+
+      it('drops an answer to steps changed since', async () => {
+        let answerFirst: (value: unknown) => void = () => {}
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockImplementationOnce(async () => await new Promise((resolve) => { answerFirst = resolve }))
+        closePanel('Notiz')
+        fireEvent.click(transformationsOf('Notiz'))
+        fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Remove Load asset' }))
+        mockPreview.mockResolvedValue(answer(true))
+        await settle()
+
+        await act(async () => {
+          answerFirst(answer(false))
+          await Promise.resolve()
+          await Promise.resolve()
+        })
+
+        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+      })
     })
 
     it('changes between the field and the transformations of a column', () => {

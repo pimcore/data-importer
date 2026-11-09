@@ -163,6 +163,67 @@ describe('the side panel of a column', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('takes the focus when it opens', () => {
+    renderPanel()
+
+    expect(document.activeElement).toBe(screen.getByRole('complementary', { name: 'Column Bezeichnung' }))
+  })
+
+  it('leaves with Escape when the focus fell to the page, and keeps it from the dialog', () => {
+    const onClose = jest.fn()
+    const dialogHears = jest.fn()
+    window.addEventListener('keydown', dialogHears)
+    renderPanel({ onClose })
+
+    fireEvent.keyDown(document.body, { key: 'Escape' })
+    window.removeEventListener('keydown', dialogHears)
+
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(dialogHears).not.toHaveBeenCalled()
+  })
+
+  it('ignores other keys, and Escape in a dialog opened over it', () => {
+    const onClose = jest.fn()
+    render(
+      <div role="dialog">
+        <button type="button">Over the panel</button>
+      </div>
+    )
+    renderPanel({ onClose })
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Over the panel' }), { key: 'Escape' })
+    fireEvent.keyDown(document.body, { key: 'Enter' })
+
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('describes one row at both ends of the chain, the first with a value', async () => {
+    const empty = { items: [], failed: false }
+    const red = { items: ['Red'], failed: false }
+    mockPreview.mockResolvedValue({
+      data: answer({
+        values: [empty, red],
+        steps: [{ type: 'trim', resultType: 'default', error: null, values: [empty, { items: ['RED'], failed: false }] }],
+        results: [empty, { items: ['Rot'], failed: false }]
+      })
+    })
+    renderPanel({ row: { ...row, sample: 'Red' } })
+    await settle()
+
+    expect(screen.getByText('“Red”')).toBeTruthy()
+    expect(screen.getByText('RED')).toBeTruthy()
+    expect(screen.getByText('Name (DE): Rot')).toBeTruthy()
+  })
+
+  it('says that a classification store key takes no transformations', async () => {
+    renderPanel({ row: { ...row, choice: { field: 'name', language: null, key: { id: '1-2', label: 'Weight' } }, transformations: [] } })
+    await settle()
+
+    expect(mockPreview).not.toHaveBeenCalled()
+    expect(screen.queryByText('Choose a field first.')).toBeNull()
+    expect(screen.getByText('A classification store key takes no transformations.')).toBeTruthy()
+  })
+
   it('has no transformations without a file to run them on', () => {
     renderPanel({ source: null })
 

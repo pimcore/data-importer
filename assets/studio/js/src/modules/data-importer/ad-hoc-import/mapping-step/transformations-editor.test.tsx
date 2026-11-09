@@ -146,6 +146,19 @@ describe('the transformations of a column', () => {
     expect(screen.getByText('Converted to a number for the field.')).toBeTruthy()
   })
 
+  it('shows each step\'s value for the first row with a value', async () => {
+    mockPreview.mockResolvedValue({
+      data: answer({
+        values: [cell(), cell('Red')],
+        steps: [{ type: 'trim', resultType: 'default', error: null, values: [cell(), cell('RED')] }]
+      })
+    })
+    renderEditor({ transformations: [{ type: 'trim', settings: { mode: 'both' } }] })
+    await settle()
+
+    expect(screen.getByText('→ RED')).toBeTruthy()
+  })
+
   it('offers only the transformations the server names, each with its settings', async () => {
     mockPreview.mockResolvedValue({ data: answer({ offered: ['trim', 'loadAsset'] }) })
     renderEditor()

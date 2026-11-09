@@ -48,6 +48,27 @@ export const transformationSourceOf = (phase: FilePhase, classId: string | undef
 export type TransformationAnswer = BundleDataImporterAdHocImportTransformationResponse
 export type TransformationCell = BundleDataImporterAdHocImportTransformationCell
 
+// what the server is asked for one column's steps
+export const transformationRequest = (
+  source: TransformationSource,
+  column: string,
+  field: string,
+  steps: TransformationStep[]
+): Parameters<ReturnType<typeof useBundleDataImporterAdHocImportPreviewTransformationsMutation>[0]>[0] => ({
+  fileId: source.fileId,
+  bundleDataImporterAdHocImportTransformationParameters: {
+    ...source.settings,
+    classId: source.classId,
+    column,
+    field,
+    transformationPipeline: steps
+  }
+})
+
+// the row whose value is shown: the first that holds one, as the column's sample is
+export const firstValueRow = (answer: TransformationAnswer | null): number =>
+  Math.max(0, answer?.values.findIndex(({ items }) => items.length > 0) ?? 0)
+
 export interface TransformationPreview {
   answer: TransformationAnswer | null
   isLoading: boolean
@@ -76,16 +97,7 @@ export const useTransformationPreview = (
     setIsLoading(true)
 
     const timer = setTimeout(() => {
-      void preview({
-        fileId: source.fileId,
-        bundleDataImporterAdHocImportTransformationParameters: {
-          ...source.settings,
-          classId: source.classId,
-          column: row.column,
-          field: field.key,
-          transformationPipeline: steps
-        }
-      }).then((result) => {
+      void preview(transformationRequest(source, row.column, field.key, steps)).then((result) => {
         if (request !== latest.current) {
           return
         }
@@ -149,7 +161,7 @@ export const TransformationsEditor = ({ field, steps, preview: { answer, isLoadi
       >
         { steps.map((step, position) => {
           const error = answer?.steps[position]?.error
-          const value = answer?.steps[position]?.values[0]
+          const value = answer?.steps[position]?.values[firstValueRow(answer)]
 
           return (
             <Flex
