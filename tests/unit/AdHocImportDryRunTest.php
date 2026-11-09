@@ -952,11 +952,12 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             ),
             [
                 'configuration' => [
-                    'resolverConfig' => [
-                        'dataObjectClassId' => $this->class->getId(),
-                        'loadingStrategy' => ['type' => 'id', 'settings' => ['dataSourceIndex' => 'ID']],
-                        'createLocationStrategy' => ['type' => 'staticPath', 'settings' => ['path' => self::TARGET]],
-                    ],
+                    'classId' => $this->class->getId(),
+                    'matchBy' => AdHocImportDryRunParameters::MATCH_BY_ID,
+                    'matchField' => null,
+                    'matchLanguage' => null,
+                    'matchColumn' => 'ID',
+                    'newObjectsFolder' => self::TARGET,
                 ],
                 'mapping' => [
                     $item('Related', 'manyToManyRelation', 'de'),
