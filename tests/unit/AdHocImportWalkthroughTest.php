@@ -14,39 +14,25 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DataImporterRunQueue;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunMessages;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunProcessor;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface;
-use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\WalkthroughStep;
-use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolver;
-use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Pimcore\Bundle\GenericDataIndexBundle\EventSubscriber\DataObjectIndexUpdateSubscriber;
 use Pimcore\Contracts\ChangeControl\ConflictPolicy;
 use Pimcore\Contracts\ChangeControl\MergeMode;
+use Pimcore\Event\DataObjectEvents;
 use Pimcore\Tests\Support\Util\TestHelper;
-use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Lock\LockFactory;
-use Symfony\Component\Lock\Store\InMemoryStore;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -71,8 +57,14 @@ class AdHocImportWalkthroughTest extends Unit
     /** @var list<string> the rows whose PreSaveEvent ran */
     private array $beforeSave = [];
 
+    /** @var list<array{callable, int}> the listeners a test took off, with their priority */
+    private array $detached = [];
+
     protected function _after(): void
     {
+        foreach ($this->detached as [$listener, $priority]) {
+            $this->dispatcher()->addListener(DataObjectEvents::POST_UPDATE, $listener, $priority);
+        }
         $this->tokenStorage()->setToken(null);
         foreach ($this->walkthroughs as $walkthrough) {
             $walkthrough->user()?->delete();
@@ -103,10 +95,27 @@ class AdHocImportWalkthroughTest extends Unit
         });
     }
 
+    /**
+     * Saving an object again asks the search index for its position, and this kernel has none; saving a new one does
+     * not.
+     */
+    private function saveAgainWithoutASearchIndex(): void
+    {
+        $dispatcher = $this->dispatcher();
+        foreach ($dispatcher->getListeners(DataObjectEvents::POST_UPDATE) as $listener) {
+            if (\is_array($listener) && $listener[0] instanceof DataObjectIndexUpdateSubscriber) {
+                $priority = $dispatcher->getListenerPriority(DataObjectEvents::POST_UPDATE, $listener) ?? 0;
+                $dispatcher->removeListener(DataObjectEvents::POST_UPDATE, $listener);
+                $this->detached[] = [$listener, $priority];
+            }
+        }
+    }
+
     private function walkthrough(
         AdHocImportRunServiceInterface $service,
         \Closure $work,
-        ?bool $expectBranch
+        ?bool $expectBranch,
+        bool $withUpdates = false
     ): AdHocImportWalkthrough {
         $walkthrough = new AdHocImportWalkthrough(
             $this->tester->grabService(AdHocImportServiceInterface::class),
@@ -114,7 +123,8 @@ class AdHocImportWalkthroughTest extends Unit
             $this->tokenStorage(),
             $work,
             AdHocImportWalkthrough::newRun(),
-            $expectBranch
+            $expectBranch,
+            $withUpdates
         );
         $this->walkthroughs[] = $walkthrough;
 
@@ -138,14 +148,15 @@ class AdHocImportWalkthroughTest extends Unit
         };
     }
 
-    private function directWay(): AdHocImportWalkthrough
+    private function directWay(bool $withUpdates = false): AdHocImportWalkthrough
     {
         return $this->walkthrough(
             $this->tester->grabService(AdHocImportRunServiceInterface::class),
             $this->workOff(function (array $item): void {
                 $this->tester->grabService(ImportProcessingService::class)->processQueueItem((int) $item['id']);
             }),
-            false
+            false,
+            $withUpdates
         );
     }
 
@@ -211,50 +222,10 @@ class AdHocImportWalkthroughTest extends Unit
      */
     private function branchWay(AdHocApplyingBranches $branches): array
     {
-        $dispatcher = $this->dispatcher();
-        $logger = new NullLogger();
-        $parts = new AdHocBranchWayParts($this->tester, $dispatcher, $branches);
-        $writer = $parts->writer;
-        $merge = $parts->merge;
-        $runs = $this->tester->grabService(RunStoreInterface::class);
-        $files = $this->tester->grabService(FileStore::class);
-        $messages = $this->tester->grabService(RunMessages::class);
-        $notifier = $this->tester->grabService(RunNotifier::class);
-        $dryRunMessages = $this->tester->grabService(DryRunMessages::class);
-        $dryRun = $this->tester->grabService(AdHocImportDryRunServiceInterface::class);
+        $parts = new AdHocBranchWayParts($this->tester, $this->dispatcher(), $branches);
+        $service = $parts->service;
+        $processor = $parts->processor;
         $queue = $this->tester->grabService(QueueService::class);
-
-        $importer = new RowImporter(
-            $writer,
-            $this->tester->grabService(MappingApplicationScope::class),
-            $dryRunMessages,
-            $messages,
-            $dispatcher,
-            $logger
-        );
-        $processor = new RunProcessor(
-            $runs,
-            $dryRun,
-            $files,
-            $importer,
-            $writer,
-            $messages,
-            $notifier,
-            new UserResolver(),
-            $logger,
-            $merge
-        );
-        $service = new AdHocImportRunService(
-            $this->tester->grabService(SecurityServiceInterface::class),
-            $dryRun,
-            $runs,
-            $files,
-            new DataImporterRunQueue($queue, $dispatcher),
-            $writer,
-            $dryRunMessages,
-            new LockFactory(new InMemoryStore()),
-            $merge
-        );
 
         $walkthrough = $this->walkthrough(
             $service,
@@ -303,6 +274,18 @@ class AdHocImportWalkthroughTest extends Unit
             $this->beforeSave,
             'the refused row gets no event'
         );
+    }
+
+    public function testAnExistingObjectIsChangedAndStaysPublished(): void
+    {
+        $this->saveAgainWithoutASearchIndex();
+        $this->listenToTheEvents();
+        $walkthrough = $this->directWay(withUpdates: true);
+
+        // its last step reads created 0, updated 1 and the object, still published, back
+        $this->assertEveryStepPasses($walkthrough->run(), 4);
+
+        $this->assertSame($this->skus($walkthrough, [...self::ALL_WRITTEN, 'W-8']), $this->saved);
     }
 
     public function testWorkersWriteEachRowOnceWhenMessengerProcessingIsOn(): void
