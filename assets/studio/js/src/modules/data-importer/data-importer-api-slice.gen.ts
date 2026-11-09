@@ -1183,9 +1183,9 @@ export type BundleDataImporterAdHocImportDryRunParameters = {
     folderId: number;
     /** The ID of the data object class to import into */
     classId: string;
-    /** Match existing objects by their Object ID or by a field */
-    matchBy: "id" | "field";
-    /** Data index of the column holding the match value */
+    /** Match existing objects by their Object ID or by a field, or none to create every row */
+    matchBy: "id" | "field" | "none";
+    /** Data index of the column holding the match value, the key of new objects when matching none */
     matchColumn: string;
     /** Key of the field to match by */
     matchField?: string | null;

@@ -49,7 +49,8 @@ export interface MappingRow {
   // "Don't import": the column is in the area to restore it from
   skipped: boolean
   suggestion?: FieldChoice & { score: number }
-  // the column finds the objects; its field is the one they are matched by, or none for the object ID
+  // the column finds the objects; its field is the one they are matched by, or none for the object ID. A column that
+  // only names new objects finds none and is mapped like any other
   isMatch: boolean
   transformations: TransformationStep[]
   // the server's answer whether the transformations lead into the field; unknown until they are applied
@@ -137,7 +138,7 @@ export const createMapping = (
     .map(({ sourceIndex, targetFieldName, language, score }) => [sourceIndex, { field: targetFieldName, language, score }]))
 
   const rows = inspected.columns.map(({ dataIndex, label }, position): MappingRow => {
-    const isMatch = dataIndex === objects.matchColumn
+    const isMatch = objects.matchBy !== 'none' && dataIndex === objects.matchColumn
 
     return {
       column: dataIndex,

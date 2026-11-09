@@ -22,7 +22,8 @@ export type FilePhase =
   | { kind: 'uploading', file: FileInfo, loaded: number, total: number }
   | { kind: 'inspected', file: FileInfo, inspected: InspectedFile }
 
-export type MatchBy = 'id' | 'field'
+// none: every row creates an object, named by the column's value
+export type MatchBy = 'id' | 'field' | 'none'
 
 export interface ObjectsSettings {
   classId?: string
@@ -78,7 +79,7 @@ export const keepMatchColumn = (objects: ObjectsSettings, before: InspectedFile,
 }
 
 /**
- * What the next steps need: an accepted file with rows, a class and what to match by.
+ * What the next steps need: an accepted file with rows, a class and what to match by, or the column to name new objects by.
  */
 export const canContinue = (phase: FilePhase, objects: ObjectsSettings): boolean => {
   if (phase.kind !== 'inspected') {
@@ -92,7 +93,7 @@ export const canContinue = (phase: FilePhase, objects: ObjectsSettings): boolean
     inspected.rowCount > 0 &&
     objects.classId !== undefined &&
     objects.matchColumn !== undefined &&
-    (objects.matchBy === 'id' || objects.matchField !== undefined)
+    (objects.matchBy !== 'field' || objects.matchField !== undefined)
 }
 
 export const fileBadge = (phase: FilePhase & { kind: 'uploading' | 'inspected' }): string =>

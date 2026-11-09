@@ -114,6 +114,13 @@ describe('a new mapping', () => {
     expect(rowOf(byId, 'Artikelnr')).toMatchObject({ isMatch: true, choice: undefined })
   })
 
+  it('maps the column naming new objects like any other when not matching, and makes another mapping', () => {
+    const createOnly = createMapping(inspected, { ...objects, matchBy: 'none', matchField: undefined }, loaded)
+
+    expect(rowOf(createOnly, 'Artikelnr')).toMatchObject({ isMatch: false, choice: { field: 'sku', language: null }, auto: true })
+    expect(createOnly.basis).not.toBe(mapping.basis)
+  })
+
   it('ignores a suggestion of a field it does not offer', () => {
     const other = createMapping(inspected, objects, { fields, suggestions: [suggestion('Notiz', 'path', 100)] })
 

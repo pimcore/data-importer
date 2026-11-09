@@ -47,6 +47,11 @@ describe('canContinue', () => {
     expect(canContinue(phase(), { ...objects, matchBy: 'id', matchField: undefined })).toBe(true)
   })
 
+  it('needs no field, only the column naming the new objects, when not matching', () => {
+    expect(canContinue(phase(), { ...objects, matchBy: 'none', matchField: undefined })).toBe(true)
+    expect(canContinue(phase(), { ...objects, matchBy: 'none', matchColumn: undefined })).toBe(false)
+  })
+
   it.each<[string, FilePhase, ObjectsSettings]>([
     ['no file', { kind: 'empty' }, objects],
     ['an upload still running', { kind: 'uploading', file, loaded: 1, total: 2 }, objects],
