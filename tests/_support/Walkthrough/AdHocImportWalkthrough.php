@@ -146,12 +146,16 @@ final class AdHocImportWalkthrough
 
     private function fixture(): AdHocImportWalkthroughFixture
     {
-        return $this->fixture ??= AdHocImportWalkthroughFixture::create(
-            $this->run,
-            $this->sku(self::LOCKED_SKU),
-            $this->withUpdates ? $this->sku(self::UPDATED_SKU) : null,
-            $this->tokens
-        );
+        if ($this->fixture === null) {
+            $this->fixture = AdHocImportWalkthroughFixture::create(
+                $this->run,
+                $this->sku(self::LOCKED_SKU),
+                $this->withUpdates ? $this->sku(self::UPDATED_SKU) : null,
+                $this->tokens
+            );
+        }
+
+        return $this->fixture;
     }
 
     /**

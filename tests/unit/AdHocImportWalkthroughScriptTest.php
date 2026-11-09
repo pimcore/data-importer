@@ -14,7 +14,11 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class AdHocImportWalkthroughScriptTest extends Unit
 {
@@ -73,6 +77,45 @@ class AdHocImportWalkthroughScriptTest extends Unit
         $this->assertSame(2, $exit);
         $this->assertSame('', $output);
         $this->assertStringContainsString('--way takes direct or branch', $errors);
+    }
+
+    public function testABootedKernelHandsTheScriptItsServices(): void
+    {
+        $container = \Pimcore::getContainer();
+
+        $this->assertInstanceOf(
+            AdHocImportServiceInterface::class,
+            $container->get(AdHocImportServiceInterface::class)
+        );
+        $this->assertInstanceOf(
+            AdHocImportRunServiceInterface::class,
+            $container->get(AdHocImportRunServiceInterface::class)
+        );
+        $this->assertInstanceOf(
+            TokenStorageInterface::class,
+            $container->get('pimcore.data_importer.ad_hoc_walkthrough.token_storage')
+        );
+    }
+
+    public function testRowsOfALaterRunCannotMatchTheObjectsOfAnEarlierOne(): void
+    {
+        $runs = array_map(static fn (): string => AdHocImportWalkthrough::newRun(), range(1, 5));
+        $this->assertGreaterThan(1, count(array_unique($runs)), 'runs started within the same second differ');
+
+        $this->assertSame('W-1-first', $this->walkthroughOfRun('first')->sku('W-1'));
+        $this->assertSame('W-1-second', $this->walkthroughOfRun('second')->sku('W-1'));
+    }
+
+    private function walkthroughOfRun(string $run): AdHocImportWalkthrough
+    {
+        return new AdHocImportWalkthrough(
+            $this->createMock(AdHocImportServiceInterface::class),
+            $this->createMock(AdHocImportRunServiceInterface::class),
+            $this->createMock(TokenStorageInterface::class),
+            static fn (): null => null,
+            $run,
+            null
+        );
     }
 
     /**

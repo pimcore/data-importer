@@ -245,13 +245,6 @@ class AdHocImportWalkthroughTest extends Unit
         );
     }
 
-    public function testARunPassesBesideTheObjectsOfAnEarlierOne(): void
-    {
-        $this->assertEveryStepPasses($this->directWay()->run(), 3);
-
-        $this->assertEveryStepPasses($this->directWay()->run(), 3);
-    }
-
     public function testThroughABranchThatIsMerged(): void
     {
         $this->listenToTheEvents();
