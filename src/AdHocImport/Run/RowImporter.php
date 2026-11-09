@@ -80,7 +80,7 @@ final readonly class RowImporter
                 return RowOutcome::failed($match->matchValue, $action, $refusal);
             }
 
-            $refusal = $this->applyMapping($object, $dryRun, $index, $row, $leftOut);
+            $refusal = $this->applyMapping($object, $dryRun, $user, $index, $row, $leftOut);
             if ($refusal !== null) {
                 return RowOutcome::failed($match->matchValue, $action, $refusal);
             }
@@ -198,21 +198,27 @@ final readonly class RowImporter
      *
      * @return string|null why a value cannot go into its field
      */
-    private function applyMapping(Concrete $object, DryRunPlan $plan, int $index, array $row, array $leftOut): ?string
-    {
-        return $this->scope->run(null, function () use ($object, $plan, $index, $row, $leftOut): ?string {
+    private function applyMapping(
+        Concrete $object,
+        DryRunPlan $plan,
+        User $user,
+        int $index,
+        array $row,
+        array $leftOut
+    ): ?string {
+        return $this->scope->run(null, function () use ($object, $plan, $user, $index, $row, $leftOut): ?string {
             foreach ($plan->writers as $position => $writer) {
                 if (in_array($position, $leftOut, true)) {
                     continue;
                 }
 
-                $error = $writer->write($object, $index, $row);
+                $error = $writer->forUser($user)->write($object, $index, $row);
                 if ($error !== null) {
                     return $this->dryRunMessages->valueError(
                         $error,
                         $writer->field()->label,
                         $writer->fileValue($row) ?? '',
-                        $plan->user
+                        $user
                     );
                 }
             }

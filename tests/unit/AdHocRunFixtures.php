@@ -150,6 +150,11 @@ final class AdHocRunFixtures
             {
                 return 'bad';
             }
+
+            public function forUser(User $user): self
+            {
+                return $this;
+            }
         };
     }
 

@@ -25,6 +25,7 @@ use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\Classificationstore;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\User;
 
 class AdHocStoreGroupCheckTest extends Unit
 {
@@ -376,6 +377,11 @@ class AdHocStoreGroupCheckTest extends Unit
             public function fileValue(array $row): ?string
             {
                 return $this->value;
+            }
+
+            public function forUser(User $user): self
+            {
+                return $this;
             }
         };
     }

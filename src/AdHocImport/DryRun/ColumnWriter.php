@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\User;
 
 /**
  * Writes one column of the file, transformed and converted beforehand, into its field.
@@ -85,5 +86,11 @@ final readonly class ColumnWriter implements FieldWriter
         $value = $row[$this->column] ?? null;
 
         return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+    }
+
+    public function forUser(User $user): self
+    {
+        // what it writes depends on no user's rights
+        return $this;
     }
 }

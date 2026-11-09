@@ -54,6 +54,17 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame(['Chair', 'en'], $object->written);
     }
 
+    public function testAColumnWriterIsTheSameForEveryUser(): void
+    {
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn(['Chair'], [false], [false], null)
+        );
+
+        $this->assertSame($writer, $writer->forUser(AdHocRunFixtures::user(false)));
+    }
+
     public function testAColumnWriterWritesAnEmptyCellAsNull(): void
     {
         $column = new ConvertedColumn([null], [false], [false], null);
