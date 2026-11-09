@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ColumnWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService as Types;
@@ -493,7 +496,7 @@ class AdHocTransformationChainTest extends Unit
         $this->assertSame([false, true, false], $numbers->failed);
     }
 
-    public function testAConvertedColumnMarksTheRowsThatLostAnElementTheUserMayNotView(): void
+    public function testAConvertedColumnMarksTheRowsThatLostAnElementTheUserMayNotViewOrThatIsNotFound(): void
     {
         $user = new User();
         $user->setId(4712);
@@ -506,11 +509,17 @@ class AdHocTransformationChainTest extends Unit
         );
         $this->assertNotNull($single);
         $this->assertNull($single->values[1], 'the preview still shows it as not found');
-        $this->assertSame([false, true, false, false], $single->hidden, 'an ID that finds nothing hides nothing');
+        $this->assertSame([false, true, true, false], $single->lost, 'a hidden and a missing ID alike, not an empty cell');
         $this->assertSame([false, false, false, false], $single->failed);
 
+        // a user must not tell a hidden element from one that does not exist
+        $writer = new ColumnWriter(new ImportField('related', null, 'Related'), 0, $single);
+        $object = $this->createStub(Concrete::class);
+        $this->assertSame(ValueError::Invalid, $writer->write($object, 1, ['2']), 'the hidden ID');
+        $this->assertSame(ValueError::Invalid, $writer->write($object, 2, ['5']), 'the missing ID');
+
         $listed = $this->chain()->convertColumn(
-            ['1,2', '1'],
+            ['1,2', '1', '1,5'],
             [
                 $this->step(TransformationAllowList::SPLIT, ['delimiter' => ',']),
                 $this->step(TransformationAllowList::LOAD_OBJECT),
@@ -520,10 +529,10 @@ class AdHocTransformationChainTest extends Unit
         );
         $this->assertNotNull($listed);
         $this->assertCount(1, $listed->values[0]);
-        $this->assertSame([true, false], $listed->hidden);
+        $this->assertSame([true, false, true], $listed->lost);
 
         $gallery = $this->chain()->convertColumn(
-            ['1|3', '1|2'],
+            ['1|3', '1|2', '1|8'],
             [
                 $this->step(TransformationAllowList::SPLIT, ['delimiter' => '|']),
                 $this->step(TransformationAllowList::LOAD_ASSET),
@@ -533,7 +542,7 @@ class AdHocTransformationChainTest extends Unit
         );
         $this->assertNotNull($gallery);
         $this->assertSame('gallery', $gallery->conversion);
-        $this->assertSame([true, false], $gallery->hidden, 'the mark outlasts the conversion after the step');
+        $this->assertSame([true, false, true], $gallery->lost, 'the mark outlasts the conversion after the step');
     }
 
     public function testAColumnThatCannotReachItsFieldIsNotConverted(): void

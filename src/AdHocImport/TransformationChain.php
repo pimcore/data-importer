@@ -159,29 +159,29 @@ final readonly class TransformationChain
     public function convertColumn(array $values, array $steps, array $accepted, User $user): ?ConvertedColumn
     {
         $operators = $this->operators($steps);
-        [$type, $data, $failed, , $hidden] = $this->runSteps($operators, $steps, $values, $user);
+        [$type, $data, $failed, , $lost] = $this->runSteps($operators, $steps, $values, $user);
         $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
         if ($type === null || $conversion === false) {
             return null;
         }
 
-        [, $converted, $failedConversion, $hidden] = $this->convert(
+        [, $converted, $failedConversion, $lost] = $this->convert(
             $conversion,
             $type,
             count($operators) + 1,
             $data,
             $failed,
             $user,
-            $hidden
+            $lost
         );
 
-        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion, $hidden);
+        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion, $lost);
     }
 
     /**
      * @param list<mixed> $data
      * @param list<bool> $failed
-     * @param list<bool> $hidden
+     * @param list<bool> $lost
      *
      * @return array{0: string, 1: list<mixed>, 2: list<bool>, 3: list<bool>}
      *
@@ -194,10 +194,10 @@ final readonly class TransformationChain
         array $data,
         array $failed,
         User $user,
-        array $hidden = []
+        array $lost = []
     ): array {
         if ($conversion === null) {
-            return [$type, $data, $failed, $hidden];
+            return [$type, $data, $failed, $lost];
         }
 
         $converter = $this->operators([
@@ -205,9 +205,9 @@ final readonly class TransformationChain
         ])[0];
         $type = $converter->evaluateReturnType($type, $position);
         $failed = $this->unreadable($conversion, $data, $failed);
-        [$data, $failed, $hidden] = $this->process($converter, $data, $failed, $user, $hidden, true);
+        [$data, $failed, $lost] = $this->process($converter, $data, $failed, $user, $lost, true);
 
-        return [$type, $data, $failed, $hidden];
+        return [$type, $data, $failed, $lost];
     }
 
     /**
@@ -224,7 +224,7 @@ final readonly class TransformationChain
         $type = TransformationDataTypeService::DEFAULT_TYPE;
         $data = $values;
         $failed = array_fill(0, count($values), false);
-        $hidden = $failed;
+        $lost = $failed;
         $stepResults = [];
         foreach ($operators as $position => $operator) {
             $error = null;
@@ -233,7 +233,14 @@ final readonly class TransformationChain
                     $this->checkStep($steps[$position], $type, $position + 1);
                     $type = $operator->evaluateReturnType($type, $position + 1);
                     $failed = $this->malformedIds($steps[$position], $data, $failed);
-                    [$data, $failed, $hidden] = $this->process($operator, $data, $failed, $user, $hidden);
+                    [$data, $failed, $lost] = $this->process(
+                        $operator,
+                        $data,
+                        $failed,
+                        $user,
+                        $lost,
+                        loads: $this->loads($steps[$position])
+                    );
                 } catch (InvalidConfigurationException $exception) {
                     $type = null;
                     $error = $exception->getMessage();
@@ -248,7 +255,7 @@ final readonly class TransformationChain
             ];
         }
 
-        return [$type, $data, $failed, $stepResults, $hidden];
+        return [$type, $data, $failed, $stepResults, $lost];
     }
 
     /**
@@ -469,8 +476,10 @@ final readonly class TransformationChain
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
-     * @param list<bool> $hidden the rows whose value lost an element the user may not see
+     * @param list<bool> $lost the rows whose value lost an element: one the user may not see, or one a load step found
+     *                         nothing for
      * @param bool $keepEmpty an empty cell stays empty instead of becoming a No, as in a run that writes no empty value
+     * @param bool $loads the step loads objects or assets
      *
      * @return array{0: list<mixed>, 1: list<bool>, 2: list<bool>}
      */
@@ -479,8 +488,9 @@ final readonly class TransformationChain
         array $data,
         array $failed,
         User $user,
-        array $hidden,
-        bool $keepEmpty = false
+        array $lost,
+        bool $keepEmpty = false,
+        bool $loads = false
     ): array {
         $references = new UserReferenceVisibility($user);
         foreach ($data as $row => $value) {
@@ -497,13 +507,38 @@ final readonly class TransformationChain
                 // a dry run logs no misses; a loaded element the user may not see counts as not found
                 $loaded = $operator->process($value, true);
                 $data[$row] = $references->visibleIn($loaded);
-                $hidden[$row] = ($hidden[$row] ?? false) || $references->hidesAnElementIn($loaded);
+                // a reference that finds nothing fails like a hidden one, so the two cannot be told apart
+                $lost[$row] = ($lost[$row] ?? false)
+                    || $references->hidesAnElementIn($loaded)
+                    || ($loads && self::findsLess($value, $loaded));
             } catch (\Exception) { // NOSONAR php:S2221 an operator may fail on a value from the file; an Error is a bug
                 $data[$row] = null;
                 $failed[$row] = true;
             }
         }
 
-        return [$data, $failed, $hidden];
+        return [$data, $failed, $lost];
+    }
+
+    /**
+     * @param array{type: string, settings: array<string, string>} $step
+     */
+    private function loads(array $step): bool
+    {
+        return in_array($step['type'], [TransformationAllowList::LOAD_OBJECT, TransformationAllowList::LOAD_ASSET], true);
+    }
+
+    /**
+     * Whether a load found fewer elements than the value names.
+     */
+    private static function findsLess(mixed $value, mixed $loaded): bool
+    {
+        $named = array_filter(
+            is_array($value) ? $value : [$value],
+            static fn (mixed $item): bool => $item !== null && (!is_scalar($item) || trim((string) $item) !== '')
+        );
+        $found = array_filter(is_array($loaded) ? $loaded : [$loaded], static fn (mixed $item): bool => $item !== null);
+
+        return count($found) < count($named);
     }
 }

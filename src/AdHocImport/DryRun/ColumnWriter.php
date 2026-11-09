@@ -71,7 +71,7 @@ final readonly class ColumnWriter implements FieldWriter
 
         $value = $this->converted->values[$index];
         // dropping the element clears or shortens what the field holds, and the row would still count as saved
-        if (($this->converted->hidden[$index] ?? false) || $this->references?->hidesAnElementIn($value) === true) {
+        if (($this->converted->lost[$index] ?? false) || $this->references?->hidesAnElementIn($value) === true) {
             return ValueError::Invalid;
         }
 
