@@ -40,16 +40,22 @@ final readonly class DataImporterRunQueue implements RunQueueInterface
         $queueName = RunRecord::queueName($run->fileId);
 
         try {
-            foreach ($rows as $index => $leftOut) {
-                $this->queue->addItemToQueue(
-                    $queueName,
-                    self::EXECUTION_TYPE,
-                    ImportProcessingService::JOB_TYPE_AD_HOC_ROW,
-                    (string) json_encode(['row' => $index, 'leftOut' => $leftOut]),
-                    $run->userId
-                );
-            }
+            $this->queue->addItemsToQueue(
+                $queueName,
+                self::EXECUTION_TYPE,
+                ImportProcessingService::JOB_TYPE_AD_HOC_ROW,
+                array_map(
+                    static fn (int $index, array $leftOut): string => (string) json_encode([
+                        'row' => $index,
+                        'leftOut' => $leftOut,
+                    ]),
+                    array_keys($rows),
+                    $rows
+                ),
+                $run->userId
+            );
 
+            // only now: a worker that gets going must find every row of the run
             $this->eventDispatcher->dispatch(
                 new PostPreparationEvent(RowImporter::CONFIG_NAME, self::EXECUTION_TYPE, true)
             );

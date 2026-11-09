@@ -29,8 +29,11 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInt
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 class AdHocImportRunServiceTest extends Unit
 {
@@ -45,6 +48,8 @@ class AdHocImportRunServiceTest extends Unit
     /** @var array<int, list<int>>|null */
     private ?array $queued = null;
 
+    private LockFactory $locks;
+
     protected function _before(): void
     {
         $this->storage = sys_get_temp_dir() . '/' . uniqid('ad-hoc-run-service-', true);
@@ -52,6 +57,7 @@ class AdHocImportRunServiceTest extends Unit
         $this->files = AdHocCsvFiles::store($this->storage);
         $this->runs = AdHocRunFixtures::memoryStore();
         $this->queued = null;
+        $this->locks = new LockFactory(new InMemoryStore());
 
         $source = tempnam(sys_get_temp_dir(), 'ad-hoc-run');
         file_put_contents($source, "sku;name\nSKU-1;Chair\n");
@@ -77,12 +83,19 @@ class AdHocImportRunServiceTest extends Unit
         array $results = [],
         int $checks = 1,
         ?RunQueueInterface $failingQueue = null,
-        ?RowWriterInterface $writer = null
+        ?RowWriterInterface $writer = null,
+        ?\Closure $duringCheck = null
     ): AdHocImportRunService
     {
         $dryRun = $this->createMock(AdHocImportDryRunServiceInterface::class);
-        $dryRun->expects($this->exactly($checks))->method('check')->willReturn(
-            new CheckedFile(AdHocRunFixtures::plan([], []), $results)
+        $dryRun->expects($this->exactly($checks))->method('check')->willReturnCallback(
+            static function () use ($results, $duringCheck): CheckedFile {
+                if ($duringCheck !== null) {
+                    $duringCheck();
+                }
+
+                return new CheckedFile(AdHocRunFixtures::plan([], []), $results);
+            }
         );
 
         $security = $this->createStub(SecurityServiceInterface::class);
@@ -105,8 +118,9 @@ class AdHocImportRunServiceTest extends Unit
             $this->runs,
             $this->files,
             $failingQueue ?? $queue,
-            $writer ?? new DirectRowWriter(new EventDispatcher()),
-            AdHocRunFixtures::dryRunMessages()
+            $writer ?? new DirectRowWriter(new EventDispatcher(), new NullLogger()),
+            AdHocRunFixtures::dryRunMessages(),
+            $this->locks
         );
     }
 
@@ -163,6 +177,49 @@ class AdHocImportRunServiceTest extends Unit
         }
 
         $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId), 'it would hold the file');
+    }
+
+    public function testASecondStartWhileTheFirstIsBeingPreparedIsRefusedAndQueuesNothing(): void
+    {
+        $parameters = $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS);
+        $service = null;
+        $refused = null;
+        $service = $this->service($this->results(), duringCheck: function () use (&$service, &$refused, $parameters): void {
+            try {
+                $service->start($this->fileId, $parameters);
+            } catch (InvalidArgumentException $exception) {
+                $refused = $exception;
+            }
+            $this->assertNull($this->queued, 'the second request queued rows while the first one was checking');
+        });
+
+        $service->start($this->fileId, $parameters);
+
+        $this->assertInstanceOf(InvalidArgumentException::class, $refused);
+        $this->assertStringContainsString('is being imported', $refused->getMessage());
+        $this->assertSame([0 => [], 3 => []], $this->queued, 'the first request goes on');
+    }
+
+    public function testStartingAgainWorksOnceAStartIsOver(): void
+    {
+        $parameters = $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS);
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willReturnOnConsecutiveCalls(
+            $this->throwException(new \RuntimeException('the database went away')),
+            null
+        );
+        $service = $this->service($this->results(), 2, $queue);
+
+        try {
+            $service->start($this->fileId, $parameters);
+            $this->fail('the first start has to fail');
+        } catch (\RuntimeException) {
+            // what the next attempt must not be held up by
+        }
+
+        $service->start($this->fileId, $parameters);
+
+        $this->assertTrue($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId)?->isRunning());
     }
 
     public function testTheWriterIsOpenedForTheRunBeforeItsRowsAreQueued(): void

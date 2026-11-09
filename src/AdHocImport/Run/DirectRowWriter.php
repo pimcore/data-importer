@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\Run;
 
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -25,6 +26,7 @@ final readonly class DirectRowWriter implements RowWriterInterface
 {
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -43,7 +45,15 @@ final readonly class DirectRowWriter implements RowWriterInterface
         }
         $object->save();
 
-        $this->eventDispatcher->dispatch(new PostSaveEvent(RowImporter::CONFIG_NAME, $write->row, $object));
+        try {
+            $this->eventDispatcher->dispatch(new PostSaveEvent(RowImporter::CONFIG_NAME, $write->row, $object));
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 the row is saved, whatever a listener does after that
+            $this->logger->error(sprintf(
+                'Ad hoc import, a listener failed after object %d was saved: %s',
+                $object->getId(),
+                $throwable->getMessage()
+            ));
+        }
     }
 
     public function close(RunRecord $run): array

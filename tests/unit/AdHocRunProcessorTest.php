@@ -27,6 +27,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunProcessor;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
@@ -114,7 +115,7 @@ class AdHocRunProcessorTest extends Unit
         );
 
         $events = new EventDispatcher();
-        $writer ??= new DirectRowWriter($events);
+        $writer ??= new DirectRowWriter($events, new NullLogger());
 
         return new RunProcessor(
             $this->runs,
@@ -595,6 +596,63 @@ class AdHocRunProcessorTest extends Unit
         $processor->processRow($this->queue(self::FILE_ID), AdHocRunFixtures::USER_ID, $this->item(0));
 
         $this->assertSame(0, $this->runs->find(AdHocRunFixtures::USER_ID, $fileId)->updated);
+    }
+
+    public function testARowAListenerFailedAfterTheSaveCountsAsSavedNotAsFailed(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $events = new EventDispatcher();
+        $events->addListener(PostSaveEvent::class, static function (): void {
+            throw new \RuntimeException('search index is down');
+        });
+        $plan = AdHocRunFixtures::plan(
+            [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved())],
+            [],
+            $user,
+            [['sku' => 'SKU-1']]
+        );
+        $writer = new DirectRowWriter($events, new NullLogger());
+
+        $this->processor($plan, $user, writer: $writer)
+            ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame([1, 0], [$run->updated, $run->failed]);
+        $this->assertNull($this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId));
+    }
+
+    public function testAnAccountDeactivatedBetweenTwoRowsSavesNothingMore(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 2);
+        $active = AdHocRunFixtures::user();
+        $deactivated = AdHocRunFixtures::user();
+        $deactivated->setActive(false);
+        $writer = $this->closingWriter([]);
+        $plan = AdHocRunFixtures::plan(
+            [
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()),
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-2', $this->saved()),
+            ],
+            [],
+            $active,
+            [['sku' => 'SKU-1'], ['sku' => 'SKU-2']]
+        );
+        $users = $this->createStub(UserResolverInterface::class);
+        $users->method('getById')->willReturnOnConsecutiveCalls($active, $deactivated);
+        $processor = $this->processor($plan, users: $users, writer: $writer);
+
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
+
+        $this->assertSame([1], $writer->closed, 'an administrator too: only the first row reached the writer');
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame([1, 1], [$run->updated, $run->failed]);
+        $this->assertFalse($run->isRunning());
+        $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
+        $this->assertStringContainsString('cannot-go-on', $stored['rows'][0]['message']);
     }
 
     public function testAUserDeletedMeanwhileFailsTheRowsWithoutANotification(): void

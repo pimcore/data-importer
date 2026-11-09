@@ -29,6 +29,7 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Lock\LockFactory;
 
 /**
  * Starts the run of a file over the Data Importer's queue, in file order, and answers how it goes.
@@ -39,6 +40,9 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
 {
     use CurrentUserResolverTrait;
 
+    // the check of a large file takes minutes; a start that died gives its file free again after this
+    private const float START_LOCK_SECONDS = 3600.0;
+
     public function __construct(
         private SecurityServiceInterface $securityService, // NOSONAR php:S1068 read by CurrentUserResolverTrait
         private AdHocImportDryRunServiceInterface $dryRunService,
@@ -47,14 +51,36 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
         private RunQueueInterface $queue,
         private RowWriterInterface $writer,
         private DryRunMessages $messages,
+        private LockFactory $lockFactory,
     ) {
     }
 
     public function start(string $fileId, AdHocImportRunParameters $parameters): AdHocImportRunResponse
     {
         $user = $this->resolveCurrentUser();
+        // two requests at once would both find no run, and each would queue every row
+        $lock = $this->lockFactory->createLock(
+            sprintf('data_importer_ad_hoc_run_start_%d_%s', $user->getId(), $fileId),
+            self::START_LOCK_SECONDS
+        );
+        if (!$lock->acquire()) {
+            throw $this->beingImported($fileId);
+        }
+
+        try {
+            return $this->startRun($user, $fileId, $parameters);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function startRun(
+        User $user,
+        string $fileId,
+        AdHocImportRunParameters $parameters
+    ): AdHocImportRunResponse {
         if ($this->runs->find($user->getId(), $fileId)?->isRunning()) {
-            throw new InvalidArgumentException(sprintf('File %s is being imported.', $fileId));
+            throw $this->beingImported($fileId);
         }
 
         $settings = $parameters->getSettings();
@@ -132,11 +158,16 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     {
         $user = $this->resolveCurrentUser();
         if ($this->requireRun($user, $fileId)->isRunning()) {
-            throw new InvalidArgumentException(sprintf('File %s is being imported.', $fileId));
+            throw $this->beingImported($fileId);
         }
 
         $this->runs->delete($user->getId(), $fileId);
         $this->files->deleteRunOutput($user->getId(), $fileId);
+    }
+
+    private function beingImported(string $fileId): InvalidArgumentException
+    {
+        return new InvalidArgumentException(sprintf('File %s is being imported.', $fileId));
     }
 
     /**

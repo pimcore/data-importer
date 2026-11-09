@@ -41,10 +41,10 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class AdHocRowImporterReferenceTest extends Unit
 {
-    private function importer(): RowImporter
+    private function importer(?RowWriterInterface $writer = null): RowImporter
     {
         return new RowImporter(
-            $this->createStub(RowWriterInterface::class),
+            $writer ?? $this->createStub(RowWriterInterface::class),
             new MappingApplicationScope(),
             AdHocRunFixtures::dryRunMessages(),
             AdHocRunFixtures::runMessages(),
@@ -126,11 +126,15 @@ class AdHocRowImporterReferenceTest extends Unit
             [['sku' => 'SKU-1', 'holder' => $holder]]
         );
 
-        $this->importer()->import($plan, $current, 0, []);
-        $this->assertSame([null], $target->assigned, 'the plan\'s user may view it, the row\'s user may not');
+        $writer = $this->createMock(RowWriterInterface::class);
+        $writer->expects($this->once())->method('write');
+
+        $refused = $this->importer($writer)->import($plan, $current, 0, []);
+        $this->assertTrue($refused->isFailure(), 'the plan\'s user may view it, the row\'s user may not');
 
         $target->assigned = [];
-        $this->importer()->import($plan, $planned, 0, []);
+        $saved = $this->importer($writer)->import($plan, $planned, 0, []);
+        $this->assertFalse($saved->isFailure());
         $this->assertSame(['/Products/Hidden'], $target->assigned);
     }
 

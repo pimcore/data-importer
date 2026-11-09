@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\Event\PostPreparationEvent;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Db;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
@@ -41,6 +42,32 @@ class AdHocRunQueueTest extends Unit
         foreach ($this->queue->getAllQueueEntryIds(self::SEQUENTIAL) as $id) {
             $this->queue->markQueueEntryAsProcessed((int) $id);
         }
+    }
+
+    public function testRowsAreQueuedAllOrNoneSoARunningWorkerNeverTakesAPartOfThem(): void
+    {
+        $failure = new \RuntimeException('the last row could not be read');
+        $items = (static function () use ($failure): \Generator {
+            yield '{"row":0,"leftOut":[]}';
+
+            throw $failure;
+        })();
+        $queueName = RunRecord::queueName(AdHocRunFixtures::FILE_ID);
+
+        try {
+            $this->queue->addItemsToQueue(
+                $queueName,
+                self::SEQUENTIAL,
+                ImportProcessingService::JOB_TYPE_AD_HOC_ROW,
+                $items,
+                AdHocRunFixtures::USER_ID
+            );
+            $this->fail('the caller must learn that the rows were not queued');
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertSame(0, $this->queue->getQueueItemCount($queueName));
     }
 
     public function testARunThatCannotBeStartedLeavesNoRowsForTheNextRunOfTheFile(): void
@@ -72,13 +99,18 @@ class AdHocRunQueueTest extends Unit
                 $event->getExecutionType(),
                 $event->isFileInterpreted(),
                 count($this->queue->getAllQueueEntryIds(self::SEQUENTIAL)),
+                Db::get()->isTransactionActive(),
             ];
         });
         $run = AdHocRunFixtures::run();
 
         (new DataImporterRunQueue($this->queue, $events))->enqueue($run, [0 => [], 2 => [1, 3]]);
 
-        $this->assertSame([['', self::SEQUENTIAL, true, 2]], $seen, 'one start, after the last row is queued');
+        $this->assertSame(
+            [['', self::SEQUENTIAL, true, 2, false]],
+            $seen,
+            'one start, once the rows are committed and so visible to a worker'
+        );
 
         $entries = array_map(
             fn (int|string $id): array => $this->queue->getQueueEntryById((int) $id),

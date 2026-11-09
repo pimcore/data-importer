@@ -118,6 +118,11 @@ final class RunProcessor implements AdHocRowProcessorInterface
             return RowOutcome::failed('', null, '');
         }
 
+        // rights on objects stay with a deactivated account, so they do not stop it
+        if (!$user->isActive()) {
+            return RowOutcome::failed('', null, $this->messages->cannotGoOn($user));
+        }
+
         $plan = $this->planOf($run, $user);
         if ($plan === null) {
             return RowOutcome::failed('', null, $this->messages->cannotGoOn($user));

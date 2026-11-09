@@ -18,6 +18,8 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWrite;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Model\DataObject\Concrete;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class AdHocDirectRowWriterTest extends Unit
@@ -44,7 +46,7 @@ class AdHocDirectRowWriterTest extends Unit
             $seen = $event;
         });
 
-        (new DirectRowWriter($events))->write(
+        (new DirectRowWriter($events, new NullLogger()))->write(
             new RowWrite($object, ['sku' => 'SKU-1'], false, AdHocRunFixtures::user())
         );
 
@@ -60,7 +62,7 @@ class AdHocDirectRowWriterTest extends Unit
         $object->expects($this->once())->method('setUserOwner')->with(AdHocRunFixtures::USER_ID)->willReturnSelf();
         $object->method('setUserModification')->willReturnSelf();
 
-        (new DirectRowWriter(new EventDispatcher()))
+        (new DirectRowWriter(new EventDispatcher(), new NullLogger()))
             ->write(new RowWrite($object, [], true, AdHocRunFixtures::user()));
     }
 
@@ -75,12 +77,31 @@ class AdHocDirectRowWriterTest extends Unit
         });
 
         $this->expectException(\RuntimeException::class);
-        (new DirectRowWriter($events))->write(new RowWrite($object, [], false, AdHocRunFixtures::user()));
+        (new DirectRowWriter($events, new NullLogger()))->write(new RowWrite($object, [], false, AdHocRunFixtures::user()));
+    }
+
+    public function testAListenerFailingAfterTheSaveLeavesTheRowSavedAndIsLogged(): void
+    {
+        $object = $this->createMock(Concrete::class);
+        $object->expects($this->once())->method('save')->willReturnSelf();
+        $object->method('setUserModification')->willReturnSelf();
+        $object->method('getId')->willReturn(42);
+        $events = new EventDispatcher();
+        $events->addListener(PostSaveEvent::class, static function (): void {
+            throw new \RuntimeException('search index is down');
+        });
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error')->with($this->logicalAnd(
+            $this->stringContains('object 42'),
+            $this->stringContains('search index is down')
+        ));
+
+        (new DirectRowWriter($events, $logger))->write(new RowWrite($object, [], false, AdHocRunFixtures::user()));
     }
 
     public function testADirectRunHasNothingToOpenOrToFindOutAtTheEnd(): void
     {
-        $writer = new DirectRowWriter(new EventDispatcher());
+        $writer = new DirectRowWriter(new EventDispatcher(), new NullLogger());
 
         $writer->open(AdHocRunFixtures::run());
 
