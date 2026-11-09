@@ -23,6 +23,9 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunner;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
@@ -57,6 +60,9 @@ use Pimcore\Model\User;
 use Pimcore\Model\User\Workspace\DataObject as ObjectWorkspace;
 use Pimcore\Security\User\User as SecurityUser;
 use Pimcore\Tests\Support\Util\TestHelper;
+use Pimcore\Tool;
+use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -1026,6 +1032,131 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         ];
     }
 
+    /**
+     * @dataProvider namesARelationTargetMayNotWriteTo
+     */
+    public function testARelationTargetOfAConfigurationCannotRenameOrMoveTheObject(string $fieldName): void
+    {
+        $fileId = $this->upload("ID;Where\n1;/elsewhere\n", 'products.csv');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Field ' . $fieldName . ' cannot be imported into.');
+
+        $this->configuredDryRun($fileId, $this->class, [[
+            'label' => 'Where',
+            'dataSourceIndex' => ['Where'],
+            'transformationPipeline' => [],
+            'dataTarget' => ['type' => 'manyToManyRelation', 'settings' => ['fieldName' => $fieldName]],
+        ]], ['ID', 'Where']);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function namesARelationTargetMayNotWriteTo(): array
+    {
+        return ['the key' => ['key'], 'the path' => ['path'], 'the type' => ['type']];
+    }
+
+    public function testALocalizedFieldAConfigurationGivesNoLanguageIsWrittenInTheDefaultLanguage(): void
+    {
+        $fileId = $this->upload("ID;Text\n1;a\n", 'products.csv');
+        $brickField = 'bricks.' . RowMatcherModel::LOCALIZED_BRICK_NAME . '.code';
+
+        $plan = $this->configurationPlan($fileId, 'Text', [
+            ['direct', 'title', ''],
+            ['manyToManyRelation', 'title', ''],
+            ['manyToManyRelation', $brickField, null],
+            ['direct', 'name', ''],
+            ['direct', 'title', 'de'],
+        ], $this->user);
+
+        $default = Tool::getDefaultLanguage();
+        $this->assertSame(
+            [$default, $default, $default, null, 'de'],
+            array_map(static fn ($writer): ?string => $writer->field()->language, $plan->dryRun->writers)
+        );
+    }
+
+    public function testALanguageAConfigurationLeavesEmptyStillNeedsTheRightToEditTheDefaultLanguage(): void
+    {
+        $this->assertNotSame('de', Tool::getDefaultLanguage(), 'the user below may edit only another language');
+        $object = $this->createObject(self::TARGET, 'SKU-1', title: 'Chair');
+        $user = $this->saveUserWithWorkspaces([
+            self::TARGET => [
+                'list' => true,
+                'view' => true,
+                'create' => true,
+                'save' => true,
+                'publish' => true,
+                'lEdit' => 'de',
+            ],
+        ]);
+        $this->users[] = $user;
+        $this->logInAs($user);
+        $fileId = $this->upload(sprintf("ID;Text\n%d;Changed\n", $object->getId()), 'products.csv');
+        $plan = $this->configurationPlan($fileId, 'Text', [['direct', 'title', '']], $user);
+
+        $writer = $this->createMock(RowWriterInterface::class);
+        $writer->expects($this->never())->method('write');
+        $outcome = (new RowImporter(
+            $writer,
+            $this->tester->grabService(MappingApplicationScope::class),
+            $this->messages(),
+            AdHocRunFixtures::runMessages(),
+            new EventDispatcher(),
+            new NullLogger()
+        ))->import($plan, $user, 0, []);
+
+        $this->assertStringContainsString('may-not-edit-language', (string) $outcome->message);
+        $this->assertSame('Chair', $object->get('title', 'en'), 'the mapping did not reach the object');
+    }
+
+    /**
+     * @param list<array{string, string, string|null}> $items per item its target's type, field name and language
+     */
+    private function configurationPlan(string $fileId, string $column, array $items, User $user): ImportPlan
+    {
+        $mapping = array_map(static function (array $item) use ($column): array {
+            [$type, $fieldName, $language] = $item;
+            $settings = $language === null
+                ? ['fieldName' => $fieldName]
+                : ['fieldName' => $fieldName, 'language' => $language];
+
+            return [
+                'label' => $fieldName,
+                'dataSourceIndex' => [$column],
+                'transformationPipeline' => [],
+                'dataTarget' => ['type' => $type, 'settings' => $settings],
+            ];
+        }, $items);
+
+        return $this->service()->planForRun(
+            $fileId,
+            FileType::Csv,
+            new AdHocImportDryRunParameters(
+                $this->folderId,
+                'ignored',
+                AdHocImportDryRunParameters::MATCH_BY_FIELD,
+                'ignored',
+                configuration: 'by-id',
+                configurationColumns: ['ID' => 'ID', $column => $column],
+            ),
+            [
+                'configuration' => [
+                    'classId' => $this->class->getId(),
+                    'matchBy' => AdHocImportDryRunParameters::MATCH_BY_ID,
+                    'matchField' => null,
+                    'matchLanguage' => null,
+                    'matchColumn' => 'ID',
+                    'newObjectsFolder' => self::TARGET,
+                ],
+                'mapping' => $mapping,
+            ],
+            $user
+        );
+    }
+
     public function testALaterRowDoesNotSeeWhatAnEarlierRowChanged(): void
     {
         $class = ClassDefinition::getByName(RowMatcherModel::INHERITING_CLASS_NAME)
@@ -1838,7 +1969,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     }
 
     /**
-     * @param array<string, array<string, bool>> $rights per folder path its rights
+     * @param array<string, array<string, bool|string>> $rights per folder path its rights
      */
     private function saveUserWithWorkspaces(array $rights): User
     {

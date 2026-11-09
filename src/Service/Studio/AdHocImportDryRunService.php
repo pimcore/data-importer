@@ -51,9 +51,11 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Folder;
+use Pimcore\Model\DataObject\Objectbrick\Definition as ObjectbrickDefinition;
 use Pimcore\Model\User;
 use Pimcore\Tool;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -524,13 +526,18 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             ? $targets[$key] ?? null
             : null;
         if ($target === null) {
-            throw new InvalidArgumentException(sprintf(
-                'Field %s cannot be imported into.',
-                is_scalar($key) ? (string) $key : get_debug_type($key)
-            ));
+            throw $this->notImportable($key);
         }
 
         return $target;
+    }
+
+    private function notImportable(mixed $key): InvalidArgumentException
+    {
+        return new InvalidArgumentException(sprintf(
+            'Field %s cannot be imported into.',
+            is_scalar($key) ? (string) $key : get_debug_type($key)
+        ));
     }
 
     /**
@@ -601,6 +608,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             if (!is_array($item)) {
                 continue;
             }
+            $item = $this->withWrittenLanguage($item, $classId);
             $read = $this->readColumns($item['dataSourceIndex'] ?? [], $fileColumns);
             $found = array_values(array_filter($read, static fn (?string $column): bool => $column !== null));
             if ($found === []) {
@@ -626,6 +634,42 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         }
 
         return $writers;
+    }
+
+    /**
+     * A localized field without a language is written in whatever locale the process has: named here, the rights of
+     * the row are checked for the language that is written.
+     *
+     * @param array<mixed> $item
+     *
+     * @return array<mixed>
+     */
+    private function withWrittenLanguage(array $item, string $classId): array
+    {
+        $settings = is_array($item['dataTarget'] ?? null) ? $item['dataTarget']['settings'] ?? null : null;
+        if (!is_array($settings)
+            || !is_string($settings['fieldName'] ?? null)
+            || !in_array($settings['language'] ?? null, [null, ''], true)
+            || !$this->isLocalized($settings['fieldName'], $classId)
+        ) {
+            return $item;
+        }
+        $item['dataTarget']['settings']['language'] = Tool::getDefaultLanguage();
+
+        return $item;
+    }
+
+    private function isLocalized(string $fieldName, string $classId): bool
+    {
+        // a field of an object brick is named container.brick.field
+        $parts = explode('.', $fieldName);
+        $definition = count($parts) === 3
+            ? ObjectbrickDefinition::getByKey($parts[1])
+            : ClassDefinition::getById($classId);
+        $localizedFields = $definition?->getFieldDefinition('localizedfields');
+
+        return $localizedFields instanceof Localizedfields
+            && $localizedFields->getFieldDefinition($parts[count($parts) - 1]) !== null;
     }
 
     /**
@@ -668,6 +712,11 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
 
         // the preview cannot read such a field, but the language it writes is still subject to the user's rights
         if (($target['type'] ?? null) !== self::DIRECT_TARGET || $fieldName === null) {
+            // the relation target writes key and path as the direct one does
+            if (in_array($fieldName, AdHocImportMappingService::NO_MAPPING_TARGETS, true)) {
+                throw $this->notImportable($fieldName);
+            }
+
             return new ImportField(null, $storeLanguage, $label);
         }
 

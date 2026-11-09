@@ -116,6 +116,21 @@ class AdHocFileStoreTest extends Unit
         );
     }
 
+    public function testAbandonedFailedRowsAreRemovedOnTheNextUpload(): void
+    {
+        $store = AdHocCsvFiles::store($this->storage);
+        $fileId = $this->storeFile($store);
+        $store->storeSkippedRows(self::USER_ID, $fileId, '{"skipped":1}');
+        $store->storeFailedRows(self::USER_ID, $fileId, '{"failed":1}');
+        touch($this->storage . '/' . self::USER_ID . '/' . $fileId . '.failed.json', time() - 25 * 3600);
+
+        $this->storeFile($store);
+
+        $this->assertNull($store->readFailedRows(self::USER_ID, $fileId), 'file values do not stay on disk');
+        $this->assertSame('{"skipped":1}', $store->readSkippedRows(self::USER_ID, $fileId), 'younger: it stays');
+        $this->assertSame(FileType::Csv, $store->findType(self::USER_ID, $fileId), 'so does its upload');
+    }
+
     public function testSkippedRowsNewerThanTheirAbandonedFileGoWithIt(): void
     {
         $store = AdHocCsvFiles::store($this->storage);

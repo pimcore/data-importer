@@ -688,7 +688,7 @@ class MappingApplierTest extends Unit
             $this->tester->grabService(CleanupStrategyFactory::class),
             $applicationLogger,
             $this->tester->grabService('event_dispatcher'),
-            static fn () => self::fail('no ad hoc rows here'),
+            static fn () => static::fail('no ad hoc rows here'),
         );
         $processingService->setLogger(new NullLogger());
 
