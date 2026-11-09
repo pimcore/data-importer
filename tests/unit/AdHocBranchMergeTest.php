@@ -603,6 +603,22 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame([], $this->branches->calls, 'nobody is left to ask as');
     }
 
+    public function testRowsWrittenForAUserDeletedMeanwhileEndWithoutAMergeOrANotification(): void
+    {
+        $this->merge()->rowsWritten(
+            $this->branchRun(),
+            null,
+            null,
+            [new RowFailure(2, 'SKU-2', 'update', 'no', [])]
+        );
+
+        $this->assertSame([], $this->branches->calls, 'nobody is left to merge as');
+        $this->assertSame(RunRecord::DONE, $this->stored()->state);
+        $this->assertSame([2 => 'no'], $this->failures());
+        $this->assertSame([], $this->notified);
+        $this->assertFalse($this->uploadExists());
+    }
+
     public function testAMergeThatCannotStartClosesTheBranchAndFailsTheRows(): void
     {
         $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
