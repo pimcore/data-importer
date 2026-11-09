@@ -37,9 +37,10 @@ class AdHocObjectChangesTest extends Unit
         $localized = new Data\Localizedfields();
         $localized->setName('localizedfields');
         $localized->setChildren([$title]);
-        $bricks = new Data\Objectbricks();
-        $bricks->setName('bricks');
-        $bricks->setAllowedTypes(['Size']);
+        // setAllowedTypes() drops a type without a stored brick definition, and the test has none
+        $bricks = $this->createStub(Data\Objectbricks::class);
+        $bricks->method('getName')->willReturn('bricks');
+        $bricks->method('getAllowedTypes')->willReturn(['Size']);
 
         $definition = new ClassDefinition();
         $definition->setName('Product');
