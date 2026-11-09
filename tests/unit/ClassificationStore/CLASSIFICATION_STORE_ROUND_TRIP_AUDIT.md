@@ -56,6 +56,7 @@ inputQuantityValue
 language
 languagemultiselect
 lastname
+multiValue
 multiselect
 numeric
 password
@@ -70,6 +71,11 @@ time
 user
 wysiwyg
 ```
+
+> `multiValue` entered this set when #1716 merged into the epic branch: a key
+> may now hold several values, as an ordered list or as named variants. It is
+> listed here because core accepts it, and the verdict table below predates it
+> — the round trip of a qualified value is #1721's subject, not this one's.
 
 `ClassificationStoreRoundTripAuditTest::testTheDerivedKeyTypeSetMatchesTheAuditDocument()` compares
 the derived set against this list, so a core release that adds or drops an accepted type fails the

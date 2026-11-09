@@ -15,7 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\BaseReader;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
@@ -24,6 +26,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Bundle\DataImporterBundle\Preview\Model\PreviewData;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
@@ -32,7 +35,7 @@ use Throwable;
 /**
  * @internal
  */
-final class XlsxFileInterpreter extends AbstractInterpreter
+final class XlsxFileInterpreter extends AbstractInterpreter implements RowReaderInterface
 {
     // Rows per chunk: the sheet XML is parsed again per chunk, so a smaller one costs time without saving much memory.
     private const IMPORT_CHUNK_ROWS = 10000;
@@ -90,7 +93,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         for ($firstRow = $firstDataRow; $firstRow <= $totalRows; $firstRow += $windowRows) {
             $lastRow = min($firstRow + $windowRows - 1, $totalRows);
 
-            $spreadSheet = $this->loadRows($path, $this->readInWindows ? range($firstRow, $lastRow) : null);
+            $spreadSheet = $this->loadSpreadsheet($path, $this->readInWindows ? range($firstRow, $lastRow) : null);
             $sheet = $spreadSheet->getActiveSheet();
 
             for ($rowNumber = $firstRow; $rowNumber <= $lastRow; $rowNumber++) {
@@ -105,6 +108,54 @@ final class XlsxFileInterpreter extends AbstractInterpreter
         }
 
         $this->logSuppressedUncachedFormulaWarnings();
+    }
+
+    /**
+     * By default every value is the text an import receives (e.g. `'123'`, `'TRUE'`). With `$typedValues` numbers are
+     * int or float, booleans bool, empty cells null and text stays text, so `'00123'` stored as text is kept apart from
+     * the number 123. Formulas are calculated either way; dates are Excel serial numbers either way.
+     */
+    public function readRows(string $path, bool $typedValues = false): iterable
+    {
+        try {
+            $this->assertFileValid($path);
+            if ($this->getWorksheetInfo($path) === null) {
+                throw new InvalidInputException(
+                    sprintf('Sheet `%s` not found in `%s`.', $this->sheetName, basename($path))
+                );
+            }
+            $rows = $this->loadRows($path, $typedValues);
+        } catch (SpreadsheetException $exception) {
+            // e.g. no reader recognises the file, or a part only the full load reads is broken
+            throw new InvalidInputException(
+                sprintf('File `%s` cannot be read: %s', basename($path), $exception->getMessage()),
+                0,
+                $exception
+            );
+        }
+
+        return $this->checkRowEncoding($rows, $path, $this->skipFirstRow ? 2 : 1);
+    }
+
+    /**
+     * @return array<int, array<int, mixed>>
+     */
+    private function loadRows(string $path, bool $typedValues): array
+    {
+        $reader = IOFactory::createReaderForFile($path);
+        $reader->setReadDataOnly(true);
+        $spreadSheet = $reader->load($path);
+
+        $spreadSheet->setActiveSheetIndexByName($this->sheetName);
+
+        // imports receive formatted text; changing that would alter what existing mappings and delta checks see
+        $data = $spreadSheet->getActiveSheet()->toArray(null, true, !$typedValues);
+
+        if ($this->skipFirstRow) {
+            array_shift($data);
+        }
+
+        return $data;
     }
 
     public function fileValid(string $path, bool $originalFilename = false): bool
@@ -170,7 +221,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
             $readRecordNumber = $totalDataRows - 1;
         }
 
-        $sheet = $this->loadRows($path, array_filter([$headerRowNumber, $targetRowNumber]))->getActiveSheet();
+        $sheet = $this->loadSpreadsheet($path, array_filter([$headerRowNumber, $targetRowNumber]))->getActiveSheet();
 
         $headerRow = $this->skipFirstRow ? $this->readRow($sheet, $headerRowNumber, $lastColumnLetter) : null;
 
@@ -180,7 +231,7 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     /**
      * @param int[]|null $rows 1-based row numbers to read, null for every row of the sheet
      */
-    private function loadRows(string $path, ?array $rows): Spreadsheet
+    private function loadSpreadsheet(string $path, ?array $rows): Spreadsheet
     {
         $reader = IOFactory::createReaderForFile($path);
         $reader->setReadDataOnly(true);
@@ -368,6 +419,16 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     private function getWorksheetInfo(string $path): ?array
     {
         $reader = IOFactory::createReaderForFile($path);
+
+        // listWorksheetInfo() is declared on BaseReader, not on the IReader that
+        // createReaderForFile() is typed to return. Every reader this bundle can be
+        // handed extends BaseReader, so this is a type narrowing rather than a case
+        // the caller has to handle — but it is narrowed rather than assumed.
+        if (!$reader instanceof BaseReader) {
+            throw new InvalidConfigurationException(
+                sprintf('The reader for "%s" cannot report worksheet dimensions.', basename($path))
+            );
+        }
 
         foreach ($reader->listWorksheetInfo($path) as $worksheetInfo) {
             if ($worksheetInfo['worksheetName'] === $this->sheetName) {
