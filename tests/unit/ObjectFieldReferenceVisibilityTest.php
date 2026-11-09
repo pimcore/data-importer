@@ -38,6 +38,26 @@ class ObjectFieldReferenceVisibilityTest extends Unit
         $this->assertNull($this->parentPath(visible: false));
     }
 
+    public function testAnElementTheLookupDoesNotLetViewLeavesAWarningSoTheRowIsRefused(): void
+    {
+        $scope = new MappingApplicationScope();
+        $operator = $this->operator();
+        $operator->setMappingApplicationScope($scope);
+
+        $warnings = $scope->run($this->visibility(false), function () use ($operator, $scope): array {
+            $operator->process($this->child());
+
+            return $scope->takeWarnings();
+        });
+
+        $this->assertCount(1, $warnings);
+        $this->assertStringNotContainsString(
+            self::PARENT_PATH,
+            $warnings[0],
+            'it must not name what the user may not see'
+        );
+    }
+
     public function testWithoutAScopeTheFullPathIsRead(): void
     {
         $operator = $this->operator();
@@ -51,24 +71,26 @@ class ObjectFieldReferenceVisibilityTest extends Unit
         $operator = $this->operator();
         $operator->setMappingApplicationScope($scope);
 
-        return $scope->run(
-            new class($visible) implements ReferenceVisibilityInterface {
-                public function __construct(private readonly bool $visible)
-                {
-                }
+        return $scope->run($this->visibility($visible), fn (): mixed => $operator->process($this->child()));
+    }
 
-                public function find(ReferenceQuery $query): ?ElementInterface
-                {
-                    return null;
-                }
+    private function visibility(bool $visible): ReferenceVisibilityInterface
+    {
+        return new class($visible) implements ReferenceVisibilityInterface {
+            public function __construct(private readonly bool $visible)
+            {
+            }
 
-                public function isVisible(ElementInterface $element): bool
-                {
-                    return $this->visible;
-                }
-            },
-            fn (): mixed => $operator->process($this->child())
-        );
+            public function find(ReferenceQuery $query): ?ElementInterface
+            {
+                return null;
+            }
+
+            public function isVisible(ElementInterface $element): bool
+            {
+                return $this->visible;
+            }
+        };
     }
 
     private function operator(): ObjectField

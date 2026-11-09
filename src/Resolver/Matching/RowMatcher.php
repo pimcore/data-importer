@@ -31,7 +31,7 @@ use Pimcore\Model\Element\Service;
  *
  * @internal use RowMatcherFactory::create()
  */
-final class RowMatcher
+final class RowMatcher implements RowMatcherInterface
 {
     // the resolver loads what this class found, so it reads an id from a row of its own, not from the file's row
     public const OBJECT_ID_INDEX = 'objectId';

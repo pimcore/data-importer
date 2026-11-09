@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\MappingApplicationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\User;
 
 /**
  * Writes one item of a Data Importer configuration's mapping.
@@ -63,5 +64,10 @@ final readonly class ConfigurationItemWriter implements FieldWriter
         }
 
         return $values === [] ? null : implode(' · ', $values);
+    }
+
+    public function forUser(User $user): self
+    {
+        return new self($this->field, $this->mapping, $this->columns, new UserReferenceVisibility($user));
     }
 }

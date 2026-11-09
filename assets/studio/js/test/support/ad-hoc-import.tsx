@@ -54,7 +54,7 @@ export const components = {
       <span>{ description }</span>
     </div>
   ),
-  Button: ({ children, disabled, onClick, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, 'aria-label'?: string }) => (
+  Button: ({ children, disabled, onClick, href, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, href?: string, 'aria-label'?: string }) => href !== undefined ? <a href={ href }>{ children }</a> : (
     <button
       aria-label={ label }
       disabled={ disabled }
@@ -64,7 +64,15 @@ export const components = {
       { children }
     </button>
   ),
-  Card: ({ children, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement>) => <div { ...props }>{ children }</div>,
+  Card: ({ children, contentPadding, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement> & { contentPadding?: unknown }) => (
+    <div
+      data-content-padding={ JSON.stringify(contentPadding) }
+      data-testid="studio-card"
+      { ...props }
+    >
+      { children }
+    </div>
+  ),
   ColumnPicker: ({ groups, onSelect, emptyText }: { groups: PickerGroup[], onSelect: (item: PickerItem) => void, emptyText?: string }) => (
     <div role="tree">
       { groups.length === 0 && <span>{ emptyText }</span> }

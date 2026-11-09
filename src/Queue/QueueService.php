@@ -77,6 +77,32 @@ final class QueueService
     }
 
     /**
+     * Adds all items or none, so that a worker already running never takes a part of them.
+     *
+     * @param iterable<string> $items the data of each item
+     *
+     * @throws Exception
+     */
+    public function addItemsToQueue(
+        string $configName,
+        string $executionType,
+        string $jobType,
+        iterable $items,
+        int $userOwner = 0
+    ): void {
+        // creating the table ends any open transaction, so it comes first
+        $this->createQueueTableIfNotExisting();
+
+        $addItems = function () use ($configName, $executionType, $jobType, $items, $userOwner): void {
+            foreach ($items as $data) {
+                $this->addItemToQueue($configName, $executionType, $jobType, $data, $userOwner);
+            }
+        };
+
+        $this->getDb()->transactional($addItems);
+    }
+
+    /**
      * @param \Closure|null $callable
      *
      * @return mixed|null

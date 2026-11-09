@@ -79,7 +79,15 @@ final class ObjectField extends AbstractOperator
 
         // this expands paths
         if ($value instanceof ElementInterface) {
-            $value = $this->visibleReference($value)?->getFullPath();
+            $visible = $this->visibleReference($value);
+            if ($visible === null) {
+                // an empty value would clear the target, and only a warning makes the caller refuse the row
+                $this->logWarning('The related element cannot be read.');
+
+                return null;
+            }
+
+            $value = $visible->getFullPath();
         }
 
         return $value;

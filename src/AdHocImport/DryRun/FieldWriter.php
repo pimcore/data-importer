@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\User;
 
 /**
  * Writes one field of the objects of a file, in memory.
@@ -38,4 +39,9 @@ interface FieldWriter
      * @param array<int|string, mixed> $row
      */
     public function fileValue(array $row): ?string;
+
+    /**
+     * The writer for this user: a run keeps its plan while the user's rights can change between rows.
+     */
+    public function forUser(User $user): self;
 }

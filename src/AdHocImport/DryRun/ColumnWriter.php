@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\User;
 
 /**
  * Writes one column of the file, transformed and converted beforehand, into its field.
@@ -32,6 +33,7 @@ final readonly class ColumnWriter implements FieldWriter
         private ImportField $field,
         private int|string $column,
         private ConvertedColumn $converted,
+        private ?UserReferenceVisibility $references = null,
     ) {
         if ($field->storeKey !== null) {
             $this->target = new Classificationstore();
@@ -67,8 +69,14 @@ final readonly class ColumnWriter implements FieldWriter
                 : ValueError::ofConversion($this->converted->conversion);
         }
 
+        $value = $this->converted->values[$index];
+        // dropping the element clears or shortens what the field holds, and the row would still count as saved
+        if (($this->converted->lost[$index] ?? false) || $this->references?->hidesAnElementIn($value) === true) {
+            return ValueError::Invalid;
+        }
+
         try {
-            $this->target->assignData($object, $this->converted->values[$index]);
+            $this->target->assignData($object, $value);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
             if ($throwable instanceof \Error && !$throwable instanceof \TypeError) {
                 throw $throwable;
@@ -85,5 +93,11 @@ final readonly class ColumnWriter implements FieldWriter
         $value = $row[$this->column] ?? null;
 
         return is_scalar($value) && (string) $value !== '' ? (string) $value : null;
+    }
+
+    public function forUser(User $user): self
+    {
+        // the values were loaded for the user the plan was made for
+        return new self($this->field, $this->column, $this->converted, new UserReferenceVisibility($user));
     }
 }

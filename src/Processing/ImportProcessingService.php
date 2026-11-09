@@ -34,6 +34,7 @@ use Pimcore\Model\Element\Service as ElementService;
 use Pimcore\Model\Tool\TmpStore;
 use Pimcore\Model\Version;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\DependencyInjection\Attribute\AutowireServiceClosure;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -46,6 +47,9 @@ final class ImportProcessingService
     public const JOB_TYPE_PROCESS = 'process';
 
     public const JOB_TYPE_CLEANUP = 'cleanup';
+
+    // one row of an ad hoc import, which has no stored configuration to load
+    public const JOB_TYPE_AD_HOC_ROW = 'ad-hoc-row';
 
     public const EXECUTION_TYPE_SEQUENTIAL = 'sequential';
 
@@ -85,6 +89,8 @@ final class ImportProcessingService
         private readonly CleanupStrategyFactory $cleanupStrategyFactory,
         private readonly ApplicationLogger $applicationLogger,
         private readonly EventDispatcherInterface $eventDispatcher,
+        #[AutowireServiceClosure(AdHocRowProcessorInterface::class)]
+        private readonly \Closure $adHocRowProcessor,
     ) {
         $this->configLoader = new ConfigurationPreparationService();
     }
@@ -101,6 +107,16 @@ final class ImportProcessingService
                 return;
             }
             $userOwner = $queueItem['userOwner'];
+
+            if ($queueItem['jobType'] === self::JOB_TYPE_AD_HOC_ROW) {
+                ($this->adHocRowProcessor)()->processRow(
+                    $queueItem['configName'],
+                    (int) $userOwner,
+                    $queueItem['data']
+                );
+
+                return;
+            }
 
             //get config
             $configName = $queueItem['configName'];

@@ -19,14 +19,18 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DeleteFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DiscardRunController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadFailedRowsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadSkippedRowsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DryRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\StartRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
@@ -54,6 +58,8 @@ class AdHocImportEndpointsTest extends Unit
     private const ROUTE_PREFIX = 'pimcore_studio_api_data_importer_ad_hoc_import_';
 
     private const NAME_COLUMN = 'Name DE';
+
+    private const RUN_PATH = '/ad-hoc-import/file/{fileId}/run';
 
     private const ENDPOINTS = [
         UploadFileController::class => ['uploadFile', 'upload_file', 'POST', '/ad-hoc-import/file'],
@@ -90,6 +96,15 @@ class AdHocImportEndpointsTest extends Unit
             'download_skipped_rows',
             'GET',
             '/ad-hoc-import/file/{fileId}/skipped-rows',
+        ],
+        StartRunController::class => ['startRun', 'start_run', 'POST', self::RUN_PATH],
+        LoadRunController::class => ['loadRun', 'load_run', 'GET', self::RUN_PATH],
+        DiscardRunController::class => ['discardRun', 'discard_run', 'DELETE', self::RUN_PATH],
+        DownloadFailedRowsController::class => [
+            'downloadFailedRows',
+            'download_failed_rows',
+            'GET',
+            '/ad-hoc-import/file/{fileId}/failed-rows',
         ],
     ];
 

@@ -160,6 +160,31 @@ describe('the ad hoc import endpoints', () => {
     expect(sent).toEqual([{ url: `${FILE_URL}/id-1/dry-run`, method: 'POST', body: parameters }])
   })
 
+  it('start, ask after and forget the run of a file', async () => {
+    const settings = {
+      folderId: 7,
+      classId: 'PROD',
+      matchBy: 'field' as const,
+      matchColumn: '0',
+      columns: [],
+      configurationColumns: {},
+      hasHeaderRow: true
+    }
+
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportStartRun.initiate({
+      fileId: 'id-1',
+      bundleDataImporterAdHocImportRunParameters: { settings, errorMode: 'skip', fileName: 'autumn.csv' }
+    }))
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportLoadRun.initiate({ fileId: 'id-1' }))
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportDiscardRun.initiate({ fileId: 'id-1' }))
+
+    expect(sent).toEqual([
+      { url: `${FILE_URL}/id-1/run`, method: 'POST', body: { settings, errorMode: 'skip', fileName: 'autumn.csv' } },
+      { url: `${FILE_URL}/id-1/run` },
+      { url: `${FILE_URL}/id-1/run`, method: 'DELETE' }
+    ])
+  })
+
   it('are exported as hooks', () => {
     const inspect = api.endpoints.bundleDataImporterAdHocImportInspectFile.useMutation
     const remove = api.endpoints.bundleDataImporterAdHocImportDeleteFile.useMutation
@@ -169,6 +194,9 @@ describe('the ad hoc import endpoints', () => {
     const configurations = api.endpoints.bundleDataImporterAdHocImportListConfigurations.useQuery
     const transformations = api.endpoints.bundleDataImporterAdHocImportPreviewTransformations.useMutation
     const dryRun = api.endpoints.bundleDataImporterAdHocImportDryRun.useMutation
+    const startRun = api.endpoints.bundleDataImporterAdHocImportStartRun.useMutation
+    const loadRun = api.endpoints.bundleDataImporterAdHocImportLoadRun.useQuery
+    const discardRun = api.endpoints.bundleDataImporterAdHocImportDiscardRun.useMutation
 
     expect(generated.useBundleDataImporterAdHocImportUploadFileMutation).toBe(api.endpoints.bundleDataImporterAdHocImportUploadFile.useMutation)
     expect(enhanced.useBundleDataImporterConnectionListQuery).toBe(api.endpoints.bundleDataImporterConnectionList.useQuery)
@@ -181,6 +209,9 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportListConfigurationsQuery).toBe(configurations)
       expect(hooks.useBundleDataImporterAdHocImportPreviewTransformationsMutation).toBe(transformations)
       expect(hooks.useBundleDataImporterAdHocImportDryRunMutation).toBe(dryRun)
+      expect(hooks.useBundleDataImporterAdHocImportStartRunMutation).toBe(startRun)
+      expect(hooks.useBundleDataImporterAdHocImportLoadRunQuery).toBe(loadRun)
+      expect(hooks.useBundleDataImporterAdHocImportDiscardRunMutation).toBe(discardRun)
     }
   })
 })

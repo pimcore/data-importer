@@ -21,6 +21,10 @@ class AdHocFileStoreTest extends Unit
 {
     private const int USER_ID = 4712;
 
+    private const string SKIPPED_ROWS = '{"skipped":1}';
+
+    private const string FAILED_ROWS = '{"failed":1}';
+
     private string $storage;
 
     protected function _before(): void
@@ -58,6 +62,35 @@ class AdHocFileStoreTest extends Unit
         $this->assertSame([], glob($this->storage . '/' . self::USER_ID . '/*'));
     }
 
+    public function testAnEndedRunLeavesItsDownloadsWhenItsUploadIsDeleted(): void
+    {
+        $store = AdHocCsvFiles::store($this->storage);
+        $fileId = $this->storeFile($store);
+        $store->storeSkippedRows(self::USER_ID, $fileId, self::SKIPPED_ROWS);
+        $store->storeFailedRows(self::USER_ID, $fileId, self::FAILED_ROWS);
+
+        $store->deleteUpload(self::USER_ID, $fileId, FileType::Csv);
+
+        $this->assertNull($store->findType(self::USER_ID, $fileId));
+        $this->assertSame(self::SKIPPED_ROWS, $store->readSkippedRows(self::USER_ID, $fileId));
+        $this->assertSame(self::FAILED_ROWS, $store->readFailedRows(self::USER_ID, $fileId));
+
+        $store->deleteRunOutput(self::USER_ID, $fileId);
+
+        $this->assertNull($store->readSkippedRows(self::USER_ID, $fileId));
+        $this->assertNull($store->readFailedRows(self::USER_ID, $fileId));
+    }
+
+    public function testTheFailedRowsAreForTheirUserAndNamedOnlyByAFileId(): void
+    {
+        $store = AdHocCsvFiles::store($this->storage);
+        $fileId = $this->storeFile($store);
+        $store->storeFailedRows(self::USER_ID, $fileId, '{}');
+
+        $this->assertNull($store->readFailedRows(self::USER_ID + 1, $fileId), 'another user has none');
+        $this->assertNull($store->readFailedRows(self::USER_ID, '../' . $fileId));
+    }
+
     public function testAFileWithoutADryRunIsDeletedAndHasNoSkippedRows(): void
     {
         $store = AdHocCsvFiles::store($this->storage);
@@ -85,6 +118,21 @@ class AdHocFileStoreTest extends Unit
             [$this->storage . '/' . self::USER_ID . '/' . $next . '.csv'],
             glob($this->storage . '/' . self::USER_ID . '/*')
         );
+    }
+
+    public function testAbandonedFailedRowsAreRemovedOnTheNextUpload(): void
+    {
+        $store = AdHocCsvFiles::store($this->storage);
+        $fileId = $this->storeFile($store);
+        $store->storeSkippedRows(self::USER_ID, $fileId, self::SKIPPED_ROWS);
+        $store->storeFailedRows(self::USER_ID, $fileId, self::FAILED_ROWS);
+        touch($this->storage . '/' . self::USER_ID . '/' . $fileId . '.failed.json', time() - 25 * 3600);
+
+        $this->storeFile($store);
+
+        $this->assertNull($store->readFailedRows(self::USER_ID, $fileId), 'file values do not stay on disk');
+        $this->assertSame(self::SKIPPED_ROWS, $store->readSkippedRows(self::USER_ID, $fileId), 'younger: it stays');
+        $this->assertSame(FileType::Csv, $store->findType(self::USER_ID, $fileId), 'so does its upload');
     }
 
     public function testSkippedRowsNewerThanTheirAbandonedFileGoWithIt(): void

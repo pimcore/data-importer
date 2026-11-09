@@ -1,0 +1,254 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
+
+use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConvertedColumn;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ColumnWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ConfigurationItemWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowOutcome;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService as Types;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
+use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Model\User;
+use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+
+class AdHocRowImporterReferenceTest extends Unit
+{
+    private function importer(?RowWriterInterface $writer = null): RowImporter
+    {
+        return new RowImporter(
+            $writer ?? $this->createStub(RowWriterInterface::class),
+            new MappingApplicationScope(),
+            AdHocRunFixtures::dryRunMessages(),
+            AdHocRunFixtures::runMessages(),
+            new EventDispatcher(),
+            new NullLogger()
+        );
+    }
+
+    private function existing(): RowMatch
+    {
+        $object = $this->createStub(Concrete::class);
+        $object->method('getId')->willReturn(11);
+        $object->method('getKey')->willReturn('SKU-1');
+        $object->method('getRealPath')->willReturn('/Products/Archive/');
+        $object->method('isAllowed')->willReturn(true);
+
+        return new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
+    }
+
+    public function testAReferenceIsCheckedForTheUserOfTheRowNotTheOneThePlanWasMadeFor(): void
+    {
+        $planned = AdHocRunFixtures::user();
+        $current = AdHocRunFixtures::user(false);
+
+        $reference = $this->createStub(Concrete::class);
+        $reference->method('getFullPath')->willReturn('/Products/Hidden');
+        $reference->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $user): bool => $type === 'view' && $user === $planned
+        );
+        $holder = new class($reference) extends Concrete {
+            public function __construct(private ElementInterface $reference)
+            {
+            }
+
+            public function getRelated(): ElementInterface
+            {
+                return $this->reference;
+            }
+        };
+
+        $scope = new MappingApplicationScope();
+        $operator = (new \ReflectionClass(ObjectField::class))->newInstanceWithoutConstructor();
+        $operator->setSettings(['attribute' => 'related']);
+        $operator->setMappingApplicationScope($scope);
+        $target = new class() implements DataTargetInterface {
+            /** @var list<mixed> */
+            public array $assigned = [];
+
+            public function setSettings(array $settings): void
+            {
+                // this target only records what the mapping assigns
+            }
+
+            public function assignData(ElementInterface $element, $data): void
+            {
+                $this->assigned[] = $data;
+            }
+        };
+        $item = new MappingConfiguration();
+        $item->setLabel('Related');
+        $item->setDataSourceIndex('holder');
+        $item->setTransformationPipeline([$operator]);
+        $item->setDataTarget($target);
+        $mapping = new PreparedMapping(
+            [$item],
+            (new \ReflectionClass(ImportProcessingService::class))->newInstanceWithoutConstructor(),
+            $scope
+        );
+        $writer = new ConfigurationItemWriter(
+            new ImportField('name', null, 'Name'),
+            $mapping,
+            ['holder'],
+            new UserReferenceVisibility($planned)
+        );
+        $plan = AdHocRunFixtures::plan(
+            [$this->existing(), $this->existing()],
+            [$writer],
+            $planned,
+            [['sku' => 'SKU-1', 'holder' => $holder]]
+        );
+
+        $writer = $this->createMock(RowWriterInterface::class);
+        $writer->expects($this->once())->method('write');
+
+        $refused = $this->importer($writer)->import($plan, $current, 0, []);
+        $this->assertTrue($refused->isFailure(), 'the plan\'s user may view it, the row\'s user may not');
+
+        $target->assigned = [];
+        $saved = $this->importer($writer)->import($plan, $planned, 0, []);
+        $this->assertFalse($saved->isFailure());
+        $this->assertSame(['/Products/Hidden'], $target->assigned);
+    }
+
+    public function testAColumnsLoadedElementIsCheckedForTheUserOfTheRowNotTheOneThePlanWasMadeFor(): void
+    {
+        $planned = AdHocRunFixtures::user();
+        $current = AdHocRunFixtures::user(false);
+
+        $reference = $this->createStub(Concrete::class);
+        $reference->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $user): bool => $type === 'view' && $user === $planned
+        );
+        $object = $this->related();
+        $writer = new ColumnWriter(
+            new ImportField('related', null, 'Related'),
+            'holder',
+            new ConvertedColumn([$reference], [false], [false], null)
+        );
+        $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
+        $plan = AdHocRunFixtures::plan([$match, $match], [$writer], $planned, [['sku' => 'SKU-1', 'holder' => '7']]);
+
+        $outcome = $this->importer()->import($plan, $current, 0, []);
+        $this->assertTrue($outcome->isFailure(), 'the plan\'s user may view it, the row\'s user may not');
+        $this->assertSame([], $object->assigned, 'the object\'s relation stays as it is');
+
+        $outcome = $this->importer()->import($plan, $planned, 0, []);
+        $this->assertSame(RowOutcome::UPDATED, $outcome->result);
+        $this->assertSame([$reference], $object->assigned);
+    }
+
+    public function testAColumnsLoadedElementTheUserMayNotViewFailsTheRowAndLeavesTheFieldAsItIs(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $hidden = $this->createStub(Concrete::class);
+        $hidden->method('isAllowed')->willReturn(false);
+        $visible = $this->createStub(Concrete::class);
+        $visible->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $type === 'view' && $asked === $user
+        );
+        $chain = AdHocTransformations::chain($this->createStub(DataTypeServiceInterface::class), [], [
+            TransformationAllowList::LOAD_OBJECT => new AdHocStandInLoader(
+                Types::DATA_OBJECT,
+                Types::DATA_OBJECT_ARRAY,
+                static fn (string $id): ?Concrete => ['5' => $visible, '7' => $hidden][$id] ?? null
+            ),
+        ]);
+        $rows = [['sku' => 'SKU-1', 'holder' => '7'], ['sku' => 'SKU-1', 'holder' => '5']];
+        // the plan is made for the same user as the rows, as a run makes it
+        $converted = $chain->convertColumn(
+            array_column($rows, 'holder'),
+            [TransformationAllowList::step(['type' => TransformationAllowList::LOAD_OBJECT], 1)],
+            [Types::DATA_OBJECT],
+            $user
+        );
+        $this->assertNotNull($converted);
+        $object = $this->related();
+        $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
+        $plan = AdHocRunFixtures::plan(
+            [$match, $match],
+            [new ColumnWriter(new ImportField('related', null, 'Related'), 'holder', $converted)],
+            $user,
+            $rows
+        );
+
+        $outcome = $this->importer()->import($plan, $user, 0, []);
+        $this->assertTrue($outcome->isFailure());
+        $this->assertSame([], $object->assigned, 'the relation is not cleared');
+
+        $outcome = $this->importer()->import($plan, $user, 1, []);
+        $this->assertSame(RowOutcome::UPDATED, $outcome->result);
+        $this->assertSame([$visible], $object->assigned);
+    }
+
+    /**
+     * An existing object with a relation `related` that records what is written into it.
+     */
+    private function related(): Concrete
+    {
+        return new class() extends Concrete {
+            /** @var list<mixed> */
+            public array $assigned = [];
+
+            public function getId(): ?int
+            {
+                return 11;
+            }
+
+            public function getKey(): ?string
+            {
+                return 'SKU-1';
+            }
+
+            public function getRealPath(): string
+            {
+                return '/Products/Archive/';
+            }
+
+            public function isAllowed(string $type, ?User $user = null): bool
+            {
+                return true;
+            }
+
+            // getPermissions() reaches the data object's dao through __call
+            public function __call($method, $arguments): mixed
+            {
+                return null;
+            }
+
+            public function setRelated(mixed $related, ?string $language = null): static
+            {
+                $this->assigned[] = $related;
+
+                return $this;
+            }
+        };
+    }
+}

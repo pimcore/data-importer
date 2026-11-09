@@ -23,7 +23,11 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
+use Pimcore\Model\Asset\Image;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\DataObject\Data\Hotspotimage;
+use Pimcore\Model\DataObject\Data\ImageGallery;
+use Pimcore\Model\User;
 
 class AdHocDryRunWritersTest extends Unit
 {
@@ -52,6 +56,130 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame($field, $writer->field());
         $this->assertNull($writer->write($object, 0, ['A-1', 'Chair']));
         $this->assertSame(['Chair', 'en'], $object->written);
+    }
+
+    public function testAColumnWriterKeepsAValueThatIsNoElementForEveryUser(): void
+    {
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn(['Chair'], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser(AdHocRunFixtures::user(false))->write($object, 0, ['A-1', 'Chair']));
+        $this->assertSame(['Chair', null], $object->written);
+    }
+
+    public function testAColumnWriterRefusesARowWhoseValueLostAnElementItsUserMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        // the transformations left the element out for the user the plan was made for
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([null, 'Chair'], [false, false], [false, false], null, [true, false])
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->write($object, 0, ['A-1', '7']), 'the dry run');
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '7']), 'the run');
+        $this->assertNull($object->written, 'the field is not cleared');
+
+        $this->assertNull($writer->forUser($user)->write($object, 1, ['A-2', 'Chair']));
+        $this->assertSame(['Chair', null], $object->written);
+    }
+
+    public function testAColumnWriterForAUserRefusesASingleElementTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$this->element($user, false)], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1']));
+        $this->assertNull($object->written, 'the field keeps what it holds');
+    }
+
+    public function testAColumnWriterForAUserRefusesAListHoldingAnElementTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([[$this->element($user, false), $this->element($user, true)]], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertNull($object->written, 'the list is not shortened');
+    }
+
+    public function testAColumnWriterForAUserRefusesAKeyedValueHoldingAnElementTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $value = ['visible' => $this->element($user, true), 'hidden' => $this->element($user, false)];
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$value], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertNull($object->written);
+    }
+
+    public function testAColumnWriterForAUserRefusesAGalleryHoldingAnImageTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $gallery = new ImageGallery([
+            new Hotspotimage($this->image($user, true)),
+            null,
+            new Hotspotimage($this->image($user, false)),
+        ]);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$gallery], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertNull($object->written, 'the gallery is not shortened');
+    }
+
+    public function testAColumnWriterForAUserWritesAListOfElementsTheyMayAllView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $list = [$this->element($user, true), $this->element($user, true)];
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$list], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertSame([$list, null], $object->written);
+    }
+
+    public function testAColumnWriterForAUserWritesAGalleryOfImagesTheyMayAllView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $gallery = new ImageGallery([new Hotspotimage($this->image($user, true)), null, new Hotspotimage()]);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$gallery], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertSame([$gallery, null], $object->written);
     }
 
     public function testAColumnWriterWritesAnEmptyCellAsNull(): void
@@ -172,6 +300,26 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame('7', $writer->fileValue([1 => 7, 'currency' => ['no text']]));
         $this->assertNull($writer->fileValue([1 => '', 'currency' => null]), 'every column empty');
         $this->assertNull($writer->fileValue([]), 'no column in the row');
+    }
+
+    private function element(User $user, bool $visible): Concrete
+    {
+        $element = $this->createStub(Concrete::class);
+        $element->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $visible && $type === 'view' && $asked === $user
+        );
+
+        return $element;
+    }
+
+    private function image(User $user, bool $visible): Image
+    {
+        $image = $this->createStub(Image::class);
+        $image->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $visible && $type === 'view' && $asked === $user
+        );
+
+        return $image;
     }
 
     /**

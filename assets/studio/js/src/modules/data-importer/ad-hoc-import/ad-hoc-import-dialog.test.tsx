@@ -27,6 +27,7 @@ jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   trackError: (...args: unknown[]) => mockTrackError(...args),
   useSettings: () => ({ validLanguages: ['en', 'de'] })
 }))
+jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/api/class-definition', () => ({
   api: { endpoints: { classDefinitionCollectionCreatable: { useQuery: () => mockClasses() } } }
 }))
@@ -52,8 +53,12 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportLoadMatchFieldsQuery: (...args: unknown[]) => mockLoadMatchFields(...args),
   useBundleDataImporterAdHocImportLoadMappingMutation: () => [mockLoadMapping],
   useBundleDataImporterAdHocImportListConfigurationsQuery: (...args: unknown[]) => mockListConfigurations(...args),
-  useBundleDataImporterAdHocImportDryRunMutation: () => [mockDryRun]
+  useBundleDataImporterAdHocImportDryRunMutation: () => [mockDryRun],
+  useBundleDataImporterAdHocImportStartRunMutation: () => [mockStartRun],
+  useBundleDataImporterAdHocImportDiscardRunMutation: () => [mockDiscardRun],
+  useBundleDataImporterAdHocImportLoadRunQuery: (...args: unknown[]) => mockLoadRun(...args)
 }))
+jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({ useElementHelper: () => ({ openElement: jest.fn() }) }))
 
 const mockTrackError = jest.fn()
 const mockClasses = jest.fn()
@@ -64,6 +69,9 @@ const mockLoadMatchFields = jest.fn()
 const mockLoadMapping = jest.fn()
 const mockListConfigurations = jest.fn()
 const mockDryRun = jest.fn()
+const mockStartRun = jest.fn()
+const mockDiscardRun = jest.fn()
+const mockLoadRun = jest.fn()
 
 const csv: InspectedFile = {
   maxRows: 5000,
@@ -221,6 +229,9 @@ beforeEach(() => {
   mockDeleteFile.mockResolvedValue({ data: undefined })
   mockLoadMapping.mockResolvedValue({ data: mappingAnswer })
   mockDryRun.mockResolvedValue({ data: dryRunAnswer })
+  mockStartRun.mockResolvedValue({ data: {} })
+  mockDiscardRun.mockResolvedValue({ data: undefined })
+  mockLoadRun.mockReturnValue({ data: undefined })
   mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
     ? { data: undefined, isFetching: false, isError: false }
     : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false, isError: false })
@@ -1246,7 +1257,7 @@ describe('the preview step', () => {
     expect(screen.getByText('SKU NH-1001 is in the file twice (row 2)')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull()
     expect(importButton().textContent).toBe('Import 2 objects')
-    expect(importButton().disabled).toBe(true)
+    expect(importButton().disabled).toBe(false)
   })
 
   it('imports the rows with invalid values without them when so chosen', async () => {
@@ -1306,5 +1317,104 @@ describe('the preview step', () => {
 
     expect(mockDryRun).toHaveBeenCalledTimes(2)
     expect(screen.getByText('All 4 rows checked')).toBeTruthy()
+  })
+
+  describe('importing', () => {
+    const runAnswer = (given: object): object => ({
+      state: 'running',
+      total: 2,
+      processed: 1,
+      updated: 1,
+      created: 0,
+      failed: 0,
+      skipped: 1,
+      errorMode: 'skip',
+      fileName: 'prices.csv',
+      matchColumn: 'Artikelnr',
+      newObjectsFolder: '/Products',
+      newObjectsFolderId: 7,
+      userName: 'Jo Doe',
+      finishedAt: null,
+      failures: [],
+      ...given
+    })
+
+    const startImport = async (): Promise<void> => {
+      await toPreview()
+      await act(async () => { fireEvent.click(importButton()) })
+    }
+
+    it('imports the file with the mapping as it stands and shows the run', async () => {
+      await startImport()
+
+      expect(mockStartRun).toHaveBeenCalledWith({
+        fileId: 'file-1',
+        bundleDataImporterAdHocImportRunParameters: expect.objectContaining({ errorMode: 'skip', fileName: 'prices.csv', settings: expect.objectContaining({ folderId: 77, matchField: 'sku' }) })
+      })
+      expect(screen.getByText('Importing 2 objects')).toBeTruthy()
+      expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 1000 })
+      expect(screen.getByRole('button', { name: 'Close, keep running' })).toBeTruthy()
+    })
+
+    it('goes on in the background when the dialog is closed, keeping the file', async () => {
+      mockLoadRun.mockReturnValue({ data: runAnswer({}) })
+      await startImport()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Close, keep running' }))
+
+      expect(onClose).toHaveBeenCalled()
+      expect(mockDeleteFile).not.toHaveBeenCalled()
+      expect(mockDiscardRun).not.toHaveBeenCalled()
+    })
+
+    it('stops asking once the run ended, and forgets it on close', async () => {
+      mockLoadRun.mockReturnValue({ data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
+      await startImport()
+
+      expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
+      expect(screen.getByText('Import complete')).toBeTruthy()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+
+      expect(mockDiscardRun).toHaveBeenCalledWith({ fileId: 'file-1' })
+      expect(mockDeleteFile).not.toHaveBeenCalled()
+      expect(onClose).toHaveBeenCalled()
+    })
+
+    it('tells the user when forgetting the run fails', async () => {
+      mockLoadRun.mockReturnValue({ data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
+      mockDiscardRun.mockResolvedValue({ error: { status: 500 } })
+      await startImport()
+
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Close' })) })
+
+      expect(mockTrackError).toHaveBeenCalled()
+      expect(onClose).toHaveBeenCalled()
+    })
+
+    it('offers the failed rows for download', async () => {
+      mockLoadRun.mockReturnValue({
+        data: runAnswer({
+          state: 'done',
+          processed: 2,
+          failed: 1,
+          finishedAt: 1_800_000_000,
+          failures: [{ row: 3, matchValue: 'NH-1077', action: 'create', message: 'Saving failed; the application log has the details' }]
+        })
+      })
+      await startImport()
+
+      expect(screen.getByRole('link', { name: 'Download failed rows (1)' }).getAttribute('href'))
+        .toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/failed-rows')
+    })
+
+    it('stays on the preview when the import cannot start', async () => {
+      mockStartRun.mockResolvedValue({ error: { status: 422 } })
+      await startImport()
+
+      expect(mockTrackError).toHaveBeenCalled()
+      expect(screen.queryByText('Importing 2 objects')).toBeNull()
+      expect(importButton()).toBeTruthy()
+    })
   })
 })

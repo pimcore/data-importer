@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\CheckedFile;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConvertedColumn;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvText;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ColumnWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ConfigurationItemWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
@@ -26,6 +28,8 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspection;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\SpreadsheetCell;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
@@ -47,9 +51,11 @@ use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Folder;
+use Pimcore\Model\DataObject\Objectbrick\Definition as ObjectbrickDefinition;
 use Pimcore\Model\User;
 use Pimcore\Tool;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -101,7 +107,31 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
 
     public function dryRun(string $fileId, AdHocImportDryRunParameters $parameters): AdHocImportDryRunResponse
     {
-        $user = $this->resolveCurrentUser();
+        $checked = $this->check($fileId, $parameters, $this->resolveCurrentUser());
+        $plan = $checked->plan->dryRun;
+
+        return new AdHocImportDryRunResponse(
+            $checked->plan->matchColumn,
+            $plan->newObjectFolder,
+            array_map(static function (int $position) use ($plan): array {
+                $field = $plan->writers[$position]->field();
+
+                return ['key' => $field->key, 'language' => $field->language, 'label' => $field->label];
+            }, $plan->shown),
+            array_map(static fn (DryRunRow $row): array => [
+                'row' => $row->row,
+                'matchValue' => $row->matchValue,
+                'action' => $row->action,
+                'error' => $row->error,
+                'values' => $row->values,
+                'invalid' => $row->invalid,
+                'blocked' => $row->blocked,
+            ], $checked->results)
+        );
+    }
+
+    public function check(string $fileId, AdHocImportDryRunParameters $parameters, User $user): CheckedFile
+    {
         $type = $this->fileStore->findType($user->getId(), $fileId)
             ?? throw new NotFoundHttpException(sprintf('File %s not found', $fileId));
         $targetFolder = $this->assertMayImportInto($parameters->getFolderId(), $user);
@@ -110,12 +140,79 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         $configuration = $parameters->getConfiguration() === null
             ? null
             : $this->configurationService->loadConfiguration($parameters->getConfiguration());
-        $objects = $configuration === null
+        $objects = $this->objects($parameters, $configuration);
+        $this->assertMayCreate($objects['classId']);
+        $newObjectFolder = $this->newObjectFolder($objects['newObjectsFolder'], $targetFolder, $user);
+
+        $plan = $this->plan(
+            $fileId,
+            $type,
+            $parameters,
+            $configuration,
+            $objects,
+            $targetPath,
+            $newObjectFolder,
+            $user
+        );
+        $results = $this->dryRunner->run($plan->dryRun);
+        $this->storeSkippedRows($user, $fileId, $plan->columns, $plan->rows, $results, $plan->firstRowNumber);
+
+        return new CheckedFile($plan, $results);
+    }
+
+    public function planForRun(
+        string $fileId,
+        FileType $type,
+        AdHocImportDryRunParameters $parameters,
+        ?array $configuration,
+        User $user
+    ): ImportPlan {
+        $targetFolder = $this->dataObjectResolver->getById($parameters->getFolderId());
+        if (!$targetFolder instanceof Folder) {
+            throw new NotFoundHttpException(sprintf('Data object folder %d not found', $parameters->getFolderId()));
+        }
+        $objects = $this->objects($parameters, $configuration);
+        $newObjectFolder = $this->newObjectFolder($objects['newObjectsFolder'], $targetFolder, null);
+
+        return $this->plan(
+            $fileId,
+            $type,
+            $parameters,
+            $configuration,
+            $objects,
+            $targetFolder->getRealFullPath(),
+            $newObjectFolder,
+            $user
+        );
+    }
+
+    /**
+     * @param array{configuration: array<mixed>, mapping: array<int|string, mixed>}|null $configuration
+     *
+     * @return Objects
+     */
+    private function objects(AdHocImportDryRunParameters $parameters, ?array $configuration): array
+    {
+        return $configuration === null
             ? $this->objectsOf($parameters)
             : $this->objectsOfConfiguration($configuration['configuration'], $parameters->getConfigurationColumns());
-        $this->assertMayCreate($objects['classId']);
-        $newObjectPath = $this->newObjectPath($objects['newObjectsFolder'], $targetPath, $user);
+    }
 
+    /**
+     * @param array{configuration: array<mixed>, mapping: array<int|string, mixed>}|null $configuration
+     * @param Objects $objects
+     */
+    private function plan(// NOSONAR php:S107 private, and each value differs between the check and the run
+        string $fileId,
+        FileType $type,
+        AdHocImportDryRunParameters $parameters,
+        ?array $configuration,
+        array $objects,
+        string $targetPath,
+        Folder $newObjectFolder,
+        User $user
+    ): ImportPlan {
+        $newObjectPath = $newObjectFolder->getRealFullPath();
         $path = $this->fileStore->localPath($user->getId(), $fileId, $type);
         $inspection = $this->fileInspector->inspect($path, $type, $parameters->toSettingsInput());
         if ($inspection->refusal !== null) {
@@ -152,38 +249,26 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                 $objects['classId'],
                 $user
             );
-        $shown = $this->shown($writers, $objects);
+        $firstRowNumber = $this->firstRowNumber($inspection);
 
-        $results = $this->dryRunner->run(new DryRunPlan(
+        return new ImportPlan(
+            new DryRunPlan(
+                $rows,
+                $firstRowNumber,
+                $matcher,
+                $writers,
+                $this->shown($writers, $objects),
+                $this->matchFieldLabel($objects, $targets, $user),
+                $targetPath,
+                $newObjectPath,
+                $user
+            ),
             $rows,
-            $this->firstRowNumber($inspection),
-            $matcher,
-            $writers,
-            $shown,
-            $this->matchFieldLabel($objects, $targets, $user),
-            $targetPath,
-            $newObjectPath,
-            $user
-        ));
-        $this->storeSkippedRows($user, $fileId, $columns, $rows, $results, $this->firstRowNumber($inspection));
-
-        return new AdHocImportDryRunResponse(
+            $firstRowNumber,
+            $columns,
             $columns[$objects['matchColumn']],
-            $newObjectPath,
-            array_map(static function (int $position) use ($writers): array {
-                $field = $writers[$position]->field();
-
-                return ['key' => $field->key, 'language' => $field->language, 'label' => $field->label];
-            }, $shown),
-            array_map(static fn (DryRunRow $row): array => [
-                'row' => $row->row,
-                'matchValue' => $row->matchValue,
-                'action' => $row->action,
-                'error' => $row->error,
-                'values' => $row->values,
-                'invalid' => $row->invalid,
-                'blocked' => $row->blocked,
-            ], $results)
+            $newObjectFolder->getId() ?? 0,
+            $configuration
         );
     }
 
@@ -199,35 +284,23 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             throw new NotFoundHttpException(sprintf('No dry run of file %s found', $fileId));
         }
 
-        $csv = fopen('php://temp', 'r+b');
-        fputcsv(
-            $csv,
-            [
-                $this->messages->columnName('row', $user),
-                ...array_map(SpreadsheetCell::safe(...), $skipped['columns']),
-                $this->messages->columnName('error', $user),
-            ],
-            escape: ''
-        );
+        $lines = [[
+            $this->messages->columnName('row', $user),
+            ...array_map(SpreadsheetCell::safe(...), $skipped['columns']),
+            $this->messages->columnName('error', $user),
+        ]];
         foreach ($skipped['rows'] as $row) {
             if ($errorMode === self::WITHOUT_INVALID_VALUES && $row['importsWithoutInvalidValues']) {
                 continue;
             }
-            fputcsv(
-                $csv,
-                [
-                    $row['row'],
-                    ...array_map(SpreadsheetCell::safe(...), $row['values']),
-                    SpreadsheetCell::safe($row['error']),
-                ],
-                escape: ''
-            );
+            $lines[] = [
+                $row['row'],
+                ...array_map(SpreadsheetCell::safe(...), $row['values']),
+                SpreadsheetCell::safe($row['error']),
+            ];
         }
-        rewind($csv);
-        $content = (string) stream_get_contents($csv);
-        fclose($csv);
 
-        return $content;
+        return CsvText::of($lines);
     }
 
     /**
@@ -286,23 +359,25 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
     }
 
     /**
+     * @param User|null $user the user who must be allowed to create there; null for a run, which checks every object
+     *
      * @throws NotFoundHttpException|ForbiddenException
      */
-    private function newObjectPath(?string $folderPath, string $targetPath, User $user): string
+    private function newObjectFolder(?string $folderPath, Folder $targetFolder, ?User $user): Folder
     {
         if ($folderPath === null || $folderPath === '') {
-            return $targetPath;
+            return $targetFolder;
         }
 
         $folder = $this->dataObjectResolver->getByPath($folderPath);
         if (!$folder instanceof Folder) {
             throw new NotFoundHttpException(sprintf('Data object folder %s not found', $folderPath));
         }
-        if (!$folder->isAllowed('create', $user)) {
+        if ($user !== null && !$folder->isAllowed('create', $user)) {
             throw new ForbiddenException(sprintf('Access denied to data object folder %s', $folderPath));
         }
 
-        return $folder->getRealFullPath();
+        return $folder;
     }
 
     /**
@@ -425,15 +500,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      */
     private function field(mixed $key, mixed $language, array $targets): ImportField
     {
-        $target = is_string($key) && !in_array($key, AdHocImportMappingService::NO_MAPPING_TARGETS, true)
-            ? $targets[$key] ?? null
-            : null;
-        if ($target === null) {
-            throw new InvalidArgumentException(sprintf(
-                'Field %s cannot be imported into.',
-                is_scalar($key) ? (string) $key : get_debug_type($key)
-            ));
-        }
+        $target = $this->target($key, $targets);
 
         $language = is_string($language) && $language !== '' ? $language : null;
         if ($target['localized'] !== ($language !== null)
@@ -443,6 +510,34 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         }
 
         return new ImportField($target['key'], $language, $this->title($target));
+    }
+
+    /**
+     * Only the fields a mapping is offered: a name outside them can reach any setter of the object, and a move or a
+     * rename is not what the rights of the row were checked for.
+     *
+     * @param array<string, Target> $targets
+     *
+     * @return Target
+     */
+    private function target(mixed $key, array $targets): array
+    {
+        $target = is_string($key) && !in_array($key, AdHocImportMappingService::NO_MAPPING_TARGETS, true)
+            ? $targets[$key] ?? null
+            : null;
+        if ($target === null) {
+            throw $this->notImportable($key);
+        }
+
+        return $target;
+    }
+
+    private function notImportable(mixed $key): InvalidArgumentException
+    {
+        return new InvalidArgumentException(sprintf(
+            'Field %s cannot be imported into.',
+            is_scalar($key) ? (string) $key : get_debug_type($key)
+        ));
     }
 
     /**
@@ -513,6 +608,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             if (!is_array($item)) {
                 continue;
             }
+            $item = $this->withWrittenLanguage($item, $classId);
             $read = $this->readColumns($item['dataSourceIndex'] ?? [], $fileColumns);
             $found = array_values(array_filter($read, static fn (?string $column): bool => $column !== null));
             if ($found === []) {
@@ -538,6 +634,42 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         }
 
         return $writers;
+    }
+
+    /**
+     * A localized field without a language is written in whatever locale the process has: named here, the rights of
+     * the row are checked for the language that is written.
+     *
+     * @param array<mixed> $item
+     *
+     * @return array<mixed>
+     */
+    private function withWrittenLanguage(array $item, string $classId): array
+    {
+        $settings = is_array($item['dataTarget'] ?? null) ? $item['dataTarget']['settings'] ?? null : null;
+        if (!is_array($settings)
+            || !is_string($settings['fieldName'] ?? null)
+            || !in_array($settings['language'] ?? null, [null, ''], true)
+            || !$this->isLocalized($settings['fieldName'], $classId)
+        ) {
+            return $item;
+        }
+        $item['dataTarget']['settings']['language'] = Tool::getDefaultLanguage();
+
+        return $item;
+    }
+
+    private function isLocalized(string $fieldName, string $classId): bool
+    {
+        // a field of an object brick is named container.brick.field
+        $parts = explode('.', $fieldName);
+        $definition = count($parts) === 3
+            ? ObjectbrickDefinition::getByKey($parts[1])
+            : ClassDefinition::getById($classId);
+        $localizedFields = $definition?->getFieldDefinition('localizedfields');
+
+        return $localizedFields instanceof Localizedfields
+            && $localizedFields->getFieldDefinition($parts[count($parts) - 1]) !== null;
     }
 
     /**
@@ -569,30 +701,26 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         $fieldName = is_string($settings['fieldName'] ?? null) ? $settings['fieldName'] : null;
         $label = is_string($item['label'] ?? null) && $item['label'] !== '' ? $item['label'] : (string) $fieldName;
 
-        if (($target['type'] ?? null) === self::STORE_TARGET) {
-            $language = $settings['language'] ?? null;
-
-            return $this->storeField(
-                $fieldName,
-                $settings['keyId'] ?? null,
-                $language === self::STORE_DEFAULT_LANGUAGE ? null : $language,
-                $classId
-            )[0];
-        }
-
-        if (($target['type'] ?? null) !== self::DIRECT_TARGET || $fieldName === null) {
-            return new ImportField(null, null, $label);
-        }
-
         $language = is_string($settings['language'] ?? null) && $settings['language'] !== ''
             ? $settings['language']
             : null;
+        $storeLanguage = $language === self::STORE_DEFAULT_LANGUAGE ? null : $language;
 
-        return new ImportField(
-            $fieldName,
-            $language,
-            isset($targets[$fieldName]) ? $this->title($targets[$fieldName]) : $label
-        );
+        if (($target['type'] ?? null) === self::STORE_TARGET) {
+            return $this->storeField($fieldName, $settings['keyId'] ?? null, $storeLanguage, $classId)[0];
+        }
+
+        // the preview cannot read such a field, but the language it writes is still subject to the user's rights
+        if (($target['type'] ?? null) !== self::DIRECT_TARGET || $fieldName === null) {
+            // the relation target writes key and path as the direct one does
+            if (in_array($fieldName, AdHocImportMappingService::NO_MAPPING_TARGETS, true)) {
+                throw $this->notImportable($fieldName);
+            }
+
+            return new ImportField(null, $storeLanguage, $label);
+        }
+
+        return new ImportField($fieldName, $language, $this->title($this->target($fieldName, $targets)));
     }
 
     /**

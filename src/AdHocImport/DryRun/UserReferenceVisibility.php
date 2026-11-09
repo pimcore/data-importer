@@ -15,6 +15,8 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun;
 
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceQuery;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
+use Pimcore\Model\DataObject\Data\Hotspotimage;
+use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
 
@@ -38,5 +40,49 @@ final readonly class UserReferenceVisibility implements ReferenceVisibilityInter
     public function isVisible(ElementInterface $element): bool
     {
         return $element->isAllowed('view', $this->user);
+    }
+
+    /**
+     * Whether the value holds an element the user may not view.
+     */
+    public function hidesAnElementIn(mixed $value): bool
+    {
+        if ($value instanceof ElementInterface) {
+            return !$this->isVisible($value);
+        }
+        if ($value instanceof ImageGallery) {
+            $value = array_map(static fn (?Hotspotimage $item) => $item?->getImage(), $value->getItems());
+        }
+
+        return is_array($value) && array_filter($value, $this->hidesAnElementIn(...)) !== [];
+    }
+
+    /**
+     * The value without the elements the user may not view: such an element counts as not found.
+     */
+    public function visibleIn(mixed $value): mixed
+    {
+        if ($value instanceof ElementInterface) {
+            return $this->isVisible($value) ? $value : null;
+        }
+        if ($value instanceof ImageGallery) {
+            return new ImageGallery(array_values(array_filter(
+                $value->getItems(),
+                fn (?Hotspotimage $item): bool => $item?->getImage() !== null && $this->isVisible($item->getImage())
+            )));
+        }
+        if (is_array($value)) {
+            $visible = [];
+            foreach ($value as $key => $item) {
+                $item = $this->visibleIn($item);
+                if ($item !== null) {
+                    $visible[$key] = $item;
+                }
+            }
+
+            return array_is_list($value) ? array_values($visible) : $visible;
+        }
+
+        return $value;
     }
 }

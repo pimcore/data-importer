@@ -13,14 +13,13 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
 
 /**
@@ -132,11 +131,11 @@ final readonly class TransformationChain
         $results = [];
         if ($conversion !== false) {
             [$type, $data, $failed] = $this->convert($conversion, $type, count($operators) + 1, $data, $failed, $user);
-            $results = $this->cells($data, $failed);
+            $results = CellItems::cells($data, $failed);
         }
 
         return new AdHocImportTransformationResponse(
-            $this->cells($values, array_fill(0, count($values), false)),
+            CellItems::cells($values, array_fill(0, count($values), false)),
             $stepResults,
             $conversion === false ? null : $conversion,
             $type,
@@ -160,29 +159,31 @@ final readonly class TransformationChain
     public function convertColumn(array $values, array $steps, array $accepted, User $user): ?ConvertedColumn
     {
         $operators = $this->operators($steps);
-        [$type, $data, $failed] = $this->runSteps($operators, $steps, $values, $user);
+        [$type, $data, $failed, , $lost] = $this->runSteps($operators, $steps, $values, $user);
         $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
         if ($type === null || $conversion === false) {
             return null;
         }
 
-        [, $converted, $failedConversion] = $this->convert(
+        [, $converted, $failedConversion, $lost] = $this->convert(
             $conversion,
             $type,
             count($operators) + 1,
             $data,
             $failed,
-            $user
+            $user,
+            $lost
         );
 
-        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion);
+        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion, $lost);
     }
 
     /**
      * @param list<mixed> $data
      * @param list<bool> $failed
+     * @param list<bool> $lost
      *
-     * @return array{0: string, 1: list<mixed>, 2: list<bool>}
+     * @return array{0: string, 1: list<mixed>, 2: list<bool>, 3: list<bool>}
      *
      * @throws InvalidConfigurationException
      */
@@ -192,10 +193,11 @@ final readonly class TransformationChain
         int $position,
         array $data,
         array $failed,
-        User $user
+        User $user,
+        array $lost = []
     ): array {
         if ($conversion === null) {
-            return [$type, $data, $failed];
+            return [$type, $data, $failed, $lost];
         }
 
         $converter = $this->operators([
@@ -203,9 +205,9 @@ final readonly class TransformationChain
         ])[0];
         $type = $converter->evaluateReturnType($type, $position);
         $failed = $this->unreadable($conversion, $data, $failed);
-        [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
+        [$data, $failed, $lost] = $this->process($converter, $data, $failed, $user, $lost, true);
 
-        return [$type, $data, $failed];
+        return [$type, $data, $failed, $lost];
     }
 
     /**
@@ -215,13 +217,14 @@ final readonly class TransformationChain
      * @param list<array{type: string, settings: array<string, string>}> $steps
      * @param list<?string> $values
      *
-     * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>}
+     * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>, 4: list<bool>}
      */
     private function runSteps(array $operators, array $steps, array $values, User $user): array
     {
         $type = TransformationDataTypeService::DEFAULT_TYPE;
         $data = $values;
         $failed = array_fill(0, count($values), false);
+        $lost = $failed;
         $stepResults = [];
         foreach ($operators as $position => $operator) {
             $error = null;
@@ -230,7 +233,14 @@ final readonly class TransformationChain
                     $this->checkStep($steps[$position], $type, $position + 1);
                     $type = $operator->evaluateReturnType($type, $position + 1);
                     $failed = $this->malformedIds($steps[$position], $data, $failed);
-                    [$data, $failed] = $this->process($operator, $data, $failed, $user);
+                    [$data, $failed, $lost] = $this->process(
+                        $operator,
+                        $data,
+                        $failed,
+                        $user,
+                        $lost,
+                        loads: $this->loads($steps[$position])
+                    );
                 } catch (InvalidConfigurationException $exception) {
                     $type = null;
                     $error = $exception->getMessage();
@@ -241,11 +251,11 @@ final readonly class TransformationChain
                 'type' => $steps[$position]['type'],
                 'resultType' => $type,
                 'error' => $error,
-                'values' => $type === null ? [] : $this->cells($data, $failed),
+                'values' => $type === null ? [] : CellItems::cells($data, $failed),
             ];
         }
 
-        return [$type, $data, $failed, $stepResults];
+        return [$type, $data, $failed, $stepResults, $lost];
     }
 
     /**
@@ -466,17 +476,23 @@ final readonly class TransformationChain
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
+     * @param list<bool> $lost the rows whose value lost an element: one the user may not see, or one a load step found
+     *                         nothing for
      * @param bool $keepEmpty an empty cell stays empty instead of becoming a No, as in a run that writes no empty value
+     * @param bool $loads the step loads objects or assets
      *
-     * @return array{0: list<mixed>, 1: list<bool>}
+     * @return array{0: list<mixed>, 1: list<bool>, 2: list<bool>}
      */
     private function process(
         OperatorInterface $operator,
         array $data,
         array $failed,
         User $user,
-        bool $keepEmpty = false
+        array $lost,
+        bool $keepEmpty = false,
+        bool $loads = false
     ): array {
+        $references = new UserReferenceVisibility($user);
         foreach ($data as $row => $value) {
             if ($failed[$row]) {
                 continue;
@@ -488,53 +504,43 @@ final readonly class TransformationChain
             }
 
             try {
-                // a dry run logs no misses
-                $data[$row] = $this->visibleTo($user, $operator->process($value, true));
+                // a dry run logs no misses; a loaded element the user may not see counts as not found
+                $loaded = $operator->process($value, true);
+                $data[$row] = $references->visibleIn($loaded);
+                // a reference that finds nothing fails like a hidden one, so the two cannot be told apart
+                $lost[$row] = ($lost[$row] ?? false)
+                    || $references->hidesAnElementIn($loaded)
+                    || ($loads && self::findsLess($value, $loaded));
             } catch (\Exception) { // NOSONAR php:S2221 an operator may fail on a value from the file; an Error is a bug
                 $data[$row] = null;
                 $failed[$row] = true;
             }
         }
 
-        return [$data, $failed];
+        return [$data, $failed, $lost];
     }
 
     /**
-     * A loaded element the user may not see counts as not found, so the preview tells nothing about it.
+     * @param array{type: string, settings: array<string, string>} $step
      */
-    private function visibleTo(User $user, mixed $value): mixed
+    private function loads(array $step): bool
     {
-        if ($value instanceof ElementInterface) {
-            return $value->isAllowed('view', $user) ? $value : null;
-        }
-        if (is_array($value)) {
-            $visible = [];
-            foreach ($value as $key => $item) {
-                $item = $this->visibleTo($user, $item);
-                if ($item !== null) {
-                    $visible[$key] = $item;
-                }
-            }
+        $loaders = [TransformationAllowList::LOAD_OBJECT, TransformationAllowList::LOAD_ASSET];
 
-            return array_is_list($value) ? array_values($visible) : $visible;
-        }
-
-        return $value;
+        return in_array($step['type'], $loaders, true);
     }
 
     /**
-     * @param list<mixed> $data
-     * @param list<bool> $failed
-     *
-     * @return list<AdHocImportTransformationCell>
+     * Whether a load found fewer elements than the value names.
      */
-    private function cells(array $data, array $failed): array
+    private static function findsLess(mixed $value, mixed $loaded): bool
     {
-        $cells = [];
-        foreach ($data as $row => $value) {
-            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : CellItems::of($value), $failed[$row]);
-        }
+        $named = array_filter(
+            is_array($value) ? $value : [$value],
+            static fn (mixed $item): bool => $item !== null && (!is_scalar($item) || trim((string) $item) !== '')
+        );
+        $found = array_filter(is_array($loaded) ? $loaded : [$loaded], static fn (mixed $item): bool => $item !== null);
 
-        return $cells;
+        return count($found) < count($named);
     }
 }

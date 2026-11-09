@@ -85,6 +85,25 @@ services:
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunService
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface:
+        class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\TmpStoreRunStore
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface:
+        class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter
+
+    Pimcore\Bundle\DataImporterBundle\Processing\AdHocRowProcessorInterface:
+        class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunProcessor
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface:
+        class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DataImporterRunQueue
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunMessages: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier: ~
+
     Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector: ~
     Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore: ~
