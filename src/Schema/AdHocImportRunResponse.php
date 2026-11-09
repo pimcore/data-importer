@@ -40,6 +40,10 @@ use OpenApi\Attributes\Schema;
         'newObjectsFolderId',
         'userName',
         'finishedAt',
+        'throughBranch',
+        'mergeTotal',
+        'mergeDone',
+        'notice',
         'failures',
     ],
     type: 'object'
@@ -50,7 +54,12 @@ final readonly class AdHocImportRunResponse
      * @param list<Failure> $failures
      */
     public function __construct(
-        #[Property(description: 'Whether the run still goes on', type: 'string', enum: ['running', 'done'])]
+        #[Property(
+            description: 'Whether its rows are being written, its branch is being merged, the user has to decide on '
+                . 'rows that cannot be saved, or it ended',
+            type: 'string',
+            enum: ['running', 'merging', 'decision', 'done']
+        )]
         private string $state,
         #[Property(description: 'The rows the run imports', type: 'integer', example: 306)]
         private int $total,
@@ -78,6 +87,18 @@ final readonly class AdHocImportRunResponse
         private string $userName,
         #[Property(description: 'When the run ended, as a timestamp', type: 'integer', nullable: true)]
         private ?int $finishedAt,
+        #[Property(description: 'Whether the rows go into a Change Control branch that is merged', type: 'boolean')]
+        private bool $throughBranch,
+        #[Property(description: 'The objects the merge covers', type: 'integer', example: 306)]
+        private int $mergeTotal,
+        #[Property(description: 'The objects the merge has written so far', type: 'integer', example: 184)]
+        private int $mergeDone,
+        #[Property(
+            description: 'What went wrong that concerns no row of the file',
+            type: 'string',
+            nullable: true
+        )]
+        private ?string $notice,
         #[Property(
             description: 'The rows not saved, once the run has ended',
             type: 'array',
@@ -164,6 +185,26 @@ final readonly class AdHocImportRunResponse
     public function getFinishedAt(): ?int
     {
         return $this->finishedAt;
+    }
+
+    public function isThroughBranch(): bool
+    {
+        return $this->throughBranch;
+    }
+
+    public function getMergeTotal(): int
+    {
+        return $this->mergeTotal;
+    }
+
+    public function getMergeDone(): int
+    {
+        return $this->mergeDone;
+    }
+
+    public function getNotice(): ?string
+    {
+        return $this->notice;
     }
 
     /**

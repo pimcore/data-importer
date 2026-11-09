@@ -16,6 +16,8 @@ use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Suggestion\AiSuggestionStage;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
+use Pimcore\Contracts\ChangeControl\BranchServiceInterface;
+use Pimcore\Contracts\ChangeControl\MergeProblemCode;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -45,6 +47,10 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         // usage.* telemetry provider; core extension point guaranteed by the composer constraint
         $loader->load('telemetry.yaml');
         $loader->load('studio_backend.yaml');
+        // a core without the change control contract, or without its problem codes, has no branch to write into
+        if (interface_exists(BranchServiceInterface::class) && enum_exists(MergeProblemCode::class)) {
+            $loader->load('studio_backend_change_control.yaml');
+        }
 
         $definition = $container->getDefinition(DataImporterHandler::class);
         $definition->setArgument('$workerCountLifeTime', $config['messenger_queue_processing']['worker_count_lifetime']);

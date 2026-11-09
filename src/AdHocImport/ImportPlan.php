@@ -40,4 +40,17 @@ final readonly class ImportPlan
         public ?array $configuration,
     ) {
     }
+
+    /**
+     * @return list<string> a row's cells, in the order of the columns
+     */
+    public function cells(int $index): array
+    {
+        $row = $this->rows[$index] ?? [];
+
+        return array_map(
+            static fn (int|string $column): string => is_scalar($row[$column] ?? null) ? (string) $row[$column] : '',
+            array_keys($this->columns)
+        );
+    }
 }

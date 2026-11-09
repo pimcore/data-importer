@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RecordedRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowFailure;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
@@ -224,6 +225,42 @@ final class AdHocRunFixtures
                 usort($failures, static fn (RowFailure $a, RowFailure $b): int => $a->row <=> $b->row);
 
                 return $failures;
+            }
+
+            /** @var array<string, array<int, RecordedRow>> */
+            private array $recorded = [];
+
+            public function addRecorded(RunRecord $run, RecordedRow $row): void
+            {
+                $this->recorded[$run->fileId][$row->row] = $row;
+            }
+
+            public function recorded(RunRecord $run): array
+            {
+                $rows = $this->recorded[$run->fileId] ?? [];
+                ksort($rows);
+
+                return array_values($rows);
+            }
+
+            public function removeRecorded(RunRecord $run, array $rows): void
+            {
+                foreach ($rows as $row) {
+                    unset($this->recorded[$run->fileId][$row]);
+                }
+            }
+
+            public function forgetRecorded(RunRecord $run): void
+            {
+                unset($this->recorded[$run->fileId]);
+            }
+
+            public function inState(string $state): array
+            {
+                return array_values(array_filter(
+                    $this->runs,
+                    static fn (RunRecord $run): bool => $run->state === $state
+                ));
             }
         };
     }

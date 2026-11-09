@@ -549,3 +549,26 @@ data-importer.ad-hoc-import.result.column.action: Action
 data-importer.ad-hoc-import.result.column.why: Why it was not saved
 data-importer.ad-hoc-import.result.download-failed: 'Download failed rows ({{count}})'
 data-importer.ad-hoc-import.result.close: Close
+data-importer.ad-hoc-import.result.merged-as: 'Merged as {{user}} · {{time}}'
+data-importer.ad-hoc-import.run.branch.written: Written into a branch
+data-importer.ad-hoc-import.run.branch.objects: '{{count}} objects'
+data-importer.ad-hoc-import.run.branch.checking: 'Checking: rights, keys, values'
+data-importer.ad-hoc-import.run.branch.merging: 'Merging as {{user}}'
+data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} rows cannot be saved.'
+data-importer.ad-hoc-import.decision.nothing-merged: Nothing is merged yet; the other rows are ready in the branch.
+data-importer.ad-hoc-import.decision.count.ready: ready to merge
+data-importer.ad-hoc-import.decision.count.cannot-be-saved: cannot be saved
+data-importer.ad-hoc-import.decision.column.why: Why it cannot be saved
+data-importer.ad-hoc-import.decision.discard: Discard import
+data-importer.ad-hoc-import.decision.back-to-mapping: Back to mapping
+data-importer.ad-hoc-import.decision.merge: 'Merge {{ready}} rows, leave out {{failed}}'
+data-importer.ad-hoc-import.decision.waiting: 'An import of {{file}} into this folder is waiting for your decision.'
+data-importer.ad-hoc-import.merge.branch-name: 'Ad hoc import: {{file}} into {{folder}}'
+data-importer.ad-hoc-import.merge.object-gone: The object no longer exists
+data-importer.ad-hoc-import.merge.invalid-value: A value of this row cannot be saved
+data-importer.ad-hoc-import.merge.missing-new-object: It refers to an object the import does not create
+data-importer.ad-hoc-import.merge.interrupted: The import ended before this row was saved
+data-importer.ad-hoc-import.merge.notice: 'The import could not be merged: {{reason}}'
+data-importer.ad-hoc-import.merge.timed-out: The merge did not finish in time. Ask an administrator to check the background worker.
+data-importer.ad-hoc-import.merge.decision.title: 'Import of {{file}}: your decision is needed'
+data-importer.ad-hoc-import.merge.decision.summary: '{{ready}} rows are ready, {{failed}} cannot be saved. Nothing is merged yet. Use "Import file…" on {{folder}} to decide.'

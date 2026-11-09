@@ -39,13 +39,37 @@ final readonly class RunNotifier
      */
     public function notify(RunRecord $run, array $failures, User $user): void
     {
+        $this->send(
+            $run,
+            $this->messages->notificationTitle($run, $user),
+            $this->messages->notificationText($run, $failures, $user),
+            $user
+        );
+    }
+
+    /**
+     * Rows cannot be saved and nothing is merged: the user decides, also when the dialog is closed.
+     *
+     * @param list<RowFailure> $failures
+     */
+    public function notifyDecision(RunRecord $run, array $failures, User $user): void
+    {
+        $this->send(
+            $run,
+            $this->messages->decisionTitle($run, $user),
+            $this->messages->decisionText($run, $failures, $user),
+            $user
+        );
+    }
+
+    private function send(RunRecord $run, string $title, string $text, User $user): void
+    {
         try {
             // no sender: Studio does not notify a user of what they sent themselves
-            $this->notifications->sendNotification(new SendNotificationParameters(
-                $user->getId(),
-                $this->messages->notificationTitle($run, $user),
-                $this->messages->notificationText($run, $failures, $user)
-            ), null);
+            $this->notifications->sendNotification(
+                new SendNotificationParameters($user->getId(), $title, $text),
+                null
+            );
         } catch (\Exception $exception) {
             $this->logger->error(
                 sprintf('Ad hoc import of %s, notification: %s', $run->fileId, $exception->getMessage())

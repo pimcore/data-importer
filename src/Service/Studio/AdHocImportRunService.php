@@ -17,6 +17,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvText;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
@@ -52,6 +53,7 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
         private RowWriterInterface $writer,
         private DryRunMessages $messages,
         private LockFactory $lockFactory,
+        private ?BranchMergeInterface $branchMerge = null,
     ) {
     }
 
@@ -79,7 +81,8 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
         string $fileId,
         AdHocImportRunParameters $parameters
     ): AdHocImportRunResponse {
-        if ($this->runs->find($user->getId(), $fileId)?->isRunning()) {
+        $earlier = $this->runs->find($user->getId(), $fileId);
+        if ($earlier !== null && $earlier->state !== RunRecord::DONE) {
             throw $this->beingImported($fileId);
         }
 
@@ -105,13 +108,15 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             $checked->plan->matchColumn,
             $checked->plan->dryRun->newObjectFolder,
             $checked->plan->newObjectFolderId,
-            trim($user->getFirstname() . ' ' . $user->getLastname()) ?: $user->getName()
+            trim($user->getFirstname() . ' ' . $user->getLastname()) ?: $user->getName(),
+            targetFolder: $checked->plan->dryRun->targetFolder
         );
 
         $this->runs->save($run);
 
         try {
-            $this->writer->open($run);
+            $run = $this->writer->open($run, $user);
+            $this->runs->save($run);
             $this->queue->enqueue($run, $imported);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 whatever stopped it, a run short of rows never ends
             $this->runs->delete($user->getId(), $fileId);
@@ -157,12 +162,73 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     public function discard(string $fileId): void
     {
         $user = $this->resolveCurrentUser();
-        if ($this->requireRun($user, $fileId)->isRunning()) {
+        $run = $this->requireRun($user, $fileId);
+        if ($run->isBusy()) {
             throw $this->beingImported($fileId);
         }
 
+        if ($run->isWaitingForDecision()) {
+            $this->closeBranch($run, $user);
+            $this->files->delete($user->getId(), $fileId, $run->type);
+        }
         $this->runs->delete($user->getId(), $fileId);
         $this->files->deleteRunOutput($user->getId(), $fileId);
+    }
+
+    public function mergeLeavingOut(string $fileId): AdHocImportRunResponse
+    {
+        $user = $this->resolveCurrentUser();
+        $run = $this->requireDecision($user, $fileId);
+        $run = $this->branchMerge()->mergeLeavingOut($run, $user);
+
+        return $this->response($run, $this->failures($user, $fileId)['rows']);
+    }
+
+    public function withdraw(string $fileId): void
+    {
+        $user = $this->resolveCurrentUser();
+        $run = $this->requireDecision($user, $fileId);
+
+        $this->closeBranch($run, $user);
+        $this->runs->delete($user->getId(), $fileId);
+        $this->files->deleteRunOutput($user->getId(), $fileId);
+    }
+
+    public function waitingRuns(int $folderId): array
+    {
+        $user = $this->resolveCurrentUser();
+        $waiting = array_filter(
+            $this->runs->inState(RunRecord::DECISION),
+            static fn (RunRecord $run): bool => $run->userId === $user->getId()
+                && (int) ($run->parameters['folderId'] ?? 0) === $folderId
+        );
+
+        return array_values(array_map(
+            static fn (RunRecord $run): array => ['fileId' => $run->fileId, 'fileName' => $run->fileName],
+            $waiting
+        ));
+    }
+
+    private function requireDecision(User $user, string $fileId): RunRecord
+    {
+        $run = $this->requireRun($user, $fileId);
+        if (!$run->isWaitingForDecision()) {
+            throw new InvalidArgumentException(sprintf('The import of %s waits for no decision.', $fileId));
+        }
+
+        return $run;
+    }
+
+    private function closeBranch(RunRecord $run, User $user): void
+    {
+        if ($run->throughBranch()) {
+            $this->branchMerge()->discard($run, $user);
+        }
+    }
+
+    private function branchMerge(): BranchMergeInterface
+    {
+        return $this->branchMerge ?? throw new InvalidArgumentException('Change Control is not installed.');
     }
 
     private function beingImported(string $fileId): InvalidArgumentException
@@ -243,6 +309,10 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             $run->newObjectsFolderId,
             $run->userName,
             $run->finishedAt,
+            $run->throughBranch(),
+            $run->mergeTotal,
+            $run->mergeDone,
+            $run->notice,
             array_map(static fn (array $row): array => [
                 'row' => $row['row'],
                 'matchValue' => $row['matchValue'],

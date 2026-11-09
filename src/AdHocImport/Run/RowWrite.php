@@ -26,12 +26,21 @@ final readonly class RowWrite
     /**
      * @param Concrete $object the object as the mapping and the events left it
      * @param array<int|string, mixed> $row the row as the file has it
+     * @param int $rowNumber the row's number in the file, the header row counted
+     * @param string $folder where the object is, or goes
+     * @param list<string> $values the row's cells, in the order of the file's columns
+     * @param RunRecord|null $run the run it belongs to
      */
     public function __construct(
         public Concrete $object,
         public array $row,
         public bool $isNew,
         public User $user,
+        public int $rowNumber = 0,
+        public string $matchValue = '',
+        public string $folder = '',
+        public array $values = [],
+        public ?RunRecord $run = null,
     ) {
     }
 }

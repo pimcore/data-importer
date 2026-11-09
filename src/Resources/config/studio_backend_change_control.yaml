@@ -1,0 +1,23 @@
+# The ad hoc import through a Change Control branch, for a core that ships its contract (PimcoreDataImporterExtension).
+# Without Change Control installed the branch service is missing and the rows are written directly.
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\ObjectChanges: ~
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\WriteWay: ~
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface:
+        factory: ['@Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\WriteWay', 'writer']
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface:
+        class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\BranchMerge
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\MergeFollowHandler: ~
+
+    Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\BranchImportsTask:
+        tags:
+            - { name: pimcore.maintenance.task, type: data_importer.ad_hoc_import_branches }

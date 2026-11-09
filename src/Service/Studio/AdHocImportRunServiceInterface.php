@@ -46,10 +46,34 @@ interface AdHocImportRunServiceInterface
     public function failedRows(string $fileId): string;
 
     /**
-     * Forgets a finished run and what it left for download.
+     * Forgets a finished run and what it left for download. A run waiting for a decision is discarded: its branch is
+     * closed without a merge, and its file is deleted.
      *
      * @throws NotFoundHttpException if the user has no run of such a file
      * @throws InvalidArgumentException if the run still goes on
      */
     public function discard(string $fileId): void;
+
+    /**
+     * Merges the rows of a run waiting for a decision that can be saved, and leaves out the others.
+     *
+     * @throws NotFoundHttpException if the user has no run of such a file
+     * @throws InvalidArgumentException if the run waits for no decision
+     */
+    public function mergeLeavingOut(string $fileId): AdHocImportRunResponse;
+
+    /**
+     * Closes the branch of a run waiting for a decision and forgets the run, keeping its file for another run.
+     *
+     * @throws NotFoundHttpException if the user has no run of such a file
+     * @throws InvalidArgumentException if the run waits for no decision
+     */
+    public function withdraw(string $fileId): void;
+
+    /**
+     * The runs of the user into a folder that wait for a decision.
+     *
+     * @return list<array{fileId: string, fileName: string}>
+     */
+    public function waitingRuns(int $folderId): array;
 }

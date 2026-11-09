@@ -59,9 +59,10 @@ class AdHocRowImporterTest extends Unit
             {
             }
 
-            public function open(RunRecord $run): void
+            public function open(RunRecord $run, User $user): RunRecord
             {
                 // these tests look only at what is written
+                return $run;
             }
 
             public function write(RowWrite $write): void
@@ -169,6 +170,20 @@ class AdHocRowImporterTest extends Unit
         $this->assertFalse($this->written[0]->isNew);
         $this->assertSame($user, $this->written[0]->user);
         $this->assertSame(['sku' => 'SKU-1', 'name' => 'Chair'], $this->written[0]->row);
+    }
+
+    public function testTheWriterLearnsWhichRowOfWhichRunItWrites(): void
+    {
+        $user = AdHocRunFixtures::user();
+        $run = AdHocRunFixtures::run(['branch' => 'branch-1']);
+
+        $this->importer()->import($this->plan($this->existing($this->object()), [], $user), $user, 0, [], $run);
+
+        $write = $this->written[0];
+        $this->assertSame(
+            [2, 'SKU-1', '/Products/Archive', ['SKU-1', 'Chair'], $run],
+            [$write->rowNumber, $write->matchValue, $write->folder, $write->values, $write->run]
+        );
     }
 
     public function testANewObjectNeedsCreateOnItsFolderAndIsReportedAsCreated(): void

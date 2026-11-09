@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\Run;
 
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
+use Pimcore\Model\User;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -30,9 +31,10 @@ final readonly class DirectRowWriter implements RowWriterInterface
     ) {
     }
 
-    public function open(RunRecord $run): void
+    public function open(RunRecord $run, User $user): RunRecord
     {
         // nothing to open: every row is saved on its own
+        return $run;
     }
 
     public function write(RowWrite $write): void

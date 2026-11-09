@@ -53,8 +53,9 @@ final readonly class RowImporter
     /**
      * @param int $index the row's position among the file's rows
      * @param list<int> $leftOut the positions of the writers whose value the row goes without
+     * @param RunRecord|null $run the run the row belongs to, which the writer may write into
      */
-    public function import(ImportPlan $plan, User $user, int $index, array $leftOut): RowOutcome
+    public function import(ImportPlan $plan, User $user, int $index, array $leftOut, ?RunRecord $run = null): RowOutcome
     {
         $dryRun = $plan->dryRun;
         $row = $plan->rows[$index] ?? [];
@@ -91,7 +92,17 @@ final readonly class RowImporter
                 return RowOutcome::failed($match->matchValue, $action, $this->messages->leftOutByListener($user));
             }
 
-            $this->writer->write(new RowWrite($object, $row, $isNew, $user));
+            $this->writer->write(new RowWrite(
+                $object,
+                $row,
+                $isNew,
+                $user,
+                $rowNumber,
+                $match->matchValue,
+                $this->folderOf($object, $isNew),
+                $plan->cells($index),
+                $run
+            ));
 
             return RowOutcome::saved($isNew, $match->matchValue);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 one row must not end the run, whatever stops it

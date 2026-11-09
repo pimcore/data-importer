@@ -45,6 +45,7 @@ final class RunProcessor implements AdHocRowProcessorInterface
         private readonly RunNotifier $notifier,
         private readonly UserResolverInterface $userResolver,
         private readonly LoggerInterface $logger,
+        private readonly ?BranchMergeInterface $branchMerge = null,
     ) {
     }
 
@@ -73,7 +74,7 @@ final class RunProcessor implements AdHocRowProcessorInterface
                 $outcome->matchValue,
                 $outcome->action,
                 (string) $outcome->message,
-                $this->cells($plan, $index)
+                $plan?->cells($index) ?? []
             );
             $this->attempt($run, function () use ($run, $failure): void {
                 $this->runs->addFailure($run, $failure);
@@ -129,7 +130,7 @@ final class RunProcessor implements AdHocRowProcessorInterface
         }
 
         try {
-            return $this->rowImporter->import($plan, $user, $index, $leftOut);
+            return $this->rowImporter->import($plan, $user, $index, $leftOut, $run);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 one row must not end the run, whatever stops it
             // what the row importer does not expect, such as the database going away while it looks for the object
             $this->logFailure($run, $throwable);
@@ -161,23 +162,6 @@ final class RunProcessor implements AdHocRowProcessorInterface
         return $this->plan;
     }
 
-    /**
-     * @return list<string>
-     */
-    private function cells(?ImportPlan $plan, int $index): array
-    {
-        if ($plan === null) {
-            return [];
-        }
-
-        $row = $plan->rows[$index] ?? [];
-
-        return array_map(
-            static fn (int|string $column): string => is_scalar($row[$column] ?? null) ? (string) $row[$column] : '',
-            array_keys($plan->columns)
-        );
-    }
-
     private function finish(RunRecord $run, ?ImportPlan $plan, ?User $user): void
     {
         $failures = [];
@@ -192,6 +176,14 @@ final class RunProcessor implements AdHocRowProcessorInterface
             $run = $run->failedAtClose($failure);
         }
         $failures = [...$failures, ...$foundAtClose];
+        if ($run->throughBranch() && $this->branchMerge !== null) {
+            $this->planFileId = null;
+            $this->plan = null;
+            $this->endInBranch($run, $plan, $user, $failures);
+
+            return;
+        }
+
         if ($failures !== []) {
             $this->attempt($run, function () use ($run, $plan, $failures): void {
                 $this->storeFailures($run, $plan, $failures);
@@ -210,6 +202,29 @@ final class RunProcessor implements AdHocRowProcessorInterface
             $this->attempt($run, function () use ($run, $failures, $user): void {
                 $this->notifier->notify($run, $failures, $user);
             });
+        }
+    }
+
+    /**
+     * The rows are in the branch: it is merged, or the user decides. A step that fails still ends the run.
+     *
+     * @param list<RowFailure> $failures
+     */
+    private function endInBranch(RunRecord $run, ?ImportPlan $plan, ?User $user, array $failures): void
+    {
+        try {
+            $this->branchMerge?->rowsWritten($run, $plan, $user, $failures);
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 a run always ends, whatever stops its merge
+            $this->logFailure($run, $throwable);
+            $run = $this->runs->find($run->userId, $run->fileId) ?? $run;
+            if ($run->state === RunRecord::RUNNING) {
+                $run = $run->nothingSaved()
+                    ->withNotice($user instanceof User ? $this->messages->cannotGoOn($user) : null)
+                    ->finished(time());
+                $this->attempt($run, function () use ($run): void {
+                    $this->runs->save($run);
+                });
+            }
         }
     }
 
