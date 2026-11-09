@@ -70,7 +70,7 @@ final readonly class BranchRowWriter implements RowWriterInterface
         $before = $write->isNew
             ? new ($object::class)()
             : $this->objects->getById((int) $object->getId(), ['force' => true])
-                ?? throw new \RuntimeException(sprintf('Object %d was deleted meanwhile.', (int) $object->getId()));
+                ?? throw ObjectGoneException::of((int) $object->getId());
         $change = $this->changes->changeOf($object, $before, $write->isNew ? $token : null);
         $this->branches->record(self::branchOf($run), self::context($run), $write->user, [$change]);
 

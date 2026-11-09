@@ -81,9 +81,12 @@ final readonly class ObjectChanges
     {
         foreach ($after->getClass()->getFieldDefinitions(self::AS_STORED) as $name => $definition) {
             $change = match (true) {
-                $definition instanceof Data\Localizedfields => $this->localized($change, $definition, $after, $before),
-                $definition instanceof Data\Objectbricks => $this->bricks($change, (string) $name, $definition, $after, $before),
-                $definition instanceof Data\Classificationstore => $this->store($change, (string) $name, $after, $before),
+                $definition instanceof Data\Localizedfields
+                    => $this->localized($change, $definition, $after, $before),
+                $definition instanceof Data\Objectbricks
+                    => $this->bricks($change, (string) $name, $definition, $after, $before),
+                $definition instanceof Data\Classificationstore
+                    => $this->store($change, (string) $name, $after, $before),
                 $this->isRecorded($definition) => $this->field($change, (string) $name, $definition, $after, $before),
                 default => $change,
             };
@@ -159,20 +162,7 @@ final readonly class ObjectChanges
     ): DataObjectChange {
         foreach ($brick->getDefinition()->getFieldDefinitions(self::AS_STORED) as $name => $field) {
             if ($field instanceof Data\Localizedfields) {
-                foreach ($field->getFieldDefinitions(self::AS_STORED) as $localizedName => $localizedField) {
-                    foreach (Tool::getValidLanguages() as $language) {
-                        $value = $brick->get((string) $localizedName, $language);
-                        if (self::differs($localizedField, $old?->get((string) $localizedName, $language), $value)) {
-                            $change = $change->withBrickValue(
-                                $bricksField,
-                                $type,
-                                (string) $localizedName,
-                                self::recordable($value),
-                                $language
-                            );
-                        }
-                    }
-                }
+                $change = $this->localizedBrick($change, $bricksField, $type, $field, $brick, $old);
 
                 continue;
             }
@@ -188,6 +178,32 @@ final readonly class ObjectChanges
         return $change;
     }
 
+    private function localizedBrick(
+        DataObjectChange $change,
+        string $bricksField,
+        string $type,
+        Data\Localizedfields $definition,
+        Objectbrick\Data\AbstractData $brick,
+        ?Objectbrick\Data\AbstractData $old
+    ): DataObjectChange {
+        foreach ($definition->getFieldDefinitions(self::AS_STORED) as $name => $field) {
+            foreach (Tool::getValidLanguages() as $language) {
+                $value = $brick->get((string) $name, $language);
+                if (self::differs($field, $old?->get((string) $name, $language), $value)) {
+                    $change = $change->withBrickValue(
+                        $bricksField,
+                        $type,
+                        (string) $name,
+                        self::recordable($value),
+                        $language
+                    );
+                }
+            }
+        }
+
+        return $change;
+    }
+
     private function store(DataObjectChange $change, string $name, Concrete $after, Concrete $before): DataObjectChange
     {
         $afterStore = $after->get($name);
@@ -196,18 +212,7 @@ final readonly class ObjectChanges
         $beforeItems = $beforeStore instanceof Classificationstore ? $beforeStore->getItems() : [];
 
         // a value the row removed is recorded as null, as an emptied field is
-        $places = [];
-        foreach ([$beforeItems, $afterItems] as $items) {
-            foreach ($items as $groupId => $keys) {
-                foreach ($keys as $keyId => $languages) {
-                    foreach (array_keys($languages) as $language) {
-                        $places[$groupId . '/' . $keyId . '/' . $language] = [(int) $groupId, (int) $keyId, (string) $language];
-                    }
-                }
-            }
-        }
-
-        foreach ($places as [$groupId, $keyId, $language]) {
+        foreach (self::places($beforeItems, $afterItems) as [$groupId, $keyId, $language]) {
             $value = $afterItems[$groupId][$keyId][$language] ?? null;
             if (!self::differs(null, $beforeItems[$groupId][$keyId][$language] ?? null, $value)) {
                 continue;
@@ -220,6 +225,28 @@ final readonly class ObjectChanges
         }
 
         return $change;
+    }
+
+    /**
+     * @param array<array-key, array<array-key, array<array-key, mixed>>> ...$itemSets
+     *
+     * @return array<string, array{0: int, 1: int, 2: string}> each group, key and language any of them holds
+     */
+    private static function places(array ...$itemSets): array
+    {
+        $places = [];
+        foreach ($itemSets as $items) {
+            foreach ($items as $groupId => $keys) {
+                foreach ($keys as $keyId => $languages) {
+                    foreach (array_keys($languages) as $language) {
+                        $places[$groupId . '/' . $keyId . '/' . $language]
+                            = [(int) $groupId, (int) $keyId, (string) $language];
+                    }
+                }
+            }
+        }
+
+        return $places;
     }
 
     private function isRecorded(Data $definition): bool
