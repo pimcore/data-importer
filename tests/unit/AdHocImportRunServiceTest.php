@@ -184,14 +184,15 @@ class AdHocImportRunServiceTest extends Unit
         $parameters = $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS);
         $service = null;
         $refused = null;
-        $service = $this->service($this->results(), duringCheck: function () use (&$service, &$refused, $parameters): void {
+        $secondRequest = function () use (&$service, &$refused, $parameters): void {
             try {
                 $service->start($this->fileId, $parameters);
             } catch (InvalidArgumentException $exception) {
                 $refused = $exception;
             }
             $this->assertNull($this->queued, 'the second request queued rows while the first one was checking');
-        });
+        };
+        $service = $this->service($this->results(), duringCheck: $secondRequest);
 
         $service->start($this->fileId, $parameters);
 

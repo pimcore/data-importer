@@ -51,7 +51,11 @@ class ObjectFieldReferenceVisibilityTest extends Unit
         });
 
         $this->assertCount(1, $warnings);
-        $this->assertStringNotContainsString(self::PARENT_PATH, $warnings[0], 'it must not name what the user may not see');
+        $this->assertStringNotContainsString(
+            self::PARENT_PATH,
+            $warnings[0],
+            'it must not name what the user may not see'
+        );
     }
 
     public function testWithoutAScopeTheFullPathIsRead(): void

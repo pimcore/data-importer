@@ -76,8 +76,10 @@ class AdHocDirectRowWriterTest extends Unit
             $this->fail('nothing was saved');
         });
 
+        $write = new RowWrite($object, [], false, AdHocRunFixtures::user());
+
         $this->expectException(\RuntimeException::class);
-        (new DirectRowWriter($events, new NullLogger()))->write(new RowWrite($object, [], false, AdHocRunFixtures::user()));
+        (new DirectRowWriter($events, new NullLogger()))->write($write);
     }
 
     public function testAListenerFailingAfterTheSaveLeavesTheRowSavedAndIsLogged(): void
@@ -88,7 +90,7 @@ class AdHocDirectRowWriterTest extends Unit
         $object->method('getId')->willReturn(42);
         $events = new EventDispatcher();
         $events->addListener(PostSaveEvent::class, static function (): void {
-            throw new \RuntimeException('search index is down');
+            throw new \UnexpectedValueException('search index is down');
         });
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())->method('error')->with($this->logicalAnd(

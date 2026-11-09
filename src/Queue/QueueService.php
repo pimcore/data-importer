@@ -93,11 +93,13 @@ final class QueueService
         // creating the table ends any open transaction, so it comes first
         $this->createQueueTableIfNotExisting();
 
-        $this->getDb()->transactional(function () use ($configName, $executionType, $jobType, $items, $userOwner): void {
+        $addItems = function () use ($configName, $executionType, $jobType, $items, $userOwner): void {
             foreach ($items as $data) {
                 $this->addItemToQueue($configName, $executionType, $jobType, $data, $userOwner);
             }
-        });
+        };
+
+        $this->getDb()->transactional($addItems);
     }
 
     /**
