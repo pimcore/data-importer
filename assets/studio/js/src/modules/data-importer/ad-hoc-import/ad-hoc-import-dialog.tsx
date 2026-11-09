@@ -104,7 +104,11 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     { fileId: runFileId ?? '' },
     { skip: runFileId === null, pollingInterval: runPolling }
   )
-  const { data: waitingRuns } = useBundleDataImporterAdHocImportListWaitingRunsQuery({ folderId: target.folderId })
+  // asked anew on every open: a list cached from an earlier open may name an import decided since
+  const { data: waitingRuns, isFetching: isFetchingWaitingRuns } = useBundleDataImporterAdHocImportListWaitingRunsQuery(
+    { folderId: target.folderId },
+    { refetchOnMountOrArgChange: true }
+  )
   const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
@@ -462,13 +466,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   // an import into this folder waits for the user's decision: the dialog opens on it
   useEffect(() => {
-    const waiting = waitingRuns?.items[0]
+    const waiting = isFetchingWaitingRuns ? undefined : waitingRuns?.items[0]
     if (waiting !== undefined && runFileId === null && step === 0 && phase.kind === 'empty') {
       setWaitingFile(waiting.fileName)
       setRunFileId(waiting.fileId)
       setStep(IMPORT_STEP)
     }
-  }, [waitingRuns])
+  }, [waitingRuns, isFetchingWaitingRuns])
 
   // an upload does not outlive the dialog
   useEffect(() => () => { upload.current?.abort() }, [])
