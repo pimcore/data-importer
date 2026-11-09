@@ -107,6 +107,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     private const string FOUND_OUTSIDE_TARGET = 'Found outside ' . self::TARGET;
 
+    private const string SKU_FOLDER_TAKEN = self::TARGET . ' already holds an object named SKU-FOLDER';
+
     private const string SECRET_NAME = 'Secret name';
 
     private const string CLOSED_NAME = 'Closed name';
@@ -207,7 +209,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
                 7 => '2 objects have sku SKU-TWICE',
                 8 => 'Found in ' . self::ELSEWHERE . ', outside ' . self::TARGET,
                 9 => 'sku is empty',
-                10 => self::TARGET . ' already holds an object named SKU-FOLDER'],
+                10 => self::SKU_FOLDER_TAKEN],
             array_map(
                 static fn (array $row): ?string => $row['error'],
                 array_filter($rows, static fn (array $row): bool => $row['action'] === null)
@@ -414,7 +416,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['old' => null, 'new' => 'SKU-1'], $rows[2]['values'][0]);
         $this->assertSame(
             [4 => 'Row 3 already creates an object named SKU-NEW',
-                5 => self::TARGET . ' already holds an object named SKU-FOLDER',
+                5 => self::SKU_FOLDER_TAKEN,
                 6 => 'Key is empty'],
             array_map(
                 static fn (array $row): ?string => $row['error'],
@@ -452,7 +454,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['old' => null, 'new' => 'Armchair'], $rows[2]['values'][0]);
         $this->assertSame(
             [4 => 'Row 3 already creates an object named SKU-NEW',
-                5 => self::TARGET . ' already holds an object named SKU-FOLDER',
+                5 => self::SKU_FOLDER_TAKEN,
                 6 => 'Key is empty'],
             array_map(
                 static fn (array $row): ?string => $row['error'],
