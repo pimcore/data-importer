@@ -26,6 +26,8 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
+use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
+use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface;
@@ -34,6 +36,7 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterf
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\WalkthroughStep;
 use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolver;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
@@ -44,6 +47,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
@@ -140,6 +145,61 @@ class AdHocImportWalkthroughTest extends Unit
             $this->workOff(function (array $item): void {
                 $this->tester->grabService(ImportProcessingService::class)->processQueueItem((int) $item['id']);
             }),
+            false
+        );
+    }
+
+    /**
+     * As an application with messenger processing on: rows go out in messages, a worker takes one and hands out the
+     * next, and the queue command, which also takes rows a worker holds, must not start.
+     */
+    private function workersWay(): AdHocImportWalkthrough
+    {
+        $sequential = ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL;
+        $queue = $this->tester->grabService(QueueService::class);
+        foreach ($queue->getAllQueueEntryIds($sequential) as $id) {
+            $queue->markQueueEntryAsProcessed($id); // a row another test left would go out first
+        }
+
+        $bus = new class() implements MessageBusInterface {
+            /** @var list<DataImporterMessage> */
+            public array $messages = [];
+
+            public function dispatch(object $message, array $stamps = []): Envelope
+            {
+                \assert($message instanceof DataImporterMessage);
+                $this->messages[] = $message;
+
+                return new Envelope($message, $stamps);
+            }
+        };
+        $processing = $this->tester->grabService(ImportProcessingService::class);
+        $handler = new DataImporterHandler($queue, $processing, $bus, 3600, 1, 3);
+        $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
+
+        $consume = static function (string $command) use ($bus, $handler): array {
+            if (!str_starts_with($command, 'messenger:consume')) {
+                return [1, 'Started beside the workers: ' . $command];
+            }
+            for ($taken = 0; $taken < 10 && $bus->messages !== []; $taken++) {
+                $handler(array_shift($bus->messages));
+            }
+
+            return [0, ''];
+        };
+
+        return $this->walkthrough(
+            $service,
+            static function (string $fileId) use ($handler, $service, $consume, $sequential): void {
+                $handler->dispatchMessages($sequential); // what the import's listener does with messenger processing on
+                (new AdHocImportWalkthroughWork(
+                    static fn (string $file): string => $service->status($file)->getState(),
+                    $consume,
+                    ['pimcore_data_import'],
+                    true,
+                    60
+                ))($fileId);
+            },
             false
         );
     }
@@ -243,6 +303,17 @@ class AdHocImportWalkthroughTest extends Unit
             $this->beforeSave,
             'the refused row gets no event'
         );
+    }
+
+    public function testWorkersWriteEachRowOnceWhenMessengerProcessingIsOn(): void
+    {
+        $this->listenToTheEvents();
+        $walkthrough = $this->workersWay();
+
+        // its first step reads created 2 and updated 0 back from the import
+        $this->assertEveryStepPasses($walkthrough->run(), 3);
+
+        $this->assertSame($this->skus($walkthrough, self::ALL_WRITTEN), $this->saved, 'each row is saved once');
     }
 
     public function testThroughABranchThatIsMerged(): void

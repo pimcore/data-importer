@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWrite;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
@@ -643,6 +644,69 @@ class AdHocImportRunServiceTest extends Unit
                 $this->assertSame([], $this->merges);
             }
         }
+    }
+
+    public function testOneDecisionAtATime(): void
+    {
+        $waiting = $this->waitingRun();
+        $lock = DecisionLock::of($this->locks, AdHocRunFixtures::USER_ID, $this->fileId);
+        $lock->acquire();
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        foreach ([$service->mergeLeavingOut(...), $service->withdraw(...), $service->discard(...)] as $decide) {
+            try {
+                $decide($this->fileId);
+                $this->fail('another decision is being taken');
+            } catch (InvalidArgumentException $refused) {
+                $this->assertStringContainsString('is being imported', $refused->getMessage());
+            }
+        }
+
+        $this->assertSame([], $this->merges);
+        $this->assertSame($waiting->state, $this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId)?->state);
+
+        $lock->release();
+        $service->withdraw($this->fileId);
+
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId), 'the lock is free again');
+    }
+
+    public function testADecisionTakenLeavesTheNextOneFree(): void
+    {
+        $this->waitingRun();
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        $service->mergeLeavingOut($this->fileId);
+
+        $this->assertTrue(
+            DecisionLock::of($this->locks, AdHocRunFixtures::USER_ID, $this->fileId)->acquire(),
+            'the lock is released'
+        );
+    }
+
+    public function testADecisionGoesByWhatTheRunIsOnceItHasTheLock(): void
+    {
+        $this->waitingRun();
+        $this->locks = AdHocRunFixtures::locksThatFirst(function (): void {
+            $this->runs->save(AdHocRunFixtures::run([
+                'fileId' => $this->fileId,
+                'branch' => AdHocFakeBranches::BRANCH,
+            ])->merging(3, 0, time()));
+        });
+        $service = $this->service(checks: 0, branchMerge: $this->branchMerge());
+
+        try {
+            $service->mergeLeavingOut($this->fileId);
+            $this->fail('the other request has started the merge');
+        } catch (InvalidArgumentException $refused) {
+            $this->assertStringContainsString('waits for no decision', $refused->getMessage());
+        }
+
+        $this->assertSame([], $this->merges);
+        $this->assertSame(
+            RunRecord::MERGING,
+            $this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId)?->state
+        );
     }
 
     public function testTheRunsWaitingInAFolderAreTheUsersOnly(): void

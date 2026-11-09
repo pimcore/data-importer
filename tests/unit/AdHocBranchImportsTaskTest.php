@@ -23,6 +23,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\MergeFollowMessage;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RecordedRow;
@@ -33,6 +34,8 @@ use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolverInterface;
 use Pimcore\Model\User;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 class AdHocBranchImportsTaskTest extends Unit
 {
@@ -41,6 +44,8 @@ class AdHocBranchImportsTaskTest extends Unit
     private FileStore $files;
 
     private RunStoreInterface $runs;
+
+    private LockFactory $locks;
 
     /** @var list<string> */
     private array $calls = [];
@@ -51,6 +56,7 @@ class AdHocBranchImportsTaskTest extends Unit
         mkdir($this->storage);
         $this->files = AdHocCsvFiles::store($this->storage);
         $this->runs = AdHocRunFixtures::memoryStore();
+        $this->locks = new LockFactory(new InMemoryStore());
         $this->calls = [];
     }
 
@@ -103,7 +109,14 @@ class AdHocBranchImportsTaskTest extends Unit
         $users = $this->createStub(UserResolverInterface::class);
         $users->method('getById')->willReturn($userExists ? AdHocRunFixtures::user() : null);
 
-        return new BranchImportsTask($this->runs, $merges ?? $this->merges(), $this->files, $users, new NullLogger());
+        return new BranchImportsTask(
+            $this->runs,
+            $merges ?? $this->merges(),
+            $this->files,
+            $users,
+            $this->locks,
+            new NullLogger()
+        );
     }
 
     private function storedFile(): string
@@ -140,6 +153,51 @@ class AdHocBranchImportsTaskTest extends Unit
         $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId));
         $this->assertNull($this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId));
         $this->assertNotNull($this->runs->find(AdHocRunFixtures::USER_ID, 'recent'));
+    }
+
+    public function testAnImportBeingDecidedOnIsLeftAlone(): void
+    {
+        $fileId = $this->storedFile();
+        $this->runs->save(AdHocRunFixtures::run(['fileId' => $fileId])->waitingForDecision(time() - 7 * 86400));
+        $lock = DecisionLock::of($this->locks, AdHocRunFixtures::USER_ID, $fileId);
+        $lock->acquire();
+
+        $this->task()->execute();
+
+        $this->assertSame([], $this->calls);
+        $this->assertNotNull($this->runs->find(AdHocRunFixtures::USER_ID, $fileId));
+        $this->assertNotNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId));
+    }
+
+    public function testAnImportDecidedOnSinceTheListWasReadIsLeftAlone(): void
+    {
+        $fileId = $this->storedFile();
+        $run = AdHocRunFixtures::run(['fileId' => $fileId]);
+        $this->runs->save($run->waitingForDecision(time() - 7 * 86400));
+        $this->locks = AdHocRunFixtures::locksThatFirst(function () use ($run): void {
+            $this->runs->save($run->merging(3, 0, time()));
+        });
+
+        $this->task()->execute();
+
+        $this->assertSame([], $this->calls);
+        $this->assertSame(RunRecord::MERGING, $this->runs->find(AdHocRunFixtures::USER_ID, $fileId)?->state);
+        $this->assertNotNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId));
+    }
+
+    public function testAnImportAskedAgainSinceTheListWasReadWaitsItsWeek(): void
+    {
+        $fileId = $this->storedFile();
+        $run = AdHocRunFixtures::run(['fileId' => $fileId]);
+        $this->runs->save($run->waitingForDecision(time() - 7 * 86400));
+        $this->locks = AdHocRunFixtures::locksThatFirst(function () use ($run): void {
+            $this->runs->save($run->waitingForDecision(time()));
+        });
+
+        $this->task()->execute();
+
+        $this->assertSame([], $this->calls);
+        $this->assertNotNull($this->runs->find(AdHocRunFixtures::USER_ID, $fileId));
     }
 
     public function testAnImportOfAUserDeletedMeanwhileIsForgotten(): void

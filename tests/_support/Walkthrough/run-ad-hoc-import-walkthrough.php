@@ -25,10 +25,11 @@ declare(strict_types=1);
  * It imports a few files as a user the run creates, through the services the Studio API calls, and reads every result
  * back from the database. The application writes the way it is set up: directly, or through a Change Control branch
  * with Change Control installed on a core that ships its contract. --way=direct or --way=branch fails the run if the
- * application writes the other way. The rows are worked off with datahub:data-importer:process-queue-sequential,
- * which also takes what other imports queued, and a merge with short `messenger:consume` runs of <transports>
- * (default pimcore_data_import), both started with <console> (default bin/console); a Change Control merge needs its
- * own transport named there or a worker running.
+ * application writes the other way. With messenger processing off the rows are worked off with
+ * datahub:data-importer:process-queue-sequential, which also takes what other imports queued; with it on they are left
+ * to the workers. Short `messenger:consume` runs of <transports> (default pimcore_data_import) work off a merge and,
+ * with messenger processing on, the rows; all are started with <console> (default bin/console). A Change Control merge
+ * needs its own transport named there or a worker running.
  *
  * What a run creates stays: its objects under "/Ad hoc import walkthrough/<run>", the class AdHocImportWalkthrough, and
  * its user, deactivated at the end. It exits non-zero if a step fails.

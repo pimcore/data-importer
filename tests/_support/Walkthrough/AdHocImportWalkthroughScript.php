@@ -109,7 +109,8 @@ final class AdHocImportWalkthroughScript
             (new AdHocImportWalkthroughWork(
                 static fn (string $fileId): string => $service->status($fileId)->getState(),
                 (new AdHocImportWalkthroughConsole($options['console']))(...),
-                explode(',', $options['transports'])
+                explode(',', $options['transports']),
+                $container->getParameter('pimcore_data_importer.messenger_queue_processing.activated') === true
             ))(...),
             AdHocImportWalkthrough::newRun(),
             $options['way'] === null ? null : $options['way'] === 'branch',
