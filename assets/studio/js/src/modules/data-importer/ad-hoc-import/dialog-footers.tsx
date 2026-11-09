@@ -9,10 +9,19 @@
  */
 
 import React from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, ModalFooter, Select } from '@pimcore/studio-ui-bundle/components'
 import { failedRowsUrl, importedCount, isDeciding, isDone, type ImportRun } from './import-step/import-state'
 import { type ErrorMode } from './preview-step/preview-state'
+
+const useStyles = createStyles(({ token, css }) => ({
+  undecided: css`
+    color: ${token.colorWarningText};
+  `,
+  decided: css`
+    color: ${token.colorSuccess};
+  `
+}))
 
 const ERROR_MODE_WIDTH = 260
 const ERROR_MODE_ID = 'ad-hoc-import-error-mode'
@@ -160,16 +169,19 @@ export const ImportFooter = ({ onClose, run, runFileId, decision }: ImportFooter
 interface StepFooterProps {
   canGoOn: boolean
   isFirstStep: boolean
+  // how many columns the mapping still leaves open
+  undecided?: number
   onBack: () => void
   onClose: () => void
   onNext: () => void
 }
 
-export const StepFooter = ({ canGoOn, isFirstStep, onBack, onClose, onNext }: StepFooterProps): React.JSX.Element => {
+export const StepFooter = ({ canGoOn, isFirstStep, undecided, onBack, onClose, onNext }: StepFooterProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
-  return (
-    <ModalFooter divider>
+  const buttons = (
+    <>
       { isFirstStep
         ? <Button onClick={ onClose }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
         : <Button onClick={ onBack }>{ t('data-importer.ad-hoc-import.back') }</Button> }
@@ -180,6 +192,29 @@ export const StepFooter = ({ canGoOn, isFirstStep, onBack, onClose, onNext }: St
       >
         { t(isFirstStep ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
       </Button>
+    </>
+  )
+
+  if (undecided === undefined) {
+    return <ModalFooter divider>{ buttons }</ModalFooter>
+  }
+
+  let undecidedText = t('data-importer.ad-hoc-import.mapping.all-decided')
+  if (undecided === 1) {
+    undecidedText = t('data-importer.ad-hoc-import.mapping.undecided-one')
+  } else if (undecided > 1) {
+    undecidedText = t('data-importer.ad-hoc-import.mapping.undecided', { count: undecided })
+  }
+
+  return (
+    <ModalFooter
+      divider
+      justify="space-between"
+    >
+      <span className={ undecided === 0 ? styles.decided : styles.undecided }>
+        { undecidedText }
+      </span>
+      <Flex gap="small">{ buttons }</Flex>
     </ModalFooter>
   )
 }

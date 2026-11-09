@@ -15,7 +15,7 @@ import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step
 import { createMapping, type LoadedMapping, type Mapping } from './mapping-state'
 import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
-import { type TransformationSource } from './transformations-modal'
+import { type TransformationSource } from './transformations-editor'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
@@ -95,18 +95,32 @@ const renderStep = (): void => {
   render(<Stateful initial={ createMapping(inspected, objects, loaded) } />)
 }
 
-const fieldOf = (column: string): HTMLSelectElement => screen.getByLabelText<HTMLSelectElement>(`Field for ${column}`)
+const rowOf = (column: string): HTMLElement => screen.queryByRole('button', { name: `Field for ${column}` })?.closest<HTMLElement>('[role="listitem"]') ?? matchRowOf(column)
+const matchRowOf = (column: string): HTMLElement => within(screen.getByRole('list', { name: 'Columns of the file' })).getByText(column).closest<HTMLElement>('[role="listitem"]')!
+const panelOf = (column: string): HTMLElement => screen.getByRole('complementary', { name: `Column ${column}` })
 
-const choose = (column: string, value: string): void => {
-  fireEvent.change(fieldOf(column), { target: { value } })
+const openPanel = (column: string): void => {
+  fireEvent.click(screen.getByRole('button', { name: `Field for ${column}` }))
+}
+
+const closePanel = (column: string): void => {
+  fireEvent.click(within(panelOf(column)).getByRole('button', { name: 'Close' }))
+}
+
+const choose = (column: string, field: string): void => {
+  openPanel(column)
+  fireEvent.click(within(panelOf(column)).getByRole('treeitem', { name: field }))
+  closePanel(column)
+}
+
+const skip = (column: string): void => {
+  fireEvent.click(screen.getByRole('button', { name: `Don't import ${column}` }))
 }
 
 const shownColumns = (): string[] =>
   within(screen.getByRole('list', { name: 'Columns of the file' }))
     .getAllByRole('listitem')
-    .map((item) => item.querySelector('strong, span')!.textContent)
-
-const rowOf = (column: string): HTMLElement => fieldOf(column).closest<HTMLElement>('[role="listitem"]')!
+    .map((item) => Array.from(item.querySelectorAll('strong, span')).find((part) => part.textContent !== '')!.textContent)
 
 afterEach(() => {
   cleanup()
@@ -124,45 +138,48 @@ describe('the mapping step', () => {
     renderStep()
 
     expect(shownColumns()).toEqual(['Artikelnr', 'Name DE', 'Preis', 'Notiz'])
-    expect(within(rowOf('Preis')).getByText('12.50')).toBeTruthy()
-    expect(within(rowOf('Notiz')).getByText('Größe M & L')).toBeTruthy()
+    expect(within(rowOf('Preis')).getByText('e.g. “12.50”')).toBeTruthy()
+    expect(within(rowOf('Notiz')).getByText('e.g. “Größe M & L”')).toBeTruthy()
   })
 
   it('marks a sure suggestion as automatic, with its language', () => {
     renderStep()
 
-    expect(fieldOf('Name DE').value).toBe('name')
+    expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toContain('Name')
     expect(within(rowOf('Name DE')).getByText('auto')).toBeTruthy()
     expect(within(rowOf('Name DE')).getByText('de')).toBeTruthy()
   })
 
-  it('names a weaker suggestion without taking it', () => {
+  it('offers a weaker suggestion to take at once', () => {
     renderStep()
 
-    expect(fieldOf('Preis').value).toBe('')
-    expect(within(rowOf('Preis')).getByText('Suggested: Price')).toBeTruthy()
+    fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Use Price?' }))
+
+    expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')
+    expect(within(rowOf('Preis')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
   })
 
   it('shows the match column with the field it finds the objects by, which cannot be changed', () => {
     renderStep()
 
-    expect(fieldOf('Artikelnr').disabled).toBe(true)
-    expect(within(rowOf('Artikelnr')).getByRole('option', { name: 'SKU' })).toBeTruthy()
-    expect(within(rowOf('Artikelnr')).getByText('Finds the objects')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Field for Artikelnr' })).toBeNull()
+    expect(within(matchRowOf('Artikelnr')).getByText('SKU')).toBeTruthy()
+    expect(within(matchRowOf('Artikelnr')).getByText('Finds the objects')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: "Don't import Artikelnr" })).toBeNull()
   })
 
   it('shows the object ID for a match column when matching by it', () => {
     render(<Stateful initial={ createMapping(inspected, { ...objects, matchBy: 'id' }, loaded) } />)
 
-    expect(within(rowOf('Artikelnr')).getByRole('option', { name: 'Object ID' })).toBeTruthy()
+    expect(within(matchRowOf('Artikelnr')).getByText('Object ID')).toBeTruthy()
   })
 
   it('takes the auto mark away once the field is changed by hand', () => {
     renderStep()
 
-    choose('Name DE', 'note')
+    choose('Name DE', 'Note & remark')
 
-    expect(fieldOf('Name DE').value).toBe('note')
+    expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toContain('Note & remark')
     expect(within(rowOf('Name DE')).queryByText('auto')).toBeNull()
     expect(within(rowOf('Name DE')).queryByText('de')).toBeNull()
   })
@@ -170,63 +187,97 @@ describe('the mapping step', () => {
   it('can leave a column without a field again', () => {
     renderStep()
 
-    choose('Name DE', '')
+    openPanel('Name DE')
+    fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: 'Remove field' }))
 
-    expect(fieldOf('Name DE').value).toBe('')
+    expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toBe('Choose field')
     expect(within(rowOf('Name DE')).queryByText('auto')).toBeNull()
   })
 
   it('offers a field another column goes into only to that column', () => {
     renderStep()
-    choose('Notiz', 'price')
+    choose('Notiz', 'Price')
 
-    expect(within(fieldOf('Preis')).getByRole<HTMLOptionElement>('option', { name: 'Price' }).disabled).toBe(true)
-    expect(within(fieldOf('Notiz')).getByRole<HTMLOptionElement>('option', { name: 'Price' }).disabled).toBe(false)
-    expect(within(fieldOf('Notiz')).getByRole<HTMLOptionElement>('option', { name: 'SKU' }).disabled).toBe(true)
+    openPanel('Preis')
+    expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(true)
+    closePanel('Preis')
+    openPanel('Notiz')
+    expect(within(panelOf('Notiz')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(false)
   })
 
   it('names the fields the class requires, unescaped', () => {
     renderStep()
+    openPanel('Notiz')
 
-    expect(within(fieldOf('Notiz')).getByRole('option', { name: 'EAN (required)' })).toBeTruthy()
-    expect(within(fieldOf('Notiz')).getByRole('option', { name: 'Note & remark' })).toBeTruthy()
+    expect(within(panelOf('Notiz')).getByRole('treeitem', { name: 'EAN (required)' })).toBeTruthy()
+    expect(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Note & remark' })).toBeTruthy()
   })
 
-  it('warns of required fields no column goes into until one does', () => {
+  it('shows whether each required field has a column', () => {
     renderStep()
 
-    expect(screen.getByRole('alert').textContent).toBe('Required fields without a column: EAN')
+    expect(screen.getByText('Required fields:')).toBeTruthy()
+    expect(screen.getByText('✗ EAN')).toBeTruthy()
 
-    choose('Notiz', 'ean')
+    choose('Notiz', 'EAN (required)')
 
-    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('✓ EAN')).toBeTruthy()
+    expect(screen.queryByText('✗ EAN')).toBeNull()
+  })
+
+  it('says how many columns go into a field and what was mapped automatically', () => {
+    renderStep()
+
+    expect(screen.getByText('2 of 4 columns go into a field')).toBeTruthy()
+    expect(screen.getByText('1 column was mapped automatically')).toBeTruthy()
+    expect(screen.getByText('when the file was read, marked “auto”. 1 more has a suggestion to confirm.')).toBeTruthy()
   })
 
   describe('a column not to import', () => {
     it('moves to the area of columns not imported, and back', () => {
       renderStep()
 
-      choose('Name DE', '-')
+      skip('Name DE')
 
       expect(shownColumns()).toEqual(['Artikelnr', 'Preis', 'Notiz'])
-      const area = screen.getByRole('region', { name: 'Not imported (1)' })
-      expect(within(area).getByText('Name DE')).toBeTruthy()
-
-      fireEvent.click(within(area).getByRole('button', { name: 'Restore Name DE' }))
+      fireEvent.click(screen.getByRole('button', { name: /Not imported \(1\)/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Restore Name DE' }))
 
       expect(shownColumns()).toEqual(['Artikelnr', 'Name DE', 'Preis', 'Notiz'])
-      expect(fieldOf('Name DE').value).toBe('')
-      expect(screen.queryByRole('region', { name: /Not imported/ })).toBeNull()
+      expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toBe('Choose field')
+      expect(screen.queryByRole('button', { name: /Not imported/ })).toBeNull()
     })
 
     it('frees its field for another column', () => {
       renderStep()
-      choose('Notiz', 'price')
+      choose('Notiz', 'Price')
 
-      choose('Notiz', '-')
+      skip('Notiz')
 
-      expect(within(fieldOf('Preis')).getByRole<HTMLOptionElement>('option', { name: 'Price' }).disabled).toBe(false)
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Use all suggestions (1)' }).disabled).toBe(false)
+      openPanel('Preis')
+      expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(false)
+    })
+
+    it('takes every open column at once, leaving the decided ones', () => {
+      renderStep()
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+
+      expect(shownColumns()).toEqual(['Artikelnr', 'Name DE'])
+      expect(screen.getByRole('button', { name: /Not imported \(2\)/ })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: /not mapped$/ })).toBeNull()
+    })
+
+    it('finds a column in the area by its name', () => {
+      renderStep()
+      skip('Name DE')
+      skip('Preis')
+      fireEvent.click(screen.getByRole('button', { name: /Not imported \(2\)/ }))
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Search columns' }), { target: { value: 'pre' } })
+
+      expect(screen.queryByRole('button', { name: 'Restore Name DE' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Restore Preis' })).toBeTruthy()
     })
   })
 
@@ -234,18 +285,18 @@ describe('the mapping step', () => {
     it('takes every suggestion waiting, marked as automatic', () => {
       renderStep()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Use all suggestions (1)' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Use all 1 suggestions' }))
 
-      expect(fieldOf('Preis').value).toBe('price')
+      expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')
       expect(within(rowOf('Preis')).getByText('auto')).toBeTruthy()
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Use all suggestions (0)' }).disabled).toBe(true)
+      expect(screen.queryByRole('button', { name: /^Use all/ })).toBeNull()
     })
 
     it('leaves a column whose suggested field another column took by hand', () => {
       renderStep()
-      choose('Notiz', 'price')
+      choose('Notiz', 'Price')
 
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Use all suggestions (0)' }).disabled).toBe(true)
+      expect(screen.queryByRole('button', { name: /^Use all/ })).toBeNull()
     })
   })
 
@@ -253,28 +304,12 @@ describe('the mapping step', () => {
     it('counts and shows the mapped and the open columns', () => {
       renderStep()
 
-      expect(screen.getByRole('radio', { name: 'All (4)' })).toBeTruthy()
-      fireEvent.click(screen.getByRole('radio', { name: 'Mapped (2)' }))
+      expect(screen.getByRole('button', { name: 'To import 4' })).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'Mapped 2' }))
       expect(shownColumns()).toEqual(['Artikelnr', 'Name DE'])
 
-      fireEvent.click(screen.getByRole('radio', { name: 'Open (2)' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Not mapped 2' }))
       expect(shownColumns()).toEqual(['Preis', 'Notiz'])
-    })
-
-    it('finds a column by its name', () => {
-      renderStep()
-
-      fireEvent.change(screen.getByRole('searchbox', { name: 'Find a column' }), { target: { value: 'pre' } })
-
-      expect(shownColumns()).toEqual(['Preis'])
-    })
-
-    it('says when no column is left to show', () => {
-      renderStep()
-
-      fireEvent.change(screen.getByRole('searchbox', { name: 'Find a column' }), { target: { value: 'missing' } })
-
-      expect(screen.getByText('No column to show')).toBeTruthy()
     })
   })
 
@@ -311,53 +346,40 @@ describe('the mapping step', () => {
       jest.useRealTimers()
     })
 
-    it('opens the transformations of a column with a field and applies them to it', async () => {
+    const transformationsOf = (column: string): HTMLElement => within(rowOf(column)).getByRole('button', { name: `Transformations of ${column}` })
+
+    it('opens the transformations of a column with a field and applies them to it as they are made', async () => {
       mockPreview.mockResolvedValue(answer(true))
       renderStep()
 
       expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Transformations of Notiz' })).toBeNull()
-      choose('Notiz', 'note')
-      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
+      choose('Notiz', 'Note & remark')
+      await settle()
+      fireEvent.click(transformationsOf('Notiz'))
       await settle()
 
-      expect(screen.getByRole('dialog', { name: 'Transformations of Notiz into Note & remark' })).toBeTruthy()
-      fireEvent.change(screen.getByLabelText('Add a transformation'), { target: { value: 'loadAsset' } })
+      fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: '+ Load asset' }))
       await settle()
-      fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+      closePanel('Notiz')
 
-      expect(screen.queryByRole('dialog', { name: 'Transformations of Notiz into Note & remark' })).toBeNull()
-      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }).textContent).toBe('Transformations (1)')
+      expect(screen.queryByRole('complementary', { name: 'Column Notiz' })).toBeNull()
+      expect(transformationsOf('Notiz').textContent).toBe('1 transformation')
     })
 
     it('marks a column whose field does not take it until its transformations fit', async () => {
       mockPreview.mockResolvedValue(answer(true))
       renderStep()
 
-      choose('Notiz', 'image')
+      openPanel('Notiz')
+      fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
       expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
       expect(screen.getByText('Columns whose values do not fit their field yet: Notiz')).toBeTruthy()
 
-      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
       await settle()
-      fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
       expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
       expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
-    })
-
-    it('keeps the transformations as they were when closed without applying', async () => {
-      mockPreview.mockResolvedValue(answer(false))
-      renderStep()
-
-      choose('Notiz', 'note')
-      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
-      await settle()
-      fireEvent.change(screen.getByLabelText('Add a transformation'), { target: { value: 'loadAsset' } })
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-
-      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }).textContent).toBe('Transformations')
-      expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
     })
 
     it('offers none for the match column, or without a file to run them on', () => {

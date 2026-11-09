@@ -184,7 +184,7 @@ export const setTransformations = (
   mapping: Mapping,
   column: string,
   transformations: TransformationStep[],
-  fits: boolean
+  fits: boolean | undefined
 ): Mapping => changeRow(mapping, column, (row) => ({ ...row, transformations, fits }))
 
 /**
@@ -212,6 +212,14 @@ export const skipColumn = (mapping: Mapping, column: string): Mapping =>
     transformations: [],
     fits: undefined
   }))
+
+// "Don't import the columns not mapped": every open column goes to the area to restore it from
+export const skipOpenColumns = (mapping: Mapping): Mapping => ({
+  ...mapping,
+  rows: mapping.rows.map((row) => isOpen(row)
+    ? { ...row, choice: undefined, auto: false, skipped: true, transformations: [], fits: undefined }
+    : row)
+})
 
 export const restoreColumn = (mapping: Mapping, column: string): Mapping =>
   changeRow(mapping, column, (row) => ({ ...row, skipped: false }))
@@ -252,20 +260,19 @@ export const rowCounts = (mapping: Mapping): Record<RowFilter, number> => {
   }
 }
 
-export const visibleRows = (mapping: Mapping, filter: RowFilter, search: string): MappingRow[] => {
-  const term = search.trim().toLowerCase()
+export const visibleRows = (mapping: Mapping, filter: RowFilter): MappingRow[] =>
+  importedRows(mapping).filter((row) => matchesFilter(row, filter))
 
-  return importedRows(mapping).filter((row) => matchesFilter(row, filter) &&
-    (term === '' || row.label.toLowerCase().includes(term)))
-}
+// the columns mapped automatically and still as they were suggested
+export const autoRowCount = (mapping: Mapping): number => importedRows(mapping).filter(({ auto }) => auto).length
 
-/**
- * The fields the class requires that no column goes into.
- */
-export const missingRequiredFields = (mapping: Mapping, fields: MappingField[]): MappingField[] => {
+export type RequiredField = MappingField & { covered: boolean }
+
+// the fields the class requires, and whether a column goes into each
+export const requiredFields = (mapping: Mapping, fields: MappingField[]): RequiredField[] => {
   const chosen = new Set(importedRows(mapping).flatMap(({ choice }) => choice === undefined ? [] : [choice.field]))
 
-  return fields.filter(({ key, mandatory }) => mandatory && !chosen.has(key))
+  return fields.filter(({ mandatory }) => mandatory).map((field) => ({ ...field, covered: chosen.has(field.key) }))
 }
 
 /**

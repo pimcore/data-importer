@@ -10,7 +10,7 @@
 
 import React, { useMemo } from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { ColumnPicker, FormKit, Text } from '@pimcore/studio-ui-bundle/components'
+import { ColumnPicker } from '@pimcore/studio-ui-bundle/components'
 import { buildFieldGroups } from './field-groups'
 import { type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { canGoInto, takenFields } from './taken-fields'
@@ -47,8 +47,8 @@ const useStyles = createStyles(({ css }) => ({
 }))
 
 export interface FieldPanelProps {
-  // the column whose field is picked; none while no column can take one
-  row?: MappingRow
+  // the column whose field is picked
+  row: MappingRow
   mapping: Mapping
   fields: MappingField[]
   languages: string[]
@@ -60,35 +60,23 @@ export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPan
   const { styles } = useStyles()
   const taken = useMemo(() => takenFields(mapping.rows), [mapping.rows])
 
-  const groups = useMemo(() => row === undefined
-    ? []
-    : buildFieldGroups(fields, (field) => ({
-        key: field.key,
-        label: field.mandatory
-          ? t('data-importer.ad-hoc-import.mapping.required-field', { field: field.title, interpolation: { escapeValue: false } })
-          : field.title,
-        disabled: !canGoInto(taken, field, row.column, languages),
-        meta: field
-      })), [row, fields, taken, languages, t])
+  const groups = useMemo(() => buildFieldGroups(fields, (field) => ({
+    key: field.key,
+    label: field.mandatory
+      ? t('data-importer.ad-hoc-import.mapping.required-field', { field: field.title, interpolation: { escapeValue: false } })
+      : field.title,
+    disabled: !canGoInto(taken, field, row.column, languages),
+    meta: field
+  })), [row, fields, taken, languages, t])
 
   return (
-    <FormKit.Panel
-      title={ row === undefined
-        ? t('data-importer.ad-hoc-import.mapping.fields')
-        : t('data-importer.ad-hoc-import.mapping.fields-for', { column: row.label, interpolation: { escapeValue: false } }) }
-    >
-      { row === undefined
-        ? <Text>{ t('data-importer.ad-hoc-import.mapping.pick-a-column') }</Text>
-        : (
-          <div className={ styles.picker }>
-            <ColumnPicker
-              emptyText={ t('data-importer.ad-hoc-import.mapping.no-fields') }
-              groups={ groups }
-              onSelect={ ({ meta }) => { if (meta !== undefined) { onPick(row, meta) } } }
-              searchPlaceholder={ t('data-importer.ad-hoc-import.mapping.find-field') }
-            />
-          </div>
-          ) }
-    </FormKit.Panel>
+    <div className={ styles.picker }>
+      <ColumnPicker
+        emptyText={ t('data-importer.ad-hoc-import.mapping.no-fields') }
+        groups={ groups }
+        onSelect={ ({ meta }) => { if (meta !== undefined) { onPick(row, meta) } } }
+        searchPlaceholder={ t('data-importer.ad-hoc-import.mapping.find-field') }
+      />
+    </div>
   )
 }

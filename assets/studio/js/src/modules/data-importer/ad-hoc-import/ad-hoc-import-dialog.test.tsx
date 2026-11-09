@@ -59,7 +59,9 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportLoadRunQuery: (...args: unknown[]) => mockLoadRun(...args),
   useBundleDataImporterAdHocImportMergeLeavingOutMutation: () => [mockMergeLeavingOut],
   useBundleDataImporterAdHocImportWithdrawRunMutation: () => [mockWithdrawRun],
-  useBundleDataImporterAdHocImportListWaitingRunsQuery: (...args: unknown[]) => mockListWaitingRuns(...args)
+  useBundleDataImporterAdHocImportListWaitingRunsQuery: (...args: unknown[]) => mockListWaitingRuns(...args),
+  // the side panel runs a column's values through the server; these tests stop before an answer counts
+  useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [async () => await new Promise(() => {})]
 }))
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({ useElementHelper: () => ({ openElement: jest.fn() }) }))
 
@@ -219,6 +221,15 @@ const dryRunAnswer = {
 const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
+
+const pickField = (column: string, field: string): void => {
+  fireEvent.click(screen.getByRole('button', { name: `Field for ${column}` }))
+  const panel = screen.getByRole('complementary', { name: `Column ${column}` })
+  fireEvent.click(within(panel).getByRole('treeitem', { name: field }))
+  fireEvent.click(within(panel).getAllByRole('button', { name: 'Close' })[0])
+}
+
+const fieldOf = (column: string): string => screen.getByRole('button', { name: `Field for ${column}` }).textContent ?? ''
 
 const nextButton = (): HTMLElement => screen.getByRole('button', { name: /^Next(: Preview)?$/ })
 
@@ -960,6 +971,17 @@ describe('the mapping step', () => {
     await act(async () => { fireEvent.click(nextButton()) })
   }
 
+  it('says in the footer whether every column is decided', async () => {
+    await toMapping()
+
+    expect(screen.getByText('Every column is decided')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Field for Bezeichnung' }))
+    fireEvent.click(within(screen.getByRole('complementary', { name: 'Column Bezeichnung' })).getByRole('button', { name: 'Remove field' }))
+
+    expect(screen.getByText('1 column not decided yet: choose a field or “Don\'t import”')).toBeTruthy()
+  })
+
   it('names the file in the title from the mapping on', async () => {
     await toMapping()
 
@@ -976,7 +998,7 @@ describe('the mapping step', () => {
       }
     })
     expect(within(screen.getByRole('list', { name: 'Columns of the file' })).getAllByRole('listitem')).toHaveLength(2)
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect(fieldOf('Bezeichnung')).toContain('Title')
     expect(screen.getByText('auto')).toBeTruthy()
   })
 
@@ -1000,11 +1022,12 @@ describe('the mapping step', () => {
     await toMapping()
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
-    select('Field for Bezeichnung', '-')
+    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
 
+    fireEvent.click(screen.getByRole('button', { name: /Not imported \(1\)/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Restore Bezeichnung' }))
-    select('Field for Bezeichnung', 'title')
+    pickField('Bezeichnung', 'Title')
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
@@ -1013,37 +1036,37 @@ describe('the mapping step', () => {
   it('waits on a column whose values do not fit its field, and offers its transformations', async () => {
     await toMapping()
 
-    select('Field for Bezeichnung', 'image')
+    pickField('Bezeichnung', 'Image')
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText('Columns whose values do not fit their field yet: Bezeichnung')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
 
-    select('Field for Bezeichnung', 'title')
+    pickField('Bezeichnung', 'Title')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('keeps the mapping when going back and on with nothing changed', async () => {
     await toMapping()
-    select('Field for Bezeichnung', '-')
+    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(mockLoadMapping).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('region', { name: 'Not imported (1)' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Not imported \(1\)/ })).toBeTruthy()
   })
 
   it('makes a new mapping for another column to match by', async () => {
     await toMapping()
-    select('Field for Bezeichnung', '-')
+    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     select('from column', 'Bezeichnung')
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(mockLoadMapping).toHaveBeenCalledTimes(2)
-    expect(screen.queryByRole('region', { name: 'Not imported (1)' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Not imported \(1\)/ })).toBeNull()
     expect(screen.getByText('Finds the objects')).toBeTruthy()
   })
 
@@ -1056,7 +1079,7 @@ describe('the mapping step', () => {
       select('Field', 'sku')
       select('from column', '0')
       await act(async () => { fireEvent.click(nextButton()) })
-      select('Field for name', 'title')
+      pickField('name', 'Title')
       fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     }
 
@@ -1069,9 +1092,9 @@ describe('the mapping step', () => {
       await act(async () => { fireEvent.click(nextButton()) })
 
       expect(mockLoadMapping).toHaveBeenCalledTimes(1)
-      expect(screen.getByLabelText<HTMLSelectElement>('Field for name').value).toBe('title')
-      expect(screen.getByText('Rain coat')).toBeTruthy()
-      expect(screen.queryByText('Trail jacket')).toBeNull()
+      expect(fieldOf('name')).toContain('Title')
+      expect(screen.getByText('e.g. “Rain coat”')).toBeTruthy()
+      expect(screen.queryByText('e.g. “Trail jacket”')).toBeNull()
     })
 
     it('makes a new mapping when the columns have no names, even for the same match column', async () => {
@@ -1082,7 +1105,7 @@ describe('the mapping step', () => {
       select('Field', 'sku')
       select('from column', '0')
       await act(async () => { fireEvent.click(nextButton()) })
-      select('Field for 1', 'title')
+      pickField('1', 'Title')
       fireEvent.click(screen.getByRole('button', { name: 'Back' }))
 
       await act(async () => { select('Sheet', 'Prices') })
@@ -1090,7 +1113,7 @@ describe('the mapping step', () => {
       await act(async () => { fireEvent.click(nextButton()) })
 
       expect(mockLoadMapping).toHaveBeenCalledTimes(2)
-      expect(screen.getByLabelText<HTMLSelectElement>('Field for 1').value).toBe('')
+      expect(fieldOf('1')).toBe('Choose field')
     })
   })
 
@@ -1109,7 +1132,7 @@ describe('the mapping step', () => {
     await act(async () => { answers[0]({ data: mappingAnswer }) })
 
     expect(screen.queryByText('auto')).toBeNull()
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Artikelnr').value).toBe('')
+    expect(fieldOf('Artikelnr')).toBe('Choose field')
   })
 
   it('reports a mapping that could not be loaded and cannot go on', async () => {
@@ -1214,7 +1237,7 @@ describe('the mapping step with a configuration', () => {
     await toConfiguration()
     fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
 
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect(fieldOf('Bezeichnung')).toContain('Title')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 

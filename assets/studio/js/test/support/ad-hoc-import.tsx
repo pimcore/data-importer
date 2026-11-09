@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 // Test stand-ins for the Studio components of the ad hoc import, and the English catalogue behind t()
 import fs from 'node:fs'
 import path from 'node:path'
@@ -19,7 +20,7 @@ const catalogue: Record<string, string> = Object.fromEntries(
     .split('\n')
     .map((line) => /^([\w.-]+): (.*)$/.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => [match[1], match[2].replace(/^'(.*)'$/, '$1')])
+    .map((match) => [match[1], match[2].replace(/^'(.*)'$/, '$1').replace(/''/g, "'")])
 )
 
 export const translate = (key: string, values: Record<string, unknown> = {}): string => {
@@ -168,11 +169,32 @@ export const components = {
       )) }
     </select>
   ),
-  Input: ({ id, value, onBlur, onChange }: { id?: string, value?: string, onBlur?: React.FocusEventHandler<HTMLInputElement>, onChange?: React.ChangeEventHandler<HTMLInputElement> }) => (
+  Tabs: ({ items, activeKey, onChange }: { items: Array<{ key: string, label: string, disabled?: boolean, children: React.ReactNode }>, activeKey: string, onChange?: (key: string) => void }) => (
+    <div>
+      <div role="tablist">
+        { items.map(({ key, label, disabled }) => (
+          <button
+            aria-selected={ key === activeKey }
+            disabled={ disabled }
+            key={ key }
+            onClick={ () => onChange?.(key) }
+            role="tab"
+            type="button"
+          >
+            { label }
+          </button>
+        )) }
+      </div>
+      { items.find(({ key }) => key === activeKey)?.children }
+    </div>
+  ),
+  Input: ({ id, value, onBlur, onChange, 'aria-label': label, placeholder }: { id?: string, value?: string, onBlur?: React.FocusEventHandler<HTMLInputElement>, onChange?: React.ChangeEventHandler<HTMLInputElement>, 'aria-label'?: string, placeholder?: string }) => (
     <input
+      aria-label={ label }
       id={ id }
       onBlur={ onBlur }
       onChange={ onChange }
+      placeholder={ placeholder }
       value={ value }
     />
   ),

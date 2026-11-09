@@ -257,11 +257,6 @@ export const ConfigurationChoice = ({
 
         { usable && (
           <FormKit.Panel title={ configuration.name }>
-            <Alert
-              message={ t('data-importer.ad-hoc-import.configuration.replaces') }
-              showIcon
-              type="info"
-            />
             <Form.Item
               label={ t('data-importer.ad-hoc-import.objects.class') }
               style={ FORM_ITEM_STYLE }

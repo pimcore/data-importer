@@ -8,7 +8,6 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Segmented, Text } from '@pimcore/studio-ui-bundle/components'
@@ -25,9 +24,8 @@ export const MapWithSwitch = ({ value, onChange }: MapWithSwitchProps): React.JS
   return (
     <Flex
       align="center"
-      gap="small"
+      gap="normal"
     >
-      <Text>{ t('data-importer.ad-hoc-import.mapping.map-with') }</Text>
       <Segmented
         onChange={ (next) => { onChange(next as MapWith) } }
         options={ [
@@ -36,6 +34,9 @@ export const MapWithSwitch = ({ value, onChange }: MapWithSwitchProps): React.JS
         ] }
         value={ value }
       />
+      <Text type="secondary">
+        { t(value === 'here' ? 'data-importer.ad-hoc-import.mapping.map-here-hint' : 'data-importer.ad-hoc-import.configuration.replaces') }
+      </Text>
     </Flex>
   )
 }

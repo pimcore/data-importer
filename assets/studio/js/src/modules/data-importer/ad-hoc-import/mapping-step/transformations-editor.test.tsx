@@ -9,12 +9,12 @@
  */
 
 /* eslint-disable max-lines */
-import React from 'react'
+import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type BundleDataImporterAdHocImportTransformationResponse } from '../../data-importer-api-slice.gen'
 import { type MappingField, type MappingRow } from './mapping-state'
 import { TransformationSettings } from './transformation-settings'
-import { TransformationsModal, transformationSourceOf, type TransformationSource } from './transformations-modal'
+import { TransformationsEditor, useTransformationPreview, transformationSourceOf, type TransformationSource } from './transformations-editor'
 import { type InspectedFile } from '../file-step/file-step-state'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../../test/support/ad-hoc-import'))
@@ -59,19 +59,25 @@ const field: MappingField = { key: 'name', title: 'Name <en>', localized: false,
 
 const source: TransformationSource = { fileId: 'file-1', classId: 'PROD', settings: { delimiter: ';', hasHeaderRow: true } }
 
-const onApply = jest.fn()
-const onCancel = jest.fn()
+const Harness = ({ given, withField }: { given: Partial<MappingRow>, withField: MappingField }): React.JSX.Element => {
+  const [steps, setSteps] = useState(given.transformations ?? [])
+  const preview = useTransformationPreview({ row: { ...row, ...given }, field: withField, source, steps })
 
-const renderModal = (given: Partial<MappingRow> = {}, withField: MappingField = field): void => {
-  render(
-    <TransformationsModal
+  return (
+    <TransformationsEditor
       field={ withField }
-      onApply={ onApply }
-      onCancel={ onCancel }
-      row={ { ...row, ...given } }
-      source={ source }
+      onChange={ setSteps }
+      preview={ preview }
+      steps={ steps }
     />
   )
+}
+
+const renderEditor = (given: Partial<MappingRow> = {}, withField: MappingField = field): void => {
+  render(<Harness
+    given={ given }
+    withField={ withField }
+         />)
 }
 
 // waits out the pause before a preview and lets its answer arrive
@@ -88,23 +94,16 @@ const lastPipeline = (): unknown => (mockPreview.mock.calls[mockPreview.mock.cal
 }).bundleDataImporterAdHocImportTransformationParameters.transformationPipeline
 
 const addStep = (label: string): void => {
-  const add = screen.getByLabelText<HTMLSelectElement>('Add a transformation')
-  const option = within(add).getByRole<HTMLOptionElement>('option', { name: label })
-  fireEvent.change(add, { target: { value: option.value } })
+  fireEvent.click(addButton(label))
 }
 
-const table = (): string[][] => Array.from(document.querySelectorAll('tr'))
-  .map((tableRow) => Array.from(tableRow.querySelectorAll('th, td')).map((tableCell) => tableCell.textContent ?? ''))
-
-const applyButton = (): HTMLButtonElement => screen.getByRole<HTMLButtonElement>('button', { name: 'Apply' })
+const addButton = (label: string): HTMLButtonElement => screen.getByRole<HTMLButtonElement>('button', { name: `+ ${label}` })
 
 beforeEach(() => {
   jest.useFakeTimers()
   mockPreview.mockReset()
   mockPreview.mockResolvedValue({ data: answer() })
   mockTrackError.mockReset()
-  onApply.mockReset()
-  onCancel.mockReset()
 })
 
 afterEach(() => {
@@ -114,7 +113,7 @@ afterEach(() => {
 
 describe('the transformations of a column', () => {
   it('runs on the stored file under its settings, for the column and its field', async () => {
-    renderModal()
+    renderEditor()
     await settle()
 
     expect(mockPreview).toHaveBeenCalledTimes(1)
@@ -129,11 +128,10 @@ describe('the transformations of a column', () => {
         transformationPipeline: []
       }
     })
-    expect(screen.getByRole('dialog', { name: 'Transformations of Name & title into Name <en>' })).toBeTruthy()
-    expect(screen.getByText('The values go into the field as they are in the file.')).toBeTruthy()
+    expect(screen.getByText('Applied top to bottom to this column\'s value, before the automatic conversion for the field\'s type.')).toBeTruthy()
   })
 
-  it('shows each row\'s value in the file, after each step and in the field', async () => {
+  it('shows each step\'s value for the first row and the conversion of the field', async () => {
     mockPreview.mockResolvedValue({
       data: answer({
         steps: [{ type: 'trim', resultType: 'default', error: null, values: [cell('Chair'), cell(), cell('x')] }],
@@ -141,33 +139,19 @@ describe('the transformations of a column', () => {
         conversion: 'numeric'
       })
     })
-    renderModal({ transformations: [{ type: 'trim', settings: { mode: 'both' } }] })
+    renderEditor({ transformations: [{ type: 'trim', settings: { mode: 'both' } }] })
     await settle()
 
-    expect(table()).toEqual([
-      ['In the file', '1. Trim', 'Into Name <en>'],
-      [' Chair ', 'Chair', 'Chair'],
-      ['(empty)', '(empty)', '(empty)'],
-      ['x', 'x', 'Cannot be converted']
-    ])
+    expect(screen.getByText('→ Chair')).toBeTruthy()
     expect(screen.getByText('Converted to a number for the field.')).toBeTruthy()
-  })
-
-  it('joins the items of a list', async () => {
-    mockPreview.mockResolvedValue({ data: answer({ values: [cell('red,blue')], results: [cell('red', 'blue')] }) })
-    renderModal()
-    await settle()
-
-    expect(table()[1]).toEqual(['red,blue', 'red, blue'])
   })
 
   it('offers only the transformations the server names, each with its settings', async () => {
     mockPreview.mockResolvedValue({ data: answer({ offered: ['trim', 'loadAsset'] }) })
-    renderModal()
+    renderEditor()
     await settle()
 
-    const add = screen.getByLabelText('Add a transformation')
-    expect(within(add).getAllByRole('option').map((option) => option.textContent)).toEqual(['Add a transformation', 'Trim', 'Load asset'])
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['+ Trim', '+ Load asset'])
 
     addStep('Load asset')
     await settle()
@@ -181,18 +165,18 @@ describe('the transformations of a column', () => {
 
   it('offers no transformation until the steps added last have their answer', async () => {
     mockPreview.mockResolvedValue({ data: answer({ offered: ['trim', 'loadAsset'] }) })
-    renderModal()
+    renderEditor()
     await settle()
 
     addStep('Load asset')
-    expect(screen.getByLabelText<HTMLSelectElement>('Add a transformation').disabled).toBe(true)
+    expect(addButton('Trim').disabled).toBe(true)
 
     await settle()
-    expect(screen.getByLabelText<HTMLSelectElement>('Add a transformation').disabled).toBe(false)
+    expect(addButton('Trim').disabled).toBe(false)
   })
 
   it('runs the values again once typing pauses', async () => {
-    renderModal({ transformations: [{ type: 'stringReplace', settings: { search: '', replace: '' } }] })
+    renderEditor({ transformations: [{ type: 'stringReplace', settings: { search: '', replace: '' } }] })
     await settle()
 
     fireEvent.change(screen.getByLabelText('Find'), { target: { value: ',' } })
@@ -204,7 +188,7 @@ describe('the transformations of a column', () => {
   })
 
   it('takes each transformation\'s settings', async () => {
-    renderModal({
+    renderEditor({
       transformations: [
         { type: 'trim', settings: { mode: 'both' } },
         { type: 'conditionalConversion', settings: { original: '', converted: '' } },
@@ -228,7 +212,7 @@ describe('the transformations of a column', () => {
   })
 
   it('removes a transformation', async () => {
-    renderModal({ transformations: [{ type: 'trim', settings: { mode: 'both' } }, { type: 'loadDataObject', settings: { loadStrategy: 'id' } }] })
+    renderEditor({ transformations: [{ type: 'trim', settings: { mode: 'both' } }, { type: 'loadDataObject', settings: { loadStrategy: 'id' } }] })
     await settle()
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove Trim' }))
@@ -264,7 +248,7 @@ describe('the transformations of a column', () => {
         offered: []
       })
     })
-    renderModal({ transformations: [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }, { type: 'trim', settings: { mode: 'both' } }] })
+    renderEditor({ transformations: [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }, { type: 'trim', settings: { mode: 'both' } }] })
     await settle()
 
     const alerts = screen.getAllByRole('alert').map((alert) => alert.textContent)
@@ -272,7 +256,7 @@ describe('the transformations of a column', () => {
       'This transformation cannot take the values of the one before it.',
       'The values cannot go into Name <en> yet. Add a transformation that leads there, or choose another field.'
     ])
-    expect(screen.getByLabelText<HTMLSelectElement>('Add a transformation').disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: /^\+ / })).toBeNull()
   })
 
   it('says when the lists of map values differ in length', async () => {
@@ -285,31 +269,16 @@ describe('the transformations of a column', () => {
         offered: []
       })
     })
-    renderModal({ transformations: [{ type: 'conditionalConversion', settings: { original: 'S|M|L', converted: 'small|medium' } }] })
+    renderEditor({ transformations: [{ type: 'conditionalConversion', settings: { original: 'S|M|L', converted: 'small|medium' } }] })
     await settle()
 
     expect(screen.getAllByRole('alert')[0].textContent).toBe('Give as many values under Into as under Values.')
   })
 
-  it('applies the transformations with the server\'s answer whether they fit', async () => {
-    mockPreview.mockResolvedValue({ data: answer({ fits: false }) })
-    renderModal()
-
-    expect(applyButton().disabled).toBe(true)
-    await settle()
-
-    addStep('Trim')
-    expect(applyButton().disabled).toBe(true)
-    await settle()
-
-    fireEvent.click(applyButton())
-    expect(onApply).toHaveBeenCalledWith([{ type: 'trim', settings: { mode: 'both' } }], false)
-  })
-
   it('takes only the answer to the steps asked for last', async () => {
     let late: (value: unknown) => void = () => {}
     mockPreview.mockResolvedValue({ data: answer({ offered: ['trim'] }) })
-    renderModal()
+    renderEditor()
     await settle()
 
     mockPreview.mockReturnValueOnce(new Promise((resolve) => { late = resolve }))
@@ -321,28 +290,18 @@ describe('the transformations of a column', () => {
     await act(async () => { late({ data: answer({ offered: ['loadAsset'], fits: false }) }) })
 
     expect(mockPreview).toHaveBeenCalledTimes(3)
-    expect(within(screen.getByLabelText('Add a transformation')).getAllByRole('option').map((option) => option.textContent))
-      .toEqual(['Add a transformation', 'Trim'])
-    fireEvent.click(applyButton())
-    expect(onApply).toHaveBeenCalledWith([{ type: 'trim', settings: { mode: 'left' } }], true)
+    expect(screen.getByRole('button', { name: '+ Trim' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '+ Load asset' })).toBeNull()
+    expect(lastPipeline()).toEqual([{ type: 'trim', settings: { mode: 'left' } }])
   })
 
-  it('reports a failed request and applies nothing', async () => {
+  it('reports a failed request', async () => {
     mockPreview.mockResolvedValue({ error: { status: 422, data: { message: 'no' } } })
-    renderModal()
+    renderEditor()
     await settle()
 
     expect(mockTrackError).toHaveBeenCalledTimes(1)
-    expect(applyButton().disabled).toBe(true)
-  })
-
-  it('closes without applying', async () => {
-    renderModal()
-    await settle()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(onCancel).toHaveBeenCalledTimes(1)
-    expect(onApply).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /^\+ / })).toBeNull()
   })
 })
 

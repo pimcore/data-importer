@@ -21,8 +21,10 @@ jest.mock('@pimcore/studio-ui-bundle/app', () => ({
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 let mockLanguages = ['en', 'de', 'fr']
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: mockLanguages }) }))
-// opens only with a file to run the transformations on, which these tests do not give
-jest.mock('./transformations-modal', () => ({ TransformationsModal: () => null }))
+// runs only with a file to run the transformations on, which these tests do not give
+jest.mock('../../data-importer-api-slice-enhanced', () => ({
+  useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [jest.fn()]
+}))
 // the key dialog loads its keys from the server; here it offers one key to take, and a way out
 jest.mock('./store-key-dialog', () => ({
   StoreKeyDialog: ({ fieldName, onSelect, onClose, takenKeyIds }: { fieldName: string, onSelect: (key: { id: string, label: string }) => void, onClose: () => void, takenKeyIds?: string[] }) => (
@@ -106,18 +108,21 @@ const renderStep = (): void => {
   render(<Stateful initial={ createMapping(inspected, objects, loaded) } />)
 }
 
-const fieldOf = (column: string): HTMLSelectElement => screen.getByLabelText<HTMLSelectElement>(`Field for ${column}`)
+const rowOf = (column: string): HTMLElement => screen.getByRole('button', { name: `Field for ${column}` }).closest<HTMLElement>('[role="listitem"]')!
+const panelOf = (column: string): HTMLElement => screen.getByRole('complementary', { name: `Column ${column}` })
+const fieldButton = (column: string): HTMLElement => screen.getByRole('button', { name: `Field for ${column}` })
 
-const choose = (column: string, value: string): void => {
-  fireEvent.change(fieldOf(column), { target: { value } })
+const openPanel = (column: string): void => {
+  fireEvent.click(fieldButton(column))
 }
 
-const shownColumns = (): string[] =>
-  within(screen.getByRole('list', { name: 'Columns of the file' }))
-    .getAllByRole('listitem')
-    .map((item) => item.querySelector('strong, span')!.textContent)
+const closePanel = (column: string): void => {
+  fireEvent.click(within(panelOf(column)).getByRole('button', { name: 'Close' }))
+}
 
-const rowOf = (column: string): HTMLElement => fieldOf(column).closest<HTMLElement>('[role="listitem"]')!
+const pickIn = (column: string, name: string): void => {
+  fireEvent.click(within(panelOf(column)).getByRole('treeitem', { name }))
+}
 
 afterEach(() => {
   cleanup()
@@ -125,70 +130,62 @@ afterEach(() => {
 })
 
 describe('picking fields', () => {
-  describe('the field panel', () => {
-    const panel = (): HTMLElement => screen.getByRole('region', { name: /^Fields/ })
-    const fieldInPanel = (name: string): HTMLButtonElement => within(panel()).getByRole<HTMLButtonElement>('treeitem', { name })
-
-    it('picks the field of the first column that can take one, grouped as in the class layout', () => {
+  describe('the side panel', () => {
+    it('opens on the column, with its fields grouped as in the class layout', () => {
       renderStep()
 
-      expect(panel().getAttribute('aria-label')).toBe('Fields for Name DE')
+      openPanel('Name DE')
+
       expect(rowOf('Name DE').getAttribute('aria-current')).toBe('true')
       expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1)
-      const groups = within(panel()).getAllByRole('group').map((group) => group.getAttribute('aria-label'))
+      const groups = within(panelOf('Name DE')).getAllByRole('group').map((group) => group.getAttribute('aria-label'))
       expect(groups).toEqual(['Product', 'Prices', 'technical', 'Engine', 'Specification'])
-      expect(within(within(panel()).getByRole('group', { name: 'Engine' })).getByRole('treeitem', { name: 'Power' })).toBeTruthy()
-      expect(fieldInPanel('EAN (required)')).toBeTruthy()
+      expect(within(within(panelOf('Name DE')).getByRole('group', { name: 'Engine' })).getByRole('treeitem', { name: 'Power' })).toBeTruthy()
+      expect(within(panelOf('Name DE')).getByRole('treeitem', { name: 'EAN (required)' })).toBeTruthy()
     })
 
-    it('picks for the column clicked or focused, never for the match column', () => {
+    it('moves to the next and the previous column, passing the match column', () => {
       renderStep()
+      openPanel('Name DE')
 
-      fireEvent.click(rowOf('Notiz'))
-      expect(panel().getAttribute('aria-label')).toBe('Fields for Notiz')
+      fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: 'Next column ›' }))
+      expect(panelOf('Preis')).toBeTruthy()
 
-      fireEvent.focus(fieldOf('Preis'))
-      expect(panel().getAttribute('aria-label')).toBe('Fields for Preis')
-
-      fireEvent.click(rowOf('Artikelnr'))
-      expect(panel().getAttribute('aria-label')).toBe('Fields for Preis')
+      fireEvent.click(within(panelOf('Preis')).getByRole('button', { name: 'Previous column' }))
+      fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: 'Previous column' }))
+      expect(panelOf('Notiz')).toBeTruthy()
     })
 
     it('puts the field picked into the column, by hand', () => {
       renderStep()
-      fireEvent.click(rowOf('Notiz'))
+      openPanel('Notiz')
 
-      fireEvent.click(fieldInPanel('Note & remark'))
+      pickIn('Notiz', 'Note & remark')
 
-      expect(fieldOf('Notiz').value).toBe('note')
+      expect(fieldButton('Notiz').textContent).toContain('Note & remark')
       expect(within(rowOf('Notiz')).queryByText('auto')).toBeNull()
     })
 
     it('offers a field another column goes into only to that column', () => {
       renderStep()
-      fireEvent.click(rowOf('Notiz'))
-      fireEvent.click(fieldInPanel('Price'))
+      openPanel('Notiz')
+      pickIn('Notiz', 'Price')
 
-      expect(fieldInPanel('Price').disabled).toBe(false)
-      fireEvent.click(rowOf('Preis'))
-      expect(fieldInPanel('Price').disabled).toBe(true)
-      expect(fieldInPanel('Note & remark').disabled).toBe(false)
+      expect(within(panelOf('Notiz')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(false)
+      closePanel('Notiz')
+      openPanel('Preis')
+      expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(true)
+      expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Note & remark' }).disabled).toBe(false)
     })
 
-    it('moves to another column when the one it picked for is not imported', () => {
+    it('closes when the column it is open on is not imported', () => {
       renderStep()
-      fireEvent.click(rowOf('Notiz'))
+      openPanel('Notiz')
 
-      choose('Notiz', '-')
+      fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: "Don't import" }))
 
-      expect(panel().getAttribute('aria-label')).toBe('Fields for Name DE')
-    })
-
-    it('asks for a column while none can take a field', () => {
-      render(<Stateful initial={ createMapping({ ...inspected, columns: [inspected.columns[0]] }, objects, loaded) } />)
-
-      expect(panel().getAttribute('aria-label')).toBe('Fields')
-      expect(within(panel()).getByText('Pick a column to choose its field here')).toBeTruthy()
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Field for Notiz' })).toBeNull()
     })
   })
 
@@ -202,13 +199,14 @@ describe('picking fields', () => {
       fireEvent.change(language, { target: { value: 'fr' } })
 
       expect(within(rowOf('Name DE')).getByRole<HTMLSelectElement>('combobox', { name: 'Language' }).value).toBe('fr')
-      expect(fieldOf('Name DE').value).toBe('name')
+      expect(fieldButton('Name DE').textContent).toContain('Name')
     })
 
     it('offers no language another column has for the field', () => {
       renderStep()
-      fireEvent.click(rowOf('Notiz'))
-      fireEvent.click(within(screen.getByRole('region', { name: 'Fields for Notiz' })).getByRole('treeitem', { name: 'Name' }))
+      openPanel('Notiz')
+      pickIn('Notiz', 'Name')
+      closePanel('Notiz')
 
       const languagesOf = (column: string): string[] =>
         Array.from(within(rowOf(column)).getByRole<HTMLSelectElement>('combobox', { name: 'Language' }).options).map(({ value }) => value)
@@ -218,47 +216,50 @@ describe('picking fields', () => {
 
     it('picked by hand gets the first language no other column has', () => {
       renderStep()
-      fireEvent.click(rowOf('Notiz'))
+      openPanel('Notiz')
 
-      fireEvent.click(within(screen.getByRole('region', { name: 'Fields for Notiz' })).getByRole('treeitem', { name: 'Name' }))
+      pickIn('Notiz', 'Name')
 
       expect(within(rowOf('Notiz')).getByRole<HTMLSelectElement>('combobox', { name: 'Language' }).value).toBe('en')
     })
   })
 
   describe('a classification store', () => {
-    it('goes in by a key chosen in its dialog, from the panel or the field list', () => {
-      renderStep()
-      fireEvent.click(rowOf('Notiz'))
+    const chooseStore = (column: string): void => {
+      openPanel(column)
+      pickIn(column, 'Attributes')
+    }
 
-      fireEvent.click(within(screen.getByRole('region', { name: 'Fields for Notiz' })).getByRole('treeitem', { name: 'Attributes' }))
+    it('goes in by a key chosen in its dialog, from the panel', () => {
+      renderStep()
+      openPanel('Notiz')
+
+      pickIn('Notiz', 'Attributes')
       fireEvent.click(within(screen.getByRole('dialog', { name: 'Keys of attributes' })).getByRole('button', { name: 'Width' }))
 
       expect(screen.queryByRole('dialog')).toBeNull()
-      expect(fieldOf('Notiz').value).toBe('attributes')
+      expect(fieldButton('Notiz').textContent).toContain('Attributes')
       expect(within(rowOf('Notiz')).getByRole('button', { name: 'Change the key for Notiz' }).textContent).toBe('Dimensions › Width')
       expect(within(rowOf('Notiz')).getByRole<HTMLSelectElement>('combobox', { name: 'Language' }).value).toBe('en')
-
-      choose('Preis', 'attributes')
-      expect(screen.getByRole('dialog', { name: 'Keys of attributes' })).toBeTruthy()
     })
 
     it('keeps the column as it was when its dialog is closed', () => {
       renderStep()
 
-      choose('Preis', 'attributes')
+      chooseStore('Preis')
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
       expect(screen.queryByRole('dialog')).toBeNull()
-      expect(fieldOf('Preis').value).toBe('')
+      expect(fieldButton('Preis').textContent).toBe('Choose field')
     })
 
     it('takes a key another column goes into only in another language', () => {
       renderStep()
-      choose('Notiz', 'attributes')
+      chooseStore('Notiz')
       fireEvent.click(screen.getByRole('button', { name: 'Width' }))
+      closePanel('Notiz')
 
-      choose('Preis', 'attributes')
+      chooseStore('Preis')
       fireEvent.click(screen.getByRole('button', { name: 'Width' }))
 
       const language = within(rowOf('Preis')).getByRole<HTMLSelectElement>('combobox', { name: 'Language' })
@@ -270,21 +271,24 @@ describe('picking fields', () => {
     it('does not offer a key other columns hold in every language', () => {
       mockLanguages = ['en']
       renderStep()
-      choose('Notiz', 'attributes')
+      chooseStore('Notiz')
       fireEvent.click(screen.getByRole('button', { name: 'Width' }))
+      closePanel('Notiz')
 
-      choose('Preis', 'attributes')
+      chooseStore('Preis')
 
       expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Width' }).disabled).toBe(true)
       fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+      closePanel('Preis')
       fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Change the key for Notiz' }))
       expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Width' }).disabled).toBe(false)
     })
 
     it('can change its key', () => {
       renderStep()
-      choose('Preis', 'attributes')
+      chooseStore('Preis')
       fireEvent.click(screen.getByRole('button', { name: 'Width' }))
+      closePanel('Preis')
 
       fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Change the key for Preis' }))
 

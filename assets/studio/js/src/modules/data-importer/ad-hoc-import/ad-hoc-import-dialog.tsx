@@ -40,11 +40,11 @@ import {
   type ObjectsSettings
 } from './file-step/file-step-state'
 import { UploadAborted, UploadFailed, uploadFile, type RunningUpload } from './file-step/upload-file'
-import { canContinueMapping, createMapping, mappingBasis, withSamples, type Mapping, type MappingField } from './mapping-step/mapping-state'
+import { canContinueMapping, createMapping, mappingBasis, rowCounts, withSamples, type Mapping, type MappingField } from './mapping-step/mapping-state'
 import { withLanguages } from './mapping-step/mapping-choices'
 import { MappingStep } from './mapping-step/mapping-step'
 import { findConfiguration } from './mapping-step/configuration-state'
-import { transformationSourceOf } from './mapping-step/transformations-modal'
+import { transformationSourceOf } from './mapping-step/transformations-editor'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 import { dryRunParameters, previewCounts, type DryRun, type DryRunParameters, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
@@ -453,6 +453,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
         onBack={ back }
         onClose={ close }
         onNext={ step === 0 ? toMapping : toPreview }
+        undecided={ step === 1 && configurationMapping.mapWith === 'here' && mapping !== null ? rowCounts(mapping).open : undefined }
       />
     )
   }
