@@ -77,6 +77,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     private const string HEIGHT_VALUE = '30 cm';
 
+    private const string NOTHING_WRITTEN = 'nothing is written';
+
     private const string FILE_WITHOUT_WEIGHT = "sku;weight\nSKU-1;\n";
 
     private const string OBJECT_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
@@ -246,7 +248,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['old' => 'Chair', 'new' => 'Stool'], $xlsxRows[2]['values'][0]);
         $this->assertSame('No object has the ID 999999999', $xlsxRows[3]['error']);
 
-        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
     }
 
     // the largest file the import takes is answered in one dry run, every row of it, within a bounded memory
@@ -282,7 +284,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             array_keys(array_filter($rows, static fn (array $row): bool => $row['invalid'] !== []))
         );
         $this->assertLessThan(256 * 1024 * 1024, $peak, sprintf('peak %.1f MB', $peak / 1024 / 1024));
-        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
     }
 
     public function testTheSkippedRowsAreKeptPerErrorModeForTheUploaderOnly(): void
@@ -419,7 +421,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
                 array_filter($rows, static fn (array $row): bool => $row['action'] === null)
             )
         );
-        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
     }
 
     public function testMatchingByAFieldNeedsTheField(): void

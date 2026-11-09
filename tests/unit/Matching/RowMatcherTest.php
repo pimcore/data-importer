@@ -50,6 +50,8 @@ class RowMatcherTest extends Unit
 
     private const OTHER_VALUE = 'other value';
 
+    private const ACCENTED_NAME = 'Müller';
+
     private const SAME_TITLE = 'Same title';
 
     private const NOT_A_NUMBER = '12abc';
@@ -493,7 +495,7 @@ class RowMatcherTest extends Unit
 
         $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('abc'), 2)->outcome);
         $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('ABC'), 3)->outcome);
-        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('Müller'), 4)->outcome);
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row(self::ACCENTED_NAME), 4)->outcome);
         $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('Muller'), 5)->outcome);
     }
 
@@ -601,7 +603,7 @@ class RowMatcherTest extends Unit
         $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('Muller'), 3)->outcome);
 
         $sameCase = $matcher->match($this->row('ABC'), 4);
-        $sameAccent = $matcher->match($this->row('Müller'), 5);
+        $sameAccent = $matcher->match($this->row(self::ACCENTED_NAME), 5);
 
         $this->assertSame(RowMatchOutcome::DuplicateInFile, $sameCase->outcome);
         $this->assertSame(2, $sameCase->firstRow);
@@ -612,7 +614,7 @@ class RowMatcherTest extends Unit
 
     public function testTheDatabaseFindsWhatTheMatcherTreatsAsOneValue(): void
     {
-        $object = $this->createObject(self::TARGET, 'Müller');
+        $object = $this->createObject(self::TARGET, self::ACCENTED_NAME);
 
         $this->assertSame($object->getId(), $this->matchOne($this->byField(), 'MULLER')->element?->getId());
     }
