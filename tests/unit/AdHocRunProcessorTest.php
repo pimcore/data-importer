@@ -605,7 +605,7 @@ class AdHocRunProcessorTest extends Unit
         $user = AdHocRunFixtures::user();
         $events = new EventDispatcher();
         $events->addListener(PostSaveEvent::class, static function (): void {
-            throw new \UnexpectedValueException('search index is down');
+            throw new \TypeError('search index is down');
         });
         $plan = AdHocRunFixtures::plan(
             [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved())],
