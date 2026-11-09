@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\MappingSuggestionService;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 
 class AdHocImportTargetsTest extends Unit
 {
@@ -38,5 +39,28 @@ class AdHocImportTargetsTest extends Unit
 
         $this->assertContains('input', $offered);
         $this->assertSame([], array_values(array_intersect($offered, ['block', 'fieldcollections'])));
+    }
+
+    /**
+     * Nor a field inside one: only localized fields and object bricks are opened up for their fields.
+     */
+    public function testNoFieldInsideABlockOrAFieldCollectionIsOffered(): void
+    {
+        $types = new TransformationDataTypeService();
+        $collect = new \ReflectionMethod(TransformationDataTypeService::class, 'addTypesToAttributesArray');
+
+        $inBlock = (new Data\Block())->setName('specs');
+        $inBlock->setChildren([(new Data\Input())->setName('specText')]);
+        $collections = (new Data\Fieldcollections())->setName('features');
+        $localized = new Data\Localizedfields();
+        $localized->setName('localizedfields');
+        $localized->setChildren([(new Data\Input())->setName('title')]);
+
+        $attributes = [];
+        foreach ([$inBlock, $collections, $localized] as $definition) {
+            $collect->invokeArgs($types, [$definition, TransformationDataTypeService::DEFAULT_TYPE, &$attributes]);
+        }
+
+        $this->assertSame(['title'], array_keys($attributes));
     }
 }

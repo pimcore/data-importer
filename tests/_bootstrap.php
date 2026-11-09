@@ -27,9 +27,11 @@ include ($pimcoreTestsSupportDir . '/Util/Autoloader.php');
 
 // core's change control contract, until the core this bundle requires ships it: see tests/CoreContract/README.md
 if (!interface_exists(\Pimcore\Contracts\ChangeControl\BranchServiceInterface::class)) {
-    $coreContractLoader = new \Composer\Autoload\ClassLoader();
-    $coreContractLoader->addPsr4('Pimcore\\Contracts\\ChangeControl\\', __DIR__ . '/CoreContract');
-    $coreContractLoader->register();
+    (static function (): void {
+        $loader = new \Composer\Autoload\ClassLoader();
+        $loader->addPsr4('Pimcore\\Contracts\\ChangeControl\\', __DIR__ . '/CoreContract');
+        $loader->register();
+    })();
 }
 
 \Pimcore\Bootstrap::setProjectRoot();

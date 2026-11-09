@@ -45,8 +45,10 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\DelayStamp;
 
-class AdHocBranchMergeTest extends Unit
+class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every collaborator of the merge
 {
+    private const string MAY_NOT_SAVE = 'may not save';
+
     private string $storage;
 
     private FileStore $files;
@@ -134,7 +136,9 @@ class AdHocBranchMergeTest extends Unit
         });
 
         $objects = $this->createStub(ConcreteObjectResolverInterface::class);
-        $objects->method('getById')->willReturnCallback(static fn (int $id): AdHocTestObject => new AdHocTestObject([], $id));
+        $objects->method('getById')->willReturnCallback(
+            static fn (int $id): AdHocTestObject => new AdHocTestObject([], $id)
+        );
 
         $users = $this->createStub(UserResolverInterface::class);
         $users->method('getById')->willReturn($userExists ? AdHocRunFixtures::user() : null);
@@ -249,7 +253,11 @@ class AdHocBranchMergeTest extends Unit
 
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
 
-        $this->assertSame([[MergeMode::Save, ConflictPolicy::BranchWins, 'run-user']], $this->branches->merges, 'new objects stay unpublished, changed ones keep their state');
+        $this->assertSame(
+            [[MergeMode::Save, ConflictPolicy::BranchWins, 'run-user']],
+            $this->branches->merges,
+            'new objects stay unpublished, changed ones keep their state'
+        );
         $run = $this->stored();
         $this->assertSame([RunRecord::DONE, 2, 1, 0], [$run->state, $run->updated, $run->created, $run->failed]);
         $this->assertNotNull($run->finishedAt);
@@ -260,7 +268,10 @@ class AdHocBranchMergeTest extends Unit
         );
         $this->assertSame([], $this->runs->recorded($run));
         $this->assertFalse($this->uploadExists(), 'the file goes once the import is merged');
-        $this->assertSame(['data-importer.ad-hoc-import.run.notification.title {"{{file}}":"autumn.csv"}'], $this->notified);
+        $this->assertSame(
+            ['data-importer.ad-hoc-import.run.notification.title {"{{file}}":"autumn.csv"}'],
+            $this->notified
+        );
     }
 
     public function testAnObjectThatAlreadyHoldsTheFilesValuesCountsAsUpdated(): void
@@ -280,9 +291,20 @@ class AdHocBranchMergeTest extends Unit
 
     public function testARowThatCouldNotBeWrittenHoldsTheMergeForADecision(): void
     {
-        $failure = new RowFailure(5, 'SKU-5', 'update', 'You may not save objects in /Products/Archive', ['SKU-5', 'Chair']);
+        $failure = new RowFailure(
+            5,
+            'SKU-5',
+            'update',
+            'You may not save objects in /Products/Archive',
+            ['SKU-5', 'Chair']
+        );
 
-        $this->merge()->rowsWritten($this->branchRun(['total' => 4, 'failed' => 1]), null, AdHocRunFixtures::user(), [$failure]);
+        $this->merge()->rowsWritten(
+            $this->branchRun(['total' => 4, 'failed' => 1]),
+            null,
+            AdHocRunFixtures::user(),
+            [$failure]
+        );
 
         $this->assertSame([], $this->branches->calls, 'nothing is merged, and the branch stays');
         $run = $this->stored();
@@ -290,14 +312,25 @@ class AdHocBranchMergeTest extends Unit
         $this->assertNotNull($run->waitingSince);
         $this->assertSame([5 => 'You may not save objects in /Products/Archive'], $this->failures());
         $this->assertTrue($this->uploadExists(), 'the file stays until the user decided');
-        $this->assertSame(['data-importer.ad-hoc-import.merge.decision.title {"{{file}}":"autumn.csv"}'], $this->notified);
-        $this->assertStringContainsString('"{{ready}}":"3","{{failed}}":"1","{{folder}}":"/Products/Outdoor"', $this->notifiedTexts[0]);
+        $this->assertSame(
+            ['data-importer.ad-hoc-import.merge.decision.title {"{{file}}":"autumn.csv"}'],
+            $this->notified
+        );
+        $this->assertStringContainsString(
+            '"{{ready}}":"3","{{failed}}":"1","{{folder}}":"/Products/Outdoor"',
+            $this->notifiedTexts[0]
+        );
     }
 
     public function testARefusedMergeNamesTheRowOfEachProblemInTheImportsOwnWords(): void
     {
         $this->branches->mergeAnswers = [MergeStatus::refused(self::branch(), 3, [
-            new MergeProblem(ObjectRef::of(42), null, 'User 7 may not publish object 42', code: MergeProblemCode::NotAllowed),
+            new MergeProblem(
+                ObjectRef::of(42),
+                null,
+                'User 7 may not publish object 42',
+                code: MergeProblemCode::NotAllowed
+            ),
             new MergeProblem(ObjectRef::token('row-4'), null, 'key taken', code: MergeProblemCode::InvalidPlace),
             new MergeProblem(null, null, 'SQLSTATE[23000]: duplicate entry in objects', code: MergeProblemCode::Other),
         ])];
@@ -311,11 +344,15 @@ class AdHocBranchMergeTest extends Unit
             4 => 'data-importer.ad-hoc-import.check.key-taken {"{{key}}":"SKU-4","{{folder}}":"/Products/Outdoor"}',
         ], $this->failures());
         $this->assertSame(
-            'data-importer.ad-hoc-import.merge.notice {"{{reason}}":"data-importer.ad-hoc-import.run.save-failed-unknown"}',
+            'data-importer.ad-hoc-import.merge.notice'
+            . ' {"{{reason}}":"data-importer.ad-hoc-import.run.save-failed-unknown"}',
             $run->notice,
             'a problem of no row is told above the table'
         );
-        $this->assertStringNotContainsString('SQLSTATE', (string) json_encode([$run->toArray(), $this->failures(), $this->notifiedTexts]));
+        $this->assertStringNotContainsString(
+            'SQLSTATE',
+            (string) json_encode([$run->toArray(), $this->failures(), $this->notifiedTexts])
+        );
         $this->assertStringContainsString('SQLSTATE', implode("\n", $this->logged), 'the reason goes to the log');
         $this->assertSame(['merge'], $this->branches->calls, 'the branch stays open for the decision');
     }
@@ -359,23 +396,29 @@ class AdHocBranchMergeTest extends Unit
     {
         $run = $this->branchRun(['state' => RunRecord::DECISION, 'updated' => 1, 'failed' => 2, 'total' => 4]);
         $this->storeFailures(
-            new RowFailure(2, 'SKU-2', 'update', 'may not save', ['SKU-2', 'Chair']),
+            new RowFailure(2, 'SKU-2', 'update', self::MAY_NOT_SAVE, ['SKU-2', 'Chair']),
             new RowFailure(9, 'SKU-9', 'update', 'listener left it out', ['SKU-9', 'Chair'])
         );
-        $this->branches->mergeAnswers = [MergeStatus::merged(self::branch(), [ObjectRef::of(43), ObjectRef::created('row-4', 77)])];
+        $this->branches->mergeAnswers = [
+            MergeStatus::merged(self::branch(), [ObjectRef::of(43), ObjectRef::created('row-4', 77)]),
+        ];
 
         $run = $this->merge()->mergeLeavingOut($run, AdHocRunFixtures::user());
 
         $this->assertEquals([ObjectRef::of(42)], $this->branches->takenOut, 'row 9 never was in the branch');
         $this->assertSame(['take out 1', 'merge'], $this->branches->calls);
         $this->assertSame([RunRecord::DONE, 1, 1, 2], [$run->state, $run->updated, $run->created, $run->failed]);
-        $this->assertSame([2 => 'may not save', 9 => 'listener left it out'], $this->failures(), 'the rows left out are told as not saved');
+        $this->assertSame(
+            [2 => self::MAY_NOT_SAVE, 9 => 'listener left it out'],
+            $this->failures(),
+            'the rows left out are told as not saved'
+        );
     }
 
     public function testASecondRefusalShowsTheTableAgainWithItsNewNumbers(): void
     {
         $run = $this->branchRun(['state' => RunRecord::DECISION, 'updated' => 1, 'failed' => 1]);
-        $this->storeFailures(new RowFailure(2, 'SKU-2', 'update', 'may not save', ['SKU-2', 'Chair']));
+        $this->storeFailures(new RowFailure(2, 'SKU-2', 'update', self::MAY_NOT_SAVE, ['SKU-2', 'Chair']));
         $this->branches->mergeAnswers = [MergeStatus::refused(self::branch(), 2, [
             new MergeProblem(ObjectRef::of(43), 'name', 'gone', code: MergeProblemCode::ObjectGone),
         ])];
@@ -383,7 +426,10 @@ class AdHocBranchMergeTest extends Unit
         $run = $this->merge()->mergeLeavingOut($run, AdHocRunFixtures::user());
 
         $this->assertSame([RunRecord::DECISION, 0, 1, 2], [$run->state, $run->updated, $run->created, $run->failed]);
-        $this->assertSame([2 => 'may not save', 3 => 'data-importer.ad-hoc-import.merge.object-gone'], $this->failures());
+        $this->assertSame(
+            [2 => self::MAY_NOT_SAVE, 3 => 'data-importer.ad-hoc-import.merge.object-gone'],
+            $this->failures()
+        );
         $this->assertSame(
             ['data-importer.ad-hoc-import.merge.decision.title {"{{file}}":"autumn.csv"}'],
             $this->notified,
@@ -406,6 +452,21 @@ class AdHocBranchMergeTest extends Unit
         $this->assertSame(RunRecord::DONE, $run->state);
     }
 
+    public function testARunWhoseRowsInTheBranchAreNoLongerKnownSavesNoneOfThem(): void
+    {
+        $run = $this->branchRun(['state' => RunRecord::DECISION, 'updated' => 1, 'created' => 1, 'failed' => 1]);
+        $this->runs->forgetRecorded($run);
+        $this->storeFailures(new RowFailure(2, 'SKU-2', 'update', 'no', []));
+
+        $run = $this->merge()->mergeLeavingOut($run, AdHocRunFixtures::user());
+
+        $this->assertSame(['discard'], $this->branches->calls, 'nothing is merged');
+        $this->assertSame([RunRecord::DONE, 0, 0, 3], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame(AdHocRunFixtures::runMessages()->cannotGoOn(AdHocRunFixtures::user()), $run->notice);
+        $this->assertSame([2 => 'no'], $this->failures());
+        $this->assertFalse($this->uploadExists());
+    }
+
     public function testOnlyARunWaitingForADecisionCanBeMergedWithoutRows(): void
     {
         $this->expectException(\LogicException::class);
@@ -416,7 +477,12 @@ class AdHocBranchMergeTest extends Unit
     public function testAPartialMergeKeepsWhatItWroteAndTellsTheRest(): void
     {
         $this->branches->mergeAnswers = [MergeStatus::partial(self::branch(), 3, [ObjectRef::of(42)], [
-            new MergeProblem(ObjectRef::token('row-4'), null, 'Deadlock found when trying to get lock', code: MergeProblemCode::WriteFailed),
+            new MergeProblem(
+                ObjectRef::token('row-4'),
+                null,
+                'Deadlock found when trying to get lock',
+                code: MergeProblemCode::WriteFailed
+            ),
         ])];
 
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
@@ -440,24 +506,35 @@ class AdHocBranchMergeTest extends Unit
         $run = $this->stored();
         $this->assertSame([RunRecord::MERGING, 3, 0], [$run->state, $run->mergeTotal, $run->mergeDone]);
         $this->assertCount(1, $this->dispatched);
-        $this->assertEquals(new MergeFollowMessage(AdHocRunFixtures::USER_ID, $this->fileId), $this->dispatched[0]->getMessage());
+        $this->assertEquals(
+            new MergeFollowMessage(AdHocRunFixtures::USER_ID, $this->fileId),
+            $this->dispatched[0]->getMessage()
+        );
         $this->assertSame(2000, $this->dispatched[0]->last(DelayStamp::class)?->getDelay());
 
         $this->branches->statusAnswers = [
             MergeStatus::running(self::branch(), 3, 2),
-            MergeStatus::merged(self::branch(), [ObjectRef::of(42), ObjectRef::of(43), ObjectRef::created('row-4', 77)]),
+            MergeStatus::merged(
+                self::branch(),
+                [ObjectRef::of(42), ObjectRef::of(43), ObjectRef::created('row-4', 77)]
+            ),
         ];
         $merge->follow(AdHocRunFixtures::USER_ID, $this->fileId);
         $this->assertSame([RunRecord::MERGING, 2], [$this->stored()->state, $this->stored()->mergeDone]);
         $this->assertCount(2, $this->dispatched);
 
         $merge->follow(AdHocRunFixtures::USER_ID, $this->fileId);
-        $this->assertSame([RunRecord::DONE, 2, 1], [$this->stored()->state, $this->stored()->updated, $this->stored()->created]);
+        $this->assertSame(
+            [RunRecord::DONE, 2, 1],
+            [$this->stored()->state, $this->stored()->updated, $this->stored()->created]
+        );
     }
 
     public function testAMergeThatWritesNothingForHalfAnHourIsGivenUp(): void
     {
-        $this->branchRun(['state' => RunRecord::MERGING, 'mergeTotal' => 3, 'mergeDone' => 1, 'waitingSince' => time() - 1800]);
+        $this->branchRun(
+            ['state' => RunRecord::MERGING, 'mergeTotal' => 3, 'mergeDone' => 1, 'waitingSince' => time() - 1800]
+        );
         $this->branches->statusAnswers = [MergeStatus::running(self::branch(), 3, 1)];
 
         $this->merge()->follow(AdHocRunFixtures::USER_ID, $this->fileId);
@@ -471,7 +548,9 @@ class AdHocBranchMergeTest extends Unit
 
     public function testAMergeThatGetsOnIsWaitedFor(): void
     {
-        $this->branchRun(['state' => RunRecord::MERGING, 'mergeTotal' => 3, 'mergeDone' => 1, 'waitingSince' => time() - 1800]);
+        $this->branchRun(
+            ['state' => RunRecord::MERGING, 'mergeTotal' => 3, 'mergeDone' => 1, 'waitingSince' => time() - 1800]
+        );
         $this->branches->statusAnswers = [MergeStatus::running(self::branch(), 3, 2)];
 
         $this->merge()->follow(AdHocRunFixtures::USER_ID, $this->fileId);
@@ -493,7 +572,9 @@ class AdHocBranchMergeTest extends Unit
     public function testFollowingWhileAnotherWorkerFollowsDoesNothing(): void
     {
         $this->branchRun(['state' => RunRecord::MERGING]);
-        $lock = $this->locks->createLock(sprintf('data_importer_ad_hoc_merge_%d_%s', AdHocRunFixtures::USER_ID, $this->fileId));
+        $lock = $this->locks->createLock(
+            sprintf('data_importer_ad_hoc_merge_%d_%s', AdHocRunFixtures::USER_ID, $this->fileId)
+        );
         $lock->acquire();
 
         $this->merge()->follow(AdHocRunFixtures::USER_ID, $this->fileId);
@@ -569,7 +650,10 @@ class AdHocBranchMergeTest extends Unit
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
 
         $this->assertSame(RunRecord::DONE, $this->stored()->state);
-        $this->assertStringContainsString('a listener failed after object 42 was saved: listener broke', implode("\n", $this->logged));
+        $this->assertStringContainsString(
+            'a listener failed after object 42 was saved: listener broke',
+            implode("\n", $this->logged)
+        );
         $this->assertStringNotContainsString('object 99', implode("\n", $this->logged), 'no row of the file wrote it');
     }
 

@@ -27,7 +27,10 @@ class AdHocBranchWiringTest extends Unit
 
     public function testWithoutChangeControlTheRowsAreWrittenDirectly(): void
     {
-        $this->assertTrue(interface_exists(BranchServiceInterface::class), 'the contract is there, from core or its copy');
+        $this->assertTrue(
+            interface_exists(BranchServiceInterface::class),
+            'the contract is there, from core or its copy'
+        );
         $this->assertFalse(
             $this->tester->grabService('service_container')->has(BranchServiceInterface::class),
             'no Change Control in this kernel'

@@ -1454,6 +1454,19 @@ describe('the preview step', () => {
         expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 1000 })
       })
 
+      it('stops asking again when the merge is refused once more', async () => {
+        let answeredAt = 1
+        mockRefetchRun.mockImplementation(() => { answeredAt += 1 })
+        mockLoadRun.mockImplementation(() => ({ refetch: mockRefetchRun, data: deciding(), fulfilledTimeStamp: answeredAt }))
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+
+        expect(mockRefetchRun).toHaveBeenCalled()
+        expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
+        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+      })
+
       it('goes back to the mapping with the file, the branch taken back', async () => {
         mockLoadRun.mockImplementation(({ fileId }: { fileId: string }, { skip }: { skip: boolean }) => ({
           refetch: mockRefetchRun,

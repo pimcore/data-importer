@@ -107,7 +107,11 @@ class AdHocDirectRowWriterTest extends Unit
 
         $run = AdHocRunFixtures::run();
 
-        $this->assertSame($run, $writer->open($run, AdHocRunFixtures::user()), 'it writes into nothing but the objects');
+        $this->assertSame(
+            $run,
+            $writer->open($run, AdHocRunFixtures::user()),
+            'it writes into nothing but the objects'
+        );
 
         $this->assertSame([], $writer->close(AdHocRunFixtures::run()));
     }

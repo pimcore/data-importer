@@ -245,7 +245,11 @@ class AdHocObjectChangesTest extends Unit
             null
         );
 
-        $this->assertSame([['field', 'name', 7 => 'Chair']], $this->values($change), 'the merge leaves it out if it is the same');
+        $this->assertSame(
+            [['field', 'name', 7 => 'Chair']],
+            $this->values($change),
+            'the merge leaves it out if it is the same'
+        );
     }
 
     public function testAStoreKeyOfAGroupThatDoesNotExistIsNotRecorded(): void

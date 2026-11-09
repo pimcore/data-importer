@@ -35,7 +35,10 @@ enum MergeProblemCode: string
     /** it points at a new object the branch does not create, e.g. one taken out, as its parent or in a value */
     case MissingNewObject = 'missing_new_object';
 
-    /** a new object cannot be created where it was recorded: its parent cannot hold it, or another object takes its key there */
+    /**
+     * a new object cannot be created where it was recorded: its parent cannot hold it, or another object takes its key
+     * there
+     */
     case InvalidPlace = 'invalid_place';
 
     /** writing the object failed after the check had passed */

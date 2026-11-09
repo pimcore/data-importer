@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\BranchRowWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\ObjectChanges;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\ObjectGoneException;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RecordedRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWrite;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
@@ -26,6 +27,8 @@ use Pimcore\Contracts\ChangeControl\FieldValue;
 
 class AdHocBranchRowWriterTest extends Unit
 {
+    private const string OUTDOOR = '/Products/Outdoor';
+
     private AdHocFakeBranches $branches;
 
     private RunStoreInterface $runs;
@@ -52,7 +55,7 @@ class AdHocBranchRowWriterTest extends Unit
 
     private function branchRun(): RunRecord
     {
-        return AdHocRunFixtures::run(['branch' => AdHocFakeBranches::BRANCH, 'targetFolder' => '/Products/Outdoor']);
+        return AdHocRunFixtures::run(['branch' => AdHocFakeBranches::BRANCH, 'targetFolder' => self::OUTDOOR]);
     }
 
     private function write(AdHocTestObject $object, bool $isNew, ?RunRecord $run = null): RowWrite
@@ -64,7 +67,7 @@ class AdHocBranchRowWriterTest extends Unit
             AdHocRunFixtures::user(),
             5,
             'SKU-1',
-            '/Products/Outdoor',
+            self::OUTDOOR,
             ['SKU-1', 'Desk'],
             $run ?? $this->branchRun()
         );
@@ -84,14 +87,15 @@ class AdHocBranchRowWriterTest extends Unit
     public function testARunOpensItsOwnBranchNamedAfterItsFileAndFolder(): void
     {
         $run = $this->writer()->open(
-            AdHocRunFixtures::run(['targetFolder' => '/Products/Outdoor']),
+            AdHocRunFixtures::run(['targetFolder' => self::OUTDOOR]),
             AdHocRunFixtures::user()
         );
 
         $this->assertSame(AdHocFakeBranches::BRANCH, $run->branch);
         $this->assertTrue($run->throughBranch());
         $this->assertSame([
-            'open "data-importer.ad-hoc-import.merge.branch-name {"{{file}}":"autumn.csv","{{folder}}":"/Products/Outdoor"}"'
+            'open "data-importer.ad-hoc-import.merge.branch-name'
+            . ' {"{{file}}":"autumn.csv","{{folder}}":"/Products/Outdoor"}"'
             . ' in data-importer:ad-hoc-import:file-1 as run-user',
         ], $this->branches->calls);
     }
@@ -112,7 +116,7 @@ class AdHocBranchRowWriterTest extends Unit
                 'SKU-1',
                 'update',
                 'SKU-1',
-                '/Products/Outdoor',
+                self::OUTDOOR,
                 ['SKU-1', 'Desk'],
                 ['sku' => 'SKU-1', 'name' => 'Desk']
             )],
@@ -125,10 +129,16 @@ class AdHocBranchRowWriterTest extends Unit
         $this->writer()->write($this->write(new AdHocTestObject(['name' => 'Desk'], null, 3, 'SKU-9'), true));
 
         $create = $this->branches->recorded[0]->create;
-        $this->assertSame(['row-5', 'Product', 3, 'SKU-9'], [$create?->token, $create?->className, $create?->parent, $create?->key]);
+        $this->assertSame(
+            ['row-5', 'Product', 3, 'SKU-9'],
+            [$create?->token, $create?->className, $create?->parent, $create?->key]
+        );
         $this->assertSame([['name', 'Desk']], $this->values());
         $recorded = $this->runs->recorded($this->branchRun());
-        $this->assertSame([null, 'row-5', 'create', 'SKU-9'], [$recorded[0]->objectId, $recorded[0]->token, $recorded[0]->action, $recorded[0]->key]);
+        $this->assertSame(
+            [null, 'row-5', 'create', 'SKU-9'],
+            [$recorded[0]->objectId, $recorded[0]->token, $recorded[0]->action, $recorded[0]->key]
+        );
     }
 
     public function testARowTheBranchRefusesFailsAloneAndIsNotRemembered(): void
@@ -136,7 +146,9 @@ class AdHocBranchRowWriterTest extends Unit
         $this->branches->recordRefusal = new InvalidChangeException('no field "nme"');
 
         try {
-            $this->writer(new AdHocTestObject([], 42))->write($this->write(new AdHocTestObject(['name' => 'Desk'], 42), false));
+            $this->writer(new AdHocTestObject([], 42))->write(
+                $this->write(new AdHocTestObject(['name' => 'Desk'], 42), false)
+            );
             $this->fail('the row fails');
         } catch (InvalidChangeException) {
             $this->assertSame([], $this->runs->recorded($this->branchRun()));
@@ -145,7 +157,7 @@ class AdHocBranchRowWriterTest extends Unit
 
     public function testARowWhoseObjectWasDeletedMeanwhileFails(): void
     {
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(ObjectGoneException::class);
 
         $this->writer(null)->write($this->write(new AdHocTestObject(['name' => 'Desk'], 42), false));
     }
