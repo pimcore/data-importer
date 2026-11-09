@@ -617,18 +617,37 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testABranchWithoutARowIsClosedWithoutAMerge(): void
     {
-        $failure = new RowFailure(2, 'SKU-2', 'update', 'no', []);
+        $run = $this->branchRun(['updated' => 0, 'created' => 0, 'total' => 1]);
+        $this->runs->forgetRecorded($run);
 
-        $this->merge()->rowsWritten(
-            $this->branchRun(['updated' => 0, 'created' => 0, 'failed' => 1, 'total' => 1]),
-            AdHocRunFixtures::plan([], []),
-            AdHocRunFixtures::user(),
-            [$failure]
-        );
+        $this->merge()->rowsWritten($run, AdHocRunFixtures::plan([], []), AdHocRunFixtures::user(), []);
 
         $this->assertSame(['discard'], $this->branches->calls);
         $this->assertSame(RunRecord::DONE, $this->stored()->state);
+    }
+
+    public function testEveryRowRefusedBeforeTheBranchStillWaitsForADecision(): void
+    {
+        $run = $this->branchRun(['updated' => 0, 'created' => 0, 'failed' => 1, 'total' => 1]);
+        $this->runs->forgetRecorded($run);
+
+        $this->merge()->rowsWritten(
+            $run,
+            AdHocRunFixtures::plan([], []),
+            AdHocRunFixtures::user(),
+            [new RowFailure(2, 'SKU-2', 'update', 'no', [])]
+        );
+
+        $this->assertSame([], $this->branches->calls, 'the branch stays until the user decided');
+        $this->assertSame(RunRecord::DECISION, $this->stored()->state);
         $this->assertSame(['SKU', 'Name'], $this->stored()->columns, 'the plan\'s columns head the download');
+        $this->assertSame([2 => 'no'], $this->failures());
+        $this->assertTrue($this->uploadExists(), 'the file stays for going back to the mapping');
+
+        $merged = $this->merge()->mergeLeavingOut($this->stored(), AdHocRunFixtures::user());
+
+        $this->assertSame(['discard'], $this->branches->calls, 'with no row left there is nothing to merge');
+        $this->assertSame(RunRecord::DONE, $merged->state);
         $this->assertSame([2 => 'no'], $this->failures());
     }
 

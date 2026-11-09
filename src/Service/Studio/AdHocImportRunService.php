@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
@@ -163,36 +164,42 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     public function discard(string $fileId): void
     {
         $user = $this->resolveCurrentUser();
-        $run = $this->requireRun($user, $fileId);
-        if ($run->isBusy()) {
-            throw $this->beingImported($fileId);
-        }
+        $this->deciding($user, $fileId, function () use ($user, $fileId): void {
+            $run = $this->requireRun($user, $fileId);
+            if ($run->isBusy()) {
+                throw $this->beingImported($fileId);
+            }
 
-        if ($run->isWaitingForDecision()) {
-            $this->closeBranch($run, $user);
-            $this->files->delete($user->getId(), $fileId, $run->type);
-        }
-        $this->runs->delete($user->getId(), $fileId);
-        $this->files->deleteRunOutput($user->getId(), $fileId);
+            if ($run->isWaitingForDecision()) {
+                $this->closeBranch($run, $user);
+                $this->files->delete($user->getId(), $fileId, $run->type);
+            }
+            $this->runs->delete($user->getId(), $fileId);
+            $this->files->deleteRunOutput($user->getId(), $fileId);
+        });
     }
 
     public function mergeLeavingOut(string $fileId): AdHocImportRunResponse
     {
         $user = $this->resolveCurrentUser();
-        $run = $this->requireDecision($user, $fileId);
-        $run = $this->branchMerge()->mergeLeavingOut($run, $user);
 
-        return $this->response($run, $this->failures($user, $fileId)['rows']);
+        return $this->deciding($user, $fileId, function () use ($user, $fileId): AdHocImportRunResponse {
+            $run = $this->branchMerge()->mergeLeavingOut($this->requireDecision($user, $fileId), $user);
+
+            return $this->response($run, $this->failures($user, $fileId)['rows']);
+        });
     }
 
     public function withdraw(string $fileId): void
     {
         $user = $this->resolveCurrentUser();
-        $run = $this->requireDecision($user, $fileId);
+        $this->deciding($user, $fileId, function () use ($user, $fileId): void {
+            $run = $this->requireDecision($user, $fileId);
 
-        $this->closeBranch($run, $user);
-        $this->runs->delete($user->getId(), $fileId);
-        $this->files->deleteRunOutput($user->getId(), $fileId);
+            $this->closeBranch($run, $user);
+            $this->runs->delete($user->getId(), $fileId);
+            $this->files->deleteRunOutput($user->getId(), $fileId);
+        });
     }
 
     public function waitingRuns(int $folderId): array
@@ -208,6 +215,27 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             static fn (RunRecord $run): array => ['fileId' => $run->fileId, 'fileName' => $run->fileName],
             $waiting
         ));
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $decide reads the run itself: what was read before the lock may be out of date
+     *
+     * @return T
+     */
+    private function deciding(User $user, string $fileId, callable $decide): mixed
+    {
+        $lock = DecisionLock::of($this->lockFactory, $user->getId(), $fileId);
+        if (!$lock->acquire()) {
+            throw $this->beingImported($fileId);
+        }
+
+        try {
+            return $decide();
+        } finally {
+            $lock->release();
+        }
     }
 
     private function requireDecision(User $user, string $fileId): RunRecord

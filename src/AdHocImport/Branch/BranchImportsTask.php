@@ -15,12 +15,14 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolverInterface;
 use Pimcore\Maintenance\TaskInterface;
 use Pimcore\Model\User;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Lock\LockFactory;
 
 /**
  * Looks after the ad hoc imports that go through a branch: a merge no worker follows any more is followed here, and
@@ -40,6 +42,7 @@ final readonly class BranchImportsTask implements TaskInterface
         private BranchMergeInterface $merges,
         private FileStore $files,
         private UserResolverInterface $users,
+        private LockFactory $locks,
         private LoggerInterface $logger,
     ) {
     }
@@ -54,10 +57,35 @@ final readonly class BranchImportsTask implements TaskInterface
         }
 
         foreach ($this->runs->inState(RunRecord::DECISION) as $run) {
-            if ($now - ($run->waitingSince ?? 0) >= self::DECISION_SECONDS) {
-                $this->attempt($run, fn () => $this->discard($run));
+            if (self::overdue($run, $now)) {
+                $this->attempt($run, fn () => $this->discardOverdue($run, $now));
             }
         }
+    }
+
+    /**
+     * The user may be deciding on it right now, or have done so since the list was read.
+     */
+    private function discardOverdue(RunRecord $listed, int $now): void
+    {
+        $lock = DecisionLock::of($this->locks, $listed->userId, $listed->fileId);
+        if (!$lock->acquire()) {
+            return;
+        }
+
+        try {
+            $run = $this->runs->find($listed->userId, $listed->fileId);
+            if ($run !== null && self::overdue($run, $now)) {
+                $this->discard($run);
+            }
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private static function overdue(RunRecord $run, int $now): bool
+    {
+        return $run->isWaitingForDecision() && $now - ($run->waitingSince ?? 0) >= self::DECISION_SECONDS;
     }
 
     private function discard(RunRecord $run): void
