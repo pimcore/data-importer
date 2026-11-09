@@ -37,16 +37,26 @@ final readonly class DataImporterRunQueue implements RunQueueInterface
 
     public function enqueue(RunRecord $run, array $rows): void
     {
-        foreach ($rows as $index => $leftOut) {
-            $this->queue->addItemToQueue(
-                RunRecord::queueName($run->fileId),
-                self::EXECUTION_TYPE,
-                ImportProcessingService::JOB_TYPE_AD_HOC_ROW,
-                (string) json_encode(['row' => $index, 'leftOut' => $leftOut]),
-                $run->userId
-            );
-        }
+        $queueName = RunRecord::queueName($run->fileId);
 
-        $this->eventDispatcher->dispatch(new PostPreparationEvent(RowImporter::CONFIG_NAME, self::EXECUTION_TYPE, true));
+        try {
+            foreach ($rows as $index => $leftOut) {
+                $this->queue->addItemToQueue(
+                    $queueName,
+                    self::EXECUTION_TYPE,
+                    ImportProcessingService::JOB_TYPE_AD_HOC_ROW,
+                    (string) json_encode(['row' => $index, 'leftOut' => $leftOut]),
+                    $run->userId
+                );
+            }
+
+            $this->eventDispatcher->dispatch(
+                new PostPreparationEvent(RowImporter::CONFIG_NAME, self::EXECUTION_TYPE, true)
+            );
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 whatever stopped it, a next run must not count these rows
+            $this->queue->cleanupQueueItems($queueName);
+
+            throw $throwable;
+        }
     }
 }

@@ -10,6 +10,8 @@
 
 import { failedRowsUrl, importedCount, isDone, percentOf, skippedRowsUrl, type ImportRun } from './import-state'
 
+jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/custom/api' }))
+
 const run = (given: Partial<ImportRun>): ImportRun => ({
   state: 'running',
   total: 4,
@@ -46,8 +48,8 @@ describe('the state of an import', () => {
     expect(importedCount(run({ updated: 298, created: 11, failed: 4 }))).toBe(309)
   })
 
-  it('downloads the failed rows and the skipped rows of its file', () => {
-    expect(failedRowsUrl('id-1')).toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/id-1/failed-rows')
-    expect(skippedRowsUrl('id-1', 'values')).toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/id-1/skipped-rows?errorMode=values')
+  it('downloads the failed rows and the skipped rows of its file below the API prefix of the install', () => {
+    expect(failedRowsUrl('id-1')).toBe('/custom/api/bundle/data-importer/ad-hoc-import/file/id-1/failed-rows')
+    expect(skippedRowsUrl('id-1', 'values')).toBe('/custom/api/bundle/data-importer/ad-hoc-import/file/id-1/skipped-rows?errorMode=values')
   })
 })

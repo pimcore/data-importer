@@ -176,6 +176,7 @@ final readonly class DryRunner
                     $shownAt
                 )
             );
+            $leftOut = $refusals['leftOut'];
         }
 
         $this->forget($object);

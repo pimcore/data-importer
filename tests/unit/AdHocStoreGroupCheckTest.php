@@ -184,7 +184,7 @@ class AdHocStoreGroupCheckTest extends Unit
         $this->assertCount(1, $check->refused($object), 'written, the value is refused');
 
         $outcome = $check->refusedWithout($object, $before, [$writer], [0 => true], 0, []);
-        $this->assertSame(['lifted' => [], 'remaining' => []], $outcome);
+        $this->assertSame(['lifted' => [], 'remaining' => [], 'leftOut' => [0 => true]], $outcome);
     }
 
     public function testAGroupOnlyAnUnusableValueActivatesCountsForNothingOnceThatValueIsLeftOut(): void
@@ -198,7 +198,7 @@ class AdHocStoreGroupCheckTest extends Unit
         $this->assertSame(ValueError::TooManyGroups, $check->refused($object)[0]['error'], 'written, two groups');
 
         $outcome = $check->refusedWithout($object, $before, [$writer], [0 => true], 0, []);
-        $this->assertSame(['lifted' => [], 'remaining' => []], $outcome);
+        $this->assertSame(['lifted' => [], 'remaining' => [], 'leftOut' => [0 => true]], $outcome);
     }
 
     public function testARefusalOfAValueTheColumnsKeptStaysWhenAnotherValueIsLeftOut(): void
@@ -235,6 +235,7 @@ class AdHocStoreGroupCheckTest extends Unit
         $this->assertSame([], $outcome['remaining']);
         $this->assertCount(1, $outcome['lifted']);
         $this->assertSame(ValueError::Required, $outcome['lifted'][0]['error']);
+        $this->assertSame([0 => true], $outcome['leftOut'], 'the run must go without the writer the preview left out');
     }
 
     public function testAKeyEmptyBeforeInAnActiveGroupRemainsRefusedAndIsNotCountedAsLifted(): void

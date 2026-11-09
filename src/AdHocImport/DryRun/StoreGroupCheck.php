@@ -83,8 +83,8 @@ final class StoreGroupCheck
      * @param array<int, true> $leftOut the writers whose value their field cannot take
      * @param array<int|string, mixed> $row
      *
-     * @return array{lifted: list<Refusal>, remaining: list<Refusal>} lifted by leaving the file's values out, and
-     *     refused whatever the row leaves out
+     * @return array{lifted: list<Refusal>, remaining: list<Refusal>, leftOut: array<int, true>} lifted by leaving the
+     *     file's values out, refused whatever the row leaves out, and every writer the row goes without for that
      */
     public function refusedWithout(
         Concrete $object,
@@ -113,7 +113,7 @@ final class StoreGroupCheck
             unset($lifted[$this->idOf($refusal)]);
         }
 
-        return ['lifted' => array_values($lifted), 'remaining' => $refused];
+        return ['lifted' => array_values($lifted), 'remaining' => $refused, 'leftOut' => $leftOut];
     }
 
     /**

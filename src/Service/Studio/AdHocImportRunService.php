@@ -83,8 +83,15 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
         );
 
         $this->runs->save($run);
-        $this->writer->open($run);
-        $this->queue->enqueue($run, $imported);
+
+        try {
+            $this->writer->open($run);
+            $this->queue->enqueue($run, $imported);
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 whatever stopped it, a run short of rows never ends
+            $this->runs->delete($user->getId(), $fileId);
+
+            throw $throwable;
+        }
 
         return $this->response($run, []);
     }

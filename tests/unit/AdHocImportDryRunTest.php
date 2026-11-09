@@ -588,6 +588,24 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertFalse($rows[0]['blocked'], 'left out, the key keeps its value');
     }
 
+    public function testAStoreKeyLiftedByLeavingItOutIsAmongTheRowsLeftOutWriters(): void
+    {
+        [$class, $weight, $height] = $this->storeClass('LiftedForTheRun', mandatoryInGroup: true);
+        $object = $this->storeObject($class, 'SKU-1');
+        $object->get('attributes')->setLocalizedKeyValue($weight->groupId, $weight->keyId, '1 kg');
+        $object->get('attributes')->setLocalizedKeyValue($height->groupId, $height->keyId, self::HEIGHT_VALUE);
+        $object->save();
+        $fileId = $this->upload(self::FILE_WITHOUT_WEIGHT, 'products.csv');
+
+        $row = $this->service()->check($fileId, $this->storeMapping($class, [
+            ['column' => 'weight', 'field' => 'attributes', 'key' => $weight->id()],
+        ]), $this->user)->results[0];
+
+        $this->assertFalse($row->blocked);
+        $this->assertTrue($row->importsWithoutInvalidValues());
+        $this->assertSame([0], $row->leftOut, 'else the run writes the empty value the preview promised to leave out');
+    }
+
     public function testActivatingAGroupRefusesTheMandatoryKeysTheFileDoesNotName(): void
     {
         [$class, $weight] = $this->storeClass('MandatoryInGroup', mandatoryInGroup: true);
@@ -972,6 +990,40 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             ['de', 'fr', null],
             array_map(static fn ($writer): ?string => $writer->field()->language, $plan->dryRun->writers)
         );
+    }
+
+    /**
+     * @dataProvider namesAConfigurationMayNotWriteTo
+     */
+    public function testAConfigurationMappingKeyOrPathIsRefused(string $fieldName): void
+    {
+        $fileId = $this->upload("ID;Where\n1;/elsewhere\n", 'products.csv');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Field ' . $fieldName . ' cannot be imported into.');
+
+        $this->configuredDryRun($fileId, $this->class, [[
+            'label' => 'Where',
+            'dataSourceIndex' => ['Where'],
+            'transformationPipeline' => [],
+            'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => $fieldName, 'language' => '']],
+        ]], ['ID', 'Where']);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function namesAConfigurationMayNotWriteTo(): array
+    {
+        return [
+            'the key' => ['key'],
+            'the path' => ['path'],
+            'the type' => ['type'],
+            // PHP finds a setter whatever the case of its name
+            'the key in another case' => ['Key'],
+            'the parent' => ['parentId'],
+            'the published state' => ['published'],
+        ];
     }
 
     public function testALaterRowDoesNotSeeWhatAnEarlierRowChanged(): void

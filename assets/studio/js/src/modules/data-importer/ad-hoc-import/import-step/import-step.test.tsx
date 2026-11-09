@@ -13,6 +13,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { ImportStep } from './import-step'
 import { type ImportRun } from './import-state'
 
+jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
   createStyles: () => () => ({ styles: { error: 'error' } })

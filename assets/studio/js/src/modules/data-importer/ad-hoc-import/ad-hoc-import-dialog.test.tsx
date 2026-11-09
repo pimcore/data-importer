@@ -27,6 +27,7 @@ jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   trackError: (...args: unknown[]) => mockTrackError(...args),
   useSettings: () => ({ validLanguages: ['en', 'de'] })
 }))
+jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/api/class-definition', () => ({
   api: { endpoints: { classDefinitionCollectionCreatable: { useQuery: () => mockClasses() } } }
 }))

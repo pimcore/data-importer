@@ -72,7 +72,11 @@ class AdHocImportRunServiceTest extends Unit
     /**
      * @param list<DryRunRow> $results
      */
-    private function service(array $results = [], int $checks = 1): AdHocImportRunService
+    private function service(
+        array $results = [],
+        int $checks = 1,
+        ?RunQueueInterface $failingQueue = null
+    ): AdHocImportRunService
     {
         $dryRun = $this->createMock(AdHocImportDryRunServiceInterface::class);
         $dryRun->expects($this->exactly($checks))->method('check')->willReturn(
@@ -98,7 +102,7 @@ class AdHocImportRunServiceTest extends Unit
             $dryRun,
             $this->runs,
             $this->files,
-            $queue,
+            $failingQueue ?? $queue,
             new DirectRowWriter(new EventDispatcher()),
             AdHocRunFixtures::dryRunMessages()
         );
@@ -138,6 +142,25 @@ class AdHocImportRunServiceTest extends Unit
             ),
             new DryRunRow(5, 'SKU-4', DryRunRow::UPDATE, invalid: [], blocked: true),
         ];
+    }
+
+    public function testAQueueThatFailsLeavesNoRunThatNeverEnds(): void
+    {
+        $failure = new \RuntimeException('the database went away');
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willThrowException($failure);
+
+        try {
+            $this->service($this->results(), failingQueue: $queue)->start(
+                $this->fileId,
+                $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
+            );
+            $this->fail('the user must learn that the import did not start');
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId), 'it would hold the file');
     }
 
     public function testSkippingQueuesOnlyTheRowsWithoutErrorsAndCountsTheRestAsSkipped(): void

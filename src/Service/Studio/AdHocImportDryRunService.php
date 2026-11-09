@@ -489,6 +489,28 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      */
     private function field(mixed $key, mixed $language, array $targets): ImportField
     {
+        $target = $this->target($key, $targets);
+
+        $language = is_string($language) && $language !== '' ? $language : null;
+        if ($target['localized'] !== ($language !== null)
+            || ($language !== null && !Tool::isValidLanguage($language))
+        ) {
+            throw new InvalidArgumentException(sprintf('Field %s needs a valid language, and only it.', $key));
+        }
+
+        return new ImportField($target['key'], $language, $this->title($target));
+    }
+
+    /**
+     * Only the fields a mapping is offered: a name outside them can reach any setter of the object, and a move or a
+     * rename is not what the rights of the row were checked for.
+     *
+     * @param array<string, Target> $targets
+     *
+     * @return Target
+     */
+    private function target(mixed $key, array $targets): array
+    {
         $target = is_string($key) && !in_array($key, AdHocImportMappingService::NO_MAPPING_TARGETS, true)
             ? $targets[$key] ?? null
             : null;
@@ -499,14 +521,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             ));
         }
 
-        $language = is_string($language) && $language !== '' ? $language : null;
-        if ($target['localized'] !== ($language !== null)
-            || ($language !== null && !Tool::isValidLanguage($language))
-        ) {
-            throw new InvalidArgumentException(sprintf('Field %s needs a valid language, and only it.', $key));
-        }
-
-        return new ImportField($target['key'], $language, $this->title($target));
+        return $target;
     }
 
     /**
@@ -647,11 +662,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
             return new ImportField(null, $storeLanguage, $label);
         }
 
-        return new ImportField(
-            $fieldName,
-            $language,
-            isset($targets[$fieldName]) ? $this->title($targets[$fieldName]) : $label
-        );
+        return new ImportField($fieldName, $language, $this->title($this->target($fieldName, $targets)));
     }
 
     /**

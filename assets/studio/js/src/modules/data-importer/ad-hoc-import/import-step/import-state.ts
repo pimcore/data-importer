@@ -8,13 +8,14 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+import { getPrefix } from '@pimcore/studio-ui-bundle/api'
 import { type BundleDataImporterAdHocImportRunResponse } from '../../data-importer-api-slice.gen'
 import { type ErrorMode } from '../preview-step/preview-state'
 
 export type ImportRun = BundleDataImporterAdHocImportRunResponse
 export type ImportRunFailure = ImportRun['failures'][number]
 
-const API_BASE = '/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file'
+const fileUrl = (fileId: string): string => `${getPrefix()}/bundle/data-importer/ad-hoc-import/file/${fileId}`
 
 export const isDone = (run: ImportRun | undefined): run is ImportRun => run?.state === 'done'
 
@@ -23,6 +24,6 @@ export const percentOf = (run: ImportRun): number => run.total === 0 ? 100 : Mat
 
 export const importedCount = (run: ImportRun): number => run.updated + run.created
 
-export const failedRowsUrl = (fileId: string): string => `${API_BASE}/${fileId}/failed-rows`
+export const failedRowsUrl = (fileId: string): string => `${fileUrl(fileId)}/failed-rows`
 
-export const skippedRowsUrl = (fileId: string, errorMode: ErrorMode): string => `${API_BASE}/${fileId}/skipped-rows?errorMode=${errorMode}`
+export const skippedRowsUrl = (fileId: string, errorMode: ErrorMode): string => `${fileUrl(fileId)}/skipped-rows?errorMode=${errorMode}`

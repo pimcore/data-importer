@@ -43,6 +43,25 @@ class AdHocRunQueueTest extends Unit
         }
     }
 
+    public function testARunThatCannotBeStartedLeavesNoRowsForTheNextRunOfTheFile(): void
+    {
+        $failure = new \RuntimeException('no transport');
+        $events = new EventDispatcher();
+        $events->addListener(PostPreparationEvent::class, static function () use ($failure): void {
+            throw $failure;
+        });
+        $run = AdHocRunFixtures::run();
+
+        try {
+            (new DataImporterRunQueue($this->queue, $events))->enqueue($run, [0 => [], 2 => [1, 3]]);
+            $this->fail('the caller must learn that the run did not start');
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertSame(0, $this->queue->getQueueItemCount(RunRecord::queueName($run->fileId)));
+    }
+
     public function testEachRowIsQueuedForTheRunsUserAndThenTheWorkersAreStartedOnce(): void
     {
         $events = new EventDispatcher();
