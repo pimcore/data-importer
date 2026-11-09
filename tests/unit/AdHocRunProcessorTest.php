@@ -253,6 +253,27 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame([0], $writers[1]->writes);
     }
 
+    public function testAQueueItemNamingNoValuesToLeaveOutWritesThemAll(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $writers = [AdHocRunFixtures::writer()];
+        $plan = AdHocRunFixtures::plan(
+            [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved())],
+            $writers,
+            $user
+        );
+
+        $this->processor($plan, $user)->processRow(
+            $this->queue($fileId),
+            AdHocRunFixtures::USER_ID,
+            (string) json_encode(['row' => 0])
+        );
+
+        $this->assertSame([0], $writers[0]->writes);
+    }
+
     public function testAPlanIsBuiltOncePerFileAndProcess(): void
     {
         $fileId = $this->storedFile();
