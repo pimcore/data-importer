@@ -633,24 +633,19 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         $fieldName = is_string($settings['fieldName'] ?? null) ? $settings['fieldName'] : null;
         $label = is_string($item['label'] ?? null) && $item['label'] !== '' ? $item['label'] : (string) $fieldName;
 
-        if (($target['type'] ?? null) === self::STORE_TARGET) {
-            $language = $settings['language'] ?? null;
-
-            return $this->storeField(
-                $fieldName,
-                $settings['keyId'] ?? null,
-                $language === self::STORE_DEFAULT_LANGUAGE ? null : $language,
-                $classId
-            )[0];
-        }
-
-        if (($target['type'] ?? null) !== self::DIRECT_TARGET || $fieldName === null) {
-            return new ImportField(null, null, $label);
-        }
-
         $language = is_string($settings['language'] ?? null) && $settings['language'] !== ''
             ? $settings['language']
             : null;
+        $storeLanguage = $language === self::STORE_DEFAULT_LANGUAGE ? null : $language;
+
+        if (($target['type'] ?? null) === self::STORE_TARGET) {
+            return $this->storeField($fieldName, $settings['keyId'] ?? null, $storeLanguage, $classId)[0];
+        }
+
+        // the preview cannot read such a field, but the language it writes is still subject to the user's rights
+        if (($target['type'] ?? null) !== self::DIRECT_TARGET || $fieldName === null) {
+            return new ImportField(null, $storeLanguage, $label);
+        }
 
         return new ImportField(
             $fieldName,

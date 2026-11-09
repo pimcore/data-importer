@@ -116,9 +116,13 @@ class AdHocRowImporterTest extends Unit
         return $object;
     }
 
-    private function newObject(bool $mayCreate): Concrete
+    /**
+     * @param list<string>|null $languages the languages the user may edit; null is all of them
+     */
+    private function newObject(bool $mayCreate, ?array $languages = null): Concrete
     {
         $parent = $this->createStub(Folder::class);
+        $parent->method('getRealFullPath')->willReturn('/Products/New');
         $parent->method('isAllowed')->willReturnCallback(
             static fn (string $type): bool => $type === 'create' && $mayCreate
         );
@@ -126,8 +130,14 @@ class AdHocRowImporterTest extends Unit
         $object = $this->createStub(Concrete::class);
         $object->method('getId')->willReturn(null);
         $object->method('getKey')->willReturn('SKU-NEW');
-        $object->method('getRealPath')->willReturn('/Products/New/');
+        // as on a real object not saved yet, whose path is null
+        $object->method('getRealPath')->willThrowException(new \TypeError('getRealPath(): null returned'));
         $object->method('getParent')->willReturn($parent);
+        $object->method('__call')->willReturnCallback(
+            static fn (string $name): ?array => $name === 'getPermissions' && $languages !== null
+                ? ['lEdit' => implode(',', $languages)]
+                : null
+        );
 
         return $object;
     }
@@ -190,6 +200,64 @@ class AdHocRowImporterTest extends Unit
             $refused->message
         );
         $this->assertSame([], $this->written, 'nothing is written');
+    }
+
+    public function testANewObjectCannotWriteALanguageTheUserMayNotEdit(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $writers = [AdHocRunFixtures::writer(language: 'de')];
+        $match = new RowMatch(RowMatchOutcome::New, 'SKU-NEW', $this->newObject(true, ['en']));
+
+        $refused = $this->importer()->import($this->plan($match, $writers, $user), $user, 0, []);
+
+        $this->assertSame(
+            'data-importer.ad-hoc-import.run.may-not-edit-language'
+            . ' {"{{language}}":"de","{{folder}}":"/Products/New"}',
+            $refused->message
+        );
+        $this->assertSame([], $writers[0]->writes, 'the value is not mapped');
+        $this->assertSame([], $this->written, 'nothing is written');
+
+        $leftOut = $this->importer()->import($this->plan($match, $writers, $user), $user, 0, [0]);
+
+        $this->assertSame(RowOutcome::CREATED, $leftOut->result, 'without the value the row can be saved');
+        $this->assertSame([], $writers[0]->writes);
+    }
+
+    public function testAFailedWriteOfANewObjectIsReportedForItsRow(): void
+    {
+        $user = AdHocRunFixtures::user();
+        $this->failWith = new DuplicateFullPathException('path');
+
+        $outcome = $this->importer()->import(
+            $this->plan(new RowMatch(RowMatchOutcome::New, 'SKU-NEW', $this->newObject(true)), [], $user),
+            $user,
+            0,
+            []
+        );
+
+        $this->assertSame('create', $outcome->action);
+        $this->assertSame(
+            'data-importer.ad-hoc-import.check.key-taken {"{{key}}":"SKU-NEW","{{folder}}":"/Products/New"}',
+            $outcome->message
+        );
+    }
+
+    public function testATargetThePreviewCannotReadIsStillRefusedTheLanguageItWrites(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $writers = [AdHocRunFixtures::writer(language: 'de', key: null)];
+
+        $outcome = $this->importer()->import(
+            $this->plan($this->existing($this->object(languages: ['en'])), $writers, $user),
+            $user,
+            0,
+            []
+        );
+
+        $this->assertStringContainsString('may-not-edit-language', (string) $outcome->message);
+        $this->assertSame([], $writers[0]->writes);
+        $this->assertSame([], $this->written);
     }
 
     public function testARowFindingNoObjectIsReportedWithTheChecksReason(): void

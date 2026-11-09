@@ -104,7 +104,7 @@ final readonly class RowImporter
             $message = $this->messages->writeFailure(
                 $throwable,
                 (string) $object->getKey(),
-                $this->folderOf($object),
+                $this->folderOf($object, $isNew),
                 $user
             );
             $this->eventDispatcher->dispatch(new ProcessElementExceptionEvent(
@@ -136,24 +136,35 @@ final readonly class RowImporter
         string $matchValue
     ): ?string {
         $user = $plan->user;
-        $folder = $this->folderOf($object);
-        if ($isNew) {
-            return $object->getParent()?->isAllowed('create', $user)
-                ? null
-                : $this->messages->mayNotCreate($folder, $user);
-        }
-
-        if (!$object->isAllowed('view', $user)) {
-            return $this->dryRunMessages->notViewable($plan->matchField, $matchValue, $user);
-        }
-        // changing what is live needs publish, as saving it in Studio does
-        if (!$object->isAllowed($object->isPublished() ? 'publish' : 'save', $user)) {
-            return $this->messages->mayNotSave($folder, $user);
+        $folder = $this->folderOf($object, $isNew);
+        $refusal = $isNew
+            ? $this->createRefusal($object, $folder, $user)
+            : $this->changeRefusal($object, $folder, $plan, $matchValue);
+        if ($refusal !== null) {
+            return $refusal;
         }
 
         $language = $this->languageNotEditable($object, $plan->writers, $leftOut, $user);
 
         return $language === null ? null : $this->messages->mayNotEditLanguage($language, $folder, $user);
+    }
+
+    private function createRefusal(Concrete $object, string $folder, User $user): ?string
+    {
+        return $object->getParent()?->isAllowed('create', $user) ? null : $this->messages->mayNotCreate($folder, $user);
+    }
+
+    private function changeRefusal(Concrete $object, string $folder, DryRunPlan $plan, string $matchValue): ?string
+    {
+        $user = $plan->user;
+        if (!$object->isAllowed('view', $user)) {
+            return $this->dryRunMessages->notViewable($plan->matchField, $matchValue, $user);
+        }
+
+        // changing what is live needs publish, as saving it in Studio does
+        return $object->isAllowed($object->isPublished() ? 'publish' : 'save', $user)
+            ? null
+            : $this->messages->mayNotSave($folder, $user);
     }
 
     /**
@@ -206,8 +217,11 @@ final readonly class RowImporter
         });
     }
 
-    private function folderOf(Concrete $object): string
+    private function folderOf(Concrete $object, bool $isNew): string
     {
-        return rtrim($object->getRealPath(), '/') ?: '/';
+        // an object not saved yet has no path, only the folder it goes to
+        $path = $isNew ? $object->getParent()?->getRealFullPath() : $object->getRealPath();
+
+        return rtrim((string) $path, '/') ?: '/';
     }
 }

@@ -74,14 +74,14 @@ final class AdHocRunFixtures
     }
 
     /**
-     * @param list<RowMatch|\Exception> $matches what the rows find, in order; an exception is thrown
+     * @param list<RowMatch|\Throwable> $matches what the rows find, in order; a throwable is thrown
      * @param list<FieldWriter> $writers
      * @param list<array<int|string, mixed>> $rows
      */
     public static function plan(array $matches, array $writers, ?User $user = null, array $rows = [[]]): ImportPlan
     {
         $matcher = new class($matches) implements RowMatcherInterface {
-            /** @param list<RowMatch|\Exception> $matches */
+            /** @param list<RowMatch|\Throwable> $matches */
             public function __construct(private array $matches)
             {
             }
@@ -89,7 +89,7 @@ final class AdHocRunFixtures
             public function match(array $row, int $rowNumber): RowMatch
             {
                 $match = array_shift($this->matches);
-                if ($match instanceof \Exception) {
+                if ($match instanceof \Throwable) {
                     throw $match;
                 }
 
@@ -108,19 +108,25 @@ final class AdHocRunFixtures
         );
     }
 
-    public static function writer(?ValueError $error = null, ?string $language = null): FieldWriter
-    {
-        return new class($error, $language) implements FieldWriter {
+    public static function writer(
+        ?ValueError $error = null,
+        ?string $language = null,
+        ?string $key = 'name'
+    ): FieldWriter {
+        return new class($error, $language, $key) implements FieldWriter {
             /** @var list<int> */
             public array $writes = [];
 
-            public function __construct(private ?ValueError $error, private ?string $language)
-            {
+            public function __construct(
+                private ?ValueError $error,
+                private ?string $language,
+                private ?string $key
+            ) {
             }
 
             public function field(): ImportField
             {
-                return new ImportField('name', $this->language, 'Name');
+                return new ImportField($this->key, $this->language, 'Name');
             }
 
             public function write(Concrete $object, int $index, array $row): ?ValueError

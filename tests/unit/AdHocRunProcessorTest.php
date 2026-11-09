@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowFailure;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunProcessor;
@@ -34,6 +36,8 @@ use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\User;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
 
 class AdHocRunProcessorTest extends Unit
 {
@@ -79,13 +83,13 @@ class AdHocRunProcessorTest extends Unit
     }
 
     private function processor(
-        ImportPlan|\Exception $plan,
+        ImportPlan|\Throwable $plan,
         ?User $user = null,
         int $planBuilds = 1
     ): RunProcessor {
         $dryRun = $this->createMock(AdHocImportDryRunServiceInterface::class);
         $expect = $dryRun->expects($this->exactly($planBuilds))->method('planForRun');
-        $plan instanceof \Exception ? $expect->willThrowException($plan) : $expect->willReturn($plan);
+        $plan instanceof \Throwable ? $expect->willThrowException($plan) : $expect->willReturn($plan);
 
         $users = $this->createStub(UserResolverInterface::class);
         $users->method('getById')->willReturn($user);
@@ -293,6 +297,102 @@ class AdHocRunProcessorTest extends Unit
         $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
         $this->assertStringContainsString('cannot-go-on', $stored['rows'][0]['message']);
         $this->assertStringNotContainsString('database', $stored['rows'][0]['message']);
+    }
+
+    public function testAPhpErrorWhileLookingForTheObjectCountsAsFailedAndTheRunEnds(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $plan = AdHocRunFixtures::plan([new \TypeError('null returned')], [], $user);
+
+        $this->processor($plan, $user)->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame(1, $run->failed);
+        $this->assertFalse($run->isRunning());
+        $this->assertCount(1, $this->notifications);
+    }
+
+    public function testAPhpErrorBuildingThePlanFailsEveryRowAndTheRunEnds(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 2);
+        $processor = $this->processor(new \TypeError('null returned'), AdHocRunFixtures::user());
+
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame(2, $run->failed);
+        $this->assertFalse($run->isRunning());
+    }
+
+    public function testARunEndsAndTellsTheUserEvenIfItsFilesCannotBeWrittenOrDeleted(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $storage = $this->createStub(FilesystemOperator::class);
+        $storage->method('write')->willThrowException(new \RuntimeException('disk full'));
+        $storage->method('delete')->willThrowException(new \RuntimeException('disk full'));
+        $this->files = new FileStore($storage, new LockFactory(new InMemoryStore()));
+        $plan = AdHocRunFixtures::plan([new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->refused())], [], $user);
+
+        $this->processor($plan, $user)->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame(1, $run->failed);
+        $this->assertFalse($run->isRunning());
+        $this->assertNotNull($run->finishedAt);
+        $this->assertCount(1, $this->notifications, 'the failure is still told');
+        $this->assertStringContainsString('may-not-save', $this->notifications[0]->getMessage());
+    }
+
+    public function testARunEndsEvenIfItsFailuresCannotBeKeptOrRead(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $this->runs = new class($this->runs) implements RunStoreInterface {
+            public function __construct(private RunStoreInterface $runs)
+            {
+            }
+
+            public function find(int $userId, string $fileId): ?RunRecord
+            {
+                return $this->runs->find($userId, $fileId);
+            }
+
+            public function save(RunRecord $run): void
+            {
+                $this->runs->save($run);
+            }
+
+            public function delete(int $userId, string $fileId): void
+            {
+                $this->runs->delete($userId, $fileId);
+            }
+
+            public function addFailure(RunRecord $run, RowFailure $failure): void
+            {
+                throw new \TypeError('cannot be kept');
+            }
+
+            public function takeFailures(RunRecord $run): array
+            {
+                throw new \RuntimeException('cannot be read');
+            }
+        };
+        $plan = AdHocRunFixtures::plan([new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->refused())], [], $user);
+
+        $this->processor($plan, $user)->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame(1, $run->failed);
+        $this->assertFalse($run->isRunning());
+        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
+        $this->assertCount(1, $this->notifications);
     }
 
     public function testAQueueItemOfAnEndedOrUnknownRunIsIgnored(): void

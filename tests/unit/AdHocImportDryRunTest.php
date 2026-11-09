@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunner;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationChain;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
@@ -925,6 +926,51 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
         $this->assertSame([], $rows[0]['invalid'], 'the save sees the last value only');
         $this->assertSame('Stool', $rows[0]['values'][1]['new']);
+    }
+
+    public function testAConfigurationsOtherTargetsKeepTheLanguageTheyWriteForTheRightsCheck(): void
+    {
+        $fileId = $this->upload("ID;Related;Batch;Default\n1;a;b;c\n", 'products.csv');
+        $item = static fn (string $column, string $type, string $language): array => [
+            'label' => $column,
+            'dataSourceIndex' => [$column],
+            'transformationPipeline' => [],
+            'dataTarget' => ['type' => $type, 'settings' => ['fieldName' => 'name', 'language' => $language]],
+        ];
+        $columns = ['ID' => 'ID', 'Related' => 'Related', 'Batch' => 'Batch', 'Default' => 'Default'];
+
+        $plan = $this->service()->planForRun(
+            $fileId,
+            FileType::Csv,
+            new AdHocImportDryRunParameters(
+                $this->folderId,
+                'ignored',
+                AdHocImportDryRunParameters::MATCH_BY_FIELD,
+                'ignored',
+                configuration: 'by-id',
+                configurationColumns: $columns,
+            ),
+            [
+                'configuration' => [
+                    'resolverConfig' => [
+                        'dataObjectClassId' => $this->class->getId(),
+                        'loadingStrategy' => ['type' => 'id', 'settings' => ['dataSourceIndex' => 'ID']],
+                        'createLocationStrategy' => ['type' => 'staticPath', 'settings' => ['path' => self::TARGET]],
+                    ],
+                ],
+                'mapping' => [
+                    $item('Related', 'manyToManyRelation', 'de'),
+                    $item('Batch', 'classificationstoreBatch', 'fr'),
+                    $item('Default', 'classificationstoreBatch', 'default'),
+                ],
+            ],
+            $this->user
+        );
+
+        $this->assertSame(
+            ['de', 'fr', null],
+            array_map(static fn ($writer): ?string => $writer->field()->language, $plan->dryRun->writers)
+        );
     }
 
     public function testALaterRowDoesNotSeeWhatAnEarlierRowChanged(): void

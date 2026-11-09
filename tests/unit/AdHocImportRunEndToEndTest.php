@@ -32,6 +32,7 @@ use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\Notification\Listing as NotificationListing;
 use Pimcore\Model\User;
+use Pimcore\Model\User\Workspace\DataObject as ObjectWorkspace;
 use Pimcore\Security\User\User as SecurityUser;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -71,10 +72,7 @@ class AdHocImportRunEndToEndTest extends Unit
         $this->user->setAdmin(true);
         $this->user->save();
 
-        $securityUser = new SecurityUser($this->user);
-        $this->tokenStorage()->setToken(
-            new UsernamePasswordToken($securityUser, 'pimcore_studio', $securityUser->getRoles())
-        );
+        $this->logInAs($this->user);
 
         $this->path = sys_get_temp_dir() . '/' . uniqid('ad-hoc-run-', true);
         file_put_contents($this->path, self::CSV);
@@ -88,13 +86,25 @@ class AdHocImportRunEndToEndTest extends Unit
         TestHelper::cleanUp();
     }
 
+    private function logInAs(User $user): void
+    {
+        $securityUser = new SecurityUser($user);
+        $this->tokenStorage()->setToken(
+            new UsernamePasswordToken($securityUser, 'pimcore_studio', $securityUser->getRoles())
+        );
+    }
+
     private function tokenStorage(): TokenStorageInterface
     {
         return $this->tester->grabService('security.token_storage');
     }
 
-    private function parameters(): AdHocImportRunParameters
-    {
+    /**
+     * @param list<array<string, string>> $columns
+     */
+    private function parameters(
+        array $columns = [['column' => 'sku', 'field' => 'sku'], ['column' => 'name', 'field' => 'name']]
+    ): AdHocImportRunParameters {
         return new AdHocImportRunParameters(
             new AdHocImportDryRunParameters(
                 $this->folderId,
@@ -102,10 +112,7 @@ class AdHocImportRunEndToEndTest extends Unit
                 AdHocImportDryRunParameters::MATCH_BY_FIELD,
                 'sku',
                 'sku',
-                columns: [
-                    ['column' => 'sku', 'field' => 'sku'],
-                    ['column' => 'name', 'field' => 'name'],
-                ]
+                columns: $columns
             ),
             AdHocImportDryRunServiceInterface::SKIP_ROWS,
             'products.csv'
@@ -174,6 +181,38 @@ class AdHocImportRunEndToEndTest extends Unit
         $notifications->setCondition('recipient = ?', [$this->user->getId()]);
         $this->assertSame(1, $notifications->getTotalCount());
         $this->assertStringContainsString('products.csv', $notifications->getNotifications()[0]->getTitle());
+
+        $service->discard($fileId);
+    }
+
+    public function testANewObjectIsNotWrittenInALanguageTheWorkspaceDoesNotAllow(): void
+    {
+        $workspace = new ObjectWorkspace();
+        $workspace->setCid($this->folderId);
+        $workspace->setCpath(self::TARGET);
+        $workspace->setValues(['list' => true, 'view' => true, 'create' => true, 'save' => true, 'lEdit' => 'en']);
+        $this->user->setAdmin(false);
+        $this->user->setPermission('objects', true);
+        $this->user->setWorkspacesObject([$workspace]);
+        $this->user->save();
+        $this->logInAs($this->user);
+        $fileId = $this->tester->grabService(AdHocImportServiceInterface::class)
+            ->upload(new UploadedFile($this->path, 'products.csv', null, null, true), $this->folderId)
+            ->getFileId();
+        $this->assertNotNull($fileId);
+        $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
+
+        $service->start($fileId, $this->parameters([
+            ['column' => 'sku', 'field' => 'sku'],
+            ['column' => 'name', 'field' => 'title', 'language' => 'de'],
+        ]));
+        $this->drainQueue();
+
+        $run = $service->status($fileId);
+        $this->assertSame('done', $run->getState());
+        $this->assertSame(0, $run->getCreated());
+        $this->assertSame(2, $run->getFailed());
+        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-1'), 'nothing is written');
 
         $service->discard($fileId);
     }

@@ -65,13 +65,16 @@ final class RunProcessor implements AdHocRowProcessorInterface
         $run = $run->counted($outcome);
         $this->runs->save($run);
         if ($outcome->isFailure()) {
-            $this->runs->addFailure($run, new RowFailure(
+            $failure = new RowFailure(
                 ($plan->firstRowNumber ?? 2) + $index,
                 $outcome->matchValue,
                 $outcome->action,
                 (string) $outcome->message,
                 $this->cells($plan, $index)
-            ));
+            );
+            $this->attempt($run, function () use ($run, $failure): void {
+                $this->runs->addFailure($run, $failure);
+            });
         }
 
         if ($run->isComplete()) {
@@ -96,9 +99,9 @@ final class RunProcessor implements AdHocRowProcessorInterface
 
         try {
             return $this->rowImporter->import($plan, $user, $index, $leftOut);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 one row must not end the run, whatever stops it
             // what the row importer does not expect, such as the database going away while it looks for the object
-            $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $exception->getMessage()));
+            $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
 
             return RowOutcome::failed('', null, $this->messages->cannotGoOn($user));
         }
@@ -118,9 +121,9 @@ final class RunProcessor implements AdHocRowProcessorInterface
                     $run->configuration,
                     $user
                 );
-            } catch (\Exception $exception) {
+            } catch (\Throwable $throwable) { // NOSONAR php:S2221 a plan that cannot be built must not end the run
                 // the file or its folder is gone: every row of the run reports that, and the run ends
-                $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $exception->getMessage()));
+                $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
             }
         }
 
@@ -146,22 +149,56 @@ final class RunProcessor implements AdHocRowProcessorInterface
 
     private function finish(RunRecord $run, ?ImportPlan $plan, ?User $user): void
     {
-        $failures = [...$this->runs->takeFailures($run), ...$this->writer->close($run)];
+        $failures = [];
+        $this->attempt($run, function () use ($run, &$failures): void {
+            $failures = $this->runs->takeFailures($run);
+        });
+        $this->attempt($run, function () use ($run, &$failures): void {
+            $failures = [...$failures, ...$this->writer->close($run)];
+        });
         if ($failures !== []) {
-            $this->files->storeFailedRows($run->userId, $run->fileId, (string) json_encode([
-                'columns' => $plan === null ? [] : array_values($plan->columns),
-                'rows' => array_map(static fn (RowFailure $failure): array => $failure->toArray(), $failures),
-            ], JSON_THROW_ON_ERROR));
+            $this->attempt($run, function () use ($run, $plan, $failures): void {
+                $this->storeFailures($run, $plan, $failures);
+            });
         }
 
         $run = $run->finished(time());
         $this->runs->save($run);
-        $this->files->deleteUpload($run->userId, $run->fileId, $run->type);
         $this->planFileId = null;
         $this->plan = null;
 
+        $this->attempt($run, function () use ($run): void {
+            $this->files->deleteUpload($run->userId, $run->fileId, $run->type);
+        });
         if ($user instanceof User) {
-            $this->notifier->notify($run, $failures, $user);
+            $this->attempt($run, function () use ($run, $failures, $user): void {
+                $this->notifier->notify($run, $failures, $user);
+            });
+        }
+    }
+
+    /**
+     * @param list<RowFailure> $failures
+     */
+    private function storeFailures(RunRecord $run, ?ImportPlan $plan, array $failures): void
+    {
+        $this->files->storeFailedRows($run->userId, $run->fileId, (string) json_encode([
+            'columns' => $plan === null ? [] : array_values($plan->columns),
+            'rows' => array_map(static fn (RowFailure $failure): array => $failure->toArray(), $failures),
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * What a run still has to record or tidy up: a step that fails is logged, so that the run ends all the same.
+     *
+     * @param callable(): void $step
+     */
+    private function attempt(RunRecord $run, callable $step): void
+    {
+        try {
+            $step();
+        } catch (\Throwable $throwable) { // NOSONAR php:S2221 a run always ends, whatever stops one of its steps
+            $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
         }
     }
 }
