@@ -74,6 +74,16 @@ describe('the running import', () => {
     expect(screen.getByText('Saving')).toBeTruthy()
     expect(screen.getByRole('progressbar').getAttribute('value')).toBe('60')
   })
+
+  it('shows the run in a Studio card', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ state: 'running', processed: 184, total: 306 }) }
+      total={ 306 }
+           />)
+
+    expect(within(screen.getByTestId('studio-card')).getByText('Importing 306 objects')).toBeTruthy()
+  })
 })
 
 describe('an import that saved every row', () => {
@@ -108,6 +118,16 @@ describe('an import that saved every row', () => {
 
     expect(screen.queryByRole('link', { name: 'Download rows' })).toBeNull()
     expect(screen.queryByText('Skipped in the preview')).toBeNull()
+  })
+
+  it('shows the result in a Studio card', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({}) }
+      total={ 309 }
+           />)
+
+    expect(within(screen.getByTestId('studio-card')).getByText('Import complete')).toBeTruthy()
   })
 })
 

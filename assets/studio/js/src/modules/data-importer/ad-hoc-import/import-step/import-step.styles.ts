@@ -13,9 +13,6 @@ import { createStyles } from '@pimcore/studio-ui-bundle/app'
 export const useStyles = createStyles(({ token, css }) => ({
   card: css`
     max-width: 640px;
-    padding: ${token.paddingLG}px ${token.paddingXL}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusLG}px;
   `,
   header: css`
     display: flex;
@@ -41,12 +38,13 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorTextSecondary};
   `,
   result: css`
+    &.ant-card {
+      border-top: 4px solid ${token.colorSuccess};
+    }
+  `,
+  resultContent: css`
     display: flex;
     gap: ${token.marginXL}px;
-    padding: ${token.paddingLG}px ${token.paddingXL}px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-top: 4px solid ${token.colorSuccess};
-    border-radius: ${token.borderRadiusLG}px;
   `,
   complete: css`
     color: ${token.colorSuccess};

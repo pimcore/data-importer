@@ -11,11 +11,13 @@
 import React, { useMemo } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Grid, Progress } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Card, Grid, Progress } from '@pimcore/studio-ui-bundle/components'
 import { useElementHelper } from '@pimcore/studio-ui-bundle/modules/element'
 import { useStyles as usePreviewStyles } from '../preview-step/preview-step.styles'
 import { importedCount, isDone, percentOf, skippedRowsUrl, type ImportRun, type ImportRunFailure } from './import-state'
 import { useStyles } from './import-step.styles'
+
+const CARD_PADDING = { x: 'extra-large', y: 'large' } as const
 
 export interface ImportStepProps {
   fileId: string
@@ -33,7 +35,10 @@ const Running = ({ run, total }: { run: ImportRun | undefined, total: number }):
   const progress = t('data-importer.ad-hoc-import.run.count-of', { done, total: count })
 
   return (
-    <div className={ styles.card }>
+    <Card
+      className={ styles.card }
+      contentPadding={ CARD_PADDING }
+    >
       <div className={ styles.header }>
         <span className={ styles.title }>{ t('data-importer.ad-hoc-import.run.importing', { count }) }</span>
         <span className={ styles.muted }>{ progress }</span>
@@ -48,7 +53,7 @@ const Running = ({ run, total }: { run: ImportRun | undefined, total: number }):
         <span className={ styles.muted }>{ progress }</span>
       </div>
       <div className={ styles.hint }>{ t('data-importer.ad-hoc-import.run.background') }</div>
-    </div>
+    </Card>
   )
 }
 
@@ -59,58 +64,63 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
 
   return (
     <div>
-      <div className={ styles.result }>
-        <div>
-          <div className={ styles.complete }>{ t('data-importer.ad-hoc-import.result.complete') }</div>
-          <div className={ styles.imported }>{ importedCount(run) }</div>
+      <Card
+        className={ styles.result }
+        contentPadding={ CARD_PADDING }
+      >
+        <div className={ styles.resultContent }>
           <div>
-            { t('data-importer.ad-hoc-import.result.objects-from', {
-              file: run.fileName,
-              interpolation: { escapeValue: false }
-            }) }
-          </div>
-          <div className={ styles.muted }>
-            { t('data-importer.ad-hoc-import.result.saved-as', {
-              user: run.userName,
-              time: run.finishedAt === null ? '' : new Date(run.finishedAt * 1000).toLocaleString(),
-              interpolation: { escapeValue: false }
-            }) }
-          </div>
-        </div>
-        <div className={ styles.lines }>
-          <div className={ styles.line }>
-            <span className={ styles.lineLabel }>{ t('data-importer.ad-hoc-import.result.updated') }</span>
-            <span className={ styles.lineCount }>{ run.updated }</span>
-          </div>
-          <div className={ styles.line }>
-            <span className={ styles.lineLabel }>
-              { t('data-importer.ad-hoc-import.result.created-in', {
-                folder: run.newObjectsFolder,
+            <div className={ styles.complete }>{ t('data-importer.ad-hoc-import.result.complete') }</div>
+            <div className={ styles.imported }>{ importedCount(run) }</div>
+            <div>
+              { t('data-importer.ad-hoc-import.result.objects-from', {
+                file: run.fileName,
                 interpolation: { escapeValue: false }
               }) }
-            </span>
-            <span className={ styles.lineCount }>{ run.created }</span>
-            <Button
-              onClick={ () => { void openElement({ id: run.newObjectsFolderId, type: 'data-object' }) } }
-              type="link"
-            >
-              { t('data-importer.ad-hoc-import.result.open-folder') }
-            </Button>
+            </div>
+            <div className={ styles.muted }>
+              { t('data-importer.ad-hoc-import.result.saved-as', {
+                user: run.userName,
+                time: run.finishedAt === null ? '' : new Date(run.finishedAt * 1000).toLocaleString(),
+                interpolation: { escapeValue: false }
+              }) }
+            </div>
           </div>
-          { run.skipped > 0 && (
+          <div className={ styles.lines }>
             <div className={ styles.line }>
-              <span className={ styles.lineLabel }>{ t('data-importer.ad-hoc-import.result.skipped') }</span>
-              <span className={ styles.lineCount }>{ run.skipped }</span>
+              <span className={ styles.lineLabel }>{ t('data-importer.ad-hoc-import.result.updated') }</span>
+              <span className={ styles.lineCount }>{ run.updated }</span>
+            </div>
+            <div className={ styles.line }>
+              <span className={ styles.lineLabel }>
+                { t('data-importer.ad-hoc-import.result.created-in', {
+                  folder: run.newObjectsFolder,
+                  interpolation: { escapeValue: false }
+                }) }
+              </span>
+              <span className={ styles.lineCount }>{ run.created }</span>
               <Button
-                href={ skippedRowsUrl(fileId, run.errorMode) }
+                onClick={ () => { void openElement({ id: run.newObjectsFolderId, type: 'data-object' }) } }
                 type="link"
               >
-                { t('data-importer.ad-hoc-import.result.download-rows') }
+                { t('data-importer.ad-hoc-import.result.open-folder') }
               </Button>
             </div>
-          ) }
+            { run.skipped > 0 && (
+              <div className={ styles.line }>
+                <span className={ styles.lineLabel }>{ t('data-importer.ad-hoc-import.result.skipped') }</span>
+                <span className={ styles.lineCount }>{ run.skipped }</span>
+                <Button
+                  href={ skippedRowsUrl(fileId, run.errorMode) }
+                  type="link"
+                >
+                  { t('data-importer.ad-hoc-import.result.download-rows') }
+                </Button>
+              </div>
+            ) }
+          </div>
         </div>
-      </div>
+      </Card>
       <div className={ styles.footnote }>{ t('data-importer.ad-hoc-import.result.history') }</div>
     </div>
   )
