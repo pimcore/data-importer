@@ -16,15 +16,23 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\BranchMerge;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\ObjectChanges;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\WriteWay;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DataImporterRunQueue;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunProcessor;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ConcreteObjectResolver;
 use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolver;
+use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Lock\LockFactory;
@@ -32,13 +40,13 @@ use Symfony\Component\Lock\Store\InMemoryStore;
 use Symfony\Component\Messenger\MessageBus;
 
 /**
- * The row writer and the merge the bundle wires when Change Control is installed, over these branches.
+ * The run service and the row processor the bundle wires when Change Control is installed, over these branches.
  */
 final readonly class AdHocBranchWayParts
 {
-    public RowWriterInterface $writer;
+    public AdHocImportRunService $service;
 
-    public BranchMerge $merge;
+    public RunProcessor $processor;
 
     public function __construct(
         UnitTester $tester,
@@ -48,9 +56,13 @@ final readonly class AdHocBranchWayParts
         $logger = new NullLogger();
         $objects = new ConcreteObjectResolver();
         $runs = $tester->grabService(RunStoreInterface::class);
+        $files = $tester->grabService(FileStore::class);
         $messages = $tester->grabService(RunMessages::class);
+        $notifier = $tester->grabService(RunNotifier::class);
+        $dryRunMessages = $tester->grabService(DryRunMessages::class);
+        $dryRun = $tester->grabService(AdHocImportDryRunServiceInterface::class);
 
-        $this->writer = (new WriteWay(
+        $writer = (new WriteWay(
             new DirectRowWriter($dispatcher, $logger),
             new ObjectChanges(),
             $objects,
@@ -58,10 +70,10 @@ final readonly class AdHocBranchWayParts
             $messages,
             $branches
         ))->writer();
-        $this->merge = new BranchMerge(
+        $merge = new BranchMerge(
             $runs,
-            $tester->grabService(FileStore::class),
-            $tester->grabService(RunNotifier::class),
+            $files,
+            $notifier,
             $messages,
             new MessageBus(),
             $dispatcher,
@@ -70,6 +82,38 @@ final readonly class AdHocBranchWayParts
             new LockFactory(new InMemoryStore()),
             $logger,
             $branches
+        );
+
+        $importer = new RowImporter(
+            $writer,
+            $tester->grabService(MappingApplicationScope::class),
+            $dryRunMessages,
+            $messages,
+            $dispatcher,
+            $logger
+        );
+        $this->processor = new RunProcessor(
+            $runs,
+            $dryRun,
+            $files,
+            $importer,
+            $writer,
+            $messages,
+            $notifier,
+            new UserResolver(),
+            $logger,
+            $merge
+        );
+        $this->service = new AdHocImportRunService(
+            $tester->grabService(SecurityServiceInterface::class),
+            $dryRun,
+            $runs,
+            $files,
+            new DataImporterRunQueue($tester->grabService(QueueService::class), $dispatcher),
+            $writer,
+            $dryRunMessages,
+            new LockFactory(new InMemoryStore()),
+            $merge
         );
     }
 }
