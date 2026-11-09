@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
@@ -88,7 +87,7 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
 
         $settings = $parameters->getSettings();
         $checked = $this->dryRunService->check($fileId, $settings, $user);
-        $imported = $this->importedRows($checked->results, $parameters->getErrorMode());
+        $imported = $checked->importedRows($parameters->getErrorMode());
         if ($imported === []) {
             throw new InvalidArgumentException(sprintf('File %s has no row to import.', $fileId));
         }
@@ -270,27 +269,6 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     private function beingImported(string $fileId): InvalidArgumentException
     {
         return new InvalidArgumentException(sprintf('File %s is being imported.', $fileId));
-    }
-
-    /**
-     * @param list<DryRunRow> $results
-     *
-     * @return array<int, list<int>> per position in the file of the rows to import, the writers it goes without
-     */
-    private function importedRows(array $results, string $errorMode): array
-    {
-        $imported = [];
-        foreach ($results as $index => $result) {
-            if ($errorMode === AdHocImportDryRunServiceInterface::SKIP_ROWS) {
-                if (!$result->hasErrors()) {
-                    $imported[$index] = [];
-                }
-            } elseif ($result->importsWithoutInvalidValues()) {
-                $imported[$index] = $result->leftOut;
-            }
-        }
-
-        return $imported;
     }
 
     private function requireRun(User $user, string $fileId): RunRecord
