@@ -319,6 +319,23 @@ class AdHocBranchMergeTest extends Unit
         $this->assertSame(['merge'], $this->branches->calls, 'the branch stays open for the decision');
     }
 
+    public function testARefusalThatNamesNoRowEndsTheRunInsteadOfAskingForADecision(): void
+    {
+        $this->branches->mergeAnswers = [MergeStatus::refused(self::branch(), 3, [
+            new MergeProblem(null, null, 'x', code: MergeProblemCode::Other),
+            new MergeProblem(ObjectRef::of(99), null, 'not of this import', code: MergeProblemCode::ObjectGone),
+        ])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $run = $this->stored();
+        $this->assertSame([RunRecord::DONE, 0, 0, 3], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame(['merge', 'discard'], $this->branches->calls, 'leaving out no row would be refused again');
+        $this->assertNotNull($run->notice);
+        $this->assertSame(array_fill(2, 3, $run->notice), $this->failures());
+        $this->assertFalse($this->uploadExists());
+    }
+
     public function testMergingWithoutTheRowsThatCannotBeSavedTakesOnlyTheirObjectsOut(): void
     {
         $run = $this->branchRun(['state' => RunRecord::DECISION, 'updated' => 1, 'failed' => 2, 'total' => 4]);

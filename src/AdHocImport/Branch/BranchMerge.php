@@ -185,6 +185,15 @@ final readonly class BranchMerge implements BranchMergeInterface
         }
     }
 
+    private function closeBranchLogged(RunRecord $run, User $user): void
+    {
+        try {
+            $this->closeBranch($run, $user);
+        } catch (ChangeControlExceptionInterface $notClosed) {
+            $this->log($run, $notClosed->getMessage());
+        }
+    }
+
     private function startMerge(RunRecord $run, User $user): RunRecord
     {
         try {
@@ -197,12 +206,7 @@ final readonly class BranchMerge implements BranchMergeInterface
             );
         } catch (ChangeControlExceptionInterface $exception) {
             $this->log($run, $exception->getMessage());
-
-            try {
-                $this->closeBranch($run, $user);
-            } catch (ChangeControlExceptionInterface $notClosed) {
-                $this->log($run, $notClosed->getMessage());
-            }
+            $this->closeBranchLogged($run, $user);
 
             return $this->failRemaining($run, $user, $this->messages->mergeProblem('other', null, $user));
         }
@@ -249,6 +253,14 @@ final readonly class BranchMerge implements BranchMergeInterface
     private function refused(RunRecord $run, MergeStatus $status, User $user): RunRecord
     {
         [$messages, $notice] = $this->rowProblems($run, $status->problems, $user);
+        if ($messages === []) {
+            // no row to leave out: merging again would be refused the same way
+            $notice ??= $this->messages->mergeProblem('other', null, $user);
+            $this->closeBranchLogged($run, $user);
+
+            return $this->failRemaining($run->withNotice($notice), $user, $notice);
+        }
+
         $failures = $this->storedFailures($run);
         foreach ($this->runs->recorded($run) as $row) {
             if (isset($messages[$row->row])) {
