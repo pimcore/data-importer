@@ -321,6 +321,29 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
     }
 
+    public function testAStartWhoseBranchCannotBeClosedTellsWhatStoppedTheStart(): void
+    {
+        $failure = new \RuntimeException('the database went away');
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willThrowException($failure);
+        $writer = $this->createStub(RowWriterInterface::class);
+        $writer->method('open')->willReturnCallback(
+            static fn (RunRecord $run): RunRecord => $run->withBranch(AdHocFakeBranches::BRANCH)
+        );
+        $branchMerge = $this->createMock(BranchMergeInterface::class);
+        $branchMerge->expects($this->once())->method('discard')->willThrowException(new \LogicException('gone'));
+
+        try {
+            $this->service($this->results(), failingQueue: $queue, writer: $writer, branchMerge: $branchMerge)
+                ->start($this->fileId, $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS));
+            $this->fail('the user must learn that the import did not start');
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
     public function testAWriterThatCannotOpenQueuesNothingAndLeavesNoRun(): void
     {
         $failure = new \RuntimeException('no branch to write to');
