@@ -43,6 +43,9 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
     noteRest = t(`${MAPPING}.auto-note.rest`, { count: pending })
   }
 
+  const autoLead = auto === 1 ? t(`${MAPPING}.auto-note.lead-one`) : t(`${MAPPING}.auto-note.lead`, { count: auto })
+  const pendingLead = pending === 1 ? t(`${MAPPING}.auto-note.pending-one`) : t(`${MAPPING}.auto-note.pending`, { count: pending })
+
   return (
     <div>
       <div className={ styles.summary }>
@@ -106,11 +109,15 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
       { (auto > 0 || pending > 0) && (
         <div className={ styles.note }>
           <span className={ styles.noteIcon }><Icon value="auto-save" /></span>
-          <span>
-            <strong>{ auto === 1 ? t(`${MAPPING}.auto-note.lead-one`) : t(`${MAPPING}.auto-note.lead`, { count: auto }) }</strong>
-            { ' ' }
-            { noteRest }
-          </span>
+          { auto === 0
+            ? <span><strong>{ pendingLead }</strong></span>
+            : (
+              <span>
+                <strong>{ autoLead }</strong>
+                { ' ' }
+                { noteRest }
+              </span>
+              ) }
           <span className={ styles.spacer } />
           { pending > 0 && (
             <Button

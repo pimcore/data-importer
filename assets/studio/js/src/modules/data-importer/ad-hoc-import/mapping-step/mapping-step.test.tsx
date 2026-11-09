@@ -13,7 +13,7 @@ import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import { Modal } from 'antd'
-import { canContinueMapping, createMapping, type LoadedMapping, type Mapping } from './mapping-state'
+import { canContinueMapping, chooseField, createMapping, setTransformations, withSamples, type LoadedMapping, type Mapping } from './mapping-state'
 import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
 import { type TransformationSource } from './transformations-editor'
@@ -283,6 +283,26 @@ describe('the mapping step', () => {
     expect(screen.getByText('2 of 4 columns go into a field')).toBeTruthy()
     expect(screen.getByText('1 column was mapped automatically')).toBeTruthy()
     expect(screen.getByText('when the file was read, marked “auto”. 1 more has a suggestion to confirm.')).toBeTruthy()
+  })
+
+  describe('with suggestions but nothing mapped automatically', () => {
+    const suggest = (score: number, ...columns: string[]): LoadedMapping['suggestions'] => columns.map((column) =>
+      ({ sourceIndex: column, sourceLabel: column, targetFieldName: 'note', targetFieldLabel: 'Note & remark', transformationResultType: 'default', score, language: null }))
+
+    it('says only that one waits to be confirmed', () => {
+      render(<Stateful initial={ createMapping(inspected, objects, { ...loaded, suggestions: suggest(55, 'Notiz') }) } />)
+
+      expect(screen.getByText('1 column has a suggestion to confirm.')).toBeTruthy()
+      expect(screen.queryByText(/mapped automatically/)).toBeNull()
+      expect(screen.queryByText(/marked “auto”/)).toBeNull()
+    })
+
+    it('counts those waiting when there are several', () => {
+      render(<Stateful initial={ createMapping(inspected, objects, { ...loaded, suggestions: [...suggest(55, 'Notiz'), ...loaded.suggestions.slice(1)] }) } />)
+
+      expect(screen.getByText('2 columns have a suggestion to confirm.')).toBeTruthy()
+      expect(screen.queryByText(/mapped automatically/)).toBeNull()
+    })
   })
 
   describe('a column not to import', () => {
@@ -575,6 +595,53 @@ describe('the mapping step', () => {
 
         expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
         expect(canContinue()).toBe('false')
+      })
+
+      describe('and the file read again', () => {
+        const steps = [{ type: 'loadAsset', settings: {} }]
+        const answered = (fits: boolean): Mapping =>
+          setTransformations(chooseField(createMapping(inspected, objects, loaded), 'Notiz', 'note'), 'Notiz', steps, fits)
+
+        it('is asked for again, as the answer was about the values read before', async () => {
+          mockPreview.mockResolvedValue(answer(true))
+          render(<Stateful initial={ withSamples(answered(false), inspected) } />)
+
+          expect(canContinue()).toBe('false')
+          await settle()
+
+          expect(mockPreview).toHaveBeenCalledTimes(1)
+          expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+          expect(canContinue()).toBe('true')
+        })
+
+        it('drops an answer that arrives after the step was left', async () => {
+          let late: (value: unknown) => void = () => {}
+          mockPreview.mockImplementation(async () => await new Promise((resolve) => { late = resolve }))
+          const onChange = jest.fn()
+          const { unmount } = render(
+            <MappingStep
+              classId="PROD"
+              configuration={ { isLoading: false, onChoose: () => {} } }
+              fields={ loaded.fields }
+              isLoading={ false }
+              mapWith="here"
+              mapping={ withSamples(answered(true), inspected) }
+              onChange={ onChange }
+              onMapWithChange={ () => {} }
+              source={ source }
+            />
+          )
+          expect(mockPreview).toHaveBeenCalledTimes(1)
+
+          unmount()
+          await act(async () => {
+            late(answer(false))
+            await Promise.resolve()
+            await Promise.resolve()
+          })
+
+          expect(onChange).not.toHaveBeenCalled()
+        })
       })
 
       it('keeps the answers of two columns that arrive together', async () => {

@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 column was mapped auto
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'when the file was read, marked “auto”. {{count}} more have a suggestion to confirm.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: 'when the file was read, marked “auto”. 1 more has a suggestion to confirm.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: 'when the file was read, marked “auto”.'
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} columns have a suggestion to confirm.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 column has a suggestion to confirm.
 data-importer.ad-hoc-import.mapping.head.column: Column in your file
 data-importer.ad-hoc-import.mapping.head.field: Goes into field
 data-importer.ad-hoc-import.mapping.head.transformations: Transformations
