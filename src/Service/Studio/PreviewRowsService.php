@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\BaseReader;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier;
 use Pimcore\Bundle\DataImporterBundle\Preview\PreviewService;
@@ -96,8 +97,13 @@ final readonly class PreviewRowsService implements PreviewRowsServiceInterface
             return false;
         }
 
+        $reader = IOFactory::createReaderForFile($path);
+        if (!$reader instanceof BaseReader) {
+            return false;
+        }
+
         $cells = 0;
-        foreach (IOFactory::createReaderForFile($path)->listWorksheetInfo($path) as $sheet) {
+        foreach ($reader->listWorksheetInfo($path) as $sheet) {
             $cells += $sheet['totalRows'] * $sheet['totalColumns'];
         }
 

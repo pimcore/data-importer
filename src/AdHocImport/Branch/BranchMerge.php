@@ -50,7 +50,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  *
  * @internal
  */
-final readonly class BranchMerge implements BranchMergeInterface
+final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:S1200 php:S1448 a merge's whole course
 {
     // how often a worker looks how a merge goes
     private const int FOLLOW_DELAY_MS = 2000;
@@ -127,7 +127,11 @@ final readonly class BranchMerge implements BranchMergeInterface
             return;
         }
 
-        $status = $this->branches()->mergeStatus(BranchRowWriter::branchOf($run), BranchRowWriter::context($run), $user);
+        $status = $this->branches()->mergeStatus(
+            BranchRowWriter::branchOf($run),
+            BranchRowWriter::context($run),
+            $user
+        );
         if ($status === null) {
             $this->failRemaining($run, $user, $this->messages->mergeInterrupted($user));
 
@@ -145,6 +149,16 @@ final readonly class BranchMerge implements BranchMergeInterface
 
         $failed = array_map(static fn (RowFailure $failure): int => $failure->row, $this->storedFailures($run));
         $recorded = $this->runs->recorded($run);
+        if ($recorded === [] && $run->updated + $run->created > 0) {
+            // the rows in the branch are no longer known: none of them can be merged, so none of them is saved
+            $this->discard($run, $user);
+
+            return $this->finish(
+                $run->nothingSaved()->withNotice($this->messages->cannotGoOn($user)),
+                $this->storedFailures($run),
+                $user
+            );
+        }
         $leftOut = array_values(array_filter(
             $recorded,
             static fn (RecordedRow $row): bool => in_array($row->row, $failed, true)
@@ -155,7 +169,7 @@ final readonly class BranchMerge implements BranchMergeInterface
                 BranchRowWriter::branchOf($run),
                 BranchRowWriter::context($run),
                 $user,
-                array_map(self::refOf(...), $leftOut)
+                array_map(static fn (RecordedRow $row): ObjectRef => self::refOf($row), $leftOut)
             );
             $this->runs->removeRecorded($run, array_map(static fn (RecordedRow $row): int => $row->row, $leftOut));
         }
@@ -185,6 +199,15 @@ final readonly class BranchMerge implements BranchMergeInterface
         }
     }
 
+    private function closeBranchLogged(RunRecord $run, User $user): void
+    {
+        try {
+            $this->closeBranch($run, $user);
+        } catch (ChangeControlExceptionInterface $notClosed) {
+            $this->log($run, $notClosed->getMessage());
+        }
+    }
+
     private function startMerge(RunRecord $run, User $user): RunRecord
     {
         try {
@@ -197,12 +220,7 @@ final readonly class BranchMerge implements BranchMergeInterface
             );
         } catch (ChangeControlExceptionInterface $exception) {
             $this->log($run, $exception->getMessage());
-
-            try {
-                $this->closeBranch($run, $user);
-            } catch (ChangeControlExceptionInterface $notClosed) {
-                $this->log($run, $notClosed->getMessage());
-            }
+            $this->closeBranchLogged($run, $user);
 
             return $this->failRemaining($run, $user, $this->messages->mergeProblem('other', null, $user));
         }
@@ -249,6 +267,14 @@ final readonly class BranchMerge implements BranchMergeInterface
     private function refused(RunRecord $run, MergeStatus $status, User $user): RunRecord
     {
         [$messages, $notice] = $this->rowProblems($run, $status->problems, $user);
+        if ($messages === []) {
+            // no row to leave out: merging again would be refused the same way
+            $notice ??= $this->messages->mergeProblem('other', null, $user);
+            $this->closeBranchLogged($run, $user);
+
+            return $this->failRemaining($run->withNotice($notice), $user, $notice);
+        }
+
         $failures = $this->storedFailures($run);
         foreach ($this->runs->recorded($run) as $row) {
             if (isset($messages[$row->row])) {
@@ -371,7 +397,11 @@ final readonly class BranchMerge implements BranchMergeInterface
                     $this->eventDispatcher->dispatch(new PostSaveEvent(RowImporter::CONFIG_NAME, $row->data, $object));
                 }
             } catch (\Throwable $throwable) { // NOSONAR php:S2221 the object is saved, whatever a listener does after that
-                $this->log($run, sprintf('a listener failed after object %d was saved: %s', $ref->id, $throwable->getMessage()));
+                $this->log($run, sprintf(
+                    'a listener failed after object %d was saved: %s',
+                    $ref->id,
+                    $throwable->getMessage()
+                ));
             }
         }
     }

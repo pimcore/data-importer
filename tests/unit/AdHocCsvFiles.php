@@ -18,6 +18,7 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvDelimiterDetector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileInspector;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\SourceFileReader;
@@ -29,11 +30,12 @@ use Symfony\Component\Lock\Store\InMemoryStore;
  */
 final class AdHocCsvFiles
 {
-    public static function store(string $directory): FileStore
+    public static function store(string $directory, ?RunStoreInterface $runs = null): FileStore
     {
         return new FileStore(
             new Filesystem(new LocalFilesystemAdapter($directory)),
-            new LockFactory(new InMemoryStore())
+            new LockFactory(new InMemoryStore()),
+            $runs
         );
     }
 

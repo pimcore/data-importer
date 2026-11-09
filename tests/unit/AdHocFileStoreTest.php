@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 
 class AdHocFileStoreTest extends Unit
 {
@@ -162,6 +163,28 @@ class AdHocFileStoreTest extends Unit
 
         $this->assertNull($store->readSkippedRows(self::USER_ID, $fileId));
         $this->assertSame([], glob($this->storage . '/' . self::USER_ID . '/*'));
+    }
+
+    public function testAnUploadKeepsTheOldFilesOfARunThatHasNotEnded(): void
+    {
+        $runs = AdHocRunFixtures::memoryStore();
+        $store = AdHocCsvFiles::store($this->storage, $runs);
+        $waiting = $this->storeFile($store);
+        $ended = $this->storeFile($store);
+        $store->storeFailedRows(self::USER_ID, $waiting, self::FAILED_ROWS);
+        $store->storeFailedRows(self::USER_ID, $ended, self::FAILED_ROWS);
+        $runs->save(AdHocRunFixtures::run(['userId' => self::USER_ID, 'fileId' => $waiting])->waitingForDecision(1));
+        $runs->save(AdHocRunFixtures::run(['userId' => self::USER_ID, 'fileId' => $ended])->finished(1));
+        foreach (glob($this->storage . '/' . self::USER_ID . '/*') ?: [] as $file) {
+            touch($file, time() - 2 * 86400);
+        }
+
+        $this->storeFile($store);
+
+        $this->assertSame(FileType::Csv, $store->findType(self::USER_ID, $waiting), 'a run waiting for a decision');
+        $this->assertSame(self::FAILED_ROWS, $store->readFailedRows(self::USER_ID, $waiting));
+        $this->assertNull($store->findType(self::USER_ID, $ended), 'an ended run is abandoned like any file');
+        $this->assertNull($store->readFailedRows(self::USER_ID, $ended));
     }
 
     private function storeFile(FileStore $store): string

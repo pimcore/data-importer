@@ -13,24 +13,15 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough;
 
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunParameters;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Model\DataObject;
-use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\DataObject\Service;
 use Pimcore\Model\User;
-use Pimcore\Model\User\Workspace\DataObject as ObjectWorkspace;
-use Pimcore\Security\User\User as SecurityUser;
-use Pimcore\Tool;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
 /**
  * One file after the other through an ad hoc import, whichever way it writes on the Pimcore it is booted in: into the
@@ -43,13 +34,9 @@ final class AdHocImportWalkthrough
 
     public const string ROOT = '/Ad hoc import walkthrough';
 
-    private const string HEADER = "sku;name;title;quantity\n";
-
     private const string LOCKED_SKU = 'W-9';
 
     private const string UPDATED_SKU = 'W-8';
-
-    private const string FILE_NAME = 'products.csv';
 
     /** @var list<string> */
     private array $lines = [];
@@ -57,13 +44,7 @@ final class AdHocImportWalkthrough
     /** @var list<string> */
     private array $failed = [];
 
-    private ?ClassDefinition $class = null;
-
-    private ?User $user = null;
-
-    private int $folderId = 0;
-
-    private string $language = '';
+    private ?AdHocImportWalkthroughFixture $fixture = null;
 
     private bool $throughBranch = false;
 
@@ -106,7 +87,20 @@ final class AdHocImportWalkthrough
 
     public function user(): ?User
     {
-        return $this->user;
+        return $this->fixture?->user;
+    }
+
+    /**
+     * What a row of this run is called: the objects of an earlier run stay, and a row is matched against all of them.
+     */
+    public function sku(string $name): string
+    {
+        return $name . '-' . $this->run;
+    }
+
+    private function row(string $name, string $values): string
+    {
+        return $this->sku($name) . ';' . $values;
     }
 
     /**
@@ -114,7 +108,7 @@ final class AdHocImportWalkthrough
      */
     public function run(): array
     {
-        $this->setUp();
+        $this->fixture();
 
         $steps = [
             ['Rows with an error are left out, the others written', $this->leaveOutRowsWithErrors(...), false],
@@ -150,105 +144,18 @@ final class AdHocImportWalkthrough
         return $results;
     }
 
-    /**
-     * Its class, its folders and its user, who has every right in the folder except writing a language below locked/.
-     */
-    public function setUp(): void
+    private function fixture(): AdHocImportWalkthroughFixture
     {
-        if ($this->user instanceof User) {
-            return;
+        if ($this->fixture === null) {
+            $this->fixture = AdHocImportWalkthroughFixture::create(
+                $this->run,
+                $this->sku(self::LOCKED_SKU),
+                $this->withUpdates ? $this->sku(self::UPDATED_SKU) : null,
+                $this->tokens
+            );
         }
 
-        $this->class = ClassDefinition::getByName(self::CLASS_NAME) ?? $this->createClass();
-        $this->language = (string) (Tool::getValidLanguages()[0] ?? 'en');
-
-        $root = self::ROOT . '/' . $this->run;
-        $folder = Service::createFolderByPath($root);
-        $locked = Service::createFolderByPath($root . '/locked');
-        $this->folderId = (int) $folder->getId();
-        $this->createObject(self::LOCKED_SKU, $locked, 'Locked');
-        if ($this->withUpdates) {
-            $this->createObject(self::UPDATED_SKU, $folder, 'Before the import');
-        }
-
-        $user = new User();
-        $user->setParentId(0);
-        $user->setName('ad-hoc-walkthrough-' . $this->run);
-        $user->setActive(true);
-        $user->setAdmin(false);
-        $user->setPermission('objects', true);
-        $user->save();
-        $user->setWorkspacesObject([
-            $this->workspace($folder, ['list' => true, 'view' => true, 'create' => true, 'save' => true, 'publish' => true]),
-            $this->workspace(
-                $locked,
-                ['list' => true, 'view' => true, 'create' => true, 'save' => true, 'publish' => true, 'lEdit' => 'none']
-            ),
-        ]);
-        $user->save();
-        $this->user = $user;
-
-        $securityUser = new SecurityUser($user);
-        $this->tokens->setToken(new UsernamePasswordToken($securityUser, 'pimcore_studio', $securityUser->getRoles()));
-    }
-
-    /**
-     * @param array<string, bool|string> $rights
-     */
-    private function workspace(DataObject\Folder $folder, array $rights): ObjectWorkspace
-    {
-        $workspace = new ObjectWorkspace();
-        $workspace->setCid((int) $folder->getId());
-        $workspace->setCpath($folder->getRealFullPath());
-        $workspace->setValues($rights);
-
-        return $workspace;
-    }
-
-    private function createObject(string $sku, DataObject\Folder $folder, string $name): void
-    {
-        $class = '\\Pimcore\\Model\\DataObject\\' . self::CLASS_NAME;
-        /** @var Concrete $object */
-        $object = new $class();
-        $object->setParent($folder);
-        $object->setKey($sku);
-        $object->setPublished(true);
-        $object->set('sku', $sku);
-        $object->set('name', $name);
-        $object->save();
-    }
-
-    private function createClass(): ClassDefinition
-    {
-        $panel = new ClassDefinition\Layout\Panel();
-        $panel->setName('pimcore_root');
-
-        foreach (['sku', 'name'] as $field) {
-            $input = new ClassDefinition\Data\Input();
-            $input->setName($field);
-            $input->setTitle($field);
-            $panel->addChild($input);
-        }
-
-        $quantity = new ClassDefinition\Data\Numeric();
-        $quantity->setName('quantity');
-        $quantity->setTitle('quantity');
-        $panel->addChild($quantity);
-
-        $title = new ClassDefinition\Data\Input();
-        $title->setName('title');
-        $title->setTitle('title');
-        $localized = new ClassDefinition\Data\Localizedfields();
-        $localized->setName('localizedfields');
-        $localized->addChild($title);
-        $panel->addChild($localized);
-
-        $definition = new ClassDefinition();
-        $definition->setName(self::CLASS_NAME);
-        $definition->setLayoutDefinitions($panel);
-        $definition->save();
-
-        return $definition;
+        return $this->fixture;
     }
 
     /**
@@ -260,50 +167,12 @@ final class AdHocImportWalkthrough
      */
     public function import(array $rows, string $errorMode = AdHocImportDryRunServiceInterface::SKIP_ROWS): array
     {
-        $this->setUp();
-        $fileId = $this->upload(self::HEADER . implode("\n", $rows) . "\n");
-        $started = $this->service->start($fileId, $this->parameters($errorMode));
+        [$fileId, $started] = (new AdHocImportWalkthroughFile($this->uploads, $this->service))
+            ->start($rows, $errorMode, $this->fixture());
         $this->throughBranch = $started->isThroughBranch();
         ($this->work)($fileId);
 
         return [$fileId, $started];
-    }
-
-    private function upload(string $csv): string
-    {
-        $path = sys_get_temp_dir() . '/' . uniqid('ad-hoc-walkthrough-', true);
-        file_put_contents($path, $csv);
-
-        try {
-            $fileId = $this->uploads
-                ->upload(new UploadedFile($path, self::FILE_NAME, null, null, true), $this->folderId)
-                ->getFileId();
-        } finally {
-            @unlink($path);
-        }
-
-        return $fileId ?? throw new \RuntimeException('The upload was refused.');
-    }
-
-    private function parameters(string $errorMode): AdHocImportRunParameters
-    {
-        return new AdHocImportRunParameters(
-            new AdHocImportDryRunParameters(
-                $this->folderId,
-                (string) $this->class?->getId(),
-                AdHocImportDryRunParameters::MATCH_BY_FIELD,
-                'sku',
-                'sku',
-                columns: [
-                    ['column' => 'sku', 'field' => 'sku'],
-                    ['column' => 'name', 'field' => 'name'],
-                    ['column' => 'title', 'field' => 'title', 'language' => $this->language],
-                    ['column' => 'quantity', 'field' => 'quantity'],
-                ]
-            ),
-            $errorMode,
-            self::FILE_NAME
-        );
     }
 
     public function read(string $sku): ?Concrete
@@ -315,12 +184,16 @@ final class AdHocImportWalkthrough
 
     private function readLocked(): ?Concrete
     {
-        return $this->read('locked/' . self::LOCKED_SKU);
+        return $this->read('locked/' . $this->sku(self::LOCKED_SKU));
     }
 
     private function leaveOutRowsWithErrors(): void
     {
-        [$fileId, $started] = $this->import(['W-1;Chair;Stuhl;1', 'W-2;Lamp;Lampe;2', 'W-2;Again;Nochmal;3']);
+        [$fileId, $started] = $this->import([
+            $this->row('W-1', 'Chair;Stuhl;1'),
+            $this->row('W-2', 'Lamp;Lampe;2'),
+            $this->row('W-2', 'Again;Nochmal;3'),
+        ]);
         $this->lines[] = $this->throughBranch ? 'Writes through a Change Control branch' : 'Writes directly';
         if ($this->expectBranch !== null) {
             $this->check($this->throughBranch === $this->expectBranch, 'the import writes the way this Pimcore should');
@@ -329,14 +202,17 @@ final class AdHocImportWalkthrough
         $this->counts($started, ['total' => 2, 'skipped' => 1]);
         $this->finished($fileId, ['created' => 2, 'updated' => 0, 'failed' => 0]);
 
-        $chair = $this->read('W-1');
+        $chair = $this->read($this->sku('W-1'));
         $this->check($chair !== null, 'W-1 exists');
         $this->check($chair?->get('name') === 'Chair', 'W-1 holds its name');
-        $this->check($chair?->get('title', $this->language) === 'Stuhl', 'W-1 holds its title');
+        $this->check($chair?->get('title', $this->fixture()->language) === 'Stuhl', 'W-1 holds its title');
         $this->check((float) $chair?->get('quantity') === 1.0, 'W-1 holds its quantity');
         $this->check($chair?->isPublished() === false, 'W-1 stays unpublished');
-        $this->check($chair?->getUserModification() === $this->user?->getId(), 'W-1 was written as the user');
-        $this->check($this->read('W-2')?->get('name') === 'Lamp', 'the first W-2 was written, the second left out');
+        $this->check($chair?->getUserModification() === $this->fixture()->user->getId(), 'W-1 was written as the user');
+        $this->check(
+            $this->read($this->sku('W-2'))?->get('name') === 'Lamp',
+            'the first W-2 was written, the second left out'
+        );
         $this->lines[] = sprintf('W-1 name %s, published no', (string) $chair?->get('name'));
 
         $this->service->discard($fileId);
@@ -344,11 +220,14 @@ final class AdHocImportWalkthrough
 
     private function importWithoutInvalidValues(): void
     {
-        [$fileId, $started] = $this->import(['W-3;Bench;Bank;abc'], AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES);
+        [$fileId, $started] = $this->import(
+            [$this->row('W-3', 'Bench;Bank;abc')],
+            AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES
+        );
 
         $this->counts($started, ['total' => 1, 'skipped' => 0]);
         $this->finished($fileId, ['created' => 1, 'failed' => 0]);
-        $bench = $this->read('W-3');
+        $bench = $this->read($this->sku('W-3'));
         $this->check($bench?->get('name') === 'Bench', 'W-3 is written');
         $this->check($bench?->get('quantity') === null, 'W-3 goes without the value that is no number');
 
@@ -357,23 +236,26 @@ final class AdHocImportWalkthrough
 
     private function refusedRow(): void
     {
-        [$fileId] = $this->import(['W-4;Desk;Tisch;1', self::LOCKED_SKU . ';Changed;Gesperrt;1']);
+        [$fileId] = $this->import([
+            $this->row('W-4', 'Desk;Tisch;1'),
+            $this->row(self::LOCKED_SKU, 'Changed;Gesperrt;1'),
+        ]);
 
         if ($this->throughBranch) {
             $status = $this->service->status($fileId);
             $this->check($status->getState() === 'decision', 'the import waits for the choice');
-            $this->check($this->read('W-4') === null, 'nothing is merged yet');
+            $this->check($this->read($this->sku('W-4')) === null, 'nothing is merged yet');
             $this->failedRow($status);
             $this->service->mergeLeavingOut($fileId);
             ($this->work)($fileId);
         }
 
         $this->finished($fileId, ['created' => 1, 'updated' => 0, 'failed' => 1]);
-        $this->check($this->read('W-4')?->get('name') === 'Desk', 'the row that may be written is saved');
+        $this->check($this->read($this->sku('W-4'))?->get('name') === 'Desk', 'the row that may be written is saved');
         $this->check($this->readLocked()?->get('name') === 'Locked', 'the refused object is unchanged');
         $this->failedRow($this->service->status($fileId));
         $this->check(
-            str_contains($this->service->failedRows($fileId), self::LOCKED_SKU),
+            str_contains($this->service->failedRows($fileId), $this->sku(self::LOCKED_SKU)),
             'the refused row is in the download'
         );
 
@@ -382,12 +264,15 @@ final class AdHocImportWalkthrough
 
     private function discarded(): void
     {
-        [$fileId] = $this->import(['W-5;Shelf;Regal;1', self::LOCKED_SKU . ';Changed;Gesperrt;1']);
+        [$fileId] = $this->import([
+            $this->row('W-5', 'Shelf;Regal;1'),
+            $this->row(self::LOCKED_SKU, 'Changed;Gesperrt;1'),
+        ]);
 
         $this->check($this->service->status($fileId)->getState() === 'decision', 'the import waits for the choice');
         $this->service->discard($fileId);
 
-        $this->check($this->read('W-5') === null, 'nothing was merged');
+        $this->check($this->read($this->sku('W-5')) === null, 'nothing was merged');
 
         try {
             $this->service->status($fileId);
@@ -399,10 +284,10 @@ final class AdHocImportWalkthrough
 
     private function updateExisting(): void
     {
-        [$fileId] = $this->import([self::UPDATED_SKU . ';After the import;Titel;5']);
+        [$fileId] = $this->import([$this->row(self::UPDATED_SKU, 'After the import;Titel;5')]);
 
         $this->finished($fileId, ['created' => 0, 'updated' => 1, 'failed' => 0]);
-        $object = $this->read(self::UPDATED_SKU);
+        $object = $this->read($this->sku(self::UPDATED_SKU));
         $this->check($object?->get('name') === 'After the import', 'the object is changed');
         $this->check($object?->isPublished() === true, 'the object stays published');
 
@@ -432,7 +317,7 @@ final class AdHocImportWalkthrough
     private function failedRow(AdHocImportRunResponse $status): void
     {
         $this->check(
-            array_column($status->getFailures(), 'matchValue') === [self::LOCKED_SKU],
+            array_column($status->getFailures(), 'matchValue') === [$this->sku(self::LOCKED_SKU)],
             'the refused row is listed'
         );
     }

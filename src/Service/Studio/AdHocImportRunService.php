@@ -120,6 +120,7 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             $this->queue->enqueue($run, $imported);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 whatever stopped it, a run short of rows never ends
             $this->runs->delete($user->getId(), $fileId);
+            $this->closeOpenedBranch($run, $user);
 
             throw $throwable;
         }
@@ -223,6 +224,22 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     {
         if ($run->throughBranch()) {
             $this->branchMerge()->discard($run, $user);
+        }
+    }
+
+    /**
+     * A start that failed leaves no branch open: nothing else knows of it any more.
+     */
+    private function closeOpenedBranch(RunRecord $run, User $user): void
+    {
+        if (!$run->throughBranch() || $this->branchMerge === null) {
+            return;
+        }
+
+        try {
+            $this->branchMerge->discard($run, $user);
+        } catch (\Throwable) { // NOSONAR php:S2221 the user learns what stopped the start, not what kept the branch
+            // the branch stays open; what stopped the start is thrown on
         }
     }
 

@@ -91,7 +91,10 @@ class AdHocRunRecordTest extends Unit
         $this->assertFalse(AdHocRunFixtures::run()->throughBranch());
 
         $run = $run->merging(2, 0, 100);
-        $this->assertSame([RunRecord::MERGING, 2, 0, 100, 100], [$run->state, $run->mergeTotal, $run->mergeDone, $run->waitingSince, $run->checkedAt]);
+        $this->assertSame(
+            [RunRecord::MERGING, 2, 0, 100, 100],
+            [$run->state, $run->mergeTotal, $run->mergeDone, $run->waitingSince, $run->checkedAt]
+        );
         $this->assertTrue($run->isBusy());
         $this->assertFalse($run->isRunning(), 'its rows are written');
 
@@ -140,7 +143,17 @@ class AdHocRunRecordTest extends Unit
 
     public function testARecordedRowSurvivesBeingStoredAndFailsAsItsRow(): void
     {
-        $row = new RecordedRow(4, null, 'row-4', 'SKU-4', 'create', 'SKU-4', '/Products', ['SKU-4'], ['sku' => 'SKU-4']);
+        $row = new RecordedRow(
+            4,
+            null,
+            'row-4',
+            'SKU-4',
+            'create',
+            'SKU-4',
+            '/Products',
+            ['SKU-4'],
+            ['sku' => 'SKU-4']
+        );
 
         $this->assertEquals($row, RecordedRow::fromArray($row->toArray()));
         $this->assertTrue($row->isNew());

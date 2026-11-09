@@ -1483,6 +1483,19 @@ describe('the preview step', () => {
         expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 1000 })
       })
 
+      it('stops asking again when the merge is refused once more', async () => {
+        let answeredAt = 1
+        mockRefetchRun.mockImplementation(() => { answeredAt += 1 })
+        mockLoadRun.mockImplementation(() => ({ refetch: mockRefetchRun, data: deciding(), fulfilledTimeStamp: answeredAt }))
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+
+        expect(mockRefetchRun).toHaveBeenCalled()
+        expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
+        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+      })
+
       it('goes back to the mapping with the file, the branch taken back', async () => {
         mockLoadRun.mockImplementation(({ fileId }: { fileId: string }, { skip }: { skip: boolean }) => ({
           refetch: mockRefetchRun,
@@ -1553,10 +1566,23 @@ describe('the preview step', () => {
 
         renderDialog()
 
-        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 })
+        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 }, { refetchOnMountOrArgChange: true })
         expect(screen.getByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeTruthy()
         expect(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })).toBeTruthy()
         expect(screen.queryByRole('button', { name: 'Back to mapping' })).toBeNull()
+      })
+
+      it('does not open on a waiting import from an earlier answer while the list is asked anew', () => {
+        mockListWaitingRuns.mockReturnValue({
+          data: { items: [{ fileId: 'waiting-1', fileName: 'autumn.xlsx' }] },
+          isFetching: true
+        })
+
+        renderDialog()
+
+        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 }, { refetchOnMountOrArgChange: true })
+        expect(mockLoadRun).not.toHaveBeenCalledWith({ fileId: 'waiting-1' }, expect.anything())
+        expect(screen.queryByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeNull()
       })
     })
 

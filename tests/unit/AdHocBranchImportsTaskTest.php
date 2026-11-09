@@ -75,6 +75,7 @@ class AdHocBranchImportsTaskTest extends Unit
 
             public function rowsWritten(RunRecord $run, ?ImportPlan $plan, ?User $user, array $failures): void
             {
+                // the task only follows merges: no run writes rows here
             }
 
             public function follow(int $userId, string $fileId): void

@@ -218,14 +218,70 @@ final class RunProcessor implements AdHocRowProcessorInterface
             $this->logFailure($run, $throwable);
             $run = $this->runs->find($run->userId, $run->fileId) ?? $run;
             if ($run->state === RunRecord::RUNNING) {
-                $run = $run->nothingSaved()
-                    ->withNotice($user instanceof User ? $this->messages->cannotGoOn($user) : null)
-                    ->finished(time());
-                $this->attempt($run, function () use ($run): void {
-                    $this->runs->save($run);
-                });
+                $this->endUnmerged($run, $plan, $user, $failures);
             }
         }
+    }
+
+    /**
+     * Nothing of the branch is saved: it is closed, and the run ends as one that saved nothing.
+     *
+     * @param list<RowFailure> $failures
+     */
+    private function endUnmerged(RunRecord $run, ?ImportPlan $plan, ?User $user, array $failures): void
+    {
+        if ($user instanceof User) {
+            // the rows in the branch are not saved either: they stay in the failed rows, to be imported again
+            $this->attempt($run, function () use ($run, $user, &$failures): void {
+                $failures = $this->withRecordedRows($run, $failures, $this->messages->cannotGoOn($user));
+            });
+        }
+        $this->attempt($run, function () use ($run, $user): void {
+            if ($user instanceof User) {
+                $this->branchMerge?->discard($run, $user);
+            } else {
+                $this->runs->forgetRecorded($run);
+            }
+        });
+        if ($failures !== []) {
+            $this->attempt($run, function () use ($run, $plan, $failures): void {
+                $this->storeFailures($run, $plan, $failures);
+            });
+        }
+
+        $run = $run->nothingSaved()
+            ->withNotice($user instanceof User ? $this->messages->cannotGoOn($user) : null)
+            ->finished(time());
+        $this->attempt($run, function () use ($run): void {
+            $this->runs->save($run);
+        });
+        $this->attempt($run, function () use ($run): void {
+            $this->files->deleteUpload($run->userId, $run->fileId, $run->type);
+        });
+        if ($user instanceof User) {
+            $this->attempt($run, function () use ($run, $failures, $user): void {
+                $this->notifier->notify($run, $failures, $user);
+            });
+        }
+    }
+
+    /**
+     * @param list<RowFailure> $failures
+     *
+     * @return list<RowFailure> one per row, by their row; a row that failed before the branch keeps its reason
+     */
+    private function withRecordedRows(RunRecord $run, array $failures, string $message): array
+    {
+        $byRow = [];
+        foreach ($this->runs->recorded($run) as $row) {
+            $byRow[$row->row] = $row->failure($message);
+        }
+        foreach ($failures as $failure) {
+            $byRow[$failure->row] = $failure;
+        }
+        ksort($byRow);
+
+        return array_values($byRow);
     }
 
     /**
