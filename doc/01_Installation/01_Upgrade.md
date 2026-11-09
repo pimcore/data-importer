@@ -7,6 +7,8 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.4.0
 
+- `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
+  `instanceof ImportAsset` no longer matches the **Load Asset** operator.
 - [Classification Store] Added: `Write If Source Is Empty` on both classification store data targets, in force on a
   mapping entry once its target type has been re-selected or the control changed - off by default on
   `Classification Store Batch`, on by default on `Classification Store`.

@@ -15,7 +15,7 @@ import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type DynamicTypeResolverRenderProps } from '../../common/dynamic-type-resolver-abstract'
 
-export function PathLoadingStrategyResolverSettings ({ columnHeaderOptions }: DynamicTypeResolverRenderProps): React.JSX.Element {
+export function PathLoadingStrategyResolverSettings ({ columnHeaderOptions, disabled }: DynamicTypeResolverRenderProps): React.JSX.Element {
   const { t } = useTranslation()
 
   return (
@@ -28,6 +28,7 @@ export function PathLoadingStrategyResolverSettings ({ columnHeaderOptions }: Dy
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           options={ columnHeaderOptions }
           placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }

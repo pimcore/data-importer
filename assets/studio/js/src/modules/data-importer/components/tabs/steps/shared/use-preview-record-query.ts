@@ -9,11 +9,10 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useBundleDataImporterConfigLoadPreviewQuery } from '../../../../data-importer-api-slice.gen'
 import { type BackendConfiguration } from '../../../../utils/transformers'
+import { type PreviewRequest, useMappingSource } from '../mapping-source/mapping-source'
 
 interface UsePreviewRecordQueryParams {
-  configName: string
   enabled: boolean
   getCurrentConfig?: () => BackendConfiguration
   /** When this counter increments, the current record is re-fetched without resetting the record index. */
@@ -22,14 +21,6 @@ interface UsePreviewRecordQueryParams {
 
 interface LoadOptions {
   forceRefetch?: boolean
-}
-
-interface PreviewRequest {
-  name: string
-  bundleDataImporterLoadPreviewParameters: {
-    recordNumber: number
-    currentConfig?: BackendConfiguration
-  }
 }
 
 export interface UsePreviewRecordQueryResult {
@@ -43,11 +34,11 @@ export interface UsePreviewRecordQueryResult {
 }
 
 export function usePreviewRecordQuery ({
-  configName,
   enabled,
   getCurrentConfig,
   forceRefreshToken
 }: UsePreviewRecordQueryParams): UsePreviewRecordQueryResult {
+  const source = useMappingSource()
   const [request, setRequest] = useState<PreviewRequest | undefined>(undefined)
   const [requestedRecordIndex, setRequestedRecordIndex] = useState(0)
   const [shouldForceRefetch, setShouldForceRefetch] = useState(false)
@@ -59,10 +50,10 @@ export function usePreviewRecordQuery ({
     isError,
     error,
     refetch
-  } = useBundleDataImporterConfigLoadPreviewQuery(
-    request!,
+  } = source.usePreviewQuery(
+    request,
     {
-      skip: !enabled || request === undefined,
+      skip: !enabled,
       refetchOnMountOrArgChange: false
     }
   )
@@ -72,17 +63,14 @@ export function usePreviewRecordQuery ({
 
     setRequestedRecordIndex(recordNumber)
     setRequest({
-      name: configName,
-      bundleDataImporterLoadPreviewParameters: {
-        recordNumber,
-        ...(currentConfig !== undefined && { currentConfig })
-      }
+      recordNumber,
+      ...(currentConfig !== undefined && { currentConfig })
     })
 
     if (options?.forceRefetch === true) {
       setShouldForceRefetch(true)
     }
-  }, [configName, getCurrentConfig])
+  }, [getCurrentConfig])
 
   useEffect(() => {
     if (!enabled) return
