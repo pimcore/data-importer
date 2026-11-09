@@ -163,7 +163,7 @@ export const components = {
     </table>
   ),
   Icon: () => null,
-  Spin: () => <span role="status" />,
+  Spin: () => <output />,
   IconButton: ({ onClick, 'aria-label': label }: { onClick?: () => void, 'aria-label'?: string }) => (
     <button
       aria-label={ label }

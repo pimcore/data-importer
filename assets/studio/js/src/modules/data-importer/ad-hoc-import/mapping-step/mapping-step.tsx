@@ -202,9 +202,9 @@ export const MappingStep = ({
           <span className={ styles.headCell }>{ t(`${MAPPING}.head.transformations`) }</span>
           <span />
         </div>
-        <div
+        <ul
           aria-label={ t(`${MAPPING}.columns`) }
-          role="list"
+          className={ styles.rows }
         >
           { rows.map((row) => (
             <MappingRowView
@@ -221,7 +221,7 @@ export const MappingStep = ({
               row={ row }
             />
           )) }
-        </div>
+        </ul>
         { skipped.length > 0 && (
           <NotImportedPanel
             onRestore={ (column) => { change(restoreColumn(mapping, column)) } }

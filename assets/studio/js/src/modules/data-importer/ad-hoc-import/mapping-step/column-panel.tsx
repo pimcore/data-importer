@@ -48,12 +48,13 @@ const ValueChain = ({ row, field, preview: { answer } }: ValueChainProps): React
   return (
     <div className={ styles.chain }>
       <Text type="secondary">{ t(`${PANEL}.first-value`, { value: row.sample ?? '', interpolation: { escapeValue: false } }) }</Text>
-      { steps.map((step, position) => (
-        <React.Fragment key={ position }>
+      { /* a step of the answer has no identity but its place in the chain */ }
+      { React.Children.toArray(steps.map((step) => (
+        <React.Fragment>
           <span aria-hidden>→</span>
           <span className={ styles.chip }>{ cellText(t, step.values[valueRow]) }</span>
         </React.Fragment>
-      )) }
+      ))) }
       <span aria-hidden>→</span>
       { field === undefined
         ? <span className={ styles.chipOpen }>{ t(`${PANEL}.choose-field`) }</span>

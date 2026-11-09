@@ -99,8 +99,8 @@ const renderStep = (): void => {
   render(<Stateful initial={ createMapping(inspected, objects, loaded) } />)
 }
 
-const rowOf = (column: string): HTMLElement => screen.queryByRole('button', { name: `Field for ${column}` })?.closest<HTMLElement>('[role="listitem"]') ?? matchRowOf(column)
-const matchRowOf = (column: string): HTMLElement => within(screen.getByRole('list', { name: 'Columns of the file' })).getByText(column).closest<HTMLElement>('[role="listitem"]')!
+const rowOf = (column: string): HTMLElement => screen.queryByRole('button', { name: `Field for ${column}` })?.closest<HTMLElement>('li') ?? matchRowOf(column)
+const matchRowOf = (column: string): HTMLElement => within(screen.getByRole('list', { name: 'Columns of the file' })).getByText(column).closest<HTMLElement>('li')!
 const panelOf = (column: string): HTMLElement => screen.getByRole('complementary', { name: `Column ${column}` })
 
 const openPanel = (column: string): void => {

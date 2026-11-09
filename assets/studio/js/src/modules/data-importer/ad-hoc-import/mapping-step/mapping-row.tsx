@@ -13,7 +13,7 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, Icon, LanguageSelection, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { chooseField, fitsField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { chooseLanguage, freeLanguages } from './mapping-choices'
-import { ROW_COLUMNS, useStyles } from './mapping-row.styles'
+import { useStyles } from './mapping-row.styles'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
 
@@ -187,10 +187,9 @@ export const MappingRowView = ({
   const isMapped = isMatch || choice !== undefined
 
   return (
-    <div
+    <li
       aria-current={ isActive ? 'true' : undefined }
       className={ isActive ? `${styles.row} ${styles.active}` : styles.row }
-      role="listitem"
     >
       <div className={ styles.dotCell }>
         <span className={ `${styles.dot} ${isMapped ? styles.dotMapped : styles.dotOpen}` } />
@@ -252,6 +251,6 @@ export const MappingRowView = ({
           </Button>
         ) }
       </div>
-    </div>
+    </li>
   )
 }

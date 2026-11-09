@@ -63,6 +63,11 @@ export const useStyles = createStyles(({ token, css }) => ({
     min-height: 120px;
     overflow: auto;
   `,
+  rows: css`
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  `,
   head: css`
     display: grid;
     grid-template-columns: ${ROW_COLUMNS};
