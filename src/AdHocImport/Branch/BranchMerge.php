@@ -79,18 +79,23 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
             $run = $run->withColumns(array_values($plan->columns));
         }
 
-        if (!$user instanceof User || $run->updated + $run->created === 0) {
-            // nobody is left to merge as, or nothing went into the branch
-            if ($user instanceof User) {
-                $this->discard($run, $user);
-            }
-            $this->finish($run, $failures, $user);
+        if (!$user instanceof User) {
+            // nobody is left to merge as
+            $this->finish($run, $failures, null);
 
             return;
         }
 
         if ($failures !== []) {
             $this->waitForDecision($run, $failures, $user);
+
+            return;
+        }
+
+        if ($run->updated + $run->created === 0) {
+            // nothing went into the branch
+            $this->discard($run, $user);
+            $this->finish($run, [], $user);
 
             return;
         }

@@ -13,16 +13,15 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvText;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\FailedRowsCsv;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\SpreadsheetCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
@@ -88,7 +87,7 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
 
         $settings = $parameters->getSettings();
         $checked = $this->dryRunService->check($fileId, $settings, $user);
-        $imported = $this->importedRows($checked->results, $parameters->getErrorMode());
+        $imported = $checked->importedRows($parameters->getErrorMode());
         if ($imported === []) {
             throw new InvalidArgumentException(sprintf('File %s has no row to import.', $fileId));
         }
@@ -144,55 +143,53 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             throw new NotFoundHttpException(sprintf('No failed rows of file %s found', $fileId));
         }
 
-        $lines = [[
+        return FailedRowsCsv::of(
+            $failed['columns'],
+            $failed['rows'],
             $this->messages->columnName('row', $user),
-            ...array_map(SpreadsheetCell::safe(...), $failed['columns']),
-            $this->messages->columnName('error', $user),
-        ]];
-        foreach ($failed['rows'] as $row) {
-            $lines[] = [
-                $row['row'],
-                ...array_map(SpreadsheetCell::safe(...), $row['values']),
-                SpreadsheetCell::safe($row['message']),
-            ];
-        }
-
-        return CsvText::of($lines);
+            $this->messages->columnName('error', $user)
+        );
     }
 
     public function discard(string $fileId): void
     {
         $user = $this->resolveCurrentUser();
-        $run = $this->requireRun($user, $fileId);
-        if ($run->isBusy()) {
-            throw $this->beingImported($fileId);
-        }
+        $this->deciding($user, $fileId, function () use ($user, $fileId): void {
+            $run = $this->requireRun($user, $fileId);
+            if ($run->isBusy()) {
+                throw $this->beingImported($fileId);
+            }
 
-        if ($run->isWaitingForDecision()) {
-            $this->closeBranch($run, $user);
-            $this->files->delete($user->getId(), $fileId, $run->type);
-        }
-        $this->runs->delete($user->getId(), $fileId);
-        $this->files->deleteRunOutput($user->getId(), $fileId);
+            if ($run->isWaitingForDecision()) {
+                $this->closeBranch($run, $user);
+                $this->files->delete($user->getId(), $fileId, $run->type);
+            }
+            $this->runs->delete($user->getId(), $fileId);
+            $this->files->deleteRunOutput($user->getId(), $fileId);
+        });
     }
 
     public function mergeLeavingOut(string $fileId): AdHocImportRunResponse
     {
         $user = $this->resolveCurrentUser();
-        $run = $this->requireDecision($user, $fileId);
-        $run = $this->branchMerge()->mergeLeavingOut($run, $user);
 
-        return $this->response($run, $this->failures($user, $fileId)['rows']);
+        return $this->deciding($user, $fileId, function () use ($user, $fileId): AdHocImportRunResponse {
+            $run = $this->branchMerge()->mergeLeavingOut($this->requireDecision($user, $fileId), $user);
+
+            return $this->response($run, $this->failures($user, $fileId)['rows']);
+        });
     }
 
     public function withdraw(string $fileId): void
     {
         $user = $this->resolveCurrentUser();
-        $run = $this->requireDecision($user, $fileId);
+        $this->deciding($user, $fileId, function () use ($user, $fileId): void {
+            $run = $this->requireDecision($user, $fileId);
 
-        $this->closeBranch($run, $user);
-        $this->runs->delete($user->getId(), $fileId);
-        $this->files->deleteRunOutput($user->getId(), $fileId);
+            $this->closeBranch($run, $user);
+            $this->runs->delete($user->getId(), $fileId);
+            $this->files->deleteRunOutput($user->getId(), $fileId);
+        });
     }
 
     public function waitingRuns(int $folderId): array
@@ -208,6 +205,27 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             static fn (RunRecord $run): array => ['fileId' => $run->fileId, 'fileName' => $run->fileName],
             $waiting
         ));
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(): T $decide reads the run itself: what was read before the lock may be out of date
+     *
+     * @return T
+     */
+    private function deciding(User $user, string $fileId, callable $decide): mixed
+    {
+        $lock = DecisionLock::of($this->lockFactory, $user->getId(), $fileId);
+        if (!$lock->acquire()) {
+            throw $this->beingImported($fileId);
+        }
+
+        try {
+            return $decide();
+        } finally {
+            $lock->release();
+        }
     }
 
     private function requireDecision(User $user, string $fileId): RunRecord
@@ -251,27 +269,6 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     private function beingImported(string $fileId): InvalidArgumentException
     {
         return new InvalidArgumentException(sprintf('File %s is being imported.', $fileId));
-    }
-
-    /**
-     * @param list<DryRunRow> $results
-     *
-     * @return array<int, list<int>> per position in the file of the rows to import, the writers it goes without
-     */
-    private function importedRows(array $results, string $errorMode): array
-    {
-        $imported = [];
-        foreach ($results as $index => $result) {
-            if ($errorMode === AdHocImportDryRunServiceInterface::SKIP_ROWS) {
-                if (!$result->hasErrors()) {
-                    $imported[$index] = [];
-                }
-            } elseif ($result->importsWithoutInvalidValues()) {
-                $imported[$index] = $result->leftOut;
-            }
-        }
-
-        return $imported;
     }
 
     private function requireRun(User $user, string $fileId): RunRecord
