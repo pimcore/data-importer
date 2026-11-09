@@ -28,8 +28,10 @@ Right-click a data object folder and choose **Import file…**. The dialog has f
 
 ### File
 
-Drop a CSV or XLSX file, or choose one. A file over 5,000 rows, a file that cannot be read, or a file of another type
-is refused; for larger files use an import configuration.
+Drop a CSV or XLSX file, or choose one. A CSV file or the chosen XLSX sheet over 5,000 rows (not counting the column
+names), a sheet whose last row times its last column exceeds 1,000,000 cells, a file that cannot be read, or a file of
+another type is refused; another sheet of the same workbook can still be chosen. For larger files use an import
+configuration.
 
 - **CSV:** the delimiter is detected and can be changed, as can the enclosure, the escape character and whether the
   column names are in the first row.
