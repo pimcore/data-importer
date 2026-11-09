@@ -268,6 +268,15 @@ describe('the mapping step', () => {
       expect(screen.queryByRole('button', { name: /not mapped$/ })).toBeNull()
     })
 
+    it('closes the panel when its column goes with the others not mapped', () => {
+      renderStep()
+      openPanel('Notiz')
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+    })
+
     it('finds a column in the area by its name', () => {
       renderStep()
       skip('Name DE')
@@ -380,6 +389,16 @@ describe('the mapping step', () => {
 
       expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
       expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
+    })
+
+    it('changes between the field and the transformations of a column', () => {
+      mockPreview.mockResolvedValue(answer(true))
+      renderStep()
+      choose('Notiz', 'Note & remark')
+      openPanel('Notiz')
+
+      fireEvent.click(within(panelOf('Notiz')).getByRole('tab', { name: 'Transformations' }))
+      expect(within(panelOf('Notiz')).getByRole('tab', { name: 'Transformations' }).getAttribute('aria-selected')).toBe('true')
     })
 
     it('offers none for the match column, or without a file to run them on', () => {

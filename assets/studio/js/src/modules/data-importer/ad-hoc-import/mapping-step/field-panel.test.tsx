@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import React, { useState } from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
@@ -176,6 +177,15 @@ describe('picking fields', () => {
       openPanel('Preis')
       expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(true)
       expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Note & remark' }).disabled).toBe(false)
+    })
+
+    it('shows a field of an object brick with its path', () => {
+      renderStep()
+      openPanel('Notiz')
+
+      pickIn('Notiz', 'Power')
+
+      expect(fieldButton('Notiz').textContent).toContain('Prices › technical › Engine')
     })
 
     it('closes when the column it is open on is not imported', () => {
