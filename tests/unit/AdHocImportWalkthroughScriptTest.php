@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
 
 class AdHocImportWalkthroughScriptTest extends Unit
 {
@@ -71,5 +72,82 @@ class AdHocImportWalkthroughScriptTest extends Unit
         $this->assertSame(2, $exit);
         $this->assertSame('', $output);
         $this->assertStringContainsString('--way takes direct or branch', $errors);
+    }
+
+    /**
+     * @param \Closure(string): array{int, string} $console
+     */
+    private function work(\Closure $stateOf, \Closure $console, int $timeout = 60): AdHocImportWalkthroughWork
+    {
+        return new AdHocImportWalkthroughWork($stateOf, $console, ['first', 'second'], $timeout);
+    }
+
+    public function testRowsAreWorkedOffWhenMessengerProcessingIsOff(): void
+    {
+        $commands = [];
+        $state = 'running';
+        $work = $this->work(
+            static function () use (&$state): string {
+                return $state;
+            },
+            static function (string $command) use (&$commands, &$state): array {
+                $commands[] = $command;
+                // messenger processing is off: only the queue command takes the rows
+                if (str_starts_with($command, 'datahub:data-importer:process-queue-sequential')) {
+                    $state = 'done';
+                }
+                if (count($commands) > 3) {
+                    throw new \LogicException('Nothing takes the rows.');
+                }
+
+                return [0, ''];
+            }
+        );
+
+        $work('file');
+
+        $this->assertSame(['datahub:data-importer:process-queue-sequential --no-interaction'], $commands);
+    }
+
+    public function testAMergeIsWorkedOffByItsTransports(): void
+    {
+        $commands = [];
+        $state = 'running';
+        $work = $this->work(
+            static function () use (&$state): string {
+                return $state;
+            },
+            static function (string $command) use (&$commands, &$state): array {
+                $commands[] = $command;
+                $state = str_starts_with($command, 'messenger:consume') ? 'decision' : 'merging';
+
+                return [0, ''];
+            }
+        );
+
+        $work('file');
+
+        $this->assertCount(2, $commands);
+        $this->assertSame("messenger:consume 'first' 'second' --limit=10 --time-limit=10 --no-interaction", $commands[1]);
+    }
+
+    public function testACommandThatFailsEndsTheWorkWithItsOutput(): void
+    {
+        $work = $this->work(static fn (): string => 'running', static fn (): array => [3, 'it went wrong']);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("exit 3):\nit went wrong");
+
+        $work('file');
+    }
+
+    public function testWorkThatDoesNotEndGivesUp(): void
+    {
+        $work = $this->work(static fn (): string => 'running', static fn (): array => [0, ''], 0);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('still going on after 0 s');
+
+        $work('file');
     }
 }

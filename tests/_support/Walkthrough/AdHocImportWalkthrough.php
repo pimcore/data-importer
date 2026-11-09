@@ -110,6 +110,19 @@ final class AdHocImportWalkthrough
     }
 
     /**
+     * What a row of this run is called: the objects of an earlier run stay, and a row is matched against all of them.
+     */
+    public function sku(string $name): string
+    {
+        return $name . '-' . $this->run;
+    }
+
+    private function row(string $name, string $values): string
+    {
+        return $this->sku($name) . ';' . $values;
+    }
+
+    /**
      * @return list<WalkthroughStep>
      */
     public function run(): array
@@ -166,9 +179,9 @@ final class AdHocImportWalkthrough
         $folder = Service::createFolderByPath($root);
         $locked = Service::createFolderByPath($root . '/locked');
         $this->folderId = (int) $folder->getId();
-        $this->createObject(self::LOCKED_SKU, $locked, 'Locked');
+        $this->createObject($this->sku(self::LOCKED_SKU), $locked, 'Locked');
         if ($this->withUpdates) {
-            $this->createObject(self::UPDATED_SKU, $folder, 'Before the import');
+            $this->createObject($this->sku(self::UPDATED_SKU), $folder, 'Before the import');
         }
 
         $user = new User();
@@ -315,12 +328,16 @@ final class AdHocImportWalkthrough
 
     private function readLocked(): ?Concrete
     {
-        return $this->read('locked/' . self::LOCKED_SKU);
+        return $this->read('locked/' . $this->sku(self::LOCKED_SKU));
     }
 
     private function leaveOutRowsWithErrors(): void
     {
-        [$fileId, $started] = $this->import(['W-1;Chair;Stuhl;1', 'W-2;Lamp;Lampe;2', 'W-2;Again;Nochmal;3']);
+        [$fileId, $started] = $this->import([
+            $this->row('W-1', 'Chair;Stuhl;1'),
+            $this->row('W-2', 'Lamp;Lampe;2'),
+            $this->row('W-2', 'Again;Nochmal;3'),
+        ]);
         $this->lines[] = $this->throughBranch ? 'Writes through a Change Control branch' : 'Writes directly';
         if ($this->expectBranch !== null) {
             $this->check($this->throughBranch === $this->expectBranch, 'the import writes the way this Pimcore should');
@@ -329,14 +346,17 @@ final class AdHocImportWalkthrough
         $this->counts($started, ['total' => 2, 'skipped' => 1]);
         $this->finished($fileId, ['created' => 2, 'updated' => 0, 'failed' => 0]);
 
-        $chair = $this->read('W-1');
+        $chair = $this->read($this->sku('W-1'));
         $this->check($chair !== null, 'W-1 exists');
         $this->check($chair?->get('name') === 'Chair', 'W-1 holds its name');
         $this->check($chair?->get('title', $this->language) === 'Stuhl', 'W-1 holds its title');
         $this->check((float) $chair?->get('quantity') === 1.0, 'W-1 holds its quantity');
         $this->check($chair?->isPublished() === false, 'W-1 stays unpublished');
         $this->check($chair?->getUserModification() === $this->user?->getId(), 'W-1 was written as the user');
-        $this->check($this->read('W-2')?->get('name') === 'Lamp', 'the first W-2 was written, the second left out');
+        $this->check(
+            $this->read($this->sku('W-2'))?->get('name') === 'Lamp',
+            'the first W-2 was written, the second left out'
+        );
         $this->lines[] = sprintf('W-1 name %s, published no', (string) $chair?->get('name'));
 
         $this->service->discard($fileId);
@@ -344,11 +364,14 @@ final class AdHocImportWalkthrough
 
     private function importWithoutInvalidValues(): void
     {
-        [$fileId, $started] = $this->import(['W-3;Bench;Bank;abc'], AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES);
+        [$fileId, $started] = $this->import(
+            [$this->row('W-3', 'Bench;Bank;abc')],
+            AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES
+        );
 
         $this->counts($started, ['total' => 1, 'skipped' => 0]);
         $this->finished($fileId, ['created' => 1, 'failed' => 0]);
-        $bench = $this->read('W-3');
+        $bench = $this->read($this->sku('W-3'));
         $this->check($bench?->get('name') === 'Bench', 'W-3 is written');
         $this->check($bench?->get('quantity') === null, 'W-3 goes without the value that is no number');
 
@@ -357,23 +380,26 @@ final class AdHocImportWalkthrough
 
     private function refusedRow(): void
     {
-        [$fileId] = $this->import(['W-4;Desk;Tisch;1', self::LOCKED_SKU . ';Changed;Gesperrt;1']);
+        [$fileId] = $this->import([
+            $this->row('W-4', 'Desk;Tisch;1'),
+            $this->row(self::LOCKED_SKU, 'Changed;Gesperrt;1'),
+        ]);
 
         if ($this->throughBranch) {
             $status = $this->service->status($fileId);
             $this->check($status->getState() === 'decision', 'the import waits for the choice');
-            $this->check($this->read('W-4') === null, 'nothing is merged yet');
+            $this->check($this->read($this->sku('W-4')) === null, 'nothing is merged yet');
             $this->failedRow($status);
             $this->service->mergeLeavingOut($fileId);
             ($this->work)($fileId);
         }
 
         $this->finished($fileId, ['created' => 1, 'updated' => 0, 'failed' => 1]);
-        $this->check($this->read('W-4')?->get('name') === 'Desk', 'the row that may be written is saved');
+        $this->check($this->read($this->sku('W-4'))?->get('name') === 'Desk', 'the row that may be written is saved');
         $this->check($this->readLocked()?->get('name') === 'Locked', 'the refused object is unchanged');
         $this->failedRow($this->service->status($fileId));
         $this->check(
-            str_contains($this->service->failedRows($fileId), self::LOCKED_SKU),
+            str_contains($this->service->failedRows($fileId), $this->sku(self::LOCKED_SKU)),
             'the refused row is in the download'
         );
 
@@ -382,12 +408,15 @@ final class AdHocImportWalkthrough
 
     private function discarded(): void
     {
-        [$fileId] = $this->import(['W-5;Shelf;Regal;1', self::LOCKED_SKU . ';Changed;Gesperrt;1']);
+        [$fileId] = $this->import([
+            $this->row('W-5', 'Shelf;Regal;1'),
+            $this->row(self::LOCKED_SKU, 'Changed;Gesperrt;1'),
+        ]);
 
         $this->check($this->service->status($fileId)->getState() === 'decision', 'the import waits for the choice');
         $this->service->discard($fileId);
 
-        $this->check($this->read('W-5') === null, 'nothing was merged');
+        $this->check($this->read($this->sku('W-5')) === null, 'nothing was merged');
 
         try {
             $this->service->status($fileId);
@@ -399,10 +428,10 @@ final class AdHocImportWalkthrough
 
     private function updateExisting(): void
     {
-        [$fileId] = $this->import([self::UPDATED_SKU . ';After the import;Titel;5']);
+        [$fileId] = $this->import([$this->row(self::UPDATED_SKU, 'After the import;Titel;5')]);
 
         $this->finished($fileId, ['created' => 0, 'updated' => 1, 'failed' => 0]);
-        $object = $this->read(self::UPDATED_SKU);
+        $object = $this->read($this->sku(self::UPDATED_SKU));
         $this->check($object?->get('name') === 'After the import', 'the object is changed');
         $this->check($object?->isPublished() === true, 'the object stays published');
 
@@ -432,7 +461,7 @@ final class AdHocImportWalkthrough
     private function failedRow(AdHocImportRunResponse $status): void
     {
         $this->check(
-            array_column($status->getFailures(), 'matchValue') === [self::LOCKED_SKU],
+            array_column($status->getFailures(), 'matchValue') === [$this->sku(self::LOCKED_SKU)],
             'the refused row is listed'
         );
     }

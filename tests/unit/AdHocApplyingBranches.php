@@ -32,9 +32,7 @@ use Symfony\Component\Uid\Uuid;
  */
 final class AdHocApplyingBranches implements BranchServiceInterface
 {
-    private const string BRANCH = '0192f5e0-0000-7000-8000-000000000002';
-
-    /** @var array<string, DataObjectChange> by token */
+    /** @var array<string, array<string, DataObjectChange>> by branch and token: a branch holds only its own run */
     private array $changes = [];
 
     /** @var list<array{MergeMode, ConflictPolicy, string}> mode, policy and the user's name of each merge */
@@ -57,14 +55,14 @@ final class AdHocApplyingBranches implements BranchServiceInterface
 
     public function open(string $name, string $context, UserInterface $by): Uuid
     {
-        return Uuid::fromString(self::BRANCH);
+        return Uuid::v7();
     }
 
     public function record(Uuid $branch, string $context, UserInterface $by, array $changes): void
     {
         foreach ($changes as $change) {
             $token = $change->create?->token ?? throw new \LogicException('This fake creates objects only.');
-            $this->changes[$token] = $change;
+            $this->changes[(string) $branch][$token] = $change;
         }
     }
 
@@ -72,7 +70,7 @@ final class AdHocApplyingBranches implements BranchServiceInterface
     {
         foreach ($objects as $object) {
             $this->takenOut[] = (string) $object->token;
-            unset($this->changes[(string) $object->token]);
+            unset($this->changes[(string) $branch][(string) $object->token]);
         }
     }
 
@@ -85,14 +83,15 @@ final class AdHocApplyingBranches implements BranchServiceInterface
     ): MergeStatus {
         $this->merges[] = [$mode, $conflicts, (string) $by->getName()];
 
-        $refused = $this->problems($this->refusing, MergeProblemCode::InvalidValue);
+        $changes = $this->changes[(string) $branch] ?? [];
+        $refused = $this->problems($changes, $this->refusing, MergeProblemCode::InvalidValue);
         if ($refused !== []) {
-            return MergeStatus::refused($branch, count($this->changes), $refused);
+            return MergeStatus::refused($branch, count($changes), $refused);
         }
 
-        $problems = $this->problems($this->failing, MergeProblemCode::WriteFailed);
+        $problems = $this->problems($changes, $this->failing, MergeProblemCode::WriteFailed);
         $written = [];
-        foreach ($this->changes as $token => $change) {
+        foreach ($changes as $token => $change) {
             if (!in_array($change->create?->key, $this->failing, true)) {
                 $written[] = ObjectRef::created($token, $this->create($change, $by));
             }
@@ -100,7 +99,7 @@ final class AdHocApplyingBranches implements BranchServiceInterface
 
         return $problems === []
             ? MergeStatus::merged($branch, $written)
-            : MergeStatus::partial($branch, count($this->changes), $written, $problems);
+            : MergeStatus::partial($branch, count($changes), $written, $problems);
     }
 
     public function mergeStatus(Uuid $branch, string $context, UserInterface $by): ?MergeStatus
@@ -111,19 +110,26 @@ final class AdHocApplyingBranches implements BranchServiceInterface
     public function discard(Uuid $branch, string $context, UserInterface $by): void
     {
         ++$this->discards;
+        unset($this->changes[(string) $branch]);
     }
 
     /**
+     * @param array<string, DataObjectChange> $changes by token
      * @param list<string> $keys
      *
      * @return list<MergeProblem>
      */
-    private function problems(array $keys, MergeProblemCode $code): array
+    private function problems(array $changes, array $keys, MergeProblemCode $code): array
     {
         $problems = [];
-        foreach ($this->changes as $token => $change) {
+        foreach ($changes as $token => $change) {
             if (in_array($change->create?->key, $keys, true)) {
-                $problems[] = new MergeProblem(ObjectRef::token($token), null, 'the reason of Change Control', code: $code);
+                $problems[] = new MergeProblem(
+                    ObjectRef::token($token),
+                    null,
+                    'the reason of Change Control',
+                    code: $code
+                );
             }
         }
 
