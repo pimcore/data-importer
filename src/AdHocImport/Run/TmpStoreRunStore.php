@@ -53,6 +53,12 @@ final class TmpStoreRunStore implements RunStoreInterface
             self::STATE_TAGS[$run->state] ?? null,
             $run->isWaitingForDecision() ? self::DECISION_LIFETIME : null
         );
+        if ($run->isWaitingForDecision()) {
+            // the rows in its branch live as long as the run: a merge refused again makes it wait anew
+            foreach ($this->recorded($run) as $row) {
+                $this->addRecorded($run, $row);
+            }
+        }
     }
 
     public function delete(int $userId, string $fileId): void

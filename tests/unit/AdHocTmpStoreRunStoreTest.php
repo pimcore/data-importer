@@ -134,6 +134,18 @@ class AdHocTmpStoreRunStoreTest extends Unit
         $this->assertEquals([$this->recordedRow(9)], $this->store->recorded($this->otherUsersRun), 'its own run\'s only');
     }
 
+    public function testTheRowsInARunsBranchLiveAsLongAsTheRunWaitingForADecisionAgain(): void
+    {
+        $this->store->addRecorded($this->run, $this->recordedRow(3));
+        $key = 'data_importer_ad_hoc_run_recorded_' . $this->run->userId . '_' . $this->run->fileId;
+        TmpStore::set($key . '_3', $this->recordedRow(3)->toArray(), $key, 60);
+
+        $this->store->save($this->run->waitingForDecision(time()));
+
+        $this->assertEqualsWithDelta(time() + 8 * 86400, (int) TmpStore::get($key . '_3')?->getExpiryDate(), 60);
+        $this->assertEquals([$this->recordedRow(3)], $this->store->recorded($this->run));
+    }
+
     public function testRunsAreFoundByTheStateAMaintenanceTaskLooksFor(): void
     {
         $this->store->save($this->run->waitingForDecision(time()));

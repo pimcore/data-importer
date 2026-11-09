@@ -145,6 +145,16 @@ final readonly class BranchMerge implements BranchMergeInterface
 
         $failed = array_map(static fn (RowFailure $failure): int => $failure->row, $this->storedFailures($run));
         $recorded = $this->runs->recorded($run);
+        if ($recorded === [] && $run->updated + $run->created > 0) {
+            // the rows in the branch are no longer known: none of them can be merged, so none of them is saved
+            $this->discard($run, $user);
+
+            return $this->finish(
+                $run->nothingSaved()->withNotice($this->messages->cannotGoOn($user)),
+                $this->storedFailures($run),
+                $user
+            );
+        }
         $leftOut = array_values(array_filter(
             $recorded,
             static fn (RecordedRow $row): bool => in_array($row->row, $failed, true)

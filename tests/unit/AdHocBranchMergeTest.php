@@ -406,6 +406,21 @@ class AdHocBranchMergeTest extends Unit
         $this->assertSame(RunRecord::DONE, $run->state);
     }
 
+    public function testARunWhoseRowsInTheBranchAreNoLongerKnownSavesNoneOfThem(): void
+    {
+        $run = $this->branchRun(['state' => RunRecord::DECISION, 'updated' => 1, 'created' => 1, 'failed' => 1]);
+        $this->runs->forgetRecorded($run);
+        $this->storeFailures(new RowFailure(2, 'SKU-2', 'update', 'no', []));
+
+        $run = $this->merge()->mergeLeavingOut($run, AdHocRunFixtures::user());
+
+        $this->assertSame(['discard'], $this->branches->calls, 'nothing is merged');
+        $this->assertSame([RunRecord::DONE, 0, 0, 3], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame(AdHocRunFixtures::runMessages()->cannotGoOn(AdHocRunFixtures::user()), $run->notice);
+        $this->assertSame([2 => 'no'], $this->failures());
+        $this->assertFalse($this->uploadExists());
+    }
+
     public function testOnlyARunWaitingForADecisionCanBeMergedWithoutRows(): void
     {
         $this->expectException(\LogicException::class);
