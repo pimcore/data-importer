@@ -952,6 +952,25 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame('Stool', $rows[0]['values'][1]['new']);
     }
 
+    public function testARunWhoseTargetFolderIsGoneHasNoPlan(): void
+    {
+        $this->expectException(NotFoundHttpException::class);
+        $this->expectExceptionMessage('Data object folder 999999999 not found');
+
+        $this->service()->planForRun(
+            'file-of-the-run',
+            FileType::Csv,
+            new AdHocImportDryRunParameters(
+                999999999,
+                $this->class->getId(),
+                AdHocImportDryRunParameters::MATCH_BY_ID,
+                'ID'
+            ),
+            null,
+            $this->user
+        );
+    }
+
     public function testAConfigurationsOtherTargetsKeepTheLanguageTheyWriteForTheRightsCheck(): void
     {
         $fileId = $this->upload("ID;Related;Batch;Default\n1;a;b;c\n", 'products.csv');
