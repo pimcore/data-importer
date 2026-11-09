@@ -18,9 +18,12 @@ import {
   useBundleDataImporterAdHocImportDiscardRunMutation,
   useBundleDataImporterAdHocImportDryRunMutation,
   useBundleDataImporterAdHocImportInspectFileMutation,
+  useBundleDataImporterAdHocImportListWaitingRunsQuery,
   useBundleDataImporterAdHocImportLoadMappingMutation,
   useBundleDataImporterAdHocImportLoadRunQuery,
-  useBundleDataImporterAdHocImportStartRunMutation
+  useBundleDataImporterAdHocImportMergeLeavingOutMutation,
+  useBundleDataImporterAdHocImportStartRunMutation,
+  useBundleDataImporterAdHocImportWithdrawRunMutation
 } from '../data-importer-api-slice-enhanced'
 import { type BundleDataImporterAdHocImportFileSettings } from '../data-importer-api-slice.gen'
 import { type AdHocImportTarget } from './dialog-store'
@@ -45,7 +48,7 @@ import { transformationSourceOf } from './mapping-step/transformations-modal'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 import { dryRunParameters, previewCounts, type DryRun, type DryRunParameters, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
-import { isDone } from './import-step/import-state'
+import { isDone, isSettled } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
 import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
@@ -83,8 +86,11 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [errorMode, setErrorMode] = useState<ErrorMode>('skip')
   // the file of the run started, once the server has answered
   const [runFileId, setRunFileId] = useState<string | null>(null)
-  // stops asking once the run has ended; the last answer stays
+  // stops asking once the run has ended or waits for a decision; the last answer stays
   const [runPolling, setRunPolling] = useState(RUN_POLLING_MS)
+  // the file of an import into this folder that waited for a decision when the dialog opened
+  const [waitingFile, setWaitingFile] = useState<string | undefined>(undefined)
+  const [isDeciding, setIsDeciding] = useState(false)
 
   const [inspectFile] = useBundleDataImporterAdHocImportInspectFileMutation()
   const [deleteFile] = useBundleDataImporterAdHocImportDeleteFileMutation()
@@ -92,10 +98,13 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [runDry] = useBundleDataImporterAdHocImportDryRunMutation()
   const [startRun] = useBundleDataImporterAdHocImportStartRunMutation()
   const [discardRun] = useBundleDataImporterAdHocImportDiscardRunMutation()
-  const { data: run } = useBundleDataImporterAdHocImportLoadRunQuery(
+  const [mergeLeavingOut] = useBundleDataImporterAdHocImportMergeLeavingOutMutation()
+  const [withdrawRun] = useBundleDataImporterAdHocImportWithdrawRunMutation()
+  const { data: run, refetch: refetchRun } = useBundleDataImporterAdHocImportLoadRunQuery(
     { fileId: runFileId ?? '' },
     { skip: runFileId === null, pollingInterval: runPolling }
   )
+  const { data: waitingRuns } = useBundleDataImporterAdHocImportListWaitingRunsQuery({ folderId: target.folderId })
   const configurationMapping = useConfigurationMapping(phase.kind === 'inspected' ? phase.inspected : undefined)
 
   const upload = useRef<RunningUpload | null>(null)
@@ -348,6 +357,63 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     onClose()
   }
 
+  // the server answers the run as its merge starts; the dialog follows it from there
+  const mergeWithoutFailed = (): void => {
+    if (runFileId === null) {
+      return
+    }
+
+    setIsDeciding(true)
+    void mergeLeavingOut({ fileId: runFileId }).then((result) => {
+      setIsDeciding(false)
+      if ('error' in result && result.error !== undefined) {
+        trackError(new ApiError(result.error))
+        return
+      }
+
+      setRunPolling(RUN_POLLING_MS)
+      void refetchRun()
+    })
+  }
+
+  // the branch goes, the file stays: the next import opens a branch of its own
+  const backToMapping = (): void => {
+    if (runFileId === null) {
+      return
+    }
+
+    setIsDeciding(true)
+    void withdrawRun({ fileId: runFileId }).then((result) => {
+      setIsDeciding(false)
+      if ('error' in result && result.error !== undefined) {
+        trackError(new ApiError(result.error))
+        return
+      }
+
+      setRunFileId(null)
+      setRunPolling(RUN_POLLING_MS)
+      setStep(1)
+    })
+  }
+
+  // nothing is written, and the file and its downloads go
+  const discardImport = (): void => {
+    if (runFileId === null) {
+      return
+    }
+
+    setIsDeciding(true)
+    void discardRun({ fileId: runFileId }).then((result) => {
+      setIsDeciding(false)
+      if ('error' in result && result.error !== undefined) {
+        trackError(new ApiError(result.error))
+        return
+      }
+
+      onClose()
+    })
+  }
+
   const footer = (): React.JSX.Element => {
     if (step === 2) {
       return (
@@ -364,6 +430,12 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     if (step === IMPORT_STEP) {
       return (
         <ImportFooter
+          decision={ {
+            isDeciding,
+            onBackToMapping: phase.kind === 'inspected' ? backToMapping : undefined,
+            onDiscard: discardImport,
+            onMerge: mergeWithoutFailed
+          } }
           onClose={ close }
           run={ run }
           runFileId={ runFileId }
@@ -383,10 +455,20 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   }
 
   useEffect(() => {
-    if (isDone(run)) {
+    if (isSettled(run)) {
       setRunPolling(0)
     }
   }, [run?.state])
+
+  // an import into this folder waits for the user's decision: the dialog opens on it
+  useEffect(() => {
+    const waiting = waitingRuns?.items[0]
+    if (waiting !== undefined && runFileId === null && step === 0 && phase.kind === 'empty') {
+      setWaitingFile(waiting.fileName)
+      setRunFileId(waiting.fileId)
+      setStep(IMPORT_STEP)
+    }
+  }, [waitingRuns])
 
   // an upload does not outlive the dialog
   useEffect(() => () => { upload.current?.abort() }, [])
@@ -434,11 +516,12 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           source={ transformationSource }
         />
       ) }
-      { step === IMPORT_STEP && phase.kind === 'inspected' && (
+      { step === IMPORT_STEP && (phase.kind === 'inspected' || runFileId !== null) && (
         <ImportStep
-          fileId={ inspectedFileId() ?? '' }
+          fileId={ runFileId ?? inspectedFileId() ?? '' }
           run={ run }
           total={ importCount }
+          waitingFile={ waitingFile }
         />
       ) }
       { step === 2 && (isDryRunFailed

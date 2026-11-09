@@ -84,5 +84,28 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   error: css`
     color: ${token.colorError};
+  `,
+  branchStep: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    padding: ${token.paddingXS}px 0;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+  branchStepLabel: css`
+    flex: 1 1 0;
+  `,
+  branchStepActive: css`
+    font-weight: 700;
+  `,
+  branchStepDone: css`
+    color: ${token.colorSuccess};
+  `,
+  branchStepPending: css`
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid ${token.colorBorder};
+    border-radius: 50%;
   `
 }))

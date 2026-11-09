@@ -56,7 +56,10 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportDryRunMutation: () => [mockDryRun],
   useBundleDataImporterAdHocImportStartRunMutation: () => [mockStartRun],
   useBundleDataImporterAdHocImportDiscardRunMutation: () => [mockDiscardRun],
-  useBundleDataImporterAdHocImportLoadRunQuery: (...args: unknown[]) => mockLoadRun(...args)
+  useBundleDataImporterAdHocImportLoadRunQuery: (...args: unknown[]) => mockLoadRun(...args),
+  useBundleDataImporterAdHocImportMergeLeavingOutMutation: () => [mockMergeLeavingOut],
+  useBundleDataImporterAdHocImportWithdrawRunMutation: () => [mockWithdrawRun],
+  useBundleDataImporterAdHocImportListWaitingRunsQuery: (...args: unknown[]) => mockListWaitingRuns(...args)
 }))
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({ useElementHelper: () => ({ openElement: jest.fn() }) }))
 
@@ -72,6 +75,10 @@ const mockDryRun = jest.fn()
 const mockStartRun = jest.fn()
 const mockDiscardRun = jest.fn()
 const mockLoadRun = jest.fn()
+const mockMergeLeavingOut = jest.fn()
+const mockWithdrawRun = jest.fn()
+const mockListWaitingRuns = jest.fn()
+const mockRefetchRun = jest.fn()
 
 const csv: InspectedFile = {
   maxRows: 5000,
@@ -231,7 +238,10 @@ beforeEach(() => {
   mockDryRun.mockResolvedValue({ data: dryRunAnswer })
   mockStartRun.mockResolvedValue({ data: {} })
   mockDiscardRun.mockResolvedValue({ data: undefined })
-  mockLoadRun.mockReturnValue({ data: undefined })
+  mockLoadRun.mockImplementation(() => ({ data: undefined, refetch: mockRefetchRun }))
+  mockMergeLeavingOut.mockResolvedValue({ data: {} })
+  mockWithdrawRun.mockResolvedValue({ data: undefined })
+  mockListWaitingRuns.mockReturnValue({ data: { items: [] } })
   mockListConfigurations.mockImplementation((_: unknown, { skip }: { skip: boolean }) => skip
     ? { data: undefined, isFetching: false, isError: false }
     : { data: { configurations: [productsConfiguration, closedConfiguration] }, isFetching: false, isError: false })
@@ -1335,6 +1345,10 @@ describe('the preview step', () => {
       newObjectsFolderId: 7,
       userName: 'Jo Doe',
       finishedAt: null,
+      throughBranch: false,
+      mergeTotal: 0,
+      mergeDone: 0,
+      notice: null,
       failures: [],
       ...given
     })
@@ -1357,7 +1371,7 @@ describe('the preview step', () => {
     })
 
     it('goes on in the background when the dialog is closed, keeping the file', async () => {
-      mockLoadRun.mockReturnValue({ data: runAnswer({}) })
+      mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: runAnswer({}) })
       await startImport()
 
       fireEvent.click(screen.getByRole('button', { name: 'Close, keep running' }))
@@ -1368,7 +1382,7 @@ describe('the preview step', () => {
     })
 
     it('stops asking once the run ended, and forgets it on close', async () => {
-      mockLoadRun.mockReturnValue({ data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
+      mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
       await startImport()
 
       expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
@@ -1382,7 +1396,7 @@ describe('the preview step', () => {
     })
 
     it('tells the user when forgetting the run fails', async () => {
-      mockLoadRun.mockReturnValue({ data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
+      mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
       mockDiscardRun.mockResolvedValue({ error: { status: 500 } })
       await startImport()
 
@@ -1394,6 +1408,7 @@ describe('the preview step', () => {
 
     it('offers the failed rows for download', async () => {
       mockLoadRun.mockReturnValue({
+        refetch: mockRefetchRun,
         data: runAnswer({
           state: 'done',
           processed: 2,
@@ -1406,6 +1421,100 @@ describe('the preview step', () => {
 
       expect(screen.getByRole('link', { name: 'Download failed rows (1)' }).getAttribute('href'))
         .toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/failed-rows')
+    })
+
+    describe('through a branch', () => {
+      const deciding = (): object => runAnswer({
+        state: 'decision',
+        processed: 2,
+        updated: 1,
+        failed: 1,
+        throughBranch: true,
+        failures: [{ row: 3, matchValue: 'NH-1077', action: 'update', message: 'You may not save objects in /Products/Archive' }]
+      })
+
+      it('shows the rows that cannot be saved and stops asking while the user decides', async () => {
+        mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
+        await startImport()
+
+        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('You may not save objects in /Products/Archive')).toBeTruthy()
+        expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
+        expect(screen.getByRole('link', { name: 'Download failed rows (1)' })).toBeTruthy()
+      })
+
+      it('merges the other rows and follows the merge again', async () => {
+        mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+
+        expect(mockMergeLeavingOut).toHaveBeenCalledWith({ fileId: 'file-1' })
+        expect(mockRefetchRun).toHaveBeenCalled()
+        expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 1000 })
+      })
+
+      it('goes back to the mapping with the file, the branch taken back', async () => {
+        mockLoadRun.mockImplementation(({ fileId }: { fileId: string }, { skip }: { skip: boolean }) => ({
+          refetch: mockRefetchRun,
+          data: skip || fileId === '' ? undefined : deciding()
+        }))
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Back to mapping' })) })
+
+        expect(mockWithdrawRun).toHaveBeenCalledWith({ fileId: 'file-1' })
+        expect(screen.getByText('Mapping', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
+        expect(mockDeleteFile).not.toHaveBeenCalled()
+      })
+
+      it('discards the import and closes', async () => {
+        mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Discard import' })) })
+
+        expect(mockDiscardRun).toHaveBeenCalledWith({ fileId: 'file-1' })
+        expect(onClose).toHaveBeenCalled()
+        expect(mockDeleteFile).not.toHaveBeenCalled()
+      })
+
+      it('tells the user when a decision cannot be carried out, and stays', async () => {
+        mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
+        mockDiscardRun.mockResolvedValue({ error: { status: 500 } })
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Discard import' })) })
+
+        expect(mockTrackError).toHaveBeenCalled()
+        expect(onClose).not.toHaveBeenCalled()
+      })
+
+      it('keeps the import waiting when the dialog is closed', async () => {
+        mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
+        await startImport()
+
+        fireEvent.click(screen.getByLabelText('close dialog'))
+
+        expect(onClose).toHaveBeenCalled()
+        expect(mockDiscardRun).not.toHaveBeenCalled()
+        expect(mockDeleteFile).not.toHaveBeenCalled()
+      })
+
+      it('opens on an import into the folder that waits for a decision', () => {
+        mockListWaitingRuns.mockReturnValue({ data: { items: [{ fileId: 'waiting-1', fileName: 'autumn.xlsx' }] } })
+        mockLoadRun.mockImplementation(({ fileId }: { fileId: string }) => ({
+          refetch: mockRefetchRun,
+          data: fileId === 'waiting-1' ? deciding() : undefined
+        }))
+
+        renderDialog()
+
+        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 })
+        expect(screen.getByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeTruthy()
+        expect(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })).toBeTruthy()
+        expect(screen.queryByRole('button', { name: 'Back to mapping' })).toBeNull()
+      })
     })
 
     it('stays on the preview when the import cannot start', async () => {

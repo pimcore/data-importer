@@ -135,6 +135,16 @@ export const api = baseApi.enhanceEndpoints({
     },
     bundleDataImporterAdHocImportDiscardRun: {
       invalidatesTags: []
+    },
+    bundleDataImporterAdHocImportMergeLeavingOut: {
+      invalidatesTags: []
+    },
+    bundleDataImporterAdHocImportWithdrawRun: {
+      invalidatesTags: []
+    },
+    // asked once as the dialog opens
+    bundleDataImporterAdHocImportListWaitingRuns: {
+      providesTags: []
     }
   }
 })
@@ -159,7 +169,10 @@ export const {
   useBundleDataImporterAdHocImportDryRunMutation,
   useBundleDataImporterAdHocImportStartRunMutation,
   useBundleDataImporterAdHocImportLoadRunQuery,
-  useBundleDataImporterAdHocImportDiscardRunMutation
+  useBundleDataImporterAdHocImportDiscardRunMutation,
+  useBundleDataImporterAdHocImportMergeLeavingOutMutation,
+  useBundleDataImporterAdHocImportWithdrawRunMutation,
+  useBundleDataImporterAdHocImportListWaitingRunsQuery
 } = api
 
 export type * from './data-importer-api-slice.gen'
