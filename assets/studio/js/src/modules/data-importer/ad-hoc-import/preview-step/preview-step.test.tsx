@@ -137,6 +137,22 @@ describe('the preview step', () => {
     expect(tones()).toEqual([null, null, 'warning', 'error'])
   })
 
+  it('sets the mark the tint of a whole row hangs on, only on rows with a tone', () => {
+    const marks = (): boolean[][] => within(screen.getByRole('table')).getAllByRole('row').slice(1)
+      .map((tableRow) => {
+        const { classList } = within(tableRow).getAllByRole('cell')[5].querySelector('span span')!
+
+        return [classList.contains('ad-hoc-import-row-error'), classList.contains('ad-hoc-import-row-warning')]
+      })
+
+    render(<PreviewStep
+      dryRun={ dryRun() }
+      errorMode="values"
+           />)
+
+    expect(marks()).toEqual([[false, false], [false, false], [false, true], [true, false]])
+  })
+
   it('shows only the rows with errors when asked to', () => {
     render(<PreviewStep
       dryRun={ dryRun() }

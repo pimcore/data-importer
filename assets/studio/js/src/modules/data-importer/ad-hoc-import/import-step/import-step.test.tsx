@@ -114,6 +114,16 @@ describe('an import that saved every row', () => {
     expect(mockOpenElement).toHaveBeenCalledWith({ id: 7, type: 'data-object' })
   })
 
+  it('draws each outcome of the result bar by its share', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ updated: 300, created: 6, skipped: 3 }) }
+      total={ 309 }
+           />)
+
+    expect(Array.from(screen.getByTestId('result-bar').children).map((segment) => (segment as HTMLElement).style.flexGrow)).toEqual(['300', '6', '3'])
+  })
+
   it('names no download when no row was skipped', () => {
     render(<ImportStep
       fileId="file-1"
