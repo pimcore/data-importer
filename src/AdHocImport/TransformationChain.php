@@ -525,7 +525,9 @@ final readonly class TransformationChain
      */
     private function loads(array $step): bool
     {
-        return in_array($step['type'], [TransformationAllowList::LOAD_OBJECT, TransformationAllowList::LOAD_ASSET], true);
+        $loaders = [TransformationAllowList::LOAD_OBJECT, TransformationAllowList::LOAD_ASSET];
+
+        return in_array($step['type'], $loaders, true);
     }
 
     /**

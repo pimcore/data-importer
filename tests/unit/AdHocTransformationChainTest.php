@@ -509,7 +509,11 @@ class AdHocTransformationChainTest extends Unit
         );
         $this->assertNotNull($single);
         $this->assertNull($single->values[1], 'the preview still shows it as not found');
-        $this->assertSame([false, true, true, false], $single->lost, 'a hidden and a missing ID alike, not an empty cell');
+        $this->assertSame(
+            [false, true, true, false],
+            $single->lost,
+            'a hidden and a missing ID alike, not an empty cell'
+        );
         $this->assertSame([false, false, false, false], $single->failed);
 
         // a user must not tell a hidden element from one that does not exist
