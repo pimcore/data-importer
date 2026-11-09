@@ -22,7 +22,7 @@ final readonly class AdHocImportWalkthroughWork
 
     /**
      * @param \Closure(string): string $stateOf the state of a file's import
-     * @param \Closure(string, int): array{int, string} $console runs a console command for at most so many seconds: its exit code and output
+     * @param \Closure(string, int): array{int, string} $console (command, time limit in seconds): exit code and output
      * @param list<string> $transports
      */
     public function __construct(
