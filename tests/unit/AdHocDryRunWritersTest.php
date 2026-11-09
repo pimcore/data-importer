@@ -71,6 +71,25 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame(['Chair', null], $object->written);
     }
 
+    public function testAColumnWriterRefusesARowWhoseValueLostAnElementItsUserMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        // the transformations left the element out for the user the plan was made for
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([null, 'Chair'], [false, false], [false, false], null, [true, false])
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->write($object, 0, ['A-1', '7']), 'the dry run');
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '7']), 'the run');
+        $this->assertNull($object->written, 'the field is not cleared');
+
+        $this->assertNull($writer->forUser($user)->write($object, 1, ['A-2', 'Chair']));
+        $this->assertSame(['Chair', null], $object->written);
+    }
+
     public function testAColumnWriterForAUserRefusesASingleElementTheyMayNotView(): void
     {
         $user = AdHocRunFixtures::user(false);

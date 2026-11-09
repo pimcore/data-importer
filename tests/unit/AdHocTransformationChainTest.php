@@ -493,6 +493,49 @@ class AdHocTransformationChainTest extends Unit
         $this->assertSame([false, true, false], $numbers->failed);
     }
 
+    public function testAConvertedColumnMarksTheRowsThatLostAnElementTheUserMayNotView(): void
+    {
+        $user = new User();
+        $user->setId(4712);
+
+        $single = $this->chain()->convertColumn(
+            ['1', '2', '5', ''],
+            [$this->step(TransformationAllowList::LOAD_OBJECT)],
+            [Types::DATA_OBJECT],
+            $user
+        );
+        $this->assertNotNull($single);
+        $this->assertNull($single->values[1], 'the preview still shows it as not found');
+        $this->assertSame([false, true, false, false], $single->hidden, 'an ID that finds nothing hides nothing');
+        $this->assertSame([false, false, false, false], $single->failed);
+
+        $listed = $this->chain()->convertColumn(
+            ['1,2', '1'],
+            [
+                $this->step(TransformationAllowList::SPLIT, ['delimiter' => ',']),
+                $this->step(TransformationAllowList::LOAD_OBJECT),
+            ],
+            [Types::DATA_OBJECT_ARRAY],
+            $user
+        );
+        $this->assertNotNull($listed);
+        $this->assertCount(1, $listed->values[0]);
+        $this->assertSame([true, false], $listed->hidden);
+
+        $gallery = $this->chain()->convertColumn(
+            ['1|3', '1|2'],
+            [
+                $this->step(TransformationAllowList::SPLIT, ['delimiter' => '|']),
+                $this->step(TransformationAllowList::LOAD_ASSET),
+            ],
+            [Types::GALLERY],
+            $user
+        );
+        $this->assertNotNull($gallery);
+        $this->assertSame('gallery', $gallery->conversion);
+        $this->assertSame([true, false], $gallery->hidden, 'the mark outlasts the conversion after the step');
+    }
+
     public function testAColumnThatCannotReachItsFieldIsNotConverted(): void
     {
         $user = new User();

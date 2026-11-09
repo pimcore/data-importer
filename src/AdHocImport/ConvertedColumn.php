@@ -25,12 +25,15 @@ final readonly class ConvertedColumn
      * @param list<bool> $failedInSteps the transformations could not take the row's value
      * @param list<bool> $failed the transformations or the conversion could not take it
      * @param string|null $conversion the operator converting into the field's type; null if none is needed
+     * @param list<bool> $hidden the value lost an element the user may not view, so writing it would clear or shorten
+     *                           what the field holds
      */
     public function __construct(
         public array $values,
         public array $failedInSteps,
         public array $failed,
         public ?string $conversion,
+        public array $hidden = [],
     ) {
     }
 

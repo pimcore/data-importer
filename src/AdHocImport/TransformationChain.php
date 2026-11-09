@@ -159,29 +159,31 @@ final readonly class TransformationChain
     public function convertColumn(array $values, array $steps, array $accepted, User $user): ?ConvertedColumn
     {
         $operators = $this->operators($steps);
-        [$type, $data, $failed] = $this->runSteps($operators, $steps, $values, $user);
+        [$type, $data, $failed, , $hidden] = $this->runSteps($operators, $steps, $values, $user);
         $conversion = $type === null ? false : $this->conversionFor($type, $accepted);
         if ($type === null || $conversion === false) {
             return null;
         }
 
-        [, $converted, $failedConversion] = $this->convert(
+        [, $converted, $failedConversion, $hidden] = $this->convert(
             $conversion,
             $type,
             count($operators) + 1,
             $data,
             $failed,
-            $user
+            $user,
+            $hidden
         );
 
-        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion);
+        return new ConvertedColumn($converted, $failed, $failedConversion, $conversion, $hidden);
     }
 
     /**
      * @param list<mixed> $data
      * @param list<bool> $failed
+     * @param list<bool> $hidden
      *
-     * @return array{0: string, 1: list<mixed>, 2: list<bool>}
+     * @return array{0: string, 1: list<mixed>, 2: list<bool>, 3: list<bool>}
      *
      * @throws InvalidConfigurationException
      */
@@ -191,10 +193,11 @@ final readonly class TransformationChain
         int $position,
         array $data,
         array $failed,
-        User $user
+        User $user,
+        array $hidden = []
     ): array {
         if ($conversion === null) {
-            return [$type, $data, $failed];
+            return [$type, $data, $failed, $hidden];
         }
 
         $converter = $this->operators([
@@ -202,9 +205,9 @@ final readonly class TransformationChain
         ])[0];
         $type = $converter->evaluateReturnType($type, $position);
         $failed = $this->unreadable($conversion, $data, $failed);
-        [$data, $failed] = $this->process($converter, $data, $failed, $user, true);
+        [$data, $failed, $hidden] = $this->process($converter, $data, $failed, $user, $hidden, true);
 
-        return [$type, $data, $failed];
+        return [$type, $data, $failed, $hidden];
     }
 
     /**
@@ -214,13 +217,14 @@ final readonly class TransformationChain
      * @param list<array{type: string, settings: array<string, string>}> $steps
      * @param list<?string> $values
      *
-     * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>}
+     * @return array{0: ?string, 1: list<mixed>, 2: list<bool>, 3: list<array<string, mixed>>, 4: list<bool>}
      */
     private function runSteps(array $operators, array $steps, array $values, User $user): array
     {
         $type = TransformationDataTypeService::DEFAULT_TYPE;
         $data = $values;
         $failed = array_fill(0, count($values), false);
+        $hidden = $failed;
         $stepResults = [];
         foreach ($operators as $position => $operator) {
             $error = null;
@@ -229,7 +233,7 @@ final readonly class TransformationChain
                     $this->checkStep($steps[$position], $type, $position + 1);
                     $type = $operator->evaluateReturnType($type, $position + 1);
                     $failed = $this->malformedIds($steps[$position], $data, $failed);
-                    [$data, $failed] = $this->process($operator, $data, $failed, $user);
+                    [$data, $failed, $hidden] = $this->process($operator, $data, $failed, $user, $hidden);
                 } catch (InvalidConfigurationException $exception) {
                     $type = null;
                     $error = $exception->getMessage();
@@ -244,7 +248,7 @@ final readonly class TransformationChain
             ];
         }
 
-        return [$type, $data, $failed, $stepResults];
+        return [$type, $data, $failed, $stepResults, $hidden];
     }
 
     /**
@@ -465,15 +469,17 @@ final readonly class TransformationChain
      *
      * @param list<mixed> $data
      * @param list<bool> $failed
+     * @param list<bool> $hidden the rows whose value lost an element the user may not see
      * @param bool $keepEmpty an empty cell stays empty instead of becoming a No, as in a run that writes no empty value
      *
-     * @return array{0: list<mixed>, 1: list<bool>}
+     * @return array{0: list<mixed>, 1: list<bool>, 2: list<bool>}
      */
     private function process(
         OperatorInterface $operator,
         array $data,
         array $failed,
         User $user,
+        array $hidden,
         bool $keepEmpty = false
     ): array {
         $references = new UserReferenceVisibility($user);
@@ -489,13 +495,15 @@ final readonly class TransformationChain
 
             try {
                 // a dry run logs no misses; a loaded element the user may not see counts as not found
-                $data[$row] = $references->visibleIn($operator->process($value, true));
+                $loaded = $operator->process($value, true);
+                $data[$row] = $references->visibleIn($loaded);
+                $hidden[$row] = ($hidden[$row] ?? false) || $references->hidesAnElementIn($loaded);
             } catch (\Exception) { // NOSONAR php:S2221 an operator may fail on a value from the file; an Error is a bug
                 $data[$row] = null;
                 $failed[$row] = true;
             }
         }
 
-        return [$data, $failed];
+        return [$data, $failed, $hidden];
     }
 }

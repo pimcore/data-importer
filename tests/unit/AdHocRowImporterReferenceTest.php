@@ -22,14 +22,17 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowOutcome;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\TransformationAllowList;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService as Types;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
@@ -140,7 +143,73 @@ class AdHocRowImporterReferenceTest extends Unit
         $reference->method('isAllowed')->willReturnCallback(
             static fn (string $type, ?User $user): bool => $type === 'view' && $user === $planned
         );
-        $object = new class() extends Concrete {
+        $object = $this->related();
+        $writer = new ColumnWriter(
+            new ImportField('related', null, 'Related'),
+            'holder',
+            new ConvertedColumn([$reference], [false], [false], null)
+        );
+        $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
+        $plan = AdHocRunFixtures::plan([$match, $match], [$writer], $planned, [['sku' => 'SKU-1', 'holder' => '7']]);
+
+        $outcome = $this->importer()->import($plan, $current, 0, []);
+        $this->assertTrue($outcome->isFailure(), 'the plan\'s user may view it, the row\'s user may not');
+        $this->assertSame([], $object->assigned, 'the object\'s relation stays as it is');
+
+        $outcome = $this->importer()->import($plan, $planned, 0, []);
+        $this->assertSame(RowOutcome::UPDATED, $outcome->result);
+        $this->assertSame([$reference], $object->assigned);
+    }
+
+    public function testAColumnsLoadedElementTheUserMayNotViewFailsTheRowAndLeavesTheFieldAsItIs(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $hidden = $this->createStub(Concrete::class);
+        $hidden->method('isAllowed')->willReturn(false);
+        $visible = $this->createStub(Concrete::class);
+        $visible->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $type === 'view' && $asked === $user
+        );
+        $chain = AdHocTransformations::chain($this->createStub(DataTypeServiceInterface::class), [], [
+            TransformationAllowList::LOAD_OBJECT => new AdHocStandInLoader(
+                Types::DATA_OBJECT,
+                Types::DATA_OBJECT_ARRAY,
+                static fn (string $id): ?Concrete => ['5' => $visible, '7' => $hidden][$id] ?? null
+            ),
+        ]);
+        $rows = [['sku' => 'SKU-1', 'holder' => '7'], ['sku' => 'SKU-1', 'holder' => '5']];
+        // the plan is made for the same user as the rows, as a run makes it
+        $converted = $chain->convertColumn(
+            array_column($rows, 'holder'),
+            [TransformationAllowList::step(['type' => TransformationAllowList::LOAD_OBJECT], 1)],
+            [Types::DATA_OBJECT],
+            $user
+        );
+        $this->assertNotNull($converted);
+        $object = $this->related();
+        $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
+        $plan = AdHocRunFixtures::plan(
+            [$match, $match],
+            [new ColumnWriter(new ImportField('related', null, 'Related'), 'holder', $converted)],
+            $user,
+            $rows
+        );
+
+        $outcome = $this->importer()->import($plan, $user, 0, []);
+        $this->assertTrue($outcome->isFailure());
+        $this->assertSame([], $object->assigned, 'the relation is not cleared');
+
+        $outcome = $this->importer()->import($plan, $user, 1, []);
+        $this->assertSame(RowOutcome::UPDATED, $outcome->result);
+        $this->assertSame([$visible], $object->assigned);
+    }
+
+    /**
+     * An existing object with a relation `related` that records what is written into it.
+     */
+    private function related(): Concrete
+    {
+        return new class() extends Concrete {
             /** @var list<mixed> */
             public array $assigned = [];
 
@@ -177,20 +246,5 @@ class AdHocRowImporterReferenceTest extends Unit
                 return $this;
             }
         };
-        $writer = new ColumnWriter(
-            new ImportField('related', null, 'Related'),
-            'holder',
-            new ConvertedColumn([$reference], [false], [false], null)
-        );
-        $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
-        $plan = AdHocRunFixtures::plan([$match, $match], [$writer], $planned, [['sku' => 'SKU-1', 'holder' => '7']]);
-
-        $outcome = $this->importer()->import($plan, $current, 0, []);
-        $this->assertTrue($outcome->isFailure(), 'the plan\'s user may view it, the row\'s user may not');
-        $this->assertSame([], $object->assigned, 'the object\'s relation stays as it is');
-
-        $outcome = $this->importer()->import($plan, $planned, 0, []);
-        $this->assertSame(RowOutcome::UPDATED, $outcome->result);
-        $this->assertSame([$reference], $object->assigned);
     }
 }

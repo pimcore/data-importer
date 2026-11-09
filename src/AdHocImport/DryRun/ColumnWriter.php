@@ -69,13 +69,13 @@ final readonly class ColumnWriter implements FieldWriter
                 : ValueError::ofConversion($this->converted->conversion);
         }
 
-        try {
-            $value = $this->converted->values[$index];
-            // filtering would clear or shorten what the field holds, and the row would still count as saved
-            if ($this->references?->hidesAnElementIn($value) === true) {
-                return ValueError::Invalid;
-            }
+        $value = $this->converted->values[$index];
+        // dropping the element clears or shortens what the field holds, and the row would still count as saved
+        if (($this->converted->hidden[$index] ?? false) || $this->references?->hidesAnElementIn($value) === true) {
+            return ValueError::Invalid;
+        }
 
+        try {
             $this->target->assignData($object, $value);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
             if ($throwable instanceof \Error && !$throwable instanceof \TypeError) {
