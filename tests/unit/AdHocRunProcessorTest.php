@@ -45,8 +45,12 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
 
-class AdHocRunProcessorTest extends Unit
+class AdHocRunProcessorTest extends Unit // NOSONAR php:S1200 a fake for every collaborator of a run
 {
+    private const string TARGET = '/Products';
+    private const string NOT_ASKED = 'not asked';
+    private const string UPLOAD_DELETED = 'the upload is deleted';
+
     private const string FILE_ID = '123e4567-e89b-12d3-a456-426614174000';
 
     private const string FOLDER_PATH = '/Products/';
@@ -168,6 +172,7 @@ class AdHocRunProcessorTest extends Unit
 
             public function follow(int $userId, string $fileId): void
             {
+                // a run only starts the merge: following it is the worker's
             }
 
             public function mergeLeavingOut(RunRecord $run, User $user): RunRecord
@@ -289,7 +294,7 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame(2, $run->updated);
         $this->assertFalse($run->isRunning());
         $this->assertNotNull($run->finishedAt);
-        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
+        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), self::UPLOAD_DELETED);
         $this->assertCount(1, $this->notifications);
         $this->assertSame(AdHocRunFixtures::USER_ID, $this->notifications[0]->getRecipientId());
         $this->assertStringContainsString('autumn.csv', $this->notifications[0]->getTitle());
@@ -541,7 +546,7 @@ class AdHocRunProcessorTest extends Unit
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
         $this->assertSame(1, $run->failed);
         $this->assertFalse($run->isRunning());
-        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
+        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), self::UPLOAD_DELETED);
         $this->assertCount(1, $this->notifications);
     }
 
@@ -662,7 +667,10 @@ class AdHocRunProcessorTest extends Unit
         $fileId = $this->storedFile();
         $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']);
         $this->runs->save($run);
-        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
+        $this->runs->addRecorded(
+            $run,
+            new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', self::TARGET, ['SKU-1'], [])
+        );
         $user = AdHocRunFixtures::user();
         $plan = AdHocRunFixtures::plan(
             [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()), new \RuntimeException('lookup failed')],
@@ -681,7 +689,11 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame(['1 updated, 1 failed, rows 3, columns SKU,Name'], $calls);
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
         $this->assertSame(RunRecord::RUNNING, $run?->state, 'the merge, not the worker, ends a branch run');
-        $this->assertSame(FileType::Csv, $this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the file stays for a decision');
+        $this->assertSame(
+            FileType::Csv,
+            $this->files->findType(AdHocRunFixtures::USER_ID, $fileId),
+            'the file stays for a decision'
+        );
         $this->assertSame([], $this->notifications);
     }
 
@@ -693,7 +705,11 @@ class AdHocRunProcessorTest extends Unit
         $plan = AdHocRunFixtures::plan([new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved())], [], $user);
         $calls = [];
 
-        $this->processor($plan, $user, branchMerge: $this->branchMerge($calls, new \RuntimeException('the database went away')))
+        $this->processor(
+            $plan,
+            $user,
+            branchMerge: $this->branchMerge($calls, new \RuntimeException('the database went away'))
+        )
             ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
 
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
@@ -706,7 +722,10 @@ class AdHocRunProcessorTest extends Unit
         $fileId = $this->storedFile();
         $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']);
         $this->runs->save($run);
-        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
+        $this->runs->addRecorded(
+            $run,
+            new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', self::TARGET, ['SKU-1'], [])
+        );
         $user = AdHocRunFixtures::user();
         $plan = AdHocRunFixtures::plan(
             [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()), new \RuntimeException('lookup failed')],
@@ -715,7 +734,11 @@ class AdHocRunProcessorTest extends Unit
             [['sku' => 'SKU-1'], ['sku' => 'SKU-2']]
         );
         $calls = [];
-        $processor = $this->processor($plan, $user, branchMerge: $this->branchMerge($calls, new \RuntimeException('db gone')));
+        $processor = $this->processor(
+            $plan,
+            $user,
+            branchMerge: $this->branchMerge($calls, new \RuntimeException('db gone'))
+        );
 
         $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
         $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
@@ -723,7 +746,7 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame(['1 updated, 1 failed, rows 3, columns SKU,Name', 'discard branch-1'], $calls);
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
         $this->assertSame([RunRecord::DONE, 0, 2], [$run?->state, $run?->updated, $run?->failed]);
-        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
+        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), self::UPLOAD_DELETED);
         $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
         $rows = array_column($stored['rows'] ?? [], 'message', 'row');
         $this->assertSame([2, 3], array_keys($rows), 'the row in the branch is not saved either');
@@ -736,11 +759,14 @@ class AdHocRunProcessorTest extends Unit
         $fileId = $this->storedFile();
         $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 1, 'branch' => 'branch-1']);
         $this->runs->save($run);
-        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
+        $this->runs->addRecorded(
+            $run,
+            new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', self::TARGET, ['SKU-1'], [])
+        );
         $calls = [];
 
         $merge = $this->branchMerge($calls, new \RuntimeException('db gone'));
-        $this->processor(new \RuntimeException('not asked'), null, 0, branchMerge: $merge)
+        $this->processor(new \RuntimeException(self::NOT_ASKED), null, 0, branchMerge: $merge)
             ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
 
         $this->assertCount(1, $calls, 'nobody is left to close the branch as');
@@ -753,7 +779,7 @@ class AdHocRunProcessorTest extends Unit
     {
         $fileId = $this->storedFile();
         $this->runs->save(AdHocRunFixtures::run(['fileId' => $fileId])->finished(1));
-        $processor = $this->processor(new \RuntimeException('not asked'), AdHocRunFixtures::user(), 0);
+        $processor = $this->processor(new \RuntimeException(self::NOT_ASKED), AdHocRunFixtures::user(), 0);
 
         $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
         $processor->processRow($this->queue(self::FILE_ID), AdHocRunFixtures::USER_ID, $this->item(0));
@@ -822,7 +848,7 @@ class AdHocRunProcessorTest extends Unit
     {
         $fileId = $this->storedFile();
         $this->storeRun($fileId, 1);
-        $processor = $this->processor(new \RuntimeException('not asked'), null, 0);
+        $processor = $this->processor(new \RuntimeException(self::NOT_ASKED), null, 0);
 
         $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
 

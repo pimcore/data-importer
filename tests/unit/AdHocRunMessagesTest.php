@@ -111,13 +111,18 @@ class AdHocRunMessagesTest extends Unit
     public function testADecisionIsAskedForWithTheCountsAndTheRows(): void
     {
         $text = AdHocRunFixtures::runMessages()->decisionText(
-            AdHocRunFixtures::run(['updated' => 300, 'created' => 5, 'failed' => 4, 'targetFolder' => '/Products/Outdoor']),
+            AdHocRunFixtures::run(
+                ['updated' => 300, 'created' => 5, 'failed' => 4, 'targetFolder' => '/Products/Outdoor']
+            ),
             [new RowFailure(41, 'NH-1090', 'create', 'taken', [])],
             AdHocRunFixtures::user()
         );
         $lines = explode("\n", $text);
 
-        $this->assertStringContainsString('"{{ready}}":"305","{{failed}}":"4","{{folder}}":"/Products/Outdoor"', $lines[0]);
+        $this->assertStringContainsString(
+            '"{{ready}}":"305","{{failed}}":"4","{{folder}}":"/Products/Outdoor"',
+            $lines[0]
+        );
         $this->assertStringContainsString('"{{row}}":"41"', $lines[1]);
     }
 

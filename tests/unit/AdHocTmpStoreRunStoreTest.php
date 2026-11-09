@@ -52,7 +52,17 @@ class AdHocTmpStoreRunStoreTest extends Unit
 
     private function recordedRow(int $row): RecordedRow
     {
-        return new RecordedRow($row, 40 + $row, null, 'SKU-' . $row, 'update', 'SKU-' . $row, '/Products', ['SKU-' . $row], ['sku' => 'SKU-' . $row]);
+        return new RecordedRow(
+            $row,
+            40 + $row,
+            null,
+            'SKU-' . $row,
+            'update',
+            'SKU-' . $row,
+            '/Products',
+            ['SKU-' . $row],
+            ['sku' => 'SKU-' . $row]
+        );
     }
 
     private function failure(int $row): RowFailure
@@ -121,8 +131,13 @@ class AdHocTmpStoreRunStoreTest extends Unit
         $this->store->addRecorded($this->run, $this->recordedRow(4));
         $this->store->addRecorded($this->otherUsersRun, $this->recordedRow(9));
 
-        $this->assertEquals([$this->recordedRow(3), $this->recordedRow(4), $this->recordedRow(5)], $this->store->recorded($this->run));
-        $stored = TmpStore::get('data_importer_ad_hoc_run_recorded_' . $this->run->userId . '_' . $this->run->fileId . '_3');
+        $this->assertEquals(
+            [$this->recordedRow(3), $this->recordedRow(4), $this->recordedRow(5)],
+            $this->store->recorded($this->run)
+        );
+        $stored = TmpStore::get(
+            'data_importer_ad_hoc_run_recorded_' . $this->run->userId . '_' . $this->run->fileId . '_3'
+        );
         $this->assertInstanceOf(TmpStore::class, $stored);
         $this->assertEqualsWithDelta(time() + 8 * 86400, $stored->getExpiryDate(), 60);
 
@@ -131,7 +146,11 @@ class AdHocTmpStoreRunStoreTest extends Unit
 
         $this->store->forgetRecorded($this->run);
         $this->assertSame([], $this->store->recorded($this->run));
-        $this->assertEquals([$this->recordedRow(9)], $this->store->recorded($this->otherUsersRun), 'its own run\'s only');
+        $this->assertEquals(
+            [$this->recordedRow(9)],
+            $this->store->recorded($this->otherUsersRun),
+            'its own run\'s only'
+        );
     }
 
     public function testTheRowsInARunsBranchLiveAsLongAsTheRunWaitingForADecisionAgain(): void
@@ -151,14 +170,28 @@ class AdHocTmpStoreRunStoreTest extends Unit
         $this->store->save($this->run->waitingForDecision(time()));
         $this->store->save($this->otherUsersRun->merging(3, 0, time()));
 
-        $this->assertContains($this->run->fileId, $this->fileIdsOf($this->store->inState(RunRecord::DECISION), $this->run->userId));
-        $this->assertContains($this->otherUsersRun->fileId, $this->fileIdsOf($this->store->inState(RunRecord::MERGING), self::OTHER_USER_ID));
+        $this->assertContains(
+            $this->run->fileId,
+            $this->fileIdsOf($this->store->inState(RunRecord::DECISION), $this->run->userId)
+        );
+        $this->assertContains(
+            $this->otherUsersRun->fileId,
+            $this->fileIdsOf($this->store->inState(RunRecord::MERGING), self::OTHER_USER_ID)
+        );
         $this->assertSame([], $this->store->inState(RunRecord::RUNNING), 'only the states it looks for');
         $waiting = TmpStore::get('data_importer_ad_hoc_run_' . $this->run->userId . '_' . $this->run->fileId);
-        $this->assertEqualsWithDelta(time() + 8 * 86400, (int) $waiting?->getExpiryDate(), 60, 'kept until the discard finds it');
+        $this->assertEqualsWithDelta(
+            time() + 8 * 86400,
+            (int) $waiting?->getExpiryDate(),
+            60,
+            'kept until the discard finds it'
+        );
 
         $this->store->save($this->run->waitingForDecision(time())->finished(time()));
-        $this->assertNotContains($this->run->fileId, $this->fileIdsOf($this->store->inState(RunRecord::DECISION), $this->run->userId));
+        $this->assertNotContains(
+            $this->run->fileId,
+            $this->fileIdsOf($this->store->inState(RunRecord::DECISION), $this->run->userId)
+        );
         $this->store->delete(self::OTHER_USER_ID, $this->otherUsersRun->fileId);
     }
 
