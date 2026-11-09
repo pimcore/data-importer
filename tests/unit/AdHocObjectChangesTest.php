@@ -26,6 +26,7 @@ use Pimcore\Model\DataObject\Classificationstore;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Objectbrick;
 use Pimcore\Model\Document;
+use Pimcore\Normalizer\NormalizerInterface;
 use Pimcore\Tool;
 
 class AdHocObjectChangesTest extends Unit
@@ -340,6 +341,152 @@ class AdHocObjectChangesTest extends Unit
             $group->delete();
             $storeConfig->delete();
         }
+    }
+
+    private function block(string $name): Data\Block
+    {
+        $text = new Data\Input();
+        $text->setName('text');
+        $block = new Data\Block();
+        $block->setName($name);
+        $block->setChildren([$text]);
+
+        return $block;
+    }
+
+    /**
+     * @return list<array<string, DataObject\Data\BlockElement>> one block item with its text
+     */
+    private function blockValue(string $text): array
+    {
+        return [['text' => new DataObject\Data\BlockElement('text', 'input', $text)]];
+    }
+
+    /**
+     * @return Data\Localizedfields holding an input "title" and a block "notes"
+     */
+    private function localizedWithBlock(): Data\Localizedfields
+    {
+        $title = new Data\Input();
+        $title->setName('title');
+        $localized = new Data\Localizedfields();
+        $localized->setName('localizedfields');
+        $localized->setChildren([$title, $this->block('notes')]);
+
+        return $localized;
+    }
+
+    public function testABlockAmongTheLocalizedFieldsIsLeftToTheObject(): void
+    {
+        $language = Tool::getValidLanguages()[0];
+        $definition = new ClassDefinition();
+        $definition->addFieldDefinition('localizedfields', $this->localizedWithBlock());
+
+        $change = (new ObjectChanges())->changeOf(
+            $this->object([], [$language => ['title' => 'Chair', 'notes' => $this->blockValue('new')]], $definition),
+            $this->object([], [$language => ['title' => 'Stool', 'notes' => $this->blockValue('old')]], $definition),
+            null
+        );
+
+        $this->assertSame([['localized', 'title', $language, 7 => 'Chair']], $this->values($change));
+    }
+
+    public function testABlockInABrickIsLeftToTheObject(): void
+    {
+        $size = new Objectbrick\Definition();
+        $size->setKey('Size');
+        $size->addFieldDefinition('width', new Data\Numeric());
+        $size->addFieldDefinition('parts', $this->block('parts'));
+
+        $change = (new ObjectChanges())->changeOf(
+            $this->object(['bricks' => $this->bricks($size, ['width' => 40, 'parts' => $this->blockValue('new')])]),
+            $this->object(['bricks' => $this->bricks($size, ['width' => 30, 'parts' => $this->blockValue('old')])]),
+            null
+        );
+
+        $this->assertSame([['brick', 'bricks', 'Size', 'width', 7 => 40]], $this->values($change));
+    }
+
+    public function testABlockAmongABricksLocalizedFieldsIsLeftToTheObject(): void
+    {
+        $language = Tool::getValidLanguages()[0];
+        $size = new Objectbrick\Definition();
+        $size->setKey('Size');
+        $size->addFieldDefinition('localizedfields', $this->localizedWithBlock());
+
+        $change = (new ObjectChanges())->changeOf(
+            $this->object(['bricks' => $this->bricks($size, [], false, [
+                $language => ['title' => 'Wide', 'notes' => $this->blockValue('new')],
+            ])]),
+            $this->object(['bricks' => $this->bricks($size, [], false, [
+                $language => ['title' => 'Narrow', 'notes' => $this->blockValue('old')],
+            ])]),
+            null
+        );
+
+        $this->assertSame([['brick', 'bricks', $language, 'Size', 'title', 7 => 'Wide']], $this->values($change));
+    }
+
+    public function testAFieldTypeThatOnlyNormalizesIsComparedByItsNormalizedValue(): void
+    {
+        // a field type of another bundle: no equality of its own, only a normalized form
+        $caseless = new class() extends Data implements NormalizerInterface {
+            public function getDataForEditmode(mixed $data, ?Concrete $object = null, array $params = []): mixed
+            {
+                return $data;
+            }
+
+            public function getDataFromEditmode(mixed $data, ?Concrete $object = null, array $params = []): mixed
+            {
+                return $data;
+            }
+
+            public function getFieldType(): string
+            {
+                return 'caseless';
+            }
+
+            public function getParameterTypeDeclaration(): string
+            {
+                return '?string';
+            }
+
+            public function getReturnTypeDeclaration(): string
+            {
+                return '?string';
+            }
+
+            public function getPhpdocInputType(): string
+            {
+                return 'string|null';
+            }
+
+            public function getPhpdocReturnType(): string
+            {
+                return 'string|null';
+            }
+
+            public function normalize(mixed $value, array $params = []): mixed
+            {
+                return is_string($value) ? strtolower($value) : $value;
+            }
+
+            public function denormalize(mixed $value, array $params = []): mixed
+            {
+                return $value;
+            }
+        };
+        $definition = new ClassDefinition();
+        $definition->addFieldDefinition('name', $caseless);
+        $definition->addFieldDefinition('colour', clone $caseless);
+
+        $change = (new ObjectChanges())->changeOf(
+            $this->object(['name' => 'CHAIR', 'colour' => 'Red'], [], $definition),
+            $this->object(['name' => 'chair', 'colour' => 'Blue'], [], $definition),
+            null
+        );
+
+        $this->assertSame([['field', 'colour', 7 => 'Red']], $this->values($change));
     }
 
     /**
