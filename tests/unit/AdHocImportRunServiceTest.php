@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
@@ -75,7 +76,8 @@ class AdHocImportRunServiceTest extends Unit
     private function service(
         array $results = [],
         int $checks = 1,
-        ?RunQueueInterface $failingQueue = null
+        ?RunQueueInterface $failingQueue = null,
+        ?RowWriterInterface $writer = null
     ): AdHocImportRunService
     {
         $dryRun = $this->createMock(AdHocImportDryRunServiceInterface::class);
@@ -103,7 +105,7 @@ class AdHocImportRunServiceTest extends Unit
             $this->runs,
             $this->files,
             $failingQueue ?? $queue,
-            new DirectRowWriter(new EventDispatcher()),
+            $writer ?? new DirectRowWriter(new EventDispatcher()),
             AdHocRunFixtures::dryRunMessages()
         );
     }
@@ -161,6 +163,46 @@ class AdHocImportRunServiceTest extends Unit
         }
 
         $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId), 'it would hold the file');
+    }
+
+    public function testTheWriterIsOpenedForTheRunBeforeItsRowsAreQueued(): void
+    {
+        $steps = [];
+        $writer = $this->createStub(RowWriterInterface::class);
+        $writer->method('open')->willReturnCallback(static function (RunRecord $run) use (&$steps): void {
+            $steps[] = 'open ' . $run->fileId;
+        });
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willReturnCallback(static function (RunRecord $run) use (&$steps): void {
+            $steps[] = 'queue ' . $run->fileId;
+        });
+
+        $this->service($this->results(), failingQueue: $queue, writer: $writer)->start(
+            $this->fileId,
+            $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
+        );
+
+        $this->assertSame(['open ' . $this->fileId, 'queue ' . $this->fileId], $steps);
+    }
+
+    public function testAWriterThatCannotOpenQueuesNothingAndLeavesNoRun(): void
+    {
+        $failure = new \RuntimeException('no branch to write to');
+        $writer = $this->createStub(RowWriterInterface::class);
+        $writer->method('open')->willThrowException($failure);
+
+        try {
+            $this->service($this->results(), writer: $writer)->start(
+                $this->fileId,
+                $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS)
+            );
+            $this->fail('the user must learn that the import did not start');
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertNull($this->queued);
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
     }
 
     public function testSkippingQueuesOnlyTheRowsWithoutErrorsAndCountsTheRestAsSkipped(): void

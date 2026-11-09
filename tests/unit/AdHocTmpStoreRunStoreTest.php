@@ -17,6 +17,7 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowFailure;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\TmpStoreRunStore;
+use Pimcore\Model\Tool\TmpStore;
 
 /**
  * The real store, over the database's temporary store.
@@ -64,6 +65,22 @@ class AdHocTmpStoreRunStoreTest extends Unit
         $this->store->delete($this->run->userId, $this->run->fileId);
 
         $this->assertNull($this->store->find($this->run->userId, $this->run->fileId));
+    }
+
+    public function testARunAndItsFailuresAreGoneSevenDaysAfterTheirLastSave(): void
+    {
+        $this->store->save($this->run);
+        $this->store->addFailure($this->run, $this->failure(4));
+        $sevenDaysFromNow = time() + 7 * 86400;
+
+        $names = $this->run->userId . '_' . $this->run->fileId;
+        $run = TmpStore::get('data_importer_ad_hoc_run_' . $names);
+        $failure = TmpStore::get('data_importer_ad_hoc_run_failure_' . $names . '_4');
+
+        $this->assertInstanceOf(TmpStore::class, $run);
+        $this->assertInstanceOf(TmpStore::class, $failure);
+        $this->assertEqualsWithDelta($sevenDaysFromNow, $run->getExpiryDate(), 60);
+        $this->assertEqualsWithDelta($sevenDaysFromNow, $failure->getExpiryDate(), 60);
     }
 
     public function testFailuresComeBackOnceInRowOrderAndOnlyForTheirOwnRun(): void

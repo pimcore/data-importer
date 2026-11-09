@@ -75,7 +75,7 @@ final readonly class RowImporter
         $action = $isNew ? 'create' : 'update';
 
         try {
-            $refusal = $this->rightsRefusal($object, $isNew, $dryRun, $leftOut, $match->matchValue);
+            $refusal = $this->rightsRefusal($object, $isNew, $dryRun, $user, $leftOut, $match->matchValue);
             if ($refusal !== null) {
                 return RowOutcome::failed($match->matchValue, $action, $refusal);
             }
@@ -132,14 +132,14 @@ final readonly class RowImporter
         Concrete $object,
         bool $isNew,
         DryRunPlan $plan,
+        User $user,
         array $leftOut,
         string $matchValue
     ): ?string {
-        $user = $plan->user;
         $folder = $this->folderOf($object, $isNew);
         $refusal = $isNew
             ? $this->createRefusal($object, $folder, $user)
-            : $this->changeRefusal($object, $folder, $plan, $matchValue);
+            : $this->changeRefusal($object, $folder, $plan, $user, $matchValue);
         if ($refusal !== null) {
             return $refusal;
         }
@@ -154,9 +154,13 @@ final readonly class RowImporter
         return $object->getParent()?->isAllowed('create', $user) ? null : $this->messages->mayNotCreate($folder, $user);
     }
 
-    private function changeRefusal(Concrete $object, string $folder, DryRunPlan $plan, string $matchValue): ?string
-    {
-        $user = $plan->user;
+    private function changeRefusal(
+        Concrete $object,
+        string $folder,
+        DryRunPlan $plan,
+        User $user,
+        string $matchValue
+    ): ?string {
         if (!$object->isAllowed('view', $user)) {
             return $this->dryRunMessages->notViewable($plan->matchField, $matchValue, $user);
         }

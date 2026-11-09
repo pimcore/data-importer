@@ -88,6 +88,20 @@ final readonly class RunRecord
         return self::fromArray([...$this->toArray(), $outcome->result => $this->{$outcome->result} + 1]);
     }
 
+    /**
+     * A row counted as written that only the end of the run found to have failed: it moves, so the counts add up.
+     */
+    public function failedAtClose(RowFailure $failure): self
+    {
+        $written = $failure->action === 'create' ? RowOutcome::CREATED : RowOutcome::UPDATED;
+
+        return self::fromArray([
+            ...$this->toArray(),
+            $written => max(0, $this->{$written} - 1),
+            RowOutcome::FAILED => $this->failed + 1,
+        ]);
+    }
+
     public function finished(int $time): self
     {
         return self::fromArray([...$this->toArray(), 'state' => self::DONE, 'finishedAt' => $time]);

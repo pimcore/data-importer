@@ -21,6 +21,8 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowFailure;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWrite;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunProcessor;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
@@ -32,6 +34,7 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInt
 use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolverInterface;
 use Pimcore\Bundle\StudioBackendBundle\Notification\Schema\SendNotificationParameters;
 use Pimcore\Bundle\StudioBackendBundle\Notification\Service\SendNotificationServiceInterface;
+use Pimcore\Cache\RuntimeCache;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\User;
 use Psr\Log\NullLogger;
@@ -85,14 +88,18 @@ class AdHocRunProcessorTest extends Unit
     private function processor(
         ImportPlan|\Throwable $plan,
         ?User $user = null,
-        int $planBuilds = 1
+        int $planBuilds = 1,
+        ?UserResolverInterface $users = null,
+        ?RowWriterInterface $writer = null
     ): RunProcessor {
         $dryRun = $this->createMock(AdHocImportDryRunServiceInterface::class);
         $expect = $dryRun->expects($this->exactly($planBuilds))->method('planForRun');
         $plan instanceof \Throwable ? $expect->willThrowException($plan) : $expect->willReturn($plan);
 
-        $users = $this->createStub(UserResolverInterface::class);
-        $users->method('getById')->willReturn($user);
+        if ($users === null) {
+            $users = $this->createStub(UserResolverInterface::class);
+            $users->method('getById')->willReturn($user);
+        }
 
         $notifications = $this->createStub(SendNotificationServiceInterface::class);
         $notifications->method('sendNotification')->willReturnCallback(
@@ -103,7 +110,7 @@ class AdHocRunProcessorTest extends Unit
         );
 
         $events = new EventDispatcher();
-        $writer = new DirectRowWriter($events);
+        $writer ??= new DirectRowWriter($events);
 
         return new RunProcessor(
             $this->runs,
@@ -123,6 +130,44 @@ class AdHocRunProcessorTest extends Unit
             $users,
             new NullLogger()
         );
+    }
+
+    /**
+     * @param list<RowFailure>|\Throwable $closes what the end of the run finds
+     */
+    private function closingWriter(array|\Throwable $closes): RowWriterInterface
+    {
+        return new class($closes) implements RowWriterInterface {
+            /** @var list<int> the rows written when it was closed */
+            public array $closed = [];
+
+            private int $written = 0;
+
+            /** @param list<RowFailure>|\Throwable $closes */
+            public function __construct(private array|\Throwable $closes)
+            {
+            }
+
+            public function open(RunRecord $run): void
+            {
+                // a run opens its writer before the worker
+            }
+
+            public function write(RowWrite $write): void
+            {
+                $this->written++;
+            }
+
+            public function close(RunRecord $run): array
+            {
+                $this->closed[] = $this->written;
+                if ($this->closes instanceof \Throwable) {
+                    throw $this->closes;
+                }
+
+                return $this->closes;
+            }
+        };
     }
 
     private function saved(): Concrete
@@ -421,6 +466,118 @@ class AdHocRunProcessorTest extends Unit
         $this->assertSame(1, $run->failed);
         $this->assertFalse($run->isRunning());
         $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
+        $this->assertCount(1, $this->notifications);
+    }
+
+    public function testARightTakenAwayBetweenTwoRowsRefusesTheNextRow(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 2);
+        $user = AdHocRunFixtures::user();
+        $object = $this->createStub(Concrete::class);
+        $object->method('setUserModification')->willReturnSelf();
+        $object->method('getRealPath')->willReturn('/Products/');
+        $object->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $checked): bool => $type === 'view' || $checked === $user
+        );
+        $plan = AdHocRunFixtures::plan(
+            [
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object),
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-2', $object),
+            ],
+            [],
+            $user,
+            [['sku' => 'SKU-1'], ['sku' => 'SKU-2']]
+        );
+        $users = $this->createStub(UserResolverInterface::class);
+        $users->method('getById')->willReturnOnConsecutiveCalls($user, AdHocRunFixtures::user());
+        $processor = $this->processor($plan, users: $users);
+
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame([1, 1], [$run->updated, $run->failed]);
+        $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
+        $this->assertSame(3, $stored['rows'][0]['row']);
+        $this->assertStringContainsString('may-not-save', $stored['rows'][0]['message']);
+    }
+
+    public function testEveryRowReadsTheUserAndTheirRolesAnew(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $roleId = 12;
+        $user = AdHocRunFixtures::user();
+        $user->setRoles([$roleId]);
+        RuntimeCache::set('user_' . AdHocRunFixtures::USER_ID, AdHocRunFixtures::user());
+        RuntimeCache::set('user_' . $roleId, AdHocRunFixtures::user());
+        $cachedWhenRead = null;
+        $users = $this->createStub(UserResolverInterface::class);
+        $users->method('getById')->willReturnCallback(
+            static function () use ($user, &$cachedWhenRead): User {
+                $cachedWhenRead = RuntimeCache::isRegistered('user_' . AdHocRunFixtures::USER_ID);
+
+                return $user;
+            }
+        );
+        $plan = AdHocRunFixtures::plan([new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved())], [], $user);
+
+        $this->processor($plan, users: $users)
+            ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $this->assertFalse($cachedWhenRead, 'getById would answer with the user as a worker first saw them');
+        $this->assertFalse(RuntimeCache::isRegistered('user_' . $roleId));
+        $this->assertSame(1, $this->runs->find(AdHocRunFixtures::USER_ID, $fileId)->updated);
+    }
+
+    public function testARowOnlyTheEndOfTheRunFoundToHaveFailedIsListedAndCounted(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 2);
+        $user = AdHocRunFixtures::user();
+        $writer = $this->closingWriter([new RowFailure(3, 'SKU-2', 'update', 'merge refused', ['SKU-2', 'Lamp'])]);
+        $plan = AdHocRunFixtures::plan(
+            [
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()),
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-2', $this->saved()),
+            ],
+            [],
+            $user,
+            [['sku' => 'SKU-1'], ['sku' => 'SKU-2']]
+        );
+        $processor = $this->processor($plan, $user, writer: $writer);
+
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+        $this->assertSame([], $writer->closed, 'not before the last row');
+
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
+
+        $this->assertSame([2], $writer->closed, 'once, when every row has been written');
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame([1, 1], [$run->updated, $run->failed]);
+        $this->assertFalse($run->isRunning());
+        $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
+        $this->assertCount(1, $stored['rows']);
+        $this->assertSame(['SKU-2', 'Lamp'], $stored['rows'][0]['values']);
+        $this->assertSame('merge refused', $stored['rows'][0]['message']);
+        $this->assertStringContainsString('merge refused', $this->notifications[0]->getMessage());
+    }
+
+    public function testARunEndsAndTellsTheUserEvenIfItsWriterCannotClose(): void
+    {
+        $fileId = $this->storedFile();
+        $this->storeRun($fileId, 1);
+        $user = AdHocRunFixtures::user();
+        $plan = AdHocRunFixtures::plan([new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved())], [], $user);
+        $writer = $this->closingWriter(new \RuntimeException('the merge went away'));
+
+        $this->processor($plan, $user, writer: $writer)
+            ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame([1, 0], [$run->updated, $run->failed]);
+        $this->assertFalse($run->isRunning());
         $this->assertCount(1, $this->notifications);
     }
 

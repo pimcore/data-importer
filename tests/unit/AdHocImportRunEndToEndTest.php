@@ -119,21 +119,57 @@ class AdHocImportRunEndToEndTest extends Unit
         );
     }
 
-    private function drainQueue(): void
+    /**
+     * @return list<int>
+     */
+    private function queuedIds(): array
     {
         $queue = $this->tester->grabService(QueueService::class);
-        $processing = $this->tester->grabService(ImportProcessingService::class);
-        foreach ($queue->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL) as $id) {
-            $processing->processQueueItem((int) $id);
+
+        return array_map(intval(...), $queue->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL));
+    }
+
+    private function processQueued(int $id): void
+    {
+        $this->tester->grabService(ImportProcessingService::class)->processQueueItem($id);
+    }
+
+    private function drainQueue(): void
+    {
+        foreach ($this->queuedIds() as $id) {
+            $this->processQueued($id);
         }
     }
 
-    public function testAFileIsImportedThroughTheQueueWithItsEventsResultAndNotification(): void
+    private function uploadedFile(): string
     {
         $fileId = $this->tester->grabService(AdHocImportServiceInterface::class)
             ->upload(new UploadedFile($this->path, 'products.csv', null, null, true), $this->folderId)
             ->getFileId();
         $this->assertNotNull($fileId);
+
+        return $fileId;
+    }
+
+    /**
+     * @param array<string, bool|string> $rights
+     */
+    private function restrictUserToTheTarget(array $rights): void
+    {
+        $workspace = new ObjectWorkspace();
+        $workspace->setCid($this->folderId);
+        $workspace->setCpath(self::TARGET);
+        $workspace->setValues($rights);
+        $this->user->setAdmin(false);
+        $this->user->setPermission('objects', true);
+        $this->user->setWorkspacesObject([$workspace]);
+        $this->user->save();
+        $this->logInAs($this->user);
+    }
+
+    public function testAFileIsImportedThroughTheQueueWithItsEventsResultAndNotification(): void
+    {
+        $fileId = $this->uploadedFile();
         $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
 
         $dispatcher = $this->tester->grabService('event_dispatcher');
@@ -187,19 +223,10 @@ class AdHocImportRunEndToEndTest extends Unit
 
     public function testANewObjectIsNotWrittenInALanguageTheWorkspaceDoesNotAllow(): void
     {
-        $workspace = new ObjectWorkspace();
-        $workspace->setCid($this->folderId);
-        $workspace->setCpath(self::TARGET);
-        $workspace->setValues(['list' => true, 'view' => true, 'create' => true, 'save' => true, 'lEdit' => 'en']);
-        $this->user->setAdmin(false);
-        $this->user->setPermission('objects', true);
-        $this->user->setWorkspacesObject([$workspace]);
-        $this->user->save();
-        $this->logInAs($this->user);
-        $fileId = $this->tester->grabService(AdHocImportServiceInterface::class)
-            ->upload(new UploadedFile($this->path, 'products.csv', null, null, true), $this->folderId)
-            ->getFileId();
-        $this->assertNotNull($fileId);
+        $this->restrictUserToTheTarget(
+            ['list' => true, 'view' => true, 'create' => true, 'save' => true, 'lEdit' => 'en']
+        );
+        $fileId = $this->uploadedFile();
         $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
 
         $service->start($fileId, $this->parameters([
@@ -213,6 +240,47 @@ class AdHocImportRunEndToEndTest extends Unit
         $this->assertSame(0, $run->getCreated());
         $this->assertSame(2, $run->getFailed());
         $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-1'), 'nothing is written');
+
+        $service->discard($fileId);
+    }
+
+    public function testARightTakenAwayAfterTheStartRefusesTheRowsAndWritesNothing(): void
+    {
+        $this->restrictUserToTheTarget(['list' => true, 'view' => true, 'create' => true, 'save' => true]);
+        $fileId = $this->uploadedFile();
+        $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
+        $service->start($fileId, $this->parameters());
+
+        $this->restrictUserToTheTarget(['list' => true, 'view' => true, 'create' => false, 'save' => true]);
+        $this->drainQueue();
+
+        $run = $service->status($fileId);
+        $this->assertSame('done', $run->getState());
+        $this->assertSame([0, 2], [$run->getCreated(), $run->getFailed()]);
+        $this->assertSame(['create', 'create'], array_column($run->getFailures(), 'action'), 'refused per object');
+        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-1'), 'nothing is written');
+        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-2'), 'nothing is written');
+
+        $service->discard($fileId);
+    }
+
+    public function testAnAdministratorDemotedDuringTheRunIsRefusedTheNextRow(): void
+    {
+        $fileId = $this->uploadedFile();
+        $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
+        $service->start($fileId, $this->parameters());
+        [$firstRow, $secondRow] = $this->queuedIds();
+
+        $this->processQueued($firstRow);
+        $this->user->setAdmin(false);
+        $this->user->save();
+        $this->processQueued($secondRow);
+
+        $run = $service->status($fileId);
+        $this->assertSame('done', $run->getState());
+        $this->assertSame([1, 1], [$run->getCreated(), $run->getFailed()]);
+        $this->assertInstanceOf(Concrete::class, DataObject::getByPath(self::TARGET . '/RUN-1'));
+        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-2'), 'no longer the right to write it');
 
         $service->discard($fileId);
     }

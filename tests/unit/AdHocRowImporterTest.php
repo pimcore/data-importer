@@ -322,6 +322,49 @@ class AdHocRowImporterTest extends Unit
         $this->assertFalse($allowed->isFailure());
     }
 
+    public function testRightsAreCheckedForTheUserOfTheRowNotTheOneThePlanWasMadeFor(): void
+    {
+        $planned = AdHocRunFixtures::user();
+        $current = AdHocRunFixtures::user(false);
+
+        $language = $this->importer()->import(
+            $this->plan(
+                $this->existing($this->object(languages: ['en'])),
+                [AdHocRunFixtures::writer(language: 'de')],
+                $planned
+            ),
+            $current,
+            0,
+            []
+        );
+        $this->assertStringContainsString('may-not-edit-language', (string) $language->message);
+
+        $object = $this->createStub(Concrete::class);
+        $object->method('getRealPath')->willReturn('/Products/Archive/');
+        $object->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $user): bool => $type === 'view' || $user === $planned
+        );
+        $changed = $this->importer()->import($this->plan($this->existing($object), [], $planned), $current, 0, []);
+        $this->assertStringContainsString('may-not-save', (string) $changed->message);
+
+        $parent = $this->createStub(Folder::class);
+        $parent->method('getRealFullPath')->willReturn('/Products/New');
+        $parent->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $user): bool => $user === $planned
+        );
+        $new = $this->createStub(Concrete::class);
+        $new->method('getParent')->willReturn($parent);
+        $created = $this->importer()->import(
+            $this->plan(new RowMatch(RowMatchOutcome::New, 'SKU-NEW', $new), [], $planned),
+            $current,
+            0,
+            []
+        );
+        $this->assertStringContainsString('may-not-create', (string) $created->message);
+
+        $this->assertSame([], $this->written);
+    }
+
     public function testALanguageTheUserMayNotEditRefusesTheRowUnlessItsValueIsLeftOut(): void
     {
         $user = AdHocRunFixtures::user(false);

@@ -38,6 +38,18 @@ class AdHocRunRecordTest extends Unit
         $this->assertTrue($run->isRunning(), 'until it is finished');
     }
 
+    public function testARowOnlyTheEndFoundToHaveFailedMovesFromWrittenToFailed(): void
+    {
+        $run = AdHocRunFixtures::run(['total' => 3, 'updated' => 2, 'created' => 1]);
+
+        $run = $run->failedAtClose(new RowFailure(2, 'SKU-1', 'update', 'no', []));
+        $this->assertSame([1, 1, 1], [$run->updated, $run->created, $run->failed]);
+
+        $run = $run->failedAtClose(new RowFailure(4, 'SKU-3', 'create', 'no', []));
+        $this->assertSame([1, 0, 2], [$run->updated, $run->created, $run->failed]);
+        $this->assertSame(3, $run->processed(), 'the counts still add up to the rows of the run');
+    }
+
     public function testAFinishedRunIsDone(): void
     {
         $run = AdHocRunFixtures::run()->finished(1800000000);

@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\Processing\AdHocRowProcessorInterface;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportDryRunServiceInterface;
 use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolverInterface;
+use Pimcore\Cache\RuntimeCache;
 use Pimcore\Model\User;
 use Psr\Log\LoggerInterface;
 
@@ -60,7 +61,7 @@ final class RunProcessor implements AdHocRowProcessorInterface
             ? array_map(intval(...), $item['leftOut'])
             : [];
 
-        $user = $this->userResolver->getById($userId);
+        $user = $this->currentUser($userId);
         $outcome = $this->rowOutcome($run, $user, $index, $leftOut);
         $plan = $this->planFileId === $run->fileId ? $this->plan : null;
 
@@ -81,6 +82,29 @@ final class RunProcessor implements AdHocRowProcessorInterface
 
         if ($run->isComplete()) {
             $this->finish($run, $plan, $user);
+        }
+    }
+
+    /**
+     * A worker lives through many rows, and what the user may do can change meanwhile.
+     */
+    private function currentUser(int $userId): ?User
+    {
+        $this->forgetUser($userId);
+        $user = $this->userResolver->getById($userId);
+        foreach ($user?->getRoles() ?? [] as $roleId) {
+            $this->forgetUser((int) $roleId);
+        }
+
+        return $user;
+    }
+
+    private function forgetUser(int $id): void
+    {
+        // not set to null: getById would take that for a user that does not exist
+        $key = 'user_' . $id;
+        if (RuntimeCache::isRegistered($key)) {
+            RuntimeCache::getInstance()->offsetUnset($key);
         }
     }
 
@@ -155,9 +179,14 @@ final class RunProcessor implements AdHocRowProcessorInterface
         $this->attempt($run, function () use ($run, &$failures): void {
             $failures = $this->runs->takeFailures($run);
         });
-        $this->attempt($run, function () use ($run, &$failures): void {
-            $failures = [...$failures, ...$this->writer->close($run)];
+        $foundAtClose = [];
+        $this->attempt($run, function () use ($run, &$foundAtClose): void {
+            $foundAtClose = $this->writer->close($run);
         });
+        foreach ($foundAtClose as $failure) {
+            $run = $run->failedAtClose($failure);
+        }
+        $failures = [...$failures, ...$foundAtClose];
         if ($failures !== []) {
             $this->attempt($run, function () use ($run, $plan, $failures): void {
                 $this->storeFailures($run, $plan, $failures);
