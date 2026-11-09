@@ -299,6 +299,28 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertSame(['open ' . $this->fileId, 'queue ' . $this->fileId], $steps);
     }
 
+    public function testAStartThatFailsAfterTheBranchIsOpenClosesItsBranch(): void
+    {
+        $failure = new \RuntimeException('the database went away');
+        $queue = $this->createStub(RunQueueInterface::class);
+        $queue->method('enqueue')->willThrowException($failure);
+        $writer = $this->createStub(RowWriterInterface::class);
+        $writer->method('open')->willReturnCallback(
+            static fn (RunRecord $run): RunRecord => $run->withBranch(AdHocFakeBranches::BRANCH)
+        );
+
+        try {
+            $this->service($this->results(), failingQueue: $queue, writer: $writer, branchMerge: $this->branchMerge())
+                ->start($this->fileId, $this->parameters(AdHocImportDryRunServiceInterface::SKIP_ROWS));
+            $this->fail('the user must learn that the import did not start');
+        } catch (\RuntimeException $caught) {
+            $this->assertSame($failure, $caught);
+        }
+
+        $this->assertSame(['discard ' . AdHocFakeBranches::BRANCH], $this->merges, 'nothing else would close it');
+        $this->assertNull($this->runs->find(AdHocRunFixtures::USER_ID, $this->fileId));
+    }
+
     public function testAWriterThatCannotOpenQueuesNothingAndLeavesNoRun(): void
     {
         $failure = new \RuntimeException('no branch to write to');
