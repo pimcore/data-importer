@@ -404,7 +404,8 @@ class AdHocImportRunServiceTest extends Unit
     public function testTheStateOfARunNamesItsFailuresWithoutTheirCells(): void
     {
         $this->runs->save(
-            AdHocRunFixtures::run(['fileId' => $this->fileId, 'failed' => 1, 'updated' => 1])->finished(9)
+            AdHocRunFixtures::run(['fileId' => $this->fileId, 'failed' => 1, 'updated' => 1, 'notice' => 'Not merged'])
+                ->finished(9)
         );
         $this->files->storeFailedRows(AdHocRunFixtures::USER_ID, $this->fileId, (string) json_encode([
             'columns' => ['SKU'],
@@ -418,6 +419,7 @@ class AdHocImportRunServiceTest extends Unit
         $this->assertSame('done', $response->getState());
         $this->assertSame(2, $response->getProcessed());
         $this->assertSame(9, $response->getFinishedAt());
+        $this->assertSame('Not merged', $response->getNotice(), 'what belongs to no row is told above the table');
         $this->assertSame(
             [['row' => 2, 'matchValue' => 'SKU-1', 'action' => 'update', 'message' => 'no']],
             $response->getFailures()

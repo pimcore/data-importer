@@ -1524,10 +1524,23 @@ describe('the preview step', () => {
 
         renderDialog()
 
-        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 })
+        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 }, { refetchOnMountOrArgChange: true })
         expect(screen.getByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeTruthy()
         expect(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })).toBeTruthy()
         expect(screen.queryByRole('button', { name: 'Back to mapping' })).toBeNull()
+      })
+
+      it('does not open on a waiting import from an earlier answer while the list is asked anew', () => {
+        mockListWaitingRuns.mockReturnValue({
+          data: { items: [{ fileId: 'waiting-1', fileName: 'autumn.xlsx' }] },
+          isFetching: true
+        })
+
+        renderDialog()
+
+        expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 }, { refetchOnMountOrArgChange: true })
+        expect(mockLoadRun).not.toHaveBeenCalledWith({ fileId: 'waiting-1' }, expect.anything())
+        expect(screen.queryByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeNull()
       })
     })
 

@@ -177,6 +177,7 @@ class AdHocRunProcessorTest extends Unit
 
             public function discard(RunRecord $run, User $user): void
             {
+                $this->calls[] = 'discard ' . $run->branch;
             }
         };
     }
@@ -696,6 +697,50 @@ class AdHocRunProcessorTest extends Unit
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
         $this->assertSame([RunRecord::DONE, 0, 1], [$run?->state, $run?->updated, $run?->failed]);
         $this->assertSame('data-importer.ad-hoc-import.run.cannot-go-on', $run?->notice);
+    }
+
+    public function testABranchRunWhoseMergeFailsUnexpectedlyClosesItsBranchAndKeepsItsFailures(): void
+    {
+        $fileId = $this->storedFile();
+        $this->runs->save(AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 2, 'branch' => 'branch-1']));
+        $user = AdHocRunFixtures::user();
+        $plan = AdHocRunFixtures::plan(
+            [new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()), new \RuntimeException('lookup failed')],
+            [],
+            $user,
+            [['sku' => 'SKU-1'], ['sku' => 'SKU-2']]
+        );
+        $calls = [];
+        $processor = $this->processor($plan, $user, branchMerge: $this->branchMerge($calls, new \RuntimeException('db gone')));
+
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+        $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
+
+        $this->assertSame(['1 updated, 1 failed, rows 3, columns SKU,Name', 'discard branch-1'], $calls);
+        $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
+        $this->assertSame([RunRecord::DONE, 0, 2], [$run?->state, $run?->updated, $run?->failed]);
+        $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload is deleted');
+        $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
+        $this->assertSame([3], array_column($stored['rows'] ?? [], 'row'), 'the row that failed before the branch is kept');
+        $this->assertCount(1, $this->notifications);
+    }
+
+    public function testABranchRunOfAUserDeletedMeanwhileWhoseMergeFailsForgetsItsRows(): void
+    {
+        $fileId = $this->storedFile();
+        $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 1, 'branch' => 'branch-1']);
+        $this->runs->save($run);
+        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
+        $calls = [];
+
+        $merge = $this->branchMerge($calls, new \RuntimeException('db gone'));
+        $this->processor(new \RuntimeException('not asked'), null, 0, branchMerge: $merge)
+            ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $this->assertCount(1, $calls, 'nobody is left to close the branch as');
+        $this->assertSame(RunRecord::DONE, $this->runs->find(AdHocRunFixtures::USER_ID, $fileId)?->state);
+        $this->assertSame([], $this->runs->recorded($run));
+        $this->assertSame([], $this->notifications);
     }
 
     public function testAQueueItemOfAnEndedOrUnknownRunIsIgnored(): void

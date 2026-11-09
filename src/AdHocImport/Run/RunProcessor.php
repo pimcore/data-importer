@@ -218,13 +218,44 @@ final class RunProcessor implements AdHocRowProcessorInterface
             $this->logFailure($run, $throwable);
             $run = $this->runs->find($run->userId, $run->fileId) ?? $run;
             if ($run->state === RunRecord::RUNNING) {
-                $run = $run->nothingSaved()
-                    ->withNotice($user instanceof User ? $this->messages->cannotGoOn($user) : null)
-                    ->finished(time());
-                $this->attempt($run, function () use ($run): void {
-                    $this->runs->save($run);
-                });
+                $this->endUnmerged($run, $plan, $user, $failures);
             }
+        }
+    }
+
+    /**
+     * Nothing of the branch is saved: it is closed, and the run ends as one that saved nothing.
+     *
+     * @param list<RowFailure> $failures
+     */
+    private function endUnmerged(RunRecord $run, ?ImportPlan $plan, ?User $user, array $failures): void
+    {
+        $this->attempt($run, function () use ($run, $user): void {
+            if ($user instanceof User) {
+                $this->branchMerge?->discard($run, $user);
+            } else {
+                $this->runs->forgetRecorded($run);
+            }
+        });
+        if ($failures !== []) {
+            $this->attempt($run, function () use ($run, $plan, $failures): void {
+                $this->storeFailures($run, $plan, $failures);
+            });
+        }
+
+        $run = $run->nothingSaved()
+            ->withNotice($user instanceof User ? $this->messages->cannotGoOn($user) : null)
+            ->finished(time());
+        $this->attempt($run, function () use ($run): void {
+            $this->runs->save($run);
+        });
+        $this->attempt($run, function () use ($run): void {
+            $this->files->deleteUpload($run->userId, $run->fileId, $run->type);
+        });
+        if ($user instanceof User) {
+            $this->attempt($run, function () use ($run, $failures, $user): void {
+                $this->notifier->notify($run, $failures, $user);
+            });
         }
     }
 

@@ -25,13 +25,16 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadSkip
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DryRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListWaitingRunsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMatchFieldsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\MergeLeavingOutController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\PreviewTransformationsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\StartRunController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\UploadFileController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\WithdrawRunController;
 use Pimcore\Bundle\DataImporterBundle\Installer;
 use Pimcore\Bundle\DataImporterBundle\Migrations\Version20261106170000;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportConfigurationsResponse;
@@ -105,6 +108,19 @@ class AdHocImportEndpointsTest extends Unit
             'download_failed_rows',
             'GET',
             '/ad-hoc-import/file/{fileId}/failed-rows',
+        ],
+        MergeLeavingOutController::class => [
+            'mergeLeavingOut',
+            'merge_leaving_out',
+            'POST',
+            '/ad-hoc-import/file/{fileId}/run/merge',
+        ],
+        WithdrawRunController::class => ['withdrawRun', 'withdraw_run', 'POST', self::RUN_PATH . '/withdraw'],
+        ListWaitingRunsController::class => [
+            'listWaitingRuns',
+            'list_waiting_runs',
+            'GET',
+            '/ad-hoc-import/folder/{folderId}/waiting-runs',
         ],
     ];
 

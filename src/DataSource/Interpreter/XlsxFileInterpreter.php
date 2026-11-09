@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\BaseReader;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -259,6 +260,9 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
     private function getWorksheetInfo(string $path): ?array
     {
         $reader = IOFactory::createReaderForFile($path);
+        if (!$reader instanceof BaseReader) {
+            return null;
+        }
 
         foreach ($reader->listWorksheetInfo($path) as $worksheetInfo) {
             if ($worksheetInfo['worksheetName'] === $this->sheetName) {
