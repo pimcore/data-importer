@@ -73,6 +73,10 @@ class AdHocBranchMergeTest extends Unit
     /** @var list<string> */
     private array $logged = [];
 
+    private ?\Throwable $busFailure = null;
+
+    private ?\Throwable $listenerFailure = null;
+
     protected function _before(): void
     {
         $this->storage = sys_get_temp_dir() . '/' . uniqid('ad-hoc-branch-merge-', true);
@@ -111,6 +115,9 @@ class AdHocBranchMergeTest extends Unit
 
         $bus = $this->createStub(MessageBusInterface::class);
         $bus->method('dispatch')->willReturnCallback(function (object $message, array $stamps): Envelope {
+            if ($this->busFailure !== null) {
+                throw $this->busFailure;
+            }
             $envelope = new Envelope($message, $stamps);
             $this->dispatched[] = $envelope;
 
@@ -119,6 +126,9 @@ class AdHocBranchMergeTest extends Unit
 
         $events = new EventDispatcher();
         $events->addListener(PostSaveEvent::class, function (PostSaveEvent $event): void {
+            if ($this->listenerFailure !== null) {
+                throw $this->listenerFailure;
+            }
             $this->saved[] = [(int) $event->getDataObject()->getId(), $event->getRawData()];
         });
 
@@ -513,5 +523,39 @@ class AdHocBranchMergeTest extends Unit
         $this->merge()->discard($run, AdHocRunFixtures::user());
 
         $this->assertSame([], $this->runs->recorded($run));
+    }
+
+    public function testAListenerThatFailsAfterTheMergeDoesNotUndoIt(): void
+    {
+        $this->listenerFailure = new \RuntimeException('listener broke');
+        $this->branches->mergeAnswers = [MergeStatus::merged(self::branch(), [ObjectRef::of(42), ObjectRef::of(99)])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $this->assertSame(RunRecord::DONE, $this->stored()->state);
+        $this->assertStringContainsString('a listener failed after object 42 was saved: listener broke', implode("\n", $this->logged));
+        $this->assertStringNotContainsString('object 99', implode("\n", $this->logged), 'no row of the file wrote it');
+    }
+
+    public function testAMergeNoWorkerCanBeAskedToFollowStaysMergingForTheMaintenance(): void
+    {
+        $this->busFailure = new \RuntimeException('transport down');
+        $this->branches->mergeAnswers = [MergeStatus::running(self::branch(), 3, 0)];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $this->assertSame(RunRecord::MERGING, $this->stored()->state);
+        $this->assertStringContainsString('transport down', implode("\n", $this->logged));
+    }
+
+    public function testABranchThatCannotBeClosedAfterAFailedMergeIsLogged(): void
+    {
+        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+        $this->branches->discardRefusal = new BranchNotWritableException('still merging');
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $this->assertSame([RunRecord::DONE, 3], [$this->stored()->state, $this->stored()->failed]);
+        $this->assertStringContainsString('still merging', implode("\n", $this->logged));
     }
 }

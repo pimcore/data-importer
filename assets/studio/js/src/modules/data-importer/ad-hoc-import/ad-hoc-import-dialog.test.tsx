@@ -1490,6 +1490,20 @@ describe('the preview step', () => {
         expect(onClose).not.toHaveBeenCalled()
       })
 
+      it('stays on the decision when merging or going back fails', async () => {
+        mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
+        mockMergeLeavingOut.mockResolvedValue({ error: { status: 422 } })
+        mockWithdrawRun.mockResolvedValue({ error: { status: 422 } })
+        await startImport()
+
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Back to mapping' })) })
+
+        expect(mockTrackError).toHaveBeenCalledTimes(2)
+        expect(mockRefetchRun).not.toHaveBeenCalled()
+        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+      })
+
       it('keeps the import waiting when the dialog is closed', async () => {
         mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
         await startImport()
