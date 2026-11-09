@@ -1,0 +1,371 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * This source file is available under the terms of the
+ * Pimcore Open Core License (POCL)
+ * Full copyright and license information is available in
+ * LICENSE.md which is distributed with this source code.
+ *
+ *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
+ *  @license    Pimcore Open Core License (POCL)
+ */
+
+namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
+
+use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
+use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
+use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
+use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterMessage;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
+use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\WalkthroughStep;
+use Pimcore\Bundle\GenericDataIndexBundle\EventSubscriber\DataObjectIndexUpdateSubscriber;
+use Pimcore\Contracts\ChangeControl\ConflictPolicy;
+use Pimcore\Contracts\ChangeControl\MergeMode;
+use Pimcore\Event\DataObjectEvents;
+use Pimcore\Tests\Support\Util\TestHelper;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+
+/**
+ * The walkthrough through both ways an import writes, over real objects and the Data Importer's queue. Change Control
+ * is not part of this kernel: the branch way runs on the services the bundle wires for it, over branches that merge
+ * for real; the run through Change Control itself is the script's.
+ */
+class AdHocImportWalkthroughTest extends Unit
+{
+    private const array ALL_WRITTEN = ['W-1', 'W-2', 'W-3', 'W-4'];
+
+    protected UnitTester $tester;
+
+    /** @var list<AdHocImportWalkthrough> */
+    private array $walkthroughs = [];
+
+    /** @var list<string> the rows whose PostSaveEvent ran */
+    private array $saved = [];
+
+    /** @var list<string> the rows whose PreSaveEvent ran */
+    private array $beforeSave = [];
+
+    /** @var list<array{callable, int}> the listeners a test took off, with their priority */
+    private array $detached = [];
+
+    protected function _after(): void
+    {
+        foreach ($this->detached as [$listener, $priority]) {
+            $this->dispatcher()->addListener(DataObjectEvents::POST_UPDATE, $listener, $priority);
+        }
+        $this->tokenStorage()->setToken(null);
+        foreach ($this->walkthroughs as $walkthrough) {
+            $walkthrough->user()?->delete();
+        }
+        TestHelper::cleanUp();
+    }
+
+    private function tokenStorage(): TokenStorageInterface
+    {
+        return $this->tester->grabService('security.token_storage');
+    }
+
+    private function dispatcher(): EventDispatcherInterface
+    {
+        $dispatcher = $this->tester->grabService('event_dispatcher');
+        \assert($dispatcher instanceof EventDispatcherInterface);
+
+        return $dispatcher;
+    }
+
+    private function listenToTheEvents(): void
+    {
+        $this->dispatcher()->addListener(PreSaveEvent::class, function (PreSaveEvent $event): void {
+            $this->beforeSave[] = (string) ($event->getRawData()['sku'] ?? '');
+        });
+        $this->dispatcher()->addListener(PostSaveEvent::class, function (PostSaveEvent $event): void {
+            $this->saved[] = (string) ($event->getRawData()['sku'] ?? '');
+        });
+    }
+
+    /**
+     * Saving an object again asks the search index for its position, and this kernel has none; saving a new one does
+     * not.
+     */
+    private function saveAgainWithoutASearchIndex(): void
+    {
+        $dispatcher = $this->dispatcher();
+        foreach ($dispatcher->getListeners(DataObjectEvents::POST_UPDATE) as $listener) {
+            if (\is_array($listener) && $listener[0] instanceof DataObjectIndexUpdateSubscriber) {
+                $priority = $dispatcher->getListenerPriority(DataObjectEvents::POST_UPDATE, $listener) ?? 0;
+                $dispatcher->removeListener(DataObjectEvents::POST_UPDATE, $listener);
+                $this->detached[] = [$listener, $priority];
+            }
+        }
+    }
+
+    private function walkthrough(
+        AdHocImportRunServiceInterface $service,
+        \Closure $work,
+        ?bool $expectBranch,
+        bool $withUpdates = false
+    ): AdHocImportWalkthrough {
+        $walkthrough = new AdHocImportWalkthrough(
+            $this->tester->grabService(AdHocImportServiceInterface::class),
+            $service,
+            $this->tokenStorage(),
+            $work,
+            AdHocImportWalkthrough::newRun(),
+            $expectBranch,
+            $withUpdates
+        );
+        $this->walkthroughs[] = $walkthrough;
+
+        return $walkthrough;
+    }
+
+    /**
+     * @param \Closure(array<string, mixed>): void $process
+     */
+    private function workOff(\Closure $process): \Closure
+    {
+        return function (string $fileId) use ($process): void {
+            $queue = $this->tester->grabService(QueueService::class);
+            $ids = $queue->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL);
+            foreach (array_map(intval(...), $ids) as $id) {
+                $item = $queue->getQueueEntryById($id);
+                if (($item['configName'] ?? null) === RunRecord::queueName($fileId)) {
+                    $process([...$item, 'id' => $id]);
+                }
+            }
+        };
+    }
+
+    private function directWay(bool $withUpdates = false): AdHocImportWalkthrough
+    {
+        return $this->walkthrough(
+            $this->tester->grabService(AdHocImportRunServiceInterface::class),
+            $this->workOff(function (array $item): void {
+                $this->tester->grabService(ImportProcessingService::class)->processQueueItem((int) $item['id']);
+            }),
+            false,
+            $withUpdates
+        );
+    }
+
+    /**
+     * As an application with messenger processing on: rows go out in messages, a worker takes one and hands out the
+     * next, and the queue command, which also takes rows a worker holds, must not start.
+     */
+    private function workersWay(): AdHocImportWalkthrough
+    {
+        $sequential = ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL;
+        $queue = $this->tester->grabService(QueueService::class);
+        foreach ($queue->getAllQueueEntryIds($sequential) as $id) {
+            $queue->markQueueEntryAsProcessed($id); // a row another test left would go out first
+        }
+
+        $bus = new class() implements MessageBusInterface {
+            /** @var list<DataImporterMessage> */
+            public array $messages = [];
+
+            public function dispatch(object $message, array $stamps = []): Envelope
+            {
+                \assert($message instanceof DataImporterMessage);
+                $this->messages[] = $message;
+
+                return new Envelope($message, $stamps);
+            }
+        };
+        $processing = $this->tester->grabService(ImportProcessingService::class);
+        $handler = new DataImporterHandler($queue, $processing, $bus, 3600, 1, 3);
+        $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
+
+        $consume = static function (string $command) use ($bus, $handler): array {
+            if (!str_starts_with($command, 'messenger:consume')) {
+                return [1, 'Started beside the workers: ' . $command];
+            }
+            for ($taken = 0; $taken < 10 && $bus->messages !== []; $taken++) {
+                $handler(array_shift($bus->messages));
+            }
+
+            return [0, ''];
+        };
+
+        return $this->walkthrough(
+            $service,
+            static function (string $fileId) use ($handler, $service, $consume, $sequential): void {
+                $handler->dispatchMessages($sequential); // what the import's listener does with messenger processing on
+                (new AdHocImportWalkthroughWork(
+                    static fn (string $file): string => $service->status($file)->getState(),
+                    $consume,
+                    ['pimcore_data_import'],
+                    true,
+                    60
+                ))($fileId);
+            },
+            false
+        );
+    }
+
+    /**
+     * The services the bundle wires when Change Control is installed, over these branches.
+     *
+     * @return array{AdHocImportWalkthrough, AdHocImportRunServiceInterface}
+     */
+    private function branchWay(AdHocApplyingBranches $branches): array
+    {
+        $parts = new AdHocBranchWayParts($this->tester, $this->dispatcher(), $branches);
+        $service = $parts->service;
+        $processor = $parts->processor;
+        $queue = $this->tester->grabService(QueueService::class);
+
+        $walkthrough = $this->walkthrough(
+            $service,
+            $this->workOff(static function (array $item) use ($processor, $queue): void {
+                $processor->processRow((string) $item['configName'], (int) $item['userOwner'], (string) $item['data']);
+                $queue->markQueueEntryAsProcessed((int) $item['id']);
+            }),
+            true
+        );
+
+        return [$walkthrough, $service];
+    }
+
+    /**
+     * @param list<WalkthroughStep> $steps
+     */
+    private function assertEveryStepPasses(array $steps, int $count): void
+    {
+        $report = implode("\n", array_map(static fn (WalkthroughStep $step): string => $step->render(), $steps));
+        $this->assertCount($count, $steps, $report);
+        foreach ($steps as $step) {
+            $this->assertTrue($step->passed(), $report);
+        }
+    }
+
+    /**
+     * @param list<string> $names
+     *
+     * @return list<string>
+     */
+    private function skus(AdHocImportWalkthrough $walkthrough, array $names): array
+    {
+        return array_map($walkthrough->sku(...), $names);
+    }
+
+    public function testWrittenDirectlyWithTheEventsOfAnImport(): void
+    {
+        $this->listenToTheEvents();
+        $walkthrough = $this->directWay();
+
+        $this->assertEveryStepPasses($walkthrough->run(), 3);
+
+        $this->assertSame($this->skus($walkthrough, self::ALL_WRITTEN), $this->saved);
+        $this->assertSame(
+            $this->skus($walkthrough, self::ALL_WRITTEN),
+            $this->beforeSave,
+            'the refused row gets no event'
+        );
+    }
+
+    public function testAnExistingObjectIsChangedAndStaysPublished(): void
+    {
+        $this->saveAgainWithoutASearchIndex();
+        $this->listenToTheEvents();
+        $walkthrough = $this->directWay(withUpdates: true);
+
+        // its last step reads created 0, updated 1 and the object, still published, back
+        $this->assertEveryStepPasses($walkthrough->run(), 4);
+
+        $this->assertSame($this->skus($walkthrough, [...self::ALL_WRITTEN, 'W-8']), $this->saved);
+    }
+
+    public function testWorkersWriteEachRowOnceWhenMessengerProcessingIsOn(): void
+    {
+        $this->listenToTheEvents();
+        $walkthrough = $this->workersWay();
+
+        // its first step reads created 2 and updated 0 back from the import
+        $this->assertEveryStepPasses($walkthrough->run(), 3);
+
+        $this->assertSame($this->skus($walkthrough, self::ALL_WRITTEN), $this->saved, 'each row is saved once');
+    }
+
+    public function testThroughABranchThatIsMerged(): void
+    {
+        $this->listenToTheEvents();
+        $branches = new AdHocApplyingBranches();
+        [$walkthrough] = $this->branchWay($branches);
+
+        $this->assertEveryStepPasses($walkthrough->run(), 4);
+
+        $this->assertSame(
+            $this->skus($walkthrough, self::ALL_WRITTEN),
+            $this->saved,
+            'PostSaveEvent only for what the merge wrote'
+        );
+        $this->assertSame($this->skus($walkthrough, [...self::ALL_WRITTEN, 'W-5']), $this->beforeSave);
+        $this->assertSame(1, $branches->discards, 'the discarded import closes its branch');
+        foreach ($branches->merges as [$mode, $conflicts, $userName]) {
+            $this->assertSame(MergeMode::Save, $mode);
+            $this->assertSame(ConflictPolicy::BranchWins, $conflicts);
+            $this->assertSame($walkthrough->user()?->getName(), $userName);
+        }
+        $this->assertCount(3, $branches->merges, 'one merge per import that was not discarded');
+    }
+
+    public function testAMergeThatCannotWriteARowEndsAsAPartialResult(): void
+    {
+        $this->listenToTheEvents();
+        [$walkthrough, $service] = $this->branchWay(new AdHocApplyingBranches(failing: ['W-1']));
+
+        [$fileId] = $walkthrough->import(['W-1;Chair;Stuhl;1', 'W-2;Lamp;Lampe;2']);
+
+        $status = $service->status($fileId);
+        $this->assertSame('done', $status->getState());
+        $this->assertSame([1, 1], [$status->getCreated(), $status->getFailed()]);
+        $this->assertNull($walkthrough->read('W-1'), 'the row the merge could not write');
+        $this->assertSame('Lamp', $walkthrough->read('W-2')?->get('name'), 'what was written stays');
+        $this->assertSame(['W-1'], array_column($status->getFailures(), 'matchValue'));
+        $this->assertStringNotContainsString(
+            'the reason of Change Control',
+            (string) $status->getFailures()[0]['message'],
+            'told in the words of the import'
+        );
+        $this->assertSame(['W-2'], $this->saved, 'PostSaveEvent only for what the merge wrote');
+
+        $service->discard($fileId);
+    }
+
+    public function testAMergeRefusedByItsCheckWaitsForTheChoiceAndMergesWithoutTheRow(): void
+    {
+        $branches = new AdHocApplyingBranches(refusing: ['W-1']);
+        [$walkthrough, $service] = $this->branchWay($branches);
+
+        [$fileId] = $walkthrough->import(['W-1;Chair;Stuhl;1', 'W-2;Lamp;Lampe;2']);
+
+        $status = $service->status($fileId);
+        $this->assertSame('decision', $status->getState());
+        $this->assertSame(['W-1'], array_column($status->getFailures(), 'matchValue'));
+        $this->assertNull($walkthrough->read('W-2'), 'nothing is merged yet');
+
+        $branches->refusing = [];
+        $merged = $service->mergeLeavingOut($fileId);
+
+        $this->assertSame('done', $merged->getState());
+        $this->assertSame([1, 1], [$merged->getCreated(), $merged->getFailed()]);
+        $this->assertSame(['row-2'], $branches->takenOut, 'the row of W-1');
+        $this->assertNull($walkthrough->read('W-1'));
+        $this->assertSame('Lamp', $walkthrough->read('W-2')?->get('name'));
+
+        $service->discard($fileId);
+    }
+}

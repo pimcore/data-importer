@@ -57,6 +57,12 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         $definition->setArgument('$workerItemCount', $config['messenger_queue_processing']['worker_item_count']);
         $definition->setArgument('$workerCountParallel', $config['messenger_queue_processing']['worker_count_parallel']);
 
+        // a parameter too: the walkthrough script must not take rows that went to the workers
+        $container->setParameter(
+            'pimcore_data_importer.messenger_queue_processing.activated',
+            $config['messenger_queue_processing']['activated']
+        );
+
         $definition = $container->getDefinition(DataImporterListener::class);
         $definition->setArgument('$messengerQueueActivated', $config['messenger_queue_processing']['activated']);
 

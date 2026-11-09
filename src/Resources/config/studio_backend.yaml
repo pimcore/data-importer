@@ -70,8 +70,15 @@ services:
     Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\PreviewRowsService
 
+    # public for tests/_support/Walkthrough/run-ad-hoc-import-walkthrough.php, as a booted kernel hands out no other;
+    # so are the run service below and the token storage's alias
+    pimcore.data_importer.ad_hoc_walkthrough.token_storage:
+        alias: security.token_storage
+        public: true
+
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportService
+        public: true
 
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportMappingService
@@ -87,6 +94,7 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService
+        public: true
 
     Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface:
         class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\TmpStoreRunStore
