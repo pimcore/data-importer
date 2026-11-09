@@ -97,7 +97,8 @@ class AdHocImportRunControllersTest extends Unit
         $service = $this->createMock(AdHocImportRunServiceInterface::class);
         $service->expects($this->once())->method('discard')->with('file-1');
 
-        $response = (new DiscardRunController($this->createStub(SerializerInterface::class), $service))->discardRun('file-1');
+        $controller = new DiscardRunController($this->createStub(SerializerInterface::class), $service);
+        $response = $controller->discardRun('file-1');
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('', $response->getContent());

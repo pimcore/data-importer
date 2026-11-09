@@ -187,7 +187,13 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
     }
 
     /**
-     * @param list<array{row: int, matchValue: string, action: string|null, message: string, values: list<string>}> $rows
+     * @param list<array{
+     *     row: int,
+     *     matchValue: string,
+     *     action: string|null,
+     *     message: string,
+     *     values: list<string>
+     * }> $rows
      */
     private function response(RunRecord $run, array $rows): AdHocImportRunResponse
     {

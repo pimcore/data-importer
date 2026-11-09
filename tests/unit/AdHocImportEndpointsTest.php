@@ -59,6 +59,8 @@ class AdHocImportEndpointsTest extends Unit
 
     private const NAME_COLUMN = 'Name DE';
 
+    private const RUN_PATH = '/ad-hoc-import/file/{fileId}/run';
+
     private const ENDPOINTS = [
         UploadFileController::class => ['uploadFile', 'upload_file', 'POST', '/ad-hoc-import/file'],
         InspectFileController::class => ['inspectFile', 'inspect_file', 'POST', '/ad-hoc-import/file/{fileId}/inspect'],
@@ -95,9 +97,9 @@ class AdHocImportEndpointsTest extends Unit
             'GET',
             '/ad-hoc-import/file/{fileId}/skipped-rows',
         ],
-        StartRunController::class => ['startRun', 'start_run', 'POST', '/ad-hoc-import/file/{fileId}/run'],
-        LoadRunController::class => ['loadRun', 'load_run', 'GET', '/ad-hoc-import/file/{fileId}/run'],
-        DiscardRunController::class => ['discardRun', 'discard_run', 'DELETE', '/ad-hoc-import/file/{fileId}/run'],
+        StartRunController::class => ['startRun', 'start_run', 'POST', self::RUN_PATH],
+        LoadRunController::class => ['loadRun', 'load_run', 'GET', self::RUN_PATH],
+        DiscardRunController::class => ['discardRun', 'discard_run', 'DELETE', self::RUN_PATH],
         DownloadFailedRowsController::class => [
             'downloadFailedRows',
             'download_failed_rows',

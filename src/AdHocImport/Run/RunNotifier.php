@@ -47,7 +47,9 @@ final readonly class RunNotifier
                 $this->messages->notificationText($run, $failures, $user)
             ), null);
         } catch (\Exception $exception) {
-            $this->logger->error(sprintf('Ad hoc import of %s, notification: %s', $run->fileId, $exception->getMessage()));
+            $this->logger->error(
+                sprintf('Ad hoc import of %s, notification: %s', $run->fileId, $exception->getMessage())
+            );
         }
     }
 }

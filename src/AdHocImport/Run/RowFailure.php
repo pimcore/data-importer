@@ -46,7 +46,13 @@ final readonly class RowFailure
      */
     public static function fromArray(array $stored): self
     {
-        return new self($stored['row'], $stored['matchValue'], $stored['action'], $stored['message'], $stored['values']);
+        return new self(
+            $stored['row'],
+            $stored['matchValue'],
+            $stored['action'],
+            $stored['message'],
+            $stored['values']
+        );
     }
 
     /**

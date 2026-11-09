@@ -192,7 +192,11 @@ class AdHocImportRunServiceTest extends Unit
             $this->parameters(AdHocImportDryRunServiceInterface::WITHOUT_INVALID_VALUES)
         );
 
-        $this->assertSame([0 => [], 2 => [0]], $this->queued, 'the blocked row is out, the invalid value goes unwritten');
+        $this->assertSame(
+            [0 => [], 2 => [0]],
+            $this->queued,
+            'the blocked row is out, the invalid value goes unwritten'
+        );
     }
 
     public function testAFileWithNoRowToImportIsRefused(): void
@@ -243,10 +247,14 @@ class AdHocImportRunServiceTest extends Unit
 
     public function testTheStateOfARunNamesItsFailuresWithoutTheirCells(): void
     {
-        $this->runs->save(AdHocRunFixtures::run(['fileId' => $this->fileId, 'failed' => 1, 'updated' => 1])->finished(9));
+        $this->runs->save(
+            AdHocRunFixtures::run(['fileId' => $this->fileId, 'failed' => 1, 'updated' => 1])->finished(9)
+        );
         $this->files->storeFailedRows(AdHocRunFixtures::USER_ID, $this->fileId, (string) json_encode([
             'columns' => ['SKU'],
-            'rows' => [['row' => 2, 'matchValue' => 'SKU-1', 'action' => 'update', 'message' => 'no', 'values' => ['SKU-1']]],
+            'rows' => [
+                ['row' => 2, 'matchValue' => 'SKU-1', 'action' => 'update', 'message' => 'no', 'values' => ['SKU-1']],
+            ],
         ]));
 
         $response = $this->service(checks: 0)->status($this->fileId);
@@ -262,7 +270,9 @@ class AdHocImportRunServiceTest extends Unit
 
     public function testAnotherUsersOrAnUnknownRunIsNotFound(): void
     {
-        $this->runs->save(AdHocRunFixtures::run(['fileId' => $this->fileId, 'userId' => AdHocRunFixtures::USER_ID + 1]));
+        $this->runs->save(
+            AdHocRunFixtures::run(['fileId' => $this->fileId, 'userId' => AdHocRunFixtures::USER_ID + 1])
+        );
 
         $this->expectException(NotFoundHttpException::class);
 
@@ -289,7 +299,12 @@ class AdHocImportRunServiceTest extends Unit
         );
 
         $this->assertSame(
-            ['data-importer.ad-hoc-import.check.column.row', 'SKU', "'=Name", 'data-importer.ad-hoc-import.check.column.error'],
+            [
+                'data-importer.ad-hoc-import.check.column.row',
+                'SKU',
+                "'=Name",
+                'data-importer.ad-hoc-import.check.column.error',
+            ],
             $lines[0]
         );
         $this->assertSame(['41', "'=cmd", 'Chair', "'=why"], $lines[1]);

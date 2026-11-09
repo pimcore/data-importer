@@ -26,7 +26,10 @@ class AdHocDirectRowWriterTest extends Unit
     {
         $calls = [];
         $object = $this->createMock(Concrete::class);
-        $object->expects($this->once())->method('setUserModification')->with(AdHocRunFixtures::USER_ID)->willReturnSelf();
+        $object->expects($this->once())
+            ->method('setUserModification')
+            ->with(AdHocRunFixtures::USER_ID)
+            ->willReturnSelf();
         $object->expects($this->never())->method('setUserOwner');
         $object->expects($this->once())->method('save')->willReturnCallback(static function () use (&$calls, $object) {
             $calls[] = 'save';
@@ -41,7 +44,9 @@ class AdHocDirectRowWriterTest extends Unit
             $seen = $event;
         });
 
-        (new DirectRowWriter($events))->write(new RowWrite($object, ['sku' => 'SKU-1'], false, AdHocRunFixtures::user()));
+        (new DirectRowWriter($events))->write(
+            new RowWrite($object, ['sku' => 'SKU-1'], false, AdHocRunFixtures::user())
+        );
 
         $this->assertSame(['save', 'post'], $calls);
         $this->assertSame('', $seen->getConfigName());

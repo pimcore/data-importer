@@ -98,7 +98,17 @@ final class AdHocRunFixtures
         };
 
         return new ImportPlan(
-            new DryRunPlan($rows, 2, $matcher, $writers, [], 'SKU', '/Products', '/Products/New', $user ?? self::user()),
+            new DryRunPlan(
+                $rows,
+                2,
+                $matcher,
+                $writers,
+                [],
+                'SKU',
+                '/Products',
+                '/Products/New',
+                $user ?? self::user()
+            ),
             $rows,
             2,
             ['sku' => 'SKU', 'name' => 'Name'],
@@ -146,7 +156,12 @@ final class AdHocRunFixtures
     public static function translator(): TranslatorInterface
     {
         return new class() implements TranslatorInterface {
-            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            public function trans(
+                string $id,
+                array $parameters = [],
+                ?string $domain = null,
+                ?string $locale = null
+            ): string
             {
                 return $id . ($parameters === [] ? '' : ' ' . json_encode($parameters, JSON_UNESCAPED_SLASHES));
             }

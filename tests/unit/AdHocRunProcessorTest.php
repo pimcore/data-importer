@@ -180,7 +180,11 @@ class AdHocRunProcessorTest extends Unit
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
         $this->assertSame(1, $run->updated);
         $this->assertTrue($run->isRunning());
-        $this->assertSame(FileType::Csv, $this->files->findType(AdHocRunFixtures::USER_ID, $fileId), 'the upload stays');
+        $this->assertSame(
+            FileType::Csv,
+            $this->files->findType(AdHocRunFixtures::USER_ID, $fileId),
+            'the upload stays'
+        );
         $this->assertSame([], $this->notifications);
 
         $processor->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(1));
@@ -239,7 +243,11 @@ class AdHocRunProcessorTest extends Unit
             $user
         );
 
-        $this->processor($plan, $user)->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0, [0]));
+        $this->processor($plan, $user)->processRow(
+            $this->queue($fileId),
+            AdHocRunFixtures::USER_ID,
+            $this->item(0, [0])
+        );
 
         $this->assertSame([], $writers[0]->writes);
         $this->assertSame([0], $writers[1]->writes);
@@ -381,7 +389,7 @@ class AdHocRunProcessorTest extends Unit
 
             public function takeFailures(RunRecord $run): array
             {
-                throw new \RuntimeException('cannot be read');
+                throw new \LogicException('cannot be read');
             }
         };
         $plan = AdHocRunFixtures::plan([new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->refused())], [], $user);

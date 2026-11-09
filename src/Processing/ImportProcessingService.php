@@ -109,7 +109,11 @@ final class ImportProcessingService
             $userOwner = $queueItem['userOwner'];
 
             if ($queueItem['jobType'] === self::JOB_TYPE_AD_HOC_ROW) {
-                ($this->adHocRowProcessor)()->processRow($queueItem['configName'], (int) $userOwner, $queueItem['data']);
+                ($this->adHocRowProcessor)()->processRow(
+                    $queueItem['configName'],
+                    (int) $userOwner,
+                    $queueItem['data']
+                );
 
                 return;
             }

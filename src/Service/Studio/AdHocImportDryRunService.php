@@ -142,7 +142,16 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
         $this->assertMayCreate($objects['classId']);
         $newObjectFolder = $this->newObjectFolder($objects['newObjectsFolder'], $targetFolder, $user);
 
-        $plan = $this->plan($fileId, $type, $parameters, $configuration, $objects, $targetPath, $newObjectFolder, $user);
+        $plan = $this->plan(
+            $fileId,
+            $type,
+            $parameters,
+            $configuration,
+            $objects,
+            $targetPath,
+            $newObjectFolder,
+            $user
+        );
         $results = $this->dryRunner->run($plan->dryRun);
         $this->storeSkippedRows($user, $fileId, $plan->columns, $plan->rows, $results, $plan->firstRowNumber);
 
@@ -191,7 +200,7 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      * @param array{configuration: array<mixed>, mapping: array<int|string, mixed>}|null $configuration
      * @param Objects $objects
      */
-    private function plan(
+    private function plan(// NOSONAR php:S107 private, and each value differs between the check and the run
         string $fileId,
         FileType $type,
         AdHocImportDryRunParameters $parameters,

@@ -56,7 +56,9 @@ final class RunProcessor implements AdHocRowProcessorInterface
         }
         $item = json_decode($data, true);
         $index = is_array($item) ? (int) ($item['row'] ?? 0) : 0;
-        $leftOut = is_array($item) && is_array($item['leftOut'] ?? null) ? array_map(intval(...), $item['leftOut']) : [];
+        $leftOut = is_array($item) && is_array($item['leftOut'] ?? null)
+            ? array_map(intval(...), $item['leftOut'])
+            : [];
 
         $user = $this->userResolver->getById($userId);
         $outcome = $this->rowOutcome($run, $user, $index, $leftOut);
@@ -101,7 +103,7 @@ final class RunProcessor implements AdHocRowProcessorInterface
             return $this->rowImporter->import($plan, $user, $index, $leftOut);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 one row must not end the run, whatever stops it
             // what the row importer does not expect, such as the database going away while it looks for the object
-            $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
+            $this->logFailure($run, $throwable);
 
             return RowOutcome::failed('', null, $this->messages->cannotGoOn($user));
         }
@@ -123,7 +125,7 @@ final class RunProcessor implements AdHocRowProcessorInterface
                 );
             } catch (\Throwable $throwable) { // NOSONAR php:S2221 a plan that cannot be built must not end the run
                 // the file or its folder is gone: every row of the run reports that, and the run ends
-                $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
+                $this->logFailure($run, $throwable);
             }
         }
 
@@ -198,7 +200,12 @@ final class RunProcessor implements AdHocRowProcessorInterface
         try {
             $step();
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 a run always ends, whatever stops one of its steps
-            $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
+            $this->logFailure($run, $throwable);
         }
+    }
+
+    private function logFailure(RunRecord $run, \Throwable $throwable): void
+    {
+        $this->logger->error(sprintf('Ad hoc import of %s: %s', $run->fileId, $throwable->getMessage()));
     }
 }

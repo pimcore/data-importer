@@ -11,7 +11,7 @@
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Flex, Modal, ModalFooter, Select, Steps } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
@@ -45,15 +45,13 @@ import { transformationSourceOf } from './mapping-step/transformations-modal'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 import { dryRunParameters, previewCounts, type DryRun, type DryRunParameters, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
-import { failedRowsUrl, isDone } from './import-step/import-state'
+import { isDone } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
 import { useLanguages } from './mapping-step/use-languages'
+import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
 
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
-const ERROR_MODE_WIDTH = 260
-const ERROR_MODE_ID = 'ad-hoc-import-error-mode'
-const ERROR_MODES: ErrorMode[] = ['skip', 'values']
 
 const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
@@ -350,6 +348,40 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     onClose()
   }
 
+  const footer = (): React.JSX.Element => {
+    if (step === 2) {
+      return (
+        <PreviewFooter
+          errorMode={ errorMode }
+          importCount={ importCount }
+          onBack={ back }
+          onErrorModeChange={ setErrorMode }
+          onImport={ toImport }
+        />
+      )
+    }
+
+    if (step === IMPORT_STEP) {
+      return (
+        <ImportFooter
+          onClose={ close }
+          run={ run }
+          runFileId={ runFileId }
+        />
+      )
+    }
+
+    return (
+      <StepFooter
+        canGoOn={ canGoOn }
+        isFirstStep={ step === 0 }
+        onBack={ back }
+        onClose={ close }
+        onNext={ step === 0 ? toMapping : toPreview }
+      />
+    )
+  }
+
   useEffect(() => {
     if (isDone(run)) {
       setRunPolling(0)
@@ -361,73 +393,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   return (
     <Modal
-      footer={ step === 2
-        ? (
-          <ModalFooter
-            divider
-            justify="space-between"
-          >
-            <Flex
-              align="center"
-              gap="small"
-            >
-              <label htmlFor={ ERROR_MODE_ID }>{ t('data-importer.ad-hoc-import.preview.rows-with-errors') }</label>
-              <Select
-                id={ ERROR_MODE_ID }
-                onChange={ (value: ErrorMode) => { setErrorMode(value) } }
-                options={ ERROR_MODES.map((mode) => ({
-                  value: mode,
-                  label: t(`data-importer.ad-hoc-import.preview.error-mode.${mode}`)
-                })) }
-                value={ errorMode }
-                width={ ERROR_MODE_WIDTH }
-              />
-            </Flex>
-            <Flex gap="small">
-              <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button>
-              <Button
-                disabled={ importCount === 0 }
-                onClick={ toImport }
-                type="primary"
-              >
-                { t('data-importer.ad-hoc-import.preview.import', { count: importCount }) }
-              </Button>
-            </Flex>
-          </ModalFooter>
-          )
-        : step === IMPORT_STEP
-          ? (
-            <ModalFooter
-              divider
-              justify={ isDone(run) && run.failed > 0 ? 'space-between' : 'flex-end' }
-            >
-              { isDone(run) && run.failed > 0 && runFileId !== null && (
-                <Button href={ failedRowsUrl(runFileId) }>
-                  { t('data-importer.ad-hoc-import.result.download-failed', { count: run.failed }) }
-                </Button>
-              ) }
-              <Button
-                onClick={ close }
-                type={ isDone(run) ? 'primary' : undefined }
-              >
-                { t(isDone(run) ? 'data-importer.ad-hoc-import.result.close' : 'data-importer.ad-hoc-import.run.close-keep-running') }
-              </Button>
-            </ModalFooter>
-            )
-          : (
-            <ModalFooter divider>
-              { step === 0
-                ? <Button onClick={ close }>{ t('data-importer.ad-hoc-import.cancel') }</Button>
-                : <Button onClick={ back }>{ t('data-importer.ad-hoc-import.back') }</Button> }
-              <Button
-                disabled={ !canGoOn }
-                onClick={ () => { step === 0 ? toMapping() : toPreview() } }
-                type="primary"
-              >
-                { t(step === 0 ? 'data-importer.ad-hoc-import.next' : 'data-importer.ad-hoc-import.next-preview') }
-              </Button>
-            </ModalFooter>
-            ) }
+      footer={ footer() }
       maskClosable={ false }
       onCancel={ close }
       open

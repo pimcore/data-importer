@@ -162,9 +162,9 @@ final readonly class RowImporter
         }
 
         // changing what is live needs publish, as saving it in Studio does
-        return $object->isAllowed($object->isPublished() ? 'publish' : 'save', $user)
-            ? null
-            : $this->messages->mayNotSave($folder, $user);
+        $right = $object->isPublished() ? 'publish' : 'save';
+
+        return $object->isAllowed($right, $user) ? null : $this->messages->mayNotSave($folder, $user);
     }
 
     /**

@@ -61,6 +61,7 @@ class AdHocRowImporterTest extends Unit
 
             public function open(RunRecord $run): void
             {
+                // these tests look only at what is written
             }
 
             public function write(RowWrite $write): void
@@ -330,7 +331,8 @@ class AdHocRowImporterTest extends Unit
         $refused = $this->importer()->import($this->plan($this->existing($object), $writers, $user), $user, 0, []);
 
         $this->assertSame(
-            'data-importer.ad-hoc-import.run.may-not-edit-language {"{{language}}":"de","{{folder}}":"/Products/Archive"}',
+            'data-importer.ad-hoc-import.run.may-not-edit-language '
+            . '{"{{language}}":"de","{{folder}}":"/Products/Archive"}',
             $refused->message
         );
 
@@ -400,7 +402,12 @@ class AdHocRowImporterTest extends Unit
             }
         );
 
-        $outcome = $this->importer()->import($this->plan($this->existing($this->object()), [$writer], $user), $user, 0, []);
+        $outcome = $this->importer()->import(
+            $this->plan($this->existing($this->object()), [$writer], $user),
+            $user,
+            0,
+            []
+        );
 
         $this->assertSame(['', ['sku' => 'SKU-1', 'name' => 'Chair'], [0]], $seen);
         $this->assertTrue($outcome->isFailure());
@@ -451,7 +458,10 @@ class AdHocRowImporterTest extends Unit
     {
         $user = AdHocRunFixtures::user();
         $cases = [
-            [new DuplicateFullPathException('path'), 'check.key-taken {"{{key}}":"SKU-1","{{folder}}":"/Products/Archive"}'],
+            [
+                new DuplicateFullPathException('path'),
+                'check.key-taken {"{{key}}":"SKU-1","{{folder}}":"/Products/Archive"}',
+            ],
             [new ValidationException('name is too long'), 'run.save-failed {"{{reason}}":"name is too long"}'],
             [
                 new ValidationException(
@@ -465,7 +475,12 @@ class AdHocRowImporterTest extends Unit
 
         foreach ($cases as [$failure, $expected]) {
             $this->failWith = $failure;
-            $outcome = $this->importer()->import($this->plan($this->existing($this->object()), [], $user), $user, 0, []);
+            $outcome = $this->importer()->import(
+                $this->plan($this->existing($this->object()), [], $user),
+                $user,
+                0,
+                []
+            );
 
             $this->assertSame('data-importer.ad-hoc-import.' . $expected, $outcome->message);
         }
