@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { act, cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { ColumnPanel, type ColumnPanelProps } from './column-panel'
 import { type MappingField, type MappingRow } from './mapping-state'
 import { type TransformationAnswer, type TransformationSource } from './transformations-editor'
@@ -141,6 +141,15 @@ describe('the side panel of a column', () => {
     expect(screen.getByText('choose a field below')).toBeTruthy()
     expect(screen.getByText('Choose a field first.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Remove field' })).toBeNull()
+  })
+
+  it('leaves with Escape, not the whole dialog', () => {
+    const onClose = jest.fn()
+    renderPanel({ onClose })
+
+    fireEvent.keyDown(screen.getByRole('complementary', { name: 'Column Bezeichnung' }), { key: 'Escape' })
+
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it('has no transformations without a file to run them on', () => {

@@ -119,7 +119,16 @@ export const ColumnPanel = ({
     : t(`${PANEL}.tab.transformations-count`, { count: steps.length })
 
   return (
-    <>
+    <div
+      // Escape leaves the panel, not the whole dialog
+      onKeyDown={ (event) => {
+        if (event.key === 'Escape') {
+          event.stopPropagation()
+          onClose()
+        }
+      } }
+      role="presentation"
+    >
       <button
         aria-label={ t(`${PANEL}.close`) }
         className={ styles.backdrop }
@@ -213,6 +222,6 @@ export const ColumnPanel = ({
           </Button>
         </div>
       </aside>
-    </>
+    </div>
   )
 }

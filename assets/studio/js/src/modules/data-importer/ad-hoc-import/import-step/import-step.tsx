@@ -74,8 +74,7 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
     <div>
       <Card
         className={ styles.result }
-        contentPadding={ CARD_PADDING }
-        footer={ <span className={ styles.muted }>{ t('data-importer.ad-hoc-import.result.history') }</span> }
+        contentPadding="none"
       >
         <ResultBar run={ run } />
         <div className={ styles.resultContent }>
@@ -136,6 +135,7 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
             ) }
           </div>
         </div>
+        <div className={ styles.resultFootnote }>{ t('data-importer.ad-hoc-import.result.history') }</div>
       </Card>
     </div>
   )

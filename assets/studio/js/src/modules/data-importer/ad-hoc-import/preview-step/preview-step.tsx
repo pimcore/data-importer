@@ -163,6 +163,7 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
         columns={ columns }
         data={ pageOf(rows, current, pageSize) }
         setRowId={ (row: DryRunRow) => String(row.row) }
+        size="small"
       />
       <Flex
         className={ styles.pagination }

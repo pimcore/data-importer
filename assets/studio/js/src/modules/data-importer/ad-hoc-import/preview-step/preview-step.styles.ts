@@ -59,6 +59,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     height: 100%;
     padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    white-space: normal;
     overflow-wrap: anywhere;
   `,
   matchValue: css`

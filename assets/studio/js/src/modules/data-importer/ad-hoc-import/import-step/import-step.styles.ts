@@ -61,6 +61,13 @@ export const useStyles = createStyles(({ token, css }) => ({
   resultContent: css`
     display: flex;
     gap: ${token.marginXL}px;
+    padding: ${token.paddingLG}px ${token.paddingXL}px;
+  `,
+  resultFootnote: css`
+    padding: ${token.paddingSM}px ${token.paddingXL}px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+    background: ${token.Table.headerBg};
+    color: ${token.colorTextSecondary};
   `,
   complete: css`
     display: flex;
@@ -120,6 +127,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     height: 100%;
     padding: ${token.paddingXXS}px ${token.paddingXS}px;
     color: ${token.colorError};
+    white-space: normal;
     overflow-wrap: anywhere;
   `,
   branchStep: css`

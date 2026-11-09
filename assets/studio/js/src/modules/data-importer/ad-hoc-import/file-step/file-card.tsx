@@ -42,6 +42,8 @@ export const FileCard = ({ phase, onRemove }: FileCardProps): React.JSX.Element 
             percent={ percent }
             showInfo={ false }
             size="small"
+            // not green while the server still reads the file
+            status="normal"
           />
           <span className={ styles.detail }>
             { t('data-importer.ad-hoc-import.file.progress', { percent, loaded, total }) }

@@ -68,6 +68,8 @@ export const BranchRunning = ({ run }: { run: ImportRun }): React.JSX.Element =>
         aria-label={ t('data-importer.ad-hoc-import.step.import') }
         percent={ percentOf(run) }
         showInfo={ false }
+        // not green while the check still has to say whether it can merge
+        status="normal"
       />
       <StepLine
         detail={ step === 'written' ? rows : t('data-importer.ad-hoc-import.run.branch.objects', { count: run.mergeTotal }) }

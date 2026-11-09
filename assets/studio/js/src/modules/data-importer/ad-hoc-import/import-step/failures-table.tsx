@@ -51,6 +51,7 @@ export const FailuresTable = ({ run, why }: { run: ImportRun, why: string }): Re
       columns={ columns }
       data={ run.failures }
       setRowId={ (failure: ImportRunFailure) => String(failure.row) }
+      size="small"
     />
   )
 }
