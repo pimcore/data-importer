@@ -332,6 +332,7 @@ user-management.permissions.plugin_data_importer_ad_hoc_import: Ad-hoc import
 # Ad hoc import
 data-importer.ad-hoc-import.menu-item: Import file…
 data-importer.ad-hoc-import.title: 'Import file into {{path}}'
+data-importer.ad-hoc-import.title-file: 'Import {{file}} into {{path}}'
 data-importer.ad-hoc-import.step.file: File
 data-importer.ad-hoc-import.step.mapping: Mapping
 data-importer.ad-hoc-import.step.preview: Preview

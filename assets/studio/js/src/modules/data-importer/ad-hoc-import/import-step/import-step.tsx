@@ -10,13 +10,14 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Card, Progress } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Card, Icon, Progress } from '@pimcore/studio-ui-bundle/components'
 import { useElementHelper } from '@pimcore/studio-ui-bundle/modules/element'
 import { useStyles as usePreviewStyles } from '../preview-step/preview-step.styles'
 import { BranchRunning } from './branch-running'
 import { Decision } from './decision'
-import { FailuresTable, Notice } from './failures-table'
+import { FailuresTable, Notice, SummaryLine } from './failures-table'
 import { importedCount, isDeciding, isDone, percentOf, skippedRowsUrl, type ImportRun } from './import-state'
+import { ResultBar } from './result-bar'
 import { useStyles } from './import-step.styles'
 
 const CARD_PADDING = { x: 'extra-large', y: 'large' } as const
@@ -74,10 +75,15 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
       <Card
         className={ styles.result }
         contentPadding={ CARD_PADDING }
+        footer={ <span className={ styles.muted }>{ t('data-importer.ad-hoc-import.result.history') }</span> }
       >
+        <ResultBar run={ run } />
         <div className={ styles.resultContent }>
           <div>
-            <div className={ styles.complete }>{ t('data-importer.ad-hoc-import.result.complete') }</div>
+            <div className={ styles.complete }>
+              <Icon value="check-circle" />
+              { t('data-importer.ad-hoc-import.result.complete') }
+            </div>
             <div className={ styles.imported }>{ importedCount(run) }</div>
             <div>
               { t('data-importer.ad-hoc-import.result.objects-from', {
@@ -95,10 +101,12 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
           </div>
           <div className={ styles.lines }>
             <div className={ styles.line }>
+              <span className={ `${styles.dot} ${styles.dotUpdated}` } />
               <span className={ styles.lineLabel }>{ t('data-importer.ad-hoc-import.result.updated') }</span>
               <span className={ styles.lineCount }>{ run.updated }</span>
             </div>
             <div className={ styles.line }>
+              <span className={ `${styles.dot} ${styles.dotCreated}` } />
               <span className={ styles.lineLabel }>
                 { t('data-importer.ad-hoc-import.result.created-in', {
                   folder: run.newObjectsFolder,
@@ -115,6 +123,7 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
             </div>
             { run.skipped > 0 && (
               <div className={ styles.line }>
+                <span className={ `${styles.dot} ${styles.dotSkipped}` } />
                 <span className={ styles.lineLabel }>{ t('data-importer.ad-hoc-import.result.skipped') }</span>
                 <span className={ styles.lineCount }>{ run.skipped }</span>
                 <Button
@@ -128,7 +137,6 @@ const Complete = ({ fileId, run }: { fileId: string, run: ImportRun }): React.JS
           </div>
         </div>
       </Card>
-      <div className={ styles.footnote }>{ t('data-importer.ad-hoc-import.result.history') }</div>
     </div>
   )
 }
@@ -143,9 +151,10 @@ const WithFailures = ({ run }: { run: ImportRun }): React.JSX.Element => {
       <Notice run={ run } />
       <Alert
         className={ styles.notSaved }
-        description={ t('data-importer.ad-hoc-import.result.others-saved') }
-        message={ t('data-importer.ad-hoc-import.result.not-saved', { count: run.failed }) }
-        showIcon
+        message={ <SummaryLine
+          lead={ t('data-importer.ad-hoc-import.result.not-saved', { count: run.failed }) }
+          rest={ t('data-importer.ad-hoc-import.result.others-saved') }
+                  /> }
         type="error"
       />
       <div className={ previewStyles.counts }>

@@ -46,6 +46,8 @@ export const PreviewFooter = ({ errorMode, importCount, onBack, onErrorModeChang
             value: mode,
             label: t(`data-importer.ad-hoc-import.preview.error-mode.${mode}`)
           })) }
+          // the footer aligns its text right, which the select would take over
+          style={ { textAlign: 'left' } }
           value={ errorMode }
           width={ ERROR_MODE_WIDTH }
         />

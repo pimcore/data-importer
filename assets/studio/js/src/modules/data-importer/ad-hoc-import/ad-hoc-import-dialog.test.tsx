@@ -960,6 +960,12 @@ describe('the mapping step', () => {
     await act(async () => { fireEvent.click(nextButton()) })
   }
 
+  it('names the file in the title from the mapping on', async () => {
+    await toMapping()
+
+    expect(screen.getByRole('dialog', { name: 'Import prices.csv into Products / Outdoor' })).toBeTruthy()
+  })
+
   it('asks for the mapping of the class with the columns of the file and shows a row per column', async () => {
     await toMapping()
 

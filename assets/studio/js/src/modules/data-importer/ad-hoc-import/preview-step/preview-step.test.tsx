@@ -121,7 +121,7 @@ describe('the preview step', () => {
 
   it('marks the message of a skipped row as an error and of a row imported without values as a warning', () => {
     const tones = (): Array<string | null> => within(screen.getByRole('table')).getAllByRole('row').slice(1)
-      .map((tableRow) => within(tableRow).getAllByRole('cell')[5].querySelector('span')?.getAttribute('class') ?? null)
+      .map((tableRow) => within(tableRow).getAllByRole('cell')[5].querySelector('span span')?.classList[0] ?? null)
 
     render(<PreviewStep
       dryRun={ dryRun() }

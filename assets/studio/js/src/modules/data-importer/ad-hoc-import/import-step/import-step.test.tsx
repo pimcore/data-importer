@@ -105,6 +105,7 @@ describe('an import that saved every row', () => {
     expect(screen.getByText('Every object keeps its version history.')).toBeTruthy()
     expect(within(screen.getByText('Skipped in the preview').parentElement!).getByText('3')).toBeTruthy()
     expect(screen.getByText('Created in /Products/Outdoor')).toBeTruthy()
+    expect(screen.getByTestId('result-bar').children).toHaveLength(3)
 
     const download = screen.getByRole('link', { name: 'Download rows' })
     expect(download.getAttribute('href')).toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/skipped-rows?errorMode=values')
@@ -208,6 +209,18 @@ describe('an import through a branch', () => {
 
     expect(screen.getByText('Merging as Jo Doe').parentElement!.getAttribute('aria-current')).toBe('step')
     expect(within(screen.getByText('Merging as Jo Doe').parentElement!).getByText('184 of 306')).toBeTruthy()
+  })
+
+  it('shows no count while the branch is checked, as the check reports none, and keeps the rows written on the bar', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ state: 'merging', throughBranch: true, total: 306, processed: 306, mergeTotal: 306, mergeDone: 0, failed: 0 }) }
+      total={ 306 }
+           />)
+
+    expect(screen.queryByText('0 of 306')).toBeNull()
+    expect(screen.getByRole('progressbar').getAttribute('value')).toBe('100')
+    expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).getByRole('status')).toBeTruthy()
   })
 
   it('names the merge in the result', () => {

@@ -414,6 +414,9 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     })
   }
 
+  // the file step is about choosing a file: the title names it from the mapping on
+  const fileInTitle = step === 0 ? undefined : (phase.kind === 'inspected' ? phase.file.name : waitingFile)
+
   const footer = (): React.JSX.Element => {
     if (step === 2) {
       return (
@@ -479,10 +482,16 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       maskClosable={ false }
       onCancel={ close }
       open
-      title={ t('data-importer.ad-hoc-import.title', {
-        path: titlePath(target),
-        interpolation: { escapeValue: false }
-      }) }
+      title={ fileInTitle === undefined
+        ? t('data-importer.ad-hoc-import.title', {
+            path: titlePath(target),
+            interpolation: { escapeValue: false }
+          })
+        : t('data-importer.ad-hoc-import.title-file', {
+            file: fileInTitle,
+            path: titlePath(target),
+            interpolation: { escapeValue: false }
+          }) }
       width={ DIALOG_WIDTH }
     >
       <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>

@@ -64,13 +64,14 @@ export const components = {
       { children }
     </button>
   ),
-  Card: ({ children, contentPadding, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement> & { contentPadding?: unknown }) => (
+  Card: ({ children, contentPadding, footer, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement> & { contentPadding?: unknown, footer?: React.ReactNode }) => (
     <div
       data-content-padding={ JSON.stringify(contentPadding) }
       data-testid="studio-card"
       { ...props }
     >
       { children }
+      { footer }
     </div>
   ),
   ColumnPicker: ({ groups, onSelect, emptyText }: { groups: PickerGroup[], onSelect: (item: PickerItem) => void, emptyText?: string }) => (
@@ -143,6 +144,7 @@ export const components = {
     </table>
   ),
   Icon: () => null,
+  Spin: () => <span role="status" />,
   IconButton: ({ onClick, 'aria-label': label }: { onClick?: () => void, 'aria-label'?: string }) => (
     <button
       aria-label={ label }
