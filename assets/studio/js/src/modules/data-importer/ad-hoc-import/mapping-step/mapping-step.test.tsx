@@ -163,6 +163,54 @@ describe('the mapping step', () => {
     expect(within(rowOf('Preis')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
   })
 
+  describe('a suggestion another column may have', () => {
+    const suggestion = (sourceIndex: string, targetFieldName: string, targetFieldLabel: string, score: number, language: string | null = null): LoadedMapping['suggestions'][number] =>
+      ({ sourceIndex, sourceLabel: sourceIndex, targetFieldName, targetFieldLabel, transformationResultType: 'default', score, language })
+
+    const renderWith = (suggestions: LoadedMapping['suggestions'], columns: string[] = []): void => {
+      const file = { ...inspected, columns: [...inspected.columns, ...columns.map((label) => ({ dataIndex: label, label }))] }
+
+      render(<Stateful initial={ createMapping(file, objects, { ...loaded, suggestions }) } />)
+    }
+
+    it('is not offered when a column was mapped to its field on arrival', () => {
+      renderWith([suggestion('Preis', 'price', 'Price', 100), suggestion('Notiz', 'price', 'Price', 55)])
+
+      expect(within(rowOf('Preis')).getByText('auto')).toBeTruthy()
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
+    })
+
+    it('goes away once another column takes its field, and comes back when that column gives it up', () => {
+      renderWith([suggestion('Preis', 'price', 'Price', 55), suggestion('Notiz', 'price', 'Price', 40)])
+
+      fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Use Price?' }))
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't import Preis" }))
+      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Use Price?' })).toBeTruthy()
+    })
+
+    it('stays for a localized field with a language free, and takes that language', () => {
+      renderWith([suggestion('Name DE', 'name', 'Name', 100, 'de'), suggestion('Notiz', 'name', 'Name', 55)])
+
+      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Use Name?' }))
+
+      expect(within(rowOf('Name DE')).getByText('de')).toBeTruthy()
+      expect(within(rowOf('Notiz')).getByText('en')).toBeTruthy()
+    })
+
+    it('is not offered for a localized field with every language taken', () => {
+      renderWith([
+        suggestion('Name DE', 'name', 'Name', 100, 'de'),
+        suggestion('Name EN', 'name', 'Name', 100, 'en'),
+        suggestion('Name FR', 'name', 'Name', 100, 'fr'),
+        suggestion('Notiz', 'name', 'Name', 55)
+      ], ['Name EN', 'Name FR'])
+
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Name?' })).toBeNull()
+    })
+  })
+
   it('shows the match column with the field it finds the objects by, which cannot be changed', () => {
     renderStep()
 

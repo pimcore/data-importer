@@ -230,6 +230,7 @@ describe('an import through a branch', () => {
 
     expect(screen.queryByText('0 of 306')).toBeNull()
     expect(screen.getByRole('progressbar').getAttribute('value')).toBe('100')
+    expect(screen.getByRole('progressbar').getAttribute('data-status')).toBe('normal')
     expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).getByRole('status')).toBeTruthy()
   })
 

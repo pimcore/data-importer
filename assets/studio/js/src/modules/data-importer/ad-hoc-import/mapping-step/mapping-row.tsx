@@ -13,6 +13,7 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, Icon, LanguageSelection, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { chooseField, fitsField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { chooseLanguage, freeLanguages } from './mapping-choices'
+import { canGoInto, takenFields } from './taken-fields'
 import { useStyles } from './mapping-row.styles'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
@@ -107,6 +108,8 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
 
   if (choice === undefined) {
     const suggested = fields.find(({ key }) => key === suggestion?.field)
+    // each column gets its best field on its own, so another column may already have it
+    const offered = suggested !== undefined && canGoInto(takenFields(mapping.rows), suggested, column, languages)
 
     return (
       <Flex
@@ -122,10 +125,10 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         >
           <span className={ styles.crumb }>{ t(`${MAPPING}.choose-field`) }</span>
         </button>
-        { suggestion !== undefined && suggested !== undefined && (
+        { offered && (
           <button
             className={ styles.suggestion }
-            onClick={ () => { onChange(chooseField(mapping, column, suggestion.field)) } }
+            onClick={ () => { onChange(chooseField(mapping, column, suggested.key)) } }
             type="button"
           >
             { t(`${MAPPING}.use-suggestion`, { field: suggested.title, interpolation: { escapeValue: false } }) }
