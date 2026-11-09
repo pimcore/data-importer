@@ -266,15 +266,100 @@ class AdHocObjectChangesTest extends Unit
         $this->assertSame([], $this->values($change));
     }
 
+    public function testALocalizedValueInABrickIsRecordedInItsBrickAndLanguage(): void
+    {
+        $language = Tool::getValidLanguages()[0];
+        $title = new Data\Input();
+        $title->setName('title');
+        $localized = new Data\Localizedfields();
+        $localized->setName('localizedfields');
+        $localized->setChildren([$title]);
+        $size = new Objectbrick\Definition();
+        $size->setKey('Size');
+        $size->addFieldDefinition('localizedfields', $localized);
+
+        $change = (new ObjectChanges())->changeOf(
+            $this->object(['bricks' => $this->bricks($size, [], false, [$language => ['title' => 'Wide']])]),
+            $this->object(['bricks' => $this->bricks($size, [], false, [$language => ['title' => 'Narrow']])]),
+            null
+        );
+
+        $this->assertSame([['brick', 'bricks', $language, 'Size', 'title', 7 => 'Wide']], $this->values($change));
+    }
+
+    public function testAStoreValueIsRecordedByItsGroupAndKeyNameAndARemovedOneAsNull(): void
+    {
+        $suffix = uniqid();
+        $storeConfig = new Classificationstore\StoreConfig();
+        $storeConfig->setName('changes-store-' . $suffix);
+        $storeConfig->save();
+        $group = new Classificationstore\GroupConfig();
+        $group->setStoreId($storeConfig->getId());
+        $group->setName('Basics-' . $suffix);
+        $group->save();
+        $keys = [];
+        foreach (['colour', 'finish'] as $name) {
+            $key = new Classificationstore\KeyConfig();
+            $key->setStoreId($storeConfig->getId());
+            $key->setName($name . '-' . $suffix);
+            $key->setType('input');
+            $key->setDefinition((string) json_encode(new Data\Input()));
+            $key->save();
+            $keys[$name] = $key;
+        }
+
+        try {
+            $after = $this->createStub(Classificationstore::class);
+            $after->method('getItems')->willReturn([$group->getId() => [
+                $keys['colour']->getId() => ['default' => 'Red'],
+            ]]);
+            $before = $this->createStub(Classificationstore::class);
+            $before->method('getItems')->willReturn([$group->getId() => [
+                $keys['colour']->getId() => ['default' => 'Blue'],
+                $keys['finish']->getId() => ['default' => 'Matt'],
+            ]]);
+
+            $change = (new ObjectChanges())->changeOf(
+                $this->object(['store' => $after]),
+                $this->object(['store' => $before]),
+                null
+            );
+
+            $this->assertSame(
+                [
+                    ['classification', 'store', 'default', 'Basics-' . $suffix, 'colour-' . $suffix, 7 => 'Red'],
+                    ['classification', 'store', 'default', 'Basics-' . $suffix, 'finish-' . $suffix, 7 => null],
+                ],
+                $this->values($change),
+                'the value the row removed is emptied on the branch'
+            );
+        } finally {
+            foreach ($keys as $key) {
+                $key->delete();
+            }
+            $group->delete();
+            $storeConfig->delete();
+        }
+    }
+
     /**
      * @param array<string, mixed> $values
+     * @param array<string, array<string, mixed>> $localized by language and field
      */
-    private function bricks(Objectbrick\Definition $definition, array $values, bool $deleted = false): Objectbrick
-    {
+    private function bricks(
+        Objectbrick\Definition $definition,
+        array $values,
+        bool $deleted = false,
+        array $localized = []
+    ): Objectbrick {
         $brick = $this->createStub(Objectbrick\Data\AbstractData::class);
         $brick->method('getDefinition')->willReturn($definition);
         $brick->method('getDoDelete')->willReturn($deleted);
-        $brick->method('get')->willReturnCallback(static fn (string $name): mixed => $values[$name] ?? null);
+        $brick->method('get')->willReturnCallback(
+            static fn (string $name, ?string $language = null): mixed => $language === null
+                ? $values[$name] ?? null
+                : $localized[$language][$name] ?? null
+        );
 
         $bricks = $this->createStub(Objectbrick::class);
         $bricks->method('get')->willReturnCallback(
