@@ -16,7 +16,7 @@ import { type ImportRun } from './import-state'
 jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: { error: 'error' } })
+  createStyles: () => () => ({ styles: { error: 'error', barColor: 'primary' } })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
@@ -77,6 +77,7 @@ describe('the running import', () => {
     expect(screen.getAllByText('184 of 306')).toHaveLength(2)
     expect(screen.getByText('Saving')).toBeTruthy()
     expect(screen.getByRole('progressbar').getAttribute('value')).toBe('60')
+    expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
   })
 
   it('shows the run in a Studio card', () => {
@@ -231,6 +232,7 @@ describe('an import through a branch', () => {
     expect(screen.queryByText('0 of 306')).toBeNull()
     expect(screen.getByRole('progressbar').getAttribute('value')).toBe('100')
     expect(screen.getByRole('progressbar').getAttribute('data-status')).toBe('normal')
+    expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
     expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).getByRole('status')).toBeTruthy()
   })
 

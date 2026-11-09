@@ -67,5 +67,7 @@ export const useStyles = createStyles(({ token, css }) => ({
       width: 260px;
       margin: 0;
     }
-  `
+  `,
+  // antd draws a normal bar in colorInfo; the canvas draws it in the primary colour
+  barColor: token.colorPrimary
 }))

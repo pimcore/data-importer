@@ -249,9 +249,10 @@ export const components = {
       />
     </nav>
   ),
-  Progress: ({ percent, status }: { percent?: number, status?: string }) => (
+  Progress: ({ percent, status, strokeColor }: { percent?: number, status?: string, strokeColor?: string }) => (
     <progress
       data-status={ status }
+      data-stroke={ strokeColor }
       max={ 100 }
       value={ percent }
     />

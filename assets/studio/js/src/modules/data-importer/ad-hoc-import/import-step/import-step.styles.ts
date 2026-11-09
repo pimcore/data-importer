@@ -152,5 +152,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     height: 14px;
     border: 1px solid ${token.colorBorder};
     border-radius: 50%;
-  `
+  `,
+  // antd draws a normal bar in colorInfo; the canvas draws it in the primary colour
+  barColor: token.colorPrimary
 }))

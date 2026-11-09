@@ -55,6 +55,7 @@ const Running = ({ run, total }: { run: ImportRun | undefined, total: number }):
         aria-label={ t('data-importer.ad-hoc-import.step.import') }
         percent={ run === undefined ? 0 : percentOf(run) }
         showInfo={ false }
+        strokeColor={ styles.barColor }
       />
       <div className={ styles.step }>
         <span>{ t('data-importer.ad-hoc-import.run.saving') }</span>

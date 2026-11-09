@@ -14,7 +14,7 @@ import { FileCard, type FileCardProps } from './file-card'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: {} })
+  createStyles: () => () => ({ styles: { barColor: 'primary' } })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 jest.mock('@pimcore/studio-ui-bundle/utils', () => ({ formatDataUnit: (bytes: number) => `${bytes} B` }))
@@ -34,5 +34,14 @@ describe('FileCard', () => {
     const bar = screen.getByRole('progressbar')
     expect(bar.getAttribute('value')).toBe('100')
     expect(bar.getAttribute('data-status')).toBe('normal')
+  })
+
+  it('draws the bar in the primary colour, not antd\'s info blue', () => {
+    render(<FileCard
+      onRemove={ () => {} }
+      phase={ uploading(512, 2048) }
+           />)
+
+    expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
   })
 })
