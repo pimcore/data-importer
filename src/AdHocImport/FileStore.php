@@ -15,6 +15,8 @@ namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
 use Pimcore\Helper\TemporaryFileHelperTrait;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
@@ -40,6 +42,7 @@ final class FileStore
     public function __construct(
         private readonly FilesystemOperator $pimcoreDataImporterAdHocStorage,
         private readonly LockFactory $lockFactory,
+        private readonly ?RunStoreInterface $runs = null,
     ) {
     }
 
@@ -182,10 +185,22 @@ final class FileStore
         /** @var list<StorageAttributes> $items */
         $items = $this->pimcoreDataImporterAdHocStorage->listContents((string)$userId)->toArray();
         foreach ($items as $item) {
-            if ($item->isFile() && $item->lastModified() !== null && $item->lastModified() < $oldest) {
+            if ($item->isFile() && $item->lastModified() !== null && $item->lastModified() < $oldest
+                && !$this->inUse($userId, $item->path())) {
                 $this->removeWithItsSkippedRows($item->path());
             }
         }
+    }
+
+    /**
+     * A run that has not ended still needs its files, however long it waits for a decision.
+     */
+    private function inUse(int $userId, string $path): bool
+    {
+        $fileId = strstr(basename($path), '.', true);
+        $run = $fileId === false ? null : $this->runs?->find($userId, $fileId);
+
+        return $run !== null && $run->state !== RunRecord::DONE;
     }
 
     /**
