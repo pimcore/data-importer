@@ -229,7 +229,8 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
                 $targetPath,
                 $objects['matchBy'] === AdHocImportDryRunParameters::MATCH_BY_FIELD ? $objects['matchField'] : null,
                 $objects['matchLanguage'] ?? '',
-                $newObjectPath === $targetPath ? null : $newObjectPath
+                $newObjectPath === $targetPath ? null : $newObjectPath,
+                $objects['matchBy'] === AdHocImportDryRunParameters::MATCH_BY_NONE
             ));
         } catch (InvalidConfigurationException|InvalidInputException $exception) {
             throw new InvalidArgumentException($exception->getMessage(), $exception);
@@ -753,6 +754,9 @@ final readonly class AdHocImportDryRunService implements AdHocImportDryRunServic
      */
     private function matchFieldLabel(array $objects, array $targets, User $user): string
     {
+        if ($objects['matchBy'] === AdHocImportDryRunParameters::MATCH_BY_NONE) {
+            return $this->messages->keyLabel($user);
+        }
         if ($objects['matchBy'] !== AdHocImportDryRunParameters::MATCH_BY_FIELD) {
             return $this->messages->objectIdLabel($user);
         }

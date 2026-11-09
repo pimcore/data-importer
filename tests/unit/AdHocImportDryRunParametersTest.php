@@ -15,6 +15,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportDryRunParameters;
+use Symfony\Component\Validator\ConstraintViolationInterface;
+use Symfony\Component\Validator\Validation;
 
 /**
  * The dry run's request as the service reads it.
@@ -69,6 +71,20 @@ class AdHocImportDryRunParametersTest extends Unit
                 $settings->sheetName,
             ]
         );
+    }
+
+    public function testMatchingNoneIsAChoiceAndAnUnknownMatchIsRefused(): void
+    {
+        $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
+
+        $none = new AdHocImportDryRunParameters(1, 'CAR', AdHocImportDryRunParameters::MATCH_BY_NONE, '0');
+        $unknown = new AdHocImportDryRunParameters(1, 'CAR', 'path', '0');
+
+        $this->assertCount(0, $validator->validate($none));
+        $this->assertSame(['matchBy'], array_map(
+            static fn (ConstraintViolationInterface $violation): string => $violation->getPropertyPath(),
+            [...$validator->validate($unknown)]
+        ));
     }
 
     public function testWithoutFileSettingsTheFileIsReadWithItsDefaults(): void

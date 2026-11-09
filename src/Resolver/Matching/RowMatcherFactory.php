@@ -51,6 +51,9 @@ final class RowMatcherFactory
             throw new InvalidConfigurationException("Class `{$configuration->classId}` not found.");
         }
 
+        if ($configuration->createOnly && $configuration->attributeName !== null) {
+            throw new InvalidConfigurationException('Creating only matches by no field.');
+        }
         $this->assertMatchable($class, $configuration->attributeName, $configuration->language);
         $field = $configuration->attributeName === null
             ? null

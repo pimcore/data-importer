@@ -385,6 +385,43 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         ));
     }
 
+    public function testMatchingNoneCountsEveryRowAsNewWithTheErrorRowsOfTheirKeys(): void
+    {
+        $this->createObjects();
+        $before = $this->snapshot();
+        $fileId = $this->upload(
+            "sku;name\nSKU-1;Armchair\nSKU-NEW;Sofa\nSKU-NEW;Again\nSKU-FOLDER;Box\n;Nameless\n",
+            'products.csv'
+        );
+
+        $response = $this->service()->dryRun($fileId, new AdHocImportDryRunParameters(
+            $this->folderId,
+            $this->class->getId(),
+            AdHocImportDryRunParameters::MATCH_BY_NONE,
+            'sku',
+            columns: [['column' => 'sku', 'field' => 'sku'], ['column' => 'name', 'field' => 'name']]
+        ));
+
+        $rows = $this->byRow($response);
+        $this->assertSame(['sku', 'name'], array_column($response->getFields(), 'key'), 'the key column is a field');
+        $this->assertSame(
+            [2 => 'create', 3 => 'create', 4 => null, 5 => null, 6 => null],
+            array_column($rows, 'action', 'row'),
+            'SKU-1 has an object, and still a new one is made'
+        );
+        $this->assertSame(['old' => null, 'new' => 'SKU-1'], $rows[2]['values'][0]);
+        $this->assertSame(
+            [4 => 'Row 3 already creates an object named SKU-NEW',
+                5 => self::TARGET . ' already holds an object named SKU-FOLDER',
+                6 => 'Key is empty'],
+            array_map(
+                static fn (array $row): ?string => $row['error'],
+                array_filter($rows, static fn (array $row): bool => $row['action'] === null)
+            )
+        );
+        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+    }
+
     public function testMatchingByAFieldNeedsTheField(): void
     {
         $fileId = $this->upload(self::ONE_ROW, 'products.csv');

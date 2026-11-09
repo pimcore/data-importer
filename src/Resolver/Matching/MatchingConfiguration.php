@@ -21,7 +21,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Matching;
 final readonly class MatchingConfiguration
 {
     /**
-     * @param int|string $dataSourceIndex the column holding the match value
+     * @param int|string $dataSourceIndex the column holding the match value, or the key of a new object when only
+     *                                     creating
      * @param string $targetFolder path of an existing element; it and what lies below it can be matched
      * @param string|null $attributeName the field to match by, `<field>.<brick>.<attribute>` for an object brick
      *                                   attribute; null matches by the Object ID
@@ -29,6 +30,7 @@ final readonly class MatchingConfiguration
      * @param string|null $newObjectFolder path of the existing element new objects go to; null is the target folder;
      *                                     its direct children can be matched too, so importing a file again finds what
      *                                     its first run made
+     * @param bool $createOnly every row makes a new object and none is looked up; no field to match by then
      */
     public function __construct(
         public string $classId,
@@ -37,6 +39,7 @@ final readonly class MatchingConfiguration
         public ?string $attributeName = null,
         public string $language = '',
         public ?string $newObjectFolder = null,
+        public bool $createOnly = false,
     ) {
     }
 }

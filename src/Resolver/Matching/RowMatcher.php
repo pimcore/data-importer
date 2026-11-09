@@ -90,6 +90,11 @@ final class RowMatcher implements RowMatcherInterface
             return new RowMatch(RowMatchOutcome::InvalidValue, $value);
         }
 
+        // keys tell case and accents apart, so only the key check below finds a row creating what an earlier one does
+        if ($this->configuration->createOnly) {
+            return $this->newObject($value, $lookupValue, $rowNumber);
+        }
+
         // the class tables' collation ignores case and accents, so `abc` and `ABC` would be one object after the import
         $valueKey = $this->valueCollator->getSortKey($lookupValue) ?: $lookupValue;
         if (isset($this->rowByValue[$valueKey])) {

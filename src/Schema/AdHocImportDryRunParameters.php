@@ -38,6 +38,9 @@ final readonly class AdHocImportDryRunParameters
 
     public const string MATCH_BY_FIELD = 'field';
 
+    // no existing object is looked up: every row creates one, keyed by the match column's value
+    public const string MATCH_BY_NONE = 'none';
+
     // more columns than a file of the row limit has cells per row
     private const int MAX_COLUMNS = 200;
 
@@ -52,14 +55,18 @@ final readonly class AdHocImportDryRunParameters
         #[Property(description: 'The ID of the data object class to import into', type: 'string', example: 'Product')]
         private string $classId,
         #[Property(
-            description: 'Match existing objects by their Object ID or by a field',
+            description: 'Match existing objects by their Object ID or by a field, or none to create every row',
             type: 'string',
-            enum: [self::MATCH_BY_ID, self::MATCH_BY_FIELD],
+            enum: [self::MATCH_BY_ID, self::MATCH_BY_FIELD, self::MATCH_BY_NONE],
             example: self::MATCH_BY_FIELD
         )]
-        #[Assert\Choice([self::MATCH_BY_ID, self::MATCH_BY_FIELD])]
+        #[Assert\Choice([self::MATCH_BY_ID, self::MATCH_BY_FIELD, self::MATCH_BY_NONE])]
         private string $matchBy,
-        #[Property(description: 'Data index of the column holding the match value', type: 'string', example: 'SKU')]
+        #[Property(
+            description: 'Data index of the column holding the match value, the key of new objects when matching none',
+            type: 'string',
+            example: 'SKU'
+        )]
         private string $matchColumn,
         #[Property(description: 'Key of the field to match by', type: 'string', example: 'sku', nullable: true)]
         private ?string $matchField = null,
