@@ -22,7 +22,7 @@ final readonly class AdHocImportWalkthroughWork
 
     /**
      * @param \Closure(string): string $stateOf the state of a file's import
-     * @param \Closure(string): array{int, string} $console runs a console command: its exit code and output
+     * @param \Closure(string, int): array{int, string} $console runs a console command for at most so many seconds: its exit code and output
      * @param list<string> $transports
      */
     public function __construct(
@@ -37,23 +37,29 @@ final readonly class AdHocImportWalkthroughWork
     {
         $deadline = time() + $this->timeout;
         while ($this->goesOn($fileId)) {
-            $left = $deadline - time();
-            if ($left <= 0) {
-                throw new AdHocImportWalkthroughFailure(
-                    sprintf('The import of %s is still going on after %d s.', $fileId, $this->timeout)
-                );
-            }
-
             // the rows wait in the importer's queue: with messenger processing off, its default, only this takes them
-            $this->run(self::ROWS_COMMAND . ' --no-interaction');
+            $this->run(self::ROWS_COMMAND . ' --no-interaction', $this->left($deadline, $fileId));
             if ($this->goesOn($fileId)) {
+                $left = $this->left($deadline, $fileId);
                 $this->run(sprintf(
                     'messenger:consume %s --limit=10 --time-limit=%d --no-interaction',
                     implode(' ', array_map(escapeshellarg(...), $this->transports)),
                     min(10, $left)
-                ));
+                ), $left);
             }
         }
+    }
+
+    private function left(int $deadline, string $fileId): int
+    {
+        $left = $deadline - time();
+        if ($left <= 0) {
+            throw new AdHocImportWalkthroughFailure(
+                sprintf('The import of %s is still going on after %d s.', $fileId, $this->timeout)
+            );
+        }
+
+        return $left;
     }
 
     private function goesOn(string $fileId): bool
@@ -61,9 +67,9 @@ final readonly class AdHocImportWalkthroughWork
         return in_array(($this->stateOf)($fileId), ['running', 'merging'], true);
     }
 
-    private function run(string $command): void
+    private function run(string $command, int $timeout): void
     {
-        [$exit, $output] = ($this->console)($command);
+        [$exit, $output] = ($this->console)($command, $timeout);
         if ($exit !== 0) {
             throw new AdHocImportWalkthroughFailure(sprintf("The worker failed (exit %d):\n%s", $exit, $output));
         }

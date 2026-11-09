@@ -102,19 +102,13 @@ final class AdHocImportWalkthroughScript
             is_string($params['dbname'] ?? null) ? $params['dbname'] : '-'
         );
 
-        $console = $options['console'];
         $walkthrough = new AdHocImportWalkthrough(
             $container->get(AdHocImportServiceInterface::class),
             $service,
             $container->get('pimcore.data_importer.ad_hoc_walkthrough.token_storage'),
             (new AdHocImportWalkthroughWork(
                 static fn (string $fileId): string => $service->status($fileId)->getState(),
-                static function (string $command) use ($console): array {
-                    $output = [];
-                    exec($console . ' ' . $command . ' 2>&1', $output, $exit);
-
-                    return [$exit, implode("\n", $output)];
-                },
+                (new AdHocImportWalkthroughConsole($options['console']))(...),
                 explode(',', $options['transports'])
             ))(...),
             AdHocImportWalkthrough::newRun(),

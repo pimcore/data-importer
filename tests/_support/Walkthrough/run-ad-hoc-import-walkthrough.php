@@ -41,6 +41,7 @@ require_once __DIR__ . '/AdHocImportWalkthroughFailure.php';
 require_once __DIR__ . '/AdHocImportWalkthroughFixture.php';
 require_once __DIR__ . '/AdHocImportWalkthroughFile.php';
 require_once __DIR__ . '/AdHocImportWalkthrough.php';
+require_once __DIR__ . '/AdHocImportWalkthroughConsole.php';
 require_once __DIR__ . '/AdHocImportWalkthroughWork.php';
 require_once __DIR__ . '/AdHocImportWalkthroughScript.php';
 

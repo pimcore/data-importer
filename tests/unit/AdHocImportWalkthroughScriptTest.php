@@ -17,6 +17,8 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughConsole;
+use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughFailure;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -119,7 +121,7 @@ class AdHocImportWalkthroughScriptTest extends Unit
     }
 
     /**
-     * @param \Closure(string): array{int, string} $console
+     * @param \Closure(string, int): array{int, string} $console
      */
     private function work(\Closure $stateOf, \Closure $console, int $timeout = 60): AdHocImportWalkthroughWork
     {
@@ -196,5 +198,85 @@ class AdHocImportWalkthroughScriptTest extends Unit
         $this->expectExceptionMessage('still going on after 0 s');
 
         $work('file');
+    }
+
+    public function testEveryCommandGetsOnlyWhatIsLeftOfTheTimeLimit(): void
+    {
+        $limits = [];
+        $state = 'running';
+        $work = $this->work(
+            static function () use (&$state): string {
+                return $state;
+            },
+            static function (string $command, int $limit) use (&$limits, &$state): array {
+                $limits[] = $limit;
+                $state = str_starts_with($command, 'messenger:consume') ? 'done' : 'merging';
+                if (count($limits) === 1) {
+                    sleep(2);
+                }
+
+                return [0, ''];
+            }
+        );
+
+        $work('file');
+
+        $this->assertCount(2, $limits);
+        $this->assertGreaterThanOrEqual(59, $limits[0]);
+        $this->assertLessThanOrEqual(58, $limits[1]);
+    }
+
+    public function testNoWorkerStartsOnceTheTimeLimitIsSpent(): void
+    {
+        $commands = [];
+        $work = $this->work(
+            static fn (): string => 'running',
+            static function (string $command) use (&$commands): array {
+                $commands[] = $command;
+                sleep(2);
+
+                return [0, ''];
+            },
+            1
+        );
+
+        try {
+            $work('file');
+            $this->fail('The work did not give up.');
+        } catch (AdHocImportWalkthroughFailure $failure) {
+            $this->assertStringContainsString('still going on after 1 s', $failure->getMessage());
+        }
+
+        $this->assertCount(1, $commands);
+    }
+
+    public function testAConsoleCommandGivesItsExitCodeAndAllItsOutput(): void
+    {
+        $console = new AdHocImportWalkthroughConsole("sh -c 'echo out; echo err >&2; exit 3' --");
+
+        $this->assertSame([3, "out\nerr\n"], $console('ignored', 10));
+    }
+
+    public function testAWorkerPastItsTimeLimitIsStoppedAndReported(): void
+    {
+        $directory = sys_get_temp_dir() . '/' . uniqid('ad-hoc-walkthrough-console-', true);
+        mkdir($directory);
+        $worker = $directory . '/worker.sh';
+        $pidFile = $directory . '/pid';
+        file_put_contents($worker, sprintf("echo started\necho $$ > %s\nexec sleep 60\n", escapeshellarg($pidFile)));
+
+        try {
+            $started = microtime(true);
+            (new AdHocImportWalkthroughConsole('sh ' . escapeshellarg($worker)))('ignored', 1);
+            $this->fail('The worker was not stopped.');
+        } catch (AdHocImportWalkthroughFailure $failure) {
+            $this->assertLessThan(30, microtime(true) - $started);
+            $this->assertStringContainsString('stopped after 1 s', $failure->getMessage());
+            $this->assertStringContainsString('started', $failure->getMessage());
+            $this->assertDirectoryDoesNotExist('/proc/' . trim((string) file_get_contents($pidFile)));
+        } finally {
+            array_map(unlink(...), (array) glob($directory . '/*'));
+            rmdir($directory);
+        }
     }
 }
