@@ -48,6 +48,12 @@ class AdHocImportRunEndToEndTest extends Unit
 {
     private const string TARGET = '/di-ad-hoc-run/target';
 
+    private const string FIRST_OBJECT = self::TARGET . '/RUN-1';
+
+    private const string SECOND_OBJECT = self::TARGET . '/RUN-2';
+
+    private const string NOTHING_WRITTEN = 'nothing is written';
+
     private const string CSV = "sku;name\nRUN-1;Chair\nRUN-1;Again\nRUN-2;Lamp\n";
 
     protected UnitTester $tester;
@@ -195,13 +201,13 @@ class AdHocImportRunEndToEndTest extends Unit
         $this->assertSame(2, $run->getCreated());
         $this->assertSame(0, $run->getFailed());
 
-        $object = DataObject::getByPath(self::TARGET . '/RUN-1');
+        $object = DataObject::getByPath(self::FIRST_OBJECT);
         $this->assertInstanceOf(Concrete::class, $object);
         $this->assertSame('Chair', $object->get('name'));
         $this->assertFalse($object->isPublished(), 'new objects stay unpublished');
         $this->assertSame($this->user->getId(), $object->getUserModification());
         $this->assertSame($this->user->getId(), $object->getUserOwner());
-        $this->assertInstanceOf(Concrete::class, DataObject::getByPath(self::TARGET . '/RUN-2'));
+        $this->assertInstanceOf(Concrete::class, DataObject::getByPath(self::SECOND_OBJECT));
 
         $this->assertSame([
             ['pre', '', 'RUN-1'],
@@ -239,7 +245,7 @@ class AdHocImportRunEndToEndTest extends Unit
         $this->assertSame('done', $run->getState());
         $this->assertSame(0, $run->getCreated());
         $this->assertSame(2, $run->getFailed());
-        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-1'), 'nothing is written');
+        $this->assertNull(DataObject::getByPath(self::FIRST_OBJECT), self::NOTHING_WRITTEN);
 
         $service->discard($fileId);
     }
@@ -258,8 +264,8 @@ class AdHocImportRunEndToEndTest extends Unit
         $this->assertSame('done', $run->getState());
         $this->assertSame([0, 2], [$run->getCreated(), $run->getFailed()]);
         $this->assertSame(['create', 'create'], array_column($run->getFailures(), 'action'), 'refused per object');
-        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-1'), 'nothing is written');
-        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-2'), 'nothing is written');
+        $this->assertNull(DataObject::getByPath(self::FIRST_OBJECT), self::NOTHING_WRITTEN);
+        $this->assertNull(DataObject::getByPath(self::SECOND_OBJECT), self::NOTHING_WRITTEN);
 
         $service->discard($fileId);
     }
@@ -279,8 +285,8 @@ class AdHocImportRunEndToEndTest extends Unit
         $run = $service->status($fileId);
         $this->assertSame('done', $run->getState());
         $this->assertSame([1, 1], [$run->getCreated(), $run->getFailed()]);
-        $this->assertInstanceOf(Concrete::class, DataObject::getByPath(self::TARGET . '/RUN-1'));
-        $this->assertNull(DataObject::getByPath(self::TARGET . '/RUN-2'), 'no longer the right to write it');
+        $this->assertInstanceOf(Concrete::class, DataObject::getByPath(self::FIRST_OBJECT));
+        $this->assertNull(DataObject::getByPath(self::SECOND_OBJECT), 'no longer the right to write it');
 
         $service->discard($fileId);
     }

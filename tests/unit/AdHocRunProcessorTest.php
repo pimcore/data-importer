@@ -46,6 +46,10 @@ class AdHocRunProcessorTest extends Unit
 {
     private const string FILE_ID = '123e4567-e89b-12d3-a456-426614174000';
 
+    private const string FOLDER_PATH = '/Products/';
+
+    private const string CLOSE_FAILURE = 'merge refused';
+
     private string $storage;
 
     private FileStore $files;
@@ -175,7 +179,7 @@ class AdHocRunProcessorTest extends Unit
         $object = $this->createStub(Concrete::class);
         $object->method('isAllowed')->willReturn(true);
         $object->method('setUserModification')->willReturnSelf();
-        $object->method('getRealPath')->willReturn('/Products/');
+        $object->method('getRealPath')->willReturn(self::FOLDER_PATH);
 
         return $object;
     }
@@ -184,7 +188,7 @@ class AdHocRunProcessorTest extends Unit
     {
         $object = $this->createStub(Concrete::class);
         $object->method('isAllowed')->willReturnCallback(static fn (string $type): bool => $type === 'view');
-        $object->method('getRealPath')->willReturn('/Products/');
+        $object->method('getRealPath')->willReturn(self::FOLDER_PATH);
 
         return $object;
     }
@@ -476,7 +480,7 @@ class AdHocRunProcessorTest extends Unit
         $user = AdHocRunFixtures::user();
         $object = $this->createStub(Concrete::class);
         $object->method('setUserModification')->willReturnSelf();
-        $object->method('getRealPath')->willReturn('/Products/');
+        $object->method('getRealPath')->willReturn(self::FOLDER_PATH);
         $object->method('isAllowed')->willReturnCallback(
             static fn (string $type, ?User $checked): bool => $type === 'view' || $checked === $user
         );
@@ -536,7 +540,7 @@ class AdHocRunProcessorTest extends Unit
         $fileId = $this->storedFile();
         $this->storeRun($fileId, 2);
         $user = AdHocRunFixtures::user();
-        $writer = $this->closingWriter([new RowFailure(3, 'SKU-2', 'update', 'merge refused', ['SKU-2', 'Lamp'])]);
+        $writer = $this->closingWriter([new RowFailure(3, 'SKU-2', 'update', self::CLOSE_FAILURE, ['SKU-2', 'Lamp'])]);
         $plan = AdHocRunFixtures::plan(
             [
                 new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()),
@@ -560,8 +564,8 @@ class AdHocRunProcessorTest extends Unit
         $stored = json_decode((string) $this->files->readFailedRows(AdHocRunFixtures::USER_ID, $fileId), true);
         $this->assertCount(1, $stored['rows']);
         $this->assertSame(['SKU-2', 'Lamp'], $stored['rows'][0]['values']);
-        $this->assertSame('merge refused', $stored['rows'][0]['message']);
-        $this->assertStringContainsString('merge refused', $this->notifications[0]->getMessage());
+        $this->assertSame(self::CLOSE_FAILURE, $stored['rows'][0]['message']);
+        $this->assertStringContainsString(self::CLOSE_FAILURE, $this->notifications[0]->getMessage());
     }
 
     public function testARunEndsAndTellsTheUserEvenIfItsWriterCannotClose(): void

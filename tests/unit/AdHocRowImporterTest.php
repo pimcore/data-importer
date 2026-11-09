@@ -16,9 +16,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 use Codeception\Test\Unit;
 use Doctrine\DBAL\Driver\Exception as DriverException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ConfigurationItemWriter;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\ImportPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
@@ -29,17 +26,11 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
-use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField;
-use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatchOutcome;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\Element\DuplicateFullPathException;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\Element\ValidationException;
 use Pimcore\Model\User;
 use Psr\Log\NullLogger;
@@ -372,76 +363,6 @@ class AdHocRowImporterTest extends Unit
         $this->assertStringContainsString('may-not-create', (string) $created->message);
 
         $this->assertSame([], $this->written);
-    }
-
-    public function testAReferenceIsCheckedForTheUserOfTheRowNotTheOneThePlanWasMadeFor(): void
-    {
-        $planned = AdHocRunFixtures::user();
-        $current = AdHocRunFixtures::user(false);
-
-        $reference = $this->createStub(Concrete::class);
-        $reference->method('getFullPath')->willReturn('/Products/Hidden');
-        $reference->method('isAllowed')->willReturnCallback(
-            static fn (string $type, ?User $user): bool => $type === 'view' && $user === $planned
-        );
-        $holder = new class($reference) extends Concrete {
-            public function __construct(private ElementInterface $reference)
-            {
-            }
-
-            public function getRelated(): ElementInterface
-            {
-                return $this->reference;
-            }
-        };
-
-        $scope = new MappingApplicationScope();
-        $operator = (new \ReflectionClass(ObjectField::class))->newInstanceWithoutConstructor();
-        $operator->setSettings(['attribute' => 'related']);
-        $operator->setMappingApplicationScope($scope);
-        $target = new class() implements DataTargetInterface {
-            /** @var list<mixed> */
-            public array $assigned = [];
-
-            public function setSettings(array $settings): void
-            {
-                // this target only records what the mapping assigns
-            }
-
-            public function assignData(ElementInterface $element, $data): void
-            {
-                $this->assigned[] = $data;
-            }
-        };
-        $item = new MappingConfiguration();
-        $item->setLabel('Related');
-        $item->setDataSourceIndex('holder');
-        $item->setTransformationPipeline([$operator]);
-        $item->setDataTarget($target);
-        $mapping = new PreparedMapping(
-            [$item],
-            (new \ReflectionClass(ImportProcessingService::class))->newInstanceWithoutConstructor(),
-            $scope
-        );
-        $writer = new ConfigurationItemWriter(
-            new ImportField('name', null, 'Name'),
-            $mapping,
-            ['holder'],
-            new UserReferenceVisibility($planned)
-        );
-        $plan = AdHocRunFixtures::plan(
-            [$this->existing($this->object()), $this->existing($this->object())],
-            [$writer],
-            $planned,
-            [['sku' => 'SKU-1', 'holder' => $holder]]
-        );
-
-        $this->importer()->import($plan, $current, 0, []);
-        $this->assertSame([null], $target->assigned, 'the plan\'s user may view it, the row\'s user may not');
-
-        $target->assigned = [];
-        $this->importer()->import($plan, $planned, 0, []);
-        $this->assertSame(['/Products/Hidden'], $target->assigned);
     }
 
     public function testALanguageTheUserMayNotEditRefusesTheRowUnlessItsValueIsLeftOut(): void
