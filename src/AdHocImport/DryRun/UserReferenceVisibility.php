@@ -43,6 +43,21 @@ final readonly class UserReferenceVisibility implements ReferenceVisibilityInter
     }
 
     /**
+     * Whether the value holds an element the user may not view.
+     */
+    public function hidesAnElementIn(mixed $value): bool
+    {
+        if ($value instanceof ElementInterface) {
+            return !$this->isVisible($value);
+        }
+        if ($value instanceof ImageGallery) {
+            $value = array_map(static fn (?Hotspotimage $item) => $item?->getImage(), $value->getItems());
+        }
+
+        return is_array($value) && array_filter($value, $this->hidesAnElementIn(...)) !== [];
+    }
+
+    /**
      * The value without the elements the user may not view: such an element counts as not found.
      */
     public function visibleIn(mixed $value): mixed

@@ -71,26 +71,38 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame(['Chair', null], $object->written);
     }
 
-    public function testAColumnWriterForAUserDropsFromAListOnlyTheElementsTheyMayNotView(): void
+    public function testAColumnWriterForAUserRefusesASingleElementTheyMayNotView(): void
     {
         $user = AdHocRunFixtures::user(false);
-        $visible = $this->element($user, true);
         $writer = new ColumnWriter(
             new ImportField('name', null, 'Name'),
             1,
-            new ConvertedColumn([[$this->element($user, false), $visible]], [false], [false], null)
+            new ConvertedColumn([$this->element($user, false)], [false], [false], null)
         );
         $object = $this->writable();
 
-        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
-        $this->assertSame([[$visible], null], $object->written);
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1']));
+        $this->assertNull($object->written, 'the field keeps what it holds');
     }
 
-    public function testAColumnWriterForAUserKeepsTheKeysOfAKeyedValue(): void
+    public function testAColumnWriterForAUserRefusesAListHoldingAnElementTheyMayNotView(): void
     {
         $user = AdHocRunFixtures::user(false);
-        $visible = $this->element($user, true);
-        $value = ['hidden' => $this->element($user, false), 'visible' => $visible];
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([[$this->element($user, false), $this->element($user, true)]], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertNull($object->written, 'the list is not shortened');
+    }
+
+    public function testAColumnWriterForAUserRefusesAKeyedValueHoldingAnElementTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $value = ['visible' => $this->element($user, true), 'hidden' => $this->element($user, false)];
         $writer = new ColumnWriter(
             new ImportField('name', null, 'Name'),
             1,
@@ -98,20 +110,48 @@ class AdHocDryRunWritersTest extends Unit
         );
         $object = $this->writable();
 
-        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
-        $this->assertSame([['visible' => $visible], null], $object->written);
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertNull($object->written);
     }
 
-    public function testAColumnWriterForAUserDropsFromAGalleryTheImagesTheyMayNotView(): void
+    public function testAColumnWriterForAUserRefusesAGalleryHoldingAnImageTheyMayNotView(): void
     {
         $user = AdHocRunFixtures::user(false);
-        $hidden = $this->createStub(Image::class);
-        $hidden->method('isAllowed')->willReturn(false);
-        $visible = $this->createStub(Image::class);
-        $visible->method('isAllowed')->willReturnCallback(
-            static fn (string $type, ?User $asked): bool => $type === 'view' && $asked === $user
+        $gallery = new ImageGallery([
+            new Hotspotimage($this->image($user, true)),
+            null,
+            new Hotspotimage($this->image($user, false)),
+        ]);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$gallery], [false], [false], null)
         );
-        $gallery = new ImageGallery([new Hotspotimage($hidden), null, new Hotspotimage($visible)]);
+        $object = $this->writable();
+
+        $this->assertSame(ValueError::Invalid, $writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertNull($object->written, 'the gallery is not shortened');
+    }
+
+    public function testAColumnWriterForAUserWritesAListOfElementsTheyMayAllView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $list = [$this->element($user, true), $this->element($user, true)];
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$list], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertSame([$list, null], $object->written);
+    }
+
+    public function testAColumnWriterForAUserWritesAGalleryOfImagesTheyMayAllView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $gallery = new ImageGallery([new Hotspotimage($this->image($user, true)), null, new Hotspotimage()]);
         $writer = new ColumnWriter(
             new ImportField('name', null, 'Name'),
             1,
@@ -120,10 +160,7 @@ class AdHocDryRunWritersTest extends Unit
         $object = $this->writable();
 
         $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
-        $this->assertInstanceOf(ImageGallery::class, $object->written[0]);
-        $items = $object->written[0]->getItems();
-        $this->assertCount(1, $items);
-        $this->assertSame($visible, $items[0]?->getImage());
+        $this->assertSame([$gallery, null], $object->written);
     }
 
     public function testAColumnWriterWritesAnEmptyCellAsNull(): void
@@ -246,9 +283,6 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertNull($writer->fileValue([]), 'no column in the row');
     }
 
-    /**
-     * An object with a field `name` that records what is written into it.
-     */
     private function element(User $user, bool $visible): Concrete
     {
         $element = $this->createStub(Concrete::class);
@@ -259,6 +293,19 @@ class AdHocDryRunWritersTest extends Unit
         return $element;
     }
 
+    private function image(User $user, bool $visible): Image
+    {
+        $image = $this->createStub(Image::class);
+        $image->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $visible && $type === 'view' && $asked === $user
+        );
+
+        return $image;
+    }
+
+    /**
+     * An object with a field `name` that records what is written into it.
+     */
     private function writable(): Concrete
     {
         return new class() extends Concrete {

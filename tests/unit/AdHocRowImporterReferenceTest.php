@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ConfigurationItemWriter
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowOutcome;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
@@ -184,11 +185,12 @@ class AdHocRowImporterReferenceTest extends Unit
         $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
         $plan = AdHocRunFixtures::plan([$match, $match], [$writer], $planned, [['sku' => 'SKU-1', 'holder' => '7']]);
 
-        $this->importer()->import($plan, $current, 0, []);
-        $this->assertSame([null], $object->assigned, 'the plan\'s user may view it, the row\'s user may not');
+        $outcome = $this->importer()->import($plan, $current, 0, []);
+        $this->assertTrue($outcome->isFailure(), 'the plan\'s user may view it, the row\'s user may not');
+        $this->assertSame([], $object->assigned, 'the object\'s relation stays as it is');
 
-        $object->assigned = [];
-        $this->importer()->import($plan, $planned, 0, []);
+        $outcome = $this->importer()->import($plan, $planned, 0, []);
+        $this->assertSame(RowOutcome::UPDATED, $outcome->result);
         $this->assertSame([$reference], $object->assigned);
     }
 }

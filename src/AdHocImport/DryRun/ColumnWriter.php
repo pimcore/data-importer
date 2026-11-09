@@ -71,7 +71,12 @@ final readonly class ColumnWriter implements FieldWriter
 
         try {
             $value = $this->converted->values[$index];
-            $this->target->assignData($object, $this->references === null ? $value : $this->references->visibleIn($value));
+            // filtering would clear or shorten what the field holds, and the row would still count as saved
+            if ($this->references?->hidesAnElementIn($value) === true) {
+                return ValueError::Invalid;
+            }
+
+            $this->target->assignData($object, $value);
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
             if ($throwable instanceof \Error && !$throwable instanceof \TypeError) {
                 throw $throwable;
