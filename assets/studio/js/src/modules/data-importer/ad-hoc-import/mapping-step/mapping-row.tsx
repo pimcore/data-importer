@@ -149,7 +149,14 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         <span className={ styles.fieldIcon }><Icon value={ iconOf(field) } /></span>
         <span className={ styles.fieldName }>{ field?.title ?? choice.field }</span>
         <span className={ styles.crumb }>{ field?.group.join(' › ') }</span>
-        { auto && <Tag color="purple">{ t(`${MAPPING}.auto`) }</Tag> }
+        { auto && (
+          <Tag
+            color="purple"
+            iconName="auto-save"
+          >
+            { t(`${MAPPING}.auto`) }
+          </Tag>
+        ) }
       </button>
       <ChoiceDetails
         languages={ languages }
