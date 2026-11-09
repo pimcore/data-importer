@@ -13,17 +13,16 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\CsvText;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\BranchMergeInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DecisionLock;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\FailedRowsCsv;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowWriterInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunQueueInterface;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\SpreadsheetCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportRunResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\Traits\CurrentUserResolverTrait;
@@ -145,20 +144,12 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             throw new NotFoundHttpException(sprintf('No failed rows of file %s found', $fileId));
         }
 
-        $lines = [[
+        return FailedRowsCsv::of(
+            $failed['columns'],
+            $failed['rows'],
             $this->messages->columnName('row', $user),
-            ...array_map(SpreadsheetCell::safe(...), $failed['columns']),
-            $this->messages->columnName('error', $user),
-        ]];
-        foreach ($failed['rows'] as $row) {
-            $lines[] = [
-                $row['row'],
-                ...array_map(SpreadsheetCell::safe(...), $row['values']),
-                SpreadsheetCell::safe($row['message']),
-            ];
-        }
-
-        return CsvText::of($lines);
+            $this->messages->columnName('error', $user)
+        );
     }
 
     public function discard(string $fileId): void
