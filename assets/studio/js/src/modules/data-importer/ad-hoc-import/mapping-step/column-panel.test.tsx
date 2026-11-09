@@ -117,6 +117,17 @@ describe('the side panel of a column', () => {
     expect(screen.getByText('Name (DE): Cannot be converted').className).toBe('failed')
   })
 
+  it('shows a step without a value for the first row as empty', async () => {
+    mockPreview.mockResolvedValue({
+      data: answer({ steps: [{ type: 'trim', resultType: 'default', error: null, values: [] }] })
+    })
+    renderPanel()
+    await settle()
+
+    const chain = screen.getByRole('complementary', { name: 'Column Bezeichnung' }).querySelectorAll('span')
+    expect(Array.from(chain).some((chip) => chip.textContent === '')).toBe(true)
+  })
+
   it('reports whether the column reaches its field, and only when that changes', async () => {
     mockPreview.mockResolvedValue({ data: answer({ fits: false }) })
     renderPanel()
