@@ -18,7 +18,6 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
-use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Model\User;
@@ -132,11 +131,11 @@ final readonly class TransformationChain
         $results = [];
         if ($conversion !== false) {
             [$type, $data, $failed] = $this->convert($conversion, $type, count($operators) + 1, $data, $failed, $user);
-            $results = $this->cells($data, $failed);
+            $results = CellItems::cells($data, $failed);
         }
 
         return new AdHocImportTransformationResponse(
-            $this->cells($values, array_fill(0, count($values), false)),
+            CellItems::cells($values, array_fill(0, count($values), false)),
             $stepResults,
             $conversion === false ? null : $conversion,
             $type,
@@ -241,7 +240,7 @@ final readonly class TransformationChain
                 'type' => $steps[$position]['type'],
                 'resultType' => $type,
                 'error' => $error,
-                'values' => $type === null ? [] : $this->cells($data, $failed),
+                'values' => $type === null ? [] : CellItems::cells($data, $failed),
             ];
         }
 
@@ -498,21 +497,5 @@ final readonly class TransformationChain
         }
 
         return [$data, $failed];
-    }
-
-    /**
-     * @param list<mixed> $data
-     * @param list<bool> $failed
-     *
-     * @return list<AdHocImportTransformationCell>
-     */
-    private function cells(array $data, array $failed): array
-    {
-        $cells = [];
-        foreach ($data as $row => $value) {
-            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : CellItems::of($value), $failed[$row]);
-        }
-
-        return $cells;
     }
 }

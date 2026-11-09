@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 
+use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -24,6 +25,22 @@ use Pimcore\Model\Element\ElementInterface;
 final class CellItems
 {
     private const string DATE_FORMAT = 'Y-m-d';
+
+    /**
+     * @param list<mixed> $data
+     * @param list<bool> $failed
+     *
+     * @return list<AdHocImportTransformationCell>
+     */
+    public static function cells(array $data, array $failed): array
+    {
+        $cells = [];
+        foreach ($data as $row => $value) {
+            $cells[] = new AdHocImportTransformationCell($failed[$row] ? [] : self::of($value), $failed[$row]);
+        }
+
+        return $cells;
+    }
 
     /**
      * @return list<string>
