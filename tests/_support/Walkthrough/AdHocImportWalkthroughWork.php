@@ -39,7 +39,7 @@ final readonly class AdHocImportWalkthroughWork
         while ($this->goesOn($fileId)) {
             $left = $deadline - time();
             if ($left <= 0) {
-                throw new \RuntimeException(
+                throw new AdHocImportWalkthroughFailure(
                     sprintf('The import of %s is still going on after %d s.', $fileId, $this->timeout)
                 );
             }
@@ -65,7 +65,7 @@ final readonly class AdHocImportWalkthroughWork
     {
         [$exit, $output] = ($this->console)($command);
         if ($exit !== 0) {
-            throw new \RuntimeException(sprintf("The worker failed (exit %d):\n%s", $exit, $output));
+            throw new AdHocImportWalkthroughFailure(sprintf("The worker failed (exit %d):\n%s", $exit, $output));
         }
     }
 }

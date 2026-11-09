@@ -29,8 +29,9 @@ class AdHocImportWalkthroughScriptTest extends Unit
         mkdir($cwd);
 
         try {
+            $script = dirname(__DIR__) . '/_support/Walkthrough/run-ad-hoc-import-walkthrough.php';
             $process = proc_open(
-                [PHP_BINARY, dirname(__DIR__) . '/_support/Walkthrough/run-ad-hoc-import-walkthrough.php', ...$arguments],
+                [PHP_BINARY, $script, ...$arguments],
                 [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
                 $pipes,
                 $cwd
@@ -128,7 +129,10 @@ class AdHocImportWalkthroughScriptTest extends Unit
         $work('file');
 
         $this->assertCount(2, $commands);
-        $this->assertSame("messenger:consume 'first' 'second' --limit=10 --time-limit=10 --no-interaction", $commands[1]);
+        $this->assertSame(
+            "messenger:consume 'first' 'second' --limit=10 --time-limit=10 --no-interaction",
+            $commands[1]
+        );
     }
 
     public function testACommandThatFailsEndsTheWorkWithItsOutput(): void

@@ -14,13 +14,9 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\BranchMerge;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\ObjectChanges;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\WriteWay;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DataImporterRunQueue;
-use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\DirectRowWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowImporter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunMessages;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunNotifier;
@@ -39,7 +35,6 @@ use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\WalkthroughStep;
-use Pimcore\Bundle\StaticResolverBundle\Models\DataObject\ConcreteObjectResolver;
 use Pimcore\Bundle\StaticResolverBundle\Models\User\UserResolver;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Contracts\ChangeControl\ConflictPolicy;
@@ -49,7 +44,6 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\Store\InMemoryStore;
-use Symfony\Component\Messenger\MessageBus;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
@@ -159,8 +153,9 @@ class AdHocImportWalkthroughTest extends Unit
     {
         $dispatcher = $this->dispatcher();
         $logger = new NullLogger();
-        $objects = new ConcreteObjectResolver();
-        $users = new UserResolver();
+        $parts = new AdHocBranchWayParts($this->tester, $dispatcher, $branches);
+        $writer = $parts->writer;
+        $merge = $parts->merge;
         $runs = $this->tester->grabService(RunStoreInterface::class);
         $files = $this->tester->grabService(FileStore::class);
         $messages = $this->tester->grabService(RunMessages::class);
@@ -169,27 +164,6 @@ class AdHocImportWalkthroughTest extends Unit
         $dryRun = $this->tester->grabService(AdHocImportDryRunServiceInterface::class);
         $queue = $this->tester->grabService(QueueService::class);
 
-        $writer = (new WriteWay(
-            new DirectRowWriter($dispatcher, $logger),
-            new ObjectChanges(),
-            $objects,
-            $runs,
-            $messages,
-            $branches
-        ))->writer();
-        $merge = new BranchMerge(
-            $runs,
-            $files,
-            $notifier,
-            $messages,
-            new MessageBus(),
-            $dispatcher,
-            $objects,
-            $users,
-            new LockFactory(new InMemoryStore()),
-            $logger,
-            $branches
-        );
         $importer = new RowImporter(
             $writer,
             $this->tester->grabService(MappingApplicationScope::class),
@@ -198,7 +172,18 @@ class AdHocImportWalkthroughTest extends Unit
             $dispatcher,
             $logger
         );
-        $processor = new RunProcessor($runs, $dryRun, $files, $importer, $writer, $messages, $notifier, $users, $logger, $merge);
+        $processor = new RunProcessor(
+            $runs,
+            $dryRun,
+            $files,
+            $importer,
+            $writer,
+            $messages,
+            $notifier,
+            new UserResolver(),
+            $logger,
+            $merge
+        );
         $service = new AdHocImportRunService(
             $this->tester->grabService(SecurityServiceInterface::class),
             $dryRun,

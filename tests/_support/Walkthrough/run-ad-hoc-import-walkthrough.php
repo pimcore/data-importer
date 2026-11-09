@@ -16,7 +16,8 @@ declare(strict_types=1);
  * The ad hoc import walkthrough against a running application, from its project root:
  *
  *   php <bundle checkout>/tests/_support/Walkthrough/run-ad-hoc-import-walkthrough.php
- *   php <bundle checkout>/tests/_support/Walkthrough/run-ad-hoc-import-walkthrough.php --write [--way=direct|branch] [--transports=pimcore_data_import,...] [--console=bin/console]
+ *   php <bundle checkout>/tests/_support/Walkthrough/run-ad-hoc-import-walkthrough.php --write \
+ *       [--way=direct|branch] [--transports=pimcore_data_import,...] [--console=bin/console]
  *
  * Without --write it is a dry run: it prints what a run would do and exits without booting the application or changing
  * anything. --dry-run together with --write is refused before anything is loaded.
@@ -36,6 +37,9 @@ declare(strict_types=1);
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughScript;
 
 require_once __DIR__ . '/WalkthroughStep.php';
+require_once __DIR__ . '/AdHocImportWalkthroughFailure.php';
+require_once __DIR__ . '/AdHocImportWalkthroughFixture.php';
+require_once __DIR__ . '/AdHocImportWalkthroughFile.php';
 require_once __DIR__ . '/AdHocImportWalkthrough.php';
 require_once __DIR__ . '/AdHocImportWalkthroughWork.php';
 require_once __DIR__ . '/AdHocImportWalkthroughScript.php';
