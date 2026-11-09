@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Branch\BranchMerge;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileStore;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
@@ -334,6 +335,24 @@ class AdHocBranchMergeTest extends Unit
         $this->assertNotNull($run->notice);
         $this->assertSame(array_fill(2, 3, $run->notice), $this->failures());
         $this->assertFalse($this->uploadExists());
+    }
+
+    public function testAMergedImportWhoseUploadCannotBeDeletedEndsAllTheSame(): void
+    {
+        $run = $this->branchRun();
+        $storage = $this->createStub(FilesystemOperator::class);
+        $storage->method('delete')->willThrowException(new \RuntimeException('disk gone'));
+        $this->files = new FileStore($storage, new LockFactory(new InMemoryStore()));
+        $this->branches->mergeAnswers = [MergeStatus::merged(
+            self::branch(),
+            [ObjectRef::of(42), ObjectRef::of(43), ObjectRef::created('row-4', 77)]
+        )];
+
+        $this->merge()->rowsWritten($run, null, AdHocRunFixtures::user(), []);
+
+        $this->assertSame(RunRecord::DONE, $this->stored()->state);
+        $this->assertStringContainsString('disk gone', implode("\n", $this->logged));
+        $this->assertCount(1, $this->notified, 'the user is still told');
     }
 
     public function testMergingWithoutTheRowsThatCannotBeSavedTakesOnlyTheirObjectsOut(): void

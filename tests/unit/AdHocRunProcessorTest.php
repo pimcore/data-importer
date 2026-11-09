@@ -725,6 +725,24 @@ class AdHocRunProcessorTest extends Unit
         $this->assertCount(1, $this->notifications);
     }
 
+    public function testABranchRunOfAUserDeletedMeanwhileWhoseMergeFailsForgetsItsRows(): void
+    {
+        $fileId = $this->storedFile();
+        $run = AdHocRunFixtures::run(['fileId' => $fileId, 'total' => 1, 'branch' => 'branch-1']);
+        $this->runs->save($run);
+        $this->runs->addRecorded($run, new RecordedRow(2, 42, null, 'SKU-1', 'update', 'SKU-1', '/Products', ['SKU-1'], []));
+        $calls = [];
+
+        $merge = $this->branchMerge($calls, new \RuntimeException('db gone'));
+        $this->processor(new \RuntimeException('not asked'), null, 0, branchMerge: $merge)
+            ->processRow($this->queue($fileId), AdHocRunFixtures::USER_ID, $this->item(0));
+
+        $this->assertCount(1, $calls, 'nobody is left to close the branch as');
+        $this->assertSame(RunRecord::DONE, $this->runs->find(AdHocRunFixtures::USER_ID, $fileId)?->state);
+        $this->assertSame([], $this->runs->recorded($run));
+        $this->assertSame([], $this->notifications);
+    }
+
     public function testAQueueItemOfAnEndedOrUnknownRunIsIgnored(): void
     {
         $fileId = $this->storedFile();
