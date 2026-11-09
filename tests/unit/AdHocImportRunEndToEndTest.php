@@ -109,15 +109,16 @@ class AdHocImportRunEndToEndTest extends Unit
      * @param list<array<string, string>> $columns
      */
     private function parameters(
-        array $columns = [['column' => 'sku', 'field' => 'sku'], ['column' => 'name', 'field' => 'name']]
+        array $columns = [['column' => 'sku', 'field' => 'sku'], ['column' => 'name', 'field' => 'name']],
+        string $matchBy = AdHocImportDryRunParameters::MATCH_BY_FIELD
     ): AdHocImportRunParameters {
         return new AdHocImportRunParameters(
             new AdHocImportDryRunParameters(
                 $this->folderId,
                 $this->class->getId(),
-                AdHocImportDryRunParameters::MATCH_BY_FIELD,
+                $matchBy,
                 'sku',
-                'sku',
+                $matchBy === AdHocImportDryRunParameters::MATCH_BY_FIELD ? 'sku' : null,
                 columns: $columns
             ),
             AdHocImportDryRunServiceInterface::SKIP_ROWS,
@@ -223,6 +224,46 @@ class AdHocImportRunEndToEndTest extends Unit
         $notifications->setCondition('recipient = ?', [$this->user->getId()]);
         $this->assertSame(1, $notifications->getTotalCount());
         $this->assertStringContainsString('products.csv', $notifications->getNotifications()[0]->getTitle());
+
+        $service->discard($fileId);
+    }
+
+    public function testARunThatOnlyCreatesLeavesTheObjectWithTheSameValueAlone(): void
+    {
+        $class = '\\Pimcore\\Model\\DataObject\\' . RowMatcherModel::CLASS_NAME;
+        /** @var Concrete $existing */
+        $existing = new $class();
+        $existing->setParent(DataObject::getById($this->folderId));
+        $existing->setKey('existing');
+        $existing->setPublished(true);
+        $existing->set('sku', 'RUN-1');
+        $existing->set('name', 'Stool');
+        $existing->save();
+        $modified = $existing->getModificationDate();
+
+        $fileId = $this->uploadedFile();
+        $service = $this->tester->grabService(AdHocImportRunServiceInterface::class);
+
+        $started = $service->start($fileId, $this->parameters(matchBy: AdHocImportDryRunParameters::MATCH_BY_NONE));
+
+        $this->assertSame(2, $started->getTotal());
+        $this->assertSame(1, $started->getSkipped(), 'the second RUN-1 names an object the first one creates');
+
+        $this->drainQueue();
+
+        $run = $service->status($fileId);
+        $this->assertSame('done', $run->getState());
+        $this->assertSame([2, 0, 0], [$run->getCreated(), $run->getUpdated(), $run->getFailed()]);
+        $created = DataObject::getByPath(self::FIRST_OBJECT, ['force' => true]);
+        $this->assertInstanceOf(Concrete::class, $created);
+        $this->assertNotSame($existing->getId(), $created->getId());
+        $this->assertSame(['RUN-1', 'Chair'], [$created->get('sku'), $created->get('name')]);
+        $this->assertInstanceOf(Concrete::class, DataObject::getByPath(self::SECOND_OBJECT));
+
+        $unchanged = DataObject::getById((int) $existing->getId(), ['force' => true]);
+        $this->assertInstanceOf(Concrete::class, $unchanged);
+        $this->assertSame('Stool', $unchanged->get('name'));
+        $this->assertSame($modified, $unchanged->getModificationDate());
 
         $service->discard($fileId);
     }

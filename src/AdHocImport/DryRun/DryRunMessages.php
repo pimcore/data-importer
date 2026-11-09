@@ -90,6 +90,11 @@ final readonly class DryRunMessages
         return $this->say($user, 'object-id', []);
     }
 
+    public function keyLabel(User $user): string
+    {
+        return $this->say($user, 'key', []);
+    }
+
     /**
      * @param 'row'|'error' $name
      */

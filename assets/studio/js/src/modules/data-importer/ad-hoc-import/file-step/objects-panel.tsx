@@ -72,6 +72,10 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
   )
   const hasColumns = columnOptions.length > 0
 
+  // without matching, the column only names the new objects
+  const createsOnly = matchBy === 'none'
+  const columnLabel = createsOnly ? 'data-importer.ad-hoc-import.objects.key-from-column' : 'data-importer.ad-hoc-import.objects.from-column'
+
   return (
     <FormKit.Panel
       title={ t('data-importer.ad-hoc-import.objects.title') }
@@ -94,7 +98,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
       </Form.Item>
 
       <Form.Item
-        extra={ t('data-importer.ad-hoc-import.objects.match-hint') }
+        extra={ t(createsOnly ? 'data-importer.ad-hoc-import.objects.create-only-hint' : 'data-importer.ad-hoc-import.objects.match-hint') }
         label={ t('data-importer.ad-hoc-import.objects.match-by') }
         style={ FORM_ITEM_STYLE }
       >
@@ -106,7 +110,8 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
             onChange={ (next) => { onChange({ ...objects, matchBy: next as MatchBy }) } }
             options={ [
               { value: 'id', label: t('data-importer.ad-hoc-import.objects.match-by.object-id') },
-              { value: 'field', label: t('data-importer.ad-hoc-import.objects.match-by.field') }
+              { value: 'field', label: t('data-importer.ad-hoc-import.objects.match-by.field') },
+              { value: 'none', label: t('data-importer.ad-hoc-import.objects.match-by.none') }
             ] }
             value={ matchBy }
           />
@@ -122,9 +127,9 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
               value={ matchField }
             />
           ) }
-          <span className={ styles.quiet }>{ t('data-importer.ad-hoc-import.objects.from-column') }</span>
+          <span className={ styles.quiet }>{ t(columnLabel) }</span>
           <Select
-            aria-label={ t('data-importer.ad-hoc-import.objects.from-column') }
+            aria-label={ t(columnLabel) }
             disabled={ !hasColumns }
             filterOption={ filterByLabel }
             onChange={ (next: string) => { onChange({ ...objects, matchColumn: next }) } }

@@ -50,6 +50,8 @@ class RowMatcherTest extends Unit
 
     private const OTHER_VALUE = 'other value';
 
+    private const ACCENTED_NAME = 'Müller';
+
     private const SAME_TITLE = 'Same title';
 
     private const NOT_A_NUMBER = '12abc';
@@ -449,6 +451,91 @@ class RowMatcherTest extends Unit
         $this->assertSame(2, $second->firstRow);
     }
 
+    public function testCreatingOnlyMakesANewObjectEvenWhereAnObjectHasTheValue(): void
+    {
+        $byField = $this->createObject(self::TARGET, 'SKU-1');
+        $byId = $this->createObject(self::TARGET, null);
+        $target = DataObject::getByPath(self::TARGET);
+        $matcher = $this->matcher($this->createOnly());
+
+        $sameValue = $matcher->match($this->row('SKU-1'), 2);
+        $sameId = $matcher->match($this->row((string) $byId->getId()), 3);
+
+        $this->assertSame(RowMatchOutcome::New, $sameValue->outcome);
+        $this->assertNotSame($byField, $sameValue->element);
+        $this->assertNull($sameValue->element?->getId());
+        $this->assertSame('SKU-1', $sameValue->element?->getKey());
+        $this->assertSame($target->getId(), $sameValue->element?->getParentId());
+        $this->assertFalse($sameValue->element?->getPublished());
+        $this->assertSame(RowMatchOutcome::New, $sameId->outcome);
+        $this->assertSame((string) $byId->getId(), $sameId->element?->getKey());
+    }
+
+    public function testCreatingOnlyMakesAKeyTwiceInTheFileAnErrorRowNamingTheFirstRow(): void
+    {
+        $matcher = $this->matcher($this->createOnly());
+
+        $first = $matcher->match($this->row('SKU-1'), 2);
+        $again = $matcher->match($this->row(' SKU-1 '), 5);
+        $sameKey = $matcher->match($this->row('A/B'), 6);
+        $sameKeyAgain = $matcher->match($this->row('A-B'), 7);
+
+        $this->assertSame(RowMatchOutcome::New, $first->outcome);
+        $this->assertSame(RowMatchOutcome::KeyTaken, $again->outcome);
+        $this->assertSame(2, $again->firstRow);
+        $this->assertNull($again->element);
+        $this->assertSame(RowMatchOutcome::New, $sameKey->outcome);
+        $this->assertSame(RowMatchOutcome::KeyTaken, $sameKeyAgain->outcome);
+        $this->assertSame(6, $sameKeyAgain->firstRow);
+    }
+
+    public function testCreatingOnlyTellsKeysApartThatDifferInCaseOrAccent(): void
+    {
+        $matcher = $this->matcher($this->createOnly());
+
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('abc'), 2)->outcome);
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('ABC'), 3)->outcome);
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row(self::ACCENTED_NAME), 4)->outcome);
+        $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('Muller'), 5)->outcome);
+    }
+
+    public function testCreatingOnlyMakesAKeyTakenInTheFolderForNewObjectsAnErrorRowNamingIt(): void
+    {
+        $taken = $this->createObject(self::NEW_FOLDER, self::OTHER_VALUE, 'SKU-1');
+        $this->createObject(self::TARGET, self::OTHER_VALUE, 'SKU-2');
+        $configuration = $this->createOnly(newObjectFolder: self::NEW_FOLDER);
+
+        $takenThere = $this->matchOne($configuration, 'SKU-1');
+        $takenInTarget = $this->matchOne($configuration, 'SKU-2');
+
+        $this->assertSame(RowMatchOutcome::KeyTaken, $takenThere->outcome);
+        $this->assertSame([$taken->getId()], $takenThere->objectIds);
+        $this->assertNull($takenThere->firstRow);
+        $this->assertSame(RowMatchOutcome::New, $takenInTarget->outcome);
+        $this->assertSame(DataObject::getByPath(self::NEW_FOLDER)?->getId(), $takenInTarget->element?->getParentId());
+    }
+
+    public function testCreatingOnlyMakesAnEmptyKeyAnErrorRow(): void
+    {
+        $matcher = $this->matcher($this->createOnly());
+
+        $this->assertSame(RowMatchOutcome::EmptyValue, $matcher->match($this->row('  '), 2)->outcome);
+        $this->assertSame(RowMatchOutcome::EmptyValue, $matcher->match($this->row("\u{200B}"), 3)->outcome);
+    }
+
+    public function testCreatingOnlyRefusesAFieldToMatchBy(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->matcher(new MatchingConfiguration(
+            $this->class->getId(),
+            self::COLUMN,
+            self::TARGET,
+            'sku',
+            createOnly: true
+        ));
+    }
+
     public static function emptyCells(): array
     {
         return [
@@ -516,7 +603,7 @@ class RowMatcherTest extends Unit
         $this->assertSame(RowMatchOutcome::New, $matcher->match($this->row('Muller'), 3)->outcome);
 
         $sameCase = $matcher->match($this->row('ABC'), 4);
-        $sameAccent = $matcher->match($this->row('Müller'), 5);
+        $sameAccent = $matcher->match($this->row(self::ACCENTED_NAME), 5);
 
         $this->assertSame(RowMatchOutcome::DuplicateInFile, $sameCase->outcome);
         $this->assertSame(2, $sameCase->firstRow);
@@ -527,7 +614,7 @@ class RowMatcherTest extends Unit
 
     public function testTheDatabaseFindsWhatTheMatcherTreatsAsOneValue(): void
     {
-        $object = $this->createObject(self::TARGET, 'Müller');
+        $object = $this->createObject(self::TARGET, self::ACCENTED_NAME);
 
         $this->assertSame($object->getId(), $this->matchOne($this->byField(), 'MULLER')->element?->getId());
     }
@@ -1069,6 +1156,17 @@ class RowMatcherTest extends Unit
     private function byField(): MatchingConfiguration
     {
         return $this->configuration(attributeName: 'sku');
+    }
+
+    private function createOnly(?string $newObjectFolder = null): MatchingConfiguration
+    {
+        return new MatchingConfiguration(
+            $this->class->getId(),
+            self::COLUMN,
+            self::TARGET,
+            newObjectFolder: $newObjectFolder,
+            createOnly: true
+        );
     }
 
     private function byObjectId(): MatchingConfiguration

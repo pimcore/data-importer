@@ -77,6 +77,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
 
     private const string HEIGHT_VALUE = '30 cm';
 
+    private const string NOTHING_WRITTEN = 'nothing is written';
+
     private const string FILE_WITHOUT_WEIGHT = "sku;weight\nSKU-1;\n";
 
     private const string OBJECT_NAMESPACE = '\\Pimcore\\Model\\DataObject\\';
@@ -104,6 +106,8 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
     private const string CLOSED_FOLDER = self::ROOT . '/closed';
 
     private const string FOUND_OUTSIDE_TARGET = 'Found outside ' . self::TARGET;
+
+    private const string SKU_FOLDER_TAKEN = self::TARGET . ' already holds an object named SKU-FOLDER';
 
     private const string SECRET_NAME = 'Secret name';
 
@@ -205,7 +209,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
                 7 => '2 objects have sku SKU-TWICE',
                 8 => 'Found in ' . self::ELSEWHERE . ', outside ' . self::TARGET,
                 9 => 'sku is empty',
-                10 => self::TARGET . ' already holds an object named SKU-FOLDER'],
+                10 => self::SKU_FOLDER_TAKEN],
             array_map(
                 static fn (array $row): ?string => $row['error'],
                 array_filter($rows, static fn (array $row): bool => $row['action'] === null)
@@ -246,7 +250,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
         $this->assertSame(['old' => 'Chair', 'new' => 'Stool'], $xlsxRows[2]['values'][0]);
         $this->assertSame('No object has the ID 999999999', $xlsxRows[3]['error']);
 
-        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
     }
 
     // the largest file the import takes is answered in one dry run, every row of it, within a bounded memory
@@ -282,7 +286,7 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             array_keys(array_filter($rows, static fn (array $row): bool => $row['invalid'] !== []))
         );
         $this->assertLessThan(256 * 1024 * 1024, $peak, sprintf('peak %.1f MB', $peak / 1024 / 1024));
-        $this->assertSame($before, $this->snapshot(), 'nothing is written');
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
     }
 
     public function testTheSkippedRowsAreKeptPerErrorModeForTheUploaderOnly(): void
@@ -383,6 +387,81 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             'sku',
             columns: $columns
         ));
+    }
+
+    public function testMatchingNoneCountsEveryRowAsNewWithTheErrorRowsOfTheirKeys(): void
+    {
+        $this->createObjects();
+        $before = $this->snapshot();
+        $fileId = $this->upload(
+            "sku;name\nSKU-1;Armchair\nSKU-NEW;Sofa\nSKU-NEW;Again\nSKU-FOLDER;Box\n;Nameless\n",
+            'products.csv'
+        );
+
+        $response = $this->service()->dryRun($fileId, new AdHocImportDryRunParameters(
+            $this->folderId,
+            $this->class->getId(),
+            AdHocImportDryRunParameters::MATCH_BY_NONE,
+            'sku',
+            columns: [['column' => 'sku', 'field' => 'sku'], ['column' => 'name', 'field' => 'name']]
+        ));
+
+        $rows = $this->byRow($response);
+        $this->assertSame(['sku', 'name'], array_column($response->getFields(), 'key'), 'the key column is a field');
+        $this->assertSame(
+            [2 => 'create', 3 => 'create', 4 => null, 5 => null, 6 => null],
+            array_column($rows, 'action', 'row'),
+            'SKU-1 has an object, and still a new one is made'
+        );
+        $this->assertSame(['old' => null, 'new' => 'SKU-1'], $rows[2]['values'][0]);
+        $this->assertSame(
+            [4 => 'Row 3 already creates an object named SKU-NEW',
+                5 => self::SKU_FOLDER_TAKEN,
+                6 => 'Key is empty'],
+            array_map(
+                static fn (array $row): ?string => $row['error'],
+                array_filter($rows, static fn (array $row): bool => $row['action'] === null)
+            )
+        );
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
+    }
+
+    public function testAConfigurationLoadingNothingCountsEveryRowAsNewKeyedByTheFileStepsColumn(): void
+    {
+        $this->createObjects();
+        $before = $this->snapshot();
+        $fileId = $this->upload(
+            "sku;name\nSKU-1;Armchair\nSKU-NEW;Sofa\nSKU-NEW;Again\nSKU-FOLDER;Box\n;Nameless\n",
+            'products.csv'
+        );
+        $configurations = $this->configurationService([$this->notLoadConfiguration()]);
+        $this->assertNull($configurations->listConfigurations()->getConfigurations()[0]['unusable']);
+
+        $rows = $this->byRow($this->service($configurations)->dryRun($fileId, new AdHocImportDryRunParameters(
+            $this->folderId,
+            'ignored',
+            AdHocImportDryRunParameters::MATCH_BY_ID,
+            'sku',
+            configuration: 'new-only',
+            configurationColumns: ['name' => 'name'],
+        )));
+
+        $this->assertSame(
+            [2 => 'create', 3 => 'create', 4 => null, 5 => null, 6 => null],
+            array_column($rows, 'action', 'row'),
+            'SKU-1 has an object, and still a new one is made'
+        );
+        $this->assertSame(['old' => null, 'new' => 'Armchair'], $rows[2]['values'][0]);
+        $this->assertSame(
+            [4 => 'Row 3 already creates an object named SKU-NEW',
+                5 => self::SKU_FOLDER_TAKEN,
+                6 => 'Key is empty'],
+            array_map(
+                static fn (array $row): ?string => $row['error'],
+                array_filter($rows, static fn (array $row): bool => $row['action'] === null)
+            )
+        );
+        $this->assertSame($before, $this->snapshot(), self::NOTHING_WRITTEN);
     }
 
     public function testMatchingByAFieldNeedsTheField(): void
@@ -1911,6 +1990,30 @@ class AdHocImportDryRunTest extends Unit // NOSONAR php:S1200 one fixture for th
             'mappingConfig' => [[
                 'label' => 'Title',
                 'dataSourceIndex' => ['Title'],
+                'transformationPipeline' => [],
+                'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name', 'language' => '']],
+            ]],
+        ]);
+
+        return $configuration;
+    }
+
+    private function notLoadConfiguration(): Configuration
+    {
+        $configuration = $this->createStub(Configuration::class);
+        $configuration->method('getName')->willReturn('new-only');
+        $configuration->method('getType')->willReturn('dataImporterDataObject');
+        $configuration->method('isAllowed')->willReturn(true);
+        $configuration->method('getConfiguration')->willReturn([
+            'interpreterConfig' => ['type' => 'csv', 'settings' => ['skipFirstRow' => true, 'saveHeaderName' => true]],
+            'resolverConfig' => [
+                'dataObjectClassId' => $this->class->getId(),
+                'loadingStrategy' => ['type' => 'notLoad', 'settings' => []],
+                'createLocationStrategy' => ['type' => 'staticPath', 'settings' => ['path' => self::TARGET]],
+            ],
+            'mappingConfig' => [[
+                'label' => 'name',
+                'dataSourceIndex' => ['name'],
                 'transformationPipeline' => [],
                 'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'name', 'language' => '']],
             ]],

@@ -208,6 +208,21 @@ class AdHocImportConfigurationServiceTest extends Unit
         $this->assertNull($configuration['unusable']);
     }
 
+    public function testAConfigurationLoadingNothingCreatesEveryRowKeyedByTheFileStepsColumn(): void
+    {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(
+            loading: ['type' => 'notLoad', 'settings' => []],
+            mapping: [['dataSourceIndex' => ['Price']]]
+        ))])->listConfigurations()->getConfigurations();
+
+        $this->assertSame('none', $configuration['matchBy']);
+        $this->assertNull($configuration['matchField']);
+        $this->assertNull($configuration['matchLanguage']);
+        $this->assertNull($configuration['matchColumn'], 'the file step names the key column');
+        $this->assertSame(['Price'], $configuration['columns']);
+        $this->assertNull($configuration['unusable']);
+    }
+
     public function testTheColumnsAreThoseItsMatchAndMappingReadOnceEach(): void
     {
         [$configuration] = $this->service([$this->configuration('products', $this->config(
@@ -249,7 +264,6 @@ class AdHocImportConfigurationServiceTest extends Unit
             'a class the user may not create' => [['classId' => 'CAR'], 'class'],
             'no class' => [['classId' => ''], 'class'],
             'matching by path' => [['loading' => $byPath], 'matching'],
-            'matching nothing' => [['loading' => ['type' => 'notLoad']], 'matching'],
             'a field without its name' => [
                 ['loading' => ['type' => 'attribute', 'settings' => ['dataSourceIndex' => 'SKU']]],
                 'matching',

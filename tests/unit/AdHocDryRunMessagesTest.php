@@ -112,6 +112,18 @@ class AdHocDryRunMessagesTest extends Unit
         $this->assertSame('Error', $messages->columnName('error', new User()));
     }
 
+    public function testTheKeyLabelNamesTheErrorsOfRowsThatOnlyCreate(): void
+    {
+        $messages = static::englishMessages();
+        $label = $messages->keyLabel(new User());
+
+        $this->assertSame('Key', $label);
+        $this->assertSame(
+            'Key is empty',
+            $messages->rowError(new RowMatch(RowMatchOutcome::EmptyValue, ''), $label, '/target', '/new', new User())
+        );
+    }
+
     public static function englishMessages(): DryRunMessages
     {
         $translator = new Translator('en');

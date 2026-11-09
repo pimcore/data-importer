@@ -272,7 +272,7 @@ export const ConfigurationChoice = ({
               label={ t('data-importer.ad-hoc-import.objects.match-by') }
               style={ FORM_ITEM_STYLE }
             >
-              <Text>{ match(configuration) }</Text>
+              <Text>{ configuration.matchBy === 'none' ? t('data-importer.ad-hoc-import.configuration.match-none') : match(configuration) }</Text>
             </Form.Item>
             <Form.Item
               label={ t('data-importer.ad-hoc-import.objects.new-objects-in') }

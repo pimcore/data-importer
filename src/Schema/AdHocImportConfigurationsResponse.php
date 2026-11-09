@@ -22,7 +22,7 @@ use OpenApi\Attributes\Schema;
  *     name: string,
  *     classId: string|null,
  *     className: string|null,
- *     matchBy: 'id'|'field'|null,
+ *     matchBy: 'id'|'field'|'none'|null,
  *     matchField: string|null,
  *     matchLanguage: string|null,
  *     matchColumn: string|null,
@@ -86,9 +86,9 @@ final readonly class AdHocImportConfigurationsResponse
                     ),
                     new Property(
                         property: 'matchBy',
-                        description: 'What it finds objects by: the object ID or a field',
+                        description: 'What it finds objects by: the object ID or a field, or none to create every row',
                         type: 'string',
-                        enum: ['id', 'field'],
+                        enum: ['id', 'field', 'none'],
                         example: 'field',
                         nullable: true
                     ),
@@ -108,7 +108,7 @@ final readonly class AdHocImportConfigurationsResponse
                     ),
                     new Property(
                         property: 'matchColumn',
-                        description: 'The column holding the value it finds objects by',
+                        description: 'The column holding the value it finds objects by; null when it finds none',
                         type: 'string',
                         example: 'SKU',
                         nullable: true

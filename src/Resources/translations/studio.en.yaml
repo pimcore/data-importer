@@ -369,9 +369,12 @@ data-importer.ad-hoc-import.objects.class: Class
 data-importer.ad-hoc-import.objects.match-by: Match existing objects by
 data-importer.ad-hoc-import.objects.match-by.object-id: Object ID
 data-importer.ad-hoc-import.objects.match-by.field: Field
+data-importer.ad-hoc-import.objects.match-by.none: Don't match
 data-importer.ad-hoc-import.objects.from-column: from column
 data-importer.ad-hoc-import.objects.after-the-file: after the file
 data-importer.ad-hoc-import.objects.match-hint: Found objects are updated where they are.
+data-importer.ad-hoc-import.objects.key-from-column: key from column
+data-importer.ad-hoc-import.objects.create-only-hint: Each row creates a new object, named by the column's value.
 data-importer.ad-hoc-import.objects.new-objects-in: New objects in
 data-importer.ad-hoc-import.objects.optional: (optional)
 data-importer.ad-hoc-import.objects.new-objects-hint: 'Empty: the folder you clicked.'
@@ -420,6 +423,7 @@ data-importer.ad-hoc-import.configuration.replaces: Its class, its match and its
 data-importer.ad-hoc-import.configuration.match-object-id: 'Object ID from column {{column}}'
 data-importer.ad-hoc-import.configuration.match-field: '{{field}} from column {{column}}'
 data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) from column {{column}}'
+data-importer.ad-hoc-import.configuration.match-none: Every row creates a new object, keyed by the file step's column
 data-importer.ad-hoc-import.configuration.missing-columns: 'Columns it reads that the file does not have: {{columns}}'
 data-importer.ad-hoc-import.mapping.transformations: Transformations
 data-importer.ad-hoc-import.mapping.transformations-count: 'Transformations ({{count}})'
@@ -465,6 +469,7 @@ data-importer.ad-hoc-import.transformations.into-field: 'Into {{field}}'
 data-importer.ad-hoc-import.transformations.empty: (empty)
 data-importer.ad-hoc-import.transformations.failed: Cannot be converted
 data-importer.ad-hoc-import.check.object-id: Object ID
+data-importer.ad-hoc-import.check.key: Key
 data-importer.ad-hoc-import.check.column.row: Row
 data-importer.ad-hoc-import.check.column.error: Error
 data-importer.ad-hoc-import.check.empty-value: '{{field}} is empty'
