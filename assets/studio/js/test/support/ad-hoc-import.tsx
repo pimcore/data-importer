@@ -75,6 +75,24 @@ export const components = {
       { footer }
     </div>
   ),
+  Collapse: ({ items, activeKeys = [], onChange }: { items: Array<{ key: string, label: React.ReactNode, subLabel?: React.ReactNode, extra?: React.ReactNode, children: React.ReactNode }>, activeKeys?: string[], onChange?: (keys: string[]) => void }) => (
+    <div>
+      { items.map(({ key, label, subLabel, extra, children }) => (
+        <div key={ key }>
+          <button
+            aria-expanded={ activeKeys.includes(key) }
+            onClick={ () => { onChange?.(activeKeys.includes(key) ? [] : [key]) } }
+            type="button"
+          >
+            { label }
+            { subLabel }
+            { extra }
+          </button>
+          { activeKeys.includes(key) && children }
+        </div>
+      )) }
+    </div>
+  ),
   ColumnPicker: ({ groups, onSelect, emptyText }: { groups: PickerGroup[], onSelect: (item: PickerItem) => void, emptyText?: string }) => (
     <div role="tree">
       { groups.length === 0 && <span>{ emptyText }</span> }
