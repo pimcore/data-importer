@@ -33,6 +33,7 @@ final readonly class ColumnWriter implements FieldWriter
         private ImportField $field,
         private int|string $column,
         private ConvertedColumn $converted,
+        private ?UserReferenceVisibility $references = null,
     ) {
         if ($field->storeKey !== null) {
             $this->target = new Classificationstore();
@@ -69,7 +70,8 @@ final readonly class ColumnWriter implements FieldWriter
         }
 
         try {
-            $this->target->assignData($object, $this->converted->values[$index]);
+            $value = $this->converted->values[$index];
+            $this->target->assignData($object, $this->references === null ? $value : $this->references->visibleIn($value));
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 a setter refuses a value of the wrong type with a \TypeError
             if ($throwable instanceof \Error && !$throwable instanceof \TypeError) {
                 throw $throwable;
@@ -90,7 +92,7 @@ final readonly class ColumnWriter implements FieldWriter
 
     public function forUser(User $user): self
     {
-        // what it writes depends on no user's rights
-        return $this;
+        // the values were loaded for the user the plan was made for
+        return new self($this->field, $this->column, $this->converted, new UserReferenceVisibility($user));
     }
 }

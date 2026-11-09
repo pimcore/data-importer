@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\ConvertedColumn;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ColumnWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ConfigurationItemWriter;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ImportField;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
@@ -126,5 +128,67 @@ class AdHocRowImporterReferenceTest extends Unit
         $target->assigned = [];
         $this->importer()->import($plan, $planned, 0, []);
         $this->assertSame(['/Products/Hidden'], $target->assigned);
+    }
+
+    public function testAColumnsLoadedElementIsCheckedForTheUserOfTheRowNotTheOneThePlanWasMadeFor(): void
+    {
+        $planned = AdHocRunFixtures::user();
+        $current = AdHocRunFixtures::user(false);
+
+        $reference = $this->createStub(Concrete::class);
+        $reference->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $user): bool => $type === 'view' && $user === $planned
+        );
+        $object = new class() extends Concrete {
+            /** @var list<mixed> */
+            public array $assigned = [];
+
+            public function getId(): ?int
+            {
+                return 11;
+            }
+
+            public function getKey(): ?string
+            {
+                return 'SKU-1';
+            }
+
+            public function getRealPath(): string
+            {
+                return '/Products/Archive/';
+            }
+
+            public function isAllowed(string $type, ?User $user = null): bool
+            {
+                return true;
+            }
+
+            // getPermissions() reaches the data object's dao through __call
+            public function __call($method, $arguments): mixed
+            {
+                return null;
+            }
+
+            public function setRelated(mixed $related, ?string $language = null): static
+            {
+                $this->assigned[] = $related;
+
+                return $this;
+            }
+        };
+        $writer = new ColumnWriter(
+            new ImportField('related', null, 'Related'),
+            'holder',
+            new ConvertedColumn([$reference], [false], [false], null)
+        );
+        $match = new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $object);
+        $plan = AdHocRunFixtures::plan([$match, $match], [$writer], $planned, [['sku' => 'SKU-1', 'holder' => '7']]);
+
+        $this->importer()->import($plan, $current, 0, []);
+        $this->assertSame([null], $object->assigned, 'the plan\'s user may view it, the row\'s user may not');
+
+        $object->assigned = [];
+        $this->importer()->import($plan, $planned, 0, []);
+        $this->assertSame([$reference], $object->assigned);
     }
 }

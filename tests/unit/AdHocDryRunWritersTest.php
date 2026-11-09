@@ -23,7 +23,11 @@ use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\ValueError;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\StoreKey;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\PreparedMapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\ReferenceVisibilityInterface;
+use Pimcore\Model\Asset\Image;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\DataObject\Data\Hotspotimage;
+use Pimcore\Model\DataObject\Data\ImageGallery;
+use Pimcore\Model\User;
 
 class AdHocDryRunWritersTest extends Unit
 {
@@ -54,15 +58,72 @@ class AdHocDryRunWritersTest extends Unit
         $this->assertSame(['Chair', 'en'], $object->written);
     }
 
-    public function testAColumnWriterIsTheSameForEveryUser(): void
+    public function testAColumnWriterKeepsAValueThatIsNoElementForEveryUser(): void
     {
         $writer = new ColumnWriter(
             new ImportField('name', null, 'Name'),
             1,
             new ConvertedColumn(['Chair'], [false], [false], null)
         );
+        $object = $this->writable();
 
-        $this->assertSame($writer, $writer->forUser(AdHocRunFixtures::user(false)));
+        $this->assertNull($writer->forUser(AdHocRunFixtures::user(false))->write($object, 0, ['A-1', 'Chair']));
+        $this->assertSame(['Chair', null], $object->written);
+    }
+
+    public function testAColumnWriterForAUserDropsFromAListOnlyTheElementsTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $visible = $this->element($user, true);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([[$this->element($user, false), $visible]], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertSame([[$visible], null], $object->written);
+    }
+
+    public function testAColumnWriterForAUserKeepsTheKeysOfAKeyedValue(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $visible = $this->element($user, true);
+        $value = ['hidden' => $this->element($user, false), 'visible' => $visible];
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$value], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertSame([['visible' => $visible], null], $object->written);
+    }
+
+    public function testAColumnWriterForAUserDropsFromAGalleryTheImagesTheyMayNotView(): void
+    {
+        $user = AdHocRunFixtures::user(false);
+        $hidden = $this->createStub(Image::class);
+        $hidden->method('isAllowed')->willReturn(false);
+        $visible = $this->createStub(Image::class);
+        $visible->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $type === 'view' && $asked === $user
+        );
+        $gallery = new ImageGallery([new Hotspotimage($hidden), null, new Hotspotimage($visible)]);
+        $writer = new ColumnWriter(
+            new ImportField('name', null, 'Name'),
+            1,
+            new ConvertedColumn([$gallery], [false], [false], null)
+        );
+        $object = $this->writable();
+
+        $this->assertNull($writer->forUser($user)->write($object, 0, ['A-1', '1,2']));
+        $this->assertInstanceOf(ImageGallery::class, $object->written[0]);
+        $items = $object->written[0]->getItems();
+        $this->assertCount(1, $items);
+        $this->assertSame($visible, $items[0]?->getImage());
     }
 
     public function testAColumnWriterWritesAnEmptyCellAsNull(): void
@@ -188,6 +249,16 @@ class AdHocDryRunWritersTest extends Unit
     /**
      * An object with a field `name` that records what is written into it.
      */
+    private function element(User $user, bool $visible): Concrete
+    {
+        $element = $this->createStub(Concrete::class);
+        $element->method('isAllowed')->willReturnCallback(
+            static fn (string $type, ?User $asked): bool => $visible && $type === 'view' && $asked === $user
+        );
+
+        return $element;
+    }
+
     private function writable(): Concrete
     {
         return new class() extends Concrete {

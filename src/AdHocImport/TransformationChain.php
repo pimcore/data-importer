@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\UserReferenceVisibility;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
@@ -20,7 +21,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationCell;
 use Pimcore\Bundle\DataImporterBundle\Schema\AdHocImportTransformationResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
-use Pimcore\Model\Element\ElementInterface;
 use Pimcore\Model\User;
 
 /**
@@ -477,6 +477,7 @@ final readonly class TransformationChain
         User $user,
         bool $keepEmpty = false
     ): array {
+        $references = new UserReferenceVisibility($user);
         foreach ($data as $row => $value) {
             if ($failed[$row]) {
                 continue;
@@ -488,8 +489,8 @@ final readonly class TransformationChain
             }
 
             try {
-                // a dry run logs no misses
-                $data[$row] = $this->visibleTo($user, $operator->process($value, true));
+                // a dry run logs no misses; a loaded element the user may not see counts as not found
+                $data[$row] = $references->visibleIn($operator->process($value, true));
             } catch (\Exception) { // NOSONAR php:S2221 an operator may fail on a value from the file; an Error is a bug
                 $data[$row] = null;
                 $failed[$row] = true;
@@ -497,29 +498,6 @@ final readonly class TransformationChain
         }
 
         return [$data, $failed];
-    }
-
-    /**
-     * A loaded element the user may not see counts as not found, so the preview tells nothing about it.
-     */
-    private function visibleTo(User $user, mixed $value): mixed
-    {
-        if ($value instanceof ElementInterface) {
-            return $value->isAllowed('view', $user) ? $value : null;
-        }
-        if (is_array($value)) {
-            $visible = [];
-            foreach ($value as $key => $item) {
-                $item = $this->visibleTo($user, $item);
-                if ($item !== null) {
-                    $visible[$key] = $item;
-                }
-            }
-
-            return array_is_list($value) ? array_values($visible) : $visible;
-        }
-
-        return $value;
     }
 
     /**
