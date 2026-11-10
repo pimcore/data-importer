@@ -27,6 +27,11 @@ final class ClassificationstoreKeyReference
 
     private const INTEGER_SEPARATOR = '-';
 
+    /**
+     * One half of the integer pair: a row id, which is digits and nothing else.
+     */
+    private const INTEGER_ID = '/^[0-9]+$/';
+
     private function __construct(
         public readonly string $token,
         public readonly string $reference,
@@ -63,11 +68,19 @@ final class ClassificationstoreKeyReference
         }
 
         // an integer pair that is not a pair of integers names no key: both halves are cast to int
-        // by whoever reads them, and a cast of a non-numeric half is group 0 or key 0
-        if (!$isIdentifier && (!is_numeric($keyParts[0]) || !is_numeric($keyParts[1]))) {
+        // by whoever reads them, and a cast of a non-integer half addresses a key the token never
+        // named - group 0 for `abc`, but also group 1 for `1.5` and group 100 for `1e2`. Digits
+        // only, so that a decimal, a scientific notation, a sign or leading whitespace - all of
+        // which `is_numeric()` accepts - is refused here rather than silently truncated later.
+        if (!$isIdentifier && (!self::isIntegerId($keyParts[0]) || !self::isIntegerId($keyParts[1]))) {
             return null;
         }
 
         return new self($token, $reference, $keyParts[0], $keyParts[1], $isIdentifier, $variant);
+    }
+
+    private static function isIntegerId(string $half): bool
+    {
+        return preg_match(self::INTEGER_ID, $half) === 1;
     }
 }

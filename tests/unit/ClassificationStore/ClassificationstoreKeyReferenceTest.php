@@ -83,6 +83,15 @@ class ClassificationstoreKeyReferenceTest extends Unit
             // them, which addresses group 0 key 0
             'a hyphen pair that is not integers' => ['abc-def'],
             'a half that is not an integer' => ['1-def'],
+            // numeric is not integer: each of these passes `is_numeric()` and would be truncated
+            // by the `(int)` cast in the readers, addressing group 1, group 100 or group 5
+            'a decimal group' => ['1.5-2'],
+            'a decimal key' => ['1-2.5'],
+            'a scientific notation group' => ['1e2-3'],
+            'a hexadecimal-looking group' => ['0x1A-2'],
+            'a signed group' => ['+5-3'],
+            'a group with leading whitespace' => [' 5-3'],
+            'a decimal pair with a variant' => ['1.5-2#metric'],
         ];
     }
 }
