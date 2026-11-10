@@ -63,7 +63,10 @@ final readonly class RowImporter
         $match = $dryRun->matcher->match($row, $rowNumber);
         $object = $match->element;
         if (!$object instanceof Concrete) {
-            return RowOutcome::failed($match->matchValue, null, $this->dryRunMessages->rowError(
+            // a taken key stops an object the row would have created
+            $action = $match->outcome === RowMatchOutcome::KeyTaken ? 'create' : null;
+
+            return RowOutcome::failed($match->matchValue, $action, $this->dryRunMessages->rowError(
                 $match,
                 $dryRun->matchField,
                 $dryRun->targetFolder,
