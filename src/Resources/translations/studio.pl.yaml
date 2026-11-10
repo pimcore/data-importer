@@ -566,7 +566,7 @@ data-importer.ad-hoc-import.result.skipped: Pominięte w podglądzie
 data-importer.ad-hoc-import.result.open-folder: Otwórz folder
 data-importer.ad-hoc-import.result.download-rows: Pobierz wiersze
 data-importer.ad-hoc-import.result.history: Każdy obiekt zachowuje historię wersji.
-data-importer.ad-hoc-import.result.not-saved_one: 'Niezapisane wiersze: {{count}}.'
+data-importer.ad-hoc-import.result.not-saved_one: 'Niezapisany wiersz: {{count}}.'
 data-importer.ad-hoc-import.result.not-saved_few: 'Niezapisane wiersze: {{count}}.'
 data-importer.ad-hoc-import.result.not-saved_many: 'Niezapisane wiersze: {{count}}.'
 data-importer.ad-hoc-import.result.not-saved_other: 'Niezapisane wiersze: {{count}}.'
@@ -585,7 +585,7 @@ data-importer.ad-hoc-import.run.branch.written: Zapisano w gałęzi
 data-importer.ad-hoc-import.run.branch.objects: 'Obiekty: {{count}}'
 data-importer.ad-hoc-import.run.branch.checking: 'Sprawdzanie: uprawnienia, klucze, wartości'
 data-importer.ad-hoc-import.run.branch.merging: 'Scalanie jako {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved_one: 'Wiersze, których nie można zapisać: {{count}}.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: 'Wiersz, którego nie można zapisać: {{count}}.'
 data-importer.ad-hoc-import.decision.cannot-be-saved_few: 'Wiersze, których nie można zapisać: {{count}}.'
 data-importer.ad-hoc-import.decision.cannot-be-saved_many: 'Wiersze, których nie można zapisać: {{count}}.'
 data-importer.ad-hoc-import.decision.cannot-be-saved_other: 'Wiersze, których nie można zapisać: {{count}}.'
@@ -595,7 +595,7 @@ data-importer.ad-hoc-import.decision.count.cannot-be-saved: nie można zapisać
 data-importer.ad-hoc-import.decision.column.why: Dlaczego nie można zapisać
 data-importer.ad-hoc-import.decision.discard: Odrzuć import
 data-importer.ad-hoc-import.decision.back-to-mapping: Wróć do mapowania
-data-importer.ad-hoc-import.decision.merge_one: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
+data-importer.ad-hoc-import.decision.merge_one: 'Scal gotowy wiersz ({{count}}), pomiń pozostałe ({{failed}})'
 data-importer.ad-hoc-import.decision.merge_few: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
 data-importer.ad-hoc-import.decision.merge_many: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
 data-importer.ad-hoc-import.decision.merge_other: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'

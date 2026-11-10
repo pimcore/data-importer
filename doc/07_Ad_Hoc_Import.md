@@ -44,7 +44,8 @@ The first rows of the file follow every change. Under **Objects**, choose:
   object is updated where it is. With **Don't match**, every row creates a new object, keyed by the column's value.
 - **New objects in** (optional): the folder for new objects. Empty means the folder you clicked.
 
-Objects are matched only in the folder you clicked and below it.
+Objects are matched only in the folder you clicked and below it, and directly in the **New objects in** folder when
+that lies outside it.
 
 ### Mapping
 
