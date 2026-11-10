@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ClassificationStore;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ClassificationStoreFixture;
 use Pimcore\Model\DataObject\ClassDefinition\Data\InputQuantityValue as InputQuantityValueDefinition;
@@ -309,7 +310,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      */
     public function testSettingsAcceptNoUnitKeys(): void
     {
-        $target = new ClassificationstoreBatch();
+        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             'unitSourceSelect' => 'static',
@@ -329,7 +330,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
 
     private function target(): ClassificationstoreBatch
     {
-        $target = new ClassificationstoreBatch();
+        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
         $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 
         return $target;

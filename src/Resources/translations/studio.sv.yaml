@@ -294,6 +294,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Sammanfog
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nyckel vald
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i grupp {{group}}'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: 'Variant'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: 'Standardvariant'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Välj Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Sök och välj en nyckel för detta Classification Store-fält
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch kräver transformationsresultattyp: array, quantityValueArray, inputQuantityValueArray eller dateArray.'

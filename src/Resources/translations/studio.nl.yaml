@@ -294,6 +294,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Samenvoeg
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store-sleutel
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Geen sleutel geselecteerd
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} in groep {{group}}"
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: "Variant"
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: "Standaardvariant"
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Classification Store-sleutel selecteren
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Zoek en selecteer een sleutel voor dit Classification Store-veld
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store Batch vereist transformatieresultaattype: array, quantityValueArray, inputQuantityValueArray of dateArray."

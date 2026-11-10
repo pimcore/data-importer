@@ -13,6 +13,7 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useStyles } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/step-target.styles'
 import { useBundleDataImporterClassificationstoreLoadKeyNameQuery } from '../../../data-importer-api-slice.gen'
+import { splitKeyReference } from './classification-store-variant'
 import { ClassificationStoreKeyModal } from '../../../components/tabs/steps/advanced-mapping-modal/step-target/classification-store-key-modal/classification-store-key-modal'
 
 export interface StepTargetClassificationstoreKeySearchProps {
@@ -36,7 +37,7 @@ export function StepTargetClassificationstoreKeySearch ({
   const [keyModalOpen, setKeyModalOpen] = useState(false)
 
   const { data: keyNameResponse } = useBundleDataImporterClassificationstoreLoadKeyNameQuery(
-    { keyId: keyId ?? '' },
+    { keyId: splitKeyReference(keyId).reference, classId, fieldName },
     { skip: keyId === undefined || keyId === '' }
   )
 

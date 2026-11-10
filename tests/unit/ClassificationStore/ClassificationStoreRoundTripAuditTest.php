@@ -22,6 +22,7 @@ use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\EncryptedField;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\Classificationstore as ClassificationstoreModel;
+use Pimcore\Model\DataObject\Classificationstore\KeyTypeSupport;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Normalizer\NormalizerInterface;
 use Pimcore\Tests\Support\Util\TestHelper;
@@ -82,6 +83,8 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         '## Documentation check',
         '## Items for the follow-up ticket',
     ];
+
+    private const FOLLOW_UP_MARKER = '**For the follow-up ticket:**';
 
     private const PROBE_NUMBER = '12';
 
@@ -185,6 +188,61 @@ class ClassificationStoreRoundTripAuditTest extends Unit
 
         foreach (self::REQUIRED_SECTIONS as $section) {
             static::assertStringContainsString($section, $document, 'missing audit section');
+        }
+    }
+
+    /**
+     * Every numbered item of the follow-up list either names the change that fixed it or states why
+     * it is not fixed, so that the document cannot drift away from what shipped.
+     */
+    public function testEveryFollowUpItemCarriesItsResolution(): void
+    {
+        $document = $this->auditDocument();
+        $list = substr($document, (int)strpos($document, self::FOLLOW_UP_MARKER) + strlen(self::FOLLOW_UP_MARKER));
+        $items = preg_split('/^(?=\d+\. )/m', $list, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $items = array_values(array_filter($items, static fn (string $item): bool => preg_match('/^\d+\. /', $item) === 1));
+
+        static::assertCount(4, $items, 'the follow-up list is items 3 to 6');
+        foreach ($items as $item) {
+            static::assertMatchesRegularExpression('/\*\*(Resolved here|Not fixed here):\*\*/', $item, 'unclassified: ' . substr($item, 0, 60));
+        }
+    }
+
+    /**
+     * The key types the importer acts on are the ones core derives, whatever core ships: the audit's
+     * own acceptance rule and `KeyTypeSupport` agree over every field type core carries.
+     */
+    public function testTheTypeSetTheBundleActsOnIsTheOneCoreDerives(): void
+    {
+        /** @var KeyTypeSupport $support */
+        $support = $this->tester->grabService(KeyTypeSupport::class);
+        $directory = dirname((string)(new ReflectionClass(Data::class))->getFileName()) . '/Data';
+
+        $held = [];
+        foreach ((array)glob($directory . '/*.php') as $file) {
+            $type = $this->keyTypeOf(Data::class . '\\' . basename((string)$file, '.php'));
+            if ($type !== null && $support->isHeldInValueColumns($type)) {
+                $held[] = $type;
+            }
+        }
+
+        sort($held);
+        static::assertSame(array_keys($this->acceptedKeyTypes()), $held);
+    }
+
+    public function testNoSourceFileEnumeratesKeyTypeNamesForThisPurpose(): void
+    {
+        $files = [
+            ...(array)glob(dirname(__DIR__, 3) . '/src/Mapping/DataTarget/Classificationstore*.php'),
+            dirname(__DIR__, 3) . '/src/Mapping/Type/ClassificationStoreDataTypeService.php',
+        ];
+
+        foreach ($files as $file) {
+            static::assertDoesNotMatchRegularExpression(
+                '/[\'"](geopoint|geobounds|geopolygon|geopolyline|hotspotimage|imageGallery|date|datetime|image)[\'"]/i',
+                (string)file_get_contents((string)$file),
+                basename((string)$file) . ' lists key types'
+            );
         }
     }
 

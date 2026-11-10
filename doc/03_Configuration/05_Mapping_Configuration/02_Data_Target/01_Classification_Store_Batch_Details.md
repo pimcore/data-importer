@@ -10,10 +10,13 @@ constraints shape how the [transformation pipeline](../01_Transformation_Pipelin
 
 ## Required Result Format
 
-The target expects an array keyed by `<GROUP_ID>-<KEY_ID>`, with the values to assign:
+The target expects an array keyed by the group and the key, with the values to assign. A key is referenced by the
+identifiers of its group and key, `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>`, which is what the editor saves for a new
+mapping entry. The integer form `<GROUP_ID>-<KEY_ID>` is still accepted, so a configuration saved with it imports as
+before, and is what the editor falls back to for a group or key that has no identifier:
 
 ```
-['1-1' => 'some value', '1-2' => 'some other value']
+['my-group:my-key' => 'some value', '1-2' => 'some other value']
 ```
 
 The pipeline has to produce that shape.
@@ -65,7 +68,13 @@ a unit **id**, as `Quantity Value` does, and an `inputQuantityValue` key takes a
 `Input Quantity Value` does. A unit the key's type cannot resolve is dropped and the value is stored without one. There
 is no unit setting on the data target — the key's type decides.
 
-Keys holding a `date` still need the matching operator at the end of the pipeline, and one pipeline produces one result
+A key that declares variants cannot be written by this target: a token for it, with or without a `#<VARIANT>` segment,
+is refused with an error naming the key. Write such a key through a `Classification Store` entry, which takes the
+variant. A key that declares several values takes a JSON array held in one source field, `["a", "b"]`; the import
+replaces the whole list of the addressed language.
+
+A key whose value this entry cannot build is warned about in the import log and skipped, and the rest of the row is
+still written. A plain date string is the common case. Keys holding a `date` need the matching operator at the end of the pipeline, and one pipeline produces one result
 type. For those, split the source data by type, one field per type:
 
 ```json

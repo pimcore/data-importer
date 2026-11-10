@@ -22,7 +22,11 @@ const injectedRtkApi = api
             >({
                 query: (queryArg) => ({
                     url: `/pimcore-studio/api/bundle/data-importer/classificationstore/key-name`,
-                    params: { keyId: queryArg.keyId },
+                    params: {
+                        keyId: queryArg.keyId,
+                        classId: queryArg.classId,
+                        fieldName: queryArg.fieldName,
+                    },
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
@@ -263,8 +267,12 @@ export type BundleDataImporterClassificationstoreLoadAttributesApiArg = {
 export type BundleDataImporterClassificationstoreLoadKeyNameApiResponse =
     /** status 200 The resolved group name and key name, or the key ID as fallback */ BundleDataImporterClassificationStoreKeyNameResponse;
 export type BundleDataImporterClassificationstoreLoadKeyNameApiArg = {
-    /** The classification store key ID in group-key format (e.g., "1-5") */
+    /** The classification store key reference: "<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>" or the integer pair "<GROUP_ID>-<KEY_ID>", optionally followed by "#<VARIANT>" */
     keyId: string;
+    /** The class of the mapping, which names the store an identifier reference is resolved in */
+    classId?: string;
+    /** The classification store field of the mapping */
+    fieldName?: string;
 };
 export type BundleDataImporterClassificationstoreLoadKeysApiResponse =
     /** status 200 Paginated list of classification store key-group relations with total count */ BundleDataImporterClassificationStoreKeysResponse;
@@ -437,12 +445,14 @@ export type BundleDataImporterClassificationStoreKeyNameResponse = {
     additionalAttributes?: {
         [key: string]: string | number | boolean | object;
     };
-    /** The key ID (group-key format) */
+    /** The key reference, as it was asked for when the key could not be resolved */
     keyId?: any;
     /** The group name */
     groupName?: any;
     /** The key name */
     keyName?: any;
+    /** The variant names the key declares */
+    variants?: string[];
 };
 export type BundleDataImporterClassificationStoreKeysResponse = {
     /** AdditionalAttributes */
@@ -461,6 +471,8 @@ export type BundleDataImporterClassificationStoreKeysResponse = {
         keyDescription?: string;
         /** Combined group-key ID */
         id?: string;
+        /** Combined group-key identifier, null when the group or the key has none */
+        identifier?: any;
         /** Sort order */
         sorter?: number;
         /** Group name */

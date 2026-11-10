@@ -294,6 +294,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Unisci
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Chiave Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Nessuna chiave selezionata
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} nel gruppo {{group}}'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: 'Variante'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: 'Variante predefinita'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Seleziona chiave Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Cerca e seleziona una chiave per questo campo Classification Store
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch richiede il tipo di risultato della trasformazione: array, quantityValueArray, inputQuantityValueArray o dateArray.'

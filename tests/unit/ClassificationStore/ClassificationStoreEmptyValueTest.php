@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ClassificationStore;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ClassificationStoreFixture;
@@ -179,7 +180,7 @@ class ClassificationStoreEmptyValueTest extends Unit
 
     public function testBothTargetsAcceptAConfigurationCarryingNoLanguage(): void
     {
-        $single = new Classificationstore();
+        $single = new Classificationstore($this->createMock(ApplicationLogger::class));
         $single->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             'keyId' => $this->batchKey(),
@@ -188,7 +189,7 @@ class ClassificationStoreEmptyValueTest extends Unit
         $single->assignData($element, self::IMPORTED);
         static::assertSame(self::IMPORTED, $this->keyValue($element));
 
-        $batch = new ClassificationstoreBatch();
+        $batch = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
         $batch->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
         $element = $this->object();
         $batch->assignData($element, [$this->batchKey() => self::IMPORTED]);
@@ -200,7 +201,7 @@ class ClassificationStoreEmptyValueTest extends Unit
      */
     private function singleKeyTarget(array $settings): Classificationstore
     {
-        $target = new Classificationstore();
+        $target = new Classificationstore($this->createMock(ApplicationLogger::class));
         $target->setSettings($settings + [
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             'keyId' => $this->batchKey(),
@@ -214,7 +215,7 @@ class ClassificationStoreEmptyValueTest extends Unit
      */
     private function batchTarget(array $settings): ClassificationstoreBatch
     {
-        $target = new ClassificationstoreBatch();
+        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
         $target->setSettings($settings + ['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 
         return $target;

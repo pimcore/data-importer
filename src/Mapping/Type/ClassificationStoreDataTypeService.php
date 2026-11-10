@@ -12,15 +12,23 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
+use Doctrine\DBAL\Connection;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\Classificationstore\Engine\EngineFeature;
+use Pimcore\Model\DataObject\Classificationstore\Engine\EngineResolver;
+use Pimcore\Model\DataObject\Classificationstore\KeyTypeSupport;
 
 /**
  * @internal
  */
 final class ClassificationStoreDataTypeService
 {
-    public function __construct(private readonly TransformationDataTypeService $transformationDataTypeService)
-    {
+    public function __construct(
+        private readonly TransformationDataTypeService $transformationDataTypeService,
+        private readonly KeyTypeSupport $keyTypeSupport,
+        private readonly EngineResolver $engineResolver,
+        private readonly Connection $connection
+    ) {
     }
 
     public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, ?string $searchString = null, ?string $filterString = null): DataObject\Classificationstore\KeyGroupRelation\Listing
@@ -79,10 +87,37 @@ final class ClassificationStoreDataTypeService
             }
         }
 
+        $unholdableTypes = $this->listUnholdableKeyTypes((int) $storeId);
+        if ($unholdableTypes !== []) {
+            $conditionParts[] = sprintf('type NOT IN (%s)', implode(',', array_map($list->quote(...), $unholdableTypes)));
+        }
+
         $condition = implode(' AND ', $conditionParts);
         $list->setCondition($condition);
         $list->setResolveGroupName(true);
 
         return $list;
+    }
+
+    /**
+     * The key types of the store the engine behind it cannot hold, asked of core rather than listed here.
+     *
+     * @return string[]
+     */
+    private function listUnholdableKeyTypes(int $storeId): array
+    {
+        if ($this->engineResolver->resolveForStore($storeId)->supports(EngineFeature::StructuredValues)) {
+            return [];
+        }
+
+        $types = $this->connection->fetchFirstColumn(
+            'SELECT DISTINCT `type` FROM ' . DataObject\Classificationstore\KeyConfig\Dao::TABLE_NAME_KEYS . ' WHERE `storeId` = ?',
+            [$storeId]
+        );
+
+        return array_values(array_filter(
+            array_map('strval', $types),
+            fn (string $type): bool => !$this->keyTypeSupport->isHeldInValueColumns($type)
+        ));
     }
 }
