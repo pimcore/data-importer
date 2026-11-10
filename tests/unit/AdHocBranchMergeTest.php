@@ -289,6 +289,19 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame([42, 77], array_column($this->saved, 0), 'nothing was saved for it');
     }
 
+    public function testRowsTheMergeHadNothingToWriteForCountAsSaved(): void
+    {
+        // importing an unchanged file again: the branch holds no change, so the merge covers no object
+        $this->branches->mergeAnswers = [MergeStatus::merged(self::branch(), [])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $run = $this->stored();
+        $this->assertSame([RunRecord::DONE, 2, 1, 0], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([], $this->failures(), 'no row reads as interrupted');
+        $this->assertSame([], $this->saved, 'nothing was saved, so no event follows');
+    }
+
     public function testARowThatCouldNotBeWrittenHoldsTheMergeForADecision(): void
     {
         $failure = new RowFailure(
