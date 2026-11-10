@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Seleziona
 data-importer.resolver.loading-strategy.language: Lingua
 data-importer.resolver.loading-strategy.language-placeholder: Seleziona lingua
 data-importer.resolver.loading-strategy.include-unpublished: Includi oggetti non pubblicati
+data-importer.resolver.loading-strategy.attribute-path: Limita al percorso
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Considera solo gli oggetti in questa cartella o nelle sottocartelle. Lascia vuoto per cercare in tutto l’albero.
 data-importer.resolver.element-creation: Creazione elemento
 data-importer.resolver.create-location-strategy: Strategia di posizionamento
 data-importer.resolver.create-location-strategy.tooltip: Controlla dove vengono posizionati gli elementi appena creati quando non è stato risolto alcun elemento esistente.
@@ -281,6 +283,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Dati
 data-importer.mapping.advanced-modal.loading: Caricamento…
 data-importer.mapping.advanced-modal.no-data: Nessun dato
 data-importer.mapping.advanced-modal.no-preview: Nessuna anteprima disponibile
+data-importer.mapping.advanced-modal.preview-error: "Impossibile creare l'anteprima"
 data-importer.mapping.advanced-modal.step-target.type: Tipo
 data-importer.mapping.advanced-modal.step-target.field-name: Nome campo
 data-importer.mapping.advanced-modal.step-target.overwrite: Sovrascrittura

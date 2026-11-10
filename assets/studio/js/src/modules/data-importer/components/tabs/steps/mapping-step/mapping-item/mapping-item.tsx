@@ -34,7 +34,6 @@ export interface MappingItemProps {
   mappingId: string
   remove: (index: number) => void
   onRemoveItem: (index: number) => void
-  configName: string
   columnHeaderOptions: Array<{ value: string, label: string }>
   classId: string | undefined
   /** Whether the panel is expanded (controlled) */
@@ -45,6 +44,7 @@ export interface MappingItemProps {
   itemLabel: string | undefined
   dataSourceIndex: string[] | undefined
   transformationResultType: string | undefined
+  dataTargetType: string | undefined
   selectedFieldName: string | undefined
   language: string | undefined
   attributesMap: Record<string, ClassAttribute[]>
@@ -55,7 +55,6 @@ const MappingItemComponent = ({
   mappingId,
   remove,
   onRemoveItem,
-  configName,
   columnHeaderOptions,
   classId,
   expanded,
@@ -63,6 +62,7 @@ const MappingItemComponent = ({
   itemLabel,
   dataSourceIndex,
   transformationResultType,
+  dataTargetType,
   selectedFieldName,
   language,
   attributesMap
@@ -123,7 +123,7 @@ const MappingItemComponent = ({
     }
   }, [expanded, columnHeaderOptions, form, getCurrentIndexByMappingId])
 
-  const attrMapKey = resolveAttrMapKey(transformationResultType)
+  const attrMapKey = resolveAttrMapKey(transformationResultType, dataTargetType)
   const attributes: ClassAttribute[] = attributesMap[attrMapKey] ?? []
 
   // Only compute props needed by MappingItemContent when the panel is expanded.
@@ -215,7 +215,6 @@ const MappingItemComponent = ({
           } }
           classId={ classId }
           columnHeaderOptions={ columnHeaderOptions }
-          configName={ configName }
           item={ (() => {
             const index = getCurrentIndexByMappingId()
             if (index < 0) return {}
@@ -267,7 +266,6 @@ function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProp
     prev.mappingId === next.mappingId &&
     prev.remove === next.remove &&
     prev.onRemoveItem === next.onRemoveItem &&
-    prev.configName === next.configName &&
     prev.columnHeaderOptions === next.columnHeaderOptions &&
     prev.classId === next.classId &&
     prev.expanded === next.expanded &&
@@ -275,6 +273,7 @@ function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProp
     prev.itemLabel === next.itemLabel &&
     dataSourceIndexEqual &&
     prev.transformationResultType === next.transformationResultType &&
+    prev.dataTargetType === next.dataTargetType &&
     prev.selectedFieldName === next.selectedFieldName &&
     prev.language === next.language &&
     prev.attributesMap === next.attributesMap

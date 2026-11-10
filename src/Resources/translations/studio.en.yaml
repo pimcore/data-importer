@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Select co
 data-importer.resolver.loading-strategy.language: Language
 data-importer.resolver.loading-strategy.language-placeholder: Select language
 data-importer.resolver.loading-strategy.include-unpublished: Include unpublished objects
+data-importer.resolver.loading-strategy.attribute-path: Limit to path
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Only match objects in this folder or below. Leave empty to search the whole tree.
 data-importer.resolver.element-creation: Element Creation
 data-importer.resolver.create-location-strategy: Location Strategy
 data-importer.resolver.create-location-strategy.tooltip: Controls where newly created elements are placed when no existing element was resolved.
@@ -281,6 +283,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Data
 data-importer.mapping.advanced-modal.loading: Loading…
 data-importer.mapping.advanced-modal.no-data: No data
 data-importer.mapping.advanced-modal.no-preview: No preview available
+data-importer.mapping.advanced-modal.preview-error: The preview could not be created
 data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Field name
 data-importer.mapping.advanced-modal.step-target.overwrite: Overwrite

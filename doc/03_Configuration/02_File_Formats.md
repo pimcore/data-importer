@@ -156,7 +156,9 @@ one field and has to be handled in the
 ```
 
 The interpreter uses [Symfony `XmlUtils`](https://github.com/symfony/config/blob/master/Util/XmlUtils.php) to read and
-validate the data.
+validate the data. A numeric looking value is only converted to a number when the number prints as exactly the
+same text: `42` becomes an integer, while `0123`, `1E5`, `12.50` or `603E709` stay text. Boolean (`true`, `false`)
+and `null` values are converted as before.
 
 ## SQL
 

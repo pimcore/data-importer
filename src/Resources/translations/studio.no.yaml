@@ -120,6 +120,8 @@ data-importer.resolver.loading-strategy.data-source-index-placeholder: Velg kolo
 data-importer.resolver.loading-strategy.language: Språk
 data-importer.resolver.loading-strategy.language-placeholder: Velg språk
 data-importer.resolver.loading-strategy.include-unpublished: Inkluder upubliserte objekter
+data-importer.resolver.loading-strategy.attribute-path: Begrens til sti
+data-importer.resolver.loading-strategy.attribute-path-tooltip: Match bare objekter i denne mappen eller under den. La stå tom for å søke i hele treet.
 data-importer.resolver.element-creation: Elementopprettelse
 data-importer.resolver.create-location-strategy: Plasseringsstrategi
 data-importer.resolver.create-location-strategy.tooltip: Styrer hvor nyopprettede elementer plasseres når ingen eksisterende elementer ble funnet.
@@ -281,6 +283,7 @@ data-importer.mapping.advanced-modal.step-source.column-data: Data
 data-importer.mapping.advanced-modal.loading: Laster…
 data-importer.mapping.advanced-modal.no-data: Ingen data
 data-importer.mapping.advanced-modal.no-preview: Ingen forhåndsvisning tilgjengelig
+data-importer.mapping.advanced-modal.preview-error: Forhåndsvisningen kunne ikke opprettes
 data-importer.mapping.advanced-modal.step-target.type: Type
 data-importer.mapping.advanced-modal.step-target.field-name: Feltnavn
 data-importer.mapping.advanced-modal.step-target.overwrite: Overskriv

@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { Form, Select, Switch } from '@pimcore/studio-ui-bundle/components'
+import { Form, ManyToOneRelationPath, Select, Switch } from '@pimcore/studio-ui-bundle/components'
 import { filterByLabel } from '../../../../utils/select-utils'
 import { DataImporterPanel } from '../../../../components/tabs/steps/data-importer-panel/data-importer-panel'
 import React, { useMemo } from 'react'
@@ -19,7 +19,8 @@ import { parseClassAttribute } from '../../../../components/tabs/steps/mapping-s
 
 export function AttributeLoadingStrategyResolverSettings ({
   columnHeaderOptions,
-  languageOptions = []
+  languageOptions = [],
+  disabled
 }: DynamicTypeResolverRenderProps): React.JSX.Element {
   const { t } = useTranslation()
 
@@ -50,6 +51,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'dataSourceIndex'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           options={ columnHeaderOptions }
           placeholder={ t('data-importer.resolver.loading-strategy.data-source-index-placeholder') }
@@ -61,6 +63,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'attributeName'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           loadingSkeleton={ isLoading }
           options={ loadingAttributeOptions }
@@ -74,6 +77,7 @@ export function AttributeLoadingStrategyResolverSettings ({
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'language'] }
       >
         <Select
+          disabled={ disabled }
           filterOption={ filterByLabel }
           options={ languageOptions }
           placeholder={ t('data-importer.resolver.loading-strategy.language-placeholder') }
@@ -82,10 +86,23 @@ export function AttributeLoadingStrategyResolverSettings ({
       </Form.Item>
       )}
       <Form.Item
+        label={ t('data-importer.resolver.loading-strategy.attribute-path') }
+        name={ ['resolverConfig', 'loadingStrategy', 'settings', 'path'] }
+        tooltip={ t('data-importer.resolver.loading-strategy.attribute-path-tooltip') }
+      >
+        <ManyToOneRelationPath
+          allowPathTextInput
+          allowedDataObjectTypes={ ['folder'] }
+          dataObjectsAllowed
+          disabled={ disabled }
+        />
+      </Form.Item>
+      <Form.Item
         name={ ['resolverConfig', 'loadingStrategy', 'settings', 'includeUnpublished'] }
         valuePropName="checked"
       >
         <Switch
+          disabled={ disabled }
           labelRight={ t('data-importer.resolver.loading-strategy.include-unpublished') }
           size="small"
         />

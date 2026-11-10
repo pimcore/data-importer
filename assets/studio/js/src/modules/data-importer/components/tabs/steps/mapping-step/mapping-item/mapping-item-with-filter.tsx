@@ -64,7 +64,7 @@ export const MappingItemWithFilter = React.memo(({
     })
   }
 
-  const { configName, classId, columnHeaderOptions, attributesMap } = useMappingItemContext()
+  const { classId, columnHeaderOptions, attributesMap } = useMappingItemContext()
   const { styles, cx } = useStyles()
 
   const form = Form.useFormInstance()
@@ -104,8 +104,8 @@ export const MappingItemWithFilter = React.memo(({
           attributesMap={ attributesMap }
           classId={ classId }
           columnHeaderOptions={ columnHeaderOptions }
-          configName={ configName }
           dataSourceIndex={ dataSourceIndex }
+          dataTargetType={ item.dataTarget?.type }
           expanded={ expanded }
           fieldIndex={ fieldIndex }
           itemLabel={ item.label }

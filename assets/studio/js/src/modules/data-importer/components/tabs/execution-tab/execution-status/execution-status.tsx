@@ -13,6 +13,7 @@ import {
   Button,
   Progress,
   Text,
+  Tooltip,
   useMessage
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
@@ -24,6 +25,7 @@ import {
 } from '../../../../data-importer-api-slice-enhanced'
 import { DataImporterPanel } from '../../steps/data-importer-panel/data-importer-panel'
 import { ManualExecutionButton } from '../manual-execution-button/manual-execution-button'
+import { useConfigCapabilities } from '../../../config-capabilities-context'
 import { useStyles } from '../../execution-tab.styles'
 
 const POLL_INTERVAL_MS = 5000
@@ -44,6 +46,7 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
   const { t } = useTranslation()
   const messageApi = useMessage()
   const { styles } = useStyles()
+  const { canRunImport } = useConfigCapabilities()
 
   const [startImport, { isLoading: isStarting }] = useBundleDataImporterConfigStartImportMutation()
   const [cancelExecution, { isLoading: isCancelling }] = useBundleDataImporterConfigCancelExecutionMutation()
@@ -130,6 +133,7 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
       { /* ── Manual Execution ── */ }
       <DataImporterPanel title={ t('data-importer.execution.manual-execution') }>
         <ManualExecutionButton
+          canRunImport={ canRunImport }
           isDirty={ isDirty }
           isStarting={ isStarting }
           label={ t('data-importer.execution.start-import') }
@@ -159,12 +163,20 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
                   trailColor={ 'rgba(0, 0, 0, 0.06)' }
                 />
               </div>
-              <Button
-                loading={ isCancelling }
-                onClick={ () => { void handleCancelExecution() } }
-              >
-                { t('data-importer.execution.status.cancel') }
-              </Button>
+              { /* Cancelling a run is an execution action, so `disabled` is passed
+                   explicitly instead of inheriting the read-only form state. */ }
+              <Tooltip title={ canRunImport ? undefined : t('data-hub.config.no-update-permission') }>
+                { /* span needed so Tooltip works on a disabled button */ }
+                <span>
+                  <Button
+                    disabled={ !canRunImport }
+                    loading={ isCancelling }
+                    onClick={ () => { void handleCancelExecution() } }
+                  >
+                    { t('data-importer.execution.status.cancel') }
+                  </Button>
+                </span>
+              </Tooltip>
             </>
             )
           : (

@@ -84,6 +84,7 @@ final class TransformationDataTypeService
             'lastname',
             'email',
             'gender',
+            'time'
         ],
         self::NUMERIC => [
             'numeric',
@@ -272,6 +273,11 @@ final class TransformationDataTypeService
                 $attributes['key'] = [
                     'key' => 'key',
                     'title' => 'SYSTEM Key',
+                    'localized' => false
+                ];
+                $attributes['path'] = [
+                    'key' => 'path',
+                    'title' => 'SYSTEM Path',
                     'localized' => false
                 ];
             }

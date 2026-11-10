@@ -41,7 +41,7 @@ final class AsGeopoint extends AbstractOperator
     public function generateResultPreview($inputData)
     {
         if ($inputData instanceof GeoCoordinates) {
-            return 'Lat.: ' . $inputData->getLongitude() . '  Long.: ' . $inputData->getLatitude();
+            return 'Lat.: ' . $inputData->getLatitude() . '  Long.: ' . $inputData->getLongitude();
         }
 
         return $inputData;

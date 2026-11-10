@@ -13,21 +13,31 @@ import { injectable } from '@pimcore/studio-ui-bundle/app'
 import { DynamicTypeTransformerAbstract } from '../dynamic-type-transformer-abstract'
 import { QuantityValueTransformerForm } from './quantity-value-transformer-form'
 
-@injectable()
-export class DynamicTypeTransformerQuantityValue extends DynamicTypeTransformerAbstract {
-  readonly id = 'quantityValue'
-  readonly label = 'Quantity Value'
-  readonly group = 'dataTypes' as const
+function makeQuantityValueTransformer (id: string, label: string, defaultUnitSource: string): new () => DynamicTypeTransformerAbstract {
+  @injectable()
+  class QuantityValueTransformerType extends DynamicTypeTransformerAbstract {
+    readonly id = id
+    readonly label = label
+    readonly group = 'dataTypes' as const
 
-  renderSettings (
-    settings: Record<string, any>,
-    onChange: (settings: Record<string, any>) => void
-  ): React.JSX.Element | null {
-    return (
-      <QuantityValueTransformerForm
-        onChange={ onChange }
-        settings={ settings }
-      />
-    )
+    renderSettings (
+      settings: Record<string, any>,
+      onChange: (settings: Record<string, any>) => void
+    ): React.JSX.Element | null {
+      return (
+        <QuantityValueTransformerForm
+          defaultUnitSource={ defaultUnitSource }
+          onChange={ onChange }
+          settings={ settings }
+        />
+      )
+    }
   }
+  return QuantityValueTransformerType
 }
+
+// The default unit source of each operator is its behaviour before the options existed
+export const DynamicTypeTransformerQuantityValue = makeQuantityValueTransformer('quantityValue', 'Quantity Value', 'id')
+export const DynamicTypeTransformerQuantityValueArray = makeQuantityValueTransformer('quantityValueArray', 'Quantity Value Array', 'id')
+export const DynamicTypeTransformerInputQuantityValue = makeQuantityValueTransformer('inputQuantityValue', 'Input Quantity Value', 'abbr')
+export const DynamicTypeTransformerInputQuantityValueArray = makeQuantityValueTransformer('inputQuantityValueArray', 'Input Quantity Value Array', 'id')

@@ -76,7 +76,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
 
         /** @var \DOMElement $item */
         foreach ($records as $item) {
-            $this->processImportRow(XmlUtils::convertDomElementToArray($item));
+            $this->processImportRow(LosslessXmlUtils::convertDomElementToArray($item));
         }
     }
 
@@ -128,7 +128,7 @@ final class XmlFileInterpreter extends AbstractInterpreter
             }
 
             if (!empty($previewDataItem) && $previewDataItem instanceof \DOMElement) {
-                $previewData = XmlUtils::convertDomElementToArray($previewDataItem);
+                $previewData = LosslessXmlUtils::convertDomElementToArray($previewDataItem);
 
                 $keys = array_keys($previewData);
                 $columns = array_combine($keys, $keys);
