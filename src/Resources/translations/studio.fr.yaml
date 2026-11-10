@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 colonne a été mappé
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'lors de la lecture du fichier, avec la mention « auto ». {{count}} autres ont une suggestion à confirmer.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: lors de la lecture du fichier, avec la mention « auto ». 1 autre a une suggestion à confirmer.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: lors de la lecture du fichier, avec la mention « auto ».
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} colonnes ont une suggestion à confirmer.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 colonne a une suggestion à confirmer.
 data-importer.ad-hoc-import.mapping.head.column: Colonne de votre fichier
 data-importer.ad-hoc-import.mapping.head.field: Va dans le champ
 data-importer.ad-hoc-import.mapping.head.transformations: Transformations
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Ignorés dans l'aperçu
 data-importer.ad-hoc-import.result.open-folder: Ouvrir le dossier
 data-importer.ad-hoc-import.result.download-rows: Télécharger les lignes
 data-importer.ad-hoc-import.result.history: Chaque objet conserve son historique des versions.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} lignes n''ont pas été enregistrées.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} ligne n''a pas été enregistrée.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} lignes n''ont pas été enregistrées.'
 data-importer.ad-hoc-import.result.others-saved: Les autres sont enregistrées, chacune avec son historique des versions.
 data-importer.ad-hoc-import.result.count.updated: mis à jour
 data-importer.ad-hoc-import.result.count.created: 'créés dans {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Écrit dans une branche
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objets'
 data-importer.ad-hoc-import.run.branch.checking: 'Vérification: droits, clés, valeurs'
 data-importer.ad-hoc-import.run.branch.merging: 'Fusion en tant que {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} lignes ne peuvent pas être enregistrées.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} ligne ne peut pas être enregistrée.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} lignes ne peuvent pas être enregistrées.'
 data-importer.ad-hoc-import.decision.nothing-merged: Rien n'est encore fusionné; les autres lignes sont prêtes dans la branche.
 data-importer.ad-hoc-import.decision.count.ready: prêtes à fusionner
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: ne peuvent pas être enregistrées
 data-importer.ad-hoc-import.decision.column.why: Pourquoi elle ne peut pas être enregistrée
 data-importer.ad-hoc-import.decision.discard: Abandonner l'import
 data-importer.ad-hoc-import.decision.back-to-mapping: Retour au Mapping
-data-importer.ad-hoc-import.decision.merge: 'Fusionner {{ready}} lignes, écarter {{failed}}'
+data-importer.ad-hoc-import.decision.merge_one: 'Fusionner {{count}} ligne, écarter {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Fusionner {{count}} lignes, écarter {{failed}}'
 data-importer.ad-hoc-import.decision.waiting: 'Un import de {{file}} dans ce dossier attend votre décision.'
 data-importer.ad-hoc-import.merge.branch-name: 'Import ad hoc: {{file}} dans {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: L'objet n'existe plus

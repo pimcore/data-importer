@@ -89,7 +89,8 @@ const sampleOf = (inspected: InspectedFile, position: number): string | undefine
     .find((value): value is string => value !== null && value !== undefined && value !== '')
 
 /**
- * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now.
+ * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now, and
+ * whether the transformations fit is asked anew, as the values they run on may be others.
  */
 export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping => {
   const positionOf = new Map(inspected.columns.map(({ dataIndex }, position) => [dataIndex, position]))
@@ -99,7 +100,7 @@ export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping
     rows: mapping.rows.map((row) => {
       const position = positionOf.get(row.column)
 
-      return { ...row, sample: position === undefined ? undefined : sampleOf(inspected, position) }
+      return { ...row, sample: position === undefined ? undefined : sampleOf(inspected, position), fits: undefined }
     })
   }
 }

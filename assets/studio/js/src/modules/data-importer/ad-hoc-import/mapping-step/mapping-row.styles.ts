@@ -67,6 +67,10 @@ export const useStyles = createStyles(({ token, css }) => ({
     &:hover {
       background: ${token.colorFillAdditional};
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+    }
   `,
   fieldIcon: css`
     flex: none;
@@ -94,6 +98,10 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorPrimaryBg};
     color: ${token.colorPrimaryActive};
     cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+    }
   `,
   skip: css`
     display: flex;

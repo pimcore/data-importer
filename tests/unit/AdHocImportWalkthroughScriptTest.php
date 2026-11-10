@@ -14,16 +14,20 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\DependencyInjection\PimcoreDataImporterExtension;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthrough;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughConsole;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughFailure;
 use Pimcore\Bundle\DataImporterBundle\Tests\Walkthrough\AdHocImportWalkthroughWork;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class AdHocImportWalkthroughScriptTest extends Unit
 {
+    private const string MESSENGER_PROCESSING = 'pimcore_data_importer.messenger_queue_processing.activated';
+
     /**
      * @param list<string> $arguments
      *
@@ -97,6 +101,28 @@ class AdHocImportWalkthroughScriptTest extends Unit
             TokenStorageInterface::class,
             $container->get('pimcore.data_importer.ad_hoc_walkthrough.token_storage')
         );
+        $this->assertFalse($container->getParameter(self::MESSENGER_PROCESSING));
+    }
+
+    public function testTheApplicationTellsTheScriptWhetherItsWorkersTakeTheRows(): void
+    {
+        $this->assertFalse($this->loadedExtension([])->getParameter(self::MESSENGER_PROCESSING));
+        $this->assertTrue(
+            $this->loadedExtension(['messenger_queue_processing' => ['activated' => true]])
+                ->getParameter(self::MESSENGER_PROCESSING)
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function loadedExtension(array $config): ContainerBuilder
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.project_dir', '/app');
+        (new PimcoreDataImporterExtension())->load([$config], $container);
+
+        return $container;
     }
 
     public function testRowsOfALaterRunCannotMatchTheObjectsOfAnEarlierOne(): void
@@ -123,9 +149,13 @@ class AdHocImportWalkthroughScriptTest extends Unit
     /**
      * @param \Closure(string, int): array{int, string} $console
      */
-    private function work(\Closure $stateOf, \Closure $console, int $timeout = 60): AdHocImportWalkthroughWork
-    {
-        return new AdHocImportWalkthroughWork($stateOf, $console, ['first', 'second'], $timeout);
+    private function work(
+        \Closure $stateOf,
+        \Closure $console,
+        int $timeout = 60,
+        bool $messengerProcessing = false
+    ): AdHocImportWalkthroughWork {
+        return new AdHocImportWalkthroughWork($stateOf, $console, ['first', 'second'], $messengerProcessing, $timeout);
     }
 
     public function testRowsAreWorkedOffWhenMessengerProcessingIsOff(): void
@@ -153,6 +183,35 @@ class AdHocImportWalkthroughScriptTest extends Unit
         $work('file');
 
         $this->assertSame(['datahub:data-importer:process-queue-sequential --no-interaction'], $commands);
+    }
+
+    public function testRowsAreLeftToTheWorkersWhenMessengerProcessingIsOn(): void
+    {
+        $commands = [];
+        $state = 'running';
+        $work = $this->work(
+            static function () use (&$state): string {
+                return $state;
+            },
+            static function (string $command) use (&$commands, &$state): array {
+                $commands[] = $command;
+                // the second consume run takes the last of the rows
+                if (count($commands) === 2) {
+                    $state = 'done';
+                }
+                if (count($commands) > 3) {
+                    throw new \LogicException('The work does not end.');
+                }
+
+                return [0, ''];
+            },
+            messengerProcessing: true
+        );
+
+        $work('file');
+
+        $consume = "messenger:consume 'first' 'second' --limit=10 --time-limit=10 --no-interaction";
+        $this->assertSame([$consume, $consume], $commands);
     }
 
     public function testAMergeIsWorkedOffByItsTransports(): void

@@ -289,6 +289,19 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame([42, 77], array_column($this->saved, 0), 'nothing was saved for it');
     }
 
+    public function testRowsTheMergeHadNothingToWriteForCountAsSaved(): void
+    {
+        // importing an unchanged file again: the branch holds no change, so the merge covers no object
+        $this->branches->mergeAnswers = [MergeStatus::merged(self::branch(), [])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $run = $this->stored();
+        $this->assertSame([RunRecord::DONE, 2, 1, 0], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([], $this->failures(), 'no row reads as interrupted');
+        $this->assertSame([], $this->saved, 'nothing was saved, so no event follows');
+    }
+
     public function testARowThatCouldNotBeWrittenHoldsTheMergeForADecision(): void
     {
         $failure = new RowFailure(
@@ -496,6 +509,21 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame([42], array_column($this->saved, 0));
     }
 
+    public function testARowAPartialMergeHadNothingToWriteForCountsAsSaved(): void
+    {
+        // row 3 held no change, so the merge covers only 42 and the new object, which it could not write
+        $this->branches->mergeAnswers = [MergeStatus::partial(self::branch(), 2, [ObjectRef::of(42)], [
+            new MergeProblem(ObjectRef::token('row-4'), null, 'x', code: MergeProblemCode::WriteFailed),
+        ])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $run = $this->stored();
+        $this->assertSame([RunRecord::DONE, 2, 0, 1], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([4 => 'data-importer.ad-hoc-import.run.save-failed-unknown'], $this->failures());
+        $this->assertSame([42], array_column($this->saved, 0));
+    }
+
     public function testARunningMergeIsFollowedUntilItEnds(): void
     {
         $this->branches->mergeAnswers = [MergeStatus::running(self::branch(), 3, 0)];
@@ -603,6 +631,22 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame([], $this->branches->calls, 'nobody is left to ask as');
     }
 
+    public function testRowsWrittenForAUserDeletedMeanwhileEndWithoutAMergeOrANotification(): void
+    {
+        $this->merge()->rowsWritten(
+            $this->branchRun(),
+            null,
+            null,
+            [new RowFailure(2, 'SKU-2', 'update', 'no', [])]
+        );
+
+        $this->assertSame([], $this->branches->calls, 'nobody is left to merge as');
+        $this->assertSame(RunRecord::DONE, $this->stored()->state);
+        $this->assertSame([2 => 'no'], $this->failures());
+        $this->assertSame([], $this->notified);
+        $this->assertFalse($this->uploadExists());
+    }
+
     public function testAMergeThatCannotStartClosesTheBranchAndFailsTheRows(): void
     {
         $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
@@ -617,18 +661,37 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testABranchWithoutARowIsClosedWithoutAMerge(): void
     {
-        $failure = new RowFailure(2, 'SKU-2', 'update', 'no', []);
+        $run = $this->branchRun(['updated' => 0, 'created' => 0, 'total' => 1]);
+        $this->runs->forgetRecorded($run);
 
-        $this->merge()->rowsWritten(
-            $this->branchRun(['updated' => 0, 'created' => 0, 'failed' => 1, 'total' => 1]),
-            AdHocRunFixtures::plan([], []),
-            AdHocRunFixtures::user(),
-            [$failure]
-        );
+        $this->merge()->rowsWritten($run, AdHocRunFixtures::plan([], []), AdHocRunFixtures::user(), []);
 
         $this->assertSame(['discard'], $this->branches->calls);
         $this->assertSame(RunRecord::DONE, $this->stored()->state);
+    }
+
+    public function testEveryRowRefusedBeforeTheBranchStillWaitsForADecision(): void
+    {
+        $run = $this->branchRun(['updated' => 0, 'created' => 0, 'failed' => 1, 'total' => 1]);
+        $this->runs->forgetRecorded($run);
+
+        $this->merge()->rowsWritten(
+            $run,
+            AdHocRunFixtures::plan([], []),
+            AdHocRunFixtures::user(),
+            [new RowFailure(2, 'SKU-2', 'update', 'no', [])]
+        );
+
+        $this->assertSame([], $this->branches->calls, 'the branch stays until the user decided');
+        $this->assertSame(RunRecord::DECISION, $this->stored()->state);
         $this->assertSame(['SKU', 'Name'], $this->stored()->columns, 'the plan\'s columns head the download');
+        $this->assertSame([2 => 'no'], $this->failures());
+        $this->assertTrue($this->uploadExists(), 'the file stays for going back to the mapping');
+
+        $merged = $this->merge()->mergeLeavingOut($this->stored(), AdHocRunFixtures::user());
+
+        $this->assertSame(['discard'], $this->branches->calls, 'with no row left there is nothing to merge');
+        $this->assertSame(RunRecord::DONE, $merged->state);
         $this->assertSame([2 => 'no'], $this->failures());
     }
 

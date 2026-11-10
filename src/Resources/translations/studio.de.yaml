@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 Spalte wurde automatis
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'beim Lesen der Datei, markiert mit „auto“. {{count}} weitere haben einen Vorschlag zur Bestätigung.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: beim Lesen der Datei, markiert mit „auto“. 1 weitere hat einen Vorschlag zur Bestätigung.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: beim Lesen der Datei, markiert mit „auto“.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} Spalten haben einen Vorschlag zur Bestätigung.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 Spalte hat einen Vorschlag zur Bestätigung.
 data-importer.ad-hoc-import.mapping.head.column: Spalte in Ihrer Datei
 data-importer.ad-hoc-import.mapping.head.field: Geht in Feld
 data-importer.ad-hoc-import.mapping.head.transformations: Transformationen
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: In der Vorschau übersprungen
 data-importer.ad-hoc-import.result.open-folder: Ordner öffnen
 data-importer.ad-hoc-import.result.download-rows: Zeilen herunterladen
 data-importer.ad-hoc-import.result.history: Jedes Objekt behält seine Versionshistorie.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} Zeilen wurden nicht gespeichert.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} Zeile wurde nicht gespeichert.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} Zeilen wurden nicht gespeichert.'
 data-importer.ad-hoc-import.result.others-saved: Die übrigen sind gespeichert, jeweils mit ihrer Versionshistorie.
 data-importer.ad-hoc-import.result.count.updated: aktualisiert
 data-importer.ad-hoc-import.result.count.created: 'erstellt in {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: In einen Branch geschrieben
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} Objekte'
 data-importer.ad-hoc-import.run.branch.checking: 'Prüfung: Rechte, Schlüssel, Werte'
 data-importer.ad-hoc-import.run.branch.merging: 'Zusammenführen als {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} Zeilen können nicht gespeichert werden.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} Zeile kann nicht gespeichert werden.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} Zeilen können nicht gespeichert werden.'
 data-importer.ad-hoc-import.decision.nothing-merged: Noch ist nichts zusammengeführt; die übrigen Zeilen liegen bereit im Branch.
 data-importer.ad-hoc-import.decision.count.ready: bereit zum Zusammenführen
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: können nicht gespeichert werden
 data-importer.ad-hoc-import.decision.column.why: Warum sie nicht gespeichert werden kann
 data-importer.ad-hoc-import.decision.discard: Import verwerfen
 data-importer.ad-hoc-import.decision.back-to-mapping: Zurück zum Mapping
-data-importer.ad-hoc-import.decision.merge: '{{ready}} Zeilen zusammenführen, {{failed}} auslassen'
+data-importer.ad-hoc-import.decision.merge_one: '{{count}} Zeile zusammenführen, {{failed}} auslassen'
+data-importer.ad-hoc-import.decision.merge_other: '{{count}} Zeilen zusammenführen, {{failed}} auslassen'
 data-importer.ad-hoc-import.decision.waiting: 'Ein Import von {{file}} in diesen Ordner wartet auf Ihre Entscheidung.'
 data-importer.ad-hoc-import.merge.branch-name: 'Ad-hoc-Import: {{file}} in {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: Das Objekt existiert nicht mehr

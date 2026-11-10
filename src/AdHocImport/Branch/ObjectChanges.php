@@ -187,6 +187,9 @@ final readonly class ObjectChanges
         ?Objectbrick\Data\AbstractData $old
     ): DataObjectChange {
         foreach ($definition->getFieldDefinitions(self::AS_STORED) as $name => $field) {
+            if (!$this->isRecorded($field)) {
+                continue;
+            }
             foreach (Tool::getValidLanguages() as $language) {
                 $value = $brick->get((string) $name, $language);
                 if (self::differs($field, $old?->get((string) $name, $language), $value)) {

@@ -237,6 +237,16 @@ describe('the same columns read again', () => {
     expect(again.rows.map(({ choice }) => choice)).toEqual(mapping.rows.map(({ choice }) => choice))
     expect(again.rows.map(({ sample }) => sample)).toEqual(['NH-9', 'Mantel', undefined, '99', 'z'])
   })
+
+  it('keep their transformations, but not the answer about the values read before', () => {
+    const steps = [{ type: 'loadAsset', settings: {} }]
+    const mapping = setTransformations(chooseField(createMapping(inspected, objects, loaded), 'Notiz', 'price'), 'Notiz', steps, true)
+
+    const row = withSamples(mapping, inspected).rows.find(({ column }) => column === 'Notiz')!
+
+    expect(row.transformations).toBe(steps)
+    expect(row.fits).toBeUndefined()
+  })
 })
 
 describe('filtering the rows', () => {

@@ -24,11 +24,13 @@ final readonly class AdHocImportWalkthroughWork
      * @param \Closure(string): string $stateOf the state of a file's import
      * @param \Closure(string, int): array{int, string} $console (command, time limit in seconds): exit code and output
      * @param list<string> $transports
+     * @param bool $messengerProcessing whether the application hands an import's rows to its messenger workers
      */
     public function __construct(
         private \Closure $stateOf,
         private \Closure $console,
         private array $transports,
+        private bool $messengerProcessing,
         private int $timeout = 900,
     ) {
     }
@@ -37,8 +39,11 @@ final readonly class AdHocImportWalkthroughWork
     {
         $deadline = time() + $this->timeout;
         while ($this->goesOn($fileId)) {
-            // the rows wait in the importer's queue: with messenger processing off, its default, only this takes them
-            $this->run(self::ROWS_COMMAND . ' --no-interaction', $this->left($deadline, $fileId));
+            // with messenger processing off, its default, only this takes the rows; with it on, it would repeat them,
+            // as it also takes rows already handed to a worker
+            if (!$this->messengerProcessing) {
+                $this->run(self::ROWS_COMMAND . ' --no-interaction', $this->left($deadline, $fileId));
+            }
             if ($this->goesOn($fileId)) {
                 $left = $this->left($deadline, $fileId);
                 $this->run(sprintf(

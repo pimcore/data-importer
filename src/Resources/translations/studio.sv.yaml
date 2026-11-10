@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 kolumn mappades automa
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'när filen lästes in, markerade ”auto”. {{count}} till har ett förslag att bekräfta.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: när filen lästes in, markerade ”auto”. 1 till har ett förslag att bekräfta.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: när filen lästes in, markerade ”auto”.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} kolumner har ett förslag att bekräfta.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 kolumn har ett förslag att bekräfta.
 data-importer.ad-hoc-import.mapping.head.column: Kolumn i din fil
 data-importer.ad-hoc-import.mapping.head.field: Går till fält
 data-importer.ad-hoc-import.mapping.head.transformations: Transformationer
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Hoppades över i förhandsvisningen
 data-importer.ad-hoc-import.result.open-folder: Öppna mapp
 data-importer.ad-hoc-import.result.download-rows: Ladda ner rader
 data-importer.ad-hoc-import.result.history: Varje objekt behåller sin versionshistorik.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} rader sparades inte.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} rad sparades inte.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} rader sparades inte.'
 data-importer.ad-hoc-import.result.others-saved: De övriga är sparade, vart och ett med sin versionshistorik.
 data-importer.ad-hoc-import.result.count.updated: uppdaterades
 data-importer.ad-hoc-import.result.count.created: 'skapades i {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Skrivet till en gren
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objekt'
 data-importer.ad-hoc-import.run.branch.checking: 'Kontrollerar: behörigheter, nycklar, värden'
 data-importer.ad-hoc-import.run.branch.merging: 'Sammanfogar som {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} rader kan inte sparas.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} rad kan inte sparas.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} rader kan inte sparas.'
 data-importer.ad-hoc-import.decision.nothing-merged: Inget är sammanfogat än; de övriga raderna är redo i grenen.
 data-importer.ad-hoc-import.decision.count.ready: redo att sammanfogas
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: kan inte sparas
 data-importer.ad-hoc-import.decision.column.why: Varför den inte kan sparas
 data-importer.ad-hoc-import.decision.discard: Förkasta import
 data-importer.ad-hoc-import.decision.back-to-mapping: Tillbaka till mapping
-data-importer.ad-hoc-import.decision.merge: 'Sammanfoga {{ready}} rader, utelämna {{failed}}'
+data-importer.ad-hoc-import.decision.merge_one: 'Sammanfoga {{count}} rad, utelämna {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Sammanfoga {{count}} rader, utelämna {{failed}}'
 data-importer.ad-hoc-import.decision.waiting: 'En import av {{file}} till den här mappen väntar på ditt beslut.'
 data-importer.ad-hoc-import.merge.branch-name: 'Ad hoc-import: {{file}} till {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: Objektet finns inte längre

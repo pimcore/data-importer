@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 kolonne ble tilordnet 
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'da filen ble lest, merket «auto». {{count}} til har et forslag som må bekreftes.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: da filen ble lest, merket «auto». 1 til har et forslag som må bekreftes.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: da filen ble lest, merket «auto».
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} kolonner har et forslag som må bekreftes.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 kolonne har et forslag som må bekreftes.
 data-importer.ad-hoc-import.mapping.head.column: Kolonne i filen din
 data-importer.ad-hoc-import.mapping.head.field: Går inn i felt
 data-importer.ad-hoc-import.mapping.head.transformations: Transformasjoner
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Hoppet over i forhåndsvisningen
 data-importer.ad-hoc-import.result.open-folder: Åpne mappe
 data-importer.ad-hoc-import.result.download-rows: Last ned rader
 data-importer.ad-hoc-import.result.history: Hvert objekt beholder versjonshistorikken sin.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} rader ble ikke lagret.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} rad ble ikke lagret.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} rader ble ikke lagret.'
 data-importer.ad-hoc-import.result.others-saved: De andre er lagret, hver med sin versjonshistorikk.
 data-importer.ad-hoc-import.result.count.updated: oppdatert
 data-importer.ad-hoc-import.result.count.created: 'opprettet i {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Skrevet inn i en gren
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objekter'
 data-importer.ad-hoc-import.run.branch.checking: 'Kontrollerer: rettigheter, nøkler, verdier'
 data-importer.ad-hoc-import.run.branch.merging: 'Slår sammen som {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} rader kan ikke lagres.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} rad kan ikke lagres.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} rader kan ikke lagres.'
 data-importer.ad-hoc-import.decision.nothing-merged: Ingenting er slått sammen ennå; de andre radene er klare i grenen.
 data-importer.ad-hoc-import.decision.count.ready: klare til sammenslåing
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: kan ikke lagres
 data-importer.ad-hoc-import.decision.column.why: Hvorfor den ikke kan lagres
 data-importer.ad-hoc-import.decision.discard: Forkast import
 data-importer.ad-hoc-import.decision.back-to-mapping: Tilbake til mapping
-data-importer.ad-hoc-import.decision.merge: 'Slå sammen {{ready}} rader, utelat {{failed}}'
+data-importer.ad-hoc-import.decision.merge_one: 'Slå sammen {{count}} rad, utelat {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Slå sammen {{count}} rader, utelat {{failed}}'
 data-importer.ad-hoc-import.decision.waiting: 'En import av {{file}} til denne mappen venter på din avgjørelse.'
 data-importer.ad-hoc-import.merge.branch-name: 'Ad hoc-import: {{file}} til {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: Objektet finnes ikke lenger

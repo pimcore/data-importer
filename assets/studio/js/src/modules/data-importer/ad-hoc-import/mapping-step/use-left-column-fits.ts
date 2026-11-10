@@ -29,6 +29,14 @@ export const useLeftColumnFits = ({ mapping, source, openColumn, onChange }: Lef
   const latest = useRef(mapping)
   latest.current = mapping
   const asked = useRef(new Map<string, TransformationStep[]>())
+  // once the step is left, the mapping can move on without this hook, and the file be read differently
+  const isLeft = useRef(false)
+
+  useEffect(() => {
+    isLeft.current = false
+
+    return () => { isLeft.current = true }
+  }, [])
 
   useEffect(() => {
     if (mapping === null || source === null) {
@@ -49,7 +57,7 @@ export const useLeftColumnFits = ({ mapping, source, openColumn, onChange }: Lef
         }
 
         const current = latest.current
-        if (current?.rows.find((candidate) => candidate.column === column)?.transformations !== steps) {
+        if (isLeft.current || current?.rows.find((candidate) => candidate.column === column)?.transformations !== steps) {
           return
         }
         latest.current = setTransformations(current, column, steps, failed ? false : result.data.fits)

@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 kolom is automatisch g
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'bij het inlezen van het bestand, gemarkeerd met “auto”. Nog {{count}} hebben een suggestie om te bevestigen.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: bij het inlezen van het bestand, gemarkeerd met “auto”. Nog 1 heeft een suggestie om te bevestigen.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: bij het inlezen van het bestand, gemarkeerd met “auto”.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} kolommen hebben een suggestie om te bevestigen.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 kolom heeft een suggestie om te bevestigen.
 data-importer.ad-hoc-import.mapping.head.column: Kolom in je bestand
 data-importer.ad-hoc-import.mapping.head.field: Gaat naar veld
 data-importer.ad-hoc-import.mapping.head.transformations: Transformaties
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Overgeslagen in het voorbeeld
 data-importer.ad-hoc-import.result.open-folder: Map openen
 data-importer.ad-hoc-import.result.download-rows: Rijen downloaden
 data-importer.ad-hoc-import.result.history: Elk object behoudt zijn versiegeschiedenis.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} rijen zijn niet opgeslagen.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} rij is niet opgeslagen.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} rijen zijn niet opgeslagen.'
 data-importer.ad-hoc-import.result.others-saved: De andere zijn opgeslagen, elk met zijn versiegeschiedenis.
 data-importer.ad-hoc-import.result.count.updated: bijgewerkt
 data-importer.ad-hoc-import.result.count.created: 'aangemaakt in {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Naar een branch geschreven
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objecten'
 data-importer.ad-hoc-import.run.branch.checking: 'Controleren: rechten, sleutels, waarden'
 data-importer.ad-hoc-import.run.branch.merging: 'Samenvoegen als {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} rijen kunnen niet worden opgeslagen.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} rij kan niet worden opgeslagen.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} rijen kunnen niet worden opgeslagen.'
 data-importer.ad-hoc-import.decision.nothing-merged: Er is nog niets samengevoegd; de andere rijen staan klaar in de branch.
 data-importer.ad-hoc-import.decision.count.ready: klaar om samen te voegen
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: kunnen niet worden opgeslagen
 data-importer.ad-hoc-import.decision.column.why: Waarom het niet kan worden opgeslagen
 data-importer.ad-hoc-import.decision.discard: Import verwerpen
 data-importer.ad-hoc-import.decision.back-to-mapping: Terug naar mapping
-data-importer.ad-hoc-import.decision.merge: '{{ready}} rijen samenvoegen, {{failed}} weglaten'
+data-importer.ad-hoc-import.decision.merge_one: '{{count}} rij samenvoegen, {{failed}} weglaten'
+data-importer.ad-hoc-import.decision.merge_other: '{{count}} rijen samenvoegen, {{failed}} weglaten'
 data-importer.ad-hoc-import.decision.waiting: 'Een import van {{file}} in deze map wacht op je beslissing.'
 data-importer.ad-hoc-import.merge.branch-name: 'Ad-hoc-import: {{file}} in {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: Het object bestaat niet meer

@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 column was mapped auto
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'when the file was read, marked “auto”. {{count}} more have a suggestion to confirm.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: 'when the file was read, marked “auto”. 1 more has a suggestion to confirm.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: 'when the file was read, marked “auto”.'
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} columns have a suggestion to confirm.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 column has a suggestion to confirm.
 data-importer.ad-hoc-import.mapping.head.column: Column in your file
 data-importer.ad-hoc-import.mapping.head.field: Goes into field
 data-importer.ad-hoc-import.mapping.head.transformations: Transformations
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Skipped in the preview
 data-importer.ad-hoc-import.result.open-folder: Open folder
 data-importer.ad-hoc-import.result.download-rows: Download rows
 data-importer.ad-hoc-import.result.history: Every object keeps its version history.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} rows were not saved.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} row was not saved.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} rows were not saved.'
 data-importer.ad-hoc-import.result.others-saved: The others are saved, each with its version history.
 data-importer.ad-hoc-import.result.count.updated: updated
 data-importer.ad-hoc-import.result.count.created: 'created in {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Written into a branch
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objects'
 data-importer.ad-hoc-import.run.branch.checking: 'Checking: rights, keys, values'
 data-importer.ad-hoc-import.run.branch.merging: 'Merging as {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} rows cannot be saved.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} row cannot be saved.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} rows cannot be saved.'
 data-importer.ad-hoc-import.decision.nothing-merged: Nothing is merged yet; the other rows are ready in the branch.
 data-importer.ad-hoc-import.decision.count.ready: ready to merge
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: cannot be saved
 data-importer.ad-hoc-import.decision.column.why: Why it cannot be saved
 data-importer.ad-hoc-import.decision.discard: Discard import
 data-importer.ad-hoc-import.decision.back-to-mapping: Back to mapping
-data-importer.ad-hoc-import.decision.merge: 'Merge {{ready}} rows, leave out {{failed}}'
+data-importer.ad-hoc-import.decision.merge_one: 'Merge {{count}} row, leave out {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Merge {{count}} rows, leave out {{failed}}'
 data-importer.ad-hoc-import.decision.waiting: 'An import of {{file}} into this folder is waiting for your decision.'
 data-importer.ad-hoc-import.merge.branch-name: 'Ad hoc import: {{file}} into {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: The object no longer exists

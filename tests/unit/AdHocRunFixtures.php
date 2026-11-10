@@ -29,6 +29,10 @@ use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatch;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherInterface;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\User;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\PersistingStoreInterface;
+use Symfony\Component\Lock\Store\InMemoryStore;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -187,6 +191,42 @@ final class AdHocRunFixtures
     public static function runMessages(): RunMessages
     {
         return new RunMessages(self::translator());
+    }
+
+    /**
+     * Locks that let something happen in the moment a lock is taken, as another request would just before it.
+     */
+    public static function locksThatFirst(\Closure $happens): LockFactory
+    {
+        return new LockFactory(new class($happens) implements PersistingStoreInterface {
+            private InMemoryStore $store;
+
+            public function __construct(private \Closure $happens)
+            {
+                $this->store = new InMemoryStore();
+            }
+
+            public function save(Key $key): void
+            {
+                ($this->happens)();
+                $this->store->save($key);
+            }
+
+            public function delete(Key $key): void
+            {
+                $this->store->delete($key);
+            }
+
+            public function exists(Key $key): bool
+            {
+                return $this->store->exists($key);
+            }
+
+            public function putOffExpiration(Key $key, float $ttl): void
+            {
+                $this->store->putOffExpiration($key, $ttl);
+            }
+        });
     }
 
     public static function memoryStore(): RunStoreInterface

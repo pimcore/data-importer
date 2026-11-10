@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: Automatycznie zmapowano 
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'podczas odczytu pliku (oznaczenie „auto”). Kolejne kolumny z sugestią do potwierdzenia: {{count}}.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: podczas odczytu pliku (oznaczenie „auto”). 1 kolejna kolumna ma sugestię do potwierdzenia.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: podczas odczytu pliku (oznaczenie „auto”).
+data-importer.ad-hoc-import.mapping.auto-note.pending: 'Kolumny z sugestią do potwierdzenia: {{count}}.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 kolumna ma sugestię do potwierdzenia.
 data-importer.ad-hoc-import.mapping.head.column: Kolumna w pliku
 data-importer.ad-hoc-import.mapping.head.field: Trafia do pola
 data-importer.ad-hoc-import.mapping.head.transformations: Transformacje
@@ -564,7 +566,10 @@ data-importer.ad-hoc-import.result.skipped: Pominięte w podglądzie
 data-importer.ad-hoc-import.result.open-folder: Otwórz folder
 data-importer.ad-hoc-import.result.download-rows: Pobierz wiersze
 data-importer.ad-hoc-import.result.history: Każdy obiekt zachowuje historię wersji.
-data-importer.ad-hoc-import.result.not-saved: 'Niezapisane wiersze: {{count}}.'
+data-importer.ad-hoc-import.result.not-saved_one: 'Niezapisane wiersze: {{count}}.'
+data-importer.ad-hoc-import.result.not-saved_few: 'Niezapisane wiersze: {{count}}.'
+data-importer.ad-hoc-import.result.not-saved_many: 'Niezapisane wiersze: {{count}}.'
+data-importer.ad-hoc-import.result.not-saved_other: 'Niezapisane wiersze: {{count}}.'
 data-importer.ad-hoc-import.result.others-saved: Pozostałe zostały zapisane, każdy z własną historią wersji.
 data-importer.ad-hoc-import.result.count.updated: zaktualizowane
 data-importer.ad-hoc-import.result.count.created: 'utworzone w {{folder}}'
@@ -580,14 +585,20 @@ data-importer.ad-hoc-import.run.branch.written: Zapisano w gałęzi
 data-importer.ad-hoc-import.run.branch.objects: 'Obiekty: {{count}}'
 data-importer.ad-hoc-import.run.branch.checking: 'Sprawdzanie: uprawnienia, klucze, wartości'
 data-importer.ad-hoc-import.run.branch.merging: 'Scalanie jako {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: 'Wiersze, których nie można zapisać: {{count}}.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: 'Wiersze, których nie można zapisać: {{count}}.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_few: 'Wiersze, których nie można zapisać: {{count}}.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_many: 'Wiersze, których nie można zapisać: {{count}}.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: 'Wiersze, których nie można zapisać: {{count}}.'
 data-importer.ad-hoc-import.decision.nothing-merged: Nic nie zostało jeszcze scalone; pozostałe wiersze są gotowe w gałęzi.
 data-importer.ad-hoc-import.decision.count.ready: gotowe do scalenia
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: nie można zapisać
 data-importer.ad-hoc-import.decision.column.why: Dlaczego nie można zapisać
 data-importer.ad-hoc-import.decision.discard: Odrzuć import
 data-importer.ad-hoc-import.decision.back-to-mapping: Wróć do mapowania
-data-importer.ad-hoc-import.decision.merge: 'Scal gotowe wiersze ({{ready}}), pomiń pozostałe ({{failed}})'
+data-importer.ad-hoc-import.decision.merge_one: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
+data-importer.ad-hoc-import.decision.merge_few: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
+data-importer.ad-hoc-import.decision.merge_many: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
+data-importer.ad-hoc-import.decision.merge_other: 'Scal gotowe wiersze ({{count}}), pomiń pozostałe ({{failed}})'
 data-importer.ad-hoc-import.decision.waiting: 'Import pliku {{file}} do tego folderu czeka na Twoją decyzję.'
 data-importer.ad-hoc-import.merge.branch-name: 'Import ad hoc: {{file}} do {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: Obiekt już nie istnieje

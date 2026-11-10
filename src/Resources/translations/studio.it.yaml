@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 colonna è stata mappa
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'durante la lettura del file, contrassegnate con “auto”. Altre {{count}} hanno un suggerimento da confermare.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: durante la lettura del file, contrassegnate con “auto”. Un'altra ha un suggerimento da confermare.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: durante la lettura del file, contrassegnate con “auto”.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} colonne hanno un suggerimento da confermare.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 colonna ha un suggerimento da confermare.
 data-importer.ad-hoc-import.mapping.head.column: Colonna nel file
 data-importer.ad-hoc-import.mapping.head.field: Va nel campo
 data-importer.ad-hoc-import.mapping.head.transformations: Trasformazioni
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Saltati nell'anteprima
 data-importer.ad-hoc-import.result.open-folder: Apri cartella
 data-importer.ad-hoc-import.result.download-rows: Scarica righe
 data-importer.ad-hoc-import.result.history: Ogni oggetto conserva la propria cronologia delle versioni.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} righe non sono state salvate.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} riga non è stata salvata.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} righe non sono state salvate.'
 data-importer.ad-hoc-import.result.others-saved: Le altre sono salvate, ciascuna con la propria cronologia delle versioni.
 data-importer.ad-hoc-import.result.count.updated: aggiornati
 data-importer.ad-hoc-import.result.count.created: 'creati in {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Scritto in un branch
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} oggetti'
 data-importer.ad-hoc-import.run.branch.checking: 'Controllo: permessi, chiavi, valori'
 data-importer.ad-hoc-import.run.branch.merging: 'Unione come {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} righe non possono essere salvate.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} riga non può essere salvata.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} righe non possono essere salvate.'
 data-importer.ad-hoc-import.decision.nothing-merged: Non è ancora stato unito nulla; le altre righe sono pronte nel branch.
 data-importer.ad-hoc-import.decision.count.ready: pronte per l'unione
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: non possono essere salvate
 data-importer.ad-hoc-import.decision.column.why: Perché non può essere salvata
 data-importer.ad-hoc-import.decision.discard: Scarta importazione
 data-importer.ad-hoc-import.decision.back-to-mapping: Torna al mapping
-data-importer.ad-hoc-import.decision.merge: 'Unisci {{ready}} righe, escludi {{failed}}'
+data-importer.ad-hoc-import.decision.merge_one: 'Unisci {{count}} riga, escludi {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Unisci {{count}} righe, escludi {{failed}}'
 data-importer.ad-hoc-import.decision.waiting: 'Un''importazione di {{file}} in questa cartella attende la Sua decisione.'
 data-importer.ad-hoc-import.merge.branch-name: 'Importazione ad hoc: {{file}} in {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: L'oggetto non esiste più

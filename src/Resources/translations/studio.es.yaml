@@ -413,6 +413,8 @@ data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 columna se asignó aut
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'al leer el archivo, con la marca “auto”. Otras {{count}} tienen una sugerencia por confirmar.'
 data-importer.ad-hoc-import.mapping.auto-note.rest-one: al leer el archivo, con la marca “auto”. 1 más tiene una sugerencia por confirmar.
 data-importer.ad-hoc-import.mapping.auto-note.rest-none: al leer el archivo, con la marca “auto”.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} columnas tienen una sugerencia por confirmar.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 columna tiene una sugerencia por confirmar.
 data-importer.ad-hoc-import.mapping.head.column: Columna de su archivo
 data-importer.ad-hoc-import.mapping.head.field: Va al campo
 data-importer.ad-hoc-import.mapping.head.transformations: Transformaciones
@@ -564,7 +566,8 @@ data-importer.ad-hoc-import.result.skipped: Omitidos en la vista previa
 data-importer.ad-hoc-import.result.open-folder: Abrir carpeta
 data-importer.ad-hoc-import.result.download-rows: Descargar filas
 data-importer.ad-hoc-import.result.history: Cada objeto conserva su historial de versiones.
-data-importer.ad-hoc-import.result.not-saved: '{{count}} filas no se guardaron.'
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} fila no se guardó.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} filas no se guardaron.'
 data-importer.ad-hoc-import.result.others-saved: Las demás están guardadas, cada una con su historial de versiones.
 data-importer.ad-hoc-import.result.count.updated: actualizados
 data-importer.ad-hoc-import.result.count.created: 'creados en {{folder}}'
@@ -580,14 +583,16 @@ data-importer.ad-hoc-import.run.branch.written: Escrito en una rama
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objetos'
 data-importer.ad-hoc-import.run.branch.checking: 'Comprobando: permisos, claves, valores'
 data-importer.ad-hoc-import.run.branch.merging: 'Fusionando como {{user}}'
-data-importer.ad-hoc-import.decision.cannot-be-saved: '{{count}} filas no se pueden guardar.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} fila no se puede guardar.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} filas no se pueden guardar.'
 data-importer.ad-hoc-import.decision.nothing-merged: Aún no se ha fusionado nada; las demás filas están listas en la rama.
 data-importer.ad-hoc-import.decision.count.ready: listas para fusionar
 data-importer.ad-hoc-import.decision.count.cannot-be-saved: no se pueden guardar
 data-importer.ad-hoc-import.decision.column.why: Por qué no se puede guardar
 data-importer.ad-hoc-import.decision.discard: Descartar importación
 data-importer.ad-hoc-import.decision.back-to-mapping: Volver al Mapping
-data-importer.ad-hoc-import.decision.merge: 'Fusionar {{ready}} filas, omitir {{failed}}'
+data-importer.ad-hoc-import.decision.merge_one: 'Fusionar {{count}} fila, omitir {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Fusionar {{count}} filas, omitir {{failed}}'
 data-importer.ad-hoc-import.decision.waiting: 'Una importación de {{file}} en esta carpeta espera su decisión.'
 data-importer.ad-hoc-import.merge.branch-name: 'Importación ad hoc: {{file}} en {{folder}}'
 data-importer.ad-hoc-import.merge.object-gone: El objeto ya no existe
