@@ -294,6 +294,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Scal
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Klucz Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Nie wybrano klucza
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} w grupie {{group}}"
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: "Wariant"
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: "Wariant domyślny"
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Wybierz klucz Classification Store
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Wyszukaj i wybierz klucz dla tego pola Classification Store
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store Batch wymaga typu wyniku transformacji: array, quantityValueArray, inputQuantityValueArray lub dateArray."

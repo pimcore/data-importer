@@ -59,9 +59,22 @@ final class LoadKeyNameController extends AbstractApiController
     )]
     #[TextFieldParameter(
         name: 'keyId',
-        description: 'The classification store key ID in group-key format (e.g., "1-5")',
+        description: 'The classification store key reference: "<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>" or the integer '
+            . 'pair "<GROUP_ID>-<KEY_ID>", optionally followed by "#<VARIANT>"',
         required: true,
-        example: '1-5'
+        example: 'dimensions:width'
+    )]
+    #[TextFieldParameter(
+        name: 'classId',
+        description: 'The class of the mapping, which names the store an identifier reference is resolved in',
+        required: false,
+        example: 'Product'
+    )]
+    #[TextFieldParameter(
+        name: 'fieldName',
+        description: 'The classification store field of the mapping',
+        required: false,
+        example: 'csField'
     )]
     #[SuccessResponse(
         description: 'bundle_data_importer_classificationstore_load_key_name_success_response',
@@ -72,10 +85,12 @@ final class LoadKeyNameController extends AbstractApiController
         HttpResponseCodes::UNAUTHORIZED,
     ])]
     public function loadKeyName(
-        #[MapQueryParameter] string $keyId
+        #[MapQueryParameter] string $keyId,
+        #[MapQueryParameter] ?string $classId = null,
+        #[MapQueryParameter] ?string $fieldName = null
     ): JsonResponse {
         return $this->jsonResponse(
-            $this->dataTypeService->loadClassificationStoreKeyName($keyId)
+            $this->dataTypeService->loadClassificationStoreKeyName($keyId, $classId, $fieldName)
         );
     }
 }

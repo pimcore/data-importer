@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Schema;
 
+use OpenApi\Attributes\Items;
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
 use Pimcore\Bundle\StudioBackendBundle\Util\Schema\AdditionalAttributesInterface;
@@ -31,12 +32,24 @@ final class ClassificationStoreKeyNameResponse implements AdditionalAttributesIn
     use AdditionalAttributesTrait;
 
     public function __construct(
-        #[Property(description: 'The key ID (group-key format)', type: 'string', example: '1-5', nullable: true)]
+        #[Property(
+            description: 'The key reference, as it was asked for when the key could not be resolved',
+            type: 'string',
+            example: '1-5',
+            nullable: true
+        )]
         private readonly ?string $keyId = null,
         #[Property(description: 'The group name', type: 'string', example: 'Dimensions', nullable: true)]
         private readonly ?string $groupName = null,
         #[Property(description: 'The key name', type: 'string', example: 'Width', nullable: true)]
         private readonly ?string $keyName = null,
+        #[Property(
+            description: 'The variant names the key declares',
+            type: 'array',
+            items: new Items(type: 'string'),
+            example: ['metric', 'imperial']
+        )]
+        private readonly array $variants = [],
     ) {
     }
 
@@ -53,5 +66,10 @@ final class ClassificationStoreKeyNameResponse implements AdditionalAttributesIn
     public function getKeyName(): ?string
     {
         return $this->keyName;
+    }
+
+    public function getVariants(): array
+    {
+        return $this->variants;
     }
 }

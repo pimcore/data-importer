@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueUnitSourceTrait;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AbstractQuantityValue as AbstractQuantityValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Classificationstore\Service as ClassificationstoreService;
@@ -22,12 +23,14 @@ use Pimcore\Model\DataObject\Data\AbstractQuantityValue;
 use Pimcore\Model\DataObject\Data\InputQuantityValue;
 use Pimcore\Model\DataObject\Data\QuantityValue;
 use Pimcore\Model\Element\ElementInterface;
+use Pimcore\Normalizer\NormalizerInterface;
 
 /**
  * @internal
  */
-final class ClassificationstoreBatch implements DataTargetInterface
+final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameAwareInterface
 {
+    use ClassificationstoreKeyTrait;
     use QuantityValueUnitSourceTrait;
     use WriteIfSourceIsEmptyTrait;
 
@@ -55,13 +58,6 @@ final class ClassificationstoreBatch implements DataTargetInterface
     private string $fieldName;
 
     private ?string $language;
-
-    /**
-     * @var array<string, KeyGroupRelation|null> the key assignment per `<GROUP_ID>-<KEY_ID>`, held
-     *                                           for the run so that one import row does not cost
-     *                                           one query per value
-     */
-    private array $keyGroupRelations = [];
 
     public function setSettings(array $settings): void
     {
@@ -93,29 +89,22 @@ final class ClassificationstoreBatch implements DataTargetInterface
                 throw new InvalidInputException('Input data not an array');
             }
 
+            // every token of the entry, before the empty-value filter removes any of them: a
+            // malformed token is the entry's error whatever its value is, and a filter that ran
+            // first would report it only when it happened to carry a non-empty value
+            $references = $this->parseReferences(array_keys($data));
+
             if (!$this->writeIfSourceIsEmpty) {
                 $data = $this->filterEmptySourceValues($data);
+                $references = array_intersect_key($references, $data);
             }
 
             if (!empty($data)) {
+                $storeId = $this->resolveStoreId($element, $this->fieldName);
+                $this->preloadIdentifierReferences($references, $storeId);
+
                 foreach ($data as $key => $value) {
-                    $keyParts = explode('-', $key);
-                    if (count($keyParts) !== 2) {
-                        throw new InvalidInputException('Key not format <GROUP_ID>-<KEY_ID>: ' . $key);
-                    }
-
-                    if (!is_numeric($keyParts[0])) {
-                        throw new \Exception('groupId not valid');
-                    }
-
-                    if (!is_numeric($keyParts[1])) {
-                        throw new \Exception('keyId not valid');
-                    }
-
-                    $value = $this->buildKeyValue((int)$keyParts[0], (int)$keyParts[1], $value);
-
-                    $classificationStore->setLocalizedKeyValue((int)$keyParts[0], (int)$keyParts[1], $value, $this->language);
-                    $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$keyParts[0] => true]);
+                    $this->assignKeyValue($classificationStore, $references[$key], $element, $value);
                 }
             }
         } else {
@@ -124,8 +113,120 @@ final class ClassificationstoreBatch implements DataTargetInterface
     }
 
     /**
-     * The value for one key of a mixed entry, dispatched on the key's own type: a quantity value key
-     * builds its model object here, every other type is written as it arrives.
+     * @param array<int|string, mixed> $tokens
+     *
+     * @return array<int|string, ClassificationstoreKeyReference> the reference of each token, under the token
+     *
+     * @throws InvalidInputException
+     */
+    private function parseReferences(array $tokens): array
+    {
+        $references = [];
+        foreach ($tokens as $token) {
+            $reference = ClassificationstoreKeyReference::parse((string) $token);
+            if (!$reference instanceof ClassificationstoreKeyReference) {
+                throw new InvalidInputException(
+                    'Key not format <GROUP_IDENTIFIER>:<KEY_IDENTIFIER> or <GROUP_ID>-<KEY_ID>: ' . $token
+                );
+            }
+
+            $references[$token] = $reference;
+        }
+
+        return $references;
+    }
+
+    /**
+     * @throws InvalidInputException
+     * @throws InvalidConfigurationException
+     */
+    private function assignKeyValue(
+        \Pimcore\Model\DataObject\Classificationstore $classificationStore,
+        ClassificationstoreKeyReference $reference,
+        ElementInterface $element,
+        mixed $value
+    ): void {
+        $relation = $this->resolveRelation($reference, $element, $this->fieldName);
+        if ($relation instanceof KeyGroupRelation) {
+            $groupId = $relation->getGroupId();
+            $keyId = $relation->getKeyId();
+        } elseif ($reference->isIdentifier) {
+            throw new InvalidInputException('Classification store key not found: ' . $reference->token);
+        } else {
+            $groupId = (int) $reference->group;
+            $keyId = (int) $reference->key;
+        }
+
+        $declaration = $this->resolveDeclaration($relation);
+        if ($reference->variant !== null || ($declaration !== null && $declaration->getVariantNames() !== [])) {
+            throw new InvalidInputException(
+                'Classification store key ' . $reference->token . ' cannot be written by a Classification Store Batch '
+                . 'entry: a batch entry carries no variants. Write that key through a single-key '
+                . 'Classification Store entry.'
+            );
+        }
+
+        $value = $this->buildKeyValue($groupId, $keyId, $value);
+        $unbuildableType = $this->unbuildableType($relation, $value);
+        if ($unbuildableType !== null) {
+            $this->logWarning(
+                'Classification store key ' . $reference->token . ' of type ' . $unbuildableType
+                . ' was skipped: a Classification Store Batch entry cannot build its value. '
+                . 'Write that key through a separate mapping entry ending in the matching operator, e.g. Date.'
+            );
+
+            return;
+        }
+
+        $this->writeKeyValue(
+            $classificationStore,
+            new ClassificationstoreKeySlot($reference->token, $groupId, $keyId, null, $declaration),
+            $value,
+            $this->language
+        );
+        $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$groupId => true]);
+    }
+
+    /**
+     * The type of the key when it would store nothing of a value that is one - its field definition normalises
+     * the value to null - and null otherwise. Asked of the definition rather than of a list of types, so that a
+     * type core adds is answered as it is.
+     */
+    private function unbuildableType(?KeyGroupRelation $relation, mixed $value): ?string
+    {
+        if (!$relation instanceof KeyGroupRelation) {
+            return null;
+        }
+
+        $definition = $this->valueDefinition($relation);
+        if (!$definition instanceof NormalizerInterface) {
+            return null;
+        }
+
+        $multiValue = $this->resolveDeclaration($relation)?->isMultiValue() === true;
+        $items = $multiValue ? ($this->decodeList($value) ?? [$value]) : [$value];
+        foreach ($items as $item) {
+            if (!$this->isEmptyValue($item) && $definition->normalize($item) === null) {
+                return $definition->getFieldtype();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The value for one key of a mixed entry, dispatched on the type of the value the key holds: a
+     * quantity value key builds its model object here, every other type is written as it arrives.
+     *
+     * The type is read off the key's value definition rather than off the key, because those two are
+     * not the same thing for a wrapper: a `multiValue` key's own type is `multiValue` whatever it
+     * wraps ({@see \Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue::getFieldType()}), so a
+     * dispatch on the key's type skipped a wrapped quantity value key and left its unit unresolved.
+     *
+     * A key holding a LIST is deliberately not dispatched: one entry value then carries several
+     * values, and there is no agreed batch-entry spelling for a list of `[value, unit]` pairs. Such a
+     * value stays as it arrives, which `unbuildableType()` reports as unbuildable, so the key is
+     * warned about and skipped with the single-key route named rather than written as a wrong number.
      *
      * @param int $groupId
      * @param int $keyId
@@ -149,7 +250,11 @@ final class ClassificationstoreBatch implements DataTargetInterface
             return $value;
         }
 
-        $type = $relation->getType();
+        if ($this->resolveDeclaration($relation)?->isMultiValue() === true) {
+            return $value;
+        }
+
+        $type = $this->valueDefinition($relation)?->getFieldtype();
         if ($type !== self::TYPE_QUANTITY_VALUE && $type !== self::TYPE_INPUT_QUANTITY_VALUE) {
             return $value;
         }
@@ -180,22 +285,6 @@ final class ClassificationstoreBatch implements DataTargetInterface
     }
 
     /**
-     * @param int $groupId
-     * @param int $keyId
-     *
-     * @return KeyGroupRelation|null
-     */
-    private function resolveKeyGroupRelation(int $groupId, int $keyId): ?KeyGroupRelation
-    {
-        $cacheKey = $groupId . '-' . $keyId;
-        if (!array_key_exists($cacheKey, $this->keyGroupRelations)) {
-            $this->keyGroupRelations[$cacheKey] = KeyGroupRelation::getByGroupAndKeyId($groupId, $keyId);
-        }
-
-        return $this->keyGroupRelations[$cacheKey];
-    }
-
-    /**
      * The default unit of the key's own field definition. Not the group's view of it: although a
      * `KeyGroupRelation` is handed in, `Service::getFieldDefinitionFromKeyConfig()` reads
      * `getDefinition()` rather than `getEffectiveDefinition()` and memoises the result under the key
@@ -208,10 +297,22 @@ final class ClassificationstoreBatch implements DataTargetInterface
      */
     private function resolveDefaultUnitId(KeyGroupRelation $relation): ?string
     {
-        $fieldDefinition = ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation);
+        $fieldDefinition = $this->valueDefinition($relation);
 
         return $fieldDefinition instanceof AbstractQuantityValueDefinition
             ? $fieldDefinition->getDefaultUnit()
             : null;
+    }
+
+    /**
+     * The definition of the VALUE a key holds, which for a wrapper is its delegate's and not its own:
+     * the one boundary core resolves an inner type at ({@see ClassificationstoreService::getValueDefinition()}).
+     * A wrapper naming no inner type answers itself.
+     */
+    private function valueDefinition(KeyGroupRelation $relation): ?Data
+    {
+        return ClassificationstoreService::getValueDefinition(
+            ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation)
+        );
     }
 }

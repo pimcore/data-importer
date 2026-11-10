@@ -33,8 +33,16 @@ jest.mock('../../../components/tabs/steps/advanced-mapping-modal/step-target/ste
   useStyles: () => ({ styles: {} })
 }))
 
+let mockVariants: string[] = []
+
 jest.mock('./use-classification-store-settings', () => ({
-  useClassificationStoreSettings: () => ({ attributes: [], options: [], isFetching: false, isLocalized: false })
+  useClassificationStoreSettings: () => ({
+    attributes: [], options: [], isFetching: false, isLocalized: false, variants: mockVariants
+  })
+}))
+
+jest.mock('./step-target-classificationstore-variant-select', () => ({
+  StepTargetClassificationstoreVariantSelect: 'VariantSelect'
 }))
 
 // the panels' other controls are not under test; mocking them keeps their own studio imports out
@@ -182,5 +190,42 @@ describe.each([
     const mounted = mountedControl()
 
     expect(theSwitch(control(mounted.settings, mounted.target)).checked).toBe(legacyChecked)
+  })
+})
+
+describe('the variant control of DataTargetClassificationstoreSettings', () => {
+  afterEach(() => { mockVariants = [] })
+
+  const variantSelects = (settings: DataTargetConfig['settings'], onChange = jest.fn()): ReactElement[] =>
+    elements(DataTargetClassificationstoreSettings({
+      classId: 'Product',
+      classFieldOptions: [],
+      isLocalized: false,
+      settings,
+      transformationResultType: 'default',
+      onChange
+    })).filter((element) => element.type === 'VariantSelect')
+
+  it('shows the declared variant names for a key that declares variants', () => {
+    mockVariants = ['metric', 'imperial']
+
+    const selects = variantSelects({ fieldName: 'csField', keyId: 'grp:key' })
+
+    expect(selects).toHaveLength(1)
+    expect(selects[0].props).toMatchObject({ keyId: 'grp:key', variants: ['metric', 'imperial'] })
+  })
+
+  it('saves the chosen variant on the mapping entry', () => {
+    mockVariants = ['metric']
+    const onChange = jest.fn()
+
+    const [select] = variantSelects({ fieldName: 'csField', keyId: 'grp:key' }, onChange)
+    ;(select.props as { onChange: (keyId: string) => void }).onChange('grp:key#metric')
+
+    expect(onChange).toHaveBeenCalledWith({ fieldName: 'csField', keyId: 'grp:key#metric' })
+  })
+
+  it('adds nothing for a key that declares no variants', () => {
+    expect(variantSelects({ fieldName: 'csField', keyId: 'grp:key' })).toHaveLength(0)
   })
 })

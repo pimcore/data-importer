@@ -113,8 +113,8 @@ Read the table from the run, not from here: pasting it in would be a second copy
 with the code, which is the failure mode this audit exists to catch. The verdicts worth knowing in
 advance:
 
-- **A plain date string in a mixed `array` batch entry does not survive.** See *Items for the
-  follow-up ticket*.
+- **A plain date string in a mixed `array` batch entry does not survive.** It is skipped with a
+  warning that names the key and points at the `Date` operator. See *Items for the follow-up ticket*.
 - **A `quantityValue` or `inputQuantityValue` key in a mixed `array` batch entry reads back as a
   quantity value model object, not as the source scalar** — it is `differed` by the table's
   definition and is the intended behaviour of this change.
@@ -230,6 +230,25 @@ bundle no longer permits, it would be 29 and
 `testTheDerivedKeyTypeSetMatchesTheAuditDocument()` would name `image` as the type to drop. Nothing
 is deferred and nothing is left to do.
 
+**Found and fixed here, unnumbered because it is the same divergence as item 2 one level deeper:** a
+`quantityValue` key *wrapped in `multiValue`* took no unit at all in a batch entry. The per-value
+dispatch read `KeyGroupRelation::getType()`, which for a wrapper is `multiValue` whatever it wraps
+(`MultiValue::getFieldType()`), so the wrapped key fell past the dispatch, normalised to null and was
+warned about and skipped — where the same key unwrapped is built. It is now dispatched on the
+definition of the value the key holds, through the one boundary core resolves an inner type at,
+`Classificationstore\Service::getValueDefinition()`; the default unit is read there too, because it
+lives on the delegate and not on the wrapper. Asserted by
+`ClassificationstoreBatchQuantityValueTest::testAWrappedQuantityValueKeyIsDispatchedOnItsDelegate()`.
+
+A wrapper declaring a **list** is deliberately left out of the dispatch: one entry value then carries
+several values, and this epic has decided no batch-entry spelling for a list of `[value, unit]`
+pairs. Such a value stays as it arrives and is therefore warned about and skipped with the single-key
+route named, which is the treatment item 3 below gives a date string for the same reason — a shape
+the batch entry cannot read is refused out loud rather than guessed at. Pinned by
+`ClassificationstoreBatchQuantityValueTest::testAListOfQuantityValuesIsWarnedAboutRatherThanBuiltFromItsJsonText()`,
+so a later dispatch over list items has to replace that test rather than silently start casting the
+list's JSON text to a number.
+
 **Fixed here, because it was trivial:**
 
 1. *A non-localized classification store field could not be imported at all.* Both targets assigned
@@ -259,18 +278,19 @@ is deferred and nothing is left to do.
 3. *A plain date string in a mixed `array` batch entry is lost.* `ClassificationstoreBatch` has no
    format handling of its own — `setSettings()` takes `fieldName` and `language` and nothing else —
    and `Data\Date::normalize()` keeps a value only when it is already a `Carbon`, returning `null`
-   otherwise. A `date` key written as `['1-4' => '2021-07-22']` therefore saves as `null`. This is
-   the outcome the audit found, asserted by
-   `testAPlainDateStringDoesNotSurviveAMixedBatchEntry()`.
-   **Date dispatch was deliberately not added here**: unlike a quantity value, a date string cannot
-   be interpreted without knowing its format, and the format would be a new configuration surface on
-   a target this ticket is not allowed to grow one on. Guessing the format would misread `02/03/2026`
-   on half the world's data silently. The documented workaround — a separate mapping entry ending in
-   the `Date` operator, which does have a format setting — keeps working and is the only correct
-   route today.
-4. *The empty test diverges from `Direct`.* See *Divergence from Direct*. Deciding whether the two
-   should agree, and which one moves, is a behaviour change for existing configurations and belongs
-   in its own ticket.
+   otherwise. A `date` key written as `['1-4' => '2021-07-22']` therefore stores nothing. This is
+   the outcome the audit found, asserted by `testAPlainDateStringDoesNotSurviveAMixedBatchEntry()`.
+   **Not fixed here:** a date string cannot be interpreted without knowing its format, and the format
+   would be a new configuration surface on the batch target; guessing it would misread `02/03/2026` on
+   half the world's data silently. **What changed here is that the loss is no longer silent:** a key
+   whose field definition normalises its value to nothing is skipped with an `ApplicationLogger`
+   warning naming the key token and the key's type and pointing at the documented route — a separate
+   mapping entry ending in the `Date` operator, which does have a format setting. The rest of the
+   row is written and the element still saves. The rule is asked of the key's own field definition,
+   so it holds for every type with the same property, `image` and the relation types included.
+4. *The empty test diverges from `Direct`.* See *Divergence from Direct*.
+   **Not fixed here:** the classification store empty test is PHP falsiness by decision, and aligning
+   it with `Direct::checkAssignData()` would change what existing configurations import.
 5. *A per-group unit override is stored but does not reach the importer.* The override **does**
    exist on the classification store branch this epic develops against: `KeyGroupRelation` carries
    `$definitionOverride` (`models/DataObject/Classificationstore/KeyGroupRelation.php:93`, column
@@ -291,11 +311,23 @@ is deferred and nothing is left to do.
    resolution that change centralises, and is not done here.
    The unit a plain scalar resolves to is therefore the key's own, whichever group it was written
    through; no test here pins that, because it is core's resolution and not this bundle's.
+   **Not fixed here:** core's `getFieldDefinitionFromKeyConfig()` drops the override, and the importer
+   begins honouring it when core resolves definitions per group, not by this bundle calling
+   `getEffectiveDefinition()` itself.
 6. *The mapping editor offers classification store keys of types that cannot be stored.*
    `TransformationDataTypeService` maps `geoPoint`, `geoBounds`, `geoPolygon`, `geoPolyline`,
    `hotspotimage` and `imageGallery` to pimcore types, and
-   `ClassificationStoreDataTypeService::listClassificationStoreKeyList()` offers classification store
+   `ClassificationStoreDataTypeService::listClassificationStoreKeyList()` offered classification store
    keys filtered by exactly that map — but none of those types is in the derived set above, because
-   none normalises to a single value and none has a classification store marshaller. Selecting such a
-   key is therefore offered and cannot work. Out of scope here; it is a defect of the key list, not of
-   the data targets.
+   none normalises to a single value and none has a classification store marshaller.
+   **Resolved here:** the key list no longer offers a key whose type the engine behind the store
+   cannot hold. The set is asked of core at runtime (`KeyTypeSupport::isHeldInValueColumns()` for a
+   store whose engine does not offer structured values) and no type name is listed in this bundle, so
+   a type core adds or drops changes the list without an edit here. On a store whose engine holds
+   structured values every key is still offered.
+   Core is asked about the key's shape rather than its type name: a `multiValue` key's type column
+   reads `multiValue` whatever it wraps, and what it can be held in is what its delegate can be held
+   in, so the question carries the `delegateDatatype` of the row. The same reading makes the key
+   offered for what its delegate produces — without it a `multiValue` key is offered for no
+   transformation result type at all, because `multiValue` is no transformation target type's field
+   type. Both are pinned by `ClassificationStoreKeyListTest`.

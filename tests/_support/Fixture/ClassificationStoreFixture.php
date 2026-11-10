@@ -38,7 +38,10 @@ final class ClassificationStoreFixture
 
     public const FIELD_LOCALIZED = 'csLocalizedField';
 
-    public function store(string $name): StoreConfig
+    /**
+     * @param string|null $engine the engine a store created here is flipped to, null for the default one
+     */
+    public function store(string $name, ?string $engine = null): StoreConfig
     {
         $store = StoreConfig::getByName($name);
         if ($store instanceof StoreConfig) {
@@ -47,12 +50,16 @@ final class ClassificationStoreFixture
 
         $store = new StoreConfig();
         $store->setName($name);
+        if ($engine !== null) {
+            $store->setEngine($engine);
+        }
+
         $store->save();
 
         return $store;
     }
 
-    public function group(int $storeId, string $name): GroupConfig
+    public function group(int $storeId, string $name, ?string $identifier = null): GroupConfig
     {
         $group = GroupConfig::getByName($name, $storeId);
         if ($group instanceof GroupConfig) {
@@ -62,6 +69,10 @@ final class ClassificationStoreFixture
         $group = new GroupConfig();
         $group->setStoreId($storeId);
         $group->setName($name);
+        if ($identifier !== null) {
+            $group->setIdentifier($identifier);
+        }
+
         $group->save();
 
         return $group;
@@ -71,7 +82,13 @@ final class ClassificationStoreFixture
      * @param Data|null $definition the field definition the key renders with; the key's own type is
      *                              used to build it back
      */
-    public function key(int $storeId, string $name, string $type, ?Data $definition = null): KeyConfig
+    public function key(
+        int $storeId,
+        string $name,
+        string $type,
+        ?Data $definition = null,
+        ?string $identifier = null
+    ): KeyConfig
     {
         $keyConfig = KeyConfig::getByName($name, $storeId);
         if ($keyConfig instanceof KeyConfig) {
@@ -85,6 +102,10 @@ final class ClassificationStoreFixture
         $keyConfig->setEnabled(true);
         $keyConfig->setType($type);
         $keyConfig->setDefinition((string)json_encode($definition ?? new Input()));
+        if ($identifier !== null) {
+            $keyConfig->setIdentifier($identifier);
+        }
+
         $keyConfig->save();
 
         return $keyConfig;

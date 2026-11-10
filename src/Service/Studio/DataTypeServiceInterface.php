@@ -48,7 +48,11 @@ interface DataTypeServiceInterface
         ClassificationStoreKeyParameters $parameters
     ): ClassificationStoreKeysResponse;
 
-    public function loadClassificationStoreKeyName(string $keyId): ClassificationStoreKeyNameResponse;
+    public function loadClassificationStoreKeyName(
+        string $keyId,
+        ?string $classId = null,
+        ?string $fieldName = null
+    ): ClassificationStoreKeyNameResponse;
 
     public function loadUnitData(): UnitDataResponse;
 

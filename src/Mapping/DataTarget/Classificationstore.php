@@ -13,13 +13,15 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\Element\ElementInterface;
 
 /**
  * @internal
  */
-final class Classificationstore implements DataTargetInterface
+final class Classificationstore implements DataTargetInterface, ConfigNameAwareInterface
 {
+    use ClassificationstoreKeyTrait;
     use WriteIfSourceIsEmptyTrait;
 
     /**
@@ -31,9 +33,7 @@ final class Classificationstore implements DataTargetInterface
 
     private ?string $language;
 
-    private int $keyId;
-
-    private int $groupId;
+    private ClassificationstoreKeyReference $keyReference;
 
     public function setSettings(array $settings): void
     {
@@ -41,14 +41,14 @@ final class Classificationstore implements DataTargetInterface
             throw new InvalidConfigurationException('Empty field name.');
         }
 
-        $keyParts = explode('-', ($settings['keyId'] ?? []));
-        if (empty($keyParts[0]) || empty($keyParts[1])) {
+        $keyReference = ClassificationstoreKeyReference::parse((string) ($settings['keyId'] ?? ''));
+        if (!$keyReference instanceof ClassificationstoreKeyReference
+            || (!$keyReference->isIdentifier && ($keyReference->group === '0' || $keyReference->key === '0'))) {
             throw new InvalidConfigurationException('Empty or invalid keyId.');
         }
 
         $this->fieldName = $settings['fieldName'];
-        $this->groupId = (int) $keyParts[0];
-        $this->keyId = (int) $keyParts[1];
+        $this->keyReference = $keyReference;
         $this->language = $settings['language'] ?? null;
         $this->setWriteIfSourceIsEmptySettings($settings, self::WRITES_EMPTY_VALUES_WITHOUT_MARKER);
     }
@@ -71,8 +71,32 @@ final class Classificationstore implements DataTargetInterface
                 return;
             }
 
-            $classificationStore->setLocalizedKeyValue($this->groupId, $this->keyId, $data, $this->language);
-            $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$this->groupId => true]);
+            $relation = $this->resolveRelation($this->keyReference, $element, $this->fieldName);
+            if ($relation instanceof KeyGroupRelation) {
+                $groupId = $relation->getGroupId();
+                $keyId = $relation->getKeyId();
+            } elseif ($this->keyReference->isIdentifier) {
+                throw new InvalidConfigurationException(
+                    'Classification store key ' . $this->keyReference->token . ' not found.'
+                );
+            } else {
+                $groupId = (int) $this->keyReference->group;
+                $keyId = (int) $this->keyReference->key;
+            }
+
+            $this->writeKeyValue(
+                $classificationStore,
+                new ClassificationstoreKeySlot(
+                    $this->keyReference->token,
+                    $groupId,
+                    $keyId,
+                    $this->keyReference->variant,
+                    $this->resolveDeclaration($relation)
+                ),
+                $data,
+                $this->language
+            );
+            $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$groupId => true]);
         } else {
             throw new InvalidConfigurationException('Field ' . $this->fieldName . ' is not a classification store.');
         }

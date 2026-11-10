@@ -8,7 +8,11 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { useBundleDataImporterClassificationstoreLoadAttributesQuery } from '../../../data-importer-api-slice.gen'
+import {
+  useBundleDataImporterClassificationstoreLoadAttributesQuery,
+  useBundleDataImporterClassificationstoreLoadKeyNameQuery
+} from '../../../data-importer-api-slice.gen'
+import { splitKeyReference } from './classification-store-variant'
 import type { ClassAttribute } from '../../../types'
 import { useEffect, useMemo, useRef } from 'react'
 import { type DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract'
@@ -23,11 +27,22 @@ export function useClassificationStoreSettings ({
     options: Array<{ value: string, label: string }>
     isFetching: boolean
     isLocalized: boolean
+    variants: string[]
   } {
   const { data, isFetching } = useBundleDataImporterClassificationstoreLoadAttributesQuery(
     { classId: classId ?? '' },
     { skip: classId === undefined }
   )
+
+  const keyId: string = settings?.keyId ?? ''
+  const fieldName: string = settings?.fieldName ?? ''
+
+  // currentData, not data: while another key is being fetched the previous key's variants must not be offered
+  const { currentData: keyName } = useBundleDataImporterClassificationstoreLoadKeyNameQuery(
+    { keyId: splitKeyReference(keyId).reference, classId: classId ?? '', fieldName },
+    { skip: keyId === '' || fieldName === '' }
+  )
+  const variants: string[] = keyName?.variants ?? []
 
   const attributes: ClassAttribute[] = useMemo(() => {
     const rawAttributes = data?.attributes ?? []
@@ -63,5 +78,5 @@ export function useClassificationStoreSettings ({
     }
   }, [transformationResultType, settings?.keyId])
 
-  return { attributes, options, isFetching, isLocalized }
+  return { attributes, options, isFetching, isLocalized, variants }
 }

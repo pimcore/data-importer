@@ -15,6 +15,11 @@ description: Breaking changes and migration steps per release.
 - [Classification Store] A `quantityValue` or `inputQuantityValue` key inside a plain `array` entry of
   `Classification Store Batch` is now written as a quantity value model object instead of the raw source value, so such
   a key imports where it previously stored nothing usable.
+- [Classification Store] Changed: the key reference of a classification store mapping entry is now saved as identifiers,
+  and a key an entry cannot build is warned about instead of silently dropped.
+- [Classification Store] A key reference that is neither `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` nor two whole integers
+  now fails the entry instead of addressing a key it never named: `1-2-3` and `1.5-2` both used to import into group 1
+  key 2.
 - [Classification Store] A mapping entry writing to a non-localized classification store field no longer fails with a
   `TypeError`; it writes to the default language.
 

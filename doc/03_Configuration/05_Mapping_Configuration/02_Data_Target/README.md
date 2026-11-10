@@ -80,7 +80,12 @@ Assigns the value to one key of a classification store field.
 **Configuration options**
 
 - **Field Name**: the classification store field.
-- **Classification Store Key**: the group and key to write.
+- **Classification Store Key**: the group and key to write, saved as `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>`. The integer
+  form `<GROUP_ID>-<KEY_ID>` of older entries is still read, and is saved for a group or key that has no identifier.
+- **Variant**: shown when the selected key declares variants. The variant is part of the reference,
+  `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>#<VARIANT>`, so one mapping entry per variant writes the variants of one key side
+  by side. Without one, the default variant is written. Variants are written by this target only, not by
+  `Classification Store Batch`.
 - **Language**: for localized keys, the language to write.
 - **Write If Source Is Empty**: enabled by default. Disable it to prevent an empty source value from clearing the key.
   The setting only takes effect once it has been saved for the mapping entry at least once — see
@@ -89,7 +94,8 @@ Assigns the value to one key of a classification store field.
 ## Classification Store Batch
 
 Assigns many classification store keys with a single mapping entry. The transformation pipeline has to produce an array
-keyed by `<GROUP_ID>-<KEY_ID>`, with the values to assign.
+keyed by `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` or the integer form `<GROUP_ID>-<KEY_ID>`, with the values to assign. A key
+that declares variants is refused by name, and a key whose value the entry cannot build is warned about and skipped.
 
 The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray` or `dateArray`.
 
@@ -107,6 +113,16 @@ The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray`
 
 For the required data shape and worked examples, see
 [Classification Store Batch Details](./01_Classification_Store_Batch_Details.md).
+
+### Keys Declaring Several Values
+
+On both classification store targets a key that declares several values takes a JSON array held in one source field,
+for example `["a", "b", "c"]`. The import replaces the whole list of the addressed language (and variant), so a shorter
+array shortens the list. An array value on a key that does not declare several values is stored as the key's single
+value, as before.
+
+If the engine of the store cannot hold a variant or a list, the key is written as position 0 of the default variant and
+a warning in the import log names the key and says that the engine of the store has to be changed.
 
 ### When Write If Source Is Empty Takes Effect
 
