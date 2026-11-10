@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueUnitSourceTrait;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AbstractQuantityValue as AbstractQuantityValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Classificationstore\Service as ClassificationstoreService;
@@ -197,9 +198,7 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
             return null;
         }
 
-        $definition = ClassificationstoreService::getValueDefinition(
-            ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation)
-        );
+        $definition = $this->valueDefinition($relation);
         if (!$definition instanceof NormalizerInterface) {
             return null;
         }
@@ -216,8 +215,18 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
     }
 
     /**
-     * The value for one key of a mixed entry, dispatched on the key's own type: a quantity value key
-     * builds its model object here, every other type is written as it arrives.
+     * The value for one key of a mixed entry, dispatched on the type of the value the key holds: a
+     * quantity value key builds its model object here, every other type is written as it arrives.
+     *
+     * The type is read off the key's value definition rather than off the key, because those two are
+     * not the same thing for a wrapper: a `multiValue` key's own type is `multiValue` whatever it
+     * wraps ({@see \Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue::getFieldType()}), so a
+     * dispatch on the key's type skipped a wrapped quantity value key and left its unit unresolved.
+     *
+     * A key holding a LIST is deliberately not dispatched: one entry value then carries several
+     * values, and there is no agreed batch-entry spelling for a list of `[value, unit]` pairs. Such a
+     * value stays as it arrives, which `unbuildableType()` reports as unbuildable, so the key is
+     * warned about and skipped with the single-key route named rather than written as a wrong number.
      *
      * @param int $groupId
      * @param int $keyId
@@ -241,7 +250,11 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
             return $value;
         }
 
-        $type = $relation->getType();
+        if ($this->resolveDeclaration($relation)?->isMultiValue() === true) {
+            return $value;
+        }
+
+        $type = $this->valueDefinition($relation)?->getFieldtype();
         if ($type !== self::TYPE_QUANTITY_VALUE && $type !== self::TYPE_INPUT_QUANTITY_VALUE) {
             return $value;
         }
@@ -284,10 +297,22 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
      */
     private function resolveDefaultUnitId(KeyGroupRelation $relation): ?string
     {
-        $fieldDefinition = ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation);
+        $fieldDefinition = $this->valueDefinition($relation);
 
         return $fieldDefinition instanceof AbstractQuantityValueDefinition
             ? $fieldDefinition->getDefaultUnit()
             : null;
+    }
+
+    /**
+     * The definition of the VALUE a key holds, which for a wrapper is its delegate's and not its own:
+     * the one boundary core resolves an inner type at ({@see ClassificationstoreService::getValueDefinition()}).
+     * A wrapper naming no inner type answers itself.
+     */
+    private function valueDefinition(KeyGroupRelation $relation): ?Data
+    {
+        return ClassificationstoreService::getValueDefinition(
+            ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation)
+        );
     }
 }

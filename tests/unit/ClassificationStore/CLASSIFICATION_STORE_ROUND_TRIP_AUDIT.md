@@ -230,6 +230,25 @@ bundle no longer permits, it would be 29 and
 `testTheDerivedKeyTypeSetMatchesTheAuditDocument()` would name `image` as the type to drop. Nothing
 is deferred and nothing is left to do.
 
+**Found and fixed here, unnumbered because it is the same divergence as item 2 one level deeper:** a
+`quantityValue` key *wrapped in `multiValue`* took no unit at all in a batch entry. The per-value
+dispatch read `KeyGroupRelation::getType()`, which for a wrapper is `multiValue` whatever it wraps
+(`MultiValue::getFieldType()`), so the wrapped key fell past the dispatch, normalised to null and was
+warned about and skipped — where the same key unwrapped is built. It is now dispatched on the
+definition of the value the key holds, through the one boundary core resolves an inner type at,
+`Classificationstore\Service::getValueDefinition()`; the default unit is read there too, because it
+lives on the delegate and not on the wrapper. Asserted by
+`ClassificationstoreBatchQuantityValueTest::testAWrappedQuantityValueKeyIsDispatchedOnItsDelegate()`.
+
+A wrapper declaring a **list** is deliberately left out of the dispatch: one entry value then carries
+several values, and this epic has decided no batch-entry spelling for a list of `[value, unit]`
+pairs. Such a value stays as it arrives and is therefore warned about and skipped with the single-key
+route named, which is the treatment item 3 below gives a date string for the same reason — a shape
+the batch entry cannot read is refused out loud rather than guessed at. Pinned by
+`ClassificationstoreBatchQuantityValueTest::testAListOfQuantityValuesIsWarnedAboutRatherThanBuiltFromItsJsonText()`,
+so a later dispatch over list items has to replace that test rather than silently start casting the
+list's JSON text to a number.
+
 **Fixed here, because it was trivial:**
 
 1. *A non-localized classification store field could not be imported at all.* Both targets assigned

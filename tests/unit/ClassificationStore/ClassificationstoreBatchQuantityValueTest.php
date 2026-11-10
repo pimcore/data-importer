@@ -18,6 +18,7 @@ use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ClassificationStoreFixture;
 use Pimcore\Model\DataObject\ClassDefinition\Data\InputQuantityValue as InputQuantityValueDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue as MultiValueDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\QuantityValue as QuantityValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore as ClassificationstoreModel;
 use Pimcore\Model\DataObject\Concrete;
@@ -29,7 +30,8 @@ use Pimcore\Tests\Support\Util\TestHelper;
 use ReflectionProperty;
 
 /**
- * Per-value dispatch on the key's own type inside one mixed `array` entry of the batch target.
+ * Per-value dispatch on the type of the value a key holds, inside one mixed `array` entry of the
+ * batch target.
  */
 class ClassificationstoreBatchQuantityValueTest extends Unit
 {
@@ -42,6 +44,17 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     private const KEY_INPUT_QUANTITY_VALUE = 'diIqvKey';
 
     private const KEY_INPUT = 'diQvInputKey';
+
+    /**
+     * A `multiValue` key over a `quantityValue` delegate holding one value: its own type column reads
+     * `multiValue`, so only the value definition names the type the dispatch has to act on.
+     */
+    private const KEY_WRAPPED_QUANTITY_VALUE = 'diQvWrappedKey';
+
+    /**
+     * The same wrapper declaring a list, where one entry value carries several values.
+     */
+    private const KEY_WRAPPED_LIST = 'diQvWrappedListKey';
 
     private const CLASS_NAME = 'DiCsQvClass';
 
@@ -82,6 +95,14 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
             self::KEY_QUANTITY_VALUE => ['quantityValue', $quantityValue],
             self::KEY_INPUT_QUANTITY_VALUE => ['inputQuantityValue', $inputQuantityValue],
             self::KEY_INPUT => ['input', null],
+            self::KEY_WRAPPED_QUANTITY_VALUE => [
+                'multiValue',
+                $this->wrappedQuantityValue(self::KEY_WRAPPED_QUANTITY_VALUE, $definitionUnit->getId(), false),
+            ],
+            self::KEY_WRAPPED_LIST => [
+                'multiValue',
+                $this->wrappedQuantityValue(self::KEY_WRAPPED_LIST, $definitionUnit->getId(), true),
+            ],
         ];
 
         $sorter = 1;
@@ -303,7 +324,68 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     }
 
     /**
-     * The unit source is decided by the key's own type, so no unit setting can reach the dispatch
+     * A key wrapped in `multiValue` is dispatched on what it holds, not on its own type column, which
+     * reads `multiValue` whatever the delegate is. Both halves of the dispatch are asserted on the
+     * wrapper - the source pair and the plain scalar taking the delegate's default unit - so that the
+     * wrapped key reads exactly as the unwrapped one of the same delegate does.
+     */
+    public function testAWrappedQuantityValueKeyIsDispatchedOnItsDelegate(): void
+    {
+        $sourceUnit = $this->unit(self::SOURCE_UNIT);
+        $definitionUnit = $this->unit(self::DEFINITION_UNIT);
+
+        $element = $this->object();
+        $this->target()->assignData($element, [
+            $this->batchKey(self::KEY_WRAPPED_QUANTITY_VALUE) => [234, $sourceUnit->getId()],
+        ]);
+
+        $value = $this->keyValue($element, self::KEY_WRAPPED_QUANTITY_VALUE);
+        static::assertInstanceOf(QuantityValue::class, $value, 'the wrapped key built its model object');
+        static::assertSame(234.0, $value->getValue());
+        static::assertSame($sourceUnit->getId(), $value->getUnitId(), 'the unit out of the source pair');
+
+        $element = $this->object();
+        $this->target()->assignData($element, [
+            $this->batchKey(self::KEY_WRAPPED_QUANTITY_VALUE) => '17.5',
+        ]);
+
+        $value = $this->keyValue($element, self::KEY_WRAPPED_QUANTITY_VALUE);
+        static::assertInstanceOf(QuantityValue::class, $value);
+        static::assertSame(17.5, $value->getValue());
+        static::assertSame(
+            $definitionUnit->getId(),
+            $value->getUnitId(),
+            "the delegate's default unit, which the wrapper itself does not carry"
+        );
+    }
+
+    /**
+     * Where the wrapper declares a LIST, one entry value carries several values and there is no
+     * agreed batch-entry spelling for a list of `[value, unit]` pairs. So the dispatch stays out of
+     * it and the key is warned about and skipped, with the single-key route named - rather than the
+     * JSON text of the list being cast to a quantity of 1.0 and imported as a real measurement.
+     */
+    public function testAListOfQuantityValuesIsWarnedAboutRatherThanBuiltFromItsJsonText(): void
+    {
+        $token = $this->batchKey(self::KEY_WRAPPED_LIST);
+        $logger = $this->createMock(ApplicationLogger::class);
+        $logger->expects(static::once())->method('warning')->with(
+            static::callback(static fn (string $message): bool => str_contains($message, $token)
+                && str_contains($message, 'quantityValue')),
+            static::anything()
+        );
+
+        $target = new ClassificationstoreBatch($logger);
+        $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
+
+        $element = $this->object();
+        $target->assignData($element, [$token => '["1","2"]']);
+
+        static::assertNull($this->keyValue($element, self::KEY_WRAPPED_LIST));
+    }
+
+    /**
+     * The unit source is decided by the type of the value the key holds, so no unit setting can reach the dispatch
      * through the configuration. Asserted on the trait's own properties rather than on a resolved
      * unit: with the source fixed per key type, a honoured `unitSourceSelect` would leave no trace
      * in a written value, and an assertion on one could not fail.
@@ -326,6 +408,27 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
                 $property . ' was taken from the mapping entry settings'
             );
         }
+    }
+
+    /**
+     * A `multiValue` definition over a `quantityValue` delegate. The delegate object is set as well as
+     * its type name, because `Service::getFieldDefinitionFromJson()` rebuilds the inner definition
+     * from the blob the wrapper carries - a wrapper naming a type but carrying nothing reads back
+     * with no delegate at all, and the delegate is where the default unit lives.
+     */
+    private function wrappedQuantityValue(string $name, string $defaultUnitId, bool $list): MultiValueDefinition
+    {
+        $delegate = new QuantityValueDefinition();
+        $delegate->setName($name);
+        $delegate->setDefaultUnit($defaultUnitId);
+
+        $definition = new MultiValueDefinition();
+        $definition->setName($name);
+        $definition->setDelegateDatatype('quantityValue');
+        $definition->setDelegate($delegate);
+        $definition->setMultiValue($list);
+
+        return $definition;
     }
 
     private function target(): ClassificationstoreBatch
