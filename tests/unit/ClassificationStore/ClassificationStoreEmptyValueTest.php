@@ -15,6 +15,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ClassificationStore;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ClassificationStoreFixture;
@@ -24,7 +26,8 @@ use Pimcore\Tests\Support\Util\TestHelper;
 
 /**
  * `writeIfSourceIsEmpty` on both classification store data targets: in force behind the opt-in
- * marker, today's behaviour without it, and a configuration carrying no `language` at all.
+ * marker, today's behaviour without it, and a configuration carrying no `language` at all - plus
+ * the key references each target refuses, which the filter does not get to swallow.
  */
 class ClassificationStoreEmptyValueTest extends Unit
 {
@@ -194,6 +197,42 @@ class ClassificationStoreEmptyValueTest extends Unit
         $element = $this->object();
         $batch->assignData($element, [$this->batchKey() => self::IMPORTED]);
         static::assertSame(self::IMPORTED, $this->keyValue($element));
+    }
+
+    /**
+     * The empty-value filter removes entries of the row; it does not excuse them. A token that is
+     * no key reference is the entry's error whatever value it carries, and the entry fails before
+     * the valid token beside it is written.
+     */
+    public function testAMalformedBatchTokenFailsTheEntryEvenWhenItsOwnValueIsEmpty(): void
+    {
+        $batch = $this->batchTarget(['writeIfSourceIsEmpty' => false]);
+        $element = $this->objectWithPresetValue();
+
+        try {
+            $batch->assignData($element, [$this->batchKey() => self::IMPORTED, 'malformed-token' => '']);
+            static::fail('the malformed token was not reported');
+        } catch (InvalidInputException $exception) {
+            static::assertStringContainsString('malformed-token', $exception->getMessage());
+        }
+
+        static::assertSame(self::PRESET, $this->keyValue($element), 'nothing is written by a failing entry');
+    }
+
+    /**
+     * `1-2-3` is not an integer pair. Reading its first two parts would silently address group 1
+     * key 2, and this target resolves the reference at configuration time, where nothing else
+     * re-checks it.
+     */
+    public function testTheSingleKeyTargetRefusesAReferenceThatIsNotTwoHalves(): void
+    {
+        $single = new Classificationstore($this->createMock(ApplicationLogger::class));
+
+        $this->expectException(InvalidConfigurationException::class);
+        $single->setSettings([
+            'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
+            'keyId' => '1-2-3',
+        ]);
     }
 
     /**

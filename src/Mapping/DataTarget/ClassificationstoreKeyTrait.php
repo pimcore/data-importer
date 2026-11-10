@@ -223,24 +223,21 @@ trait ClassificationstoreKeyTrait
      */
     private function writeKeyValue(
         ClassificationstoreModel $classificationStore,
-        string $token,
-        int $groupId,
-        int $keyId,
+        ClassificationstoreKeySlot $slot,
         mixed $value,
-        ?string $language,
-        ?string $variant,
-        ?MultiValueDefinition $declaration
+        ?string $language
     ): void {
-        $values = $declaration?->isMultiValue() === true ? $this->decodeList($value) : null;
+        $variant = $slot->variant;
+        $values = $slot->declaration?->isMultiValue() === true ? $this->decodeList($value) : null;
         if ($variant === null && $values === null) {
-            $classificationStore->setLocalizedKeyValue($groupId, $keyId, $value, $language);
+            $classificationStore->setLocalizedKeyValue($slot->groupId, $slot->keyId, $value, $language);
 
             return;
         }
 
-        if ($variant !== null && !in_array($variant, $declaration?->getVariantNames() ?? [], true)) {
+        if ($variant !== null && !in_array($variant, $slot->declaration?->getVariantNames() ?? [], true)) {
             throw new InvalidConfigurationException(
-                'Classification store key ' . $token . ' does not declare the variant `' . $variant . '`.'
+                'Classification store key ' . $slot->token . ' does not declare the variant `' . $variant . '`.'
             );
         }
 
@@ -254,13 +251,18 @@ trait ClassificationstoreKeyTrait
         try {
             // an empty list still addresses the slot, so that it clears it
             $classificationStore->setKeyValues(
-                $groupId,
-                $keyId,
+                $slot->groupId,
+                $slot->keyId,
                 $entries === [] ? [new MultiValue(null, $entryLanguage, $variant, 0)] : $entries
             );
         } catch (UnsupportedEngineFeatureException) {
-            $this->logWarning($this->engineWarning($token, $variant, count($values)));
-            $classificationStore->setLocalizedKeyValue($groupId, $keyId, array_values($values)[0] ?? null, $language);
+            $this->logWarning($this->engineWarning($slot->token, $variant, count($values)));
+            $classificationStore->setLocalizedKeyValue(
+                $slot->groupId,
+                $slot->keyId,
+                array_values($values)[0] ?? null,
+                $language
+            );
         }
     }
 

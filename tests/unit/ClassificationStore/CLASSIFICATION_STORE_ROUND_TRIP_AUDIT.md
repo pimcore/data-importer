@@ -306,3 +306,9 @@ is deferred and nothing is left to do.
    store whose engine does not offer structured values) and no type name is listed in this bundle, so
    a type core adds or drops changes the list without an edit here. On a store whose engine holds
    structured values every key is still offered.
+   Core is asked about the key's shape rather than its type name: a `multiValue` key's type column
+   reads `multiValue` whatever it wraps, and what it can be held in is what its delegate can be held
+   in, so the question carries the `delegateDatatype` of the row. The same reading makes the key
+   offered for what its delegate produces — without it a `multiValue` key is offered for no
+   transformation result type at all, because `multiValue` is no transformation target type's field
+   type. Both are pinned by `ClassificationStoreKeyListTest`.

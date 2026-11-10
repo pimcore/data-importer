@@ -51,11 +51,20 @@ final class ClassificationstoreKeyReference
 
         $isIdentifier = str_contains($reference, self::IDENTIFIER_SEPARATOR);
         $keyParts = explode($isIdentifier ? self::IDENTIFIER_SEPARATOR : self::INTEGER_SEPARATOR, $reference);
-        if (count($keyParts) < 2 || ($isIdentifier && count($keyParts) !== 2)) {
+
+        // exactly two, in either spelling: a third part cannot be assigned to either half, and
+        // reading only the first two silently addresses a key the entry did not name
+        if (count($keyParts) !== 2) {
             return null;
         }
 
         if ($keyParts[0] === '' || $keyParts[1] === '') {
+            return null;
+        }
+
+        // an integer pair that is not a pair of integers names no key: both halves are cast to int
+        // by whoever reads them, and a cast of a non-numeric half is group 0 or key 0
+        if (!$isIdentifier && (!is_numeric($keyParts[0]) || !is_numeric($keyParts[1]))) {
             return null;
         }
 

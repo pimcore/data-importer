@@ -189,10 +189,6 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         }
 
         if (!$reference->isIdentifier) {
-            if (count(explode('-', $reference->reference)) !== 2) {
-                return null;
-            }
-
             return DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId(
                 (int) $reference->group,
                 (int) $reference->key

@@ -86,13 +86,15 @@ final class Classificationstore implements DataTargetInterface, ConfigNameAwareI
 
             $this->writeKeyValue(
                 $classificationStore,
-                $this->keyReference->token,
-                $groupId,
-                $keyId,
+                new ClassificationstoreKeySlot(
+                    $this->keyReference->token,
+                    $groupId,
+                    $keyId,
+                    $this->keyReference->variant,
+                    $this->resolveDeclaration($relation)
+                ),
                 $data,
-                $this->language,
-                $this->keyReference->variant,
-                $this->resolveDeclaration($relation)
+                $this->language
             );
             $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$groupId => true]);
         } else {

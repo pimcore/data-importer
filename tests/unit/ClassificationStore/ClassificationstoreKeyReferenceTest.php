@@ -73,6 +73,16 @@ class ClassificationstoreKeyReferenceTest extends Unit
             'empty key' => ['grp:'],
             'three identifiers' => ['a:b:c'],
             'empty variant' => ['grp:key#'],
+            // not two halves: reading the first two addresses group 1 key 2, which the token
+            // never named - and neither `Classificationstore::setSettings()` nor the keys
+            // listing re-checks the count
+            'three integers' => ['1-2-3'],
+            'three integers with a variant' => ['1-2-3#metric'],
+            'four integers' => ['1-2-3-4'],
+            // two halves, but neither is an integer: both are cast to int by whoever reads
+            // them, which addresses group 0 key 0
+            'a hyphen pair that is not integers' => ['abc-def'],
+            'a half that is not an integer' => ['1-def'],
         ];
     }
 }

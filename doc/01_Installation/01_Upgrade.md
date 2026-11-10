@@ -17,6 +17,8 @@ description: Breaking changes and migration steps per release.
   a key imports where it previously stored nothing usable.
 - [Classification Store] Changed: the key reference of a classification store mapping entry is now saved as identifiers,
   and a key an entry cannot build is warned about instead of silently dropped.
+- [Classification Store] A key reference that is neither `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` nor two integers now
+  fails the entry instead of being read as its first two parts: `1-2-3` used to import into group 1 key 2.
 - [Classification Store] A mapping entry writing to a non-localized classification store field no longer fails with a
   `TypeError`; it writes to the default language.
 

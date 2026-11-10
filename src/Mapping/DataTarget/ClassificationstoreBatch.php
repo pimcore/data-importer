@@ -88,12 +88,17 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
                 throw new InvalidInputException('Input data not an array');
             }
 
+            // every token of the entry, before the empty-value filter removes any of them: a
+            // malformed token is the entry's error whatever its value is, and a filter that ran
+            // first would report it only when it happened to carry a non-empty value
+            $references = $this->parseReferences(array_keys($data));
+
             if (!$this->writeIfSourceIsEmpty) {
                 $data = $this->filterEmptySourceValues($data);
+                $references = array_intersect_key($references, $data);
             }
 
             if (!empty($data)) {
-                $references = $this->parseReferences(array_keys($data));
                 $storeId = $this->resolveStoreId($element, $this->fieldName);
                 $this->preloadIdentifierReferences($references, $storeId);
 
@@ -119,19 +124,9 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
         foreach ($tokens as $token) {
             $reference = ClassificationstoreKeyReference::parse((string) $token);
             if (!$reference instanceof ClassificationstoreKeyReference) {
-                throw new InvalidInputException('Key not format <GROUP_IDENTIFIER>:<KEY_IDENTIFIER>: ' . $token);
-            }
-
-            if (!$reference->isIdentifier && count(explode('-', $reference->reference)) !== 2) {
-                throw new InvalidInputException('Key not format <GROUP_ID>-<KEY_ID>: ' . $token);
-            }
-
-            if (!$reference->isIdentifier && !is_numeric($reference->group)) {
-                throw new \Exception('groupId not valid');
-            }
-
-            if (!$reference->isIdentifier && !is_numeric($reference->key)) {
-                throw new \Exception('keyId not valid');
+                throw new InvalidInputException(
+                    'Key not format <GROUP_IDENTIFIER>:<KEY_IDENTIFIER> or <GROUP_ID>-<KEY_ID>: ' . $token
+                );
             }
 
             $references[$token] = $reference;
@@ -184,13 +179,9 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
 
         $this->writeKeyValue(
             $classificationStore,
-            $reference->token,
-            $groupId,
-            $keyId,
+            new ClassificationstoreKeySlot($reference->token, $groupId, $keyId, null, $declaration),
             $value,
-            $this->language,
-            null,
-            $declaration
+            $this->language
         );
         $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$groupId => true]);
     }
