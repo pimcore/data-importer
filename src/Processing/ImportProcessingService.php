@@ -75,6 +75,11 @@ final class ImportProcessingService
     private array $versioningConfigCache = [];
 
     /**
+     * @var array<string, array<string, string>>
+     */
+    private array $saveParametersCache = [];
+
+    /**
      * ImportProcessingService constructor.
      */
     public function __construct(
@@ -112,6 +117,10 @@ final class ImportProcessingService
             if (empty($this->versioningConfigCache[$configName])) {
                 $this->versioningConfigCache[$configName] = $config['processingConfig']['disableVersioning'] ?? false;
             }
+
+            $this->saveParametersCache[$configName] ??= ElementSaveParameters::fromProcessingConfig(
+                $config['processingConfig'] ?? []
+            );
 
             //init resolver and mapping
             if (empty($this->mappingConfigurationCache[$configName])) {
@@ -244,7 +253,7 @@ final class ImportProcessingService
                     $this->checkKey($element);
                     $element
                         ->setUserModification($userOwner)
-                        ->save();
+                        ->save($this->saveParametersCache[$configName] ?? []);
 
                     $event = new PostSaveEvent($configName, $importDataRow, $element);
                     $this->eventDispatcher->dispatch($event);
