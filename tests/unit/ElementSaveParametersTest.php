@@ -28,7 +28,9 @@ class ElementSaveParametersTest extends Unit
 
     public function testVersionNoteIsTrimmed(): void
     {
-        $saveParameters = ElementSaveParameters::fromProcessingConfig(['versionNote' => '  ' . self::VERSION_NOTE . " \n"]);
+        $saveParameters = ElementSaveParameters::fromProcessingConfig([
+            'versionNote' => '  ' . self::VERSION_NOTE . " \n",
+        ]);
 
         static::assertSame(['versionNote' => self::VERSION_NOTE], $saveParameters);
     }
