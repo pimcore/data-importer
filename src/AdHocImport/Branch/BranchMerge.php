@@ -298,13 +298,21 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
     private function merged(RunRecord $run, MergeStatus $status, User $user): RunRecord
     {
         [$messages, $notice] = $this->rowProblems($run, $status->problems, $user);
-        $coveredAll = $status->total === count($status->written) + count($status->leftOut);
         $saved = [];
         foreach ([...$status->written, ...$status->leftOut] as $object) {
             foreach (self::keysOf($object) as $key) {
                 $saved[$key] = true;
             }
         }
+        // the total counts the objects that failed too: only when each is accounted for, the merge got to every one
+        $failed = [];
+        foreach ($status->problems as $problem) {
+            $keys = $problem->object === null ? [] : self::keysOf($problem->object);
+            if ($keys !== [] && array_intersect_key($saved, array_flip($keys)) === []) {
+                $failed[implode(' ', $keys)] = true;
+            }
+        }
+        $coveredAll = $status->total === count($status->written) + count($status->leftOut) + count($failed);
 
         $failures = $this->storedFailures($run);
         $written = [];
