@@ -216,6 +216,7 @@ data-importer.mapping.autofill-suggestions.selected: "{{count}} geselecteerd"
 data-importer.mapping.autofill-suggestions.reject-all: Alles afwijzen
 data-importer.mapping.autofill-suggestions.apply: Geselecteerde suggesties toepassen
 data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.source-ai: AI
 data-importer.mapping.autofill-suggestions.empty: Geen suggesties gevonden voor niet-gemapte kolommen.
 data-importer.mapping.autofill-suggestions.no-source-columns: Geen bronkolommen beschikbaar. Voer eerst een importvoorbeeld uit.
 data-importer.mapping.empty-state: Maak een mapping rechtstreeks vanuit de kolom Bronnen, of klik op Nieuw om er handmatig een te maken.
@@ -326,3 +327,279 @@ data-importer.execution.status.cancel: Uitvoering annuleren & wachtrij opschonen
 data-importer.execution.cron-validating: Cron-expressie valideren...
 data-importer.validation.required: "{{field}} is verplicht"
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub-adapter - Gegevensobjectimport
+user-management.permissions.plugin_data_importer_ad_hoc_import: Ad-hoc-import
+
+# Ad hoc import
+data-importer.ad-hoc-import.menu-item: Bestand importeren…
+data-importer.ad-hoc-import.title: 'Bestand importeren in {{path}}'
+data-importer.ad-hoc-import.title-file: '{{file}} importeren in {{path}}'
+data-importer.ad-hoc-import.step.file: Bestand
+data-importer.ad-hoc-import.step.mapping: Mapping
+data-importer.ad-hoc-import.step.preview: Voorbeeld
+data-importer.ad-hoc-import.step.import: Import
+data-importer.ad-hoc-import.cancel: Annuleren
+data-importer.ad-hoc-import.back: Terug
+data-importer.ad-hoc-import.next: Volgende
+data-importer.ad-hoc-import.next-preview: 'Volgende: Voorbeeld'
+data-importer.ad-hoc-import.file.title: Bestand
+data-importer.ad-hoc-import.file.drop: Sleep een XLSX- of CSV-bestand hierheen, of klik om er een te kiezen
+data-importer.ad-hoc-import.file.remove: Bestand verwijderen
+data-importer.ad-hoc-import.file.cancel-upload: Upload annuleren
+data-importer.ad-hoc-import.file.summary: '{{rows}} rijen · {{columns}} kolommen · {{size}}'
+data-importer.ad-hoc-import.file.summary-refused: '{{rows}} rijen · {{size}}'
+data-importer.ad-hoc-import.file.progress: '{{percent}} % · {{loaded}} van {{total}}'
+data-importer.ad-hoc-import.refused.too-many-rows: 'Dit bestand heeft {{rows}} rijen; een ad-hoc-import verwerkt er maximaal {{limit}}.'
+data-importer.ad-hoc-import.refused.too-many-rows-hint: Splits het bestand, of importeer het met een Data Importer-configuratie in de Data Hub.
+data-importer.ad-hoc-import.refused.too-many-cells: Dit blad is te groot voor een ad-hoc-import.
+data-importer.ad-hoc-import.refused.unreadable: 'Dit bestand kan niet als {{type}} worden gelezen.'
+data-importer.ad-hoc-import.refused.wrong-format: Alleen XLSX- en CSV-bestanden kunnen worden geïmporteerd.
+data-importer.ad-hoc-import.settings.delimiter: Scheidingsteken
+data-importer.ad-hoc-import.settings.delimiter.semicolon: ; Puntkomma
+data-importer.ad-hoc-import.settings.delimiter.comma: ', Komma'
+data-importer.ad-hoc-import.settings.delimiter.tab: Tab
+data-importer.ad-hoc-import.settings.delimiter.pipe: '| Verticale streep'
+data-importer.ad-hoc-import.settings.delimiter.detected: '{{delimiter}} (gedetecteerd)'
+data-importer.ad-hoc-import.settings.enclosure: Tekstscheidingsteken
+data-importer.ad-hoc-import.settings.escape: Escape-teken
+data-importer.ad-hoc-import.settings.sheet: Blad
+data-importer.ad-hoc-import.settings.column-names: Kolomnamen
+data-importer.ad-hoc-import.settings.in-first-row: in de eerste rij
+data-importer.ad-hoc-import.first-rows.more-columns: '+{{count}} meer'
+data-importer.ad-hoc-import.objects.title: Objecten
+data-importer.ad-hoc-import.objects.class: Klasse
+data-importer.ad-hoc-import.objects.match-by: Bestaande objecten matchen op
+data-importer.ad-hoc-import.objects.match-by.object-id: Object-ID
+data-importer.ad-hoc-import.objects.match-by.field: Veld
+data-importer.ad-hoc-import.objects.match-by.none: Niet matchen
+data-importer.ad-hoc-import.objects.from-column: uit kolom
+data-importer.ad-hoc-import.objects.after-the-file: na het bestand
+data-importer.ad-hoc-import.objects.match-hint: Gevonden objecten worden op hun huidige locatie bijgewerkt.
+data-importer.ad-hoc-import.objects.key-from-column: sleutel uit kolom
+data-importer.ad-hoc-import.objects.create-only-hint: Elke rij maakt een nieuw object aan, genoemd naar de waarde van de kolom.
+data-importer.ad-hoc-import.objects.new-objects-in: Nieuwe objecten in
+data-importer.ad-hoc-import.objects.optional: (optioneel)
+data-importer.ad-hoc-import.objects.new-objects-hint: 'Leeg: de map waarop je hebt geklikt.'
+data-importer.ad-hoc-import.mapping.map-here: Kolommen hier mappen
+data-importer.ad-hoc-import.mapping.use-configuration: Een Data Importer-configuratie gebruiken
+data-importer.ad-hoc-import.mapping.filter.all: 'Te importeren {{count}}'
+data-importer.ad-hoc-import.mapping.filter.mapped: 'Gemapt {{count}}'
+data-importer.ad-hoc-import.mapping.filter.open: 'Niet gemapt {{count}}'
+data-importer.ad-hoc-import.mapping.use-all-suggestions: 'Alle {{count}} suggesties gebruiken'
+data-importer.ad-hoc-import.mapping.required: 'Verplichte velden:'
+data-importer.ad-hoc-import.mapping.columns: Kolommen van het bestand
+data-importer.ad-hoc-import.mapping.field-of: 'Veld voor {{column}}'
+data-importer.ad-hoc-import.mapping.dont-import: Niet importeren
+data-importer.ad-hoc-import.mapping.required-field: '{{field}} (verplicht)'
+data-importer.ad-hoc-import.mapping.choose-field: Veld kiezen
+data-importer.ad-hoc-import.mapping.use-suggestion: '{{field}} gebruiken?'
+data-importer.ad-hoc-import.mapping.object-id: Object-ID
+data-importer.ad-hoc-import.mapping.match: Vindt de objecten
+data-importer.ad-hoc-import.mapping.auto: auto
+data-importer.ad-hoc-import.mapping.not-imported: 'Niet geïmporteerd ({{count}})'
+data-importer.ad-hoc-import.mapping.not-imported.show: Tonen en terughalen
+data-importer.ad-hoc-import.mapping.not-imported.hide: Verbergen
+data-importer.ad-hoc-import.mapping.not-imported.search: Kolommen zoeken
+data-importer.ad-hoc-import.mapping.not-imported.note: Deze kolommen blijven in het bestand en worden nergens naartoe geschreven.
+data-importer.ad-hoc-import.mapping.restore: + Importeren
+data-importer.ad-hoc-import.mapping.restore-column: '{{column}} herstellen'
+data-importer.ad-hoc-import.mapping.find-field: Zoeken
+data-importer.ad-hoc-import.mapping.no-fields: Geen veld gevonden
+data-importer.ad-hoc-import.mapping.change-key: 'Sleutel voor {{column}} wijzigen'
+data-importer.ad-hoc-import.mapping.map-here-hint: 'Eén kolom per veld, met suggesties. Meerdere kolommen in één veld: gebruik een configuratie.'
+data-importer.ad-hoc-import.mapping.progress: '{{mapped}} van {{total}} kolommen gaan naar een veld'
+data-importer.ad-hoc-import.mapping.skip-open: 'De {{count}} niet-gemapte niet importeren'
+data-importer.ad-hoc-import.mapping.auto-note.lead: '{{count}} kolommen zijn automatisch gemapt'
+data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 kolom is automatisch gemapt
+data-importer.ad-hoc-import.mapping.auto-note.rest: 'bij het inlezen van het bestand, gemarkeerd met “auto”. Nog {{count}} hebben een suggestie om te bevestigen.'
+data-importer.ad-hoc-import.mapping.auto-note.rest-one: bij het inlezen van het bestand, gemarkeerd met “auto”. Nog 1 heeft een suggestie om te bevestigen.
+data-importer.ad-hoc-import.mapping.auto-note.rest-none: bij het inlezen van het bestand, gemarkeerd met “auto”.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} kolommen hebben een suggestie om te bevestigen.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 kolom heeft een suggestie om te bevestigen.
+data-importer.ad-hoc-import.mapping.head.column: Kolom in je bestand
+data-importer.ad-hoc-import.mapping.head.field: Gaat naar veld
+data-importer.ad-hoc-import.mapping.head.transformations: Transformaties
+data-importer.ad-hoc-import.mapping.sample: 'bijv. “{{value}}”'
+data-importer.ad-hoc-import.mapping.skip: Overslaan
+data-importer.ad-hoc-import.mapping.skip-column: '{{column}} niet importeren'
+data-importer.ad-hoc-import.mapping.undecided: '{{count}} kolommen nog niet beslist: kies een veld of “Niet importeren”'
+data-importer.ad-hoc-import.mapping.undecided-one: '1 kolom nog niet beslist: kies een veld of “Niet importeren”'
+data-importer.ad-hoc-import.mapping.all-decided: Over elke kolom is beslist
+data-importer.ad-hoc-import.mapping.panel.aria: 'Kolom {{column}}'
+data-importer.ad-hoc-import.mapping.panel.column: Kolom
+data-importer.ad-hoc-import.mapping.panel.previous: Vorige kolom
+data-importer.ad-hoc-import.mapping.panel.next: Volgende kolom
+data-importer.ad-hoc-import.mapping.panel.close: Sluiten
+data-importer.ad-hoc-import.mapping.panel.first-value: '“{{value}}”'
+data-importer.ad-hoc-import.mapping.panel.choose-field: kies hieronder een veld
+data-importer.ad-hoc-import.mapping.panel.field-first: Kies eerst een veld.
+data-importer.ad-hoc-import.mapping.panel.store-key-no-transformations: Een classification store-sleutel accepteert geen transformaties.
+data-importer.ad-hoc-import.mapping.panel.tab.field: Veld
+data-importer.ad-hoc-import.mapping.panel.tab.transformations: Transformaties
+data-importer.ad-hoc-import.mapping.panel.tab.transformations-count: 'Transformaties ({{count}})'
+data-importer.ad-hoc-import.mapping.panel.remove-field: Veld verwijderen
+data-importer.ad-hoc-import.mapping.panel.next-column: Volgende kolom ›
+data-importer.ad-hoc-import.mapping.key-taken: Een andere kolom gaat al naar deze sleutel
+data-importer.ad-hoc-import.configuration.list-title: Data Importer-configuraties
+data-importer.ad-hoc-import.configuration.list-hint: Alleen die je in de Data Hub mag lezen
+data-importer.ad-hoc-import.configuration.choose: Kies een configuratie
+data-importer.ad-hoc-import.configuration.none: Er is geen importconfiguratie voor gegevensobjecten die je mag gebruiken.
+data-importer.ad-hoc-import.configuration.load-failed: De configuraties konden niet worden geladen.
+data-importer.ad-hoc-import.configuration.unusable-detail: '{{class}} · {{reason}}'
+data-importer.ad-hoc-import.configuration.unusable.class: je mag geen objecten van de klasse ervan aanmaken
+data-importer.ad-hoc-import.configuration.unusable.matching: deze zoekt objecten niet op hun ID of een veld in alle mappen
+data-importer.ad-hoc-import.configuration.unusable.folder: deze maakt nieuwe objecten niet in één map aan
+data-importer.ad-hoc-import.configuration.unusable.folder-missing: de map ervan voor nieuwe objecten bestaat niet
+data-importer.ad-hoc-import.configuration.unusable.folder-not-allowed: je mag geen objecten in de map ervan aanmaken
+data-importer.ad-hoc-import.configuration.unusable.match-column: 'het bestand heeft geen kolom {{column}} om op te matchen'
+data-importer.ad-hoc-import.configuration.replaces: Wordt ongewijzigd en alleen-lezen gebruikt; de klasse, matching en map ervan vervangen die uit Bestand.
+data-importer.ad-hoc-import.configuration.match-object-id: 'Object-ID uit kolom {{column}}'
+data-importer.ad-hoc-import.configuration.match-field: '{{field}} uit kolom {{column}}'
+data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) uit kolom {{column}}'
+data-importer.ad-hoc-import.configuration.match-none: Elke rij maakt een nieuw object aan, met als sleutel de kolom uit de stap Bestand
+data-importer.ad-hoc-import.configuration.missing-columns: 'Kolommen die deze leest en die het bestand niet heeft: {{columns}}'
+data-importer.ad-hoc-import.mapping.transformations: Transformaties
+data-importer.ad-hoc-import.mapping.transform: Transformeren…
+data-importer.ad-hoc-import.mapping.transformation-one: 1 transformatie
+data-importer.ad-hoc-import.mapping.transformations-count: '{{count}} transformaties'
+data-importer.ad-hoc-import.mapping.transformations-of: 'Transformaties van {{column}}'
+data-importer.ad-hoc-import.mapping.needs-transformation: Vereist een transformatie
+data-importer.ad-hoc-import.mapping.not-fitting: 'Kolommen waarvan de waarden nog niet in hun veld passen: {{columns}}'
+data-importer.ad-hoc-import.transformations.intro: Van boven naar beneden toegepast op de waarde van deze kolom, vóór de automatische conversie voor het type van het veld.
+data-importer.ad-hoc-import.transformations.add: Transformatie toevoegen
+data-importer.ad-hoc-import.transformations.remove: '{{step}} verwijderen'
+data-importer.ad-hoc-import.transformations.type.trim: Trimmen
+data-importer.ad-hoc-import.transformations.type.stringReplace: Tekst vervangen
+data-importer.ad-hoc-import.transformations.type.conditionalConversion: Waarden mappen
+data-importer.ad-hoc-import.transformations.type.explode: Splitsen in een lijst
+data-importer.ad-hoc-import.transformations.type.loadDataObject: Object laden
+data-importer.ad-hoc-import.transformations.type.loadAsset: Asset laden
+data-importer.ad-hoc-import.transformations.trim.mode: Spaties verwijderen
+data-importer.ad-hoc-import.transformations.trim.mode.both: Aan beide kanten
+data-importer.ad-hoc-import.transformations.trim.mode.left: Aan het begin
+data-importer.ad-hoc-import.transformations.trim.mode.right: Aan het einde
+data-importer.ad-hoc-import.transformations.replace.search: Zoeken
+data-importer.ad-hoc-import.transformations.replace.replace: Vervangen door
+data-importer.ad-hoc-import.transformations.map.original: Waarden
+data-importer.ad-hoc-import.transformations.map.converted: Naar
+data-importer.ad-hoc-import.transformations.map.hint: Scheid de waarden met |, in beide in dezelfde volgorde; * staat voor elke andere waarde.
+data-importer.ad-hoc-import.transformations.map.unequal: Geef onder Naar evenveel waarden op als onder Waarden.
+data-importer.ad-hoc-import.transformations.split.delimiter: Scheidingsteken
+data-importer.ad-hoc-import.transformations.load.strategy: Zoeken op
+data-importer.ad-hoc-import.transformations.load.strategy.id: ID
+data-importer.ad-hoc-import.transformations.load.strategy.path: Volledig pad
+data-importer.ad-hoc-import.transformations.step-error: Deze transformatie kan de waarden van de vorige niet verwerken.
+data-importer.ad-hoc-import.transformations.does-not-fit: 'De waarden passen nog niet in {{field}}. Voeg een transformatie toe die daarheen leidt, of kies een ander veld.'
+data-importer.ad-hoc-import.transformations.conversion.numeric: Voor het veld omgezet naar een getal.
+data-importer.ad-hoc-import.transformations.conversion.date: Voor het veld omgezet naar een datum, gelezen als jaar-maand-dag (2026-11-07).
+data-importer.ad-hoc-import.transformations.conversion.asArray: Voor het veld omgezet naar een lijst met één waarde.
+data-importer.ad-hoc-import.transformations.conversion.gallery: Voor het veld omgezet naar een galerij.
+data-importer.ad-hoc-import.transformations.conversion.boolean: Voor het veld omgezet naar ja of nee.
+data-importer.ad-hoc-import.transformations.empty: (leeg)
+data-importer.ad-hoc-import.transformations.failed: Kan niet worden omgezet
+data-importer.ad-hoc-import.check.object-id: Object-ID
+data-importer.ad-hoc-import.check.key: Sleutel
+data-importer.ad-hoc-import.check.column.row: Rij
+data-importer.ad-hoc-import.check.column.error: Fout
+data-importer.ad-hoc-import.check.empty-value: '{{field}} is leeg'
+data-importer.ad-hoc-import.check.invalid-match-value: '{{field}} “{{value}}” is geen waarde waarop objecten kunnen worden gematcht'
+data-importer.ad-hoc-import.check.duplicate-in-file: '{{field}} {{value}} staat twee keer in het bestand (rij {{row}})'
+data-importer.ad-hoc-import.check.several-matches: '{{count}} objecten hebben {{field}} {{value}}'
+data-importer.ad-hoc-import.check.found-outside-target-folder: 'Gevonden in {{path}}, buiten {{folder}}'
+data-importer.ad-hoc-import.check.outside-target-folder: 'Gevonden buiten {{folder}}'
+data-importer.ad-hoc-import.check.not-viewable: 'Je mag het object met {{field}} {{value}} niet bekijken'
+data-importer.ad-hoc-import.check.unknown-object-id: 'Geen object heeft het ID {{value}}'
+data-importer.ad-hoc-import.check.other-class: 'Het ID {{value}} hoort bij een map of een object van een andere klasse'
+data-importer.ad-hoc-import.check.key-taken: '{{folder}} bevat al een object met de naam {{key}}'
+data-importer.ad-hoc-import.check.key-taken-in-file: 'Rij {{row}} maakt al een object met de naam {{key}} aan'
+data-importer.ad-hoc-import.check.value.not-a-number: '{{field}} “{{value}}” is geen getal'
+data-importer.ad-hoc-import.check.value.not-a-date: '{{field}} “{{value}}” is geen datum'
+data-importer.ad-hoc-import.check.value.not-yes-no: '{{field}} “{{value}}” is ja noch nee'
+data-importer.ad-hoc-import.check.value.not-an-option: '{{field}} “{{value}}” is geen optie van {{field}}'
+data-importer.ad-hoc-import.check.value.required: '{{field}} is verplicht'
+data-importer.ad-hoc-import.check.value.invalid: '{{field}} “{{value}}” past niet in het veld'
+data-importer.ad-hoc-import.check.value.too-many-groups: '{{field}} bevat meer groepen dan toegestaan'
+data-importer.ad-hoc-import.preview.updated: worden bijgewerkt
+data-importer.ad-hoc-import.preview.created: 'worden aangemaakt in {{folder}}'
+data-importer.ad-hoc-import.preview.with-errors.skip: 'rijen met fouten: overgeslagen, achteraf te downloaden'
+data-importer.ad-hoc-import.preview.with-errors.values: 'rijen met fouten: ongeldige waarden weggelaten; rijen die niet kunnen worden gematcht of opgeslagen, worden overgeslagen'
+data-importer.ad-hoc-import.preview.checked: 'Alle {{count}} rijen gecontroleerd'
+data-importer.ad-hoc-import.preview.old-new: · oude waarde → nieuwe waarde
+data-importer.ad-hoc-import.preview.errors-only: Alleen fouten
+data-importer.ad-hoc-import.preview.column.row: Rij
+data-importer.ad-hoc-import.preview.column.action: Actie
+data-importer.ad-hoc-import.preview.column.message: Melding
+data-importer.ad-hoc-import.preview.action.update: bijwerken
+data-importer.ad-hoc-import.preview.action.create: aanmaken
+data-importer.ad-hoc-import.preview.action.skipped: overgeslagen
+data-importer.ad-hoc-import.preview.action.update-without: 'bijwerken, zonder {{fields}}'
+data-importer.ad-hoc-import.preview.action.create-without: 'aanmaken, zonder {{fields}}'
+data-importer.ad-hoc-import.preview.left-unchanged: '{{field}} “{{value}}” → ongewijzigd gelaten'
+data-importer.ad-hoc-import.preview.total: 'Totaal {{total}} items'
+data-importer.ad-hoc-import.preview.rows-with-errors: Rijen met fouten
+data-importer.ad-hoc-import.preview.error-mode.skip: Overslaan
+data-importer.ad-hoc-import.preview.error-mode.values: Importeren zonder de ongeldige waarden
+data-importer.ad-hoc-import.preview.import: '{{count}} objecten importeren'
+data-importer.ad-hoc-import.preview.failed: Het bestand kon niet worden gecontroleerd.
+data-importer.ad-hoc-import.run.importing: '{{count}} objecten importeren'
+data-importer.ad-hoc-import.run.count-of: '{{done}} van {{total}}'
+data-importer.ad-hoc-import.run.saving: Opslaan
+data-importer.ad-hoc-import.run.background: Draait op de achtergrond. Je kunt dit venster sluiten; Studio laat je weten wanneer de import klaar is.
+data-importer.ad-hoc-import.run.close-keep-running: Sluiten, laten doorlopen
+data-importer.ad-hoc-import.run.may-not-save: 'Je mag geen objecten opslaan in {{folder}}'
+data-importer.ad-hoc-import.run.may-not-create: 'Je mag geen objecten aanmaken in {{folder}}'
+data-importer.ad-hoc-import.run.may-not-edit-language: 'Je mag de taal {{language}} van objecten in {{folder}} niet bewerken'
+data-importer.ad-hoc-import.run.left-out-by-listener: Een listener van de import heeft deze rij weggelaten
+data-importer.ad-hoc-import.run.cannot-go-on: De import kon niet verder met dit bestand
+data-importer.ad-hoc-import.run.must-be-unique: Een waarde moet uniek zijn, en een ander object heeft deze al
+data-importer.ad-hoc-import.run.save-failed: 'Opslaan mislukt: {{reason}}'
+data-importer.ad-hoc-import.run.save-failed-unknown: Opslaan mislukt; het toepassingslog bevat de details
+data-importer.ad-hoc-import.run.notification.title: 'Import van {{file}} voltooid'
+data-importer.ad-hoc-import.run.notification.summary: '{{updated}} bijgewerkt, {{created}} aangemaakt in {{folder}}, {{failed}} niet opgeslagen, {{skipped}} overgeslagen in het voorbeeld.'
+data-importer.ad-hoc-import.run.notification.row: 'Rij {{row}} · {{value}}: {{reason}}'
+data-importer.ad-hoc-import.run.notification.more: 'En nog {{count}}.'
+data-importer.ad-hoc-import.result.complete: Import voltooid
+data-importer.ad-hoc-import.result.objects-from: 'objecten geïmporteerd uit {{file}}'
+data-importer.ad-hoc-import.result.saved-as: 'Opgeslagen als {{user}} · {{time}}'
+data-importer.ad-hoc-import.result.updated: Bijgewerkt
+data-importer.ad-hoc-import.result.created-in: 'Aangemaakt in {{folder}}'
+data-importer.ad-hoc-import.result.skipped: Overgeslagen in het voorbeeld
+data-importer.ad-hoc-import.result.open-folder: Map openen
+data-importer.ad-hoc-import.result.download-rows: Rijen downloaden
+data-importer.ad-hoc-import.result.history: Elk object behoudt zijn versiegeschiedenis.
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} rij is niet opgeslagen.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} rijen zijn niet opgeslagen.'
+data-importer.ad-hoc-import.result.others-saved: De andere zijn opgeslagen, elk met zijn versiegeschiedenis.
+data-importer.ad-hoc-import.result.count.updated: bijgewerkt
+data-importer.ad-hoc-import.result.count.created: 'aangemaakt in {{folder}}'
+data-importer.ad-hoc-import.result.count.not-saved: niet opgeslagen
+data-importer.ad-hoc-import.result.count.skipped: overgeslagen in het voorbeeld
+data-importer.ad-hoc-import.result.column.row: Rij
+data-importer.ad-hoc-import.result.column.action: Actie
+data-importer.ad-hoc-import.result.column.why: Waarom het niet is opgeslagen
+data-importer.ad-hoc-import.result.download-failed: 'Mislukte rijen downloaden ({{count}})'
+data-importer.ad-hoc-import.result.close: Sluiten
+data-importer.ad-hoc-import.result.merged-as: 'Samengevoegd als {{user}} · {{time}}'
+data-importer.ad-hoc-import.run.branch.written: Naar een branch geschreven
+data-importer.ad-hoc-import.run.branch.objects: '{{count}} objecten'
+data-importer.ad-hoc-import.run.branch.checking: 'Controleren: rechten, sleutels, waarden'
+data-importer.ad-hoc-import.run.branch.merging: 'Samenvoegen als {{user}}'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} rij kan niet worden opgeslagen.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} rijen kunnen niet worden opgeslagen.'
+data-importer.ad-hoc-import.decision.nothing-merged: Er is nog niets samengevoegd; de andere rijen staan klaar in de branch.
+data-importer.ad-hoc-import.decision.count.ready: klaar om samen te voegen
+data-importer.ad-hoc-import.decision.count.cannot-be-saved: kunnen niet worden opgeslagen
+data-importer.ad-hoc-import.decision.column.why: Waarom het niet kan worden opgeslagen
+data-importer.ad-hoc-import.decision.discard: Import verwerpen
+data-importer.ad-hoc-import.decision.back-to-mapping: Terug naar mapping
+data-importer.ad-hoc-import.decision.merge_one: '{{count}} rij samenvoegen, {{failed}} weglaten'
+data-importer.ad-hoc-import.decision.merge_other: '{{count}} rijen samenvoegen, {{failed}} weglaten'
+data-importer.ad-hoc-import.decision.waiting: 'Een import van {{file}} in deze map wacht op je beslissing.'
+data-importer.ad-hoc-import.merge.branch-name: 'Ad-hoc-import: {{file}} in {{folder}}'
+data-importer.ad-hoc-import.merge.object-gone: Het object bestaat niet meer
+data-importer.ad-hoc-import.merge.invalid-value: Een waarde van deze rij kan niet worden opgeslagen
+data-importer.ad-hoc-import.merge.missing-new-object: Het verwijst naar een object dat de import niet aanmaakt
+data-importer.ad-hoc-import.merge.interrupted: De import is beëindigd voordat deze rij werd opgeslagen
+data-importer.ad-hoc-import.merge.notice: 'De import kon niet worden samengevoegd: {{reason}}'
+data-importer.ad-hoc-import.merge.timed-out: Het samenvoegen is niet op tijd voltooid. Vraag een beheerder de achtergrondworker te controleren.
+data-importer.ad-hoc-import.merge.decision.title: 'Import van {{file}}: je beslissing is nodig'
+data-importer.ad-hoc-import.merge.decision.summary: '{{ready}} rijen staan klaar, {{failed}} kunnen niet worden opgeslagen. Er is nog niets samengevoegd. Gebruik "Bestand importeren…" op {{folder}} om te beslissen.'

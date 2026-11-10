@@ -21,6 +21,7 @@ Pimcore data objects based on a configured mapping, without writing code.
 - Delta check to skip unchanged records, and cleanup to remove data objects that left the source.
 - Manual, scheduled, command-line and push-triggered execution.
 - Progress tracking and detailed import logs.
+- Ad hoc import of a CSV or XLSX file into a data object folder in Pimcore Studio, without an import configuration.
 
 ## Documentation
 
@@ -35,6 +36,7 @@ Reference:
 - [Import Execution Details](./doc/04_Import_Execution_Details.md): what happens between the trigger and the data.
 - [Import Progress and Logging](./doc/05_Import_Progress_and_Logging.md): watch and audit an import.
 - [Extending](./doc/06_Extending/README.md): custom strategies and events.
+- [Ad Hoc Import](./doc/07_Ad_Hoc_Import.md): import a file into a folder without a configuration.
 - [Troubleshooting / FAQ](./doc/08_Troubleshooting_FAQ.md): common problems.
 - [Upgrade Notes](./doc/01_Installation/01_Upgrade.md): breaking changes per release.
 

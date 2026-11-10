@@ -216,6 +216,7 @@ data-importer.mapping.autofill-suggestions.selected: '{{count}} vald(a)'
 data-importer.mapping.autofill-suggestions.reject-all: Avvisa alla
 data-importer.mapping.autofill-suggestions.apply: Tillämpa valt autofyll
 data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.source-ai: AI
 data-importer.mapping.autofill-suggestions.empty: Inga förslag hittades för omappade kolumner.
 data-importer.mapping.autofill-suggestions.no-source-columns: Inga källkolumner tillgängliga. Kör en förhandsvisning av importen först.
 data-importer.mapping.empty-state: Skapa en mapping direkt från kolumnen Källor, eller klicka på Ny för att skapa en manuellt.
@@ -326,3 +327,279 @@ data-importer.execution.status.cancel: Avbryt körning & rensa kö
 data-importer.execution.cron-validating: Validerar Cron-uttryck...
 data-importer.validation.required: '{{field}} är obligatoriskt'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Dataobjektimportör
+user-management.permissions.plugin_data_importer_ad_hoc_import: Ad hoc-import
+
+# Ad hoc import
+data-importer.ad-hoc-import.menu-item: Importera fil…
+data-importer.ad-hoc-import.title: 'Importera fil till {{path}}'
+data-importer.ad-hoc-import.title-file: 'Importera {{file}} till {{path}}'
+data-importer.ad-hoc-import.step.file: Fil
+data-importer.ad-hoc-import.step.mapping: Mapping
+data-importer.ad-hoc-import.step.preview: Förhandsvisning
+data-importer.ad-hoc-import.step.import: Importera
+data-importer.ad-hoc-import.cancel: Avbryt
+data-importer.ad-hoc-import.back: Tillbaka
+data-importer.ad-hoc-import.next: Nästa
+data-importer.ad-hoc-import.next-preview: 'Nästa: Förhandsvisning'
+data-importer.ad-hoc-import.file.title: Fil
+data-importer.ad-hoc-import.file.drop: Dra och släpp en XLSX- eller CSV-fil här, eller klicka för att välja en
+data-importer.ad-hoc-import.file.remove: Ta bort fil
+data-importer.ad-hoc-import.file.cancel-upload: Avbryt uppladdning
+data-importer.ad-hoc-import.file.summary: '{{rows}} rader · {{columns}} kolumner · {{size}}'
+data-importer.ad-hoc-import.file.summary-refused: '{{rows}} rader · {{size}}'
+data-importer.ad-hoc-import.file.progress: '{{percent}} % · {{loaded}} av {{total}}'
+data-importer.ad-hoc-import.refused.too-many-rows: 'Den här filen har {{rows}} rader; en ad hoc-import tar upp till {{limit}}.'
+data-importer.ad-hoc-import.refused.too-many-rows-hint: Dela upp filen, eller importera den med en Data Importer-konfiguration i Data Hub.
+data-importer.ad-hoc-import.refused.too-many-cells: Det här bladet sträcker sig för långt för en ad hoc-import.
+data-importer.ad-hoc-import.refused.unreadable: 'Den här filen kan inte läsas som {{type}}.'
+data-importer.ad-hoc-import.refused.wrong-format: Endast XLSX- och CSV-filer kan importeras.
+data-importer.ad-hoc-import.settings.delimiter: Avgränsare
+data-importer.ad-hoc-import.settings.delimiter.semicolon: ; Semikolon
+data-importer.ad-hoc-import.settings.delimiter.comma: ', Komma'
+data-importer.ad-hoc-import.settings.delimiter.tab: Tabb
+data-importer.ad-hoc-import.settings.delimiter.pipe: '| Lodstreck'
+data-importer.ad-hoc-import.settings.delimiter.detected: '{{delimiter}} (identifierad)'
+data-importer.ad-hoc-import.settings.enclosure: Textavgränsare
+data-importer.ad-hoc-import.settings.escape: Escape-tecken
+data-importer.ad-hoc-import.settings.sheet: Blad
+data-importer.ad-hoc-import.settings.column-names: Kolumnnamn
+data-importer.ad-hoc-import.settings.in-first-row: i första raden
+data-importer.ad-hoc-import.first-rows.more-columns: '+{{count}} till'
+data-importer.ad-hoc-import.objects.title: Objekt
+data-importer.ad-hoc-import.objects.class: Klass
+data-importer.ad-hoc-import.objects.match-by: Matcha befintliga objekt via
+data-importer.ad-hoc-import.objects.match-by.object-id: Objekt-ID
+data-importer.ad-hoc-import.objects.match-by.field: Fält
+data-importer.ad-hoc-import.objects.match-by.none: Matcha inte
+data-importer.ad-hoc-import.objects.from-column: från kolumn
+data-importer.ad-hoc-import.objects.after-the-file: efter filen
+data-importer.ad-hoc-import.objects.match-hint: Hittade objekt uppdateras där de ligger.
+data-importer.ad-hoc-import.objects.key-from-column: nyckel från kolumn
+data-importer.ad-hoc-import.objects.create-only-hint: Varje rad skapar ett nytt objekt, namngivet efter kolumnens värde.
+data-importer.ad-hoc-import.objects.new-objects-in: Nya objekt i
+data-importer.ad-hoc-import.objects.optional: (valfritt)
+data-importer.ad-hoc-import.objects.new-objects-hint: 'Tomt: mappen du klickade på.'
+data-importer.ad-hoc-import.mapping.map-here: Mappa kolumnerna här
+data-importer.ad-hoc-import.mapping.use-configuration: Använd en Data Importer-konfiguration
+data-importer.ad-hoc-import.mapping.filter.all: 'Att importera {{count}}'
+data-importer.ad-hoc-import.mapping.filter.mapped: 'Mappade {{count}}'
+data-importer.ad-hoc-import.mapping.filter.open: 'Ej mappade {{count}}'
+data-importer.ad-hoc-import.mapping.use-all-suggestions: 'Använd alla {{count}} förslag'
+data-importer.ad-hoc-import.mapping.required: 'Obligatoriska fält:'
+data-importer.ad-hoc-import.mapping.columns: Filens kolumner
+data-importer.ad-hoc-import.mapping.field-of: 'Fält för {{column}}'
+data-importer.ad-hoc-import.mapping.dont-import: Importera inte
+data-importer.ad-hoc-import.mapping.required-field: '{{field}} (obligatoriskt)'
+data-importer.ad-hoc-import.mapping.choose-field: Välj fält
+data-importer.ad-hoc-import.mapping.use-suggestion: 'Använd {{field}}?'
+data-importer.ad-hoc-import.mapping.object-id: Objekt-ID
+data-importer.ad-hoc-import.mapping.match: Hittar objekten
+data-importer.ad-hoc-import.mapping.auto: auto
+data-importer.ad-hoc-import.mapping.not-imported: 'Importeras inte ({{count}})'
+data-importer.ad-hoc-import.mapping.not-imported.show: Visa och ta tillbaka
+data-importer.ad-hoc-import.mapping.not-imported.hide: Dölj
+data-importer.ad-hoc-import.mapping.not-imported.search: Sök kolumner
+data-importer.ad-hoc-import.mapping.not-imported.note: De här kolumnerna stannar i filen och skrivs inte någonstans.
+data-importer.ad-hoc-import.mapping.restore: + Importera
+data-importer.ad-hoc-import.mapping.restore-column: 'Återställ {{column}}'
+data-importer.ad-hoc-import.mapping.find-field: Sök
+data-importer.ad-hoc-import.mapping.no-fields: Inget fält hittades
+data-importer.ad-hoc-import.mapping.change-key: 'Ändra nyckeln för {{column}}'
+data-importer.ad-hoc-import.mapping.map-here-hint: 'En kolumn per fält, med förslag. Flera kolumner i ett fält: använd en konfiguration.'
+data-importer.ad-hoc-import.mapping.progress: '{{mapped}} av {{total}} kolumner går till ett fält'
+data-importer.ad-hoc-import.mapping.skip-open: 'Importera inte de {{count}} ej mappade'
+data-importer.ad-hoc-import.mapping.auto-note.lead: '{{count}} kolumner mappades automatiskt'
+data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 kolumn mappades automatiskt
+data-importer.ad-hoc-import.mapping.auto-note.rest: 'när filen lästes in, markerade ”auto”. {{count}} till har ett förslag att bekräfta.'
+data-importer.ad-hoc-import.mapping.auto-note.rest-one: när filen lästes in, markerade ”auto”. 1 till har ett förslag att bekräfta.
+data-importer.ad-hoc-import.mapping.auto-note.rest-none: när filen lästes in, markerade ”auto”.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} kolumner har ett förslag att bekräfta.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 kolumn har ett förslag att bekräfta.
+data-importer.ad-hoc-import.mapping.head.column: Kolumn i din fil
+data-importer.ad-hoc-import.mapping.head.field: Går till fält
+data-importer.ad-hoc-import.mapping.head.transformations: Transformationer
+data-importer.ad-hoc-import.mapping.sample: 't.ex. ”{{value}}”'
+data-importer.ad-hoc-import.mapping.skip: Hoppa över
+data-importer.ad-hoc-import.mapping.skip-column: 'Importera inte {{column}}'
+data-importer.ad-hoc-import.mapping.undecided: '{{count}} kolumner är inte avgjorda än: välj ett fält eller ”Importera inte”'
+data-importer.ad-hoc-import.mapping.undecided-one: '1 kolumn är inte avgjord än: välj ett fält eller ”Importera inte”'
+data-importer.ad-hoc-import.mapping.all-decided: Alla kolumner är avgjorda
+data-importer.ad-hoc-import.mapping.panel.aria: 'Kolumn {{column}}'
+data-importer.ad-hoc-import.mapping.panel.column: Kolumn
+data-importer.ad-hoc-import.mapping.panel.previous: Föregående kolumn
+data-importer.ad-hoc-import.mapping.panel.next: Nästa kolumn
+data-importer.ad-hoc-import.mapping.panel.close: Stäng
+data-importer.ad-hoc-import.mapping.panel.first-value: '”{{value}}”'
+data-importer.ad-hoc-import.mapping.panel.choose-field: välj ett fält nedan
+data-importer.ad-hoc-import.mapping.panel.field-first: Välj ett fält först.
+data-importer.ad-hoc-import.mapping.panel.store-key-no-transformations: En Classification Store-nyckel tar inga transformationer.
+data-importer.ad-hoc-import.mapping.panel.tab.field: Fält
+data-importer.ad-hoc-import.mapping.panel.tab.transformations: Transformationer
+data-importer.ad-hoc-import.mapping.panel.tab.transformations-count: 'Transformationer ({{count}})'
+data-importer.ad-hoc-import.mapping.panel.remove-field: Ta bort fält
+data-importer.ad-hoc-import.mapping.panel.next-column: Nästa kolumn ›
+data-importer.ad-hoc-import.mapping.key-taken: En annan kolumn går redan till den här nyckeln
+data-importer.ad-hoc-import.configuration.list-title: Data Importer-konfigurationer
+data-importer.ad-hoc-import.configuration.list-hint: Bara de du får läsa i Data Hub
+data-importer.ad-hoc-import.configuration.choose: Välj en konfiguration
+data-importer.ad-hoc-import.configuration.none: Det finns ingen importkonfiguration för dataobjekt som du får använda.
+data-importer.ad-hoc-import.configuration.load-failed: Konfigurationerna kunde inte laddas.
+data-importer.ad-hoc-import.configuration.unusable-detail: '{{class}} · {{reason}}'
+data-importer.ad-hoc-import.configuration.unusable.class: du får inte skapa objekt av dess klass
+data-importer.ad-hoc-import.configuration.unusable.matching: den hittar inte objekt via deras ID eller ett fält i alla mappar
+data-importer.ad-hoc-import.configuration.unusable.folder: den skapar inte nya objekt i en enda mapp
+data-importer.ad-hoc-import.configuration.unusable.folder-missing: dess mapp för nya objekt finns inte
+data-importer.ad-hoc-import.configuration.unusable.folder-not-allowed: du får inte skapa objekt i dess mapp
+data-importer.ad-hoc-import.configuration.unusable.match-column: 'filen har ingen kolumn {{column}} att matcha via'
+data-importer.ad-hoc-import.configuration.replaces: Används som den är, skrivskyddad; dess klass, matchning och mapp ersätter de från Fil.
+data-importer.ad-hoc-import.configuration.match-object-id: 'Objekt-ID från kolumn {{column}}'
+data-importer.ad-hoc-import.configuration.match-field: '{{field}} från kolumn {{column}}'
+data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) från kolumn {{column}}'
+data-importer.ad-hoc-import.configuration.match-none: Varje rad skapar ett nytt objekt, med nyckel från kolumnen i filsteget
+data-importer.ad-hoc-import.configuration.missing-columns: 'Kolumner den läser som filen inte har: {{columns}}'
+data-importer.ad-hoc-import.mapping.transformations: Transformationer
+data-importer.ad-hoc-import.mapping.transform: Transformera…
+data-importer.ad-hoc-import.mapping.transformation-one: 1 transformation
+data-importer.ad-hoc-import.mapping.transformations-count: '{{count}} transformationer'
+data-importer.ad-hoc-import.mapping.transformations-of: 'Transformationer för {{column}}'
+data-importer.ad-hoc-import.mapping.needs-transformation: Behöver en transformation
+data-importer.ad-hoc-import.mapping.not-fitting: 'Kolumner vars värden inte passar sitt fält än: {{columns}}'
+data-importer.ad-hoc-import.transformations.intro: Tillämpas uppifrån och ned på den här kolumnens värde, före den automatiska konverteringen för fältets typ.
+data-importer.ad-hoc-import.transformations.add: Lägg till transformation
+data-importer.ad-hoc-import.transformations.remove: 'Ta bort {{step}}'
+data-importer.ad-hoc-import.transformations.type.trim: Trimma
+data-importer.ad-hoc-import.transformations.type.stringReplace: Ersätt text
+data-importer.ad-hoc-import.transformations.type.conditionalConversion: Mappa värden
+data-importer.ad-hoc-import.transformations.type.explode: Dela upp i en lista
+data-importer.ad-hoc-import.transformations.type.loadDataObject: Ladda objekt
+data-importer.ad-hoc-import.transformations.type.loadAsset: Ladda asset
+data-importer.ad-hoc-import.transformations.trim.mode: Ta bort mellanslag
+data-importer.ad-hoc-import.transformations.trim.mode.both: I båda ändar
+data-importer.ad-hoc-import.transformations.trim.mode.left: I början
+data-importer.ad-hoc-import.transformations.trim.mode.right: I slutet
+data-importer.ad-hoc-import.transformations.replace.search: Hitta
+data-importer.ad-hoc-import.transformations.replace.replace: Ersätt med
+data-importer.ad-hoc-import.transformations.map.original: Värden
+data-importer.ad-hoc-import.transformations.map.converted: Till
+data-importer.ad-hoc-import.transformations.map.hint: Separera värdena med |, i samma ordning i båda; * står för alla andra värden.
+data-importer.ad-hoc-import.transformations.map.unequal: Ange lika många värden under Till som under Värden.
+data-importer.ad-hoc-import.transformations.split.delimiter: Skiljetecken
+data-importer.ad-hoc-import.transformations.load.strategy: Hitta via
+data-importer.ad-hoc-import.transformations.load.strategy.id: ID
+data-importer.ad-hoc-import.transformations.load.strategy.path: Full sökväg
+data-importer.ad-hoc-import.transformations.step-error: Den här transformationen kan inte ta emot värdena från den föregående.
+data-importer.ad-hoc-import.transformations.does-not-fit: 'Värdena kan inte gå till {{field}} än. Lägg till en transformation som leder dit, eller välj ett annat fält.'
+data-importer.ad-hoc-import.transformations.conversion.numeric: Konverteras till ett tal för fältet.
+data-importer.ad-hoc-import.transformations.conversion.date: Konverteras till ett datum för fältet, läst som år-månad-dag (2026-11-07).
+data-importer.ad-hoc-import.transformations.conversion.asArray: Konverteras till en lista med ett värde för fältet.
+data-importer.ad-hoc-import.transformations.conversion.gallery: Konverteras till ett galleri för fältet.
+data-importer.ad-hoc-import.transformations.conversion.boolean: Konverteras till ja eller nej för fältet.
+data-importer.ad-hoc-import.transformations.empty: (tomt)
+data-importer.ad-hoc-import.transformations.failed: Kan inte konverteras
+data-importer.ad-hoc-import.check.object-id: Objekt-ID
+data-importer.ad-hoc-import.check.key: Nyckel
+data-importer.ad-hoc-import.check.column.row: Rad
+data-importer.ad-hoc-import.check.column.error: Fel
+data-importer.ad-hoc-import.check.empty-value: '{{field}} är tomt'
+data-importer.ad-hoc-import.check.invalid-match-value: '{{field}} ”{{value}}” är inget värde som objekt kan matchas via'
+data-importer.ad-hoc-import.check.duplicate-in-file: '{{field}} {{value}} finns två gånger i filen (rad {{row}})'
+data-importer.ad-hoc-import.check.several-matches: '{{count}} objekt har {{field}} {{value}}'
+data-importer.ad-hoc-import.check.found-outside-target-folder: 'Hittades i {{path}}, utanför {{folder}}'
+data-importer.ad-hoc-import.check.outside-target-folder: 'Hittades utanför {{folder}}'
+data-importer.ad-hoc-import.check.not-viewable: 'Du får inte visa objektet med {{field}} {{value}}'
+data-importer.ad-hoc-import.check.unknown-object-id: 'Inget objekt har ID {{value}}'
+data-importer.ad-hoc-import.check.other-class: 'ID {{value}} tillhör en mapp eller ett objekt av en annan klass'
+data-importer.ad-hoc-import.check.key-taken: '{{folder}} innehåller redan ett objekt med namnet {{key}}'
+data-importer.ad-hoc-import.check.key-taken-in-file: 'Rad {{row}} skapar redan ett objekt med namnet {{key}}'
+data-importer.ad-hoc-import.check.value.not-a-number: '{{field}} ”{{value}}” är inget tal'
+data-importer.ad-hoc-import.check.value.not-a-date: '{{field}} ”{{value}}” är inget datum'
+data-importer.ad-hoc-import.check.value.not-yes-no: '{{field}} ”{{value}}” är varken ja eller nej'
+data-importer.ad-hoc-import.check.value.not-an-option: '{{field}} ”{{value}}” är inget alternativ för {{field}}'
+data-importer.ad-hoc-import.check.value.required: '{{field}} är obligatoriskt'
+data-importer.ad-hoc-import.check.value.invalid: '{{field}} ”{{value}}” passar inte fältet'
+data-importer.ad-hoc-import.check.value.too-many-groups: '{{field}} innehåller fler grupper än det tillåter'
+data-importer.ad-hoc-import.preview.updated: kommer att uppdateras
+data-importer.ad-hoc-import.preview.created: 'kommer att skapas i {{folder}}'
+data-importer.ad-hoc-import.preview.with-errors.skip: 'rader med fel: hoppas över, kan laddas ner efteråt'
+data-importer.ad-hoc-import.preview.with-errors.values: 'rader med fel: ogiltiga värden utelämnas; rader som inte kan matchas eller sparas hoppas över'
+data-importer.ad-hoc-import.preview.checked: 'Alla {{count}} rader kontrollerade'
+data-importer.ad-hoc-import.preview.old-new: · gammalt värde → nytt värde
+data-importer.ad-hoc-import.preview.errors-only: Endast fel
+data-importer.ad-hoc-import.preview.column.row: Rad
+data-importer.ad-hoc-import.preview.column.action: Handling
+data-importer.ad-hoc-import.preview.column.message: Meddelande
+data-importer.ad-hoc-import.preview.action.update: uppdatera
+data-importer.ad-hoc-import.preview.action.create: skapa
+data-importer.ad-hoc-import.preview.action.skipped: hoppas över
+data-importer.ad-hoc-import.preview.action.update-without: 'uppdatera, utan {{fields}}'
+data-importer.ad-hoc-import.preview.action.create-without: 'skapa, utan {{fields}}'
+data-importer.ad-hoc-import.preview.left-unchanged: '{{field}} ”{{value}}” → lämnas oförändrat'
+data-importer.ad-hoc-import.preview.total: 'Totalt {{total}} objekt'
+data-importer.ad-hoc-import.preview.rows-with-errors: Rader med fel
+data-importer.ad-hoc-import.preview.error-mode.skip: Hoppa över dem
+data-importer.ad-hoc-import.preview.error-mode.values: Importera dem utan de ogiltiga värdena
+data-importer.ad-hoc-import.preview.import: 'Importera {{count}} objekt'
+data-importer.ad-hoc-import.preview.failed: Filen kunde inte kontrolleras.
+data-importer.ad-hoc-import.run.importing: 'Importerar {{count}} objekt'
+data-importer.ad-hoc-import.run.count-of: '{{done}} av {{total}}'
+data-importer.ad-hoc-import.run.saving: Sparar
+data-importer.ad-hoc-import.run.background: Körs i bakgrunden. Du kan stänga det här fönstret; Studio meddelar dig när importen är klar.
+data-importer.ad-hoc-import.run.close-keep-running: Stäng, fortsätt köra
+data-importer.ad-hoc-import.run.may-not-save: 'Du får inte spara objekt i {{folder}}'
+data-importer.ad-hoc-import.run.may-not-create: 'Du får inte skapa objekt i {{folder}}'
+data-importer.ad-hoc-import.run.may-not-edit-language: 'Du får inte redigera språket {{language}} för objekt i {{folder}}'
+data-importer.ad-hoc-import.run.left-out-by-listener: En lyssnare i importen utelämnade den här raden
+data-importer.ad-hoc-import.run.cannot-go-on: Importen kunde inte fortsätta med den här filen
+data-importer.ad-hoc-import.run.must-be-unique: Ett värde måste vara unikt, och ett annat objekt har det
+data-importer.ad-hoc-import.run.save-failed: 'Sparandet misslyckades: {{reason}}'
+data-importer.ad-hoc-import.run.save-failed-unknown: Sparandet misslyckades; applikationsloggen har detaljerna
+data-importer.ad-hoc-import.run.notification.title: 'Importen av {{file}} är klar'
+data-importer.ad-hoc-import.run.notification.summary: '{{updated}} uppdaterade, {{created}} skapade i {{folder}}, {{failed}} inte sparade, {{skipped}} överhoppade i förhandsvisningen.'
+data-importer.ad-hoc-import.run.notification.row: 'Rad {{row}} · {{value}}: {{reason}}'
+data-importer.ad-hoc-import.run.notification.more: 'Och {{count}} till.'
+data-importer.ad-hoc-import.result.complete: Importen är klar
+data-importer.ad-hoc-import.result.objects-from: 'objekt importerade från {{file}}'
+data-importer.ad-hoc-import.result.saved-as: 'Sparat som {{user}} · {{time}}'
+data-importer.ad-hoc-import.result.updated: Uppdaterades
+data-importer.ad-hoc-import.result.created-in: 'Skapades i {{folder}}'
+data-importer.ad-hoc-import.result.skipped: Hoppades över i förhandsvisningen
+data-importer.ad-hoc-import.result.open-folder: Öppna mapp
+data-importer.ad-hoc-import.result.download-rows: Ladda ner rader
+data-importer.ad-hoc-import.result.history: Varje objekt behåller sin versionshistorik.
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} rad sparades inte.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} rader sparades inte.'
+data-importer.ad-hoc-import.result.others-saved: De övriga är sparade, vart och ett med sin versionshistorik.
+data-importer.ad-hoc-import.result.count.updated: uppdaterades
+data-importer.ad-hoc-import.result.count.created: 'skapades i {{folder}}'
+data-importer.ad-hoc-import.result.count.not-saved: sparades inte
+data-importer.ad-hoc-import.result.count.skipped: hoppades över i förhandsvisningen
+data-importer.ad-hoc-import.result.column.row: Rad
+data-importer.ad-hoc-import.result.column.action: Handling
+data-importer.ad-hoc-import.result.column.why: Varför den inte sparades
+data-importer.ad-hoc-import.result.download-failed: 'Ladda ner misslyckade rader ({{count}})'
+data-importer.ad-hoc-import.result.close: Stäng
+data-importer.ad-hoc-import.result.merged-as: 'Sammanfogat som {{user}} · {{time}}'
+data-importer.ad-hoc-import.run.branch.written: Skrivet till en gren
+data-importer.ad-hoc-import.run.branch.objects: '{{count}} objekt'
+data-importer.ad-hoc-import.run.branch.checking: 'Kontrollerar: behörigheter, nycklar, värden'
+data-importer.ad-hoc-import.run.branch.merging: 'Sammanfogar som {{user}}'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} rad kan inte sparas.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} rader kan inte sparas.'
+data-importer.ad-hoc-import.decision.nothing-merged: Inget är sammanfogat än; de övriga raderna är redo i grenen.
+data-importer.ad-hoc-import.decision.count.ready: redo att sammanfogas
+data-importer.ad-hoc-import.decision.count.cannot-be-saved: kan inte sparas
+data-importer.ad-hoc-import.decision.column.why: Varför den inte kan sparas
+data-importer.ad-hoc-import.decision.discard: Förkasta import
+data-importer.ad-hoc-import.decision.back-to-mapping: Tillbaka till mapping
+data-importer.ad-hoc-import.decision.merge_one: 'Sammanfoga {{count}} rad, utelämna {{failed}}'
+data-importer.ad-hoc-import.decision.merge_other: 'Sammanfoga {{count}} rader, utelämna {{failed}}'
+data-importer.ad-hoc-import.decision.waiting: 'En import av {{file}} till den här mappen väntar på ditt beslut.'
+data-importer.ad-hoc-import.merge.branch-name: 'Ad hoc-import: {{file}} till {{folder}}'
+data-importer.ad-hoc-import.merge.object-gone: Objektet finns inte längre
+data-importer.ad-hoc-import.merge.invalid-value: Ett värde i den här raden kan inte sparas
+data-importer.ad-hoc-import.merge.missing-new-object: Den hänvisar till ett objekt som importen inte skapar
+data-importer.ad-hoc-import.merge.interrupted: Importen avslutades innan den här raden sparades
+data-importer.ad-hoc-import.merge.notice: 'Importen kunde inte sammanfogas: {{reason}}'
+data-importer.ad-hoc-import.merge.timed-out: Sammanfogningen blev inte klar i tid. Be en administratör kontrollera bakgrundsprocessen.
+data-importer.ad-hoc-import.merge.decision.title: 'Import av {{file}}: ditt beslut behövs'
+data-importer.ad-hoc-import.merge.decision.summary: '{{ready}} rader är redo, {{failed}} kan inte sparas. Inget är sammanfogat än. Använd "Importera fil…" på {{folder}} för att avgöra.'

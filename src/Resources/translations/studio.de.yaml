@@ -216,6 +216,7 @@ data-importer.mapping.autofill-suggestions.selected: '{{count}} ausgewählt'
 data-importer.mapping.autofill-suggestions.reject-all: Alle ablehnen
 data-importer.mapping.autofill-suggestions.apply: Ausgewähltes Autofill übernehmen
 data-importer.mapping.autofill-suggestions.ok: OK
+data-importer.mapping.autofill-suggestions.source-ai: KI
 data-importer.mapping.autofill-suggestions.empty: Keine Vorschläge für nicht zugeordnete Spalten gefunden.
 data-importer.mapping.autofill-suggestions.no-source-columns: Keine Quellspalten verfügbar. Bitte führen Sie zuerst eine Import-Vorschau durch.
 data-importer.mapping.empty-state: Erstellen Sie ein Mapping direkt aus der Quellspalte oder klicken Sie auf Neu, um eines manuell zu erstellen.
@@ -326,3 +327,279 @@ data-importer.execution.status.cancel: Ausführung abbrechen & Warteschlange ber
 data-importer.execution.cron-validating: Cron-Ausdruck wird validiert...
 data-importer.validation.required: '{{field}} ist erforderlich'
 user-management.permissions.plugin_datahub_adapter_dataImporterDataObject: Datahub Adapter - Datenobjekt-Importer
+user-management.permissions.plugin_data_importer_ad_hoc_import: Ad-hoc-Import
+
+# Ad hoc import
+data-importer.ad-hoc-import.menu-item: Datei importieren…
+data-importer.ad-hoc-import.title: 'Datei in {{path}} importieren'
+data-importer.ad-hoc-import.title-file: '{{file}} in {{path}} importieren'
+data-importer.ad-hoc-import.step.file: Datei
+data-importer.ad-hoc-import.step.mapping: Mapping
+data-importer.ad-hoc-import.step.preview: Vorschau
+data-importer.ad-hoc-import.step.import: Importieren
+data-importer.ad-hoc-import.cancel: Abbrechen
+data-importer.ad-hoc-import.back: Zurück
+data-importer.ad-hoc-import.next: Weiter
+data-importer.ad-hoc-import.next-preview: 'Weiter: Vorschau'
+data-importer.ad-hoc-import.file.title: Datei
+data-importer.ad-hoc-import.file.drop: Ziehen Sie eine XLSX- oder CSV-Datei hierher oder klicken Sie, um eine auszuwählen
+data-importer.ad-hoc-import.file.remove: Datei entfernen
+data-importer.ad-hoc-import.file.cancel-upload: Upload abbrechen
+data-importer.ad-hoc-import.file.summary: '{{rows}} Zeilen · {{columns}} Spalten · {{size}}'
+data-importer.ad-hoc-import.file.summary-refused: '{{rows}} Zeilen · {{size}}'
+data-importer.ad-hoc-import.file.progress: '{{percent}} % · {{loaded}} von {{total}}'
+data-importer.ad-hoc-import.refused.too-many-rows: 'Diese Datei hat {{rows}} Zeilen; ein Ad-hoc-Import verarbeitet bis zu {{limit}}.'
+data-importer.ad-hoc-import.refused.too-many-rows-hint: Teilen Sie die Datei auf oder importieren Sie sie mit einer Data-Importer-Konfiguration im Data Hub.
+data-importer.ad-hoc-import.refused.too-many-cells: Dieses Tabellenblatt ist zu groß für einen Ad-hoc-Import.
+data-importer.ad-hoc-import.refused.unreadable: 'Diese Datei kann nicht als {{type}} gelesen werden.'
+data-importer.ad-hoc-import.refused.wrong-format: Nur XLSX- und CSV-Dateien können importiert werden.
+data-importer.ad-hoc-import.settings.delimiter: Trennzeichen
+data-importer.ad-hoc-import.settings.delimiter.semicolon: ; Semikolon
+data-importer.ad-hoc-import.settings.delimiter.comma: ', Komma'
+data-importer.ad-hoc-import.settings.delimiter.tab: Tabulator
+data-importer.ad-hoc-import.settings.delimiter.pipe: '| Senkrechter Strich'
+data-importer.ad-hoc-import.settings.delimiter.detected: '{{delimiter}} (erkannt)'
+data-importer.ad-hoc-import.settings.enclosure: Textbegrenzungszeichen
+data-importer.ad-hoc-import.settings.escape: Escape-Zeichen
+data-importer.ad-hoc-import.settings.sheet: Tabellenblatt
+data-importer.ad-hoc-import.settings.column-names: Spaltennamen
+data-importer.ad-hoc-import.settings.in-first-row: in der ersten Zeile
+data-importer.ad-hoc-import.first-rows.more-columns: '+{{count}} weitere'
+data-importer.ad-hoc-import.objects.title: Objekte
+data-importer.ad-hoc-import.objects.class: Klasse
+data-importer.ad-hoc-import.objects.match-by: Vorhandene Objekte abgleichen über
+data-importer.ad-hoc-import.objects.match-by.object-id: Objekt-ID
+data-importer.ad-hoc-import.objects.match-by.field: Feld
+data-importer.ad-hoc-import.objects.match-by.none: Nicht abgleichen
+data-importer.ad-hoc-import.objects.from-column: aus Spalte
+data-importer.ad-hoc-import.objects.after-the-file: nach Dateiauswahl
+data-importer.ad-hoc-import.objects.match-hint: Gefundene Objekte werden an ihrem Ort aktualisiert.
+data-importer.ad-hoc-import.objects.key-from-column: Schlüssel aus Spalte
+data-importer.ad-hoc-import.objects.create-only-hint: Jede Zeile erstellt ein neues Objekt, benannt nach dem Wert der Spalte.
+data-importer.ad-hoc-import.objects.new-objects-in: Neue Objekte in
+data-importer.ad-hoc-import.objects.optional: (optional)
+data-importer.ad-hoc-import.objects.new-objects-hint: 'Leer: der Ordner, auf den Sie geklickt haben.'
+data-importer.ad-hoc-import.mapping.map-here: Spalten hier zuordnen
+data-importer.ad-hoc-import.mapping.use-configuration: Eine Data-Importer-Konfiguration verwenden
+data-importer.ad-hoc-import.mapping.filter.all: 'Zu importieren {{count}}'
+data-importer.ad-hoc-import.mapping.filter.mapped: 'Zugeordnet {{count}}'
+data-importer.ad-hoc-import.mapping.filter.open: 'Nicht zugeordnet {{count}}'
+data-importer.ad-hoc-import.mapping.use-all-suggestions: 'Alle {{count}} Vorschläge übernehmen'
+data-importer.ad-hoc-import.mapping.required: 'Pflichtfelder:'
+data-importer.ad-hoc-import.mapping.columns: Spalten der Datei
+data-importer.ad-hoc-import.mapping.field-of: 'Feld für {{column}}'
+data-importer.ad-hoc-import.mapping.dont-import: Nicht importieren
+data-importer.ad-hoc-import.mapping.required-field: '{{field}} (erforderlich)'
+data-importer.ad-hoc-import.mapping.choose-field: Feld auswählen
+data-importer.ad-hoc-import.mapping.use-suggestion: '{{field}} verwenden?'
+data-importer.ad-hoc-import.mapping.object-id: Objekt-ID
+data-importer.ad-hoc-import.mapping.match: Findet die Objekte
+data-importer.ad-hoc-import.mapping.auto: auto
+data-importer.ad-hoc-import.mapping.not-imported: 'Nicht importiert ({{count}})'
+data-importer.ad-hoc-import.mapping.not-imported.show: Anzeigen und zurückholen
+data-importer.ad-hoc-import.mapping.not-imported.hide: Verbergen
+data-importer.ad-hoc-import.mapping.not-imported.search: Spalten durchsuchen
+data-importer.ad-hoc-import.mapping.not-imported.note: Diese Spalten bleiben in der Datei und werden nirgendwohin geschrieben.
+data-importer.ad-hoc-import.mapping.restore: + Importieren
+data-importer.ad-hoc-import.mapping.restore-column: '{{column}} wiederherstellen'
+data-importer.ad-hoc-import.mapping.find-field: Suche
+data-importer.ad-hoc-import.mapping.no-fields: Kein Feld gefunden
+data-importer.ad-hoc-import.mapping.change-key: 'Key für {{column}} ändern'
+data-importer.ad-hoc-import.mapping.map-here-hint: 'Eine Spalte pro Feld, mit Vorschlägen. Mehrere Spalten in einem Feld: Verwenden Sie eine Konfiguration.'
+data-importer.ad-hoc-import.mapping.progress: '{{mapped}} von {{total}} Spalten gehen in ein Feld'
+data-importer.ad-hoc-import.mapping.skip-open: 'Die {{count}} nicht zugeordneten nicht importieren'
+data-importer.ad-hoc-import.mapping.auto-note.lead: '{{count}} Spalten wurden automatisch zugeordnet'
+data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 Spalte wurde automatisch zugeordnet
+data-importer.ad-hoc-import.mapping.auto-note.rest: 'beim Lesen der Datei, markiert mit „auto“. {{count}} weitere haben einen Vorschlag zur Bestätigung.'
+data-importer.ad-hoc-import.mapping.auto-note.rest-one: beim Lesen der Datei, markiert mit „auto“. 1 weitere hat einen Vorschlag zur Bestätigung.
+data-importer.ad-hoc-import.mapping.auto-note.rest-none: beim Lesen der Datei, markiert mit „auto“.
+data-importer.ad-hoc-import.mapping.auto-note.pending: '{{count}} Spalten haben einen Vorschlag zur Bestätigung.'
+data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 Spalte hat einen Vorschlag zur Bestätigung.
+data-importer.ad-hoc-import.mapping.head.column: Spalte in Ihrer Datei
+data-importer.ad-hoc-import.mapping.head.field: Geht in Feld
+data-importer.ad-hoc-import.mapping.head.transformations: Transformationen
+data-importer.ad-hoc-import.mapping.sample: 'z. B. „{{value}}“'
+data-importer.ad-hoc-import.mapping.skip: Überspringen
+data-importer.ad-hoc-import.mapping.skip-column: '{{column}} nicht importieren'
+data-importer.ad-hoc-import.mapping.undecided: '{{count}} Spalten noch nicht entschieden: Wählen Sie ein Feld oder „Nicht importieren“'
+data-importer.ad-hoc-import.mapping.undecided-one: '1 Spalte noch nicht entschieden: Wählen Sie ein Feld oder „Nicht importieren“'
+data-importer.ad-hoc-import.mapping.all-decided: Alle Spalten sind entschieden
+data-importer.ad-hoc-import.mapping.panel.aria: 'Spalte {{column}}'
+data-importer.ad-hoc-import.mapping.panel.column: Spalte
+data-importer.ad-hoc-import.mapping.panel.previous: Vorherige Spalte
+data-importer.ad-hoc-import.mapping.panel.next: Nächste Spalte
+data-importer.ad-hoc-import.mapping.panel.close: Schließen
+data-importer.ad-hoc-import.mapping.panel.first-value: '„{{value}}“'
+data-importer.ad-hoc-import.mapping.panel.choose-field: Feld unten auswählen
+data-importer.ad-hoc-import.mapping.panel.field-first: Wählen Sie zuerst ein Feld aus.
+data-importer.ad-hoc-import.mapping.panel.store-key-no-transformations: Ein Classification-Store-Key erlaubt keine Transformationen.
+data-importer.ad-hoc-import.mapping.panel.tab.field: Feld
+data-importer.ad-hoc-import.mapping.panel.tab.transformations: Transformationen
+data-importer.ad-hoc-import.mapping.panel.tab.transformations-count: 'Transformationen ({{count}})'
+data-importer.ad-hoc-import.mapping.panel.remove-field: Feld entfernen
+data-importer.ad-hoc-import.mapping.panel.next-column: Nächste Spalte ›
+data-importer.ad-hoc-import.mapping.key-taken: Eine andere Spalte geht bereits in diesen Key
+data-importer.ad-hoc-import.configuration.list-title: Data-Importer-Konfigurationen
+data-importer.ad-hoc-import.configuration.list-hint: Nur solche, die Sie im Data Hub lesen dürfen
+data-importer.ad-hoc-import.configuration.choose: Wählen Sie eine Konfiguration aus
+data-importer.ad-hoc-import.configuration.none: Es gibt keine Importkonfiguration für Datenobjekte, die Sie verwenden dürfen.
+data-importer.ad-hoc-import.configuration.load-failed: Die Konfigurationen konnten nicht geladen werden.
+data-importer.ad-hoc-import.configuration.unusable-detail: '{{class}} · {{reason}}'
+data-importer.ad-hoc-import.configuration.unusable.class: Sie dürfen keine Objekte ihrer Klasse erstellen
+data-importer.ad-hoc-import.configuration.unusable.matching: sie findet Objekte nicht in allen Ordnern über ihre ID oder ein Feld
+data-importer.ad-hoc-import.configuration.unusable.folder: sie erstellt neue Objekte nicht in einem einzigen Ordner
+data-importer.ad-hoc-import.configuration.unusable.folder-missing: ihr Ordner für neue Objekte existiert nicht
+data-importer.ad-hoc-import.configuration.unusable.folder-not-allowed: Sie dürfen keine Objekte in ihrem Ordner erstellen
+data-importer.ad-hoc-import.configuration.unusable.match-column: 'die Datei hat keine Spalte {{column}} zum Abgleichen'
+data-importer.ad-hoc-import.configuration.replaces: Wird unverändert und schreibgeschützt verwendet; ihre Klasse, ihr Abgleich und ihr Ordner ersetzen die aus „Datei“.
+data-importer.ad-hoc-import.configuration.match-object-id: 'Objekt-ID aus Spalte {{column}}'
+data-importer.ad-hoc-import.configuration.match-field: '{{field}} aus Spalte {{column}}'
+data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) aus Spalte {{column}}'
+data-importer.ad-hoc-import.configuration.match-none: Jede Zeile erstellt ein neues Objekt, benannt nach der Spalte aus dem Schritt „Datei“
+data-importer.ad-hoc-import.configuration.missing-columns: 'Spalten, die sie liest, die die Datei aber nicht hat: {{columns}}'
+data-importer.ad-hoc-import.mapping.transformations: Transformationen
+data-importer.ad-hoc-import.mapping.transform: Transformieren…
+data-importer.ad-hoc-import.mapping.transformation-one: 1 Transformation
+data-importer.ad-hoc-import.mapping.transformations-count: '{{count}} Transformationen'
+data-importer.ad-hoc-import.mapping.transformations-of: 'Transformationen von {{column}}'
+data-importer.ad-hoc-import.mapping.needs-transformation: Benötigt eine Transformation
+data-importer.ad-hoc-import.mapping.not-fitting: 'Spalten, deren Werte noch nicht zu ihrem Feld passen: {{columns}}'
+data-importer.ad-hoc-import.transformations.intro: Von oben nach unten auf den Wert dieser Spalte angewendet, vor der automatischen Umwandlung für den Typ des Felds.
+data-importer.ad-hoc-import.transformations.add: Transformation hinzufügen
+data-importer.ad-hoc-import.transformations.remove: '{{step}} entfernen'
+data-importer.ad-hoc-import.transformations.type.trim: Trimmen
+data-importer.ad-hoc-import.transformations.type.stringReplace: Text ersetzen
+data-importer.ad-hoc-import.transformations.type.conditionalConversion: Werte zuordnen
+data-importer.ad-hoc-import.transformations.type.explode: In eine Liste aufteilen
+data-importer.ad-hoc-import.transformations.type.loadDataObject: Objekt laden
+data-importer.ad-hoc-import.transformations.type.loadAsset: Asset laden
+data-importer.ad-hoc-import.transformations.trim.mode: Leerzeichen entfernen
+data-importer.ad-hoc-import.transformations.trim.mode.both: An beiden Enden
+data-importer.ad-hoc-import.transformations.trim.mode.left: Am Anfang
+data-importer.ad-hoc-import.transformations.trim.mode.right: Am Ende
+data-importer.ad-hoc-import.transformations.replace.search: Suchen
+data-importer.ad-hoc-import.transformations.replace.replace: Ersetzen durch
+data-importer.ad-hoc-import.transformations.map.original: Werte
+data-importer.ad-hoc-import.transformations.map.converted: Wird zu
+data-importer.ad-hoc-import.transformations.map.hint: Trennen Sie die Werte mit |, in beiden in derselben Reihenfolge; * steht für jeden anderen Wert.
+data-importer.ad-hoc-import.transformations.map.unequal: Geben Sie unter „Wird zu“ so viele Werte an wie unter „Werte“.
+data-importer.ad-hoc-import.transformations.split.delimiter: Trennzeichen
+data-importer.ad-hoc-import.transformations.load.strategy: Suchen nach
+data-importer.ad-hoc-import.transformations.load.strategy.id: ID
+data-importer.ad-hoc-import.transformations.load.strategy.path: Voller Pfad
+data-importer.ad-hoc-import.transformations.step-error: Diese Transformation kann die Werte der vorherigen nicht übernehmen.
+data-importer.ad-hoc-import.transformations.does-not-fit: 'Die Werte können noch nicht in {{field}} übernommen werden. Fügen Sie eine Transformation hinzu, die dorthin führt, oder wählen Sie ein anderes Feld.'
+data-importer.ad-hoc-import.transformations.conversion.numeric: Für das Feld in eine Zahl umgewandelt.
+data-importer.ad-hoc-import.transformations.conversion.date: Für das Feld in ein Datum umgewandelt, gelesen als Jahr-Monat-Tag (2026-11-07).
+data-importer.ad-hoc-import.transformations.conversion.asArray: Für das Feld in eine Liste mit einem Wert umgewandelt.
+data-importer.ad-hoc-import.transformations.conversion.gallery: Für das Feld in eine Galerie umgewandelt.
+data-importer.ad-hoc-import.transformations.conversion.boolean: Für das Feld in Ja oder Nein umgewandelt.
+data-importer.ad-hoc-import.transformations.empty: (leer)
+data-importer.ad-hoc-import.transformations.failed: Kann nicht umgewandelt werden
+data-importer.ad-hoc-import.check.object-id: Objekt-ID
+data-importer.ad-hoc-import.check.key: Schlüssel
+data-importer.ad-hoc-import.check.column.row: Zeile
+data-importer.ad-hoc-import.check.column.error: Fehler
+data-importer.ad-hoc-import.check.empty-value: '{{field}} ist leer'
+data-importer.ad-hoc-import.check.invalid-match-value: '{{field}} „{{value}}“ ist kein Wert, über den Objekte abgeglichen werden können'
+data-importer.ad-hoc-import.check.duplicate-in-file: '{{field}} {{value}} kommt zweimal in der Datei vor (Zeile {{row}})'
+data-importer.ad-hoc-import.check.several-matches: '{{count}} Objekte haben {{field}} {{value}}'
+data-importer.ad-hoc-import.check.found-outside-target-folder: 'Gefunden in {{path}}, außerhalb von {{folder}}'
+data-importer.ad-hoc-import.check.outside-target-folder: 'Außerhalb von {{folder}} gefunden'
+data-importer.ad-hoc-import.check.not-viewable: 'Sie dürfen das Objekt mit {{field}} {{value}} nicht anzeigen'
+data-importer.ad-hoc-import.check.unknown-object-id: 'Kein Objekt hat die ID {{value}}'
+data-importer.ad-hoc-import.check.other-class: 'Die ID {{value}} gehört zu einem Ordner oder einem Objekt einer anderen Klasse'
+data-importer.ad-hoc-import.check.key-taken: '{{folder}} enthält bereits ein Objekt namens {{key}}'
+data-importer.ad-hoc-import.check.key-taken-in-file: 'Zeile {{row}} erstellt bereits ein Objekt namens {{key}}'
+data-importer.ad-hoc-import.check.value.not-a-number: '{{field}} „{{value}}“ ist keine Zahl'
+data-importer.ad-hoc-import.check.value.not-a-date: '{{field}} „{{value}}“ ist kein Datum'
+data-importer.ad-hoc-import.check.value.not-yes-no: '{{field}} „{{value}}“ ist weder Ja noch Nein'
+data-importer.ad-hoc-import.check.value.not-an-option: '{{field}} „{{value}}“ ist keine Option von {{field}}'
+data-importer.ad-hoc-import.check.value.required: '{{field}} ist erforderlich'
+data-importer.ad-hoc-import.check.value.invalid: '{{field}} „{{value}}“ passt nicht zum Feld'
+data-importer.ad-hoc-import.check.value.too-many-groups: '{{field}} enthält mehr Gruppen, als es zulässt'
+data-importer.ad-hoc-import.preview.updated: werden aktualisiert
+data-importer.ad-hoc-import.preview.created: 'werden in {{folder}} erstellt'
+data-importer.ad-hoc-import.preview.with-errors.skip: 'Zeilen mit Fehlern: übersprungen, danach herunterladbar'
+data-importer.ad-hoc-import.preview.with-errors.values: 'Zeilen mit Fehlern: ungültige Werte ausgelassen; Zeilen, die nicht abgeglichen oder gespeichert werden können, werden übersprungen'
+data-importer.ad-hoc-import.preview.checked: 'Alle {{count}} Zeilen geprüft'
+data-importer.ad-hoc-import.preview.old-new: · alter Wert → neuer Wert
+data-importer.ad-hoc-import.preview.errors-only: Nur Fehler
+data-importer.ad-hoc-import.preview.column.row: Zeile
+data-importer.ad-hoc-import.preview.column.action: Aktion
+data-importer.ad-hoc-import.preview.column.message: Nachricht
+data-importer.ad-hoc-import.preview.action.update: aktualisieren
+data-importer.ad-hoc-import.preview.action.create: erstellen
+data-importer.ad-hoc-import.preview.action.skipped: übersprungen
+data-importer.ad-hoc-import.preview.action.update-without: 'aktualisieren, ohne {{fields}}'
+data-importer.ad-hoc-import.preview.action.create-without: 'erstellen, ohne {{fields}}'
+data-importer.ad-hoc-import.preview.left-unchanged: '{{field}} „{{value}}“ → unverändert gelassen'
+data-importer.ad-hoc-import.preview.total: 'Insgesamt {{total}} Einträge'
+data-importer.ad-hoc-import.preview.rows-with-errors: Zeilen mit Fehlern
+data-importer.ad-hoc-import.preview.error-mode.skip: Überspringen
+data-importer.ad-hoc-import.preview.error-mode.values: Ohne die ungültigen Werte importieren
+data-importer.ad-hoc-import.preview.import: '{{count}} Objekte importieren'
+data-importer.ad-hoc-import.preview.failed: Die Datei konnte nicht geprüft werden.
+data-importer.ad-hoc-import.run.importing: '{{count}} Objekte werden importiert'
+data-importer.ad-hoc-import.run.count-of: '{{done}} von {{total}}'
+data-importer.ad-hoc-import.run.saving: Speichert
+data-importer.ad-hoc-import.run.background: Läuft im Hintergrund. Sie können dieses Fenster schließen; Studio benachrichtigt Sie, wenn der Import abgeschlossen ist.
+data-importer.ad-hoc-import.run.close-keep-running: Schließen, weiterlaufen lassen
+data-importer.ad-hoc-import.run.may-not-save: 'Sie dürfen keine Objekte in {{folder}} speichern'
+data-importer.ad-hoc-import.run.may-not-create: 'Sie dürfen keine Objekte in {{folder}} erstellen'
+data-importer.ad-hoc-import.run.may-not-edit-language: 'Sie dürfen die Sprache {{language}} von Objekten in {{folder}} nicht bearbeiten'
+data-importer.ad-hoc-import.run.left-out-by-listener: Ein Listener des Imports hat diese Zeile ausgelassen
+data-importer.ad-hoc-import.run.cannot-go-on: Der Import konnte mit dieser Datei nicht fortgesetzt werden
+data-importer.ad-hoc-import.run.must-be-unique: Ein Wert muss eindeutig sein, und ein anderes Objekt enthält ihn bereits
+data-importer.ad-hoc-import.run.save-failed: 'Speichern fehlgeschlagen: {{reason}}'
+data-importer.ad-hoc-import.run.save-failed-unknown: Speichern fehlgeschlagen; das Application Log enthält die Details
+data-importer.ad-hoc-import.run.notification.title: 'Import von {{file}} abgeschlossen'
+data-importer.ad-hoc-import.run.notification.summary: '{{updated}} aktualisiert, {{created}} in {{folder}} erstellt, {{failed}} nicht gespeichert, {{skipped}} in der Vorschau übersprungen.'
+data-importer.ad-hoc-import.run.notification.row: 'Zeile {{row}} · {{value}}: {{reason}}'
+data-importer.ad-hoc-import.run.notification.more: 'Und {{count}} weitere.'
+data-importer.ad-hoc-import.result.complete: Import abgeschlossen
+data-importer.ad-hoc-import.result.objects-from: 'Objekte aus {{file}} importiert'
+data-importer.ad-hoc-import.result.saved-as: 'Gespeichert als {{user}} · {{time}}'
+data-importer.ad-hoc-import.result.updated: Aktualisiert
+data-importer.ad-hoc-import.result.created-in: 'Erstellt in {{folder}}'
+data-importer.ad-hoc-import.result.skipped: In der Vorschau übersprungen
+data-importer.ad-hoc-import.result.open-folder: Ordner öffnen
+data-importer.ad-hoc-import.result.download-rows: Zeilen herunterladen
+data-importer.ad-hoc-import.result.history: Jedes Objekt behält seine Versionshistorie.
+data-importer.ad-hoc-import.result.not-saved_one: '{{count}} Zeile wurde nicht gespeichert.'
+data-importer.ad-hoc-import.result.not-saved_other: '{{count}} Zeilen wurden nicht gespeichert.'
+data-importer.ad-hoc-import.result.others-saved: Die übrigen sind gespeichert, jeweils mit ihrer Versionshistorie.
+data-importer.ad-hoc-import.result.count.updated: aktualisiert
+data-importer.ad-hoc-import.result.count.created: 'erstellt in {{folder}}'
+data-importer.ad-hoc-import.result.count.not-saved: nicht gespeichert
+data-importer.ad-hoc-import.result.count.skipped: in der Vorschau übersprungen
+data-importer.ad-hoc-import.result.column.row: Zeile
+data-importer.ad-hoc-import.result.column.action: Aktion
+data-importer.ad-hoc-import.result.column.why: Warum sie nicht gespeichert wurde
+data-importer.ad-hoc-import.result.download-failed: 'Fehlgeschlagene Zeilen herunterladen ({{count}})'
+data-importer.ad-hoc-import.result.close: Schließen
+data-importer.ad-hoc-import.result.merged-as: 'Zusammengeführt als {{user}} · {{time}}'
+data-importer.ad-hoc-import.run.branch.written: In einen Branch geschrieben
+data-importer.ad-hoc-import.run.branch.objects: '{{count}} Objekte'
+data-importer.ad-hoc-import.run.branch.checking: 'Prüfung: Rechte, Schlüssel, Werte'
+data-importer.ad-hoc-import.run.branch.merging: 'Zusammenführen als {{user}}'
+data-importer.ad-hoc-import.decision.cannot-be-saved_one: '{{count}} Zeile kann nicht gespeichert werden.'
+data-importer.ad-hoc-import.decision.cannot-be-saved_other: '{{count}} Zeilen können nicht gespeichert werden.'
+data-importer.ad-hoc-import.decision.nothing-merged: Noch ist nichts zusammengeführt; die übrigen Zeilen liegen bereit im Branch.
+data-importer.ad-hoc-import.decision.count.ready: bereit zum Zusammenführen
+data-importer.ad-hoc-import.decision.count.cannot-be-saved: können nicht gespeichert werden
+data-importer.ad-hoc-import.decision.column.why: Warum sie nicht gespeichert werden kann
+data-importer.ad-hoc-import.decision.discard: Import verwerfen
+data-importer.ad-hoc-import.decision.back-to-mapping: Zurück zum Mapping
+data-importer.ad-hoc-import.decision.merge_one: '{{count}} Zeile zusammenführen, {{failed}} auslassen'
+data-importer.ad-hoc-import.decision.merge_other: '{{count}} Zeilen zusammenführen, {{failed}} auslassen'
+data-importer.ad-hoc-import.decision.waiting: 'Ein Import von {{file}} in diesen Ordner wartet auf Ihre Entscheidung.'
+data-importer.ad-hoc-import.merge.branch-name: 'Ad-hoc-Import: {{file}} in {{folder}}'
+data-importer.ad-hoc-import.merge.object-gone: Das Objekt existiert nicht mehr
+data-importer.ad-hoc-import.merge.invalid-value: Ein Wert dieser Zeile kann nicht gespeichert werden
+data-importer.ad-hoc-import.merge.missing-new-object: Sie verweist auf ein Objekt, das der Import nicht erstellt
+data-importer.ad-hoc-import.merge.interrupted: Der Import endete, bevor diese Zeile gespeichert wurde
+data-importer.ad-hoc-import.merge.notice: 'Der Import konnte nicht zusammengeführt werden: {{reason}}'
+data-importer.ad-hoc-import.merge.timed-out: Das Zusammenführen wurde nicht rechtzeitig abgeschlossen. Bitten Sie einen Administrator, den Background-Worker zu prüfen.
+data-importer.ad-hoc-import.merge.decision.title: 'Import von {{file}}: Ihre Entscheidung ist erforderlich'
+data-importer.ad-hoc-import.merge.decision.summary: '{{ready}} Zeilen sind bereit, {{failed}} können nicht gespeichert werden. Noch ist nichts zusammengeführt. Verwenden Sie „Datei importieren…“ auf {{folder}}, um zu entscheiden.'

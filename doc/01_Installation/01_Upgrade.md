@@ -7,6 +7,9 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.4.0
 
+- The [ad hoc import](../07_Ad_Hoc_Import.md) adds the `plugin_data_importer_ad_hoc_import` permission. Run the
+  migrations (`bin/console doctrine:migrations:migrate`) to create it, then grant it to the users or roles that may
+  import files into folders.
 - `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
   `instanceof ImportAsset` no longer matches the **Load Asset** operator.
 
