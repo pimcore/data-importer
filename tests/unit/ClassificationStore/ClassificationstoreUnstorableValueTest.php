@@ -120,7 +120,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
 
         $element = $this->newElement();
         $target = new ClassificationstoreBatch($logger);
-        $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED, 'language' => $this->language]);
+        $target->setSettings([
+            'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,
+            'language' => $this->language,
+        ]);
         $target->assignData($element, [
             $this->groupId . '-' . $this->keyIds[self::KEY_INPUT] => 'kept',
             $dateToken => '2021-07-22',
@@ -128,8 +131,8 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $element->save();
 
         $store = $this->store($this->reload($element));
-        static::assertSame('kept', $store->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_INPUT], $this->language));
-        static::assertNull($store->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_DATE], $this->language));
+        static::assertSame('kept', $this->valueOf($store, self::KEY_INPUT));
+        static::assertNull($this->valueOf($store, self::KEY_DATE));
     }
 
     public function testAVariantOnAStoreWithoutVariantsWarnsAndWritesTheDefaultSlot(): void
@@ -149,8 +152,8 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $element->save();
 
         $store = $this->store($this->reload($element));
-        static::assertSame('qualified', $store->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_VARIANT], $this->language));
-        static::assertSame('untouched', $store->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_INPUT], $this->language));
+        static::assertSame('qualified', $this->valueOf($store, self::KEY_VARIANT));
+        static::assertSame('untouched', $this->valueOf($store, self::KEY_INPUT));
     }
 
     public function testAListOnAStoreWithoutListsWarnsAndWritesTheFirstValueAsTheDefaultSlot(): void
@@ -158,7 +161,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $token = (string)$this->groupId . '-' . $this->keyIds[self::KEY_LIST];
         $logger = $this->createMock(ApplicationLogger::class);
         $logger->expects(static::once())->method('warning')->with(
-            static::callback(static fn (string $message): bool => str_contains($message, $token) && str_contains($message, 'list of 2')),
+            static::callback(
+                static fn (string $message): bool => str_contains($message, $token)
+                    && str_contains($message, 'list of 2')
+            ),
             static::anything()
         );
 
@@ -167,20 +173,37 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $element->save();
 
         $store = $this->store($this->reload($element));
-        static::assertSame('first', $store->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_LIST], $this->language));
+        static::assertSame('first', $this->valueOf($store, self::KEY_LIST));
     }
 
     /**
+     * The statement-count bound on identifier resolution: resolving a reference costs no lookup of
+     * its own, because `ClassificationstoreKeyTrait::preloadIdentifierReferences()` reads every
+     * pending reference of a row together.
+     *
      * Counts the statements one import row costs through the batch target, for one key and for
-     * fifty, both spelled as identifiers.
+     * fifty, both spelled as identifiers, and bounds the marginal cost of the forty-nine further
+     * references at less than one statement each. A lookup per reference costs at least one, so it
+     * fails here; the preload adds none, so the two counts come out equal. The measured pair is
+     * written to the run's output either way.
      */
-    public function testResolvingIdentifiersDoesNotCostAQueryPerReference(): void
+    public function testResolvingIdentifiersCostsNoStatementPerReference(): void
     {
         $one = $this->statementsFor(1);
         $many = $this->statementsFor(self::BULK_SIZE);
+        $further = self::BULK_SIZE - 1;
 
         codecept_debug(sprintf('statements for 1 key: %d, for %d keys: %d', $one, self::BULK_SIZE, $many));
-        static::assertLessThan(10 * $one, $many);
+        static::assertLessThan(
+            $further,
+            $many - $one,
+            sprintf(
+                '%d further references cost %d further statements, which is at least one each: '
+                . 'identifier resolution is looking a reference up instead of preloading it',
+                $further,
+                $many - $one
+            )
+        );
     }
 
     private function statementsFor(int $keys): int
@@ -193,7 +216,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
         DefinitionCache::clear(null);
         $element = $this->newElement();
         $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
-        $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED, 'language' => $this->language]);
+        $target->setSettings([
+            'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,
+            'language' => $this->language,
+        ]);
 
         $before = $this->questions();
         $target->assignData($element, $tokens);
@@ -235,8 +261,19 @@ class ClassificationstoreUnstorableValueTest extends Unit
         return $store;
     }
 
-    private function singleKeyTarget(ApplicationLogger $logger, string $keyName, string $suffix = ''): Classificationstore
+    /**
+     * The value the store holds for a key of the group, in the language of the test.
+     */
+    private function valueOf(ClassificationstoreModel $store, string $keyName): mixed
     {
+        return $store->getLocalizedKeyValue($this->groupId, $this->keyIds[$keyName], $this->language);
+    }
+
+    private function singleKeyTarget(
+        ApplicationLogger $logger,
+        string $keyName,
+        string $suffix = ''
+    ): Classificationstore {
         $target = new Classificationstore($logger);
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,

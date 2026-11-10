@@ -99,7 +99,8 @@ trait ClassificationstoreKeyTrait
     {
         $pending = [];
         foreach ($references as $reference) {
-            if ($reference->isIdentifier && !array_key_exists($this->identifierCacheKey($reference, $storeId), $this->identifierPairs)) {
+            $cacheKey = $this->identifierCacheKey($reference, $storeId);
+            if ($reference->isIdentifier && !array_key_exists($cacheKey, $this->identifierPairs)) {
                 $pending[] = $reference;
             }
         }
@@ -118,7 +119,8 @@ trait ClassificationstoreKeyTrait
         if ($groupIds !== [] && $keyIds !== []) {
             $list = new KeyGroupRelationListing();
             $list->setCondition(
-                '`groupId` IN (' . $this->placeholders($groupIds) . ') AND `keyId` IN (' . $this->placeholders($keyIds) . ')',
+                '`groupId` IN (' . $this->placeholders($groupIds) . ') '
+                . 'AND `keyId` IN (' . $this->placeholders($keyIds) . ')',
                 [...array_values($groupIds), ...array_values($keyIds)]
             );
             foreach ($list->load() as $relation) {
@@ -128,7 +130,8 @@ trait ClassificationstoreKeyTrait
 
         foreach ($pending as $reference) {
             $pair = ($groupIds[$reference->group] ?? 0) . '-' . ($keyIds[$reference->key] ?? 0);
-            $this->identifierPairs[$this->identifierCacheKey($reference, $storeId)] = isset($relations[$pair]) ? $pair : null;
+            $cacheKey = $this->identifierCacheKey($reference, $storeId);
+            $this->identifierPairs[$cacheKey] = isset($relations[$pair]) ? $pair : null;
             if (isset($relations[$pair])) {
                 $this->keyGroupRelations[$pair] = $relations[$pair];
             }

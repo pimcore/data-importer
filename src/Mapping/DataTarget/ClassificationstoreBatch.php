@@ -196,9 +196,9 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
     }
 
     /**
-     * The type of the key when it would store nothing of a value that is one - its field definition normalises the value
-     * to null - and null otherwise. Asked of the definition rather than of a list of types, so that a type core adds is
-     * answered as it is.
+     * The type of the key when it would store nothing of a value that is one - its field definition normalises
+     * the value to null - and null otherwise. Asked of the definition rather than of a list of types, so that a
+     * type core adds is answered as it is.
      */
     private function unbuildableType(?KeyGroupRelation $relation, mixed $value): ?string
     {

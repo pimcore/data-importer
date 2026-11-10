@@ -198,8 +198,13 @@ describe('the variant control of DataTargetClassificationstoreSettings', () => {
 
   const variantSelects = (settings: DataTargetConfig['settings'], onChange = jest.fn()): ReactElement[] =>
     elements(DataTargetClassificationstoreSettings({
-      classId: 'Product', settings, transformationResultType: 'default', onChange
-    } as never)).filter((element) => element.type === 'VariantSelect')
+      classId: 'Product',
+      classFieldOptions: [],
+      isLocalized: false,
+      settings,
+      transformationResultType: 'default',
+      onChange
+    })).filter((element) => element.type === 'VariantSelect')
 
   it('shows the declared variant names for a key that declares variants', () => {
     mockVariants = ['metric', 'imperial']

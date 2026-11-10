@@ -76,7 +76,9 @@ final class Classificationstore implements DataTargetInterface, ConfigNameAwareI
                 $groupId = $relation->getGroupId();
                 $keyId = $relation->getKeyId();
             } elseif ($this->keyReference->isIdentifier) {
-                throw new InvalidConfigurationException('Classification store key ' . $this->keyReference->token . ' not found.');
+                throw new InvalidConfigurationException(
+                    'Classification store key ' . $this->keyReference->token . ' not found.'
+                );
             } else {
                 $groupId = (int) $this->keyReference->group;
                 $keyId = (int) $this->keyReference->key;

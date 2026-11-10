@@ -89,7 +89,8 @@ final class ClassificationStoreDataTypeService
 
         $unholdableTypes = $this->listUnholdableKeyTypes((int) $storeId);
         if ($unholdableTypes !== []) {
-            $conditionParts[] = sprintf('type NOT IN (%s)', implode(',', array_map($list->quote(...), $unholdableTypes)));
+            $quoted = implode(',', array_map($list->quote(...), $unholdableTypes));
+            $conditionParts[] = sprintf('type NOT IN (%s)', $quoted);
         }
 
         $condition = implode(' AND ', $conditionParts);
@@ -111,7 +112,8 @@ final class ClassificationStoreDataTypeService
         }
 
         $types = $this->connection->fetchFirstColumn(
-            'SELECT DISTINCT `type` FROM ' . DataObject\Classificationstore\KeyConfig\Dao::TABLE_NAME_KEYS . ' WHERE `storeId` = ?',
+            'SELECT DISTINCT `type` FROM ' . DataObject\Classificationstore\KeyConfig\Dao::TABLE_NAME_KEYS
+            . ' WHERE `storeId` = ?',
             [$storeId]
         );
 

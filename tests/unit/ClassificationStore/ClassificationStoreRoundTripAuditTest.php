@@ -200,11 +200,18 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         $document = $this->auditDocument();
         $list = substr($document, (int)strpos($document, self::FOLLOW_UP_MARKER) + strlen(self::FOLLOW_UP_MARKER));
         $items = preg_split('/^(?=\d+\. )/m', $list, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $items = array_values(array_filter($items, static fn (string $item): bool => preg_match('/^\d+\. /', $item) === 1));
+        $items = array_values(array_filter(
+            $items,
+            static fn (string $item): bool => preg_match('/^\d+\. /', $item) === 1
+        ));
 
         static::assertCount(4, $items, 'the follow-up list is items 3 to 6');
         foreach ($items as $item) {
-            static::assertMatchesRegularExpression('/\*\*(Resolved here|Not fixed here):\*\*/', $item, 'unclassified: ' . substr($item, 0, 60));
+            static::assertMatchesRegularExpression(
+                '/\*\*(Resolved here|Not fixed here):\*\*/',
+                $item,
+                'unclassified: ' . substr($item, 0, 60)
+            );
         }
     }
 
@@ -239,7 +246,8 @@ class ClassificationStoreRoundTripAuditTest extends Unit
 
         foreach ($files as $file) {
             static::assertDoesNotMatchRegularExpression(
-                '/[\'"](geopoint|geobounds|geopolygon|geopolyline|hotspotimage|imageGallery|date|datetime|image)[\'"]/i',
+                '/[\'"](geopoint|geobounds|geopolygon|geopolyline|hotspotimage'
+                . '|imageGallery|date|datetime|image)[\'"]/i',
                 (string)file_get_contents((string)$file),
                 basename((string)$file) . ' lists key types'
             );
@@ -311,8 +319,9 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         static::assertSame(
             self::VERDICT_DIFFERED,
             $result['verdict'],
-            'A plain date string now survives a mixed batch entry. Restate the finding in the audit '
-            . 'document and in the follow-up item that currently carries it.'
+            'A plain date string no longer reads back as this finding describes. Restate the finding '
+            . 'in the audit document and in the follow-up item that currently carries it. The run '
+            . 'noted: ' . $result['note']
         );
     }
 

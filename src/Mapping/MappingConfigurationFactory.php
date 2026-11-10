@@ -122,7 +122,9 @@ final class MappingConfigurationFactory
         $mappingConfiguration->setDataSourceIndex($configurationEntry['dataSourceIndex'] ?? null);
         $mappingConfiguration->setTransformationPipeline($this->buildTransformationPipeline($configName, $configurationEntry['transformationPipeline'] ?? []));
         if (!$ignoreDataTarget) {
-            $mappingConfiguration->setDataTarget($this->buildDataTarget($configName, $configurationEntry['dataTarget'] ?? []));
+            $mappingConfiguration->setDataTarget(
+                $this->buildDataTarget($configName, $configurationEntry['dataTarget'] ?? [])
+            );
         }
 
         return $mappingConfiguration;

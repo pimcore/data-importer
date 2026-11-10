@@ -122,8 +122,10 @@ final readonly class DataTypeService implements DataTypeServiceInterface
             }
 
             $keyConfig = DataObject\Classificationstore\DefinitionCache::get($config->getKeyId());
-            if ($groupConfig && $keyConfig && $groupConfig->getIdentifier() !== null && $keyConfig->getIdentifier() !== null) {
-                $item['identifier'] = $groupConfig->getIdentifier() . ':' . $keyConfig->getIdentifier();
+            $groupIdentifier = $groupConfig?->getIdentifier();
+            $keyIdentifier = $keyConfig?->getIdentifier();
+            if ($groupIdentifier !== null && $keyIdentifier !== null) {
+                $item['identifier'] = $groupIdentifier . ':' . $keyIdentifier;
             }
 
             $data[] = $item;
@@ -145,7 +147,9 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         ?string $fieldName = null
     ): ClassificationStoreKeyNameResponse {
         $keyGroupRelation = $this->findKeyGroupRelation($keyId, $classId, $fieldName);
-        $group = $keyGroupRelation ? DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId()) : null;
+        $group = $keyGroupRelation
+            ? DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId())
+            : null;
 
         if ($keyGroupRelation && $group) {
             $definition = DataObject\Classificationstore\Service::getFieldDefinitionFromKeyConfig($keyGroupRelation);
@@ -202,8 +206,9 @@ final readonly class DataTypeService implements DataTypeServiceInterface
             return null;
         }
 
-        $group = DataObject\Classificationstore\GroupConfig::getByIdentifier($reference->group, (int) $field->getStoreId());
-        $key = DataObject\Classificationstore\KeyConfig::getByIdentifier($reference->key, (int) $field->getStoreId());
+        $storeId = (int) $field->getStoreId();
+        $group = DataObject\Classificationstore\GroupConfig::getByIdentifier($reference->group, $storeId);
+        $key = DataObject\Classificationstore\KeyConfig::getByIdentifier($reference->key, $storeId);
 
         return $group && $key
             ? DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId($group->getId(), $key->getId())

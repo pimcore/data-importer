@@ -49,6 +49,8 @@ class ClassificationstoreQualifiedValueTest extends Unit
 
     private const KEY_LIST = 'diQualList';
 
+    private const KEY_LIST_VARIANT = 'diQualListVariant';
+
     private const KEY_VARIANT = 'diQualVariant';
 
     private const KEY_PLAIN = 'diQualPlain';
@@ -88,6 +90,14 @@ class ClassificationstoreQualifiedValueTest extends Unit
         $list->setDelegateDatatype('input');
         $list->setMultiValue(true);
 
+        // a key that declares both a list and a variant: core refuses an undeclared variant
+        // outright, so the isolation of one variant from another needs a key that declares one
+        $listVariant = new MultiValue();
+        $listVariant->setName(self::KEY_LIST_VARIANT);
+        $listVariant->setDelegateDatatype('input');
+        $listVariant->setMultiValue(true);
+        $listVariant->setVariants([self::VARIANT_METRIC]);
+
         $variant = new MultiValue();
         $variant->setName(self::KEY_VARIANT);
         $variant->setDelegateDatatype('input');
@@ -95,6 +105,7 @@ class ClassificationstoreQualifiedValueTest extends Unit
 
         $keys = [
             self::KEY_LIST => ['multiValue', $list, null],
+            self::KEY_LIST_VARIANT => ['multiValue', $listVariant, null],
             self::KEY_VARIANT => ['multiValue', $variant, null],
             self::KEY_PLAIN => ['input', null, self::KEY_PLAIN_IDENTIFIER],
         ];
@@ -132,7 +143,11 @@ class ClassificationstoreQualifiedValueTest extends Unit
             static::assertSame(['a', 'b', 'c'], $this->list($element, self::KEY_LIST, $this->language), $targetKind);
 
             $write(json_encode(['x', 'y']));
-            static::assertSame(['x', 'y'], $this->list($element, self::KEY_LIST, $this->language), $targetKind . ': a list can shorten');
+            static::assertSame(
+                ['x', 'y'],
+                $this->list($element, self::KEY_LIST, $this->language),
+                $targetKind . ': a list can shorten'
+            );
 
             $element->save();
             $reloaded = $this->reload($element);
@@ -140,25 +155,46 @@ class ClassificationstoreQualifiedValueTest extends Unit
         }
     }
 
-    public function testAListLeavesOtherLanguagesAndOtherVariantsAlone(): void
+    public function testAListLeavesOtherLanguagesAlone(): void
     {
+        $field = ClassificationStoreFixture::FIELD_LOCALIZED;
+        $keyId = $this->keyIds[self::KEY_LIST];
         $element = $this->newElement();
-        $store = $this->store($element, ClassificationStoreFixture::FIELD_LOCALIZED);
-        $store->setKeyValues($this->groupId, $this->keyIds[self::KEY_LIST], [
+        $store = $this->store($element, $field);
+        $store->setKeyValues($this->groupId, $keyId, [
             new MultiValueEntry('other-language', self::OTHER_LANGUAGE),
         ]);
-        $store->setKeyValues($this->groupId, $this->keyIds[self::KEY_LIST], [
+
+        $this->write('single', $element, self::KEY_LIST, json_encode(['a', 'b', 'c']), $field);
+        $this->write('batch', $element, self::KEY_LIST, json_encode(['a', 'b']), $field);
+
+        static::assertSame(['a', 'b'], $store->getKeyValues($this->groupId, $keyId, $this->language));
+        static::assertSame(
+            ['other-language'],
+            $store->getKeyValues($this->groupId, $keyId, self::OTHER_LANGUAGE)
+        );
+    }
+
+    /**
+     * On the single-key target only: the batch target refuses a variant declaring key by name, so a
+     * key that declares both a list and a variant is unreachable through a batch entry.
+     */
+    public function testAListLeavesOtherVariantsAlone(): void
+    {
+        $field = ClassificationStoreFixture::FIELD_LOCALIZED;
+        $keyId = $this->keyIds[self::KEY_LIST_VARIANT];
+        $element = $this->newElement();
+        $store = $this->store($element, $field);
+        $store->setKeyValues($this->groupId, $keyId, [
             new MultiValueEntry('other-variant', $this->language, self::VARIANT_METRIC),
         ]);
 
-        $this->write('single', $element, self::KEY_LIST, json_encode(['a', 'b', 'c']), ClassificationStoreFixture::FIELD_LOCALIZED);
-        $this->write('batch', $element, self::KEY_LIST, json_encode(['a', 'b']), ClassificationStoreFixture::FIELD_LOCALIZED);
+        $this->write('single', $element, self::KEY_LIST_VARIANT, json_encode(['a', 'b']), $field);
 
-        static::assertSame(['a', 'b'], $store->getKeyValues($this->groupId, $this->keyIds[self::KEY_LIST], $this->language));
-        static::assertSame(['other-language'], $store->getKeyValues($this->groupId, $this->keyIds[self::KEY_LIST], self::OTHER_LANGUAGE));
+        static::assertSame(['a', 'b'], $store->getKeyValues($this->groupId, $keyId, $this->language));
         static::assertSame(
             ['other-variant'],
-            $store->getKeyValues($this->groupId, $this->keyIds[self::KEY_LIST], $this->language, self::VARIANT_METRIC)
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_METRIC)
         );
     }
 
@@ -173,25 +209,13 @@ class ClassificationstoreQualifiedValueTest extends Unit
                 $this->write($targetKind, $element, 'diQual_' . $type, $probe);
                 $element->save();
 
+                // read in the language it was written in: getLocalizedKeyValue() defaults to the
+                // `default` slot, which a localized write never reaches
                 $value = $this->store($this->reload($element))
-                    ->getLocalizedKeyValue($this->groupId, $this->keyIds['diQual_' . $type]);
+                    ->getLocalizedKeyValue($this->groupId, $this->keyIds['diQual_' . $type], $this->language);
                 static::assertEquals($probe, $value, $type . ' through ' . $targetKind);
             }
         }
-    }
-
-    /**
-     * What the classification store keeps of a value handed to its own setter, the path both targets
-     * took before a key could declare anything.
-     */
-    private function storedThroughTheStoreItself(string $type, mixed $probe): mixed
-    {
-        $element = $this->newElement();
-        $this->store($element)->setLocalizedKeyValue($this->groupId, $this->keyIds['diQual_' . $type], $probe, $this->language);
-        $element->save();
-
-        return $this->store($this->reload($element))
-            ->getLocalizedKeyValue($this->groupId, $this->keyIds['diQual_' . $type], $this->language);
     }
 
     public function testAMetricAndAnImperialValueOfOneKeyEachKeepTheirOwnVariant(): void
@@ -203,8 +227,14 @@ class ClassificationstoreQualifiedValueTest extends Unit
 
         $store = $this->store($this->reload($element));
         $keyId = $this->keyIds[self::KEY_VARIANT];
-        static::assertSame(['2.5'], $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_METRIC));
-        static::assertSame(['1'], $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_IMPERIAL));
+        static::assertSame(
+            ['2.5'],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_METRIC)
+        );
+        static::assertSame(
+            ['1'],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_IMPERIAL)
+        );
     }
 
     /**
@@ -248,7 +278,8 @@ class ClassificationstoreQualifiedValueTest extends Unit
 
             static::assertSame(
                 'stored',
-                $this->store($element)->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_PLAIN], $this->language),
+                $this->store($element)
+                    ->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_PLAIN], $this->language),
                 $targetKind . ' with ' . $reference
             );
         }
@@ -275,8 +306,10 @@ class ClassificationstoreQualifiedValueTest extends Unit
         return $reloaded;
     }
 
-    private function store(Concrete $element, string $field = ClassificationStoreFixture::FIELD_LOCALIZED): ClassificationstoreModel
-    {
+    private function store(
+        Concrete $element,
+        string $field = ClassificationStoreFixture::FIELD_LOCALIZED
+    ): ClassificationstoreModel {
         $getter = 'get' . ucfirst($field);
         $store = $element->$getter();
         static::assertInstanceOf(ClassificationstoreModel::class, $store);
@@ -296,7 +329,10 @@ class ClassificationstoreQualifiedValueTest extends Unit
     private function batchTarget(string $field = ClassificationStoreFixture::FIELD_LOCALIZED): ClassificationstoreBatch
     {
         $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
-        $target->setSettings(['fieldName' => $field, 'language' => $field === ClassificationStoreFixture::FIELD_LOCALIZED ? $this->language : null]);
+        $target->setSettings([
+            'fieldName' => $field,
+            'language' => $field === ClassificationStoreFixture::FIELD_LOCALIZED ? $this->language : null,
+        ]);
 
         return $target;
     }
