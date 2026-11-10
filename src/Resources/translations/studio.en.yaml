@@ -166,6 +166,8 @@ data-importer.processing.execution-type.sequential: Sequential
 data-importer.processing.execution-type.parallel: Parallel
 data-importer.processing.archive-import-file: Archive Import File
 data-importer.processing.disable-versioning: Disable Versioning
+data-importer.processing.version-note: Version Note
+data-importer.processing.version-note.tooltip: Note stored on the version created each time the import saves an element. Leave empty to save versions without a note. Has no effect while versioning is disabled.
 data-importer.processing.id-data-index: Data index of ID field
 data-importer.processing.id-data-index.tooltip: Column used as stable identifier for Delta Check and Cleanup. These options are only available when an ID data index is set.
 data-importer.processing.id-data-index-placeholder: Select column

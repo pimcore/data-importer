@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect } from 'react'
-import { Flex, Select, Form, Switch } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Input, Select, Form, Switch } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { StepHeading } from '../step-heading/step-heading'
@@ -43,6 +43,8 @@ export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettin
   // Watch parent logging toggles to auto-check sub-items when parent is enabled
   const disableInfoLogs = Form.useWatch(['processingConfig', 'logging', 'disableInfoLogs']) as boolean | undefined
   const disableErrorLogs = Form.useWatch(['processingConfig', 'logging', 'disableErrorLogs']) as boolean | undefined
+
+  const disableVersioning = Form.useWatch(['processingConfig', 'disableVersioning']) as boolean | undefined
 
   useEffect(() => {
     if (disableInfoLogs === true) {
@@ -86,6 +88,17 @@ export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettin
           valuePropName="checked"
         >
           <Switch labelRight={ t('data-importer.processing.disable-versioning') } />
+        </Form.Item>
+
+        <Form.Item
+          label={ t('data-importer.processing.version-note') }
+          name={ ['processingConfig', 'versionNote'] }
+          tooltip={ t('data-importer.processing.version-note.tooltip') }
+        >
+          <Input
+            allowClear
+            disabled={ disableVersioning === true }
+          />
         </Form.Item>
       </DataImporterPanel>
 

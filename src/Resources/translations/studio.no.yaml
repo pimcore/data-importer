@@ -166,6 +166,8 @@ data-importer.processing.execution-type.sequential: Sekvensiell
 data-importer.processing.execution-type.parallel: Parallell
 data-importer.processing.archive-import-file: Arkiver importfil
 data-importer.processing.disable-versioning: Deaktiver versjonering
+data-importer.processing.version-note: Versjonsnotat
+data-importer.processing.version-note.tooltip: Notat som lagres på versjonen som opprettes hver gang importen lagrer et element. La stå tomt for å lagre versjoner uten notat. Har ingen effekt så lenge versjonering er deaktivert.
 data-importer.processing.id-data-index: Dataindeks for ID-felt
 data-importer.processing.id-data-index.tooltip: Kolonne brukt som stabil identifikator for Delta Check og opprydding. Disse alternativene er kun tilgjengelige når en ID-dataindeks er satt.
 data-importer.processing.id-data-index-placeholder: Velg kolonne
