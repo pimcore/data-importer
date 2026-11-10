@@ -119,7 +119,7 @@ const DecisionFooter = ({ isDeciding, onBackToMapping, onDiscard, onMerge, run, 
           onClick={ onMerge }
           type="primary"
         >
-          { t('data-importer.ad-hoc-import.decision.merge', { ready: importedCount(run), failed: run.failed }) }
+          { t('data-importer.ad-hoc-import.decision.merge', { count: importedCount(run), failed: run.failed }) }
         </Button>
       </Flex>
     </ModalFooter>

@@ -1448,6 +1448,7 @@ describe('the preview step', () => {
       })
       await startImport()
 
+      expect(screen.getByText('1 row was not saved.')).toBeTruthy()
       expect(screen.getByRole('link', { name: 'Download failed rows (1)' }).getAttribute('href'))
         .toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/failed-rows')
     })
@@ -1466,17 +1467,36 @@ describe('the preview step', () => {
         mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
         await startImport()
 
-        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
         expect(screen.getByText('You may not save objects in /Products/Archive')).toBeTruthy()
         expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
         expect(screen.getByRole('link', { name: 'Download failed rows (1)' })).toBeTruthy()
+      })
+
+      it('counts several rows to merge in the plural', async () => {
+        mockLoadRun.mockReturnValue({
+          refetch: mockRefetchRun,
+          data: runAnswer({
+            state: 'decision',
+            processed: 5,
+            updated: 4,
+            failed: 1,
+            throughBranch: true,
+            failures: [{ row: 3, matchValue: 'NH-1077', action: 'create', message: 'You may not save objects in /Products/Archive' }]
+          })
+        })
+        await startImport()
+
+        expect(screen.getByRole('button', { name: 'Merge 4 rows, leave out 1' })).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
+        expect(screen.getByRole('cell', { name: 'create' })).toBeTruthy()
       })
 
       it('merges the other rows and follows the merge again', async () => {
         mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
         await startImport()
 
-        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })) })
 
         expect(mockMergeLeavingOut).toHaveBeenCalledWith({ fileId: 'file-1' })
         expect(mockRefetchRun).toHaveBeenCalled()
@@ -1489,11 +1509,11 @@ describe('the preview step', () => {
         mockLoadRun.mockImplementation(() => ({ refetch: mockRefetchRun, data: deciding(), fulfilledTimeStamp: answeredAt }))
         await startImport()
 
-        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })) })
 
         expect(mockRefetchRun).toHaveBeenCalled()
         expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
-        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
       })
 
       it('goes back to the mapping with the file, the branch taken back', async () => {
@@ -1538,12 +1558,12 @@ describe('the preview step', () => {
         mockWithdrawRun.mockResolvedValue({ error: { status: 422 } })
         await startImport()
 
-        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })) })
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Back to mapping' })) })
 
         expect(mockTrackError).toHaveBeenCalledTimes(2)
         expect(mockRefetchRun).not.toHaveBeenCalled()
-        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
       })
 
       it('keeps the import waiting when the dialog is closed', async () => {
@@ -1568,7 +1588,7 @@ describe('the preview step', () => {
 
         expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 }, { refetchOnMountOrArgChange: true })
         expect(screen.getByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeTruthy()
-        expect(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })).toBeTruthy()
+        expect(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })).toBeTruthy()
         expect(screen.queryByRole('button', { name: 'Back to mapping' })).toBeNull()
       })
 

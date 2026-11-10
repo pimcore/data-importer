@@ -23,8 +23,17 @@ const catalogue: Record<string, string> = Object.fromEntries(
     .map((match) => [match[1], match[2].replace(/^'(.*)'$/, '$1').replace(/''/g, "'")])
 )
 
+// as i18next does for English: a count picks the key's _one or _other form when it has them
+const pluralOf = (key: string, values: Record<string, unknown>): string => {
+  if (typeof values.count !== 'number' || catalogue[key] !== undefined) {
+    return key
+  }
+
+  return `${key}_${values.count === 1 ? 'one' : 'other'}`
+}
+
 export const translate = (key: string, values: Record<string, unknown> = {}): string => {
-  const text = catalogue[key]
+  const text = catalogue[pluralOf(key, values)]
   if (text === undefined) {
     throw new Error(`No text for ${key} in the catalogue`)
   }
