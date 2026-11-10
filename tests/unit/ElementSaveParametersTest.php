@@ -17,18 +17,20 @@ use Pimcore\Bundle\DataImporterBundle\Processing\ElementSaveParameters;
 
 class ElementSaveParametersTest extends Unit
 {
+    private const VERSION_NOTE = 'Imported by ERP feed';
+
     public function testConfiguredVersionNoteBecomesSaveParameter(): void
     {
-        $saveParameters = ElementSaveParameters::fromProcessingConfig(['versionNote' => 'Imported by ERP feed']);
+        $saveParameters = ElementSaveParameters::fromProcessingConfig(['versionNote' => self::VERSION_NOTE]);
 
-        static::assertSame(['versionNote' => 'Imported by ERP feed'], $saveParameters);
+        static::assertSame(['versionNote' => self::VERSION_NOTE], $saveParameters);
     }
 
     public function testVersionNoteIsTrimmed(): void
     {
-        $saveParameters = ElementSaveParameters::fromProcessingConfig(['versionNote' => "  Imported by ERP feed \n"]);
+        $saveParameters = ElementSaveParameters::fromProcessingConfig(['versionNote' => '  ' . self::VERSION_NOTE . " \n"]);
 
-        static::assertSame(['versionNote' => 'Imported by ERP feed'], $saveParameters);
+        static::assertSame(['versionNote' => self::VERSION_NOTE], $saveParameters);
     }
 
     /**

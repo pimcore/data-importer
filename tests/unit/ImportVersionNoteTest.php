@@ -36,6 +36,8 @@ class ImportVersionNoteTest extends Unit
 {
     private const CONFIG_NAME = 'version-note-test';
 
+    private const VERSION_NOTE = 'Imported by ERP feed';
+
     private bool $versioningDisabledBefore;
 
     protected function _before(): void
@@ -54,10 +56,10 @@ class ImportVersionNoteTest extends Unit
         $element = $this->createElement();
         $element->expects($this->once())
             ->method('save')
-            ->with(['versionNote' => 'Imported by ERP feed'])
+            ->with(['versionNote' => self::VERSION_NOTE])
             ->willReturnSelf();
 
-        $this->processRow($element, ['versionNote' => 'Imported by ERP feed']);
+        $this->processRow($element, ['versionNote' => self::VERSION_NOTE]);
     }
 
     public function testImportedElementIsSavedWithoutParametersWhenNoVersionNoteIsConfigured(): void
@@ -78,14 +80,14 @@ class ImportVersionNoteTest extends Unit
         $element = $this->createElement();
         $element->expects($this->once())
             ->method('save')
-            ->with(['versionNote' => 'Imported by ERP feed'])
+            ->with(['versionNote' => self::VERSION_NOTE])
             ->willReturnCallback(function () use (&$versioningDisabledDuringSave, $element) {
                 $versioningDisabledDuringSave = Version::$disabled;
 
                 return $element;
             });
 
-        $this->processRow($element, ['versionNote' => 'Imported by ERP feed', 'disableVersioning' => true]);
+        $this->processRow($element, ['versionNote' => self::VERSION_NOTE, 'disableVersioning' => true]);
 
         static::assertTrue($versioningDisabledDuringSave, 'No version, and therefore no note, is written');
         static::assertFalse(Version::$disabled, 'Versioning is restored after the element was saved');
