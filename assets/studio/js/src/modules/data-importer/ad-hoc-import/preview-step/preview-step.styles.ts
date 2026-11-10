@@ -10,6 +10,9 @@
 
 import { createStyles } from '@pimcore/studio-ui-bundle/app'
 
+export const ROW_ERROR_MARK = 'ad-hoc-import-row-error'
+export const ROW_WARNING_MARK = 'ad-hoc-import-row-warning'
+
 export const useStyles = createStyles(({ token, css }) => ({
   counts: css`
     display: flex;
@@ -49,6 +52,16 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorTextTertiary};
     flex-grow: 1;
   `,
+  // a cell of one's own loses the grid's padding and its vertical centering
+  cell: css`
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  `,
   matchValue: css`
     font-weight: ${token.fontWeightStrong};
   `,
@@ -57,6 +70,16 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   warning: css`
     color: ${token.colorWarningText};
+  `,
+  // Studio's grid takes no class per row, a row is tinted through what its cells hold
+  grid: css`
+    tr:has(.${ROW_ERROR_MARK}) > td {
+      background: ${token.colorErrorBg};
+    }
+
+    tr:has(.${ROW_WARNING_MARK}) > td {
+      background: ${token.colorWarningBg};
+    }
   `,
   pagination: css`
     margin-top: ${token.marginXS}px;

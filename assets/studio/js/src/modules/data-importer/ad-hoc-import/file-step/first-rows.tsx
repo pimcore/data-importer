@@ -54,6 +54,7 @@ export const FirstRows = ({ inspected, isLoading }: FirstRowsProps): React.JSX.E
       columns={ columns }
       data={ inspected.firstRows }
       isLoading={ isLoading }
+      size="small"
     />
   )
 }

@@ -40,6 +40,7 @@ export const FailuresTable = ({ run, why }: { run: ImportRun, why: string }): Re
       id: 'why',
       header: why,
       accessorFn: (failure) => failure.message,
+      // a cell of one's own loses the grid's padding
       cell: ({ getValue }) => <span className={ styles.error }>{ getValue<string>() }</span>
     }
   ], [run.matchColumn, styles.error, t, why])
@@ -50,9 +51,19 @@ export const FailuresTable = ({ run, why }: { run: ImportRun, why: string }): Re
       columns={ columns }
       data={ run.failures }
       setRowId={ (failure: ImportRunFailure) => String(failure.row) }
+      size="small"
     />
   )
 }
+
+// a summary on one line: what happened in bold, then what it means
+export const SummaryLine = ({ lead, rest }: { lead: string, rest: string }): React.JSX.Element => (
+  <span>
+    <strong>{ lead }</strong>
+    { ' ' }
+    { rest }
+  </span>
+)
 
 // what went wrong that no row of the file shows
 export const Notice = ({ run }: { run: ImportRun }): React.JSX.Element | null => {

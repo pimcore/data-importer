@@ -289,6 +289,19 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame([42, 77], array_column($this->saved, 0), 'nothing was saved for it');
     }
 
+    public function testRowsTheMergeHadNothingToWriteForCountAsSaved(): void
+    {
+        // importing an unchanged file again: the branch holds no change, so the merge covers no object
+        $this->branches->mergeAnswers = [MergeStatus::merged(self::branch(), [])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $run = $this->stored();
+        $this->assertSame([RunRecord::DONE, 2, 1, 0], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([], $this->failures(), 'no row reads as interrupted');
+        $this->assertSame([], $this->saved, 'nothing was saved, so no event follows');
+    }
+
     public function testARowThatCouldNotBeWrittenHoldsTheMergeForADecision(): void
     {
         $failure = new RowFailure(
@@ -493,6 +506,21 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
             3 => 'data-importer.ad-hoc-import.merge.interrupted',
             4 => 'data-importer.ad-hoc-import.run.save-failed-unknown',
         ], $this->failures(), 'no choice is left: the written rows stay');
+        $this->assertSame([42], array_column($this->saved, 0));
+    }
+
+    public function testARowAPartialMergeHadNothingToWriteForCountsAsSaved(): void
+    {
+        // row 3 held no change, so the merge covers only 42 and the new object, which it could not write
+        $this->branches->mergeAnswers = [MergeStatus::partial(self::branch(), 2, [ObjectRef::of(42)], [
+            new MergeProblem(ObjectRef::token('row-4'), null, 'x', code: MergeProblemCode::WriteFailed),
+        ])];
+
+        $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
+
+        $run = $this->stored();
+        $this->assertSame([RunRecord::DONE, 2, 0, 1], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([4 => 'data-importer.ad-hoc-import.run.save-failed-unknown'], $this->failures());
         $this->assertSame([42], array_column($this->saved, 0));
     }
 

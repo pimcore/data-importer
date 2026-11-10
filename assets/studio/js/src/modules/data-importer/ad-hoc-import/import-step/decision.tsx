@@ -12,7 +12,7 @@ import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert } from '@pimcore/studio-ui-bundle/components'
 import { useStyles as usePreviewStyles } from '../preview-step/preview-step.styles'
-import { FailuresTable, Notice } from './failures-table'
+import { FailuresTable, Notice, SummaryLine } from './failures-table'
 import { importedCount, type ImportRun } from './import-state'
 import { useStyles } from './import-step.styles'
 
@@ -38,9 +38,10 @@ export const Decision = ({ run, waitingFile }: { run: ImportRun, waitingFile?: s
       <Notice run={ run } />
       <Alert
         className={ styles.notSaved }
-        description={ t('data-importer.ad-hoc-import.decision.nothing-merged') }
-        message={ t('data-importer.ad-hoc-import.decision.cannot-be-saved', { count: run.failed }) }
-        showIcon
+        message={ <SummaryLine
+          lead={ t('data-importer.ad-hoc-import.decision.cannot-be-saved', { count: run.failed }) }
+          rest={ t('data-importer.ad-hoc-import.decision.nothing-merged') }
+                  /> }
         type="error"
       />
       <div className={ previewStyles.counts }>

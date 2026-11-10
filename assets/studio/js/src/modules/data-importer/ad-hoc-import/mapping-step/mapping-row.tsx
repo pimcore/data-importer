@@ -8,55 +8,38 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo } from 'react'
-import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Flex, LanguageSelection, Select, Tag, Text } from '@pimcore/studio-ui-bundle/components'
-import { filterByLabel } from '../../utils/select-utils'
-import {
-  chooseField,
-  fitsField,
-  skipColumn,
-  type Mapping,
-  type MappingField,
-  type MappingRow
-} from './mapping-state'
+import React from 'react'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { Button, Flex, Icon, LanguageSelection, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { chooseField, fitsField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { chooseLanguage, freeLanguages } from './mapping-choices'
-import { canGoInto, type TakenFields } from './taken-fields'
+import { canGoInto, takenFields } from './taken-fields'
+import { useStyles } from './mapping-row.styles'
 
-const COLUMN_WIDTH = 280
-const FIELD_WIDTH = 320
+const MAPPING = 'data-importer.ad-hoc-import.mapping'
 
-// a value no field key can have: keys are PHP property names
-const DONT_IMPORT = '-'
+const transformationsLabel = (t: ReturnType<typeof useTranslation>['t'], count: number): string => {
+  if (count === 0) {
+    return t(`${MAPPING}.transform`)
+  }
 
-const useStyles = createStyles(({ token, css }) => ({
-  column: css`
-    width: ${COLUMN_WIDTH}px;
-    min-width: 0;
-  `,
-  quiet: css`
-    color: ${token.colorTextTertiary};
-  `,
-  active: css`
-    background: ${token.controlItemBgActive};
-    border-radius: ${token.borderRadius}px;
-  `
-}))
+  return count === 1 ? t(`${MAPPING}.transformation-one`) : t(`${MAPPING}.transformations-count`, { count })
+}
 
 export interface MappingRowViewProps {
   row: MappingRow
   mapping: Mapping
   fields: MappingField[]
   languages: string[]
-  taken: TakenFields
-  // the column whose field the side panel picks
+  // the column the side panel is open on
   isActive: boolean
-  onActivate: (column: string) => void
   onChange: (mapping: Mapping) => void
   // a classification store goes in by a key chosen in its own dialog
   onPickStoreKey: (column: string, field: string) => void
-  // opens the column's transformations; none without a file to run them on
-  onTransform?: (column: string) => void
+  // the side panel, on the column's field or its transformations; none without a file to run them on
+  onOpenField: (column: string) => void
+  onOpenTransformations?: (column: string) => void
+  onSkip: (column: string) => void
 }
 
 type ChoiceDetailsProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'languages' | 'onChange' | 'onPickStoreKey'>
@@ -73,7 +56,7 @@ const ChoiceDetails = ({ row, mapping, languages, onChange, onPickStoreKey }: Ch
     <>
       { choice.key !== undefined && (
         <Button
-          aria-label={ t('data-importer.ad-hoc-import.mapping.change-key', { column: label, interpolation: { escapeValue: false } }) }
+          aria-label={ t(`${MAPPING}.change-key`, { column: label, interpolation: { escapeValue: false } }) }
           onClick={ () => { onPickStoreKey(column, choice.field) } }
           type="link"
         >
@@ -91,71 +74,101 @@ const ChoiceDetails = ({ row, mapping, languages, onChange, onPickStoreKey }: Ch
   )
 }
 
-type SelectFieldContext = Pick<MappingRowViewProps, 'mapping' | 'fields' | 'onChange' | 'onPickStoreKey'> & { column: string }
+const iconOf = (field: MappingField | undefined): string => {
+  if (field?.classificationStore === true) {
+    return 'classification-store'
+  }
+  if (field?.key.includes('.') === true) {
+    return 'object-bricks'
+  }
 
-const selectField = (value: string | undefined, { mapping, fields, column, onChange, onPickStoreKey }: SelectFieldContext): void => {
-  if (value === DONT_IMPORT) {
-    onChange(skipColumn(mapping, column))
-    return
-  }
-  if (fields.some(({ key, classificationStore }) => key === value && classificationStore)) {
-    onPickStoreKey(column, value!)
-    return
-  }
-  onChange(chooseField(mapping, column, value === '' ? undefined : value))
+  return field?.localized === true ? 'world' : 'text-field'
 }
 
-type FieldSelectProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'taken' | 'onChange' | 'onPickStoreKey'>
+type FieldCellProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'onChange' | 'onOpenField' | 'onPickStoreKey'>
 
-// the row's field: fixed for the column that matches existing objects, else chosen from the class's fields
-const FieldSelect = ({ row, mapping, fields, languages, taken, onChange, onPickStoreKey }: FieldSelectProps): React.JSX.Element => {
+const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onPickStoreKey }: FieldCellProps): React.JSX.Element => {
   const { t } = useTranslation()
-  const { column, label, choice, suggestion, isMatch } = row
-
-  const options = useMemo(() => [
-    { value: DONT_IMPORT, label: t('data-importer.ad-hoc-import.mapping.dont-import') },
-    ...fields.map((field) => ({
-      value: field.key,
-      label: field.mandatory
-        ? t('data-importer.ad-hoc-import.mapping.required-field', { field: field.title, interpolation: { escapeValue: false } })
-        : field.title,
-      // a localized field takes a column per language, a classification store one per key
-      disabled: !canGoInto(taken, field, column, languages)
-    }))
-  ], [fields, taken, column, languages, t])
-
-  const titleOf = (key: string): string => fields.find((field) => field.key === key)?.title ?? key
-
-  const onSelect = (value?: string): void => {
-    selectField(value, { mapping, fields, column, onChange, onPickStoreKey })
-  }
+  const { styles } = useStyles()
+  const { column, label, choice, suggestion, isMatch, auto } = row
+  const field = fields.find(({ key }) => key === choice?.field)
+  const openLabel = t(`${MAPPING}.field-of`, { column: label, interpolation: { escapeValue: false } })
 
   if (isMatch) {
     return (
-      <Select
-        aria-label={ t('data-importer.ad-hoc-import.mapping.field-of', { column: label, interpolation: { escapeValue: false } }) }
-        disabled
-        options={ [{ value: choice?.field ?? '', label: choice === undefined ? t('data-importer.ad-hoc-import.mapping.object-id') : titleOf(choice.field) }] }
-        style={ { width: FIELD_WIDTH } }
-        value={ choice?.field ?? '' }
-      />
+      <Flex
+        align="center"
+        gap="small"
+      >
+        <span className={ styles.fieldName }>{ field?.title ?? t(`${MAPPING}.object-id`) }</span>
+        <Tag>{ t(`${MAPPING}.match`) }</Tag>
+      </Flex>
+    )
+  }
+
+  if (choice === undefined) {
+    const suggested = fields.find(({ key }) => key === suggestion?.field)
+    // each column gets its best field on its own, so another column may already have it
+    const offered = suggested !== undefined && canGoInto(takenFields(mapping.rows), suggested, column, languages)
+
+    return (
+      <Flex
+        align="center"
+        gap="small"
+        wrap="wrap"
+      >
+        <button
+          aria-label={ openLabel }
+          className={ styles.fieldButton }
+          onClick={ () => { onOpenField(column) } }
+          type="button"
+        >
+          <span className={ styles.crumb }>{ t(`${MAPPING}.choose-field`) }</span>
+        </button>
+        { offered && (
+          <button
+            className={ styles.suggestion }
+            onClick={ () => { onChange(chooseField(mapping, column, suggested.key)) } }
+            type="button"
+          >
+            { t(`${MAPPING}.use-suggestion`, { field: suggested.title, interpolation: { escapeValue: false } }) }
+          </button>
+        ) }
+      </Flex>
     )
   }
 
   return (
-    <Select
-      allowClear
-      aria-label={ t('data-importer.ad-hoc-import.mapping.field-of', { column: label, interpolation: { escapeValue: false } }) }
-      filterOption={ filterByLabel }
-      onChange={ onSelect }
-      options={ options }
-      placeholder={ suggestion === undefined
-        ? t('data-importer.ad-hoc-import.mapping.choose-field')
-        : t('data-importer.ad-hoc-import.mapping.suggested', { field: titleOf(suggestion.field), interpolation: { escapeValue: false } }) }
-      showSearch
-      style={ { width: FIELD_WIDTH } }
-      value={ choice?.field }
-    />
+    <Flex
+      align="center"
+      gap="small"
+    >
+      <button
+        aria-label={ openLabel }
+        className={ styles.fieldButton }
+        onClick={ () => { onOpenField(column) } }
+        type="button"
+      >
+        <span className={ styles.fieldIcon }><Icon value={ iconOf(field) } /></span>
+        <span className={ styles.fieldName }>{ field?.title ?? choice.field }</span>
+        <span className={ styles.crumb }>{ field?.group.join(' › ') }</span>
+        { auto && (
+          <Tag
+            color="purple"
+            iconName="auto-save"
+          >
+            { t(`${MAPPING}.auto`) }
+          </Tag>
+        ) }
+      </button>
+      <ChoiceDetails
+        languages={ languages }
+        mapping={ mapping }
+        onChange={ onChange }
+        onPickStoreKey={ onPickStoreKey }
+        row={ row }
+      />
+    </Flex>
   )
 }
 
@@ -164,29 +177,28 @@ export const MappingRowView = ({
   mapping,
   fields,
   languages,
-  taken,
   isActive,
-  onActivate,
   onChange,
   onPickStoreKey,
-  onTransform
+  onOpenField,
+  onOpenTransformations,
+  onSkip
 }: MappingRowViewProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { column, label, sample, choice, auto, isMatch, transformations } = row
+  const { column, label, sample, choice, isMatch, transformations } = row
+  const isMapped = isMatch || choice !== undefined
 
   return (
-    <Flex
-      align="center"
+    <li
       aria-current={ isActive ? 'true' : undefined }
-      className={ isActive ? styles.active : undefined }
-      gap="small"
-      onClick={ isMatch ? undefined : () => { onActivate(column) } }
-      onFocus={ isMatch ? undefined : () => { onActivate(column) } }
-      role="listitem"
+      className={ isActive ? `${styles.row} ${styles.active}` : styles.row }
     >
+      <div className={ styles.dotCell }>
+        <span className={ `${styles.dot} ${isMapped ? styles.dotMapped : styles.dotOpen}` } />
+      </div>
       <Flex
-        className={ styles.column }
+        className={ styles.cell }
         vertical
       >
         <Text
@@ -196,49 +208,52 @@ export const MappingRowView = ({
           { label }
         </Text>
         { sample !== undefined && (
-          <Text
-            className={ styles.quiet }
-            ellipsis
-          >
-            { sample }
-          </Text>
+          <span className={ styles.sample }>
+            { t(`${MAPPING}.sample`, { value: sample, interpolation: { escapeValue: false } }) }
+          </span>
         ) }
       </Flex>
-
-      <FieldSelect
-        fields={ fields }
-        languages={ languages }
-        mapping={ mapping }
-        onChange={ onChange }
-        onPickStoreKey={ onPickStoreKey }
-        row={ row }
-        taken={ taken }
-      />
-
-      { isMatch
-        ? <Tag>{ t('data-importer.ad-hoc-import.mapping.match') }</Tag>
-        : (
-          <ChoiceDetails
-            languages={ languages }
-            mapping={ mapping }
-            onChange={ onChange }
-            onPickStoreKey={ onPickStoreKey }
-            row={ row }
-          />
-          ) }
-
-      { !isMatch && choice !== undefined && choice.key === undefined && onTransform !== undefined && (
-        <Button
-          aria-label={ t('data-importer.ad-hoc-import.mapping.transformations-of', { column: label, interpolation: { escapeValue: false } }) }
-          onClick={ () => { onTransform(column) } }
-        >
-          { transformations.length === 0
-            ? t('data-importer.ad-hoc-import.mapping.transformations')
-            : t('data-importer.ad-hoc-import.mapping.transformations-count', { count: transformations.length }) }
-        </Button>
-      ) }
-      { !fitsField(row, fields) && <Tag color="warning">{ t('data-importer.ad-hoc-import.mapping.needs-transformation') }</Tag> }
-      { auto && <Tag color="purple">{ t('data-importer.ad-hoc-import.mapping.auto') }</Tag> }
-    </Flex>
+      <span
+        aria-hidden
+        className={ styles.arrow }
+      >
+        →
+      </span>
+      <div className={ styles.cell }>
+        <FieldCell
+          fields={ fields }
+          languages={ languages }
+          mapping={ mapping }
+          onChange={ onChange }
+          onOpenField={ onOpenField }
+          onPickStoreKey={ onPickStoreKey }
+          row={ row }
+        />
+      </div>
+      <div className={ styles.cell }>
+        { !isMatch && choice !== undefined && choice.key === undefined && onOpenTransformations !== undefined && (
+          <Button
+            aria-label={ t(`${MAPPING}.transformations-of`, { column: label, interpolation: { escapeValue: false } }) }
+            onClick={ () => { onOpenTransformations(column) } }
+            size="small"
+            type={ transformations.length === 0 ? 'default' : 'primary' }
+          >
+            { transformationsLabel(t, transformations.length) }
+          </Button>
+        ) }
+        { !fitsField(row, fields) && <Tag color="warning">{ t(`${MAPPING}.needs-transformation`) }</Tag> }
+      </div>
+      <div className={ styles.skip }>
+        { !isMatch && (
+          <Button
+            aria-label={ t(`${MAPPING}.skip-column`, { column: label, interpolation: { escapeValue: false } }) }
+            onClick={ () => { onSkip(column) } }
+            type="text"
+          >
+            { t(`${MAPPING}.skip`) }
+          </Button>
+        ) }
+      </div>
+    </li>
   )
 }

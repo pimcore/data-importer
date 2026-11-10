@@ -16,7 +16,7 @@ import { type ImportRun } from './import-state'
 jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: { error: 'error' } })
+  createStyles: () => () => ({ styles: { error: 'error', barColor: 'primary' } })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
@@ -77,6 +77,7 @@ describe('the running import', () => {
     expect(screen.getAllByText('184 of 306')).toHaveLength(2)
     expect(screen.getByText('Saving')).toBeTruthy()
     expect(screen.getByRole('progressbar').getAttribute('value')).toBe('60')
+    expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
   })
 
   it('shows the run in a Studio card', () => {
@@ -105,12 +106,23 @@ describe('an import that saved every row', () => {
     expect(screen.getByText('Every object keeps its version history.')).toBeTruthy()
     expect(within(screen.getByText('Skipped in the preview').parentElement!).getByText('3')).toBeTruthy()
     expect(screen.getByText('Created in /Products/Outdoor')).toBeTruthy()
+    expect(screen.getByTestId('result-bar').children).toHaveLength(3)
 
     const download = screen.getByRole('link', { name: 'Download rows' })
     expect(download.getAttribute('href')).toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/skipped-rows?errorMode=values')
 
     fireEvent.click(screen.getByRole('button', { name: 'Open folder' }))
     expect(mockOpenElement).toHaveBeenCalledWith({ id: 7, type: 'data-object' })
+  })
+
+  it('draws each outcome of the result bar by its share', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ updated: 300, created: 6, skipped: 3 }) }
+      total={ 309 }
+           />)
+
+    expect(Array.from(screen.getByTestId('result-bar').children).map((segment) => (segment as HTMLElement).style.flexGrow)).toEqual(['300', '6', '3'])
   })
 
   it('names no download when no row was skipped', () => {
@@ -208,6 +220,20 @@ describe('an import through a branch', () => {
 
     expect(screen.getByText('Merging as Jo Doe').parentElement!.getAttribute('aria-current')).toBe('step')
     expect(within(screen.getByText('Merging as Jo Doe').parentElement!).getByText('184 of 306')).toBeTruthy()
+  })
+
+  it('shows no count while the branch is checked, as the check reports none, and keeps the rows written on the bar', () => {
+    render(<ImportStep
+      fileId="file-1"
+      run={ run({ state: 'merging', throughBranch: true, total: 306, processed: 306, mergeTotal: 306, mergeDone: 0, failed: 0 }) }
+      total={ 306 }
+           />)
+
+    expect(screen.queryByText('0 of 306')).toBeNull()
+    expect(screen.getByRole('progressbar').getAttribute('value')).toBe('100')
+    expect(screen.getByRole('progressbar').getAttribute('data-status')).toBe('normal')
+    expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
+    expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).getByRole('status')).toBeTruthy()
   })
 
   it('names the merge in the result', () => {

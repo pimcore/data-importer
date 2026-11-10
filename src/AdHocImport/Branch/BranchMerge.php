@@ -293,6 +293,7 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
 
     /**
      * What was written stays and the branch is closed; a row whose object the merge did not get to is not saved.
+     * A row the merge did not cover at all held no change, as on an unchanged import again: it counts as saved.
      */
     private function merged(RunRecord $run, MergeStatus $status, User $user): RunRecord
     {
@@ -303,11 +304,20 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
                 $saved[$key] = true;
             }
         }
+        // the total counts the objects that failed too: only when each is accounted for, the merge got to every one
+        $failed = [];
+        foreach ($status->problems as $problem) {
+            $keys = $problem->object === null ? [] : self::keysOf($problem->object);
+            if ($keys !== [] && array_intersect_key($saved, array_flip($keys)) === []) {
+                $failed[implode(' ', $keys)] = true;
+            }
+        }
+        $coveredAll = $status->total === count($status->written) + count($status->leftOut) + count($failed);
 
         $failures = $this->storedFailures($run);
         $written = [];
         foreach ($this->runs->recorded($run) as $row) {
-            if (isset($saved[self::keyOf($row)])) {
+            if (isset($saved[self::keyOf($row)]) || ($coveredAll && !isset($messages[$row->row]))) {
                 $written[] = $row;
 
                 continue;

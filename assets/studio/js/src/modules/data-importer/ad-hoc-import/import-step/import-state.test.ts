@@ -77,6 +77,10 @@ describe('an import through a branch', () => {
 
   it('shows how far the merge got while it merges', () => {
     expect(percentOf(run({ state: 'merging', processed: 4, total: 4, mergeTotal: 4, mergeDone: 1 }))).toBe(25)
-    expect(percentOf(run({ state: 'merging', mergeTotal: 0, mergeDone: 0 }))).toBe(100)
+    expect(percentOf(run({ state: 'merging', processed: 4, total: 4, mergeTotal: 0, mergeDone: 0 }))).toBe(100)
+  })
+
+  it('keeps the rows written on the bar while the branch is checked', () => {
+    expect(percentOf(run({ state: 'merging', processed: 4, total: 4, mergeTotal: 4, mergeDone: 0 }))).toBe(100)
   })
 })

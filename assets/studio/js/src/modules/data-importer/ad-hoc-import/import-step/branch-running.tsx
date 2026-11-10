@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Card, Icon, Progress } from '@pimcore/studio-ui-bundle/components'
+import { Card, Icon, Progress, Spin } from '@pimcore/studio-ui-bundle/components'
 import { branchStepOf, percentOf, type ImportRun } from './import-state'
 import { useStyles } from './import-step.styles'
 
@@ -37,7 +37,7 @@ const StepLine = ({ label, state, detail }: StepLineProps): React.JSX.Element =>
           <Icon value="check-circle" />
         </span>
       ) }
-      { state === 'active' && <Icon value="spinner" /> }
+      { state === 'active' && <Spin type="classic" /> }
       { state === 'pending' && <span className={ styles.branchStepPending } /> }
       <span className={ `${styles.branchStepLabel} ${state === 'active' ? styles.branchStepActive : ''}` }>{ label }</span>
       { detail !== undefined && <span className={ styles.muted }>{ detail }</span> }
@@ -62,12 +62,15 @@ export const BranchRunning = ({ run }: { run: ImportRun }): React.JSX.Element =>
     >
       <div className={ styles.header }>
         <span className={ styles.title }>{ t('data-importer.ad-hoc-import.run.importing', { count: run.total }) }</span>
-        <span className={ styles.muted }>{ step === 'written' ? rows : merged }</span>
+        { step !== 'checking' && <span className={ styles.muted }>{ step === 'written' ? rows : merged }</span> }
       </div>
       <Progress
         aria-label={ t('data-importer.ad-hoc-import.step.import') }
         percent={ percentOf(run) }
         showInfo={ false }
+        // not green while the check still has to say whether it can merge
+        status="normal"
+        strokeColor={ styles.barColor }
       />
       <StepLine
         detail={ step === 'written' ? rows : t('data-importer.ad-hoc-import.run.branch.objects', { count: run.mergeTotal }) }

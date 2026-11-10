@@ -89,7 +89,8 @@ const sampleOf = (inspected: InspectedFile, position: number): string | undefine
     .find((value): value is string => value !== null && value !== undefined && value !== '')
 
 /**
- * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now.
+ * The same columns read again, from another sheet say: the choices stay, the first values are the ones read now, and
+ * whether the transformations fit is asked anew, as the values they run on may be others.
  */
 export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping => {
   const positionOf = new Map(inspected.columns.map(({ dataIndex }, position) => [dataIndex, position]))
@@ -99,7 +100,7 @@ export const withSamples = (mapping: Mapping, inspected: InspectedFile): Mapping
     rows: mapping.rows.map((row) => {
       const position = positionOf.get(row.column)
 
-      return { ...row, sample: position === undefined ? undefined : sampleOf(inspected, position) }
+      return { ...row, sample: position === undefined ? undefined : sampleOf(inspected, position), fits: undefined }
     })
   }
 }
@@ -184,7 +185,7 @@ export const setTransformations = (
   mapping: Mapping,
   column: string,
   transformations: TransformationStep[],
-  fits: boolean
+  fits: boolean | undefined
 ): Mapping => changeRow(mapping, column, (row) => ({ ...row, transformations, fits }))
 
 /**
@@ -200,6 +201,9 @@ export const fitsField = (row: MappingRow, fields: MappingField[]): boolean => {
   return row.fits ?? fields.find(({ key }) => key === field)?.takesColumnAsIs ?? true
 }
 
+// steps the server has not answered for yet: until then no one knows whether the column reaches its field
+export const awaitsFit = (row: MappingRow): boolean => row.fits === undefined && row.transformations.length > 0
+
 export const unfitRows = (mapping: Mapping, fields: MappingField[]): MappingRow[] =>
   importedRows(mapping).filter((row) => !fitsField(row, fields))
 
@@ -212,6 +216,14 @@ export const skipColumn = (mapping: Mapping, column: string): Mapping =>
     transformations: [],
     fits: undefined
   }))
+
+// "Don't import the columns not mapped": every open column goes to the area to restore it from
+export const skipOpenColumns = (mapping: Mapping): Mapping => ({
+  ...mapping,
+  rows: mapping.rows.map((row) => isOpen(row)
+    ? { ...row, choice: undefined, auto: false, skipped: true, transformations: [], fits: undefined }
+    : row)
+})
 
 export const restoreColumn = (mapping: Mapping, column: string): Mapping =>
   changeRow(mapping, column, (row) => ({ ...row, skipped: false }))
@@ -252,25 +264,25 @@ export const rowCounts = (mapping: Mapping): Record<RowFilter, number> => {
   }
 }
 
-export const visibleRows = (mapping: Mapping, filter: RowFilter, search: string): MappingRow[] => {
-  const term = search.trim().toLowerCase()
+export const visibleRows = (mapping: Mapping, filter: RowFilter): MappingRow[] =>
+  importedRows(mapping).filter((row) => matchesFilter(row, filter))
 
-  return importedRows(mapping).filter((row) => matchesFilter(row, filter) &&
-    (term === '' || row.label.toLowerCase().includes(term)))
-}
+// the columns mapped automatically and still as they were suggested
+export const autoRowCount = (mapping: Mapping): number => importedRows(mapping).filter(({ auto }) => auto).length
 
-/**
- * The fields the class requires that no column goes into.
- */
-export const missingRequiredFields = (mapping: Mapping, fields: MappingField[]): MappingField[] => {
+export type RequiredField = MappingField & { covered: boolean }
+
+// the fields the class requires, and whether a column goes into each
+export const requiredFields = (mapping: Mapping, fields: MappingField[]): RequiredField[] => {
   const chosen = new Set(importedRows(mapping).flatMap(({ choice }) => choice === undefined ? [] : [choice.field]))
 
-  return fields.filter(({ key, mandatory }) => mandatory && !chosen.has(key))
+  return fields.filter(({ mandatory }) => mandatory).map((field) => ({ ...field, covered: chosen.has(field.key) }))
 }
 
 /**
- * Something to import beside the column that finds the objects, and every column fitting its field.
+ * Something to import beside the column that finds the objects, and every column known to fit its field.
  */
 export const canContinueMapping = (mapping: Mapping, fields: MappingField[]): boolean =>
   mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined) &&
-  unfitRows(mapping, fields).length === 0
+  unfitRows(mapping, fields).length === 0 &&
+  !mapping.rows.some(awaitsFit)

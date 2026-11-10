@@ -13,15 +13,17 @@ import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step
 import {
   canContinueMapping,
   chooseField,
+  autoRowCount,
   createMapping,
   fitsField,
   mappingBasis,
-  missingRequiredFields,
   pendingSuggestionCount,
+  requiredFields,
   restoreColumn,
   rowCounts,
   setTransformations,
   skipColumn,
+  skipOpenColumns,
   skippedRows,
   takeAllSuggestions,
   unfitRows,
@@ -173,7 +175,7 @@ describe('changing the mapping', () => {
     const skipped = skipColumn(mapping, 'Name DE')
 
     expect(skippedRows(skipped).map(({ column }) => column)).toEqual(['Name DE'])
-    expect(visibleRows(skipped, 'all', '').map(({ column }) => column)).not.toContain('Name DE')
+    expect(visibleRows(skipped, 'all').map(({ column }) => column)).not.toContain('Name DE')
     expect(isTaken(skipped.rows, { field: 'name', language: 'de' })).toBe(false)
   })
 
@@ -235,6 +237,16 @@ describe('the same columns read again', () => {
     expect(again.rows.map(({ choice }) => choice)).toEqual(mapping.rows.map(({ choice }) => choice))
     expect(again.rows.map(({ sample }) => sample)).toEqual(['NH-9', 'Mantel', undefined, '99', 'z'])
   })
+
+  it('keep their transformations, but not the answer about the values read before', () => {
+    const steps = [{ type: 'loadAsset', settings: {} }]
+    const mapping = setTransformations(chooseField(createMapping(inspected, objects, loaded), 'Notiz', 'price'), 'Notiz', steps, true)
+
+    const row = withSamples(mapping, inspected).rows.find(({ column }) => column === 'Notiz')!
+
+    expect(row.transformations).toBe(steps)
+    expect(row.fits).toBeUndefined()
+  })
 })
 
 describe('filtering the rows', () => {
@@ -245,28 +257,41 @@ describe('filtering the rows', () => {
   })
 
   it('shows the mapped or the open ones', () => {
-    expect(visibleRows(mapping, 'mapped', '').map(({ column }) => column)).toEqual(['Artikelnr', 'Name DE', 'Name EN'])
-    expect(visibleRows(mapping, 'open', '').map(({ column }) => column)).toEqual(['Preis'])
-  })
-
-  it('finds columns by a part of their name, in any case', () => {
-    expect(visibleRows(mapping, 'all', ' name ').map(({ column }) => column)).toEqual(['Name DE', 'Name EN'])
-    expect(visibleRows(mapping, 'open', 'name')).toEqual([])
+    expect(visibleRows(mapping, 'mapped').map(({ column }) => column)).toEqual(['Artikelnr', 'Name DE', 'Name EN'])
+    expect(visibleRows(mapping, 'open').map(({ column }) => column)).toEqual(['Preis'])
   })
 })
 
 describe('the required fields', () => {
   const mapping = createMapping(inspected, objects, loaded)
 
-  it('are those the class requires that no column goes into', () => {
-    expect(missingRequiredFields(mapping, fields).map(({ key }) => key)).toEqual(['ean'])
+  const missing = (of: Mapping): string[] => requiredFields(of, fields).filter(({ covered }) => !covered).map(({ key }) => key)
+
+  it('are those the class requires, each saying whether a column goes into it', () => {
+    expect(requiredFields(mapping, fields).map(({ key, covered }) => [key, covered])).toEqual([['sku', true], ['name', true], ['ean', false]])
   })
 
   it('count a localized field in any language, and the field matched by', () => {
     const one = skipColumn(mapping, 'Name EN')
 
-    expect(missingRequiredFields(one, fields).map(({ key }) => key)).toEqual(['ean'])
-    expect(missingRequiredFields(skipColumn(one, 'Name DE'), fields).map(({ key }) => key)).toEqual(['name', 'ean'])
+    expect(missing(one)).toEqual(['ean'])
+    expect(missing(skipColumn(one, 'Name DE'))).toEqual(['name', 'ean'])
+  })
+})
+
+describe('the columns still open', () => {
+  const mapping = createMapping(inspected, objects, loaded)
+
+  it('go to the area not to import together, the decided ones stay', () => {
+    const next = skipOpenColumns(mapping)
+
+    expect(skippedRows(next).map(({ column }) => column)).toEqual(['Preis', 'Notiz'])
+    expect(rowCounts(next)).toEqual({ all: 3, mapped: 3, open: 0 })
+  })
+
+  it('count the automatic mappings that still stand', () => {
+    expect(autoRowCount(mapping)).toBe(2)
+    expect(autoRowCount(skipColumn(mapping, 'Name DE'))).toBe(1)
   })
 })
 
@@ -287,6 +312,14 @@ describe('going on', () => {
 
     expect(canContinueMapping(setTransformations(image, 'Notiz', [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }], true), fields)).toBe(true)
     expect(canContinueMapping(skipColumn(image, 'Notiz'), fields)).toBe(true)
+  })
+
+  it('waits for the answer to steps not answered yet', () => {
+    const steps = [{ type: 'trim', settings: { mode: 'both' } }]
+    const pending = setTransformations(chooseField(mapping, 'Notiz', 'price'), 'Notiz', steps, undefined)
+    expect(canContinueMapping(pending, fields)).toBe(false)
+    expect(canContinueMapping(setTransformations(pending, 'Notiz', steps, true), fields)).toBe(true)
+    expect(canContinueMapping(setTransformations(pending, 'Notiz', [], undefined), fields)).toBe(true)
   })
 })
 

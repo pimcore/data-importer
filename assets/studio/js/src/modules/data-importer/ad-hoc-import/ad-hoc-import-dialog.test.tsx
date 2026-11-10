@@ -59,7 +59,9 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportLoadRunQuery: (...args: unknown[]) => mockLoadRun(...args),
   useBundleDataImporterAdHocImportMergeLeavingOutMutation: () => [mockMergeLeavingOut],
   useBundleDataImporterAdHocImportWithdrawRunMutation: () => [mockWithdrawRun],
-  useBundleDataImporterAdHocImportListWaitingRunsQuery: (...args: unknown[]) => mockListWaitingRuns(...args)
+  useBundleDataImporterAdHocImportListWaitingRunsQuery: (...args: unknown[]) => mockListWaitingRuns(...args),
+  // the side panel runs a column's values through the server; these tests stop before an answer counts
+  useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [async () => await new Promise(() => {})]
 }))
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({ useElementHelper: () => ({ openElement: jest.fn() }) }))
 
@@ -219,6 +221,15 @@ const dryRunAnswer = {
 const select = (label: string, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
+
+const pickField = (column: string, field: string): void => {
+  fireEvent.click(screen.getByRole('button', { name: `Field for ${column}` }))
+  const panel = screen.getByRole('complementary', { name: `Column ${column}` })
+  fireEvent.click(within(panel).getByRole('treeitem', { name: field }))
+  fireEvent.click(within(panel).getAllByRole('button', { name: 'Close' })[0])
+}
+
+const fieldOf = (column: string): string => screen.getByRole('button', { name: `Field for ${column}` }).textContent ?? ''
 
 const nextButton = (): HTMLElement => screen.getByRole('button', { name: /^Next(: Preview)?$/ })
 
@@ -960,6 +971,23 @@ describe('the mapping step', () => {
     await act(async () => { fireEvent.click(nextButton()) })
   }
 
+  it('says in the footer whether every column is decided', async () => {
+    await toMapping()
+
+    expect(screen.getByText('Every column is decided')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Field for Bezeichnung' }))
+    fireEvent.click(within(screen.getByRole('complementary', { name: 'Column Bezeichnung' })).getByRole('button', { name: 'Remove field' }))
+
+    expect(screen.getByText('1 column not decided yet: choose a field or “Don\'t import”')).toBeTruthy()
+  })
+
+  it('names the file in the title from the mapping on', async () => {
+    await toMapping()
+
+    expect(screen.getByRole('dialog', { name: 'Import prices.csv into Products / Outdoor' })).toBeTruthy()
+  })
+
   it('asks for the mapping of the class with the columns of the file and shows a row per column', async () => {
     await toMapping()
 
@@ -970,7 +998,7 @@ describe('the mapping step', () => {
       }
     })
     expect(within(screen.getByRole('list', { name: 'Columns of the file' })).getAllByRole('listitem')).toHaveLength(2)
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect(fieldOf('Bezeichnung')).toContain('Title')
     expect(screen.getByText('auto')).toBeTruthy()
   })
 
@@ -994,11 +1022,12 @@ describe('the mapping step', () => {
     await toMapping()
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
-    select('Field for Bezeichnung', '-')
+    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
 
+    fireEvent.click(screen.getByRole('button', { name: /Not imported \(1\)/ }))
     fireEvent.click(screen.getByRole('button', { name: 'Restore Bezeichnung' }))
-    select('Field for Bezeichnung', 'title')
+    pickField('Bezeichnung', 'Title')
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
@@ -1007,37 +1036,37 @@ describe('the mapping step', () => {
   it('waits on a column whose values do not fit its field, and offers its transformations', async () => {
     await toMapping()
 
-    select('Field for Bezeichnung', 'image')
+    pickField('Bezeichnung', 'Image')
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText('Columns whose values do not fit their field yet: Bezeichnung')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
 
-    select('Field for Bezeichnung', 'title')
+    pickField('Bezeichnung', 'Title')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('keeps the mapping when going back and on with nothing changed', async () => {
     await toMapping()
-    select('Field for Bezeichnung', '-')
+    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(mockLoadMapping).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('region', { name: 'Not imported (1)' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Not imported \(1\)/ })).toBeTruthy()
   })
 
   it('makes a new mapping for another column to match by', async () => {
     await toMapping()
-    select('Field for Bezeichnung', '-')
+    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     select('from column', 'Bezeichnung')
     await act(async () => { fireEvent.click(nextButton()) })
 
     expect(mockLoadMapping).toHaveBeenCalledTimes(2)
-    expect(screen.queryByRole('region', { name: 'Not imported (1)' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Not imported \(1\)/ })).toBeNull()
     expect(screen.getByText('Finds the objects')).toBeTruthy()
   })
 
@@ -1050,7 +1079,7 @@ describe('the mapping step', () => {
       select('Field', 'sku')
       select('from column', '0')
       await act(async () => { fireEvent.click(nextButton()) })
-      select('Field for name', 'title')
+      pickField('name', 'Title')
       fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     }
 
@@ -1063,9 +1092,9 @@ describe('the mapping step', () => {
       await act(async () => { fireEvent.click(nextButton()) })
 
       expect(mockLoadMapping).toHaveBeenCalledTimes(1)
-      expect(screen.getByLabelText<HTMLSelectElement>('Field for name').value).toBe('title')
-      expect(screen.getByText('Rain coat')).toBeTruthy()
-      expect(screen.queryByText('Trail jacket')).toBeNull()
+      expect(fieldOf('name')).toContain('Title')
+      expect(screen.getByText('e.g. “Rain coat”')).toBeTruthy()
+      expect(screen.queryByText('e.g. “Trail jacket”')).toBeNull()
     })
 
     it('makes a new mapping when the columns have no names, even for the same match column', async () => {
@@ -1076,7 +1105,7 @@ describe('the mapping step', () => {
       select('Field', 'sku')
       select('from column', '0')
       await act(async () => { fireEvent.click(nextButton()) })
-      select('Field for 1', 'title')
+      pickField('1', 'Title')
       fireEvent.click(screen.getByRole('button', { name: 'Back' }))
 
       await act(async () => { select('Sheet', 'Prices') })
@@ -1084,7 +1113,7 @@ describe('the mapping step', () => {
       await act(async () => { fireEvent.click(nextButton()) })
 
       expect(mockLoadMapping).toHaveBeenCalledTimes(2)
-      expect(screen.getByLabelText<HTMLSelectElement>('Field for 1').value).toBe('')
+      expect(fieldOf('1')).toBe('Choose field')
     })
   })
 
@@ -1103,7 +1132,7 @@ describe('the mapping step', () => {
     await act(async () => { answers[0]({ data: mappingAnswer }) })
 
     expect(screen.queryByText('auto')).toBeNull()
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Artikelnr').value).toBe('')
+    expect(fieldOf('Artikelnr')).toBe('Choose field')
   })
 
   it('reports a mapping that could not be loaded and cannot go on', async () => {
@@ -1208,7 +1237,7 @@ describe('the mapping step with a configuration', () => {
     await toConfiguration()
     fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
 
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Bezeichnung').value).toBe('title')
+    expect(fieldOf('Bezeichnung')).toContain('Title')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 
@@ -1419,6 +1448,7 @@ describe('the preview step', () => {
       })
       await startImport()
 
+      expect(screen.getByText('1 row was not saved.')).toBeTruthy()
       expect(screen.getByRole('link', { name: 'Download failed rows (1)' }).getAttribute('href'))
         .toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/failed-rows')
     })
@@ -1437,17 +1467,36 @@ describe('the preview step', () => {
         mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
         await startImport()
 
-        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
         expect(screen.getByText('You may not save objects in /Products/Archive')).toBeTruthy()
         expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
         expect(screen.getByRole('link', { name: 'Download failed rows (1)' })).toBeTruthy()
+      })
+
+      it('counts several rows to merge in the plural', async () => {
+        mockLoadRun.mockReturnValue({
+          refetch: mockRefetchRun,
+          data: runAnswer({
+            state: 'decision',
+            processed: 5,
+            updated: 4,
+            failed: 1,
+            throughBranch: true,
+            failures: [{ row: 3, matchValue: 'NH-1077', action: 'create', message: 'You may not save objects in /Products/Archive' }]
+          })
+        })
+        await startImport()
+
+        expect(screen.getByRole('button', { name: 'Merge 4 rows, leave out 1' })).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
+        expect(screen.getByRole('cell', { name: 'create' })).toBeTruthy()
       })
 
       it('merges the other rows and follows the merge again', async () => {
         mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: deciding() })
         await startImport()
 
-        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })) })
 
         expect(mockMergeLeavingOut).toHaveBeenCalledWith({ fileId: 'file-1' })
         expect(mockRefetchRun).toHaveBeenCalled()
@@ -1460,11 +1509,11 @@ describe('the preview step', () => {
         mockLoadRun.mockImplementation(() => ({ refetch: mockRefetchRun, data: deciding(), fulfilledTimeStamp: answeredAt }))
         await startImport()
 
-        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })) })
 
         expect(mockRefetchRun).toHaveBeenCalled()
         expect(mockLoadRun).toHaveBeenLastCalledWith({ fileId: 'file-1' }, { skip: false, pollingInterval: 0 })
-        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
       })
 
       it('goes back to the mapping with the file, the branch taken back', async () => {
@@ -1509,12 +1558,12 @@ describe('the preview step', () => {
         mockWithdrawRun.mockResolvedValue({ error: { status: 422 } })
         await startImport()
 
-        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })) })
+        await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })) })
         await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Back to mapping' })) })
 
         expect(mockTrackError).toHaveBeenCalledTimes(2)
         expect(mockRefetchRun).not.toHaveBeenCalled()
-        expect(screen.getByText('1 rows cannot be saved.')).toBeTruthy()
+        expect(screen.getByText('1 row cannot be saved.')).toBeTruthy()
       })
 
       it('keeps the import waiting when the dialog is closed', async () => {
@@ -1539,7 +1588,7 @@ describe('the preview step', () => {
 
         expect(mockListWaitingRuns).toHaveBeenCalledWith({ folderId: 77 }, { refetchOnMountOrArgChange: true })
         expect(screen.getByText('An import of autumn.xlsx into this folder is waiting for your decision.')).toBeTruthy()
-        expect(screen.getByRole('button', { name: 'Merge 1 rows, leave out 1' })).toBeTruthy()
+        expect(screen.getByRole('button', { name: 'Merge 1 row, leave out 1' })).toBeTruthy()
         expect(screen.queryByRole('button', { name: 'Back to mapping' })).toBeNull()
       })
 

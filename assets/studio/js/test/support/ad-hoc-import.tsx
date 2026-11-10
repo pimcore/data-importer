@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 // Test stand-ins for the Studio components of the ad hoc import, and the English catalogue behind t()
 import fs from 'node:fs'
 import path from 'node:path'
@@ -19,11 +20,20 @@ const catalogue: Record<string, string> = Object.fromEntries(
     .split('\n')
     .map((line) => /^([\w.-]+): (.*)$/.exec(line))
     .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => [match[1], match[2].replace(/^'(.*)'$/, '$1')])
+    .map((match) => [match[1], match[2].replace(/^'(.*)'$/, '$1').replace(/''/g, "'")])
 )
 
+// as i18next does for English: a count picks the key's _one or _other form when it has them
+const pluralOf = (key: string, values: Record<string, unknown>): string => {
+  if (typeof values.count !== 'number' || catalogue[key] !== undefined) {
+    return key
+  }
+
+  return `${key}_${values.count === 1 ? 'one' : 'other'}`
+}
+
 export const translate = (key: string, values: Record<string, unknown> = {}): string => {
-  const text = catalogue[key]
+  const text = catalogue[pluralOf(key, values)]
   if (text === undefined) {
     throw new Error(`No text for ${key} in the catalogue`)
   }
@@ -64,13 +74,32 @@ export const components = {
       { children }
     </button>
   ),
-  Card: ({ children, contentPadding, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement> & { contentPadding?: unknown }) => (
+  Card: ({ children, contentPadding, footer, ...props }: WithChildren & React.HTMLAttributes<HTMLDivElement> & { contentPadding?: unknown, footer?: React.ReactNode }) => (
     <div
       data-content-padding={ JSON.stringify(contentPadding) }
       data-testid="studio-card"
       { ...props }
     >
       { children }
+      { footer }
+    </div>
+  ),
+  Collapse: ({ items, activeKeys = [], onChange }: { items: Array<{ key: string, label: React.ReactNode, subLabel?: React.ReactNode, extra?: React.ReactNode, children: React.ReactNode }>, activeKeys?: string[], onChange?: (keys: string[]) => void }) => (
+    <div>
+      { items.map(({ key, label, subLabel, extra, children }) => (
+        <div key={ key }>
+          <button
+            aria-expanded={ activeKeys.includes(key) }
+            onClick={ () => { onChange?.(activeKeys.includes(key) ? [] : [key]) } }
+            type="button"
+          >
+            { label }
+            { subLabel }
+            { extra }
+          </button>
+          { activeKeys.includes(key) && children }
+        </div>
+      )) }
     </div>
   ),
   ColumnPicker: ({ groups, onSelect, emptyText }: { groups: PickerGroup[], onSelect: (item: PickerItem) => void, emptyText?: string }) => (
@@ -143,6 +172,7 @@ export const components = {
     </table>
   ),
   Icon: () => null,
+  Spin: () => <output />,
   IconButton: ({ onClick, 'aria-label': label }: { onClick?: () => void, 'aria-label'?: string }) => (
     <button
       aria-label={ label }
@@ -166,11 +196,32 @@ export const components = {
       )) }
     </select>
   ),
-  Input: ({ id, value, onBlur, onChange }: { id?: string, value?: string, onBlur?: React.FocusEventHandler<HTMLInputElement>, onChange?: React.ChangeEventHandler<HTMLInputElement> }) => (
+  Tabs: ({ items, activeKey, onChange }: { items: Array<{ key: string, label: string, disabled?: boolean, children: React.ReactNode }>, activeKey: string, onChange?: (key: string) => void }) => (
+    <div>
+      <div role="tablist">
+        { items.map(({ key, label, disabled }) => (
+          <button
+            aria-selected={ key === activeKey }
+            disabled={ disabled }
+            key={ key }
+            onClick={ () => onChange?.(key) }
+            role="tab"
+            type="button"
+          >
+            { label }
+          </button>
+        )) }
+      </div>
+      { items.find(({ key }) => key === activeKey)?.children }
+    </div>
+  ),
+  Input: ({ id, value, onBlur, onChange, 'aria-label': label, placeholder }: { id?: string, value?: string, onBlur?: React.FocusEventHandler<HTMLInputElement>, onChange?: React.ChangeEventHandler<HTMLInputElement>, 'aria-label'?: string, placeholder?: string }) => (
     <input
+      aria-label={ label }
       id={ id }
       onBlur={ onBlur }
       onChange={ onChange }
+      placeholder={ placeholder }
       value={ value }
     />
   ),
@@ -207,8 +258,10 @@ export const components = {
       />
     </nav>
   ),
-  Progress: ({ percent }: { percent?: number }) => (
+  Progress: ({ percent, status, strokeColor }: { percent?: number, status?: string, strokeColor?: string }) => (
     <progress
+      data-status={ status }
+      data-stroke={ strokeColor }
       max={ 100 }
       value={ percent }
     />

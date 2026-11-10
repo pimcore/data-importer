@@ -289,6 +289,18 @@ class AdHocRowImporterTest extends Unit
         $this->assertStringContainsString('"{{row}}":"2"', (string) $outcome->message);
     }
 
+    public function testARowWhoseNewKeyIsTakenIsReportedAsACreateThatFailed(): void
+    {
+        $user = AdHocRunFixtures::user();
+        $match = new RowMatch(RowMatchOutcome::KeyTaken, 'SKU-1', firstRow: 2);
+
+        $outcome = $this->importer()->import($this->plan($match, [], $user), $user, 0, []);
+
+        $this->assertTrue($outcome->isFailure());
+        $this->assertSame('create', $outcome->action);
+        $this->assertSame([], $this->written);
+    }
+
     public function testAnObjectMayNotBeSavedOrSeenWithoutTheRight(): void
     {
         $user = AdHocRunFixtures::user();

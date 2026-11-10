@@ -39,14 +39,40 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   result: css`
     &.ant-card {
-      border-top: 4px solid ${token.colorSuccess};
+      position: relative;
+      overflow: hidden;
     }
+  `,
+  resultBar: css`
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    height: 4px;
+  `,
+  resultBarUpdated: css`
+    background: ${token.colorSuccess};
+  `,
+  resultBarCreated: css`
+    background: ${token.colorPrimary};
+  `,
+  resultBarSkipped: css`
+    background: ${token.colorTextDisabled};
   `,
   resultContent: css`
     display: flex;
     gap: ${token.marginXL}px;
+    padding: ${token.paddingLG}px ${token.paddingXL}px;
+  `,
+  resultFootnote: css`
+    padding: ${token.paddingSM}px ${token.paddingXL}px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+    background: ${token.Table.headerBg};
+    color: ${token.colorTextSecondary};
   `,
   complete: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXXS}px;
     color: ${token.colorSuccess};
     font-weight: 700;
   `,
@@ -57,6 +83,22 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   lines: css`
     flex: 1 1 0;
+  `,
+  dot: css`
+    flex: none;
+    align-self: center;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  `,
+  dotUpdated: css`
+    background: ${token.colorSuccess};
+  `,
+  dotCreated: css`
+    background: ${token.colorPrimary};
+  `,
+  dotSkipped: css`
+    background: ${token.colorTextDisabled};
   `,
   line: css`
     display: flex;
@@ -71,10 +113,6 @@ export const useStyles = createStyles(({ token, css }) => ({
   lineCount: css`
     font-weight: 700;
   `,
-  footnote: css`
-    margin-top: ${token.marginSM}px;
-    color: ${token.colorTextSecondary};
-  `,
   notSaved: css`
     margin-bottom: ${token.marginSM}px;
   `,
@@ -83,7 +121,14 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorErrorBg};
   `,
   error: css`
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px;
     color: ${token.colorError};
+    white-space: normal;
+    overflow-wrap: anywhere;
   `,
   branchStep: css`
     display: flex;
@@ -107,5 +152,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     height: 14px;
     border: 1px solid ${token.colorBorder};
     border-radius: 50%;
-  `
+  `,
+  // antd draws a normal bar in colorInfo; the canvas draws it in the primary colour
+  barColor: token.colorPrimary
 }))

@@ -25,7 +25,9 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ com
 // the mapping step loads the transformations modal and the store key dialog, which no test here opens
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en'] }) }))
 jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
-jest.mock('../../data-importer-api-slice-enhanced', () => ({}))
+jest.mock('../../data-importer-api-slice-enhanced', () => ({
+  useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [async () => await new Promise(() => {})]
+}))
 
 const inspected: InspectedFile = {
   maxRows: 5000,
@@ -223,7 +225,6 @@ describe('the mapping with a configuration', () => {
     choose('products')
 
     const summary = within(screen.getByRole('region', { name: 'products' }))
-    expect(summary.getByText('Its class, its match and its folder for new objects are used instead of those of the file step.')).toBeTruthy()
     expect(summary.getByText('Product')).toBeTruthy()
     expect(summary.getByText('name (de) from column Name DE')).toBeTruthy()
     expect(summary.getByText('/Products & more/Imported')).toBeTruthy()
@@ -300,11 +301,13 @@ describe('the mapping with a configuration', () => {
 
   it('keeps the mapping made here for a switch back', () => {
     render(<Stateful />)
-    fireEvent.change(screen.getByLabelText('Field for Preis'), { target: { value: 'price' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Field for Preis' }))
+    const panel = screen.getByRole('complementary', { name: 'Column Preis' })
+    fireEvent.click(within(panel).getByRole('treeitem', { name: 'Price' }))
 
     fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
     fireEvent.click(screen.getByRole('radio', { name: 'Map the columns here' }))
 
-    expect(screen.getByLabelText<HTMLSelectElement>('Field for Preis').value).toBe('price')
+    expect(screen.getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')
   })
 })

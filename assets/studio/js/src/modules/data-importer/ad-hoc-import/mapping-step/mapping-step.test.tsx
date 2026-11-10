@@ -12,10 +12,11 @@
 import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
-import { createMapping, type LoadedMapping, type Mapping } from './mapping-state'
+import { Modal } from 'antd'
+import { canContinueMapping, chooseField, createMapping, setTransformations, withSamples, type LoadedMapping, type Mapping } from './mapping-state'
 import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
-import { type TransformationSource } from './transformations-modal'
+import { type TransformationSource } from './transformations-editor'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
@@ -77,17 +78,20 @@ const Stateful = ({ initial, isLoading = false, withSource = source }: { initial
   const [mapping, setMapping] = useState(initial)
 
   return (
-    <MappingStep
-      classId="PROD"
-      configuration={ { isLoading: false, onChoose: () => {} } }
-      fields={ loaded.fields }
-      isLoading={ isLoading }
-      mapWith="here"
-      mapping={ mapping }
-      onChange={ setMapping }
-      onMapWithChange={ () => {} }
-      source={ withSource }
-    />
+    <>
+      <MappingStep
+        classId="PROD"
+        configuration={ { isLoading: false, onChoose: () => {} } }
+        fields={ loaded.fields }
+        isLoading={ isLoading }
+        mapWith="here"
+        mapping={ mapping }
+        onChange={ setMapping }
+        onMapWithChange={ () => {} }
+        source={ withSource }
+      />
+      <span data-testid="can-continue">{ String(mapping !== null && canContinueMapping(mapping, loaded.fields)) }</span>
+    </>
   )
 }
 
@@ -95,18 +99,32 @@ const renderStep = (): void => {
   render(<Stateful initial={ createMapping(inspected, objects, loaded) } />)
 }
 
-const fieldOf = (column: string): HTMLSelectElement => screen.getByLabelText<HTMLSelectElement>(`Field for ${column}`)
+const rowOf = (column: string): HTMLElement => screen.queryByRole('button', { name: `Field for ${column}` })?.closest<HTMLElement>('li') ?? matchRowOf(column)
+const matchRowOf = (column: string): HTMLElement => within(screen.getByRole('list', { name: 'Columns of the file' })).getByText(column).closest<HTMLElement>('li')!
+const panelOf = (column: string): HTMLElement => screen.getByRole('complementary', { name: `Column ${column}` })
 
-const choose = (column: string, value: string): void => {
-  fireEvent.change(fieldOf(column), { target: { value } })
+const openPanel = (column: string): void => {
+  fireEvent.click(screen.getByRole('button', { name: `Field for ${column}` }))
+}
+
+const closePanel = (column: string): void => {
+  fireEvent.click(within(panelOf(column)).getByRole('button', { name: 'Close' }))
+}
+
+const choose = (column: string, field: string): void => {
+  openPanel(column)
+  fireEvent.click(within(panelOf(column)).getByRole('treeitem', { name: field }))
+  closePanel(column)
+}
+
+const skip = (column: string): void => {
+  fireEvent.click(screen.getByRole('button', { name: `Don't import ${column}` }))
 }
 
 const shownColumns = (): string[] =>
   within(screen.getByRole('list', { name: 'Columns of the file' }))
     .getAllByRole('listitem')
-    .map((item) => item.querySelector('strong, span')!.textContent)
-
-const rowOf = (column: string): HTMLElement => fieldOf(column).closest<HTMLElement>('[role="listitem"]')!
+    .map((item) => Array.from(item.querySelectorAll('strong, span')).find((part) => part.textContent !== '')!.textContent)
 
 afterEach(() => {
   cleanup()
@@ -124,45 +142,96 @@ describe('the mapping step', () => {
     renderStep()
 
     expect(shownColumns()).toEqual(['Artikelnr', 'Name DE', 'Preis', 'Notiz'])
-    expect(within(rowOf('Preis')).getByText('12.50')).toBeTruthy()
-    expect(within(rowOf('Notiz')).getByText('Größe M & L')).toBeTruthy()
+    expect(within(rowOf('Preis')).getByText('e.g. “12.50”')).toBeTruthy()
+    expect(within(rowOf('Notiz')).getByText('e.g. “Größe M & L”')).toBeTruthy()
   })
 
   it('marks a sure suggestion as automatic, with its language', () => {
     renderStep()
 
-    expect(fieldOf('Name DE').value).toBe('name')
+    expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toContain('Name')
     expect(within(rowOf('Name DE')).getByText('auto')).toBeTruthy()
     expect(within(rowOf('Name DE')).getByText('de')).toBeTruthy()
   })
 
-  it('names a weaker suggestion without taking it', () => {
+  it('offers a weaker suggestion to take at once', () => {
     renderStep()
 
-    expect(fieldOf('Preis').value).toBe('')
-    expect(within(rowOf('Preis')).getByText('Suggested: Price')).toBeTruthy()
+    fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Use Price?' }))
+
+    expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')
+    expect(within(rowOf('Preis')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
+  })
+
+  describe('a suggestion another column may have', () => {
+    const suggestion = (sourceIndex: string, targetFieldName: string, targetFieldLabel: string, score: number, language: string | null = null): LoadedMapping['suggestions'][number] =>
+      ({ sourceIndex, sourceLabel: sourceIndex, targetFieldName, targetFieldLabel, transformationResultType: 'default', score, language })
+
+    const renderWith = (suggestions: LoadedMapping['suggestions'], columns: string[] = []): void => {
+      const file = { ...inspected, columns: [...inspected.columns, ...columns.map((label) => ({ dataIndex: label, label }))] }
+
+      render(<Stateful initial={ createMapping(file, objects, { ...loaded, suggestions }) } />)
+    }
+
+    it('is not offered when a column was mapped to its field on arrival', () => {
+      renderWith([suggestion('Preis', 'price', 'Price', 100), suggestion('Notiz', 'price', 'Price', 55)])
+
+      expect(within(rowOf('Preis')).getByText('auto')).toBeTruthy()
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
+    })
+
+    it('goes away once another column takes its field, and comes back when that column gives it up', () => {
+      renderWith([suggestion('Preis', 'price', 'Price', 55), suggestion('Notiz', 'price', 'Price', 40)])
+
+      fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Use Price?' }))
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't import Preis" }))
+      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Use Price?' })).toBeTruthy()
+    })
+
+    it('stays for a localized field with a language free, and takes that language', () => {
+      renderWith([suggestion('Name DE', 'name', 'Name', 100, 'de'), suggestion('Notiz', 'name', 'Name', 55)])
+
+      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Use Name?' }))
+
+      expect(within(rowOf('Name DE')).getByText('de')).toBeTruthy()
+      expect(within(rowOf('Notiz')).getByText('en')).toBeTruthy()
+    })
+
+    it('is not offered for a localized field with every language taken', () => {
+      renderWith([
+        suggestion('Name DE', 'name', 'Name', 100, 'de'),
+        suggestion('Name EN', 'name', 'Name', 100, 'en'),
+        suggestion('Name FR', 'name', 'Name', 100, 'fr'),
+        suggestion('Notiz', 'name', 'Name', 55)
+      ], ['Name EN', 'Name FR'])
+
+      expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Name?' })).toBeNull()
+    })
   })
 
   it('shows the match column with the field it finds the objects by, which cannot be changed', () => {
     renderStep()
 
-    expect(fieldOf('Artikelnr').disabled).toBe(true)
-    expect(within(rowOf('Artikelnr')).getByRole('option', { name: 'SKU' })).toBeTruthy()
-    expect(within(rowOf('Artikelnr')).getByText('Finds the objects')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Field for Artikelnr' })).toBeNull()
+    expect(within(matchRowOf('Artikelnr')).getByText('SKU')).toBeTruthy()
+    expect(within(matchRowOf('Artikelnr')).getByText('Finds the objects')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: "Don't import Artikelnr" })).toBeNull()
   })
 
   it('shows the object ID for a match column when matching by it', () => {
     render(<Stateful initial={ createMapping(inspected, { ...objects, matchBy: 'id' }, loaded) } />)
 
-    expect(within(rowOf('Artikelnr')).getByRole('option', { name: 'Object ID' })).toBeTruthy()
+    expect(within(matchRowOf('Artikelnr')).getByText('Object ID')).toBeTruthy()
   })
 
   it('takes the auto mark away once the field is changed by hand', () => {
     renderStep()
 
-    choose('Name DE', 'note')
+    choose('Name DE', 'Note & remark')
 
-    expect(fieldOf('Name DE').value).toBe('note')
+    expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toContain('Note & remark')
     expect(within(rowOf('Name DE')).queryByText('auto')).toBeNull()
     expect(within(rowOf('Name DE')).queryByText('de')).toBeNull()
   })
@@ -170,63 +239,126 @@ describe('the mapping step', () => {
   it('can leave a column without a field again', () => {
     renderStep()
 
-    choose('Name DE', '')
+    openPanel('Name DE')
+    fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: 'Remove field' }))
 
-    expect(fieldOf('Name DE').value).toBe('')
+    expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toBe('Choose field')
     expect(within(rowOf('Name DE')).queryByText('auto')).toBeNull()
   })
 
   it('offers a field another column goes into only to that column', () => {
     renderStep()
-    choose('Notiz', 'price')
+    choose('Notiz', 'Price')
 
-    expect(within(fieldOf('Preis')).getByRole<HTMLOptionElement>('option', { name: 'Price' }).disabled).toBe(true)
-    expect(within(fieldOf('Notiz')).getByRole<HTMLOptionElement>('option', { name: 'Price' }).disabled).toBe(false)
-    expect(within(fieldOf('Notiz')).getByRole<HTMLOptionElement>('option', { name: 'SKU' }).disabled).toBe(true)
+    openPanel('Preis')
+    expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(true)
+    closePanel('Preis')
+    openPanel('Notiz')
+    expect(within(panelOf('Notiz')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(false)
   })
 
   it('names the fields the class requires, unescaped', () => {
     renderStep()
+    openPanel('Notiz')
 
-    expect(within(fieldOf('Notiz')).getByRole('option', { name: 'EAN (required)' })).toBeTruthy()
-    expect(within(fieldOf('Notiz')).getByRole('option', { name: 'Note & remark' })).toBeTruthy()
+    expect(within(panelOf('Notiz')).getByRole('treeitem', { name: 'EAN (required)' })).toBeTruthy()
+    expect(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Note & remark' })).toBeTruthy()
   })
 
-  it('warns of required fields no column goes into until one does', () => {
+  it('shows whether each required field has a column', () => {
     renderStep()
 
-    expect(screen.getByRole('alert').textContent).toBe('Required fields without a column: EAN')
+    expect(screen.getByText('Required fields:')).toBeTruthy()
+    expect(screen.getByText('✗ EAN')).toBeTruthy()
 
-    choose('Notiz', 'ean')
+    choose('Notiz', 'EAN (required)')
 
-    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('✓ EAN')).toBeTruthy()
+    expect(screen.queryByText('✗ EAN')).toBeNull()
+  })
+
+  it('says how many columns go into a field and what was mapped automatically', () => {
+    renderStep()
+
+    expect(screen.getByText('2 of 4 columns go into a field')).toBeTruthy()
+    expect(screen.getByText('1 column was mapped automatically')).toBeTruthy()
+    expect(screen.getByText('when the file was read, marked “auto”. 1 more has a suggestion to confirm.')).toBeTruthy()
+  })
+
+  describe('with suggestions but nothing mapped automatically', () => {
+    const suggest = (score: number, ...columns: string[]): LoadedMapping['suggestions'] => columns.map((column) =>
+      ({ sourceIndex: column, sourceLabel: column, targetFieldName: 'note', targetFieldLabel: 'Note & remark', transformationResultType: 'default', score, language: null }))
+
+    it('says only that one waits to be confirmed', () => {
+      render(<Stateful initial={ createMapping(inspected, objects, { ...loaded, suggestions: suggest(55, 'Notiz') }) } />)
+
+      expect(screen.getByText('1 column has a suggestion to confirm.')).toBeTruthy()
+      expect(screen.queryByText(/mapped automatically/)).toBeNull()
+      expect(screen.queryByText(/marked “auto”/)).toBeNull()
+    })
+
+    it('counts those waiting when there are several', () => {
+      render(<Stateful initial={ createMapping(inspected, objects, { ...loaded, suggestions: [...suggest(55, 'Notiz'), ...loaded.suggestions.slice(1)] }) } />)
+
+      expect(screen.getByText('2 columns have a suggestion to confirm.')).toBeTruthy()
+      expect(screen.queryByText(/mapped automatically/)).toBeNull()
+    })
   })
 
   describe('a column not to import', () => {
     it('moves to the area of columns not imported, and back', () => {
       renderStep()
 
-      choose('Name DE', '-')
+      skip('Name DE')
 
       expect(shownColumns()).toEqual(['Artikelnr', 'Preis', 'Notiz'])
-      const area = screen.getByRole('region', { name: 'Not imported (1)' })
-      expect(within(area).getByText('Name DE')).toBeTruthy()
-
-      fireEvent.click(within(area).getByRole('button', { name: 'Restore Name DE' }))
+      fireEvent.click(screen.getByRole('button', { name: /Not imported \(1\)/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Restore Name DE' }))
 
       expect(shownColumns()).toEqual(['Artikelnr', 'Name DE', 'Preis', 'Notiz'])
-      expect(fieldOf('Name DE').value).toBe('')
-      expect(screen.queryByRole('region', { name: /Not imported/ })).toBeNull()
+      expect(within(rowOf('Name DE')).getByRole('button', { name: 'Field for Name DE' }).textContent).toBe('Choose field')
+      expect(screen.queryByRole('button', { name: /Not imported/ })).toBeNull()
     })
 
     it('frees its field for another column', () => {
       renderStep()
-      choose('Notiz', 'price')
+      choose('Notiz', 'Price')
 
-      choose('Notiz', '-')
+      skip('Notiz')
 
-      expect(within(fieldOf('Preis')).getByRole<HTMLOptionElement>('option', { name: 'Price' }).disabled).toBe(false)
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Use all suggestions (1)' }).disabled).toBe(false)
+      openPanel('Preis')
+      expect(within(panelOf('Preis')).getByRole<HTMLButtonElement>('treeitem', { name: 'Price' }).disabled).toBe(false)
+    })
+
+    it('takes every open column at once, leaving the decided ones', () => {
+      renderStep()
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+
+      expect(shownColumns()).toEqual(['Artikelnr', 'Name DE'])
+      expect(screen.getByRole('button', { name: /Not imported \(2\)/ })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: /not mapped$/ })).toBeNull()
+    })
+
+    it('closes the panel when its column goes with the others not mapped', () => {
+      renderStep()
+      openPanel('Notiz')
+
+      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+    })
+
+    it('finds a column in the area by its name', () => {
+      renderStep()
+      skip('Name DE')
+      skip('Preis')
+      fireEvent.click(screen.getByRole('button', { name: /Not imported \(2\)/ }))
+
+      fireEvent.change(screen.getByRole('textbox', { name: 'Search columns' }), { target: { value: 'pre' } })
+
+      expect(screen.queryByRole('button', { name: 'Restore Name DE' })).toBeNull()
+      expect(screen.getByRole('button', { name: 'Restore Preis' })).toBeTruthy()
     })
   })
 
@@ -234,18 +366,18 @@ describe('the mapping step', () => {
     it('takes every suggestion waiting, marked as automatic', () => {
       renderStep()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Use all suggestions (1)' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Use all 1 suggestions' }))
 
-      expect(fieldOf('Preis').value).toBe('price')
+      expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')
       expect(within(rowOf('Preis')).getByText('auto')).toBeTruthy()
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Use all suggestions (0)' }).disabled).toBe(true)
+      expect(screen.queryByRole('button', { name: /^Use all/ })).toBeNull()
     })
 
     it('leaves a column whose suggested field another column took by hand', () => {
       renderStep()
-      choose('Notiz', 'price')
+      choose('Notiz', 'Price')
 
-      expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Use all suggestions (0)' }).disabled).toBe(true)
+      expect(screen.queryByRole('button', { name: /^Use all/ })).toBeNull()
     })
   })
 
@@ -253,28 +385,12 @@ describe('the mapping step', () => {
     it('counts and shows the mapped and the open columns', () => {
       renderStep()
 
-      expect(screen.getByRole('radio', { name: 'All (4)' })).toBeTruthy()
-      fireEvent.click(screen.getByRole('radio', { name: 'Mapped (2)' }))
+      expect(screen.getByRole('button', { name: 'To import 4' })).toBeTruthy()
+      fireEvent.click(screen.getByRole('button', { name: 'Mapped 2' }))
       expect(shownColumns()).toEqual(['Artikelnr', 'Name DE'])
 
-      fireEvent.click(screen.getByRole('radio', { name: 'Open (2)' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Not mapped 2' }))
       expect(shownColumns()).toEqual(['Preis', 'Notiz'])
-    })
-
-    it('finds a column by its name', () => {
-      renderStep()
-
-      fireEvent.change(screen.getByRole('searchbox', { name: 'Find a column' }), { target: { value: 'pre' } })
-
-      expect(shownColumns()).toEqual(['Preis'])
-    })
-
-    it('says when no column is left to show', () => {
-      renderStep()
-
-      fireEvent.change(screen.getByRole('searchbox', { name: 'Find a column' }), { target: { value: 'missing' } })
-
-      expect(screen.getByText('No column to show')).toBeTruthy()
     })
   })
 
@@ -289,6 +405,72 @@ describe('the mapping step', () => {
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
   })
+  describe('Escape in the import dialog', () => {
+    const onCancel = jest.fn()
+
+    const renderInDialog = (): void => {
+      render(
+        <Modal
+          footer={ null }
+          onCancel={ onCancel }
+          open
+          title="Import"
+        >
+          <Stateful initial={ createMapping(inspected, objects, loaded) } />
+        </Modal>
+      )
+    }
+
+    const pressEscape = (): void => {
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' })
+    }
+
+    const openFromItsButton = (column: string): void => {
+      const button = screen.getByRole('button', { name: `Field for ${column}` })
+      button.focus()
+      fireEvent.click(button)
+    }
+
+    beforeEach(() => {
+      onCancel.mockReset()
+      mockPreview.mockReset()
+      mockPreview.mockResolvedValue({ data: { values: [], steps: [], conversion: null, resultType: 'default', fits: true, results: [], offered: [] } })
+    })
+
+    it('closes only the panel, opened from the button of a row', () => {
+      renderInDialog()
+      openFromItsButton('Notiz')
+
+      pressEscape()
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+
+    it('closes only the panel after moving on to the next column', () => {
+      renderInDialog()
+      openFromItsButton('Name DE')
+      fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: 'Next column ›' }))
+
+      pressEscape()
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+
+    it('closes only the panel with the focus on a row behind it', () => {
+      renderInDialog()
+      openFromItsButton('Notiz')
+
+      const behind = screen.getByRole('button', { name: 'Field for Preis' })
+      behind.focus()
+      fireEvent.keyDown(behind, { key: 'Escape' })
+
+      expect(screen.queryByRole('complementary')).toBeNull()
+      expect(onCancel).not.toHaveBeenCalled()
+    })
+  })
+
   describe('with transformations', () => {
     const answer = (fits: boolean): unknown => ({
       data: { values: [], steps: [], conversion: null, resultType: 'default', fits, results: [], offered: ['loadAsset'] }
@@ -311,53 +493,210 @@ describe('the mapping step', () => {
       jest.useRealTimers()
     })
 
-    it('opens the transformations of a column with a field and applies them to it', async () => {
+    const transformationsOf = (column: string): HTMLElement => within(rowOf(column)).getByRole('button', { name: `Transformations of ${column}` })
+
+    it('opens the transformations of a column with a field and applies them to it as they are made', async () => {
       mockPreview.mockResolvedValue(answer(true))
       renderStep()
 
       expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Transformations of Notiz' })).toBeNull()
-      choose('Notiz', 'note')
-      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
+      choose('Notiz', 'Note & remark')
+      await settle()
+      fireEvent.click(transformationsOf('Notiz'))
       await settle()
 
-      expect(screen.getByRole('dialog', { name: 'Transformations of Notiz into Note & remark' })).toBeTruthy()
-      fireEvent.change(screen.getByLabelText('Add a transformation'), { target: { value: 'loadAsset' } })
+      fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: '+ Load asset' }))
       await settle()
-      fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+      closePanel('Notiz')
 
-      expect(screen.queryByRole('dialog', { name: 'Transformations of Notiz into Note & remark' })).toBeNull()
-      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }).textContent).toBe('Transformations (1)')
+      expect(screen.queryByRole('complementary', { name: 'Column Notiz' })).toBeNull()
+      expect(transformationsOf('Notiz').textContent).toBe('1 transformation')
     })
 
     it('marks a column whose field does not take it until its transformations fit', async () => {
       mockPreview.mockResolvedValue(answer(true))
       renderStep()
 
-      choose('Notiz', 'image')
+      openPanel('Notiz')
+      fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
       expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
       expect(screen.getByText('Columns whose values do not fit their field yet: Notiz')).toBeTruthy()
 
-      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
       await settle()
-      fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
       expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
       expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
     })
 
-    it('keeps the transformations as they were when closed without applying', async () => {
-      mockPreview.mockResolvedValue(answer(false))
+    describe('a column left before the answer', () => {
+      const canContinue = (): string | null => screen.getByTestId('can-continue').textContent
+
+      const addStepInPanel = async (column: string, target: string): Promise<void> => {
+        choose(column, target)
+        await settle()
+        fireEvent.click(transformationsOf(column))
+        await settle()
+        fireEvent.click(within(panelOf(column)).getByRole('button', { name: '+ Load asset' }))
+      }
+
+      it('still gets its answer after the panel closed, and cannot be continued with until then', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockClear()
+        mockPreview.mockResolvedValue(answer(false))
+
+        closePanel('Notiz')
+        expect(canContinue()).toBe('false')
+        await settle()
+
+        expect(mockPreview).toHaveBeenCalledTimes(1)
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(canContinue()).toBe('false')
+      })
+
+      it('still gets its answer after moving on to the next column', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockResolvedValue(answer(false))
+
+        fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Next column ›' }))
+        await settle()
+
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+      })
+
+      it('fits a field that does not take it as it is, once the answer says so', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        openPanel('Notiz')
+        fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
+        await settle()
+        fireEvent.click(within(panelOf('Notiz')).getByRole('tab', { name: 'Transformations' }))
+        fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: '+ Load asset' }))
+
+        closePanel('Notiz')
+        await settle()
+
+        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+        expect(canContinue()).toBe('true')
+      })
+
+      it('does not count as fitting when the server gives no answer', async () => {
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockResolvedValue({ error: { status: 500 } })
+
+        closePanel('Notiz')
+        await settle()
+
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(canContinue()).toBe('false')
+      })
+
+      describe('and the file read again', () => {
+        const steps = [{ type: 'loadAsset', settings: {} }]
+        const answered = (fits: boolean): Mapping =>
+          setTransformations(chooseField(createMapping(inspected, objects, loaded), 'Notiz', 'note'), 'Notiz', steps, fits)
+
+        it('is asked for again, as the answer was about the values read before', async () => {
+          mockPreview.mockResolvedValue(answer(true))
+          render(<Stateful initial={ withSamples(answered(false), inspected) } />)
+
+          expect(canContinue()).toBe('false')
+          await settle()
+
+          expect(mockPreview).toHaveBeenCalledTimes(1)
+          expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+          expect(canContinue()).toBe('true')
+        })
+
+        it('drops an answer that arrives after the step was left', async () => {
+          let late: (value: unknown) => void = () => {}
+          mockPreview.mockImplementation(async () => await new Promise((resolve) => { late = resolve }))
+          const onChange = jest.fn()
+          const { unmount } = render(
+            <MappingStep
+              classId="PROD"
+              configuration={ { isLoading: false, onChoose: () => {} } }
+              fields={ loaded.fields }
+              isLoading={ false }
+              mapWith="here"
+              mapping={ withSamples(answered(true), inspected) }
+              onChange={ onChange }
+              onMapWithChange={ () => {} }
+              source={ source }
+            />
+          )
+          expect(mockPreview).toHaveBeenCalledTimes(1)
+
+          unmount()
+          await act(async () => {
+            late(answer(false))
+            await Promise.resolve()
+            await Promise.resolve()
+          })
+
+          expect(onChange).not.toHaveBeenCalled()
+        })
+      })
+
+      it('keeps the answers of two columns that arrive together', async () => {
+        const answers = new Map<string, (value: unknown) => void>()
+        mockPreview.mockImplementation(async ({ bundleDataImporterAdHocImportTransformationParameters: { column, transformationPipeline } }: { bundleDataImporterAdHocImportTransformationParameters: { column: string, transformationPipeline: unknown[] } }) =>
+          transformationPipeline.length === 0 ? answer(true) : await new Promise((resolve) => { answers.set(column, resolve) }))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        closePanel('Notiz')
+        fireEvent.click(transformationsOf('Name DE'))
+        await settle()
+        fireEvent.click(within(panelOf('Name DE')).getByRole('button', { name: '+ Load asset' }))
+        closePanel('Name DE')
+
+        await act(async () => {
+          answers.get('Notiz')!(answer(false))
+          answers.get('Name DE')!(answer(false))
+          await Promise.resolve()
+          await Promise.resolve()
+        })
+
+        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Name DE')).getByText('Needs a transformation')).toBeTruthy()
+      })
+
+      it('drops an answer to steps changed since', async () => {
+        let answerFirst: (value: unknown) => void = () => {}
+        mockPreview.mockResolvedValue(answer(true))
+        renderStep()
+        await addStepInPanel('Notiz', 'Note & remark')
+        mockPreview.mockImplementationOnce(async () => await new Promise((resolve) => { answerFirst = resolve }))
+        closePanel('Notiz')
+        fireEvent.click(transformationsOf('Notiz'))
+        fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Remove Load asset' }))
+        mockPreview.mockResolvedValue(answer(true))
+        await settle()
+
+        await act(async () => {
+          answerFirst(answer(false))
+          await Promise.resolve()
+          await Promise.resolve()
+        })
+
+        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+      })
+    })
+
+    it('changes between the field and the transformations of a column', () => {
+      mockPreview.mockResolvedValue(answer(true))
       renderStep()
+      choose('Notiz', 'Note & remark')
+      openPanel('Notiz')
 
-      choose('Notiz', 'note')
-      fireEvent.click(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }))
-      await settle()
-      fireEvent.change(screen.getByLabelText('Add a transformation'), { target: { value: 'loadAsset' } })
-      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-
-      expect(within(rowOf('Notiz')).getByRole('button', { name: 'Transformations of Notiz' }).textContent).toBe('Transformations')
-      expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+      fireEvent.click(within(panelOf('Notiz')).getByRole('tab', { name: 'Transformations' }))
+      expect(within(panelOf('Notiz')).getByRole('tab', { name: 'Transformations' }).getAttribute('aria-selected')).toBe('true')
     })
 
     it('offers none for the match column, or without a file to run them on', () => {

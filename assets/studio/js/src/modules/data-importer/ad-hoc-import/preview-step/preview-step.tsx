@@ -25,7 +25,7 @@ import {
   type DryRunRow,
   type ErrorMode
 } from './preview-state'
-import { useStyles } from './preview-step.styles'
+import { ROW_ERROR_MARK, ROW_WARNING_MARK, useStyles } from './preview-step.styles'
 
 export interface PreviewStepProps {
   dryRun: DryRun | null
@@ -87,7 +87,7 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
         id: 'match',
         header: dryRun.matchColumn,
         accessorFn: (row) => row.matchValue,
-        cell: ({ getValue }) => <span className={ styles.matchValue }>{ getValue<string>() }</span>
+        cell: ({ getValue }) => <span className={ `${styles.cell} ${styles.matchValue}` }>{ getValue<string>() }</span>
       },
       {
         id: 'action',
@@ -106,11 +106,13 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
         cell: ({ getValue, row }) => {
           const tone = rowTone(row.original, errorMode)
 
-          return (
-            <span className={ tone === 'error' ? styles.error : tone === 'warning' ? styles.warning : undefined }>
-              { getValue<string>() }
-            </span>
-          )
+          const toneClass = {
+            none: undefined,
+            error: `${styles.error} ${ROW_ERROR_MARK}`,
+            warning: `${styles.warning} ${ROW_WARNING_MARK}`
+          }[tone]
+
+          return <span className={ styles.cell }><span className={ toneClass }>{ getValue<string>() }</span></span>
         }
       }
     ]
@@ -157,9 +159,11 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
       </div>
       <Grid
         autoWidth
+        className={ styles.grid }
         columns={ columns }
         data={ pageOf(rows, current, pageSize) }
         setRowId={ (row: DryRunRow) => String(row.row) }
+        size="small"
       />
       <Flex
         className={ styles.pagination }

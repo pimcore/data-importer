@@ -9,16 +9,19 @@
  */
 
 import React, { useMemo, useState } from 'react'
-import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Flex, SearchInput, Segmented, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
-import { FieldPanel } from './field-panel'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { Alert, Flex, Skeleton } from '@pimcore/studio-ui-bundle/components'
+import { ColumnPanel, type ColumnPanelTab } from './column-panel'
 import {
+  autoRowCount,
   chooseField,
-  missingRequiredFields,
   pendingSuggestionCount,
+  requiredFields,
   restoreColumn,
   rowCounts,
   setTransformations,
+  skipColumn,
+  skipOpenColumns,
   skippedRows,
   takeAllSuggestions,
   unfitRows,
@@ -29,7 +32,6 @@ import {
   type RowFilter
 } from './mapping-state'
 import { chooseStoreKey, withLanguages } from './mapping-choices'
-import { takenFields } from './taken-fields'
 import { MappingRowView } from './mapping-row'
 import { StoreKeyDialog } from './store-key-dialog'
 import { takenStoreKeys } from './taken-store-keys'
@@ -37,26 +39,13 @@ import { useLanguages } from './use-languages'
 import { ConfigurationChoice, type ConfigurationChoiceProps } from './configuration-choice'
 import { type MapWith } from './configuration-state'
 import { MapWithSwitch } from './map-with-switch'
+import { MappingSummary } from './mapping-summary'
 import { NotImportedPanel } from './not-imported-panel'
-import { TransformationsModal, type TransformationSource } from './transformations-modal'
+import { useStyles } from './mapping-step.styles'
+import { type TransformationSource } from './transformations-editor'
+import { useLeftColumnFits } from './use-left-column-fits'
 
-const SEARCH_WIDTH = 240
-const PANEL_WIDTH = 320
-const FILTERS: RowFilter[] = ['all', 'mapped', 'open']
-
-const useStyles = createStyles(({ token, css }) => ({
-  quiet: css`
-    color: ${token.colorTextTertiary};
-  `,
-  rows: css`
-    flex: 1;
-    min-width: 0;
-  `,
-  panel: css`
-    width: ${PANEL_WIDTH}px;
-    flex: none;
-  `
-}))
+const MAPPING = 'data-importer.ad-hoc-import.mapping'
 
 export interface MappingStepProps {
   // the class the objects are of, whose classification store keys are offered
@@ -87,20 +76,19 @@ export const MappingStep = ({
   const { styles } = useStyles()
   const languages = useLanguages()
   const [filter, setFilter] = useState<RowFilter>('all')
-  const [search, setSearch] = useState('')
-  const [activeColumn, setActiveColumn] = useState<string | null>(null)
+  // the column the side panel is open on, and on which tab
+  const [panel, setPanel] = useState<{ column: string, tab: ColumnPanelTab } | null>(null)
   // the column and store whose key is being chosen
   const [storeKeyFor, setStoreKeyFor] = useState<{ column: string, field: string } | null>(null)
+
+  useLeftColumnFits({ mapping, source, openColumn: panel?.column, onChange })
 
   // a column going into a localized field always holds a language
   const settle = (next: Mapping): Mapping => withLanguages(next, fields, languages)
   const change = (next: Mapping): void => { onChange(settle(next)) }
-  // the column whose transformations are open
-  const [editing, setEditing] = useState<string | null>(null)
 
-  const missing = useMemo(() => mapping === null ? [] : missingRequiredFields(mapping, fields), [mapping, fields])
+  const required = useMemo(() => mapping === null ? [] : requiredFields(mapping, fields), [mapping, fields])
   const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
-  const taken = useMemo(() => takenFields(mapping?.rows ?? []), [mapping?.rows])
 
   const mapWithSwitch = (
     <MapWithSwitch
@@ -134,10 +122,6 @@ export const MappingStep = ({
     )
   }
 
-  // the column picked last, else the first one that can take a field
-  const activeRow = mapping.rows.find((row) => row.column === activeColumn && !row.isMatch && !row.skipped) ??
-    mapping.rows.find((row) => !row.isMatch && !row.skipped)
-
   const pick = (row: MappingRow, field: MappingField): void => {
     if (field.classificationStore) {
       setStoreKeyFor({ column: row.column, field: field.key })
@@ -146,13 +130,29 @@ export const MappingStep = ({
     change(chooseField(mapping, row.column, field.key))
   }
 
-  const editedRow = mapping.rows.find(({ column }) => column === editing)
-  const editedField = fields.find(({ key }) => key === editedRow?.choice?.field)
-
   const counts = rowCounts(mapping)
-  const pending = pendingSuggestionCount(mapping, settle)
-  const rows = visibleRows(mapping, filter, search)
+  const rows = visibleRows(mapping, filter)
   const skipped = skippedRows(mapping)
+  const panelRow = mapping.rows.find(({ column }) => column === panel?.column)
+
+  // the columns the panel can move over: those that can take a field
+  const panelRows = visibleRows(mapping, 'all').filter(({ isMatch }) => !isMatch)
+  const moveBy = (step: number): void => {
+    if (panelRow === undefined || panelRows.length === 0) {
+      return
+    }
+    const position = panelRows.findIndex(({ column }) => column === panelRow.column)
+    const next = panelRows[(position + step + panelRows.length) % panelRows.length]
+    setPanel({ column: next.column, tab: panel!.tab })
+  }
+
+  const openPanel = (column: string, tab: ColumnPanelTab): void => { setPanel({ column, tab }) }
+  const skip = (column: string): void => {
+    if (panel?.column === column) {
+      setPanel(null)
+    }
+    change(skipColumn(mapping, column))
+  }
 
   return (
     <Flex
@@ -161,56 +161,27 @@ export const MappingStep = ({
     >
       { mapWithSwitch }
 
-      <Flex
-        align="center"
-        gap="small"
-        justify="space-between"
-      >
-        <Flex
-          align="center"
-          gap="small"
-        >
-          <Segmented
-            onChange={ (next) => { setFilter(next as RowFilter) } }
-            options={ FILTERS.map((value) => ({
-              value,
-              label: t(`data-importer.ad-hoc-import.mapping.filter.${value}`, { count: counts[value] })
-            })) }
-            value={ filter }
-          />
-          <SearchInput
-            aria-label={ t('data-importer.ad-hoc-import.mapping.search') }
-            maxWidth={ SEARCH_WIDTH }
-            onChange={ (event) => { setSearch(event.target.value) } }
-            placeholder={ t('data-importer.ad-hoc-import.mapping.search') }
-            value={ search }
-            withClear
-            withPrefix
-            withoutAddon
-          />
-        </Flex>
-        <Button
-          disabled={ pending === 0 }
-          onClick={ () => { change(takeAllSuggestions(mapping)) } }
-        >
-          { t('data-importer.ad-hoc-import.mapping.use-all-suggestions', { count: pending }) }
-        </Button>
-      </Flex>
-
-      { missing.length > 0 && (
-        <Alert
-          message={ t('data-importer.ad-hoc-import.mapping.missing-required', {
-            fields: missing.map(({ title }) => title).join(', '),
-            interpolation: { escapeValue: false }
-          }) }
-          showIcon
-          type="warning"
-        />
-      ) }
+      <MappingSummary
+        auto={ autoRowCount(mapping) }
+        counts={ counts }
+        filter={ filter }
+        onFilter={ setFilter }
+        onSkipOpen={ () => {
+          if (panelRow !== undefined && panelRow.choice === undefined && !panelRow.isMatch && !panelRow.skipped) {
+            setPanel(null)
+          }
+          change(skipOpenColumns(mapping))
+        } }
+        onUseSuggestions={ () => { change(takeAllSuggestions(mapping)) } }
+        pending={ pendingSuggestionCount(mapping, settle) }
+        required={ required }
+        skipped={ skipped.length }
+        total={ mapping.rows.length }
+      />
 
       { unfit.length > 0 && (
         <Alert
-          message={ t('data-importer.ad-hoc-import.mapping.not-fitting', {
+          message={ t(`${MAPPING}.not-fitting`, {
             columns: unfit.map(({ label }) => label).join(', '),
             interpolation: { escapeValue: false }
           }) }
@@ -219,44 +190,45 @@ export const MappingStep = ({
         />
       ) }
 
-      <Flex
-        align="flex-start"
-        gap="normal"
-      >
-        <Flex
-          aria-label={ t('data-importer.ad-hoc-import.mapping.columns') }
+      <div className={ styles.table }>
+        <div
+          aria-hidden
+          className={ styles.head }
+        >
+          <span />
+          <span className={ styles.headCell }>{ t(`${MAPPING}.head.column`) }</span>
+          <span />
+          <span className={ styles.headCell }>{ t(`${MAPPING}.head.field`) }</span>
+          <span className={ styles.headCell }>{ t(`${MAPPING}.head.transformations`) }</span>
+          <span />
+        </div>
+        <ul
+          aria-label={ t(`${MAPPING}.columns`) }
           className={ styles.rows }
-          gap="small"
-          role="list"
-          vertical
         >
           { rows.map((row) => (
             <MappingRowView
               fields={ fields }
-              isActive={ row.column === activeRow?.column }
+              isActive={ row.column === panel?.column }
               key={ row.column }
               languages={ languages }
               mapping={ mapping }
-              onActivate={ setActiveColumn }
               onChange={ change }
+              onOpenField={ (column) => { openPanel(column, 'field') } }
+              onOpenTransformations={ source === null ? undefined : (column) => { openPanel(column, 'transformations') } }
               onPickStoreKey={ (column, field) => { setStoreKeyFor({ column, field }) } }
-              onTransform={ source === null ? undefined : setEditing }
+              onSkip={ skip }
               row={ row }
-              taken={ taken }
             />
           )) }
-          { rows.length === 0 && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.mapping.no-rows') }</Text> }
-        </Flex>
-        <div className={ styles.panel }>
-          <FieldPanel
-            fields={ fields }
-            languages={ languages }
-            mapping={ mapping }
-            onPick={ pick }
-            row={ activeRow }
+        </ul>
+        { skipped.length > 0 && (
+          <NotImportedPanel
+            onRestore={ (column) => { change(restoreColumn(mapping, column)) } }
+            skipped={ skipped }
           />
-        </div>
-      </Flex>
+        ) }
+      </div>
 
       { storeKeyFor !== null && (
         <StoreKeyDialog
@@ -271,23 +243,24 @@ export const MappingStep = ({
         />
       ) }
 
-      { skipped.length > 0 && (
-        <NotImportedPanel
-          onRestore={ (column) => { change(restoreColumn(mapping, column)) } }
-          skipped={ skipped }
-        />
-      ) }
-
-      { source !== null && editedRow !== undefined && editedField !== undefined && (
-        <TransformationsModal
-          field={ editedField }
-          onApply={ (transformations, fits) => {
-            onChange(setTransformations(mapping, editedRow.column, transformations, fits))
-            setEditing(null)
-          } }
-          onCancel={ () => { setEditing(null) } }
-          row={ editedRow }
+      { panel !== null && panelRow !== undefined && (
+        <ColumnPanel
+          fields={ fields }
+          key={ panelRow.column }
+          languages={ languages }
+          mapping={ mapping }
+          onClose={ () => { setPanel(null) } }
+          onFits={ (steps, fits) => { onChange(setTransformations(mapping, panelRow.column, steps, fits)) } }
+          onNext={ () => { moveBy(1) } }
+          onPick={ pick }
+          onPrevious={ () => { moveBy(-1) } }
+          onRemoveField={ () => { change(chooseField(mapping, panelRow.column, undefined)) } }
+          onSkip={ () => { skip(panelRow.column) } }
+          onSteps={ (steps) => { onChange(setTransformations(mapping, panelRow.column, steps, undefined)) } }
+          onTabChange={ (tab) => { setPanel({ column: panelRow.column, tab }) } }
+          row={ panelRow }
           source={ source }
+          tab={ panel.tab }
         />
       ) }
     </Flex>
