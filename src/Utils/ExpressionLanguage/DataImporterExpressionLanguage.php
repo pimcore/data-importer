@@ -12,14 +12,22 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage;
 
+use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+use Symfony\Component\ExpressionLanguage\Node\GetAttrNode;
+use Symfony\Component\ExpressionLanguage\Node\Node;
+use Symfony\Component\ExpressionLanguage\ParsedExpression;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
 
 /**
  * Expression language used by the symfony expression operator. Functions can be contributed by
- * services tagged with `pimcore.datahub.data_importer.expression_language_provider`. The built-in
- * `constant()` function is disabled because it would expose internal PHP constants to import configurations.
+ * services tagged with `pimcore.datahub.data_importer.expression_language_provider`.
+ *
+ * Two parts of the Symfony expression syntax are rejected, at validation and at evaluation:
+ * - the built-in `constant()` function, because it would expose internal PHP constants to import configurations
+ * - method calls, because pipeline values can be live elements and the preview, which only requires read
+ *   permission on the configuration, must not be able to modify or delete them
  */
 class DataImporterExpressionLanguage extends ExpressionLanguage
 {
@@ -28,15 +36,35 @@ class DataImporterExpressionLanguage extends ExpressionLanguage
      */
     public function __construct(iterable $providers = [])
     {
-        parent::__construct();
+        parent::__construct(null, $providers);
+    }
 
-        $rejectConstant = static function (): never {
-            throw new SyntaxError('The `constant` function is not available.');
-        };
-        $this->register('constant', $rejectConstant, $rejectConstant);
+    /**
+     * @throws SyntaxError when the expression is invalid or calls a method
+     */
+    public function parse(Expression|string $expression, array $names, int $flags = 0): ParsedExpression
+    {
+        $parsedExpression = parent::parse($expression, $names, $flags);
+        $this->rejectMethodCalls($parsedExpression->getNodes(), (string) $expression);
 
-        foreach ($providers as $provider) {
-            $this->registerProvider($provider);
+        return $parsedExpression;
+    }
+
+    protected function registerFunctions(): void
+    {
+        parent::registerFunctions();
+
+        unset($this->functions['constant']);
+    }
+
+    private function rejectMethodCalls(Node $node, string $expression): void
+    {
+        if ($node instanceof GetAttrNode && $node->attributes['type'] === GetAttrNode::METHOD_CALL) {
+            throw new SyntaxError('Method calls are not available', 0, $expression);
+        }
+
+        foreach ($node->nodes as $childNode) {
+            $this->rejectMethodCalls($childNode, $expression);
         }
     }
 }

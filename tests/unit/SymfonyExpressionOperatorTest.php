@@ -50,7 +50,34 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator = $this->createOperator('   ');
 
         $this->assertSame(['a', 'b'], $operator->process(['a', 'b']));
-        $this->assertSame(TransformationDataTypeService::DEFAULT_TYPE, $operator->evaluateReturnType('string'));
+        $this->assertSame('scalar', $operator->process('scalar'));
+        $this->assertSame(
+            TransformationDataTypeService::DEFAULT_ARRAY,
+            $operator->evaluateReturnType(TransformationDataTypeService::DEFAULT_ARRAY)
+        );
+        $this->assertSame(
+            TransformationDataTypeService::DATA_OBJECT,
+            $operator->evaluateReturnType(TransformationDataTypeService::DATA_OBJECT)
+        );
+    }
+
+    public function testExpressionResultIsReportedAsDefaultType(): void
+    {
+        $operator = $this->createOperator('attributes[0]');
+
+        $this->assertSame(
+            TransformationDataTypeService::DEFAULT_TYPE,
+            $operator->evaluateReturnType(TransformationDataTypeService::DEFAULT_ARRAY)
+        );
+    }
+
+    public function testSingleSourceValueIsAvailableAsFirstAttribute(): void
+    {
+        $operator = $this->createOperator("attributes[0] ?? 'fallback'");
+
+        $this->assertSame('Demo Value', $operator->process('Demo Value'));
+        $this->assertSame(42, $operator->process(42));
+        $this->assertSame('fallback', $operator->process(null));
     }
 
     public function testFunctionsFromTaggedProvidersAreAvailable(): void
@@ -88,6 +115,65 @@ class SymfonyExpressionOperatorTest extends Unit
 
         $this->expectException(InvalidConfigurationException::class);
         $operator->evaluateReturnType('string', 1);
+    }
+
+    public function testConstantFunctionIsRejectedAsConfigurationError(): void
+    {
+        $operator = $this->createOperator("constant('PHP_VERSION')");
+
+        $this->expectException(InvalidConfigurationException::class);
+        $operator->evaluateReturnType('string', 1);
+    }
+
+    public function testMethodCallIsRejectedAsConfigurationError(): void
+    {
+        $operator = $this->createOperator('attributes[0].delete()');
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Method calls are not available');
+        $operator->evaluateReturnType('string', 1);
+    }
+
+    /**
+     * @dataProvider provideMethodCallExpressions
+     */
+    public function testMethodCallIsNotExecuted(string $expression): void
+    {
+        $element = new class() {
+            public bool $deleted = false;
+
+            public function delete(): bool
+            {
+                return $this->deleted = true;
+            }
+        };
+        $operator = $this->createOperator($expression);
+
+        try {
+            $operator->process($element, true);
+            $this->fail('The method call was not rejected.');
+        } catch (SyntaxError) {
+            $this->assertFalse($element->deleted);
+        }
+    }
+
+    public static function provideMethodCallExpressions(): array
+    {
+        return [
+            'direct' => ['attributes[0].delete()'],
+            'null safe' => ['attributes[0]?.delete()'],
+            'nested in a condition' => ["attributes[0] ? [attributes[0].delete()] : 'none'"],
+            'as function argument' => ['max(1, attributes[0].delete())'],
+        ];
+    }
+
+    public function testPublicPropertiesStayReadable(): void
+    {
+        $value = new class() {
+            public string $name = 'Demo';
+        };
+
+        $this->assertSame('Demo', $this->createOperator('attributes[0].name')->process($value));
     }
 
     public function testConstantFunctionIsDisabled(): void

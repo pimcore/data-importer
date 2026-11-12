@@ -49,28 +49,33 @@ final class SymfonyExpression extends AbstractOperator
             return $inputData;
         }
 
-        return $this->expressionLanguage->evaluate($this->expression, [self::VARIABLE_NAME => $inputData]);
+        // A mapping with a single source column hands over the bare value instead of a list.
+        $attributes = is_array($inputData) ? $inputData : [$inputData];
+
+        return $this->expressionLanguage->evaluate($this->expression, [self::VARIABLE_NAME => $attributes]);
     }
 
     /**
-     * @throws InvalidConfigurationException when the configured expression cannot be parsed
+     * @throws InvalidConfigurationException when the configured expression is not valid
      */
     public function evaluateReturnType(string $inputType, ?int $index = null): string
     {
-        if ($this->expression !== '') {
-            try {
-                $this->expressionLanguage->lint($this->expression, [self::VARIABLE_NAME]);
-            } catch (SyntaxError $exception) {
-                throw new InvalidConfigurationException(
-                    sprintf(
-                        'Invalid expression for symfony expression operator at transformation position %s: %s',
-                        $index,
-                        $exception->getMessage()
-                    ),
-                    0,
-                    $exception
-                );
-            }
+        if ($this->expression === '') {
+            return $inputType;
+        }
+
+        try {
+            $this->expressionLanguage->parse($this->expression, [self::VARIABLE_NAME]);
+        } catch (SyntaxError $exception) {
+            throw new InvalidConfigurationException(
+                sprintf(
+                    'Invalid expression for symfony expression operator at transformation position %s: %s',
+                    $index,
+                    $exception->getMessage()
+                ),
+                0,
+                $exception
+            );
         }
 
         return TransformationDataTypeService::DEFAULT_TYPE;
