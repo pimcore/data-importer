@@ -169,7 +169,7 @@ data-importer.processing.execution-type.parallel: Parallel
 data-importer.processing.archive-import-file: Import-Datei archivieren
 data-importer.processing.disable-versioning: Versionierung deaktivieren
 data-importer.processing.version-note: Versionsnotiz
-data-importer.processing.version-note.tooltip: Notiz, die an der Version gespeichert wird, die beim Speichern eines Elements durch den Import entsteht. Leer lassen, um Versionen ohne Notiz zu speichern. Ohne Wirkung, solange die Versionierung deaktiviert ist.
+data-importer.processing.version-note.tooltip: Notiz, die an der Version gespeichert wird, die beim Speichern eines Datenobjekts durch den Import entsteht. Leer lassen, um Versionen ohne Notiz zu speichern. Ohne Wirkung, solange die Versionierung deaktiviert ist.
 data-importer.processing.id-data-index: Datenindex des ID-Felds
 data-importer.processing.id-data-index.tooltip: Spalte, die als stabiler Identifikator für Delta-Check und Bereinigung verwendet wird. Diese Optionen sind nur verfügbar, wenn ein ID-Datenindex gesetzt ist.
 data-importer.processing.id-data-index-placeholder: Spalte auswählen

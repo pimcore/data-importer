@@ -169,7 +169,7 @@ data-importer.processing.execution-type.parallel: Paralelo
 data-importer.processing.archive-import-file: Archivar archivo de importación
 data-importer.processing.disable-versioning: Desactivar versionado
 data-importer.processing.version-note: Nota de versión
-data-importer.processing.version-note.tooltip: Nota que se guarda en la versión creada cada vez que la importación guarda un elemento. Déjelo vacío para guardar versiones sin nota. No tiene efecto mientras el versionado esté desactivado.
+data-importer.processing.version-note.tooltip: Nota que se guarda en la versión creada cada vez que la importación guarda un objeto de datos. Déjelo vacío para guardar versiones sin nota. No tiene efecto mientras el versionado esté desactivado.
 data-importer.processing.id-data-index: Índice de datos del campo ID
 data-importer.processing.id-data-index.tooltip: Columna utilizada como identificador estable para Delta Check y limpieza. Estas opciones solo están disponibles cuando se ha establecido un índice de datos de ID.
 data-importer.processing.id-data-index-placeholder: Seleccionar columna
