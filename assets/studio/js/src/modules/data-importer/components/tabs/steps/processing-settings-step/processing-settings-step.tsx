@@ -18,6 +18,8 @@ import type { DataImporterFormValues } from '../../../../types'
 import { type ColumnHeaderOption } from '../../../../hooks/use-column-header-options'
 import { useStyles } from './processing-settings-step.styles'
 
+const VERSION_NOTE_MAX_LENGTH = 255
+
 export interface ProcessingSettingsStepProps {
   columnHeaderOptions: ColumnHeaderOption[]
 }
@@ -98,6 +100,7 @@ export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettin
           <Input
             allowClear
             disabled={ disableVersioning === true }
+            maxLength={ VERSION_NOTE_MAX_LENGTH }
           />
         </Form.Item>
       </DataImporterPanel>
