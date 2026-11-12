@@ -14,7 +14,7 @@ import { type DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-da
 // The hook is called as a plain function, as the components of this directory are, so React's own
 // hooks stand in as pass-throughs.
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
-  ApiError: class {},
+  ApiError: jest.fn(),
   trackError: jest.fn()
 }))
 

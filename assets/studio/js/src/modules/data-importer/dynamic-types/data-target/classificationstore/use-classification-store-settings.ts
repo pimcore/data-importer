@@ -55,7 +55,7 @@ export function useClassificationStoreSettings ({
 
   useEffect(() => {
     if (isKeyError && keyError !== undefined) {
-      trackError(new ApiError(keyError as any))
+      trackError(new ApiError(keyError))
     }
   }, [isKeyError, keyError])
 

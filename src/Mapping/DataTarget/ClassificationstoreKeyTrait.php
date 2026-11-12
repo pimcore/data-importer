@@ -43,6 +43,8 @@ trait ClassificationstoreKeyTrait
 {
     use MappingApplicationScopeAwareTrait;
 
+    private const KEY_MESSAGE_PREFIX = 'Classification store key ';
+
     private ?string $configName = null;
 
     /**
@@ -131,7 +133,7 @@ trait ClassificationstoreKeyTrait
             if (!isset($this->languageWarned[$cacheKey])) {
                 $this->languageWarned[$cacheKey] = true;
                 $this->logWarning(
-                    'Classification store key ' . $keyId . ' of field ' . $fieldName . ' is localized, but the '
+                    self::KEY_MESSAGE_PREFIX . $keyId . ' of field ' . $fieldName . ' is localized, but the '
                     . 'mapping entry carries no language; its value is written to the default bucket, not under a '
                     . 'language. Choose a language in the mapping entry.'
                 );
@@ -290,7 +292,7 @@ trait ClassificationstoreKeyTrait
 
         if ($variant !== null && !in_array($variant, $slot->declaration?->getVariantNames() ?? [], true)) {
             throw new InvalidConfigurationException(
-                'Classification store key ' . $slot->token . ' does not declare the variant `' . $variant . '`.'
+                self::KEY_MESSAGE_PREFIX . $slot->token . ' does not declare the variant `' . $variant . '`.'
             );
         }
 
@@ -346,7 +348,7 @@ trait ClassificationstoreKeyTrait
             $qualifiers[] = 'a list of ' . $valueCount . ' values';
         }
 
-        return 'Classification store key ' . $token . ': ' . implode(' and ', $qualifiers) . ' cannot be stored, '
+        return self::KEY_MESSAGE_PREFIX . $token . ': ' . implode(' and ', $qualifiers) . ' cannot be stored, '
             . 'the engine of the store has to be flipped to one that holds them. '
             . 'The first value was written as position 0 of the default variant.';
     }
