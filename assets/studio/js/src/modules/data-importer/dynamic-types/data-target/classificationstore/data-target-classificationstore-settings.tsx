@@ -19,7 +19,7 @@ import { StepTargetClassificationstoreVariantSelect } from './step-target-classi
 
 export function DataTargetClassificationstoreSettings (props: DynamicTypeDataTargetRenderProps): React.JSX.Element {
   const { classId, settings, transformationResultType, onChange } = props
-  const { options, isLocalized, isFetching, variants } = useClassificationStoreSettings(props)
+  const { options, isKeyLocalized, isKeyUnanswered, isFetching, variants } = useClassificationStoreSettings(props)
   const fieldName = settings?.fieldName
   const currentKeyId: string = settings?.keyId ?? ''
 
@@ -42,7 +42,7 @@ export function DataTargetClassificationstoreSettings (props: DynamicTypeDataTar
         />
       )}
 
-      {isLocalized && (
+      {(isKeyLocalized || isKeyUnanswered) && (
         <StepTargetAttributeLanguageSelect
           onChange={ (language) => { onChange({ ...settings, language }) } }
           value={ settings?.language }

@@ -37,13 +37,15 @@ final readonly class DataTypeHydrator implements DataTypeHydratorInterface
         ?string $keyId = null,
         ?string $groupName = null,
         ?string $keyName = null,
-        array $variants = []
+        array $variants = [],
+        ?bool $localized = null
     ): ClassificationStoreKeyNameResponse {
         return new ClassificationStoreKeyNameResponse(
             $keyId,
             $groupName,
             $keyName,
-            $variants
+            $variants,
+            $localized
         );
     }
 

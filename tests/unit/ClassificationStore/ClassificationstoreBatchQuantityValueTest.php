@@ -375,7 +375,10 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
             static::anything()
         );
 
-        $target = new ClassificationstoreBatch($logger);
+        $target = new ClassificationstoreBatch(
+            $logger,
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 
         $element = $this->object();
@@ -392,7 +395,10 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      */
     public function testSettingsAcceptNoUnitKeys(): void
     {
-        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
+        $target = new ClassificationstoreBatch(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             'unitSourceSelect' => 'static',
@@ -433,7 +439,10 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
 
     private function target(): ClassificationstoreBatch
     {
-        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
+        $target = new ClassificationstoreBatch(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 
         return $target;

@@ -34,10 +34,12 @@ jest.mock('../../../components/tabs/steps/advanced-mapping-modal/step-target/ste
 }))
 
 let mockVariants: string[] = []
+let mockKeyLocalized = false
+let mockKeyUnanswered = false
 
 jest.mock('./use-classification-store-settings', () => ({
   useClassificationStoreSettings: () => ({
-    attributes: [], options: [], isFetching: false, isLocalized: false, variants: mockVariants
+    attributes: [], options: [], isFetching: false, isLocalized: false, isKeyLocalized: mockKeyLocalized, isKeyUnanswered: mockKeyUnanswered, variants: mockVariants
   })
 }))
 
@@ -227,5 +229,40 @@ describe('the variant control of DataTargetClassificationstoreSettings', () => {
 
   it('adds nothing for a key that declares no variants', () => {
     expect(variantSelects({ fieldName: 'csField', keyId: 'grp:key' })).toHaveLength(0)
+  })
+})
+
+describe('the language control of DataTargetClassificationstoreSettings', () => {
+  afterEach(() => { mockKeyLocalized = false; mockKeyUnanswered = false })
+
+  const languageSelects = (settings: DataTargetConfig['settings']): ReactElement[] =>
+    elements(DataTargetClassificationstoreSettings({
+      classId: 'Product',
+      classFieldOptions: [],
+      // the field's own flag must not decide: the key does
+      isLocalized: !mockKeyLocalized,
+      settings,
+      transformationResultType: 'default',
+      onChange: jest.fn()
+    })).filter((element) => element.type === 'LanguageSelect')
+
+  it('is offered for a key that resolves localized', () => {
+    mockKeyLocalized = true
+
+    expect(languageSelects({ fieldName: 'csField', keyId: 'grp:key' })).toHaveLength(1)
+  })
+
+  it('is not offered for a key that does not resolve localized', () => {
+    expect(languageSelects({ fieldName: 'csField', keyId: 'grp:key' })).toHaveLength(0)
+  })
+
+  it('is kept while the answer for the selected key is missing', () => {
+    mockKeyUnanswered = true
+
+    expect(languageSelects({ fieldName: 'csField', keyId: 'grp:key' })).toHaveLength(1)
+  })
+
+  it('is not offered before a key is selected', () => {
+    expect(languageSelects({ fieldName: 'csField' })).toHaveLength(0)
   })
 })

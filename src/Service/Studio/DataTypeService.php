@@ -28,6 +28,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\UnitDataResponse;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -39,7 +40,8 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         private TransformationDataTypeService $transformationDataTypeService,
         private ClassificationStoreDataTypeService $classificationStoreDataTypeService,
         private DataTypeHydratorInterface $dataTypeHydrator,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private LocalizationResolver $localizationResolver
     ) {
     }
 
@@ -157,7 +159,8 @@ final readonly class DataTypeService implements DataTypeServiceInterface
             $response = $this->dataTypeHydrator->hydrateClassificationStoreKeyName(
                 groupName: $group->getName(),
                 keyName: $keyGroupRelation->getName(),
-                variants: $definition instanceof MultiValue ? $definition->getVariantNames() : []
+                variants: $definition instanceof MultiValue ? $definition->getVariantNames() : [],
+                localized: $this->isKeyLocalized($keyGroupRelation->getKeyId(), $classId, $fieldName)
             );
 
             $this->eventDispatcher->dispatch(
@@ -176,6 +179,17 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         );
 
         return $response;
+    }
+
+    private function isKeyLocalized(int $keyId, ?string $classId, ?string $fieldName): ?bool
+    {
+        $field = $classId !== null && $fieldName !== null
+            ? DataObject\ClassDefinition::getById($classId)?->getFieldDefinition($fieldName)
+            : null;
+
+        return $field instanceof DataObject\ClassDefinition\Data\Classificationstore
+            ? $this->localizationResolver->isKeyLocalized($keyId, $field)
+            : null;
     }
 
     private function findKeyGroupRelation(

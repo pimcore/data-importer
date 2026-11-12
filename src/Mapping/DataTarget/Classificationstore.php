@@ -94,7 +94,7 @@ final class Classificationstore implements DataTargetInterface, ConfigNameAwareI
                     $this->resolveDeclaration($relation)
                 ),
                 $data,
-                $this->language
+                $this->resolveLanguage($element, $this->fieldName, $keyId, $this->language)
             );
             $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$groupId => true]);
         } else {

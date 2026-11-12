@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 /**
@@ -69,6 +70,10 @@ final class TransformationDataTypeService
     public const COUNTRY_ARRAY = 'countryArray';
 
     public const CALCULATED = 'calculated';
+
+    public function __construct(private readonly LocalizationResolver $localizationResolver)
+    {
+    }
 
     private array $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -311,7 +316,7 @@ final class TransformationDataTypeService
                 $attributes[$definition->getName()] = [
                     'key' => $definition->getName(),
                     'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
-                    'localized' => $definition->isLocalized()
+                    'localized' => $this->localizationResolver->hasLocalizedKey($definition)
                 ];
             }
         }

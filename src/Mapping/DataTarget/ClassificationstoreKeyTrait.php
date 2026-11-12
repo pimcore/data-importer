@@ -25,6 +25,7 @@ use Pimcore\Model\DataObject\Classificationstore\GroupConfig\Listing as GroupCon
 use Pimcore\Model\DataObject\Classificationstore\KeyConfig\Listing as KeyConfigListing;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation\Listing as KeyGroupRelationListing;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Classificationstore\Service as ClassificationstoreService;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Data\MultiValue;
@@ -42,6 +43,8 @@ trait ClassificationstoreKeyTrait
 {
     use MappingApplicationScopeAwareTrait;
 
+    private const KEY_MESSAGE_PREFIX = 'Classification store key ';
+
     private ?string $configName = null;
 
     /**
@@ -57,8 +60,21 @@ trait ClassificationstoreKeyTrait
      */
     private array $identifierPairs = [];
 
-    public function __construct(private readonly ApplicationLogger $applicationLogger)
-    {
+    /**
+     * @var array<string, bool> whether a key is localized in a field, per `<KEY_ID>-<FIELD_NAME>`, held for the run
+     *                          so that one value does not cost one resolver call
+     */
+    private array $keyLocalization = [];
+
+    /**
+     * @var array<string, true> the `<KEY_ID>-<FIELD_NAME>` already warned about for lacking a language
+     */
+    private array $languageWarned = [];
+
+    public function __construct(
+        private readonly ApplicationLogger $applicationLogger,
+        private readonly LocalizationResolver $localizationResolver
+    ) {
     }
 
     public function setConfigName(string $configName): void
@@ -88,6 +104,45 @@ trait ClassificationstoreKeyTrait
         }
 
         return (int) $definition->getStoreId();
+    }
+
+    /**
+     * The language a value of the key is written under: the configured one where the key is localized in the
+     * field, none where it is not.
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function resolveLanguage(
+        ElementInterface $element,
+        string $fieldName,
+        int $keyId,
+        ?string $language
+    ): ?string {
+        $definition = $element instanceof Concrete ? $element->getClass()->getFieldDefinition($fieldName) : null;
+        if (!$definition instanceof ClassificationstoreDefinition) {
+            throw new InvalidConfigurationException('Field ' . $fieldName . ' is not a classification store.');
+        }
+
+        $cacheKey = $keyId . '-' . $fieldName;
+        $this->keyLocalization[$cacheKey] ??= $this->localizationResolver->isKeyLocalized($keyId, $definition);
+        if (!$this->keyLocalization[$cacheKey]) {
+            return null;
+        }
+
+        if ($language === null || $language === '') {
+            if (!isset($this->languageWarned[$cacheKey])) {
+                $this->languageWarned[$cacheKey] = true;
+                $this->logWarning(
+                    self::KEY_MESSAGE_PREFIX . $keyId . ' of field ' . $fieldName . ' is localized, but the '
+                    . 'mapping entry carries no language; its value is written to the default bucket, not under a '
+                    . 'language. Choose a language in the mapping entry.'
+                );
+            }
+
+            return null;
+        }
+
+        return $language;
     }
 
     /**
@@ -237,7 +292,7 @@ trait ClassificationstoreKeyTrait
 
         if ($variant !== null && !in_array($variant, $slot->declaration?->getVariantNames() ?? [], true)) {
             throw new InvalidConfigurationException(
-                'Classification store key ' . $slot->token . ' does not declare the variant `' . $variant . '`.'
+                self::KEY_MESSAGE_PREFIX . $slot->token . ' does not declare the variant `' . $variant . '`.'
             );
         }
 
@@ -293,7 +348,7 @@ trait ClassificationstoreKeyTrait
             $qualifiers[] = 'a list of ' . $valueCount . ' values';
         }
 
-        return 'Classification store key ' . $token . ': ' . implode(' and ', $qualifiers) . ' cannot be stored, '
+        return self::KEY_MESSAGE_PREFIX . $token . ': ' . implode(' and ', $qualifiers) . ' cannot be stored, '
             . 'the engine of the store has to be flipped to one that holds them. '
             . 'The first value was written as position 0 of the default variant.';
     }

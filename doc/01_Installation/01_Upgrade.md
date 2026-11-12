@@ -21,7 +21,10 @@ description: Breaking changes and migration steps per release.
   now fails the entry instead of addressing a key it never named: `1-2-3` and `1.5-2` both used to import into group 1
   key 2.
 - [Classification Store] A mapping entry writing to a non-localized classification store field no longer fails with a
-  `TypeError`; it writes to the default language.
+  `TypeError`; it writes to the default language, unless the key itself is localized.
+- [Classification Store] Changed: both classification store data targets write a key under the configured language where
+  that key is localized and without one where it is not, as the object editor reads it; the **Language** control follows
+  the keys' own flags rather than the field's alone.
 
 ## Upgrade to 2026.3.3
 

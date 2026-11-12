@@ -50,6 +50,12 @@ final class ClassificationStoreKeyNameResponse implements AdditionalAttributesIn
             example: ['metric', 'imperial']
         )]
         private readonly array $variants = [],
+        #[Property(
+            description: 'Whether the key is kept per language in the field it was asked for',
+            type: 'boolean',
+            nullable: true
+        )]
+        private readonly ?bool $localized = null,
     ) {
     }
 
@@ -71,5 +77,10 @@ final class ClassificationStoreKeyNameResponse implements AdditionalAttributesIn
     public function getVariants(): array
     {
         return $this->variants;
+    }
+
+    public function getLocalized(): ?bool
+    {
+        return $this->localized;
     }
 }

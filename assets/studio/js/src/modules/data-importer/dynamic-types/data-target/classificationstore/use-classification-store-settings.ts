@@ -15,6 +15,7 @@ import {
 import { splitKeyReference } from './classification-store-variant'
 import type { ClassAttribute } from '../../../types'
 import { useEffect, useMemo, useRef } from 'react'
+import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import { type DynamicTypeDataTargetRenderProps } from '../common/dynamic-type-data-target-abstract'
 
 export function useClassificationStoreSettings ({
@@ -27,6 +28,8 @@ export function useClassificationStoreSettings ({
     options: Array<{ value: string, label: string }>
     isFetching: boolean
     isLocalized: boolean
+    isKeyLocalized: boolean
+    isKeyUnanswered: boolean
     variants: string[]
   } {
   const { data, isFetching } = useBundleDataImporterClassificationstoreLoadAttributesQuery(
@@ -38,11 +41,23 @@ export function useClassificationStoreSettings ({
   const fieldName: string = settings?.fieldName ?? ''
 
   // currentData, not data: while another key is being fetched the previous key's variants must not be offered
-  const { currentData: keyName } = useBundleDataImporterClassificationstoreLoadKeyNameQuery(
+  const { currentData: keyName, isError: isKeyError, error: keyError } = useBundleDataImporterClassificationstoreLoadKeyNameQuery(
     { keyId: splitKeyReference(keyId).reference, classId: classId ?? '', fieldName },
-    { skip: keyId === '' || fieldName === '' }
+    { skip: keyId === '' || fieldName === '' || classId === undefined || classId === '' }
   )
   const variants: string[] = keyName?.variants ?? []
+  const isKeyLocalized: boolean = keyName?.localized === true
+  // A key is selected but its answer is not held yet (in flight, or not askable without a class): that is not
+  // "not localized", so the panel keeps the Language control rather than let an entry for a localized key be
+  // saved without one. A failed request is its own state: it has toasted, will not be retried, and the control
+  // is not offered on the strength of an answer that never came.
+  const isKeyUnanswered: boolean = keyId !== '' && fieldName !== '' && keyName === undefined && !isKeyError
+
+  useEffect(() => {
+    if (isKeyError && keyError !== undefined) {
+      trackError(new ApiError(keyError))
+    }
+  }, [isKeyError, keyError])
 
   const attributes: ClassAttribute[] = useMemo(() => {
     const rawAttributes = data?.attributes ?? []
@@ -78,5 +93,5 @@ export function useClassificationStoreSettings ({
     }
   }, [transformationResultType, settings?.keyId])
 
-  return { attributes, options, isFetching, isLocalized, variants }
+  return { attributes, options, isFetching, isLocalized, isKeyLocalized, isKeyUnanswered, variants }
 }
