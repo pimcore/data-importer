@@ -49,6 +49,8 @@ the version history, for example `Imported by ERP product feed`.
 - When **Disable Versioning** is enabled, or versioning is turned off for the element, no version is created and the
   note is not stored anywhere.
 - Elements unpublished by [Cleanup](#cleanup) are saved without the note.
+- Assets created or overwritten by the **Import Asset** operator of the transformation pipeline are saved without
+  the note.
 
 In the configuration the setting is stored as `processingConfig.versionNote`.
 
