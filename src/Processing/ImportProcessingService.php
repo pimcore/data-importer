@@ -76,11 +76,6 @@ final class ImportProcessingService
     private array $versioningConfigCache = [];
 
     /**
-     * @var array<string, array<string, string>>
-     */
-    private array $saveParametersCache = [];
-
-    /**
      * ImportProcessingService constructor.
      */
     public function __construct(
@@ -119,10 +114,6 @@ final class ImportProcessingService
                 $this->versioningConfigCache[$configName] = $config['processingConfig']['disableVersioning'] ?? false;
             }
 
-            $this->saveParametersCache[$configName] ??= ElementSaveParameters::fromProcessingConfig(
-                $config['processingConfig'] ?? []
-            );
-
             //init resolver and mapping
             if (empty($this->mappingConfigurationCache[$configName])) {
                 $this->mappingConfigurationCache[$configName] = $this->mappingConfigurationFactory->loadMappingConfiguration($configName, $config['mappingConfig']);
@@ -137,7 +128,14 @@ final class ImportProcessingService
             //process element
             if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
                 $data = json_decode($queueItem['data'], true);
-                $this->processElement($configName, $data, $resolver, $mapping, $userOwner);
+                $this->processElement(
+                    $configName,
+                    $data,
+                    $resolver,
+                    $mapping,
+                    $userOwner,
+                    $config['processingConfig'] ?? []
+                );
             } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
                 $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
             } else {
@@ -212,6 +210,7 @@ final class ImportProcessingService
      * @param array $importDataRow
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
+     * @param array<string, mixed> $processingConfig
      */
     private function processElement(
         string $configName,
@@ -219,6 +218,7 @@ final class ImportProcessingService
         Resolver $resolver,
         array $mapping,
         int $userOwner,
+        array $processingConfig,
     ) {
         $element = null;
         $currentMapping = null;
@@ -264,7 +264,7 @@ final class ImportProcessingService
                     $this->checkKey($element);
                     $element
                         ->setUserModification($userOwner)
-                        ->save($this->saveParametersCache[$configName] ?? []);
+                        ->save(ElementSaveParameters::fromProcessingConfig($processingConfig));
 
                     $event = new PostSaveEvent($configName, $importDataRow, $element);
                     $this->eventDispatcher->dispatch($event);

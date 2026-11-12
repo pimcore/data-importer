@@ -19,7 +19,6 @@ use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
-use Pimcore\Bundle\DataImporterBundle\Processing\ElementSaveParameters;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
@@ -62,6 +61,25 @@ class ImportVersionNoteTest extends Unit
         $this->processRow($element, ['versionNote' => self::VERSION_NOTE]);
     }
 
+    public function testChangedVersionNoteIsUsedByTheSameServiceInstance(): void
+    {
+        $service = $this->createService();
+
+        $firstElement = $this->createElement();
+        $firstElement->expects($this->once())
+            ->method('save')
+            ->with(['versionNote' => self::VERSION_NOTE])
+            ->willReturnSelf();
+        $this->processRow($firstElement, ['versionNote' => self::VERSION_NOTE], $service);
+
+        $secondElement = $this->createElement();
+        $secondElement->expects($this->once())
+            ->method('save')
+            ->with(['versionNote' => 'Changed note'])
+            ->willReturnSelf();
+        $this->processRow($secondElement, ['versionNote' => 'Changed note'], $service);
+    }
+
     public function testImportedElementIsSavedWithoutParametersWhenNoVersionNoteIsConfigured(): void
     {
         $element = $this->createElement();
@@ -101,7 +119,7 @@ class ImportVersionNoteTest extends Unit
         return $element;
     }
 
-    private function processRow(ElementInterface $element, array $processingConfig): void
+    private function createService(): ImportProcessingService
     {
         $service = new ImportProcessingService(
             new QueueService(),
@@ -113,15 +131,23 @@ class ImportVersionNoteTest extends Unit
         );
         $service->setLogger(new NullLogger());
 
+        return $service;
+    }
+
+    private function processRow(
+        ElementInterface $element,
+        array $processingConfig,
+        ?ImportProcessingService $service = null,
+    ): void {
+        $service ??= $this->createService();
         $resolver = $this->createResolverLoading($element);
         $configName = self::CONFIG_NAME;
 
         Closure::bind(function () use ($configName, $processingConfig, $resolver): void {
             $this->loggingConfigCache[$configName] = ['disableInfoLogs' => true, 'disableErrorLogs' => true];
             $this->versioningConfigCache[$configName] = $processingConfig['disableVersioning'] ?? false;
-            $this->saveParametersCache[$configName] = ElementSaveParameters::fromProcessingConfig($processingConfig);
 
-            $this->processElement($configName, ['id-1'], $resolver, [], 0);
+            $this->processElement($configName, ['id-1'], $resolver, [], 0, $processingConfig);
         }, $service, ImportProcessingService::class)();
     }
 
