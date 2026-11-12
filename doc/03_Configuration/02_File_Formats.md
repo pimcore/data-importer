@@ -121,6 +121,15 @@ For the full expression reference see [jmespath.org](https://jmespath.org) and t
 
 The interpreter uses [phpspreadsheet](https://phpspreadsheet.readthedocs.io/en/latest).
 
+Workbooks whose sheet holds more than 100,000 cells are read row by row with
+[OpenSpout](https://github.com/openspout/openspout) to keep memory usage low. Values arrive in the same form as for
+smaller workbooks, with three exceptions:
+
+- A date-formatted cell holding a date in January or February 1900 is read one day earlier.
+- Fractions of a second in date and time cells are dropped.
+- A formula that evaluates to an error, such as `=1/0`, is read as an empty value instead of the error text
+  (`#DIV/0!`).
+
 ## XML
 
 The interpreter expects a list of data elements at the configured XPath and reads every first-level child of a data
