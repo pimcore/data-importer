@@ -15,6 +15,7 @@
     "skipLibCheck": true,
     "declaration": true,
     "emitDeclarationOnly": true,
+    "rootDir": "./js",
     "outDir": "./dist/build/types",
     "declarationDir": "./dist/build/types"
   },
