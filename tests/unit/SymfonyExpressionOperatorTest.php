@@ -24,6 +24,8 @@ use Symfony\Component\ExpressionLanguage\SyntaxError;
 
 class SymfonyExpressionOperatorTest extends Unit
 {
+    private const SOURCE_VALUE = 'Demo Value';
+
     protected $tester;
 
     /**
@@ -39,9 +41,11 @@ class SymfonyExpressionOperatorTest extends Unit
 
     public function testEvaluatesExpressionAgainstSourceAttributes(): void
     {
-        $operator = $this->createOperator("attributes[0] == 'Demo Value' ? attributes[1] : null");
+        $operator = $this->createOperator(
+            sprintf("attributes[0] == '%s' ? attributes[1] : null", self::SOURCE_VALUE)
+        );
 
-        $this->assertSame('second', $operator->process(['Demo Value', 'second']));
+        $this->assertSame('second', $operator->process([self::SOURCE_VALUE, 'second']));
         $this->assertNull($operator->process(['other', 'second']));
     }
 
@@ -75,7 +79,7 @@ class SymfonyExpressionOperatorTest extends Unit
     {
         $operator = $this->createOperator("attributes[0] ?? 'fallback'");
 
-        $this->assertSame('Demo Value', $operator->process('Demo Value'));
+        $this->assertSame(self::SOURCE_VALUE, $operator->process(self::SOURCE_VALUE));
         $this->assertSame(42, $operator->process(42));
         $this->assertSame('fallback', $operator->process(null));
     }
@@ -142,9 +146,9 @@ class SymfonyExpressionOperatorTest extends Unit
         $element = new class() {
             public bool $deleted = false;
 
-            public function delete(): bool
+            public function delete(): void
             {
-                return $this->deleted = true;
+                $this->deleted = true;
             }
         };
         $operator = $this->createOperator($expression);
