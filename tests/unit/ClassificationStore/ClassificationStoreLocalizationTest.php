@@ -289,6 +289,42 @@ class ClassificationStoreLocalizationTest extends Unit
         $this->assertValue(null, $element, self::KEY_FALSE, $this->language, $field, $batch);
     }
 
+    public function testALocalizedKeyWrittenWithoutALanguageGoesToTheDefaultBucketAndWarnsOncePerKey(): void
+    {
+        $field = ClassificationStoreFixture::FIELD_NON_LOCALIZED;
+
+        foreach (self::TARGETS as $targetKind) {
+            $logger = $this->createMock(ApplicationLogger::class);
+            $logger->expects(static::once())->method('warning')->with(
+                static::stringContains('is localized, but the mapping entry carries no language')
+            );
+            $resolver = (new ClassificationStoreFixture())->localizationResolver();
+            $settings = ['fieldName' => $field];
+
+            if ($targetKind === self::TARGET_BATCH) {
+                $target = new ClassificationstoreBatch($logger, $resolver);
+                $target->setSettings($settings);
+                $assign = fn (Concrete $element, string $value) => $target->assignData(
+                    $element,
+                    [$this->reference(self::KEY_TRUE) => $value]
+                );
+            } else {
+                $target = new Classificationstore($logger, $resolver);
+                $target->setSettings($settings + ['keyId' => $this->reference(self::KEY_TRUE)]);
+                $assign = fn (Concrete $element, string $value) => $target->assignData($element, $value);
+            }
+
+            $first = $this->newElement();
+            $assign($first, 'one');
+            $second = $this->newElement();
+            $assign($second, 'two');
+
+            $this->assertValue('one', $first, self::KEY_TRUE, null, $field, $targetKind);
+            $this->assertValue(null, $first, self::KEY_TRUE, $this->language, $field, $targetKind);
+            $this->assertValue('two', $second, self::KEY_TRUE, null, $field, $targetKind);
+        }
+    }
+
     private function reference(string $keyName): string
     {
         return $this->groupId . '-' . $this->keyIds[$keyName];
