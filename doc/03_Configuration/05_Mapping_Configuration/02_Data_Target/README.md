@@ -86,7 +86,8 @@ Assigns the value to one key of a classification store field.
   `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>#<VARIANT>`, so one mapping entry per variant writes the variants of one key side
   by side. Without one, the default variant is written. Variants are written by this target only, not by
   `Classification Store Batch`.
-- **Language**: for localized keys, the language to write.
+- **Language**: shown once a key is selected and the key is localized. The key's own flag decides; a key that states
+  none uses the flag of the classification store field. For any other key the value is written without a language.
 - **Write If Source Is Empty**: enabled by default. Disable it to prevent an empty source value from clearing the key.
   The setting only takes effect once it has been saved for the mapping entry at least once — see
   [When the setting takes effect](#when-write-if-source-is-empty-takes-effect).
@@ -102,7 +103,8 @@ The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray`
 **Configuration options**
 
 - **Field Name**: the classification store field.
-- **Language**: for localized keys, the language to write.
+- **Language**: shown when the field is localized or any key of its store is. The language applies to the keys of the
+  entry that are localized, decided per key as for `Classification Store`; the other keys are written without a language.
 - **Write If Source Is Empty**: **disabled** by default, unlike every other data target. Enable it to let an empty
   source value clear the key instead of being dropped. The setting only takes effect once it has been saved for the
   mapping entry at least once — see [When the setting takes effect](#when-write-if-source-is-empty-takes-effect).

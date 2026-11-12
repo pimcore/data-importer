@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\Fixture;
 
+use Pimcore\Db;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore as ClassificationstoreDefinition;
@@ -21,6 +22,7 @@ use Pimcore\Model\DataObject\ClassDefinition\Layout\Panel;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Classificationstore\StoreConfig;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
@@ -37,6 +39,15 @@ final class ClassificationStoreFixture
     public const FIELD_NON_LOCALIZED = 'csField';
 
     public const FIELD_LOCALIZED = 'csLocalizedField';
+
+    /**
+     * Built here because this fixture is a plain class, not a Codeception test, and has no `$tester` to grab the
+     * core service with.
+     */
+    public function localizationResolver(): LocalizationResolver
+    {
+        return new LocalizationResolver(Db::get());
+    }
 
     /**
      * @param string|null $engine the engine a store created here is flipped to, null for the default one
@@ -81,13 +92,15 @@ final class ClassificationStoreFixture
     /**
      * @param Data|null $definition the field definition the key renders with; the key's own type is
      *                              used to build it back
+     * @param bool|null $localized the key's own flag, null for a key that states none
      */
     public function key(
         int $storeId,
         string $name,
         string $type,
         ?Data $definition = null,
-        ?string $identifier = null
+        ?string $identifier = null,
+        ?bool $localized = null
     ): KeyConfig
     {
         $keyConfig = KeyConfig::getByName($name, $storeId);
@@ -102,6 +115,7 @@ final class ClassificationStoreFixture
         $keyConfig->setEnabled(true);
         $keyConfig->setType($type);
         $keyConfig->setDefinition((string)json_encode($definition ?? new Input()));
+        $keyConfig->setLocalized($localized);
         if ($identifier !== null) {
             $keyConfig->setIdentifier($identifier);
         }

@@ -31,7 +31,8 @@ interface DataTypeHydratorInterface
         ?string $keyId = null,
         ?string $groupName = null,
         ?string $keyName = null,
-        array $variants = []
+        array $variants = [],
+        ?bool $localized = null
     ): ClassificationStoreKeyNameResponse;
 
     public function hydrateUnitData(array $unitList): UnitDataResponse;

@@ -183,7 +183,10 @@ class ClassificationStoreEmptyValueTest extends Unit
 
     public function testBothTargetsAcceptAConfigurationCarryingNoLanguage(): void
     {
-        $single = new Classificationstore($this->createMock(ApplicationLogger::class));
+        $single = new Classificationstore(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $single->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             'keyId' => $this->batchKey(),
@@ -192,7 +195,10 @@ class ClassificationStoreEmptyValueTest extends Unit
         $single->assignData($element, self::IMPORTED);
         static::assertSame(self::IMPORTED, $this->keyValue($element));
 
-        $batch = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
+        $batch = new ClassificationstoreBatch(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $batch->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
         $element = $this->object();
         $batch->assignData($element, [$this->batchKey() => self::IMPORTED]);
@@ -226,7 +232,10 @@ class ClassificationStoreEmptyValueTest extends Unit
      */
     public function testTheSingleKeyTargetRefusesAReferenceThatIsNotTwoHalves(): void
     {
-        $single = new Classificationstore($this->createMock(ApplicationLogger::class));
+        $single = new Classificationstore(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
 
         $this->expectException(InvalidConfigurationException::class);
         $single->setSettings([
@@ -240,7 +249,10 @@ class ClassificationStoreEmptyValueTest extends Unit
      */
     private function singleKeyTarget(array $settings): Classificationstore
     {
-        $target = new Classificationstore($this->createMock(ApplicationLogger::class));
+        $target = new Classificationstore(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings($settings + [
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             'keyId' => $this->batchKey(),
@@ -254,7 +266,10 @@ class ClassificationStoreEmptyValueTest extends Unit
      */
     private function batchTarget(array $settings): ClassificationstoreBatch
     {
-        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
+        $target = new ClassificationstoreBatch(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings($settings + ['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 
         return $target;

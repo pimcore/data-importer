@@ -182,7 +182,7 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
             $classificationStore,
             new ClassificationstoreKeySlot($reference->token, $groupId, $keyId, null, $declaration),
             $value,
-            $this->language
+            $this->resolveLanguage($element, $this->fieldName, $keyId, $this->language)
         );
         $classificationStore->setActiveGroups($classificationStore->getActiveGroups() + [$groupId => true]);
     }

@@ -119,7 +119,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
         );
 
         $element = $this->newElement();
-        $target = new ClassificationstoreBatch($logger);
+        $target = new ClassificationstoreBatch(
+            $logger,
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,
             'language' => $this->language,
@@ -215,7 +218,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
 
         DefinitionCache::clear(null);
         $element = $this->newElement();
-        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
+        $target = new ClassificationstoreBatch(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,
             'language' => $this->language,
@@ -274,7 +280,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
         string $keyName,
         string $suffix = ''
     ): Classificationstore {
-        $target = new Classificationstore($logger);
+        $target = new Classificationstore(
+            $logger,
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,
             'language' => $this->language,

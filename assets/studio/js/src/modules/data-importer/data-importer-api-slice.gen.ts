@@ -453,6 +453,8 @@ export type BundleDataImporterClassificationStoreKeyNameResponse = {
     keyName?: any;
     /** The variant names the key declares */
     variants?: string[];
+    /** Whether the key is kept per language in the field it was asked for */
+    localized?: any;
 };
 export type BundleDataImporterClassificationStoreKeysResponse = {
     /** AdditionalAttributes */

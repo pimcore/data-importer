@@ -328,7 +328,10 @@ class ClassificationstoreQualifiedValueTest extends Unit
 
     private function batchTarget(string $field = ClassificationStoreFixture::FIELD_LOCALIZED): ClassificationstoreBatch
     {
-        $target = new ClassificationstoreBatch($this->createMock(ApplicationLogger::class));
+        $target = new ClassificationstoreBatch(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings([
             'fieldName' => $field,
             'language' => $field === ClassificationStoreFixture::FIELD_LOCALIZED ? $this->language : null,
@@ -360,7 +363,10 @@ class ClassificationstoreQualifiedValueTest extends Unit
             return;
         }
 
-        $target = new Classificationstore($this->createMock(ApplicationLogger::class));
+        $target = new Classificationstore(
+            $this->createMock(ApplicationLogger::class),
+            (new ClassificationStoreFixture())->localizationResolver()
+        );
         $target->setSettings(['fieldName' => $field, 'keyId' => $reference . $suffix, 'language' => $language]);
         $target->assignData($element, $value);
     }
