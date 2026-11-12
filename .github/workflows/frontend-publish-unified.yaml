@@ -1,0 +1,127 @@
+name: Frontend build and publish
+
+on:
+  push:
+    branches:
+      - "[0-9]+.x"
+      - "[0-9]+.[0-9]+"
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+      target-release: ${{ steps.target.outputs.target-release }}
+      canary-tag: ${{ steps.target.outputs.canary-tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Check for frontend changes
+        id: check
+        shell: bash
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          publish=false
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            publish=true
+          elif [[ ! "${GITHUB_REF_NAME}" =~ ^[0-9]+\.(x|[0-9]+)$ ]]; then
+            # Canaries only from version branches (e.g. 2026.x, 2026.2, 2.4)
+            publish=false
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            publish=true
+          elif [[ -z "${BEFORE}" || "${BEFORE}" =~ ^0+$ ]]; then
+            # New branch: no base to diff against — publish rather than miss one
+            publish=true
+          elif ! git fetch --quiet --no-tags --depth=1 origin "${BEFORE}"; then
+            # Base commit unavailable (e.g. after a force push) — publish rather than miss one
+            publish=true
+          elif CHANGED="$(git diff --name-only "${BEFORE}" "${GITHUB_SHA}" -- assets/studio)"; then
+            if [[ -n "${CHANGED}" ]]; then
+              publish=true
+            fi
+          else
+            # Diff failed — publish rather than miss one
+            publish=true
+          fi
+          echo "Frontend changed / must publish: ${publish}"
+          echo "publish=${publish}" >> "$GITHUB_OUTPUT"
+
+      - name: Determine canary target release and tag
+        id: target
+        if: steps.check.outputs.publish == 'true'
+        shell: bash
+        run: |
+          # Tag runs: the reusable workflow derives the release version from the
+          # tag itself, so target-release is unused here — emit a non-empty
+          # placeholder so the publish job still runs. canary-tag is unused for
+          # tag/release publishes.
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "target-release=tag" >> "$GITHUB_OUTPUT"
+            echo "canary-tag=canary" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BRANCH="${GITHUB_REF_NAME}"
+          # One canary dist-tag per version branch (canary-2026.x, canary-2026.4, …)
+          echo "canary-tag=canary-${BRANCH}" >> "$GITHUB_OUTPUT"
+          # Canary base = next release of this branch's line; the branch name
+          # (e.g. "2026.x", "2026.2") is itself a valid semver range
+          PKG_NAME="$(node -p "require('./assets/studio/package.json').name" 2>/dev/null || true)"
+          LINE_LATEST="$([ -n "${PKG_NAME}" ] && npm view "${PKG_NAME}@${BRANCH}" version --json 2>/dev/null | node -p '(v=>{if(Array.isArray(v))v=v[v.length-1];return typeof v==="string"?v:""})(JSON.parse(require("fs").readFileSync(0,"utf8")))' 2>/dev/null || true)"
+          if [[ -z "${LINE_LATEST}" ]]; then
+            # Package not on npm yet: the line's latest release tag (e.g. v2026.3.4) is the base
+            LINE_LATEST="$(git ls-remote --tags --refs origin "v${BRANCH%.x}.*" 2>/dev/null | sed -nE 's#.*refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$#\1#p' | sort -V | tail -n 1 || true)"
+          fi
+          TARGET=""
+          if [[ "${LINE_LATEST}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            if [[ "${BRANCH}" == *.x ]]; then
+              TARGET="${BASH_REMATCH[1]}.$(( BASH_REMATCH[2] + 1 )).0"
+            else
+              TARGET="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$(( BASH_REMATCH[3] + 1 ))"
+            fi
+          elif [[ "${BRANCH}" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            # Version branch without a release yet (e.g. a new 2026.4): its first release is X.Y.0
+            TARGET="${BRANCH}.0"
+          elif [[ "${BRANCH}" =~ ^([0-9]+)\.x$ ]]; then
+            # Year branch without a release yet (e.g. a new 2027.x): the year starts with YYYY.1.0
+            TARGET="${BASH_REMATCH[1]}.1.0"
+          fi
+          if [[ -n "${TARGET}" ]]; then
+            echo "Canary target release for ${BRANCH}: ${TARGET}"
+          else
+            echo "::warning::Could not derive canary release line for ${BRANCH} (pkg=${PKG_NAME}); skipping canary publish."
+          fi
+          echo "target-release=${TARGET}" >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: gate
+    if: needs.gate.outputs.publish == 'true' && needs.gate.outputs.target-release != ''
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: write
+    uses: pimcore/workflows-collection-public/.github/workflows/reusable-frontend-publish-unified.yaml@main
+    with:
+      target-release: ${{ needs.gate.outputs.target-release }}
+      canary-tag: ${{ needs.gate.outputs.canary-tag }}
+      pre-publish-script: generate-types
+      build-output-path: './src/Resources/public/studio/'
+      commit-lint-output: false
+      commit-build-output: false
+    secrets:
+      SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
