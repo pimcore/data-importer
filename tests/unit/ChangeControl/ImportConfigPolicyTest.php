@@ -15,10 +15,16 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ChangeControl;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataHubBundle\Configuration;
+use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\SqlLoader;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\UploadLoader;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposedImportConfiguration;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
@@ -39,7 +45,7 @@ class ImportConfigPolicyTest extends Unit
             });
 
         $before = time();
-        (new ImportConfigPolicy($configurations, new LoaderSettingsCheck(new ServiceLocator([]))))->save('car-import', $configuration);
+        (new ImportConfigPolicy($configurations, new LoaderSettingsCheck(new ServiceLocator([])), $this->createStub(StoredConfigurationsInterface::class)))->save('car-import', $configuration);
 
         static::assertSame('car-import', $saved[0]);
         static::assertSame($configuration, $saved[1]);
@@ -53,6 +59,7 @@ class ImportConfigPolicyTest extends Unit
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
             new LoaderSettingsCheck(new ServiceLocator([])),
+            $this->createStub(StoredConfigurationsInterface::class),
         );
 
         static::assertSame('dataImporterDataObject', $policy->configType());
@@ -74,6 +81,7 @@ class ImportConfigPolicyTest extends Unit
             new LoaderSettingsCheck(new ServiceLocator([
                 'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
             ])),
+            $this->createStub(StoredConfigurationsInterface::class),
         );
 
         static::assertSame(
@@ -83,6 +91,106 @@ class ImportConfigPolicyTest extends Unit
         static::assertSame(
             [],
             $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]], false)
+        );
+    }
+
+    public function testAStoredLoaderTheMergedStateLeavesAloneIsNotJudged(): void
+    {
+        $loaderConfig = ['type' => 'asset', 'settings' => ['assetPath' => '']];
+        $policy = $this->policyStoring(['general' => ['name' => 'dealer-feed'], 'loaderConfig' => $loaderConfig]);
+
+        // approve judges the merged state: a description change must not fail on the untouched loader
+        static::assertSame([], $policy->problems([
+            'general' => ['name' => 'dealer-feed', 'description' => 'Cars from the dealer feed'],
+            'loaderConfig' => ['settings' => ['assetPath' => ''], 'type' => 'asset'],
+        ], false));
+    }
+
+    public function testAChangedStoredLoaderIsJudged(): void
+    {
+        $policy = $this->policyStoring([
+            'general' => ['name' => 'dealer-feed'],
+            'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/feeds/cars.csv']],
+        ]);
+
+        static::assertSame(['loaderConfig: Empty asset path.'], $policy->problems([
+            'general' => ['name' => 'dealer-feed'],
+            'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '']],
+        ], false));
+        // a create has nothing stored to compare with
+        static::assertSame(['loaderConfig: Empty asset path.'], $policy->problems([
+            'general' => ['name' => 'dealer-feed'],
+            'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '']],
+        ], true));
+    }
+
+    public function testSettingsALoaderReadsButTheStateLacksAreAProblem(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'sql' => static fn (): SqlLoader => new SqlLoader(new Filesystem()),
+            ])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
+
+        $problems = $policy->problems(['loaderConfig' => ['type' => 'sql', 'settings' => [
+            'connection' => 'default', 'select' => '*', 'from' => 'cars',
+        ]]], true);
+
+        static::assertCount(1, $problems);
+        static::assertStringStartsWith('loaderConfig: the "sql" loader cannot read its settings', $problems[0]);
+        static::assertStringContainsString('where', $problems[0]);
+    }
+
+    public function testASettingOfTheWrongTypeIsAProblem(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
+            ])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
+
+        static::assertSame(
+            ['loaderConfig: a setting of the "http" loader is missing or has the wrong type.'],
+            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['url' => ['example.com'], 'schema' => 'https://']]], true)
+        );
+    }
+
+    public function testAnUploadLoaderWithoutItsFileIsNoProblem(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'upload' => fn (): UploadLoader => new UploadLoader($this->createStub(FilesystemOperator::class)),
+            ])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
+
+        // the file can only be uploaded once the configuration exists
+        static::assertSame([], $policy->problems(['loaderConfig' => ['type' => 'upload', 'settings' => []]], true));
+    }
+
+    /**
+     * @param array<string, mixed> $stored
+     */
+    private function policyStoring(array $stored): ImportConfigPolicy
+    {
+        $configuration = $this->createStub(Configuration::class);
+        $configuration->method('getConfiguration')->willReturn($stored);
+        $configurations = $this->createStub(StoredConfigurationsInterface::class);
+        $configurations->method('find')->willReturnCallback(
+            static fn (string $name): ?Configuration => $name === $stored['general']['name'] ? $configuration : null
+        );
+
+        return new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'asset' => static fn (): AssetLoader => new AssetLoader(),
+            ])),
+            $configurations,
         );
     }
 }

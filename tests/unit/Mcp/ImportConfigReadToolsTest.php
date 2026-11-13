@@ -84,6 +84,7 @@ class ImportConfigReadToolsTest extends Unit
         $this->policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
             new LoaderSettingsCheck(new ServiceLocator([])),
+            $stored,
         );
     }
 
