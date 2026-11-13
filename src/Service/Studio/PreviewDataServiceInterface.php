@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Service\Studio;
 
 use Exception;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 use Pimcore\Bundle\DataImporterBundle\Schema\ColumnHeadersResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\DataPreviewResponse;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\EnvironmentException;
@@ -35,7 +36,7 @@ interface PreviewDataServiceInterface
      * @throws MaxFileSizeExceededException
      * @throws Exception
      */
-    public function uploadPreviewData(string $name, UploadedFile $file): void;
+    public function uploadPreviewData(string $name, UploadedFile $file, ?PreviewScope $scope = null): void;
 
     /**
      * @throws NotFoundHttpException
@@ -45,7 +46,7 @@ interface PreviewDataServiceInterface
      * @throws InvalidConfigurationException
      * @throws Exception
      */
-    public function copyPreviewData(string $name, ?array $currentConfig): void;
+    public function copyPreviewData(string $name, ?array $currentConfig, ?PreviewScope $scope = null): void;
 
     /**
      * @throws NotFoundHttpException
@@ -57,12 +58,17 @@ interface PreviewDataServiceInterface
     public function loadPreviewData(
         string $name,
         ?array $currentConfig,
-        int $recordNumber
+        int $recordNumber,
+        ?PreviewScope $scope = null
     ): DataPreviewResponse;
 
     /**
      * @throws NotFoundHttpException
      * @throws ForbiddenException
      */
-    public function loadColumnHeaders(string $name, ?array $currentConfig): ColumnHeadersResponse;
+    public function loadColumnHeaders(
+        string $name,
+        ?array $currentConfig,
+        ?PreviewScope $scope = null,
+    ): ColumnHeadersResponse;
 }

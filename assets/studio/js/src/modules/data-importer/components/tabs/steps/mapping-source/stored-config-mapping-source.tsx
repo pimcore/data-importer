@@ -17,28 +17,43 @@ import {
   useBundleDataImporterConfigLoadTransformationResultQuery
 } from '../../../../data-importer-api-slice.gen'
 import { type BackendConfiguration } from '../../../../utils/transformers'
+import { usePreviewContext, usePreviewScope } from '../../../preview-scope'
 import { type MappingSource, MappingSourceContext } from './mapping-source'
 
 type StoredConfigQueries = Pick<MappingSource, 'useColumnHeadersQuery' | 'usePreviewQuery' | 'useTransformationResultTypeQuery' | 'useTransformationResultQuery'>
 
-export const storedConfigQueries = (name: string): StoredConfigQueries => ({
-  useColumnHeadersQuery: (request, options) => useBundleDataImporterConfigLoadColumnHeadersQuery(
-    { name, bundleDataImporterCopyPreviewParameters: request ?? {} },
-    { ...options, skip: options?.skip === true || request === undefined }
-  ),
-  usePreviewQuery: (request, options) => useBundleDataImporterConfigLoadPreviewQuery(
-    { name, bundleDataImporterLoadPreviewParameters: request ?? {} },
-    { ...options, skip: options?.skip === true || request === undefined }
-  ),
-  useTransformationResultTypeQuery: (request, options) => useBundleDataImporterConfigCalculateTransformationResultTypeQuery(
-    { name, bundleDataImporterCalculateTransformationResultTypeParameters: request ?? { currentConfig: {} } },
-    { ...options, skip: options?.skip === true || request === undefined }
-  ),
-  useTransformationResultQuery: (request, options) => useBundleDataImporterConfigLoadTransformationResultQuery(
-    { name, bundleDataImporterLoadPreviewParameters: request ?? {} },
-    { ...options, skip: options?.skip === true || request === undefined }
-  )
-})
+interface PreviewScopeParameters {
+  previewScope?: string
+  previewContext?: string
+}
+
+export const storedConfigQueries = (name: string, scope?: PreviewScopeParameters): StoredConfigQueries => {
+  // under a review every request reads the change set's preview data, not the live configuration's
+  const scoped = <T extends object>(parameters: T): T => ({
+    ...parameters,
+    ...(scope?.previewScope !== undefined && { previewScope: scope.previewScope }),
+    ...(scope?.previewContext !== undefined && { previewContext: scope.previewContext })
+  })
+
+  return {
+    useColumnHeadersQuery: (request, options) => useBundleDataImporterConfigLoadColumnHeadersQuery(
+      { name, bundleDataImporterCopyPreviewParameters: scoped(request ?? {}) },
+      { ...options, skip: options?.skip === true || request === undefined }
+    ),
+    usePreviewQuery: (request, options) => useBundleDataImporterConfigLoadPreviewQuery(
+      { name, bundleDataImporterLoadPreviewParameters: scoped(request ?? {}) },
+      { ...options, skip: options?.skip === true || request === undefined }
+    ),
+    useTransformationResultTypeQuery: (request, options) => useBundleDataImporterConfigCalculateTransformationResultTypeQuery(
+      { name, bundleDataImporterCalculateTransformationResultTypeParameters: scoped(request ?? { currentConfig: {} }) },
+      { ...options, skip: options?.skip === true || request === undefined }
+    ),
+    useTransformationResultQuery: (request, options) => useBundleDataImporterConfigLoadTransformationResultQuery(
+      { name, bundleDataImporterLoadPreviewParameters: scoped(request ?? {}) },
+      { ...options, skip: options?.skip === true || request === undefined }
+    )
+  }
+}
 
 export interface StoredConfigMappingSourceProps {
   configName: string
@@ -51,7 +66,12 @@ export interface StoredConfigMappingSourceProps {
  */
 export const StoredConfigMappingSource = ({ configName, children }: StoredConfigMappingSourceProps): React.JSX.Element => {
   const { data, isSuccess, requestId } = useBundleDataImporterConfigGetQuery({ name: configName })
-  const queries = useMemo(() => storedConfigQueries(configName), [configName])
+  const previewScope = usePreviewScope()
+  const previewContext = usePreviewContext()
+  const queries = useMemo(
+    () => storedConfigQueries(configName, { previewScope, previewContext }),
+    [configName, previewScope, previewContext]
+  )
   const configuration = data?.configuration as BackendConfiguration | undefined
 
   const source = useMemo((): MappingSource => ({

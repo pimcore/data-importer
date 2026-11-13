@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Schema;
 
 use OpenApi\Attributes\Property;
 use OpenApi\Attributes\Schema;
+use Pimcore\Bundle\DataImporterBundle\Preview\PreviewScope;
 
 /**
  * @internal
@@ -28,7 +29,8 @@ final readonly class CopyPreviewParameters
 {
     public function __construct(
         #[Property(
-            description: 'Optional unsaved in-progress configuration from the UI. When provided, the loader uses these settings instead of the saved configuration.',
+            description: 'Optional unsaved in-progress configuration from the UI. When provided, '
+                . 'the loader uses these settings instead of the saved configuration.',
             properties: [
                 new Property(property: 'general', type: 'object'),
                 new Property(property: 'loaderConfig', type: 'object'),
@@ -42,11 +44,28 @@ final readonly class CopyPreviewParameters
             nullable: true
         )]
         private ?array $currentConfig = null,
+        #[Property(
+            description: 'A change set under review: its preview data is kept beside the live '
+                . 'configuration\'s, and a configuration that is only proposed so far is accepted',
+            type: 'string',
+        )]
+        // a plain string, not ?string: the Studio codegen turns a nullable into `any`
+        private string $previewScope = '',
+        #[Property(
+            description: 'The context the change set is kept in, when its author keeps it in one',
+            type: 'string',
+        )]
+        private string $previewContext = '',
     ) {
     }
 
     public function getCurrentConfig(): ?array
     {
         return $this->currentConfig;
+    }
+
+    public function getPreviewScope(): ?PreviewScope
+    {
+        return PreviewScope::fromRequest($this->previewScope, $this->previewContext);
     }
 }

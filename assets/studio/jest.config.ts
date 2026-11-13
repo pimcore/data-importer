@@ -23,7 +23,8 @@ const transform: Config['transform'] = {
 const moduleNameMapper: Config['moduleNameMapper'] = {
   '^@pimcore/studio-ui-bundle$': '<rootDir>/js/test/__mocks__/studio-ui-bundle/index',
   '^@pimcore/studio-ui-bundle/(.+)$': '<rootDir>/js/test/__mocks__/studio-ui-bundle/$1',
-  '^@pimcore/data-hub$': '<rootDir>/js/test/__mocks__/data-hub/index'
+  '^@pimcore/data-hub$': '<rootDir>/js/test/__mocks__/data-hub/index',
+  '^@pimcore/change-control-bundle/(.+)$': '<rootDir>/js/test/__mocks__/change-control-bundle/$1'
 }
 
 const config: Config = {
