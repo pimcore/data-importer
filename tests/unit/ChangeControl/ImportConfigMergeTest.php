@@ -19,8 +19,10 @@ use Pimcore\Bundle\ChangeControlBundle\Merge\EditableDataMerge;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\ChangeControl\ConfigStateShape;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 
 /**
  * Approval merges a proposal over the configuration as stored then, against the state stored
@@ -66,6 +68,25 @@ class ImportConfigMergeTest extends Unit
         static::assertSame('xml', $merged['interpreterConfig']['type']);
     }
 
+    /** approving a switch to another loader stores the new loader's settings, not the old loader's path */
+    public function testApprovingALoaderSwitchStoresNoSettingOfThePreviousLoader(): void
+    {
+        $base = $this->stored();
+        $proposed = $this->propose($base, [
+            'loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']],
+        ]);
+        $delta = $this->merge->deltaOf($base, $proposed);
+
+        $merged = $this->merge->deepOverlay($base, $delta);
+
+        static::assertSame([], $this->merge->conflictsDeep($base, $base, $delta));
+        static::assertSame('http', $merged['loaderConfig']['type']);
+        static::assertSame('https://', $merged['loaderConfig']['settings']['schema']);
+        static::assertSame('example.com/cars.json', $merged['loaderConfig']['settings']['url']);
+        // Change Control marks a removed key with null; the old path itself is gone
+        static::assertNull($merged['loaderConfig']['settings']['assetPath'] ?? null);
+    }
+
     /** the mapping list is one value: a row edited meanwhile refuses a proposal changing another */
     public function testALaterEditOfAMappingRowRefusesAProposalChangingAnother(): void
     {
@@ -93,7 +114,10 @@ class ImportConfigMergeTest extends Unit
         $existing->method('getConfiguration')->willReturn($stored);
         $existing->method('getType')->willReturn(ImportConfigPolicy::CONFIG_TYPE);
 
-        $builder = new ImportConfigProposalBuilder(new ImportConfigVocabulary([]));
+        $builder = new ImportConfigProposalBuilder(
+            new ImportConfigVocabulary([]),
+            new LoaderSettingsCheck(new ServiceLocator([])),
+        );
 
         return $builder->build('dealer-feed', $document, $existing);
     }

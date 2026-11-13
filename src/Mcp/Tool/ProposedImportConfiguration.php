@@ -133,6 +133,9 @@ final class ProposedImportConfiguration
     /** a node whose keys belong to the type it configures, not to the document */
     private const string OPEN_NODE = 'settings';
 
+    /** sections made of a type and that type's settings */
+    private const array SWITCHABLE = ['loaderConfig', 'interpreterConfig'];
+
     /** sections with no fixed leaves: a list checked whole, and an ACL the editor writes */
     private const array OPEN_SECTIONS = ['mappingConfig', 'permissions'];
 
@@ -243,7 +246,8 @@ final class ProposedImportConfiguration
      * The proposal folded over the stored document, so a section the agent did not mention
      * keeps its value. Lists are replaced whole: merging them index by index would graft the
      * stored row's keys onto a row the agent rewrote, and leave a longer stored list's tail
-     * behind a shorter proposed one.
+     * behind a shorter proposed one. A section switched to another type starts from the
+     * proposed settings alone: the previous type's settings mean nothing to the new one.
      *
      * @param array<string, mixed> $stored
      * @param array<string, mixed> $proposed
@@ -252,10 +256,28 @@ final class ProposedImportConfiguration
      */
     public static function fold(array $stored, array $proposed): array
     {
+        foreach (self::SWITCHABLE as $section) {
+            $type = is_array($proposed[$section] ?? null) ? ($proposed[$section]['type'] ?? null) : null;
+            if (is_string($type) && is_array($stored[$section] ?? null) && $type !== ($stored[$section]['type'] ?? null)) {
+                unset($stored[$section][self::OPEN_NODE]);
+            }
+        }
+
+        return self::overlay($stored, $proposed);
+    }
+
+    /**
+     * @param array<string, mixed> $stored
+     * @param array<string, mixed> $proposed
+     *
+     * @return array<string, mixed>
+     */
+    private static function overlay(array $stored, array $proposed): array
+    {
         foreach ($proposed as $key => $value) {
             $current = $stored[$key] ?? null;
             $stored[$key] = is_array($value) && is_array($current) && !array_is_list($value) && !array_is_list($current)
-                ? self::fold($current, $value)
+                ? self::overlay($current, $value)
                 : $value;
         }
 

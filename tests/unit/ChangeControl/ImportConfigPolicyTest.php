@@ -17,7 +17,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ChangeControl;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposedImportConfiguration;
+use Symfony\Component\DependencyInjection\ServiceLocator;
+use Symfony\Component\Filesystem\Filesystem;
 
 class ImportConfigPolicyTest extends Unit
 {
@@ -35,7 +39,7 @@ class ImportConfigPolicyTest extends Unit
             });
 
         $before = time();
-        (new ImportConfigPolicy($configurations))->save('car-import', $configuration);
+        (new ImportConfigPolicy($configurations, new LoaderSettingsCheck(new ServiceLocator([]))))->save('car-import', $configuration);
 
         static::assertSame('car-import', $saved[0]);
         static::assertSame($configuration, $saved[1]);
@@ -46,7 +50,10 @@ class ImportConfigPolicyTest extends Unit
 
     public function testItNamesTheImportConfigurationKind(): void
     {
-        $policy = new ImportConfigPolicy($this->createStub(ConfigurationServiceInterface::class));
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([])),
+        );
 
         static::assertSame('dataImporterDataObject', $policy->configType());
         static::assertSame('data-importer-config', $policy->subjectType());
@@ -58,5 +65,24 @@ class ImportConfigPolicyTest extends Unit
         static::assertSame('', $policy->withheldReason());
         static::assertSame([], $policy->problems(['general' => []], true));
         static::assertSame([], $policy->summarize(['general' => []]));
+    }
+
+    public function testALoaderThatCannotRunIsAProblem(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
+            ])),
+        );
+
+        static::assertSame(
+            ['loaderConfig: Empty Schema.'],
+            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['url' => 'example.com/cars.json']]], false)
+        );
+        static::assertSame(
+            [],
+            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]], false)
+        );
     }
 }

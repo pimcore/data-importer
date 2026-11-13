@@ -17,9 +17,14 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Mcp;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposalRefusedException;
+use Symfony\Component\DependencyInjection\ServiceLocator;
+use Symfony\Component\Filesystem\Filesystem;
 
 class ImportConfigProposalBuilderTest extends Unit
 {
@@ -27,7 +32,10 @@ class ImportConfigProposalBuilderTest extends Unit
 
     protected function _before(): void
     {
-        $this->builder = new ImportConfigProposalBuilder(new ImportConfigVocabulary([]));
+        $this->builder = new ImportConfigProposalBuilder(
+            new ImportConfigVocabulary([]),
+            new LoaderSettingsCheck(new ServiceLocator([])),
+        );
     }
 
     /** a reviewed pipeline must not start running because nobody said otherwise */
@@ -116,7 +124,8 @@ class ImportConfigProposalBuilderTest extends Unit
     public function testATypeTheInstallationLacksIsRefused(): void
     {
         $builder = new ImportConfigProposalBuilder(
-            new ImportConfigVocabulary(['interpreter' => ['csv' => new \stdClass()]])
+            new ImportConfigVocabulary(['interpreter' => ['csv' => new \stdClass()]]),
+            new LoaderSettingsCheck(new ServiceLocator([])),
         );
 
         $this->expectException(ProposalRefusedException::class);
@@ -151,6 +160,80 @@ class ImportConfigProposalBuilderTest extends Unit
             'dealer-feed',
             ['processingConfig' => ['doDeltaCheck' => true]],
             $this->stored($this->complete())
+        );
+    }
+
+    public function testAnHttpLoaderWithoutItsSchemaIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('loaderConfig: Empty Schema.');
+        $this->withLoaders()->build(
+            'dealer-feed',
+            ['loaderConfig' => ['type' => 'http', 'settings' => ['url' => 'example.com/cars.json']]],
+            $this->stored($this->complete())
+        );
+    }
+
+    public function testAnHttpLoaderWithSchemaAndUrlIsProposed(): void
+    {
+        $state = $this->withLoaders()->build(
+            'dealer-feed',
+            ['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]],
+            $this->stored($this->complete())
+        );
+
+        static::assertSame('http', $state['loaderConfig']['type']);
+        static::assertSame('https://', $state['loaderConfig']['settings']['schema']);
+    }
+
+    /** the asset loader's path means nothing to the HTTP loader, so it must not ride along */
+    public function testASwitchFromAssetToHttpCarriesNoAssetPath(): void
+    {
+        $state = $this->withLoaders()->build(
+            'dealer-feed',
+            ['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]],
+            $this->stored($this->complete())
+        );
+
+        static::assertSame(
+            ['schema' => 'https://', 'url' => 'example.com/cars.json'],
+            $state['loaderConfig']['settings']
+        );
+    }
+
+    /** a loader stored without its settings is not the proposal's to refuse when it leaves it alone */
+    public function testAStoredLoaderTheProposalLeavesAloneIsNotJudged(): void
+    {
+        $stored = $this->complete();
+        $stored['loaderConfig']['settings']['assetPath'] = '';
+
+        $state = $this->withLoaders()->build(
+            'dealer-feed',
+            ['general' => ['description' => 'Cars from the dealer feed']],
+            $this->stored($stored)
+        );
+
+        static::assertSame('Cars from the dealer feed', $state['general']['description']);
+    }
+
+    public function testANewConfigurationWithALoaderThatCannotRunIsRefused(): void
+    {
+        $document = $this->complete();
+        $document['loaderConfig']['settings'] = [];
+
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('loaderConfig: Empty asset path.');
+        $this->withLoaders()->build('dealer-feed', $document, null);
+    }
+
+    private function withLoaders(): ImportConfigProposalBuilder
+    {
+        return new ImportConfigProposalBuilder(
+            new ImportConfigVocabulary([]),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'asset' => static fn (): AssetLoader => new AssetLoader(),
+                'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
+            ])),
         );
     }
 

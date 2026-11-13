@@ -41,8 +41,10 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
         'permissions' => ['permissions'],
     ];
 
-    public function __construct(private ConfigurationServiceInterface $configurations)
-    {
+    public function __construct(
+        private ConfigurationServiceInterface $configurations,
+        private LoaderSettingsCheck $loaderSettings,
+    ) {
     }
 
     public function configType(): string
@@ -87,7 +89,7 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
 
     public function problems(array $state, bool $isNew): array
     {
-        return [];
+        return $this->loaderSettings->problems($state);
     }
 
     public function summarize(array $configuration): array

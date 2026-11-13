@@ -21,6 +21,7 @@ use function json_decode;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\ConfigDocument;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use function sprintf;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
@@ -33,8 +34,10 @@ use Throwable;
  */
 final readonly class ImportConfigProposalBuilder
 {
-    public function __construct(private ImportConfigVocabulary $vocabulary)
-    {
+    public function __construct(
+        private ImportConfigVocabulary $vocabulary,
+        private LoaderSettingsCheck $loaderSettings,
+    ) {
     }
 
     /**
@@ -145,6 +148,15 @@ final readonly class ImportConfigProposalBuilder
         $unknownValues = ProposedImportConfiguration::unknownValues($state, $this->vocabulary->all());
         if ($unknownValues !== []) {
             throw new ProposalRefusedException(implode("\n", $unknownValues));
+        }
+
+        // a loader that cannot run fails the next import; a stored one nobody touches is not
+        // the proposal's to refuse
+        if ($existing === null || ($state['loaderConfig'] ?? null) !== ($stored['loaderConfig'] ?? null)) {
+            $loaderProblems = $this->loaderSettings->problems($state);
+            if ($loaderProblems !== []) {
+                throw new ProposalRefusedException(implode("\n", $loaderProblems));
+            }
         }
 
         // a change the import would ignore is not worth a reviewer's turn; a create is

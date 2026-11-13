@@ -24,7 +24,9 @@ use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\AdapterAvailabilityServiceInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Model\User;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Uid\Uuid;
 
 class ImportConfigRejectTest extends Unit
@@ -87,7 +89,7 @@ class ImportConfigRejectTest extends Unit
         $adapters->method('isEnabled')->willReturn(true);
 
         return new ConfigSubjectHandler(
-            new ImportConfigPolicy($configurations),
+            new ImportConfigPolicy($configurations, new LoaderSettingsCheck(new ServiceLocator([]))),
             $configurations,
             $storedConfigurations,
             $adapters,

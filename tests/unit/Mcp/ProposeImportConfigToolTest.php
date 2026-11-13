@@ -20,6 +20,7 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposeImportConfigTool;
@@ -34,6 +35,7 @@ use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Authenticator\Mcp\McpAccessTokenAuthenticator;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\UserInterface;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use UnexpectedValueException;
@@ -71,7 +73,10 @@ class ProposeImportConfigToolTest extends Unit
         static::assertTrue($recorded[1]['isNew']);
         static::assertSame('dealer-feed', $recorded[1]['subjectRef']);
         static::assertSame(ImportConfigPolicy::SUBJECT_TYPE, $recorded[1]['subjectType']);
-        $builder = new ImportConfigProposalBuilder(new ImportConfigVocabulary([]));
+        $builder = new ImportConfigProposalBuilder(
+            new ImportConfigVocabulary([]),
+            new LoaderSettingsCheck(new ServiceLocator([])),
+        );
         static::assertSame($builder->build('dealer-feed', $this->complete(), null), $recorded[1]['subjectState']);
         static::assertSame('dealer-feed', $this->payload($result)['name']);
     }
@@ -194,7 +199,10 @@ class ProposeImportConfigToolTest extends Unit
             new BoundSessionReferenceResolver($requests),
             $security,
             $errors,
-            new ImportConfigProposalBuilder(new ImportConfigVocabulary([])),
+            new ImportConfigProposalBuilder(
+                new ImportConfigVocabulary([]),
+                new LoaderSettingsCheck(new ServiceLocator([])),
+            ),
             $find,
         );
     }

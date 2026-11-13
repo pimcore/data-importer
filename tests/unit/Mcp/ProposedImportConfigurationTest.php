@@ -55,6 +55,41 @@ class ProposedImportConfigurationTest extends Unit
         static::assertSame([['label' => 'series', 'dataSourceIndex' => ['series']]], $folded['mappingConfig']);
     }
 
+    /** the previous loader's settings mean nothing to the new one and must not be stored with it */
+    public function testASwitchedLoaderTypeStartsFromTheProposedSettings(): void
+    {
+        $folded = ProposedImportConfiguration::fold($this->stored(), [
+            'loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']],
+        ]);
+
+        static::assertSame(
+            ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']],
+            $folded['loaderConfig']
+        );
+    }
+
+    public function testASwitchedInterpreterTypeStartsFromTheProposedSettings(): void
+    {
+        $stored = $this->stored();
+        $stored['interpreterConfig'] = ['type' => 'csv', 'settings' => ['delimiter' => ';', 'skipFirstRow' => true]];
+
+        $folded = ProposedImportConfiguration::fold($stored, ['interpreterConfig' => ['type' => 'json']]);
+
+        static::assertSame(['type' => 'json'], $folded['interpreterConfig']);
+    }
+
+    public function testASettingOfTheSameLoaderTypeFoldsOverTheOthers(): void
+    {
+        $stored = $this->stored();
+        $stored['loaderConfig']['settings']['extra'] = 'kept';
+
+        $folded = ProposedImportConfiguration::fold($stored, [
+            'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/import/trucks.json']],
+        ]);
+
+        static::assertSame(['assetPath' => '/import/trucks.json', 'extra' => 'kept'], $folded['loaderConfig']['settings']);
+    }
+
     public function testAPlainListIsAMappingList(): void
     {
         $rows = [['label' => 'a'], ['label' => 'b']];
