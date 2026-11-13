@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * This source file is available under the terms of the
@@ -12,59 +13,60 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage;
 
+use Pimcore\Helper\SymfonyExpression\ReadOnlyExpressionLanguage;
+use Pimcore\Helper\SymfonyExpression\ReadOnlyValueAdapterInterface;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
-use Symfony\Component\ExpressionLanguage\Node\GetAttrNode;
+use Symfony\Component\ExpressionLanguage\Node\BinaryNode;
 use Symfony\Component\ExpressionLanguage\Node\Node;
 use Symfony\Component\ExpressionLanguage\ParsedExpression;
-use Symfony\Component\ExpressionLanguage\SyntaxError;
 
 /**
  * Expression language used by the symfony expression operator. Functions can be contributed by
  * services tagged with `pimcore.datahub.data_importer.expression_language_provider`.
  *
- * Two parts of the Symfony expression syntax are rejected, at validation and at evaluation:
- * - the built-in `constant()` function, because it would expose internal PHP constants to import configurations
- * - method calls, because pipeline values can be live elements and the preview, which only requires read
- *   permission on the configuration, must not be able to modify or delete them
+ * Pipeline values can be live elements and the preview only requires read permission on the
+ * configuration, so expressions are evaluated against the read-only stand-ins of the core. On top of that:
+ * - `constant()` and `enum()`, which resolves its argument with `constant()`, are not registered at all,
+ *   so they are rejected when the configuration is validated and cannot expose internal PHP constants
+ * - ranges are limited in size
+ *
+ * @internal
  */
-class DataImporterExpressionLanguage extends ExpressionLanguage
+final class DataImporterExpressionLanguage extends ReadOnlyExpressionLanguage
 {
-    /**
-     * @param iterable<ExpressionFunctionProviderInterface> $providers
-     */
-    public function __construct(iterable $providers = [])
-    {
-        parent::__construct(null, $providers);
-    }
+    private const UNAVAILABLE_FUNCTIONS = ['constant', 'enum'];
 
     /**
-     * @throws SyntaxError when the expression is invalid or calls a method
+     * @param iterable<ExpressionFunctionProviderInterface> $providers
+     * @param iterable<ReadOnlyValueAdapterInterface> $valueAdapters
      */
+    public function __construct(iterable $providers = [], iterable $valueAdapters = [])
+    {
+        parent::__construct($providers, $valueAdapters);
+
+        foreach (self::UNAVAILABLE_FUNCTIONS as $functionName) {
+            unset($this->functions[$functionName]);
+        }
+    }
+
     public function parse(Expression|string $expression, array $names, int $flags = 0): ParsedExpression
     {
         $parsedExpression = parent::parse($expression, $names, $flags);
-        $this->rejectMethodCalls($parsedExpression->getNodes(), (string) $expression);
 
-        return $parsedExpression;
+        return new ParsedExpression((string) $parsedExpression, $this->limitRanges($parsedExpression->getNodes()));
     }
 
-    protected function registerFunctions(): void
+    private function limitRanges(Node $node): Node
     {
-        parent::registerFunctions();
-
-        unset($this->functions['constant']);
-    }
-
-    private function rejectMethodCalls(Node $node, string $expression): void
-    {
-        if ($node instanceof GetAttrNode && $node->attributes['type'] === GetAttrNode::METHOD_CALL) {
-            throw new SyntaxError('Method calls are not available', 0, $expression);
+        foreach ($node->nodes as $key => $childNode) {
+            $node->nodes[$key] = $this->limitRanges($childNode);
         }
 
-        foreach ($node->nodes as $childNode) {
-            $this->rejectMethodCalls($childNode, $expression);
-        }
+        $isUnlimitedRange = $node instanceof BinaryNode
+            && !$node instanceof LimitedRangeNode
+            && $node->attributes['operator'] === LimitedRangeNode::OPERATOR;
+
+        return $isUnlimitedRange ? new LimitedRangeNode($node->nodes['left'], $node->nodes['right']) : $node;
     }
 }

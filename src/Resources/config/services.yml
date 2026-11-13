@@ -202,3 +202,4 @@ services:
     Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage:
         arguments:
             $providers: !tagged_iterator pimcore.datahub.data_importer.expression_language_provider
+            $valueAdapters: !tagged_iterator pimcore.expression.read_only_value_adapter

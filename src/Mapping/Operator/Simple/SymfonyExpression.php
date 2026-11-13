@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * This source file is available under the terms of the
@@ -18,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
+use Throwable;
 
 /**
  * Evaluates a Symfony Expression Language expression against the source values of the mapping,
@@ -43,6 +45,9 @@ final class SymfonyExpression extends AbstractOperator
         $this->expression = trim((string) ($settings['expression'] ?? ''));
     }
 
+    /**
+     * @throws InvalidConfigurationException when the expression fails for the given input
+     */
     public function process(mixed $inputData, bool $dryRun = false): mixed
     {
         if ($this->expression === '') {
@@ -52,7 +57,15 @@ final class SymfonyExpression extends AbstractOperator
         // A mapping with a single source column hands over the bare value instead of a list.
         $attributes = is_array($inputData) ? $inputData : [$inputData];
 
-        return $this->expressionLanguage->evaluate($this->expression, [self::VARIABLE_NAME => $attributes]);
+        try {
+            return $this->expressionLanguage->evaluate($this->expression, [self::VARIABLE_NAME => $attributes]);
+        } catch (Throwable $exception) {
+            throw new InvalidConfigurationException(
+                sprintf('Symfony expression operator could not evaluate its expression: %s', $exception->getMessage()),
+                0,
+                $exception
+            );
+        }
     }
 
     /**

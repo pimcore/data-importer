@@ -18,9 +18,11 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\SymfonyExpression;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage;
+use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\LimitedRangeNode;
+use Pimcore\Helper\SymfonyExpression\ReadOnlyValueAdapterInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionFunction;
 use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
-use Symfony\Component\ExpressionLanguage\SyntaxError;
+use stdClass;
 
 class SymfonyExpressionOperatorTest extends Unit
 {
@@ -30,10 +32,17 @@ class SymfonyExpressionOperatorTest extends Unit
 
     /**
      * @param ExpressionFunctionProviderInterface[] $providers
+     * @param ReadOnlyValueAdapterInterface[] $valueAdapters
      */
-    private function createOperator(string $expression, array $providers = []): SymfonyExpression
-    {
-        $operator = new SymfonyExpression(new ApplicationLogger(), new DataImporterExpressionLanguage($providers));
+    private function createOperator(
+        string $expression,
+        array $providers = [],
+        array $valueAdapters = []
+    ): SymfonyExpression {
+        $operator = new SymfonyExpression(
+            new ApplicationLogger(),
+            new DataImporterExpressionLanguage($providers, $valueAdapters)
+        );
         $operator->setSettings(['expression' => $expression]);
 
         return $operator;
@@ -129,19 +138,37 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator->evaluateReturnType('string', 1);
     }
 
-    public function testMethodCallIsRejectedAsConfigurationError(): void
+    public function testEnumFunctionIsRejectedAsConfigurationError(): void
     {
-        $operator = $this->createOperator('attributes[0].delete()');
+        $operator = $this->createOperator("enum('PHP_VERSION')");
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Method calls are not available');
         $operator->evaluateReturnType('string', 1);
+    }
+
+    /**
+     * @dataProvider provideUnavailableFunctionExpressions
+     */
+    public function testUnavailableFunctionsAreNotEvaluated(string $expression): void
+    {
+        $operator = $this->createOperator($expression);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $operator->process([]);
+    }
+
+    public static function provideUnavailableFunctionExpressions(): array
+    {
+        return [
+            'constant' => ["constant('PHP_VERSION')"],
+            'enum' => ["enum('PHP_VERSION')"],
+        ];
     }
 
     /**
      * @dataProvider provideMethodCallExpressions
      */
-    public function testMethodCallIsNotExecuted(string $expression): void
+    public function testMethodsOfPipelineValuesAreNotExecuted(string $expression): void
     {
         $element = new class() {
             public bool $deleted = false;
@@ -156,7 +183,7 @@ class SymfonyExpressionOperatorTest extends Unit
         try {
             $operator->process($element, true);
             $this->fail('The method call was not rejected.');
-        } catch (SyntaxError) {
+        } catch (InvalidConfigurationException) {
             $this->assertFalse($element->deleted);
         }
     }
@@ -171,20 +198,117 @@ class SymfonyExpressionOperatorTest extends Unit
         ];
     }
 
-    public function testPublicPropertiesStayReadable(): void
+    public function testPropertiesOfPipelineValuesAreNotReadable(): void
     {
         $value = new class() {
             public string $name = 'Demo';
         };
 
-        $this->assertSame('Demo', $this->createOperator('attributes[0].name')->process($value));
+        $this->expectException(InvalidConfigurationException::class);
+        $this->createOperator('attributes[0].name')->process($value);
     }
 
-    public function testConstantFunctionIsDisabled(): void
+    public function testOnlyGettersOfValueAdaptersAreCallable(): void
     {
-        $operator = $this->createOperator("constant('PHP_VERSION')");
+        $value = new class() {
+            public bool $deleted = false;
 
-        $this->expectException(SyntaxError::class);
-        $operator->process([]);
+            public function getName(): string
+            {
+                return 'Demo';
+            }
+
+            public function delete(): void
+            {
+                $this->deleted = true;
+            }
+        };
+        $valueAdapter = new class($value) implements ReadOnlyValueAdapterInterface {
+            public function __construct(private readonly object $supportedValue)
+            {
+            }
+
+            public function supports(object $value): bool
+            {
+                return $value === $this->supportedValue;
+            }
+
+            public function getGetters(object $value): array
+            {
+                return ['getname' => static fn (): string => $value->getName()];
+            }
+        };
+
+        $this->assertSame(
+            'Demo',
+            $this->createOperator('attributes[0].getName()', [], [$valueAdapter])->process($value)
+        );
+
+        try {
+            $this->createOperator('attributes[0].delete()', [], [$valueAdapter])->process($value);
+            $this->fail('The method call was not rejected.');
+        } catch (InvalidConfigurationException) {
+            $this->assertFalse($value->deleted);
+        }
+    }
+
+    public function testPipelineValueIsPassedOnUnchanged(): void
+    {
+        $value = new stdClass();
+
+        $this->assertSame($value, $this->createOperator('attributes[0]')->process($value));
+    }
+
+    /**
+     * @dataProvider provideFailingExpressions
+     */
+    public function testRuntimeErrorIsReportedAsConfigurationError(string $expression, mixed $inputData): void
+    {
+        $operator = $this->createOperator($expression);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('could not evaluate its expression');
+        $operator->process($inputData);
+    }
+
+    public static function provideFailingExpressions(): array
+    {
+        return [
+            'division by zero' => ['attributes[0] % attributes[1]', [1, 0]],
+            'unsupported operand types' => ['attributes[0] + 1', [['a']]],
+            'method call on a scalar' => ['attributes[0].getName()', 'Demo'],
+        ];
+    }
+
+    public function testRangeWithinLimitIsEvaluated(): void
+    {
+        $this->assertSame([1, 2, 3], $this->createOperator('1..attributes[0]')->process(3));
+        $this->assertSame(
+            LimitedRangeNode::MAX_ITEMS,
+            $this->createOperator('max(1..attributes[0])')->process(LimitedRangeNode::MAX_ITEMS)
+        );
+    }
+
+    /**
+     * @dataProvider provideOversizedRangeExpressions
+     */
+    public function testOversizedRangeIsRejected(string $expression, mixed $inputData): void
+    {
+        $operator = $this->createOperator($expression);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('A range can have');
+        $operator->process($inputData);
+    }
+
+    public static function provideOversizedRangeExpressions(): array
+    {
+        return [
+            'constant bounds' => ['1..999999999', null],
+            'bound from the source data' => ['1..attributes[0]', LimitedRangeNode::MAX_ITEMS + 1],
+            'descending' => ['attributes[0]..1', LimitedRangeNode::MAX_ITEMS + 1],
+            'nested in a function' => ['max(0..attributes[0])', '999999999'],
+            'non numeric bound' => ["'a'..999999999", null],
+        ];
     }
 }
