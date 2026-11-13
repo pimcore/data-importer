@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ImportAsset;
 use Pimcore\Tests\Support\Util\TestHelper;
 
@@ -40,9 +41,18 @@ class ImportAssetTest extends Unit
         TestHelper::cleanUp();
     }
 
+    /**
+     * Built directly (not via the container) so the rejection's error log doesn't require the
+     * ApplicationLoggerBundle's database table, which this test suite doesn't install.
+     */
+    private function createService(): ImportAsset
+    {
+        return new ImportAsset(new ApplicationLogger());
+    }
+
     public function testProcessRejectsLocalFilesystemPath()
     {
-        $service = $this->tester->grabService(ImportAsset::class);
+        $service = $this->createService();
         $service->setSettings(['parentFolder' => '/import-asset-test']);
 
         $this->assertNull($service->process($this->localFile, true));
@@ -50,7 +60,7 @@ class ImportAssetTest extends Unit
 
     public function testProcessRejectsFileScheme()
     {
-        $service = $this->tester->grabService(ImportAsset::class);
+        $service = $this->createService();
         $service->setSettings(['parentFolder' => '/import-asset-test']);
 
         $this->assertNull($service->process('file://' . $this->localFile, true));
@@ -58,7 +68,7 @@ class ImportAssetTest extends Unit
 
     public function testProcessRejectsOtherStreamWrapperSchemes()
     {
-        $service = $this->tester->grabService(ImportAsset::class);
+        $service = $this->createService();
         $service->setSettings(['parentFolder' => '/import-asset-test']);
 
         $data = $service->process([
