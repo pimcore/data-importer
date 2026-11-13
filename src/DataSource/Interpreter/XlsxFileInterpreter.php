@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\BaseReader;
 use PhpOffice\PhpSpreadsheet\RichText\RichText;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -186,6 +187,9 @@ final class XlsxFileInterpreter extends AbstractInterpreter
     private function getWorksheetInfo(string $path): ?array
     {
         $reader = IOFactory::createReaderForFile($path);
+        if (!$reader instanceof BaseReader) {
+            return null;
+        }
 
         foreach ($reader->listWorksheetInfo($path) as $worksheetInfo) {
             if ($worksheetInfo['worksheetName'] === $this->sheetName) {
