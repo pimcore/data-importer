@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { Form, type FormInstance } from 'antd'
-import { cleanup, render, renderHook, screen } from '@testing-library/react'
+import { act, cleanup, render, renderHook, screen } from '@testing-library/react'
 import { type DynamicTypeResolverRenderProps } from '../../../../dynamic-types/resolver/common/dynamic-type-resolver-abstract'
 import { IdLoadingStrategyResolverSettings } from '../../../../dynamic-types/resolver/loading-strategy/id/id-loading-strategy-resolver-settings'
 import { PathLoadingStrategyResolverSettings } from '../../../../dynamic-types/resolver/loading-strategy/path/path-loading-strategy-resolver-settings'
@@ -42,6 +42,7 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => {
   return {
     Form,
     Space: Children,
+    Text: Children,
     FormKit: { Panel: ({ children, title }: { children?: React.ReactNode, title?: string }) => <section aria-label={ title }>{ children }</section> },
     Select: ({ disabled }: { disabled?: boolean }) => (
       <select
@@ -64,7 +65,11 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => {
     )
   }
 })
-jest.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+jest.mock('@pimcore/studio-ui-bundle/app', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: { column: string, field: string }) => values === undefined ? key : `${key}: ${values.column}, ${values.field}`
+  })
+}))
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en', 'de'] }) }))
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({
   FieldWidthProvider: ({ children }: { children: React.ReactNode }) => <>{ children }</>,
@@ -130,29 +135,46 @@ const Host = ({ loadingStrategy, locked, form, formDisabled }: { loadingStrategy
   </Form>
 )
 
+const lockedSentence = (column: string, field: string): string => `data-importer.resolver.loading-strategy.locked: ${column}, ${field}`
+
 const field = (name: string): HTMLInputElement | HTMLSelectElement => screen.getByLabelText<HTMLInputElement | HTMLSelectElement>(name, { exact: true })
 
 afterEach(cleanup)
 
 describe('ResolverStep', () => {
-  it.each(['id', 'path'])('disables the loading strategy and its column with the lock (%s)', async (strategy) => {
-    render(<Host
-      loadingStrategy={ strategy }
-      locked
-           />)
-
-    expect(await screen.findByLabelText(loadingFields[1])).toBeTruthy()
-    expect(loadingFields.map(name => field(name).disabled)).toEqual([true, true])
-  })
-
-  it('disables every field of the attribute loading strategy with the lock', async () => {
+  it('says which column and field find a record under the lock, and shows none of the loading fields', async () => {
     render(<Host
       loadingStrategy="attribute"
       locked
            />)
 
-    expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
-    expect(attributeFields.map(name => field(name).disabled)).toEqual([true, true, true, true, true, true])
+    expect(await screen.findByText(lockedSentence('sku', 'Name (name)'))).toBeTruthy()
+    expect(attributeFields.filter(name => screen.queryByLabelText(name, { exact: true }) !== null)).toEqual([])
+  })
+
+  it.each(['id', 'path', 'notLoad'])('says no key is set under the lock while records do not load by an attribute (%s)', async (strategy) => {
+    render(<Host
+      loadingStrategy={ strategy }
+      locked
+           />)
+
+    expect(await screen.findByText('data-importer.resolver.loading-strategy.locked-no-key')).toBeTruthy()
+  })
+
+  it('follows the key the host sets while the fields are not there', async () => {
+    const { result } = renderHook(() => Form.useForm()[0])
+    render(<Host
+      form={ result.current }
+      loadingStrategy="notLoad"
+      locked
+           />)
+    expect(await screen.findByText('data-importer.resolver.loading-strategy.locked-no-key')).toBeTruthy()
+
+    act(() => {
+      result.current.setFieldValue(['resolverConfig', 'loadingStrategy'], { type: 'attribute', settings: { dataSourceIndex: 'item_no', attributeName: 'name' } })
+    })
+
+    expect(await screen.findByText(lockedSentence('item_no', 'Name (name)'))).toBeTruthy()
   })
 
   it.each(['id', 'path'])('keeps the loading strategy and its column editable without the lock (%s)', async (strategy) => {
@@ -188,7 +210,7 @@ describe('ResolverStep', () => {
       locked
            />)
 
-    expect(await screen.findByLabelText(attributeFields[3])).toBeTruthy()
+    expect(await screen.findByText(lockedSentence('sku', 'Name (name)'))).toBeTruthy()
     expect(result.current.getFieldsValue(true).resolverConfig.loadingStrategy).toEqual({ type: 'attribute', settings: loadingSettings })
   })
 

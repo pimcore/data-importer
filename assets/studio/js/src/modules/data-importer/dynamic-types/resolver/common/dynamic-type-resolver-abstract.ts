@@ -17,7 +17,6 @@ export interface DynamicTypeResolverRenderProps {
   languageOptions?: Array<{ value: string, label: string }>
   classOptions?: Array<{ value: string, label: string }>
   isLoadingClasses?: boolean
-  disabled?: boolean
 }
 
 export type ResolverGroup = 'loading' | 'createLocation' | 'updateLocation' | 'publishing'

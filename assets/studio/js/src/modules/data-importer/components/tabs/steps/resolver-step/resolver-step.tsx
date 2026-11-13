@@ -18,6 +18,7 @@ import { DataImporterPanel } from '../data-importer-panel/data-importer-panel'
 import { StepHeading } from '../step-heading/step-heading'
 import { filterByLabel } from '../../../../utils/select-utils'
 import { LoadingPanel } from './loading-panel'
+import { LockedLoadingPanel } from './locked-loading-panel'
 import { CreationPanel } from './creation-panel'
 import { LocationUpdatePanel } from './location-update-panel'
 import { PublishingPanel } from './publishing-panel'
@@ -28,7 +29,7 @@ import { type DynamicTypeResolverRegistry } from '../../../../dynamic-types/reso
 export interface ResolverStepProps {
   columnHeaderOptions: Array<{ value: string, label: string }>
   isActive: boolean
-  // a host that derives Element Loading from its own data shows it read-only
+  // a host that derives Element Loading from its own data shows what it derived
   isElementLoadingLocked?: boolean
 }
 
@@ -75,13 +76,15 @@ export const ResolverStep = ({ columnHeaderOptions, isActive, isElementLoadingLo
           </Form.Item>
         </DataImporterPanel>
 
-        <LoadingPanel
-          columnHeaderOptions={ columnHeaderOptions }
-          // never false: an explicit false would make the fields editable in a read-only form
-          disabled={ isElementLoadingLocked === true ? true : undefined }
-          languageOptions={ languageOptions }
-          registry={ registry }
-        />
+        {isElementLoadingLocked === true
+          ? <LockedLoadingPanel />
+          : (
+            <LoadingPanel
+              columnHeaderOptions={ columnHeaderOptions }
+              languageOptions={ languageOptions }
+              registry={ registry }
+            />
+            )}
 
         <CreationPanel
           classOptions={ classOptions }
