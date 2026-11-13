@@ -66,6 +66,7 @@ export interface ProcessingConfig {
   executionType?: 'sequential' | 'parallel'
   doArchiveImportFile?: boolean
   disableVersioning?: boolean
+  versionNote?: string
   idDataIndex?: string
   doDeltaCheck?: boolean
   cleanup?: CleanupConfig

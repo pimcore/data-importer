@@ -38,6 +38,22 @@ example during an initial data load run by several import configurations in sequ
 
 Versioning is restored after each element is processed, so the setting does not leak into other operations in the system.
 
+### Version Note
+
+A text that is stored as the note of the version created each time the import saves an element. Every data object the
+import creates or updates carries the note on that version, so imported changes can be told apart from manual edits in
+the version history, for example `Imported by ERP product feed`.
+
+- Leave the field empty to save versions without a note. This is the default.
+- The note is a fixed text. It is the same for every element and every run of the import configuration.
+- When **Disable Versioning** is enabled, or versioning is turned off for the element, no version is created and the
+  note is not stored anywhere.
+- Elements unpublished by [Cleanup](#cleanup) are saved without the note.
+- Assets created or overwritten by the **Import Asset** operator of the transformation pipeline are saved without
+  the note.
+
+In the configuration the setting is stored as `processingConfig.versionNote`.
+
 ## ID, Delta Check and Cleanup
 
 ### Data Index of ID Field
