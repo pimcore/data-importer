@@ -258,7 +258,8 @@ final class ProposedImportConfiguration
     {
         foreach (self::SWITCHABLE as $section) {
             $type = is_array($proposed[$section] ?? null) ? ($proposed[$section]['type'] ?? null) : null;
-            if (is_string($type) && is_array($stored[$section] ?? null) && $type !== ($stored[$section]['type'] ?? null)) {
+            $storedSection = $stored[$section] ?? null;
+            if (is_string($type) && is_array($storedSection) && $type !== ($storedSection['type'] ?? null)) {
                 unset($stored[$section][self::OPEN_NODE]);
             }
         }

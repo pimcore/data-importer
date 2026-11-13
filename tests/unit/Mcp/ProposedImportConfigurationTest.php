@@ -59,7 +59,10 @@ class ProposedImportConfigurationTest extends Unit
     public function testASwitchedLoaderTypeStartsFromTheProposedSettings(): void
     {
         $folded = ProposedImportConfiguration::fold($this->stored(), [
-            'loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']],
+            'loaderConfig' => [
+                'type' => 'http',
+                'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json'],
+            ],
         ]);
 
         static::assertSame(
@@ -87,7 +90,10 @@ class ProposedImportConfigurationTest extends Unit
             'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/import/trucks.json']],
         ]);
 
-        static::assertSame(['assetPath' => '/import/trucks.json', 'extra' => 'kept'], $folded['loaderConfig']['settings']);
+        static::assertSame(
+            ['assetPath' => '/import/trucks.json', 'extra' => 'kept'],
+            $folded['loaderConfig']['settings']
+        );
     }
 
     public function testAPlainListIsAMappingList(): void

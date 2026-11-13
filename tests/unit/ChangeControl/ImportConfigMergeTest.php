@@ -73,7 +73,10 @@ class ImportConfigMergeTest extends Unit
     {
         $base = $this->stored();
         $proposed = $this->propose($base, [
-            'loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']],
+            'loaderConfig' => [
+                'type' => 'http',
+                'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json'],
+            ],
         ]);
         $delta = $this->merge->deltaOf($base, $proposed);
 

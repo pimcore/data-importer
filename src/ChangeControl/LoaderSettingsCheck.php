@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
-use ErrorException;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -69,7 +68,7 @@ final readonly class LoaderSettingsCheck
 
         // a setting the loader reads but the proposal lacks fails the import just as an empty one
         set_error_handler(static function (int $severity, string $message): never {
-            throw new ErrorException($message, 0, $severity);
+            throw new LoaderSettingsReadException($message, 0, $severity);
         });
 
         try {
@@ -77,7 +76,7 @@ final readonly class LoaderSettingsCheck
             (clone $loader)->setSettings(is_array($settings) ? $settings : []);
         } catch (InvalidConfigurationException $e) {
             return ['loaderConfig: ' . $e->getMessage()];
-        } catch (ErrorException $e) {
+        } catch (LoaderSettingsReadException $e) {
             return [sprintf('loaderConfig: the "%s" loader cannot read its settings: %s.', $type, $e->getMessage())];
         } catch (TypeError) {
             return [sprintf('loaderConfig: a setting of the "%s" loader is missing or has the wrong type.', $type)];

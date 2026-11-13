@@ -45,7 +45,12 @@ class ImportConfigPolicyTest extends Unit
             });
 
         $before = time();
-        (new ImportConfigPolicy($configurations, new LoaderSettingsCheck(new ServiceLocator([])), $this->createStub(StoredConfigurationsInterface::class)))->save('car-import', $configuration);
+        $policy = new ImportConfigPolicy(
+            $configurations,
+            new LoaderSettingsCheck(new ServiceLocator([])),
+            $this->createStub(StoredConfigurationsInterface::class)
+        );
+        $policy->save('car-import', $configuration);
 
         static::assertSame('car-import', $saved[0]);
         static::assertSame($configuration, $saved[1]);
@@ -86,11 +91,20 @@ class ImportConfigPolicyTest extends Unit
 
         static::assertSame(
             ['loaderConfig: Empty Schema.'],
-            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['url' => 'example.com/cars.json']]], false)
+            $policy->problems(
+                ['loaderConfig' => ['type' => 'http', 'settings' => ['url' => 'example.com/cars.json']]],
+                false
+            )
         );
         static::assertSame(
             [],
-            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]], false)
+            $policy->problems(
+                ['loaderConfig' => [
+                    'type' => 'http',
+                    'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json'],
+                ]],
+                false
+            )
         );
     }
 
@@ -100,10 +114,11 @@ class ImportConfigPolicyTest extends Unit
         $policy = $this->policyStoring(['general' => ['name' => 'dealer-feed'], 'loaderConfig' => $loaderConfig]);
 
         // approve judges the merged state: a description change must not fail on the untouched loader
-        static::assertSame([], $policy->problems([
+        $problems = $policy->problems([
             'general' => ['name' => 'dealer-feed', 'description' => 'Cars from the dealer feed'],
             'loaderConfig' => ['settings' => ['assetPath' => ''], 'type' => 'asset'],
-        ], false));
+        ], false);
+        static::assertSame([], $problems);
     }
 
     public function testAChangedStoredLoaderIsJudged(): void
@@ -113,15 +128,13 @@ class ImportConfigPolicyTest extends Unit
             'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/feeds/cars.csv']],
         ]);
 
-        static::assertSame(['loaderConfig: Empty asset path.'], $policy->problems([
+        $emptied = [
             'general' => ['name' => 'dealer-feed'],
             'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '']],
-        ], false));
+        ];
+        static::assertSame(['loaderConfig: Empty asset path.'], $policy->problems($emptied, false));
         // a create has nothing stored to compare with
-        static::assertSame(['loaderConfig: Empty asset path.'], $policy->problems([
-            'general' => ['name' => 'dealer-feed'],
-            'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '']],
-        ], true));
+        static::assertSame(['loaderConfig: Empty asset path.'], $policy->problems($emptied, true));
     }
 
     public function testSettingsALoaderReadsButTheStateLacksAreAProblem(): void
@@ -155,7 +168,13 @@ class ImportConfigPolicyTest extends Unit
 
         static::assertSame(
             ['loaderConfig: a setting of the "http" loader is missing or has the wrong type.'],
-            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => ['url' => ['example.com'], 'schema' => 'https://']]], true)
+            $policy->problems(
+                ['loaderConfig' => [
+                    'type' => 'http',
+                    'settings' => ['url' => ['example.com'], 'schema' => 'https://'],
+                ]],
+                true
+            )
         );
     }
 

@@ -28,6 +28,10 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class ImportConfigProposalBuilderTest extends Unit
 {
+    private const string HTTP_SCHEMA = 'https://';
+
+    private const string CARS_URL = 'example.com/cars.json';
+
     private ImportConfigProposalBuilder $builder;
 
     protected function _before(): void
@@ -169,7 +173,7 @@ class ImportConfigProposalBuilderTest extends Unit
         $this->expectExceptionMessage('loaderConfig: Empty Schema.');
         $this->withLoaders()->build(
             'dealer-feed',
-            ['loaderConfig' => ['type' => 'http', 'settings' => ['url' => 'example.com/cars.json']]],
+            ['loaderConfig' => ['type' => 'http', 'settings' => ['url' => self::CARS_URL]]],
             $this->stored($this->complete())
         );
     }
@@ -178,12 +182,15 @@ class ImportConfigProposalBuilderTest extends Unit
     {
         $state = $this->withLoaders()->build(
             'dealer-feed',
-            ['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]],
+            ['loaderConfig' => [
+                'type' => 'http',
+                'settings' => ['schema' => self::HTTP_SCHEMA, 'url' => self::CARS_URL],
+            ]],
             $this->stored($this->complete())
         );
 
         static::assertSame('http', $state['loaderConfig']['type']);
-        static::assertSame('https://', $state['loaderConfig']['settings']['schema']);
+        static::assertSame(self::HTTP_SCHEMA, $state['loaderConfig']['settings']['schema']);
     }
 
     /** the asset loader's path means nothing to the HTTP loader, so it must not ride along */
@@ -191,12 +198,15 @@ class ImportConfigProposalBuilderTest extends Unit
     {
         $state = $this->withLoaders()->build(
             'dealer-feed',
-            ['loaderConfig' => ['type' => 'http', 'settings' => ['schema' => 'https://', 'url' => 'example.com/cars.json']]],
+            ['loaderConfig' => [
+                'type' => 'http',
+                'settings' => ['schema' => self::HTTP_SCHEMA, 'url' => self::CARS_URL],
+            ]],
             $this->stored($this->complete())
         );
 
         static::assertSame(
-            ['schema' => 'https://', 'url' => 'example.com/cars.json'],
+            ['schema' => self::HTTP_SCHEMA, 'url' => self::CARS_URL],
             $state['loaderConfig']['settings']
         );
     }

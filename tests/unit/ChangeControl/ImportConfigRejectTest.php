@@ -89,7 +89,11 @@ class ImportConfigRejectTest extends Unit
         $adapters->method('isEnabled')->willReturn(true);
 
         return new ConfigSubjectHandler(
-            new ImportConfigPolicy($configurations, new LoaderSettingsCheck(new ServiceLocator([])), $storedConfigurations),
+            new ImportConfigPolicy(
+                $configurations,
+                new LoaderSettingsCheck(new ServiceLocator([])),
+                $storedConfigurations
+            ),
             $configurations,
             $storedConfigurations,
             $adapters,
