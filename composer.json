@@ -22,7 +22,7 @@
     "mtdowling/jmespath.php": "^2.8",
     "nesbot/carbon": "^2.72 || ^3.8.4",
     "phpoffice/phpspreadsheet": "^4.3 || ^5.1",
-    "pimcore/data-hub": "dev-feat/change-control-proposals as 2026.99.0",
+    "pimcore/data-hub": "^2026.4",
     "pimcore/pimcore": "^2026.3",
     "pimcore/studio-backend-bundle": "^2026.3",
     "pimcore/studio-ui-bundle": "^2026.2.6",
