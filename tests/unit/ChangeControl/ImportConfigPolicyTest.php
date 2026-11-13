@@ -192,6 +192,37 @@ class ImportConfigPolicyTest extends Unit
         static::assertSame([], $policy->problems(['loaderConfig' => ['type' => 'upload', 'settings' => []]], true));
     }
 
+    public function testSettingsThatAreNoMapAreJudgedAsEmpty(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
+            ])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
+
+        static::assertSame(
+            ['loaderConfig: Empty URL.'],
+            $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => 'https://example.com']], true)
+        );
+    }
+
+    public function testATypeThatNamesNoLoaderIsLeftToTheVocabulary(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([
+                'other' => static fn (): Filesystem => new Filesystem(),
+            ])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
+
+        static::assertSame([], $policy->problems(['loaderConfig' => ['type' => 'unknown', 'settings' => []]], true));
+        static::assertSame([], $policy->problems(['loaderConfig' => ['type' => 'other', 'settings' => []]], true));
+        static::assertSame([], $policy->problems(['loaderConfig' => 'http'], true));
+    }
+
     /**
      * @param array<string, mixed> $stored
      */
