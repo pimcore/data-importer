@@ -168,6 +168,8 @@ data-importer.processing.execution-type.sequential: Sekwencyjne
 data-importer.processing.execution-type.parallel: Równoległe
 data-importer.processing.archive-import-file: Archiwizuj plik importu
 data-importer.processing.disable-versioning: Wyłącz wersjonowanie
+data-importer.processing.version-note: Notatka wersji
+data-importer.processing.version-note.tooltip: Notatka zapisywana przy wersji tworzonej za każdym razem, gdy import zapisuje obiekt danych. Pozostaw puste, aby zapisywać wersje bez notatki. Nie ma wpływu, dopóki wersjonowanie jest wyłączone.
 data-importer.processing.id-data-index: Indeks danych pola ID
 data-importer.processing.id-data-index.tooltip: Kolumna używana jako stały identyfikator dla kontroli delty i czyszczenia. Te opcje są dostępne tylko wtedy, gdy ustawiono indeks danych ID.
 data-importer.processing.id-data-index-placeholder: Wybierz kolumnę

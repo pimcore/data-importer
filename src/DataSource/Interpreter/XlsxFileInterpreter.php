@@ -419,6 +419,9 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
     private function getWorksheetInfo(string $path): ?array
     {
         $reader = IOFactory::createReaderForFile($path);
+        if (!$reader instanceof BaseReader) {
+            return null;
+        }
 
         // listWorksheetInfo() is declared on BaseReader, not on the IReader that
         // createReaderForFile() is typed to return. Every reader this bundle can be
