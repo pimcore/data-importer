@@ -105,7 +105,11 @@ class ImportAsset extends AbstractOperator
                 ];
                 $context = stream_context_create($options);
 
-                if ($assetData = @file_get_contents($fileUrl, false, $context)) {
+                if (!$this->isHttpUrl($fileUrl)) {
+                    $this->applicationLogger->error("Could not import asset data from `$fileUrl`: only http and https URLs are supported", [
+                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
+                    ]);
+                } elseif ($assetData = @file_get_contents($fileUrl, false, $context)) {
                     if ($asset === null) {
                         $parent = Asset\Service::createFolderByPath($this->parentFolderPath);
                         $filename = $this->getSafeFilename($this->parentFolderPath, $filename);
@@ -152,6 +156,17 @@ class ImportAsset extends AbstractOperator
         } else {
             return $assets;
         }
+    }
+
+    /**
+     * The value comes from the import data, so it must not reach PHP's other stream
+     * wrappers: a local path, file://, php:// or phar:// would copy a file of this
+     * server into an asset. PHP picks the wrapper by the part before "://", so the
+     * same prefix check decides which wrapper file_get_contents() uses.
+     */
+    private function isHttpUrl(string $url): bool
+    {
+        return preg_match('~^https?://~i', $url) === 1;
     }
 
     /**
