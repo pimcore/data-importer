@@ -14,6 +14,8 @@ on:
         branches:
             - "[0-9]+.[0-9]+"
             - "[0-9]+.x"
+            # TEMPORARY, REVERT BEFORE MERGING TO 2026.x
+            - "cs-store-improvements"
     # TEMPORARY, REVERT BEFORE MERGING TO 2026.x:
     # `pull_request` and not `pull_request_target`, because GitHub does not execute
     # the base branch's definition for pull_request_target here — it runs a version
