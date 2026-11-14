@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ChangeControl;
 
 use Codeception\Test\Unit;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
@@ -24,7 +25,6 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\SqlLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\UploadLoader;
-use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposedImportConfiguration;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
@@ -223,10 +223,35 @@ class ImportConfigPolicyTest extends Unit
         static::assertSame([], $policy->problems(['loaderConfig' => 'http'], true));
     }
 
+    public function testAStoredLoaderSettingThatChangesOnlyItsTypeIsJudged(): void
+    {
+        $settings = ['connection' => 'default', 'select' => '*', 'from' => 'cars', 'where' => ''];
+        $policy = $this->policyStoring(
+            ['general' => ['name' => 'dealer-feed'], 'loaderConfig' => ['type' => 'sql', 'settings' => $settings]],
+            ['sql' => static fn (): SqlLoader => new SqlLoader(new Filesystem())],
+        );
+
+        // a review amendment "" -> null never met the propose tool's checks, and the loader cannot read it
+        static::assertSame(
+            ['loaderConfig: a setting of the "sql" loader is missing or has the wrong type.'],
+            $policy->problems([
+                'general' => ['name' => 'dealer-feed'],
+                'loaderConfig' => ['type' => 'sql', 'settings' => ['where' => null] + $settings],
+            ], false)
+        );
+
+        // the same settings in another key order are still untouched
+        static::assertSame([], $policy->problems([
+            'general' => ['name' => 'dealer-feed'],
+            'loaderConfig' => ['settings' => array_reverse($settings), 'type' => 'sql'],
+        ], false));
+    }
+
     /**
      * @param array<string, mixed> $stored
+     * @param array<string, callable> $loaders
      */
-    private function policyStoring(array $stored): ImportConfigPolicy
+    private function policyStoring(array $stored, array $loaders = []): ImportConfigPolicy
     {
         $configuration = $this->createStub(Configuration::class);
         $configuration->method('getConfiguration')->willReturn($stored);
@@ -237,7 +262,7 @@ class ImportConfigPolicyTest extends Unit
 
         return new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            new LoaderSettingsCheck(new ServiceLocator($loaders + [
                 'asset' => static fn (): AssetLoader => new AssetLoader(),
             ])),
             $configurations,

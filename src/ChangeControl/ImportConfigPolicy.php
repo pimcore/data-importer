@@ -14,7 +14,11 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
+use function array_is_list;
+use function array_map;
+use function is_array;
 use function is_string;
+use function ksort;
 use Pimcore\Bundle\DataHubBundle\Proposal\ConfigProposalPolicyInterface;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
@@ -123,7 +127,22 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
             return true;
         }
 
-        // loose: a stored document and a merged one may order their keys differently
-        return ($state['loaderConfig'] ?? null) != ($stored->getConfiguration()['loaderConfig'] ?? null);
+        // key order differs between a stored and a merged document; a type change ("22" -> 22) still counts
+        return self::keySorted($state['loaderConfig'] ?? null)
+            !== self::keySorted($stored->getConfiguration()['loaderConfig'] ?? null);
+    }
+
+    private static function keySorted(mixed $value): mixed
+    {
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        $value = array_map(self::keySorted(...), $value);
+        if (!array_is_list($value)) {
+            ksort($value);
+        }
+
+        return $value;
     }
 }
