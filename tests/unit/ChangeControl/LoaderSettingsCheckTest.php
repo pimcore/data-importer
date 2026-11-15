@@ -21,6 +21,8 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 
 class LoaderSettingsCheckTest extends Unit
 {
+    private const array CONFIGURATION = ['loaderConfig' => ['type' => 'vendor.loader', 'settings' => ['a' => 1]]];
+
     private int $errorReporting;
 
     protected function _before(): void
@@ -39,7 +41,7 @@ class LoaderSettingsCheckTest extends Unit
             @trigger_error('a silenced notice', E_USER_NOTICE);
         });
 
-        static::assertSame([], $check->problems(['loaderConfig' => ['type' => 'vendor.loader', 'settings' => ['a' => 1]]]));
+        static::assertSame([], $check->problems(self::CONFIGURATION));
     }
 
     public function testADeprecationWhileReadingTheSettingsIsNoProblem(): void
@@ -48,7 +50,7 @@ class LoaderSettingsCheckTest extends Unit
             trigger_error('a deprecated option', E_USER_DEPRECATED);
         });
 
-        static::assertSame([], $check->problems(['loaderConfig' => ['type' => 'vendor.loader', 'settings' => ['a' => 1]]]));
+        static::assertSame([], $check->problems(self::CONFIGURATION));
     }
 
     public function testAWarningWhileReadingTheSettingsIsAProblem(): void
@@ -59,7 +61,7 @@ class LoaderSettingsCheckTest extends Unit
 
         static::assertSame(
             ['loaderConfig: the "vendor.loader" loader cannot read its settings: a missing setting.'],
-            $check->problems(['loaderConfig' => ['type' => 'vendor.loader', 'settings' => ['a' => 1]]])
+            $check->problems(self::CONFIGURATION)
         );
     }
 
@@ -72,7 +74,7 @@ class LoaderSettingsCheckTest extends Unit
 
         static::assertSame(
             ['loaderConfig: the "vendor.loader" loader cannot read its settings: a missing setting.'],
-            $check->problems(['loaderConfig' => ['type' => 'vendor.loader', 'settings' => ['a' => 1]]])
+            $check->problems(self::CONFIGURATION)
         );
     }
 
@@ -99,9 +101,12 @@ class LoaderSettingsCheckTest extends Unit
 
             public function cleanup(): void
             {
+                // nothing to clean up: the check never loads data
             }
         };
 
-        return new LoaderSettingsCheck(new ServiceLocator(['vendor.loader' => static fn (): DataLoaderInterface => $loader]));
+        return new LoaderSettingsCheck(
+            new ServiceLocator(['vendor.loader' => static fn (): DataLoaderInterface => $loader])
+        );
     }
 }

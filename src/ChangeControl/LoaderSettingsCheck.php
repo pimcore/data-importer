@@ -38,7 +38,8 @@ final readonly class LoaderSettingsCheck
     private const array SETTINGS_FILLED_AFTER_CREATE = ['upload'];
 
     /** what error_reporting() keeps inside an @-silenced expression */
-    private const int LEVELS_AT_SILENCE = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
+    private const int LEVELS_AT_SILENCE = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR
+        | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
     /**
      * @param ContainerInterface $loaders loader type => loader
