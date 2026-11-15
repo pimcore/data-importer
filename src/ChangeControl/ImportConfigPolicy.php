@@ -14,12 +14,9 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
-use function array_is_list;
-use function array_map;
-use function is_array;
 use function is_string;
-use function ksort;
 use Pimcore\Bundle\DataHubBundle\Proposal\ConfigProposalPolicyInterface;
+use Pimcore\Bundle\DataHubBundle\Proposal\ConfigStateNormalizerInterface;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposedImportConfiguration;
@@ -31,7 +28,7 @@ use function time;
  *
  * @internal
  */
-final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
+final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface, ConfigStateNormalizerInterface
 {
     public const string CONFIG_TYPE = 'dataImporterDataObject';
 
@@ -116,6 +113,16 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
         $this->configurations->updateConfiguration($name, $configuration, time());
     }
 
+    public function comparable(array $state): array
+    {
+        return MappingRowIds::dropped($state);
+    }
+
+    public function restored(array $approved, array $stored): array
+    {
+        return MappingRowIds::restored($approved, $stored);
+    }
+
     /**
      * @param array<string, mixed> $state
      */
@@ -127,22 +134,7 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
             return true;
         }
 
-        // key order differs between a stored and a merged document; a type change ("22" -> 22) still counts
-        return self::keySorted($state['loaderConfig'] ?? null)
-            !== self::keySorted($stored->getConfiguration()['loaderConfig'] ?? null);
-    }
-
-    private static function keySorted(mixed $value): mixed
-    {
-        if (!is_array($value)) {
-            return $value;
-        }
-
-        $value = array_map(self::keySorted(...), $value);
-        if (!array_is_list($value)) {
-            ksort($value);
-        }
-
-        return $value;
+        return KeySorted::of($state['loaderConfig'] ?? null)
+            !== KeySorted::of($stored->getConfiguration()['loaderConfig'] ?? null);
     }
 }

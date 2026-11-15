@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\ConfigDocument;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\MappingRowIds;
 use function sprintf;
 use Symfony\Component\Yaml\Yaml;
 use Throwable;
@@ -61,7 +62,8 @@ final readonly class ImportConfigProposalBuilder
 
         $this->assertRecordable($state, $stored, $existing);
 
-        return $this->withSubjectIdentity($state, $name, $existing);
+        // the subject reads its state without the editor's row ids, so the proposal is recorded so too
+        return MappingRowIds::dropped($this->withSubjectIdentity($state, $name, $existing));
     }
 
     /**

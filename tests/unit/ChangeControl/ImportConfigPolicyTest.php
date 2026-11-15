@@ -59,6 +59,24 @@ class ImportConfigPolicyTest extends Unit
         static::assertLessThanOrEqual(time(), $saved[2]);
     }
 
+    /** a review compares mapping rows without the ids the editor mints; the approval puts them back */
+    public function testAReviewComparesMappingRowsWithoutTheirIdsAndAnApprovalRestoresThem(): void
+    {
+        $policy = new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
+        $row = ['label' => 'VIN', 'dataSourceIndex' => ['vin']];
+        $stored = ['general' => ['name' => 'car-import'], 'mappingConfig' => [$row + ['mappingId' => 'm1']]];
+
+        static::assertSame(
+            ['general' => ['name' => 'car-import'], 'mappingConfig' => [$row]],
+            $policy->comparable($stored),
+        );
+        static::assertSame($stored, $policy->restored($policy->comparable($stored), $stored));
+    }
+
     public function testItNamesTheImportConfigurationKind(): void
     {
         $policy = new ImportConfigPolicy(

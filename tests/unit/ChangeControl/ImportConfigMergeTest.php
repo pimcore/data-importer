@@ -18,6 +18,8 @@ use Codeception\Test\Unit;
 use Pimcore\Bundle\ChangeControlBundle\Merge\EditableDataMerge;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\ChangeControl\ConfigStateShape;
+use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
+use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
@@ -103,6 +105,78 @@ class ImportConfigMergeTest extends Unit
         $conflicts = $this->merge->conflictsDeep($base, $main, $this->merge->deltaOf($base, $proposed));
 
         static::assertSame(['mappingConfig'], array_column($conflicts, 'path'));
+    }
+
+    /**
+     * The Studio editor's save of another field mints a mappingId on every row stored without
+     * one: the approval stores the proposed row, keeps the editor's edit and the minted ids.
+     */
+    public function testAnEditorSaveThatOnlyAddsRowIdsDoesNotRefuseTheApproval(): void
+    {
+        $policy = $this->policy();
+        $stored = $this->stored();
+        $base = $policy->comparable($stored);
+        $mappings = $stored['mappingConfig'];
+        $mappings[1]['dataTarget']['settings']['language'] = 'fr';
+        $proposed = $this->propose($stored, ['mappingConfig' => $mappings]);
+
+        $edited = $stored;
+        $edited['general']['description'] = 'Edited in the Studio editor';
+        $edited['mappingConfig'][0]['mappingId'] = 'm-vin';
+        $edited['mappingConfig'][1]['mappingId'] = 'm-model';
+        $main = $policy->comparable($edited);
+        $delta = $this->merge->deltaOf($base, $proposed);
+
+        static::assertSame([], $this->merge->conflictsDeep($base, $main, $delta));
+
+        $saved = $policy->restored($this->merge->deepOverlay($main, $delta), $edited);
+        static::assertSame('Edited in the Studio editor', $saved['general']['description']);
+        static::assertSame('fr', $saved['mappingConfig'][1]['dataTarget']['settings']['language']);
+        static::assertSame(['m-vin', 'm-model'], array_column($saved['mappingConfig'], 'mappingId'));
+    }
+
+    public function testAnEditorSaveThatChangesAMappingRowStillRefusesTheApproval(): void
+    {
+        $policy = $this->policy();
+        $stored = $this->stored();
+        $base = $policy->comparable($stored);
+        $mappings = $stored['mappingConfig'];
+        $mappings[1]['dataTarget']['settings']['language'] = 'fr';
+        $proposed = $this->propose($stored, ['mappingConfig' => $mappings]);
+
+        $edited = $stored;
+        $edited['mappingConfig'][0]['mappingId'] = 'm-vin';
+        $edited['mappingConfig'][1]['mappingId'] = 'm-model';
+        $edited['mappingConfig'][0]['label'] = 'VIN number';
+
+        $conflicts = $this->merge->conflictsDeep(
+            $base,
+            $policy->comparable($edited),
+            $this->merge->deltaOf($base, $proposed),
+        );
+
+        static::assertSame(['mappingConfig'], array_column($conflicts, 'path'));
+    }
+
+    /** a proposal that keeps the stored ids, as the agent is asked to, compares as one without them */
+    public function testAProposalIsRecordedWithoutTheStoredRowIds(): void
+    {
+        $stored = $this->stored();
+        $stored['mappingConfig'][0]['mappingId'] = 'm-vin';
+
+        $proposed = $this->propose($stored, ['mappingConfig' => $stored['mappingConfig']]);
+
+        static::assertArrayNotHasKey('mappingId', $proposed['mappingConfig'][0]);
+        static::assertSame([], $this->merge->deltaOf($this->policy()->comparable($stored), $proposed));
+    }
+
+    private function policy(): ImportConfigPolicy
+    {
+        return new ImportConfigPolicy(
+            $this->createStub(ConfigurationServiceInterface::class),
+            new LoaderSettingsCheck(new ServiceLocator([])),
+            $this->createStub(StoredConfigurationsInterface::class),
+        );
     }
 
     /**
