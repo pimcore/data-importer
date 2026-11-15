@@ -77,9 +77,12 @@ final class MappingRowIds
         }
 
         $storedIds = self::ids($storedRows);
-        $claims = array_count_values(self::ids($rows));
-        foreach (self::ids($rows) as $at => $id) {
-            if ($claims[$id] > 1 || !in_array($id, $storedIds, true)) {
+        $ids = self::ids($rows);
+        $claims = array_count_values($ids);
+        foreach ($rows as $at => $row) {
+            $id = $ids[$at] ?? null;
+            // an empty or non-string id would block restored() from giving the row its stored one
+            if (is_array($row) && ($id === null || $claims[$id] > 1 || !in_array($id, $storedIds, true))) {
                 unset($rows[$at][self::ID]);
             }
         }
