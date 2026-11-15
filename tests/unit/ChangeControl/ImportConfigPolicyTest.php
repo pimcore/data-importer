@@ -259,10 +259,13 @@ class ImportConfigPolicyTest extends Unit
         );
 
         // the same settings in another key order are still untouched
-        static::assertSame([], $policy->problems([
-            'general' => ['name' => 'dealer-feed'],
-            'loaderConfig' => ['settings' => array_reverse($settings), 'type' => 'sql'],
-        ], false));
+        static::assertSame(
+            [],
+            $policy->problems([
+                'general' => ['name' => 'dealer-feed'],
+                'loaderConfig' => ['settings' => array_reverse($settings), 'type' => 'sql'],
+            ], false)
+        );
     }
 
     /**

@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
+use function array_diff;
+use function array_keys;
 use function is_array;
 use function is_string;
 use function json_encode;
@@ -69,39 +71,14 @@ final class MappingRowIds
             return $approved;
         }
 
-        /** @var array<int|string, string> $free stored position => id not given out yet */
-        $free = [];
-        foreach ($storedRows as $at => $row) {
-            $id = is_array($row) ? ($row[self::ID] ?? null) : null;
-            if (is_string($id) && $id !== '') {
-                $free[$at] = $id;
-            }
-        }
-        foreach ($rows as $row) {
-            // an id the approved state still carries is that row's; never hand it out twice
-            $id = is_array($row) ? ($row[self::ID] ?? null) : null;
-            if (is_string($id) && $id !== '') {
-                foreach ($free as $at => $freeId) {
-                    if ($freeId === $id) {
-                        unset($free[$at]);
-                    }
-                }
-            }
-        }
-
-        $keys = [self::sameRow(...), self::sameSource(...)];
-        foreach ($keys as $key) {
+        // an id the approved state still carries is that row's; never hand it out twice
+        $free = array_diff(self::ids($storedRows), self::ids($rows));
+        foreach ([false, true] as $bySource) {
             foreach ($rows as $i => $row) {
-                if (!is_array($row) || isset($row[self::ID])) {
-                    continue;
-                }
-                foreach ($free as $at => $id) {
-                    if (is_array($storedRows[$at]) && $key($storedRows[$at]) === $key($row)) {
-                        $rows[$i][self::ID] = $id;
-                        unset($free[$at]);
-
-                        break;
-                    }
+                $at = self::match($row, $storedRows, $free, $bySource);
+                if ($at !== null) {
+                    $rows[$i][self::ID] = $free[$at];
+                    unset($free[$at]);
                 }
             }
         }
@@ -117,20 +94,56 @@ final class MappingRowIds
     }
 
     /**
-     * @param array<mixed> $row
+     * @param array<mixed> $rows
+     *
+     * @return array<int|string, string> position => id
      */
-    private static function sameRow(array $row): mixed
+    private static function ids(array $rows): array
     {
-        unset($row[self::ID]);
+        $ids = [];
+        foreach ($rows as $at => $row) {
+            $id = is_array($row) ? ($row[self::ID] ?? null) : null;
+            if (is_string($id) && $id !== '') {
+                $ids[$at] = $id;
+            }
+        }
 
-        return KeySorted::of($row);
+        return $ids;
     }
 
     /**
+     * The position of the free stored row an approved row without an id is, or null.
+     *
+     * @param array<mixed> $storedRows
+     * @param array<int|string, string> $free
+     */
+    private static function match(mixed $row, array $storedRows, array $free, bool $bySource): int|string|null
+    {
+        if (!is_array($row) || isset($row[self::ID])) {
+            return null;
+        }
+        $key = self::key($row, $bySource);
+        foreach (array_keys($free) as $at) {
+            if (is_array($storedRows[$at]) && self::key($storedRows[$at], $bySource) === $key) {
+                return $at;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The whole row without its id, or only its label and source columns.
+     *
      * @param array<mixed> $row
      */
-    private static function sameSource(array $row): string
+    private static function key(array $row, bool $bySource): mixed
     {
-        return json_encode([$row['label'] ?? null, $row['dataSourceIndex'] ?? null]) ?: '';
+        if ($bySource) {
+            return json_encode([$row['label'] ?? null, $row['dataSourceIndex'] ?? null]) ?: '';
+        }
+        unset($row[self::ID]);
+
+        return KeySorted::of($row);
     }
 }

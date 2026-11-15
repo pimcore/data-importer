@@ -19,16 +19,18 @@ use Pimcore\Bundle\DataImporterBundle\ChangeControl\MappingRowIds;
 
 class MappingRowIdsTest extends Unit
 {
+    private const string NOT_A_ROW = 'not a row';
+
     public function testTheRowIdsAreDroppedAndNothingElse(): void
     {
         $state = [
             'general' => ['name' => 'car-import', 'mappingId' => 'kept'],
-            'mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name'), 'not a row'],
+            'mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name'), self::NOT_A_ROW],
         ];
 
         static::assertSame([
             'general' => ['name' => 'car-import', 'mappingId' => 'kept'],
-            'mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Model', 'name'), 'not a row'],
+            'mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Model', 'name'), self::NOT_A_ROW],
         ], MappingRowIds::dropped($state));
     }
 
@@ -104,17 +106,17 @@ class MappingRowIdsTest extends Unit
     public function testAnIdTheApprovedStateCarriesStaysAndIsNotGivenToAnotherRow(): void
     {
         $stored = ['mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name', 'm2')]];
-        $approved = ['mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), 'not a row']];
+        $approved = ['mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), self::NOT_A_ROW]];
 
         static::assertSame(
-            ['mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), 'not a row']],
+            ['mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), self::NOT_A_ROW]],
             MappingRowIds::restored($approved, $stored),
         );
     }
 
     public function testAStoredRowThatIsNoArrayGivesNoId(): void
     {
-        $stored = ['mappingConfig' => ['not a row', $this->row('VIN', 'vin', 'm1')]];
+        $stored = ['mappingConfig' => [self::NOT_A_ROW, $this->row('VIN', 'vin', 'm1')]];
         $approved = ['mappingConfig' => [$this->row('Year', 'year'), $this->row('VIN', 'vin')]];
 
         static::assertSame(
