@@ -26,6 +26,8 @@ class LoaderSettingsCheckTest extends Unit
 {
     private const array CONFIGURATION = ['loaderConfig' => ['type' => 'vendor.loader', 'settings' => ['a' => 1]]];
 
+    private const string MISSING_SETTING = 'a missing setting';
+
     private int $errorReporting;
 
     protected function _before(): void
@@ -59,7 +61,7 @@ class LoaderSettingsCheckTest extends Unit
     public function testAWarningWhileReadingTheSettingsIsAProblem(): void
     {
         $check = $this->check(static function (): void {
-            trigger_error('a missing setting', E_USER_WARNING);
+            trigger_error(self::MISSING_SETTING, E_USER_WARNING);
         });
 
         static::assertSame(
@@ -72,7 +74,7 @@ class LoaderSettingsCheckTest extends Unit
     {
         error_reporting(0);
         $check = $this->check(static function (): void {
-            trigger_error('a missing setting', E_USER_WARNING);
+            trigger_error(self::MISSING_SETTING, E_USER_WARNING);
         });
 
         static::assertSame(
@@ -105,10 +107,12 @@ class LoaderSettingsCheckTest extends Unit
 
     public function testAnHttpLoaderWithSchemaAndUrlIsNoProblem(): void
     {
-        static::assertSame([], $this->realLoaders()->problems(['loaderConfig' => [
+        $configuration = ['loaderConfig' => [
             'type' => 'http',
             'settings' => ['schema' => 'https://', 'url' => 'example.com/feed.json'],
-        ]]));
+        ]];
+
+        static::assertSame([], $this->realLoaders()->problems($configuration));
     }
 
     public function testALoaderWithoutAKnownShapeKeepsItsOwnMessage(): void
@@ -122,7 +126,7 @@ class LoaderSettingsCheckTest extends Unit
     public function testAWarningOfAnHttpLoaderAlsoNamesTheSettingsItNeeds(): void
     {
         $check = $this->check(static function (): void {
-            trigger_error('a missing setting', E_USER_WARNING);
+            trigger_error(self::MISSING_SETTING, E_USER_WARNING);
         }, 'http');
 
         static::assertSame(
