@@ -188,10 +188,11 @@ class ImportConfigMergeTest extends Unit
         $base = $policy->comparable($stored);
         $saved = $policy->restored($this->merge->deepOverlay($base, $this->merge->deltaOf($base, $proposed)), $stored);
 
-        static::assertSame([['Mileage', 'm-model']], array_map(
+        $labelsAndIds = array_map(
             static fn (array $row): array => [$row['label'], $row['mappingId'] ?? null],
             $saved['mappingConfig'],
-        ));
+        );
+        static::assertSame([['Mileage', 'm-model']], $labelsAndIds);
     }
 
     private function policy(): ImportConfigPolicy

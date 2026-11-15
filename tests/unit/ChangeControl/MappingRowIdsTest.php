@@ -179,7 +179,12 @@ class MappingRowIdsTest extends Unit
         $stored = ['mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name', 'm2')]];
         $year = ['label' => 'Year', 'dataSourceIndex' => ['year'], 'mappingId' => 7];
         $tags = ['label' => 'Tags', 'dataSourceIndex' => ['tags'], 'mappingId' => ['m1']];
-        $proposed = ['mappingConfig' => [$this->row('VIN', 'vin', ''), $this->row('Mileage', 'mileage', 'm2'), $year, $tags]];
+        $proposed = ['mappingConfig' => [
+            $this->row('VIN', 'vin', ''),
+            $this->row('Mileage', 'mileage', 'm2'),
+            $year,
+            $tags,
+        ]];
 
         $recorded = MappingRowIds::recorded($proposed, $stored);
 
