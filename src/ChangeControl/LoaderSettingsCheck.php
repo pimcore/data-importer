@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
+use function error_reporting;
 use function in_array;
 use function is_array;
 use function is_string;
@@ -35,6 +36,9 @@ final readonly class LoaderSettingsCheck
 {
     /** its file can only be uploaded in the editor once the configuration exists */
     private const array SETTINGS_FILLED_AFTER_CREATE = ['upload'];
+
+    /** what error_reporting() keeps inside an @-silenced expression */
+    private const int LEVELS_AT_SILENCE = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
     /**
      * @param ContainerInterface $loaders loader type => loader
@@ -66,8 +70,16 @@ final readonly class LoaderSettingsCheck
 
         $settings = $loaderConfig['settings'] ?? [];
 
-        // a setting the loader reads but the proposal lacks fails the import just as an empty one
-        set_error_handler(static function (int $severity, string $message): never {
+        // a setting the loader reads but the proposal lacks fails the import just as an empty one;
+        // a deprecation or an error the loader silences with @ does not
+        $reported = error_reporting();
+        set_error_handler(static function (int $severity, string $message) use ($reported): bool {
+            $silenced = ($reported & ~self::LEVELS_AT_SILENCE) !== 0
+                && (error_reporting() & ~self::LEVELS_AT_SILENCE) === 0;
+            if ($silenced || ($severity & (E_DEPRECATED | E_USER_DEPRECATED)) !== 0) {
+                return false;
+            }
+
             throw new LoaderSettingsReadException($message, 0, $severity);
         });
 
