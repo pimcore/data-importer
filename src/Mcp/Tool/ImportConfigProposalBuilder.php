@@ -62,8 +62,9 @@ final readonly class ImportConfigProposalBuilder
 
         $this->assertRecordable($state, $stored, $existing);
 
-        // the subject reads its state without the editor's row ids, so the proposal is recorded so too
-        return MappingRowIds::dropped($this->withSubjectIdentity($state, $name, $existing));
+        // the subject reads its state without the editor's row ids; a changed mapping list keeps the
+        // stored ids it names, so the approval saves each row under its own
+        return MappingRowIds::recorded($this->withSubjectIdentity($state, $name, $existing), $stored);
     }
 
     /**

@@ -170,6 +170,30 @@ class ImportConfigMergeTest extends Unit
         static::assertSame([], $this->merge->deltaOf($this->policy()->comparable($stored), $proposed));
     }
 
+    /**
+     * A row the proposal rewrites keeps the id the agent sent: guessing by label, source or position
+     * would give it the id of a row the proposal deleted.
+     */
+    public function testARewrittenRowKeepsTheIdTheProposalSentWhenAnotherRowIsDeleted(): void
+    {
+        $policy = $this->policy();
+        $stored = $this->stored();
+        $stored['mappingConfig'][0]['mappingId'] = 'm-vin';
+        $stored['mappingConfig'][1]['mappingId'] = 'm-model';
+        $rewritten = $stored['mappingConfig'][1];
+        $rewritten['label'] = 'Mileage';
+        $rewritten['dataSourceIndex'] = ['mileage'];
+
+        $proposed = $this->propose($stored, ['mappingConfig' => [$rewritten]]);
+        $base = $policy->comparable($stored);
+        $saved = $policy->restored($this->merge->deepOverlay($base, $this->merge->deltaOf($base, $proposed)), $stored);
+
+        static::assertSame([['Mileage', 'm-model']], array_map(
+            static fn (array $row): array => [$row['label'], $row['mappingId'] ?? null],
+            $saved['mappingConfig'],
+        ));
+    }
+
     private function policy(): ImportConfigPolicy
     {
         return new ImportConfigPolicy(

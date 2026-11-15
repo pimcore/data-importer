@@ -106,12 +106,9 @@ class MappingRowIdsTest extends Unit
     public function testAnIdTheApprovedStateCarriesStaysAndIsNotGivenToAnotherRow(): void
     {
         $stored = ['mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name', 'm2')]];
-        $approved = ['mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), self::NOT_A_ROW]];
+        $rows = [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), self::NOT_A_ROW];
 
-        static::assertSame(
-            ['mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Chassis', 'vin', 'm1'), self::NOT_A_ROW]],
-            MappingRowIds::restored($approved, $stored),
-        );
+        static::assertSame(['mappingConfig' => $rows], MappingRowIds::restored(['mappingConfig' => $rows], $stored));
     }
 
     public function testAStoredRowThatIsNoArrayGivesNoId(): void
@@ -135,6 +132,56 @@ class MappingRowIdsTest extends Unit
         static::assertSame(
             ['mappingConfig' => [$this->row('Year', 'year'), $this->row('VIN', 'vin', 'm1')]],
             MappingRowIds::restored($approved, $stored),
+        );
+    }
+
+    public function testAnUnchangedMappingListIsRecordedWithoutIds(): void
+    {
+        $stored = ['mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name')]];
+        // the editor's minted ids alone are no change, whichever rows carry them
+        $proposed = [
+            'general' => [],
+            'mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name', 'm2')],
+        ];
+
+        static::assertSame(
+            ['general' => [], 'mappingConfig' => [$this->row('VIN', 'vin'), $this->row('Model', 'name')]],
+            MappingRowIds::recorded($proposed, $stored),
+        );
+    }
+
+    public function testAChangedMappingListKeepsEachStoredIdItNamesOnce(): void
+    {
+        $stored = ['mappingConfig' => [$this->row('VIN', 'vin', 'm1'), $this->row('Model', 'name', 'm2')]];
+        $proposed = ['mappingConfig' => [
+            $this->row('Mileage', 'mileage', 'm2'),
+            $this->row('Year', 'year', 'invented'),
+            $this->row('Price', 'price', 'm1'),
+            $this->row('Colour', 'colour', 'm1'),
+            self::NOT_A_ROW,
+        ]];
+
+        // an id no stored row has, or one two rows claim, identifies nothing
+        static::assertSame(
+            ['mappingConfig' => [
+                $this->row('Mileage', 'mileage', 'm2'),
+                $this->row('Year', 'year'),
+                $this->row('Price', 'price'),
+                $this->row('Colour', 'colour'),
+                self::NOT_A_ROW,
+            ]],
+            MappingRowIds::recorded($proposed, $stored),
+        );
+    }
+
+    public function testAStateWithoutAMappingListIsRecordedAsItIs(): void
+    {
+        $stored = ['mappingConfig' => [$this->row('VIN', 'vin', 'm1')]];
+
+        static::assertSame(['general' => []], MappingRowIds::recorded(['general' => []], $stored));
+        static::assertSame(
+            ['mappingConfig' => [$this->row('VIN', 'vin')]],
+            MappingRowIds::recorded(['mappingConfig' => [$this->row('VIN', 'vin', 'm1')]], ['mappingConfig' => 'none']),
         );
     }
 

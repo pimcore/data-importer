@@ -14,15 +14,18 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
+use function array_count_values;
 use function array_diff;
 use function array_keys;
+use function in_array;
 use function is_array;
 use function is_string;
 use function json_encode;
 
 /**
  * The Studio editor mints a `mappingId` for every mapping row stored without one on any save,
- * so a review compares mapping rows without it and an approval puts the stored ids back.
+ * so a review compares mapping rows without it and an approval puts the stored ids back. A
+ * proposal that changes the list keeps the stored ids its rows name: only they say which row is which.
  *
  * @internal
  */
@@ -52,6 +55,37 @@ final class MappingRowIds
         $state[self::SECTION] = $rows;
 
         return $state;
+    }
+
+    /**
+     * The proposed state as it is recorded: without ids while its mapping list equals the stored
+     * one without them, else each row keeps the stored id it alone names.
+     *
+     * @param array<string, mixed> $proposed
+     * @param array<string, mixed> $stored
+     *
+     * @return array<string, mixed>
+     */
+    public static function recorded(array $proposed, array $stored): array
+    {
+        $dropped = self::dropped($proposed);
+        $rows = $proposed[self::SECTION] ?? null;
+        $storedRows = $stored[self::SECTION] ?? null;
+        if (!is_array($rows) || !is_array($storedRows)
+            || KeySorted::of($dropped[self::SECTION]) === KeySorted::of(self::dropped($stored)[self::SECTION])) {
+            return $dropped;
+        }
+
+        $storedIds = self::ids($storedRows);
+        $claims = array_count_values(self::ids($rows));
+        foreach (self::ids($rows) as $at => $id) {
+            if ($claims[$id] > 1 || !in_array($id, $storedIds, true)) {
+                unset($rows[$at][self::ID]);
+            }
+        }
+        $proposed[self::SECTION] = $rows;
+
+        return $proposed;
     }
 
     /**
