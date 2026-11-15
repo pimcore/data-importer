@@ -34,7 +34,7 @@ unless the user asked for it to run; say so.
 | Section | What it holds |
 |---|---|
 | `general` | `name`, `type`, `active`, `description`, `group`. `active: false` means the import never runs. |
-| `loaderConfig` | where the file comes from — `{type, settings}`; type is `asset`, `sftp`, `http`, `upload`, `push` or `sql`. |
+| `loaderConfig` | where the file comes from — `{type, settings}`; type is `asset`, `sftp`, `http`, `upload`, `push` or `sql`. Switching the type replaces the settings. `http`: `{"schema": "https://", "url": "example.com/feed.json"}`, schema `https://` or `http://`, url without the scheme. |
 | `interpreterConfig` | how it is parsed — `{type, settings}`; type is `csv`, `json`, `xlsx`, `xml` or `sql`. |
 | `resolverConfig` | which object a row becomes — `loadingStrategy`, `createLocationStrategy`, `locationUpdateStrategy`, `publishingStrategy`, each `{type, settings}`. |
 | `processingConfig` | `executionType`, `idDataIndex`, `doDeltaCheck`, `cleanup: {doCleanup, strategy}`. Delta check and cleanup only work with an `idDataIndex`; `cleanup.strategy` only while `cleanup.doCleanup` is true — change the switch together with the setting. |

@@ -72,7 +72,11 @@ final readonly class ProposeImportConfigTool
             . 'your changes applied; anything you leave out keeps its current value. For a new one, '
             . 'send a complete document (copy a similar configuration and adjust it): it needs a '
             . 'loader, a file format, a target class and the resolver strategies; it starts inactive '
-            . 'unless active is set. Returns {proposalId, name}. The review widget is shown '
+            . 'unless active is set. loaderConfig is {"type": ..., "settings": {...}} with the '
+            . 'settings that loader type needs; changing the type replaces its settings. The HTTP '
+            . 'loader: {"type": "http", "settings": {"schema": "https://", "url": '
+            . '"example.com/feed.json"}}, schema "https://" or "http://", url the address without '
+            . 'its scheme. Returns {proposalId, name}. The review widget is shown '
             . 'automatically once the proposal succeeds; end your turn after a successful proposal '
             . 'and wait for the decision.',
         annotations: new ToolAnnotations(

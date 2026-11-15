@@ -16,6 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Mcp;
 
 use Closure;
 use Codeception\Test\Unit;
+use Mcp\Capability\Attribute\McpTool;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Configuration;
@@ -35,6 +36,7 @@ use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Authenticator\Mcp\McpAccessTokenAuthenticator;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\UserInterface;
+use ReflectionMethod;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -50,6 +52,18 @@ class ProposeImportConfigToolTest extends Unit
         if (!interface_exists(AgentSessionServiceInterface::class)) {
             static::markTestSkipped('Agent bundle not installed');
         }
+    }
+
+    public function testTheDescriptionShowsTheHttpLoaderShape(): void
+    {
+        $attribute = (new ReflectionMethod(ProposeImportConfigTool::class, 'execute'))
+            ->getAttributes(McpTool::class)[0]->newInstance();
+
+        static::assertStringContainsString(
+            '{"type": "http", "settings": {"schema": "https://", "url": "example.com/feed.json"}}',
+            $attribute->description
+        );
+        static::assertStringContainsString('url the address without its scheme', $attribute->description);
     }
 
     public function testAnUnknownNameIsProposedAsNewAndOnlyRecorded(): void

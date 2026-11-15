@@ -41,6 +41,12 @@ final readonly class LoaderSettingsCheck
     private const int LEVELS_AT_SILENCE = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR
         | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
+    /** a loader's own message names one setting; the agent needs the whole shape to fix it */
+    private const array SETTINGS_SHAPES = [
+        'http' => 'The "http" loader needs settings.schema ("https://" or "http://") and settings.url '
+            . '(the address without its scheme, e.g. "example.com/feed.json").',
+    ];
+
     /**
      * @param ContainerInterface $loaders loader type => loader
      */
@@ -88,15 +94,28 @@ final readonly class LoaderSettingsCheck
             // loaders are shared services: never configure the one the importer uses
             (clone $loader)->setSettings(is_array($settings) ? $settings : []);
         } catch (InvalidConfigurationException $e) {
-            return ['loaderConfig: ' . $e->getMessage()];
+            return [$this->withShape($type, 'loaderConfig: ' . $e->getMessage())];
         } catch (LoaderSettingsReadException $e) {
-            return [sprintf('loaderConfig: the "%s" loader cannot read its settings: %s.', $type, $e->getMessage())];
+            return [$this->withShape(
+                $type,
+                sprintf('loaderConfig: the "%s" loader cannot read its settings: %s.', $type, $e->getMessage())
+            )];
         } catch (TypeError) {
-            return [sprintf('loaderConfig: a setting of the "%s" loader is missing or has the wrong type.', $type)];
+            return [$this->withShape(
+                $type,
+                sprintf('loaderConfig: a setting of the "%s" loader is missing or has the wrong type.', $type)
+            )];
         } finally {
             restore_error_handler();
         }
 
         return [];
+    }
+
+    private function withShape(string $type, string $problem): string
+    {
+        $shape = self::SETTINGS_SHAPES[$type] ?? null;
+
+        return $shape === null ? $problem : $problem . ' ' . $shape;
     }
 }

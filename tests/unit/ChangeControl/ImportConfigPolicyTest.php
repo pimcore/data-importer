@@ -31,6 +31,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class ImportConfigPolicyTest extends Unit
 {
+    private const string HTTP_SHAPE = 'The "http" loader needs settings.schema ("https://" or "http://") and '
+        . 'settings.url (the address without its scheme, e.g. "example.com/feed.json").';
+
     public function testAnApprovedConfigurationIsSavedAsProposed(): void
     {
         $configuration = ['general' => ['name' => 'car-import'], 'interpreterConfig' => ['type' => 'csv']];
@@ -108,7 +111,7 @@ class ImportConfigPolicyTest extends Unit
         );
 
         static::assertSame(
-            ['loaderConfig: Empty Schema.'],
+            ['loaderConfig: Empty Schema. ' . self::HTTP_SHAPE],
             $policy->problems(
                 ['loaderConfig' => ['type' => 'http', 'settings' => ['url' => 'example.com/cars.json']]],
                 false
@@ -185,7 +188,7 @@ class ImportConfigPolicyTest extends Unit
         );
 
         static::assertSame(
-            ['loaderConfig: a setting of the "http" loader is missing or has the wrong type.'],
+            ['loaderConfig: a setting of the "http" loader is missing or has the wrong type. ' . self::HTTP_SHAPE],
             $policy->problems(
                 ['loaderConfig' => [
                     'type' => 'http',
@@ -221,7 +224,7 @@ class ImportConfigPolicyTest extends Unit
         );
 
         static::assertSame(
-            ['loaderConfig: Empty URL.'],
+            ['loaderConfig: Empty URL. ' . self::HTTP_SHAPE],
             $policy->problems(['loaderConfig' => ['type' => 'http', 'settings' => 'https://example.com']], true)
         );
     }
