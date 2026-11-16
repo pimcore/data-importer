@@ -22,6 +22,10 @@ implement `Pimcore\Helper\SymfonyExpression\ReadOnlyValueAdapterInterface`.
 The built-in `constant()` and `enum()` functions are not available, also not when a provider registers a function with
 one of these names.
 
+When a function throws, the operator reports a generic error and keeps the exception as the previous one, so its
+message is not shown in the preview. Only a `Symfony\Component\ExpressionLanguage\SyntaxError` is reported with its
+message.
+
 ## Creating a Provider
 
 Implement `Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface`:

@@ -10,43 +10,57 @@ declare(strict_types=1);
  *  @copyright  Copyright (c) Pimcore GmbH (https://www.pimcore.com)
  *  @license    Pimcore Open Core License (POCL)
  */
-
 namespace Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage;
 
-use Symfony\Component\ExpressionLanguage\Node\BinaryNode;
+use LogicException;
+use Symfony\Component\ExpressionLanguage\Compiler;
 use Symfony\Component\ExpressionLanguage\Node\Node;
-use Symfony\Component\ExpressionLanguage\SyntaxError;
 
 /**
- * The range operator (`1..10`) with an upper limit on the number of items, so an expression cannot
- * exhaust the memory with a range like `1..999999999`.
+ * The range operator (`1..10`), drawing its items from a budget that is shared by all ranges of an
+ * expression. A single huge range like `1..999999999` is rejected before it is created, many
+ * smaller ones as soon as they exceed the budget together.
  *
  * @internal
  */
-final class LimitedRangeNode extends BinaryNode
+final class LimitedRangeNode extends Node
 {
-    public const OPERATOR = '..';
+    private const START = 'start';
 
-    public const MAX_ITEMS = 10000;
+    private const END = 'end';
 
-    public function __construct(Node $start, Node $end)
+    public function __construct(Node $start, Node $end, private readonly RangeItemBudget $itemBudget)
     {
-        parent::__construct(self::OPERATOR, $start, $end);
+        parent::__construct([self::START => $start, self::END => $end]);
     }
 
     /**
-     * @throws SyntaxError when the range has more than MAX_ITEMS items
+     * @throws RangeLimitExceededException when the ranges of the evaluation exceed the item budget
      */
     public function evaluate(array $functions, array $values): array
     {
-        $start = $this->nodes['left']->evaluate($functions, $values);
-        $end = $this->nodes['right']->evaluate($functions, $values);
+        $start = $this->nodes[self::START]->evaluate($functions, $values);
+        $end = $this->nodes[self::END]->evaluate($functions, $values);
 
-        if (abs($this->toNumber($end) - $this->toNumber($start)) >= self::MAX_ITEMS) {
-            throw new SyntaxError(sprintf('A range can have %d items at most', self::MAX_ITEMS));
-        }
+        $this->itemBudget->assertAvailable(abs($this->toNumber($end) - $this->toNumber($start)) + 1);
 
-        return range($start, $end);
+        $items = range($start, $end);
+        $this->itemBudget->consume(count($items));
+
+        return $items;
+    }
+
+    /**
+     * @throws LogicException
+     */
+    public function compile(Compiler $compiler): void
+    {
+        throw new LogicException('Limited ranges cannot be compiled, they are only evaluated');
+    }
+
+    public function toArray(): array
+    {
+        return ['(', $this->nodes[self::START], ' .. ', $this->nodes[self::END], ')'];
     }
 
     /**

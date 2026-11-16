@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage;
+use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\RangeLimitExceededException;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
 use Throwable;
 
@@ -30,6 +31,8 @@ use Throwable;
 final class SymfonyExpression extends AbstractOperator
 {
     private const VARIABLE_NAME = 'attributes';
+
+    private const EVALUATION_ERROR_MESSAGE = 'Symfony expression operator could not evaluate its expression';
 
     private string $expression = '';
 
@@ -59,9 +62,16 @@ final class SymfonyExpression extends AbstractOperator
 
         try {
             return $this->expressionLanguage->evaluate($this->expression, [self::VARIABLE_NAME => $attributes]);
-        } catch (Throwable $exception) {
+        } catch (SyntaxError|RangeLimitExceededException $exception) {
             throw new InvalidConfigurationException(
-                sprintf('Symfony expression operator could not evaluate its expression: %s', $exception->getMessage()),
+                sprintf('%s: %s', self::EVALUATION_ERROR_MESSAGE, $exception->getMessage()),
+                0,
+                $exception
+            );
+        } catch (Throwable $exception) {
+            // The message can hold internals, e.g. of a database error in a getter or a function.
+            throw new InvalidConfigurationException(
+                sprintf('%s for the given values', self::EVALUATION_ERROR_MESSAGE),
                 0,
                 $exception
             );

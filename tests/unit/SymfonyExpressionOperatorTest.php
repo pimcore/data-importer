@@ -18,10 +18,12 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\SymfonyExpression;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage;
-use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\LimitedRangeNode;
+use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\RangeLimitExceededException;
 use Pimcore\Helper\SymfonyExpression\ReadOnlyValueAdapterInterface;
+use RuntimeException;
 use Symfony\Component\ExpressionLanguage\ExpressionFunction;
 use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
+use Symfony\Component\ExpressionLanguage\SyntaxError;
 use stdClass;
 
 class SymfonyExpressionOperatorTest extends Unit
@@ -166,6 +168,36 @@ class SymfonyExpressionOperatorTest extends Unit
     }
 
     /**
+     * @dataProvider provideUnavailableFunctionExpressions
+     */
+    public function testProviderCannotRegisterUnavailableFunctions(string $expression): void
+    {
+        $provider = new class() implements ExpressionFunctionProviderInterface {
+            public function getFunctions(): array
+            {
+                return [
+                    ExpressionFunction::fromPhp('constant'),
+                    new ExpressionFunction(
+                        'enum',
+                        fn ($value) => sprintf('constant(%s)', $value),
+                        fn (array $variables, $value): mixed => constant((string) $value)
+                    ),
+                ];
+            }
+        };
+        $operator = $this->createOperator($expression, [$provider]);
+
+        try {
+            $operator->evaluateReturnType('string', 1);
+            $this->fail('The function was not rejected when the configuration was validated.');
+        } catch (InvalidConfigurationException) {
+        }
+
+        $this->expectException(InvalidConfigurationException::class);
+        $operator->process([]);
+    }
+
+    /**
      * @dataProvider provideMethodCallExpressions
      */
     public function testMethodsOfPipelineValuesAreNotExecuted(string $expression): void
@@ -284,8 +316,8 @@ class SymfonyExpressionOperatorTest extends Unit
     {
         $this->assertSame([1, 2, 3], $this->createOperator('1..attributes[0]')->process(3));
         $this->assertSame(
-            LimitedRangeNode::MAX_ITEMS,
-            $this->createOperator('max(1..attributes[0])')->process(LimitedRangeNode::MAX_ITEMS)
+            DataImporterExpressionLanguage::MAX_RANGE_ITEMS,
+            $this->createOperator('max(1..attributes[0])')->process(DataImporterExpressionLanguage::MAX_RANGE_ITEMS)
         );
     }
 
@@ -297,7 +329,7 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator = $this->createOperator($expression);
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('A range can have');
+        $this->expectExceptionMessage('items in total at most');
         $operator->process($inputData);
     }
 
@@ -305,10 +337,125 @@ class SymfonyExpressionOperatorTest extends Unit
     {
         return [
             'constant bounds' => ['1..999999999', null],
-            'bound from the source data' => ['1..attributes[0]', LimitedRangeNode::MAX_ITEMS + 1],
-            'descending' => ['attributes[0]..1', LimitedRangeNode::MAX_ITEMS + 1],
+            'bound from the source data' => ['1..attributes[0]', DataImporterExpressionLanguage::MAX_RANGE_ITEMS + 1],
+            'descending' => ['attributes[0]..1', DataImporterExpressionLanguage::MAX_RANGE_ITEMS + 1],
             'nested in a function' => ['max(0..attributes[0])', '999999999'],
             'non numeric bound' => ["'a'..999999999", null],
         ];
+    }
+
+    public function testRangeItemsAreLimitedAcrossAllRangesOfAnExpression(): void
+    {
+        $halfOfLimit = intdiv(DataImporterExpressionLanguage::MAX_RANGE_ITEMS, 2);
+
+        $this->assertCount(
+            2,
+            $this->createOperator('[1..attributes[0], 1..attributes[0]]')->process($halfOfLimit)
+        );
+
+        $operator = $this->createOperator('[1..attributes[0], 1..attributes[0], 1..1]');
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('items in total at most');
+        $operator->process($halfOfLimit);
+    }
+
+    public function testManyRangesInOneExpressionAreRejected(): void
+    {
+        $ranges = array_fill(0, 400, sprintf('1..%d', DataImporterExpressionLanguage::MAX_RANGE_ITEMS));
+        $operator = $this->createOperator(sprintf('[%s]', implode(', ', $ranges)));
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('items in total at most');
+        $operator->process(null);
+    }
+
+    public function testCharacterRangesCountTowardsTheLimit(): void
+    {
+        $this->assertSame(['a', 'b', 'c'], $this->createOperator("'a'..'c'")->process(null));
+
+        $ranges = array_fill(0, DataImporterExpressionLanguage::MAX_RANGE_ITEMS, "'a'..'b'");
+        $operator = $this->createOperator(sprintf('[%s]', implode(', ', $ranges)));
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('items in total at most');
+        $operator->process(null);
+    }
+
+    public function testRangeLimitAppliesToEveryEvaluationSeparately(): void
+    {
+        $operator = $this->createOperator('max(1..attributes[0])');
+
+        $this->assertSame(
+            DataImporterExpressionLanguage::MAX_RANGE_ITEMS,
+            $operator->process(DataImporterExpressionLanguage::MAX_RANGE_ITEMS)
+        );
+        $this->assertSame(
+            DataImporterExpressionLanguage::MAX_RANGE_ITEMS,
+            $operator->process(DataImporterExpressionLanguage::MAX_RANGE_ITEMS)
+        );
+    }
+
+    public function testRangeLimitErrorIsNotASyntaxError(): void
+    {
+        try {
+            $this->createOperator('1..999999999')->process(null);
+            $this->fail('The range was not rejected.');
+        } catch (InvalidConfigurationException $exception) {
+            $this->assertInstanceOf(RangeLimitExceededException::class, $exception->getPrevious());
+            $this->assertStringNotContainsString('around position', $exception->getMessage());
+        }
+    }
+
+    public function testRangeOperatorInsideAStringIsNotARange(): void
+    {
+        $this->assertSame('1..999999999', $this->createOperator("'1..999999999'")->process(null));
+    }
+
+    public function testErrorOfTheExpressionItselfIsReported(): void
+    {
+        $value = new class() {
+            public function delete(): void
+            {
+            }
+        };
+
+        try {
+            $this->createOperator('attributes[0].delete()')->process($value);
+            $this->fail('The method call was not rejected.');
+        } catch (InvalidConfigurationException $exception) {
+            $this->assertInstanceOf(SyntaxError::class, $exception->getPrevious());
+            $this->assertStringContainsString($exception->getPrevious()->getMessage(), $exception->getMessage());
+        }
+    }
+
+    public function testInternalErrorMessageIsNotReported(): void
+    {
+        $internalMessage = 'SQLSTATE[HY000]: connection to db-internal:3306 failed';
+        $provider = new class($internalMessage) implements ExpressionFunctionProviderInterface {
+            public function __construct(private readonly string $message)
+            {
+            }
+
+            public function getFunctions(): array
+            {
+                return [
+                    new ExpressionFunction(
+                        'lookup',
+                        fn () => '',
+                        fn (array $variables): never => throw new RuntimeException($this->message)
+                    ),
+                ];
+            }
+        };
+
+        try {
+            $this->createOperator('lookup()', [$provider])->process(null);
+            $this->fail('The failing function was not reported.');
+        } catch (InvalidConfigurationException $exception) {
+            $this->assertStringNotContainsString($internalMessage, $exception->getMessage());
+            $this->assertStringContainsString('could not evaluate its expression', $exception->getMessage());
+            $this->assertSame($internalMessage, $exception->getPrevious()?->getMessage());
+        }
     }
 }
