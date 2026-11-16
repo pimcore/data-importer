@@ -203,12 +203,8 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
             return null;
         }
 
-        $multiValue = $this->resolveDeclaration($relation)?->isMultiValue() === true;
-        $items = $multiValue ? ($this->decodeList($value) ?? [$value]) : [$value];
-        foreach ($items as $item) {
-            if (!$this->isEmptyValue($item) && $definition->normalize($item) === null) {
-                return $definition->getFieldtype();
-            }
+        if (!$this->isEmptyValue($value) && $definition->normalize($value) === null) {
+            return $definition->getFieldtype();
         }
 
         return null;
@@ -222,11 +218,6 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
      * not the same thing for a wrapper: a `multiValue` key's own type is `multiValue` whatever it
      * wraps ({@see \Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue::getFieldType()}), so a
      * dispatch on the key's type skipped a wrapped quantity value key and left its unit unresolved.
-     *
-     * A key holding a LIST is deliberately not dispatched: one entry value then carries several
-     * values, and there is no agreed batch-entry spelling for a list of `[value, unit]` pairs. Such a
-     * value stays as it arrives, which `unbuildableType()` reports as unbuildable, so the key is
-     * warned about and skipped with the single-key route named rather than written as a wrong number.
      *
      * @param int $groupId
      * @param int $keyId
@@ -247,10 +238,6 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
 
         $relation = $this->resolveKeyGroupRelation($groupId, $keyId);
         if (!$relation instanceof KeyGroupRelation) {
-            return $value;
-        }
-
-        if ($this->resolveDeclaration($relation)?->isMultiValue() === true) {
             return $value;
         }
 

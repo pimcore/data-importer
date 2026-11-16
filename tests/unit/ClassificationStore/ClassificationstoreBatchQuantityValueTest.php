@@ -51,11 +51,6 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      */
     private const KEY_WRAPPED_QUANTITY_VALUE = 'diQvWrappedKey';
 
-    /**
-     * The same wrapper declaring a list, where one entry value carries several values.
-     */
-    private const KEY_WRAPPED_LIST = 'diQvWrappedListKey';
-
     private const CLASS_NAME = 'DiCsQvClass';
 
     private const DEFINITION_UNIT = 'diQvDefinitionUnit';
@@ -97,11 +92,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
             self::KEY_INPUT => ['input', null],
             self::KEY_WRAPPED_QUANTITY_VALUE => [
                 'multiValue',
-                $this->wrappedQuantityValue(self::KEY_WRAPPED_QUANTITY_VALUE, $definitionUnit->getId(), false),
-            ],
-            self::KEY_WRAPPED_LIST => [
-                'multiValue',
-                $this->wrappedQuantityValue(self::KEY_WRAPPED_LIST, $definitionUnit->getId(), true),
+                $this->wrappedQuantityValue(self::KEY_WRAPPED_QUANTITY_VALUE, $definitionUnit->getId()),
             ],
         ];
 
@@ -360,34 +351,6 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     }
 
     /**
-     * Where the wrapper declares a LIST, one entry value carries several values and there is no
-     * agreed batch-entry spelling for a list of `[value, unit]` pairs. So the dispatch stays out of
-     * it and the key is warned about and skipped, with the single-key route named - rather than the
-     * JSON text of the list being cast to a quantity of 1.0 and imported as a real measurement.
-     */
-    public function testAListOfQuantityValuesIsWarnedAboutRatherThanBuiltFromItsJsonText(): void
-    {
-        $token = $this->batchKey(self::KEY_WRAPPED_LIST);
-        $logger = $this->createMock(ApplicationLogger::class);
-        $logger->expects(static::once())->method('warning')->with(
-            static::callback(static fn (string $message): bool => str_contains($message, $token)
-                && str_contains($message, 'quantityValue')),
-            static::anything()
-        );
-
-        $target = new ClassificationstoreBatch(
-            $logger,
-            (new ClassificationStoreFixture())->localizationResolver()
-        );
-        $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
-
-        $element = $this->object();
-        $target->assignData($element, [$token => '["1","2"]']);
-
-        static::assertNull($this->keyValue($element, self::KEY_WRAPPED_LIST));
-    }
-
-    /**
      * The unit source is decided by the type of the value the key holds, so no unit setting can reach the dispatch
      * through the configuration. Asserted on the trait's own properties rather than on a resolved
      * unit: with the source fixed per key type, a honoured `unitSourceSelect` would leave no trace
@@ -422,7 +385,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      * from the blob the wrapper carries - a wrapper naming a type but carrying nothing reads back
      * with no delegate at all, and the delegate is where the default unit lives.
      */
-    private function wrappedQuantityValue(string $name, string $defaultUnitId, bool $list): MultiValueDefinition
+    private function wrappedQuantityValue(string $name, string $defaultUnitId): MultiValueDefinition
     {
         $delegate = new QuantityValueDefinition();
         $delegate->setName($name);
@@ -432,7 +395,6 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
         $definition->setName($name);
         $definition->setDelegateDatatype('quantityValue');
         $definition->setDelegate($delegate);
-        $definition->setMultiValue($list);
 
         return $definition;
     }

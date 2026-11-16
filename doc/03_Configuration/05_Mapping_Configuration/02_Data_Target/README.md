@@ -116,15 +116,14 @@ The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray`
 For the required data shape and worked examples, see
 [Classification Store Batch Details](./01_Classification_Store_Batch_Details.md).
 
-### Keys Declaring Several Values
+### Keys Declaring Variants
 
-On both classification store targets a key that declares several values takes a JSON array held in one source field,
-for example `["a", "b", "c"]`. The import replaces the whole list of the addressed language (and variant), so a shorter
-array shortens the list. An array value on a key that does not declare several values is stored as the key's single
-value, as before.
+On both classification store targets a key of type `multiValue` holds one value per variant. The import writes the
+addressed variant of the addressed language, replacing the value already held there. A JSON array in the source field
+is not a list: it is stored as the key's one value, as it is for any other key.
 
-If the engine of the store cannot hold a variant or a list, the key is written as position 0 of the default variant and
-a warning in the import log names the key and says that the engine of the store has to be changed.
+If the engine of the store cannot hold a variant, the key is written to the default variant and a warning in the import
+log names the key and says that the engine of the store has to be changed.
 
 ### When Write If Source Is Empty Takes Effect
 

@@ -47,8 +47,6 @@ class ClassificationstoreUnstorableValueTest extends Unit
 
     private const KEY_VARIANT = 'diEavVariant';
 
-    private const KEY_LIST = 'diEavList';
-
     private const KEY_BULK = 'diEavBulk';
 
     private const BULK_SIZE = 50;
@@ -75,16 +73,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $variant->setDelegateDatatype('input');
         $variant->setVariants([self::VARIANT]);
 
-        $list = new MultiValue();
-        $list->setName(self::KEY_LIST);
-        $list->setDelegateDatatype('input');
-        $list->setMultiValue(true);
-
         $keys = [
             self::KEY_INPUT => ['input', null],
             self::KEY_DATE => ['date', new Date()],
             self::KEY_VARIANT => ['multiValue', $variant],
-            self::KEY_LIST => ['multiValue', $list],
         ];
         for ($i = 0; $i < self::BULK_SIZE; $i++) {
             $keys[self::KEY_BULK . $i] = ['input', null];
@@ -157,26 +149,6 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $store = $this->store($this->reload($element));
         static::assertSame('qualified', $this->valueOf($store, self::KEY_VARIANT));
         static::assertSame('untouched', $this->valueOf($store, self::KEY_INPUT));
-    }
-
-    public function testAListOnAStoreWithoutListsWarnsAndWritesTheFirstValueAsTheDefaultSlot(): void
-    {
-        $token = (string)$this->groupId . '-' . $this->keyIds[self::KEY_LIST];
-        $logger = $this->createMock(ApplicationLogger::class);
-        $logger->expects(static::once())->method('warning')->with(
-            static::callback(
-                static fn (string $message): bool => str_contains($message, $token)
-                    && str_contains($message, 'list of 2')
-            ),
-            static::anything()
-        );
-
-        $element = $this->newElement();
-        $this->singleKeyTarget($logger, self::KEY_LIST)->assignData($element, json_encode(['first', 'second']));
-        $element->save();
-
-        $store = $this->store($this->reload($element));
-        static::assertSame('first', $this->valueOf($store, self::KEY_LIST));
     }
 
     /**

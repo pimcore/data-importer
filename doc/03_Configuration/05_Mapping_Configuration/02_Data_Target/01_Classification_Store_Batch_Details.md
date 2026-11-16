@@ -70,8 +70,7 @@ is no unit setting on the data target — the key's type decides.
 
 A key that declares variants cannot be written by this target: a token for it, with or without a `#<VARIANT>` segment,
 is refused with an error naming the key. Write such a key through a `Classification Store` entry, which takes the
-variant. A key that declares several values takes a JSON array held in one source field, `["a", "b"]`; the import
-replaces the whole list of the addressed language.
+variant.
 
 A key whose value this entry cannot build is warned about in the import log and skipped, and the rest of the row is
 still written. A plain date string is the common case. Keys holding a `date` need the matching operator at the end of the pipeline, and one pipeline produces one result
