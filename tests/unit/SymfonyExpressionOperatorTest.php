@@ -20,15 +20,23 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\DataImporterExpressionLanguage;
 use Pimcore\Bundle\DataImporterBundle\Utils\ExpressionLanguage\RangeLimitExceededException;
 use Pimcore\Helper\SymfonyExpression\ReadOnlyValueAdapterInterface;
-use RuntimeException;
 use Symfony\Component\ExpressionLanguage\ExpressionFunction;
 use Symfony\Component\ExpressionLanguage\ExpressionFunctionProviderInterface;
 use Symfony\Component\ExpressionLanguage\SyntaxError;
+use UnexpectedValueException;
 use stdClass;
 
 class SymfonyExpressionOperatorTest extends Unit
 {
     private const SOURCE_VALUE = 'Demo Value';
+
+    private const DELETE_CALL_EXPRESSION = 'attributes[0].delete()';
+
+    private const OVERSIZED_RANGE_EXPRESSION = '1..999999999';
+
+    private const RANGE_LIMIT_MESSAGE = 'items in total at most';
+
+    private const METHOD_CALL_NOT_REJECTED = 'The method call was not rejected.';
 
     protected $tester;
 
@@ -190,7 +198,8 @@ class SymfonyExpressionOperatorTest extends Unit
         try {
             $operator->evaluateReturnType('string', 1);
             $this->fail('The function was not rejected when the configuration was validated.');
-        } catch (InvalidConfigurationException) {
+        } catch (InvalidConfigurationException $exception) {
+            $this->assertInstanceOf(SyntaxError::class, $exception->getPrevious());
         }
 
         $this->expectException(InvalidConfigurationException::class);
@@ -214,7 +223,7 @@ class SymfonyExpressionOperatorTest extends Unit
 
         try {
             $operator->process($element, true);
-            $this->fail('The method call was not rejected.');
+            $this->fail(self::METHOD_CALL_NOT_REJECTED);
         } catch (InvalidConfigurationException) {
             $this->assertFalse($element->deleted);
         }
@@ -223,7 +232,7 @@ class SymfonyExpressionOperatorTest extends Unit
     public static function provideMethodCallExpressions(): array
     {
         return [
-            'direct' => ['attributes[0].delete()'],
+            'direct' => [self::DELETE_CALL_EXPRESSION],
             'null safe' => ['attributes[0]?.delete()'],
             'nested in a condition' => ["attributes[0] ? [attributes[0].delete()] : 'none'"],
             'as function argument' => ['max(1, attributes[0].delete())'],
@@ -277,8 +286,8 @@ class SymfonyExpressionOperatorTest extends Unit
         );
 
         try {
-            $this->createOperator('attributes[0].delete()', [], [$valueAdapter])->process($value);
-            $this->fail('The method call was not rejected.');
+            $this->createOperator(self::DELETE_CALL_EXPRESSION, [], [$valueAdapter])->process($value);
+            $this->fail(self::METHOD_CALL_NOT_REJECTED);
         } catch (InvalidConfigurationException) {
             $this->assertFalse($value->deleted);
         }
@@ -329,14 +338,14 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator = $this->createOperator($expression);
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('items in total at most');
+        $this->expectExceptionMessage(self::RANGE_LIMIT_MESSAGE);
         $operator->process($inputData);
     }
 
     public static function provideOversizedRangeExpressions(): array
     {
         return [
-            'constant bounds' => ['1..999999999', null],
+            'constant bounds' => [self::OVERSIZED_RANGE_EXPRESSION, null],
             'bound from the source data' => ['1..attributes[0]', DataImporterExpressionLanguage::MAX_RANGE_ITEMS + 1],
             'descending' => ['attributes[0]..1', DataImporterExpressionLanguage::MAX_RANGE_ITEMS + 1],
             'nested in a function' => ['max(0..attributes[0])', '999999999'],
@@ -356,7 +365,7 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator = $this->createOperator('[1..attributes[0], 1..attributes[0], 1..1]');
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('items in total at most');
+        $this->expectExceptionMessage(self::RANGE_LIMIT_MESSAGE);
         $operator->process($halfOfLimit);
     }
 
@@ -366,7 +375,7 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator = $this->createOperator(sprintf('[%s]', implode(', ', $ranges)));
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('items in total at most');
+        $this->expectExceptionMessage(self::RANGE_LIMIT_MESSAGE);
         $operator->process(null);
     }
 
@@ -378,7 +387,7 @@ class SymfonyExpressionOperatorTest extends Unit
         $operator = $this->createOperator(sprintf('[%s]', implode(', ', $ranges)));
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('items in total at most');
+        $this->expectExceptionMessage(self::RANGE_LIMIT_MESSAGE);
         $operator->process(null);
     }
 
@@ -399,7 +408,7 @@ class SymfonyExpressionOperatorTest extends Unit
     public function testRangeLimitErrorIsNotASyntaxError(): void
     {
         try {
-            $this->createOperator('1..999999999')->process(null);
+            $this->createOperator(self::OVERSIZED_RANGE_EXPRESSION)->process(null);
             $this->fail('The range was not rejected.');
         } catch (InvalidConfigurationException $exception) {
             $this->assertInstanceOf(RangeLimitExceededException::class, $exception->getPrevious());
@@ -409,23 +418,30 @@ class SymfonyExpressionOperatorTest extends Unit
 
     public function testRangeOperatorInsideAStringIsNotARange(): void
     {
-        $this->assertSame('1..999999999', $this->createOperator("'1..999999999'")->process(null));
+        $this->assertSame(
+            self::OVERSIZED_RANGE_EXPRESSION,
+            $this->createOperator(sprintf("'%s'", self::OVERSIZED_RANGE_EXPRESSION))->process(null)
+        );
     }
 
     public function testErrorOfTheExpressionItselfIsReported(): void
     {
         $value = new class() {
+            public bool $deleted = false;
+
             public function delete(): void
             {
+                $this->deleted = true;
             }
         };
 
         try {
-            $this->createOperator('attributes[0].delete()')->process($value);
-            $this->fail('The method call was not rejected.');
+            $this->createOperator(self::DELETE_CALL_EXPRESSION)->process($value);
+            $this->fail(self::METHOD_CALL_NOT_REJECTED);
         } catch (InvalidConfigurationException $exception) {
             $this->assertInstanceOf(SyntaxError::class, $exception->getPrevious());
             $this->assertStringContainsString($exception->getPrevious()->getMessage(), $exception->getMessage());
+            $this->assertFalse($value->deleted);
         }
     }
 
@@ -443,7 +459,7 @@ class SymfonyExpressionOperatorTest extends Unit
                     new ExpressionFunction(
                         'lookup',
                         fn () => '',
-                        fn (array $variables): never => throw new RuntimeException($this->message)
+                        fn (array $variables): never => throw new UnexpectedValueException($this->message)
                     ),
                 ];
             }

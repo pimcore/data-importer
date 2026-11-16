@@ -37,8 +37,7 @@ final class RangeItemBudget
      */
     public function assertAvailable(int|float $items): void
     {
-        // Negated so that NAN, which compares false with everything, is rejected as well.
-        if (!($items <= $this->remainingItems)) {
+        if ($items > $this->remainingItems || is_nan((float) $items)) {
             throw new RangeLimitExceededException($this->maxItems);
         }
     }
