@@ -168,6 +168,8 @@ data-importer.processing.execution-type.sequential: Sequentieel
 data-importer.processing.execution-type.parallel: Parallel
 data-importer.processing.archive-import-file: Importbestand archiveren
 data-importer.processing.disable-versioning: Versiebeheer uitschakelen
+data-importer.processing.version-note: Versienotitie
+data-importer.processing.version-note.tooltip: Notitie die wordt opgeslagen bij de versie die ontstaat telkens wanneer de import een data-object opslaat. Laat leeg om versies zonder notitie op te slaan. Heeft geen effect zolang versiebeheer is uitgeschakeld.
 data-importer.processing.id-data-index: Gegevensindex van het ID-veld
 data-importer.processing.id-data-index.tooltip: Kolom die als stabiele identificatie voor deltacontrole en opschoning wordt gebruikt. Deze opties zijn alleen beschikbaar als een ID-gegevensindex is ingesteld.
 data-importer.processing.id-data-index-placeholder: Kolom selecteren

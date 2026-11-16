@@ -18,6 +18,7 @@ import {
 } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
+import { withApiMessage } from '../../../../utils/api-error-message'
 import {
   useBundleDataImporterConfigStartImportMutation,
   useBundleDataImporterConfigCancelExecutionMutation,
@@ -90,7 +91,7 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
 
     if ('error' in result) {
       if (result.error !== undefined) {
-        trackError(new ApiError(result.error))
+        trackError(new ApiError(withApiMessage(result.error)))
       }
       void messageApi.error(t('data-importer.execution.start-import.error'))
       return
@@ -113,7 +114,7 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
 
     if ('error' in result) {
       if (result.error !== undefined) {
-        trackError(new ApiError(result.error))
+        trackError(new ApiError(withApiMessage(result.error)))
       }
       void messageApi.error(t('data-importer.execution.cancel.error'))
       return

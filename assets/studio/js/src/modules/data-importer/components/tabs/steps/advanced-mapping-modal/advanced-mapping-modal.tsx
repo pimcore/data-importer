@@ -19,6 +19,7 @@ import { StepTarget } from './step-target/step-target'
 import { useStyles } from './advanced-mapping-modal.styles'
 import { useAutoRecalculateType } from './hooks/use-auto-recalculate-type'
 import { ResultPreviewProvider } from './result-preview/result-preview-context'
+import { useConfigEditorReadOnly } from '../../../config-editor-mode'
 
 export { type ClassAttribute } from '../../../../types'
 export interface AdvancedMappingModalProps {
@@ -149,6 +150,8 @@ export const AdvancedMappingModal = ({
     setForceRefreshToken(n => n + 1)
   }, [recalculateType])
 
+  const readOnly = useConfigEditorReadOnly()
+
   const handleSave = (): void => {
     onSave(localItem)
     onClose()
@@ -169,12 +172,14 @@ export const AdvancedMappingModal = ({
             onClick={ handleRefreshAll }
             tooltip={ { title: t('data-importer.mapping.advanced-modal.refresh-all-previews') } }
           />
-          <Button
-            onClick={ handleSave }
-            type="primary"
-          >
-            { t('data-importer.mapping.advanced-modal.save') }
-          </Button>
+          { !readOnly && (
+            <Button
+              onClick={ handleSave }
+              type="primary"
+            >
+              { t('data-importer.mapping.advanced-modal.save') }
+            </Button>
+          ) }
         </Flex>
       ) }
       onCancel={ onClose }

@@ -15,6 +15,8 @@ import { type ClassAttribute } from '../../../../../types'
 import { filterByLabel } from '../../../../../utils/select-utils'
 import { useStyles } from '../mapping-step.styles'
 import { ArrowColumn } from './arrow-column/arrow-column'
+import { useConfigEditorReadOnly } from '../../../../config-editor-mode'
+import { ConfigProvider } from 'antd'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -55,6 +57,7 @@ export const MappingItemContent = React.memo(({
   onOpenAdvanced,
   onRemove
 }: MappingItemContentProps): React.JSX.Element => {
+  const readOnly = useConfigEditorReadOnly()
   const { t } = useTranslation()
   const { styles } = useStyles()
   const form = Form.useFormInstance()
@@ -106,20 +109,27 @@ export const MappingItemContent = React.memo(({
           />
         </div>
 
-        <IconTextButton
-          icon={ { value: 'transformation' } }
-          onClick={ onOpenAdvanced }
-          type="default"
-        >
-          { t('data-importer.mapping.item.advanced') }
-        </IconTextButton>
+        { /* a disabled form disables every antd control under it, this button included -
+             but reading the transformations is the whole point of a read-only review */ }
+        <ConfigProvider componentDisabled={ false }>
+          <IconTextButton
+            disabled={ false }
+            icon={ { value: 'transformation' } }
+            onClick={ onOpenAdvanced }
+            type="default"
+          >
+            { t('data-importer.mapping.item.advanced') }
+          </IconTextButton>
+        </ConfigProvider>
 
-        <IconButton
-          icon={ { value: 'trash' } }
-          onClick={ onRemove }
-          tooltip={ { title: t('data-importer.mapping.item.delete') } }
-          type="default"
-        />
+        { !readOnly && (
+          <IconButton
+            icon={ { value: 'trash' } }
+            onClick={ onRemove }
+            tooltip={ { title: t('data-importer.mapping.item.delete') } }
+            type="default"
+          />
+        ) }
       </div>
 
       <div className={ styles.mappingDivider } />

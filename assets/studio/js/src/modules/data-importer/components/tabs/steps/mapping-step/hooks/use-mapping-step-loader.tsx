@@ -427,6 +427,7 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
     setAttributesMap,
     classId,
     mappingAttrMapKeyList,
-    getMappingConfig
+    getMappingConfig,
+    getBackendConfig
   }
 }
