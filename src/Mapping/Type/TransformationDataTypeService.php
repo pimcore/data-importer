@@ -98,7 +98,8 @@ final class TransformationDataTypeService
         self::DEFAULT_ARRAY => [
             'multiselect',
             'countrymultiselect',
-            'languages'
+            // the type was renamed in Pimcore 5; `languages` matched no field type at all
+            'languagemultiselect'
         ],
         self::QUANTITY_VALUE => [
             'quantityValue'
