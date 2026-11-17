@@ -13,12 +13,13 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget;
 
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue as MultiValueDefinition;
 
 /**
  * The slot of a classification store a mapping entry writes to: the resolved group and key, the
  * token the entry named them with - which is what a message about them has to quote - the variant
- * the entry addressed, and what the key declares about the qualifiers of its values.
+ * the entry addressed, and the field definition the key renders with.
  *
  * @internal
  */
@@ -29,7 +30,15 @@ final class ClassificationstoreKeySlot
         public readonly int $groupId,
         public readonly int $keyId,
         public readonly ?string $variant,
-        public readonly ?MultiValueDefinition $declaration
+        public readonly ?Data $definition
     ) {
+    }
+
+    /**
+     * What the key declares about the qualifiers of its values, null for a key that declares none.
+     */
+    public function declaration(): ?MultiValueDefinition
+    {
+        return $this->definition instanceof MultiValueDefinition ? $this->definition : null;
     }
 }

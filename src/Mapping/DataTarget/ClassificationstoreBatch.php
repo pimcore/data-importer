@@ -180,7 +180,13 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
 
         $this->writeKeyValue(
             $classificationStore,
-            new ClassificationstoreKeySlot($reference->token, $groupId, $keyId, null, $declaration),
+            new ClassificationstoreKeySlot(
+                $reference->token,
+                $groupId,
+                $keyId,
+                null,
+                $this->resolveDefinition($relation)
+            ),
             $value,
             $this->resolveLanguage($element, $this->fieldName, $keyId, $this->language)
         );

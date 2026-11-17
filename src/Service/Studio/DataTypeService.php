@@ -98,7 +98,8 @@ final readonly class DataTypeService implements DataTypeServiceInterface
             $parameters->getStart(),
             $parameters->getLimit(),
             $parameters->getSearchfilter() !== null ? strip_tags($parameters->getSearchfilter()) : null,
-            $parameters->getFilter() !== null ? strip_tags($parameters->getFilter()) : null
+            $parameters->getFilter() !== null ? strip_tags($parameters->getFilter()) : null,
+            $parameters->getLoadAdvancedRelations()
         );
 
         DataObject\Classificationstore\DefinitionCache::load(array_map(

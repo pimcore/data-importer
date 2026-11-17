@@ -235,16 +235,10 @@ final class TransformationDataTypeService
 
         //replace for advanced relations
         if ($includeAdvancedRelations) {
-            $transformationTargetType = array_map(function ($item) {
-                switch ($item) {
-                    case self::ASSET_ARRAY:
-                        return self::ADVANCED_ASSET_ARRAY;
-                    case self::DATA_OBJECT_ARRAY:
-                        return self::ADVANCED_DATA_OBJECT_ARRAY;
-                    default:
-                        return $item;
-                }
-            }, $transformationTargetType);
+            $transformationTargetType = array_map(
+                $this->advancedRelationTargetType(...),
+                $transformationTargetType
+            );
         }
 
         foreach ($transformationTargetType as $targetType) {
@@ -323,6 +317,19 @@ final class TransformationDataTypeService
         }
 
         return array_values($attributes);
+    }
+
+    /**
+     * The counterpart of a relation result type that also covers the advanced relation types, where
+     * one exists. Any other result type is its own counterpart.
+     */
+    public function advancedRelationTargetType(string $transformationTargetType): string
+    {
+        return match ($transformationTargetType) {
+            self::ASSET_ARRAY => self::ADVANCED_ASSET_ARRAY,
+            self::DATA_OBJECT_ARRAY => self::ADVANCED_DATA_OBJECT_ARRAY,
+            default => $transformationTargetType,
+        };
     }
 
     /**

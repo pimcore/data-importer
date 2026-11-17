@@ -51,7 +51,7 @@ final class ClassificationStoreDataTypeService
     ) {
     }
 
-    public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, ?string $searchString = null, ?string $filterString = null): DataObject\Classificationstore\KeyGroupRelation\Listing
+    public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, ?string $searchString = null, ?string $filterString = null, bool $loadAdvancedRelations = false): DataObject\Classificationstore\KeyGroupRelation\Listing
     {
         $classDefinition = DataObject\ClassDefinition::getById($classId);
         $field = $classDefinition->getFieldDefinition($fieldName);
@@ -99,6 +99,11 @@ final class ClassificationStoreDataTypeService
         }
 
         if ($transformationResultType) {
+            if ($loadAdvancedRelations) {
+                $transformationResultType = $this->transformationDataTypeService
+                    ->advancedRelationTargetType($transformationResultType);
+            }
+
             $pimcoreTypes = $this->transformationDataTypeService->getPimcoreTypesByTransformationTargetType($transformationResultType);
             if ($pimcoreTypes === []) {
                 // A result type no key type can hold refuses every key rather than passing all of

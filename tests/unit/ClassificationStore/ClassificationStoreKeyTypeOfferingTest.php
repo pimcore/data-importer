@@ -51,6 +51,10 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
         'externalImage',
         'date',
         'quantityValue',
+        'manyToManyRelation',
+        'manyToManyObjectRelation',
+        'advancedManyToManyRelation',
+        'advancedManyToManyObjectRelation',
     ];
 
     /**
@@ -119,17 +123,48 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
     }
 
     /**
+     * An advanced relation key is reachable the way an advanced relation class field is: the caller
+     * asks for the advanced relations, and the plain relation result type is read as its advanced
+     * counterpart. Without that flag the listing answers exactly as before.
+     */
+    public function testAnAdvancedRelationKeyIsOfferedOnlyWhenAdvancedRelationsAreAsked(): void
+    {
+        $plain = $this->offeredKeyIds(TransformationDataTypeService::DATA_OBJECT_ARRAY);
+        static::assertNotContains($this->keyIds['advancedManyToManyObjectRelation'], $plain);
+        static::assertContains($this->keyIds['manyToManyObjectRelation'], $plain, 'the plain relation');
+
+        $advanced = $this->offeredKeyIds(TransformationDataTypeService::DATA_OBJECT_ARRAY, true);
+        static::assertContains($this->keyIds['advancedManyToManyObjectRelation'], $advanced);
+        static::assertContains($this->keyIds['manyToManyObjectRelation'], $advanced, 'still the plain one');
+        static::assertNotContains($this->keyIds['date'], $advanced, 'a type no relation result covers');
+    }
+
+    public function testAnAdvancedAssetRelationKeyIsOfferedOnlyWhenAdvancedRelationsAreAsked(): void
+    {
+        $plain = $this->offeredKeyIds(TransformationDataTypeService::ASSET_ARRAY);
+        static::assertNotContains($this->keyIds['advancedManyToManyRelation'], $plain);
+        static::assertContains($this->keyIds['manyToManyRelation'], $plain, 'the plain relation');
+
+        $advanced = $this->offeredKeyIds(TransformationDataTypeService::ASSET_ARRAY, true);
+        static::assertContains($this->keyIds['advancedManyToManyRelation'], $advanced);
+        static::assertNotContains($this->keyIds['date'], $advanced, 'a type no relation result covers');
+    }
+
+    /**
      * @return int[]
      */
-    private function offeredKeyIds(string $transformationResultType): array
-    {
+    private function offeredKeyIds(
+        string $transformationResultType,
+        bool $loadAdvancedRelations = false
+    ): array {
         /** @var ClassificationStoreDataTypeService $service */
         $service = $this->tester->grabService(ClassificationStoreDataTypeService::class);
         $list = $service->listClassificationStoreKeyList(
             $this->classId,
             ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             $transformationResultType,
-            limit: 100
+            limit: 100,
+            loadAdvancedRelations: $loadAdvancedRelations
         );
 
         return array_map(static fn ($relation): int => $relation->getKeyId(), $list->load());
