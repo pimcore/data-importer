@@ -51,11 +51,7 @@ class ClassificationStoreLocalizationTest extends Unit
 
     private const KEY_PLAIN = 'diLocPlain';
 
-    private const KEY_LIST = 'diLocList';
-
     private const KEY_VARIANT = 'diLocVariant';
-
-    private const KEY_LIST_LOCALIZED = 'diLocListLocalized';
 
     private const KEY_VARIANT_LOCALIZED = 'diLocVariantLocalized';
 
@@ -96,18 +92,10 @@ class ClassificationStoreLocalizationTest extends Unit
         $store = $fixture->store(self::STORE, 'document');
         $group = $fixture->group($store->getId(), self::GROUP);
 
-        $list = new MultiValue();
-        $list->setName(self::KEY_LIST);
-        $list->setDelegateDatatype(self::TYPE_INPUT);
-        $list->setMultiValue(true);
-
         $variant = new MultiValue();
         $variant->setName(self::KEY_VARIANT);
         $variant->setDelegateDatatype(self::TYPE_INPUT);
         $variant->setVariants([self::VARIANT_METRIC]);
-
-        $listLocalized = clone $list;
-        $listLocalized->setName(self::KEY_LIST_LOCALIZED);
 
         $variantLocalized = clone $variant;
         $variantLocalized->setName(self::KEY_VARIANT_LOCALIZED);
@@ -116,9 +104,7 @@ class ClassificationStoreLocalizationTest extends Unit
             self::KEY_TRUE => [self::TYPE_INPUT, null, true],
             self::KEY_FALSE => [self::TYPE_INPUT, null, false],
             self::KEY_FLAGLESS => [self::TYPE_INPUT, null, null],
-            self::KEY_LIST => [self::TYPE_MULTI_VALUE, $list, false],
             self::KEY_VARIANT => [self::TYPE_MULTI_VALUE, $variant, false],
-            self::KEY_LIST_LOCALIZED => [self::TYPE_MULTI_VALUE, $listLocalized, true],
             self::KEY_VARIANT_LOCALIZED => [self::TYPE_MULTI_VALUE, $variantLocalized, true],
         ];
         $sorter = 1;
@@ -236,11 +222,6 @@ class ClassificationStoreLocalizationTest extends Unit
         $element = $this->newElement();
         $store = $this->store($element);
 
-        $this->write(self::TARGET_SINGLE, $element, self::KEY_LIST, json_encode(['a', 'b']));
-        $listId = $this->keyIds[self::KEY_LIST];
-        static::assertSame(['a', 'b'], array_values($store->getKeyValues($this->groupId, $listId)));
-        static::assertSame([], $store->getKeyValues($this->groupId, $listId, $this->language));
-
         $this->write(self::TARGET_SINGLE, $element, self::KEY_VARIANT, 'v', null, '#' . self::VARIANT_METRIC);
         $keyId = $this->keyIds[self::KEY_VARIANT];
         static::assertSame(
@@ -255,11 +236,6 @@ class ClassificationStoreLocalizationTest extends Unit
         $element = $this->newElement();
         $field = ClassificationStoreFixture::FIELD_NON_LOCALIZED;
         $store = $this->store($element, $field);
-
-        $this->write(self::TARGET_SINGLE, $element, self::KEY_LIST_LOCALIZED, json_encode(['a', 'b']), $field);
-        $listId = $this->keyIds[self::KEY_LIST_LOCALIZED];
-        static::assertSame(['a', 'b'], array_values($store->getKeyValues($this->groupId, $listId, $this->language)));
-        static::assertSame([], $store->getKeyValues($this->groupId, $listId));
 
         $suffix = '#' . self::VARIANT_METRIC;
         $this->write(self::TARGET_SINGLE, $element, self::KEY_VARIANT_LOCALIZED, 'v', $field, $suffix);

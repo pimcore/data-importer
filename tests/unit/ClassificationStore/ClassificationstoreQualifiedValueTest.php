@@ -28,14 +28,13 @@ use Pimcore\Model\DataObject\ClassDefinition\Data\Multiselect;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Table;
 use Pimcore\Model\DataObject\Classificationstore as ClassificationstoreModel;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\DataObject\Data\MultiValue as MultiValueEntry;
 use Pimcore\Tests\Support\Util\TestHelper;
 use Pimcore\Tool;
 
 /**
- * Both classification store targets over a store whose engine holds variants and lists of values:
- * a JSON array in one source field, one declared variant per mapping entry, the refusal of a
- * variant by the batch target, and the two spellings of a key reference.
+ * Both classification store targets over a store whose engine holds variants: one value per cell,
+ * one declared variant per mapping entry, the refusal of a variant by the batch target, and the
+ * two spellings of a key reference.
  */
 class ClassificationstoreQualifiedValueTest extends Unit
 {
@@ -47,9 +46,7 @@ class ClassificationstoreQualifiedValueTest extends Unit
 
     private const CLASS_NAME = 'DiCsQualClass';
 
-    private const KEY_LIST = 'diQualList';
-
-    private const KEY_LIST_VARIANT = 'diQualListVariant';
+    private const KEY_MULTI = 'diQualMulti';
 
     private const KEY_VARIANT = 'diQualVariant';
 
@@ -60,8 +57,6 @@ class ClassificationstoreQualifiedValueTest extends Unit
     private const VARIANT_METRIC = 'metric';
 
     private const VARIANT_IMPERIAL = 'imperial';
-
-    private const OTHER_LANGUAGE = 'default';
 
     private const ARRAY_TYPES = [
         'multiselect' => [Multiselect::class, ['one', 'two']],
@@ -85,18 +80,9 @@ class ClassificationstoreQualifiedValueTest extends Unit
         $store = $fixture->store(self::STORE, 'document');
         $group = $fixture->group($store->getId(), self::GROUP, self::GROUP_IDENTIFIER);
 
-        $list = new MultiValue();
-        $list->setName(self::KEY_LIST);
-        $list->setDelegateDatatype('input');
-        $list->setMultiValue(true);
-
-        // a key that declares both a list and a variant: core refuses an undeclared variant
-        // outright, so the isolation of one variant from another needs a key that declares one
-        $listVariant = new MultiValue();
-        $listVariant->setName(self::KEY_LIST_VARIANT);
-        $listVariant->setDelegateDatatype('input');
-        $listVariant->setMultiValue(true);
-        $listVariant->setVariants([self::VARIANT_METRIC]);
+        $multi = new MultiValue();
+        $multi->setName(self::KEY_MULTI);
+        $multi->setDelegateDatatype('input');
 
         $variant = new MultiValue();
         $variant->setName(self::KEY_VARIANT);
@@ -104,8 +90,7 @@ class ClassificationstoreQualifiedValueTest extends Unit
         $variant->setVariants([self::VARIANT_METRIC, self::VARIANT_IMPERIAL]);
 
         $keys = [
-            self::KEY_LIST => ['multiValue', $list, null],
-            self::KEY_LIST_VARIANT => ['multiValue', $listVariant, null],
+            self::KEY_MULTI => ['multiValue', $multi, null],
             self::KEY_VARIANT => ['multiValue', $variant, null],
             self::KEY_PLAIN => ['input', null, self::KEY_PLAIN_IDENTIFIER],
         ];
@@ -133,68 +118,44 @@ class ClassificationstoreQualifiedValueTest extends Unit
         TestHelper::cleanUp();
     }
 
-    public function testAJsonArrayReplacesTheWholeListOfTheAddressedSlotThroughBothTargets(): void
+    /**
+     * A cell is one value per variant: a JSON array in a source field is not split into several values.
+     */
+    public function testAJsonArrayOnAMultiValueKeyIsStoredAsItsOneValueThroughBothTargets(): void
     {
+        $json = json_encode(['a', 'b']);
         foreach (['single', 'batch'] as $targetKind) {
             $element = $this->newElement();
-            $write = fn (mixed $value) => $this->write($targetKind, $element, self::KEY_LIST, $value);
-
-            $write(json_encode(['a', 'b', 'c']));
-            static::assertSame(['a', 'b', 'c'], $this->list($element, self::KEY_LIST, $this->language), $targetKind);
-
-            $write(json_encode(['x', 'y']));
-            static::assertSame(
-                ['x', 'y'],
-                $this->list($element, self::KEY_LIST, $this->language),
-                $targetKind . ': a list can shorten'
-            );
-
+            $this->write($targetKind, $element, self::KEY_MULTI, $json);
             $element->save();
-            $reloaded = $this->reload($element);
-            static::assertSame(['x', 'y'], $this->list($reloaded, self::KEY_LIST, $this->language), $targetKind);
+
+            $value = $this->store($this->reload($element))
+                ->getLocalizedKeyValue($this->groupId, $this->keyIds[self::KEY_MULTI], $this->language);
+            static::assertSame($json, $value, $targetKind);
         }
     }
 
-    public function testAListLeavesOtherLanguagesAlone(): void
-    {
-        $field = ClassificationStoreFixture::FIELD_LOCALIZED;
-        $keyId = $this->keyIds[self::KEY_LIST];
-        $element = $this->newElement();
-        $store = $this->store($element, $field);
-        $store->setKeyValues($this->groupId, $keyId, [
-            new MultiValueEntry('other-language', self::OTHER_LANGUAGE),
-        ]);
-
-        $this->write('single', $element, self::KEY_LIST, json_encode(['a', 'b', 'c']), $field);
-        $this->write('batch', $element, self::KEY_LIST, json_encode(['a', 'b']), $field);
-
-        static::assertSame(['a', 'b'], $store->getKeyValues($this->groupId, $keyId, $this->language));
-        static::assertSame(
-            ['other-language'],
-            $store->getKeyValues($this->groupId, $keyId, self::OTHER_LANGUAGE)
-        );
-    }
-
     /**
-     * On the single-key target only: the batch target refuses a variant declaring key by name, so a
-     * key that declares both a list and a variant is unreachable through a batch entry.
+     * The same on a named variant: the qualified write path builds one entry, so a JSON array reaches
+     * the variant whole rather than being split across it.
      */
-    public function testAListLeavesOtherVariantsAlone(): void
+    public function testAJsonArrayWrittenToANamedVariantIsThatVariantsOneValue(): void
     {
-        $field = ClassificationStoreFixture::FIELD_LOCALIZED;
-        $keyId = $this->keyIds[self::KEY_LIST_VARIANT];
+        $json = json_encode(['a', 'b']);
         $element = $this->newElement();
-        $store = $this->store($element, $field);
-        $store->setKeyValues($this->groupId, $keyId, [
-            new MultiValueEntry('other-variant', $this->language, self::VARIANT_METRIC),
-        ]);
+        $this->write('single', $element, self::KEY_VARIANT, $json, null, '#' . self::VARIANT_METRIC);
+        $element->save();
 
-        $this->write('single', $element, self::KEY_LIST_VARIANT, json_encode(['a', 'b']), $field);
-
-        static::assertSame(['a', 'b'], $store->getKeyValues($this->groupId, $keyId, $this->language));
+        $store = $this->store($this->reload($element));
+        $keyId = $this->keyIds[self::KEY_VARIANT];
         static::assertSame(
-            ['other-variant'],
+            [$json],
             $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_METRIC)
+        );
+        static::assertSame(
+            [],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_IMPERIAL),
+            'the other variant is untouched'
         );
     }
 
@@ -315,15 +276,6 @@ class ClassificationstoreQualifiedValueTest extends Unit
         static::assertInstanceOf(ClassificationstoreModel::class, $store);
 
         return $store;
-    }
-
-    /**
-     * @return array<int, mixed>
-     */
-    private function list(Concrete $element, string $keyName, string $language): array
-    {
-        return array_values($this->store($element)
-            ->getKeyValues($this->groupId, $this->keyIds[$keyName], $language));
     }
 
     private function batchTarget(string $field = ClassificationStoreFixture::FIELD_LOCALIZED): ClassificationstoreBatch

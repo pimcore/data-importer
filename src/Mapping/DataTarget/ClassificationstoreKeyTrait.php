@@ -271,8 +271,8 @@ trait ClassificationstoreKeyTrait
     }
 
     /**
-     * One value of a key through the setter of its own slot, or - where the key declares several values or the entry
-     * names a variant - through the qualified write, which replaces the whole list of the addressed slot.
+     * One value of a key through the setter of its own slot, or - where the entry names a variant - through the
+     * qualified write, which replaces the value of the addressed variant.
      *
      * @throws InvalidConfigurationException
      */
@@ -283,73 +283,36 @@ trait ClassificationstoreKeyTrait
         ?string $language
     ): void {
         $variant = $slot->variant;
-        $values = $slot->declaration?->isMultiValue() === true ? $this->decodeList($value) : null;
-        if ($variant === null && $values === null) {
+        if ($variant === null) {
             $classificationStore->setLocalizedKeyValue($slot->groupId, $slot->keyId, $value, $language);
 
             return;
         }
 
-        if ($variant !== null && !in_array($variant, $slot->declaration?->getVariantNames() ?? [], true)) {
+        if (!in_array($variant, $slot->declaration?->getVariantNames() ?? [], true)) {
             throw new InvalidConfigurationException(
                 self::KEY_MESSAGE_PREFIX . $slot->token . ' does not declare the variant `' . $variant . '`.'
             );
         }
 
-        $values ??= [$value];
         $entryLanguage = $language === '' ? null : $language;
-        $entries = [];
-        foreach (array_values($values) as $position => $item) {
-            $entries[] = new MultiValue($item, $entryLanguage, $variant, $position);
-        }
 
         try {
-            // an empty list still addresses the slot, so that it clears it
             $classificationStore->setKeyValues(
                 $slot->groupId,
                 $slot->keyId,
-                $entries === [] ? [new MultiValue(null, $entryLanguage, $variant, 0)] : $entries
+                [new MultiValue($value, $entryLanguage, $variant, 0)]
             );
         } catch (UnsupportedEngineFeatureException) {
-            $this->logWarning($this->engineWarning($slot->token, $variant, count($values)));
-            $classificationStore->setLocalizedKeyValue(
-                $slot->groupId,
-                $slot->keyId,
-                array_values($values)[0] ?? null,
-                $language
-            );
+            $this->logWarning($this->engineWarning($slot->token, $variant));
+            $classificationStore->setLocalizedKeyValue($slot->groupId, $slot->keyId, $value, $language);
         }
     }
 
-    /**
-     * The JSON array a source field holds for a key declaring several values; null for anything else.
-     *
-     * @return array<int, mixed>|null
-     */
-    private function decodeList(mixed $value): ?array
+    private function engineWarning(string $token, string $variant): string
     {
-        if (!is_string($value)) {
-            return null;
-        }
-
-        $decoded = json_decode($value, true);
-
-        return is_array($decoded) && array_is_list($decoded) ? $decoded : null;
-    }
-
-    private function engineWarning(string $token, ?string $variant, int $valueCount): string
-    {
-        $qualifiers = [];
-        if ($variant !== null) {
-            $qualifiers[] = 'the variant `' . $variant . '`';
-        }
-
-        if ($valueCount > 1) {
-            $qualifiers[] = 'a list of ' . $valueCount . ' values';
-        }
-
-        return self::KEY_MESSAGE_PREFIX . $token . ': ' . implode(' and ', $qualifiers) . ' cannot be stored, '
-            . 'the engine of the store has to be flipped to one that holds them. '
-            . 'The first value was written as position 0 of the default variant.';
+        return self::KEY_MESSAGE_PREFIX . $token . ': the variant `' . $variant . '` cannot be stored, '
+            . 'the engine of the store has to be flipped to one that holds variants. '
+            . 'The value was written as the default variant.';
     }
 }

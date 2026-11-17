@@ -51,11 +51,6 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      */
     private const KEY_WRAPPED_QUANTITY_VALUE = 'diQvWrappedKey';
 
-    /**
-     * The same wrapper declaring a list, where one entry value carries several values.
-     */
-    private const KEY_WRAPPED_LIST = 'diQvWrappedListKey';
-
     private const CLASS_NAME = 'DiCsQvClass';
 
     private const DEFINITION_UNIT = 'diQvDefinitionUnit';
@@ -97,11 +92,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
             self::KEY_INPUT => ['input', null],
             self::KEY_WRAPPED_QUANTITY_VALUE => [
                 'multiValue',
-                $this->wrappedQuantityValue(self::KEY_WRAPPED_QUANTITY_VALUE, $definitionUnit->getId(), false),
-            ],
-            self::KEY_WRAPPED_LIST => [
-                'multiValue',
-                $this->wrappedQuantityValue(self::KEY_WRAPPED_LIST, $definitionUnit->getId(), true),
+                $this->wrappedQuantityValue(self::KEY_WRAPPED_QUANTITY_VALUE, $definitionUnit->getId()),
             ],
         ];
 
@@ -360,31 +351,26 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     }
 
     /**
-     * Where the wrapper declares a LIST, one entry value carries several values and there is no
-     * agreed batch-entry spelling for a list of `[value, unit]` pairs. So the dispatch stays out of
-     * it and the key is warned about and skipped, with the single-key route named - rather than the
-     * JSON text of the list being cast to a quantity of 1.0 and imported as a real measurement.
+     * A JSON array in a cell is no longer a list, so a `multiValue` key over a quantity value casts it
+     * exactly as a plain quantity-value key does rather than being warned about and skipped. Pinned
+     * against the plain key so that reintroducing a list-specific skip cannot pass unnoticed.
      */
-    public function testAListOfQuantityValuesIsWarnedAboutRatherThanBuiltFromItsJsonText(): void
+    public function testAJsonArrayCellCastsTheSameOnAWrappedAndOnAPlainQuantityValueKey(): void
     {
-        $token = $this->batchKey(self::KEY_WRAPPED_LIST);
-        $logger = $this->createMock(ApplicationLogger::class);
-        $logger->expects(static::once())->method('warning')->with(
-            static::callback(static fn (string $message): bool => str_contains($message, $token)
-                && str_contains($message, 'quantityValue')),
-            static::anything()
-        );
-
-        $target = new ClassificationstoreBatch(
-            $logger,
-            (new ClassificationStoreFixture())->localizationResolver()
-        );
-        $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
+        $json = json_encode(['1', '2']);
 
         $element = $this->object();
-        $target->assignData($element, [$token => '["1","2"]']);
+        $this->target()->assignData($element, [
+            $this->batchKey(self::KEY_QUANTITY_VALUE) => $json,
+            $this->batchKey(self::KEY_WRAPPED_QUANTITY_VALUE) => $json,
+        ]);
 
-        static::assertNull($this->keyValue($element, self::KEY_WRAPPED_LIST));
+        // the plain key's own answer is the reference: whatever it makes of the cell, the wrapped key
+        // makes the same, which is the thing a reintroduced list-specific skip would break
+        static::assertEquals(
+            $this->keyValue($element, self::KEY_QUANTITY_VALUE),
+            $this->keyValue($element, self::KEY_WRAPPED_QUANTITY_VALUE)
+        );
     }
 
     /**
@@ -422,7 +408,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
      * from the blob the wrapper carries - a wrapper naming a type but carrying nothing reads back
      * with no delegate at all, and the delegate is where the default unit lives.
      */
-    private function wrappedQuantityValue(string $name, string $defaultUnitId, bool $list): MultiValueDefinition
+    private function wrappedQuantityValue(string $name, string $defaultUnitId): MultiValueDefinition
     {
         $delegate = new QuantityValueDefinition();
         $delegate->setName($name);
@@ -432,7 +418,6 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
         $definition->setName($name);
         $definition->setDelegateDatatype('quantityValue');
         $definition->setDelegate($delegate);
-        $definition->setMultiValue($list);
 
         return $definition;
     }

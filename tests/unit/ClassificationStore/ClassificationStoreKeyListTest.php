@@ -204,7 +204,6 @@ class ClassificationStoreKeyListTest extends Unit
         $definition = new MultiValue();
         $definition->setName($name);
         $definition->setDelegateDatatype($delegateType);
-        $definition->setMultiValue(true);
 
         return $definition;
     }
