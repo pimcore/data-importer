@@ -242,27 +242,20 @@ class StructuredValueOperatorTest extends Unit
         return $unit;
     }
 
+    // grabService() is typed on the class string it is handed, so no local annotation is needed
+
     private function quantityValueRange(): QuantityValueRangeOperator
     {
-        /** @var QuantityValueRangeOperator $operator */
-        $operator = $this->tester->grabService(QuantityValueRangeOperator::class);
-
-        return $operator;
+        return $this->tester->grabService(QuantityValueRangeOperator::class);
     }
 
     private function externalImage(): AsExternalImage
     {
-        /** @var AsExternalImage $operator */
-        $operator = $this->tester->grabService(AsExternalImage::class);
-
-        return $operator;
+        return $this->tester->grabService(AsExternalImage::class);
     }
 
     private function numericRange(): AsNumericRange
     {
-        /** @var AsNumericRange $operator */
-        $operator = $this->tester->grabService(AsNumericRange::class);
-
-        return $operator;
+        return $this->tester->grabService(AsNumericRange::class);
     }
 }

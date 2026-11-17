@@ -51,8 +51,17 @@ final class ClassificationStoreDataTypeService
     ) {
     }
 
-    public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, ?string $searchString = null, ?string $filterString = null, bool $loadAdvancedRelations = false): DataObject\Classificationstore\KeyGroupRelation\Listing
-    {
+    public function listClassificationStoreKeyList(
+        string $classId,
+        string $fieldName,
+        string $transformationResultType,
+        ?ClassificationStoreKeyListOptions $options = null
+    ): DataObject\Classificationstore\KeyGroupRelation\Listing {
+        $options ??= new ClassificationStoreKeyListOptions();
+        $orderKey = $options->orderKey;
+        $searchString = $options->searchString;
+        $filterString = $options->filterString;
+
         $classDefinition = DataObject\ClassDefinition::getById($classId);
         $field = $classDefinition->getFieldDefinition($fieldName);
         if ($field instanceof DataObject\ClassDefinition\Data\Classificationstore) {
@@ -72,9 +81,9 @@ final class ClassificationStoreDataTypeService
         }
 
         $list = new DataObject\Classificationstore\KeyGroupRelation\Listing();
-        $list->setLimit($limit);
-        $list->setOffset($start);
-        $list->setOrder($order);
+        $list->setLimit($options->limit);
+        $list->setOffset($options->start);
+        $list->setOrder($options->order);
         $list->setOrderKey($orderKey);
 
         $conditionParts = [];
@@ -99,7 +108,7 @@ final class ClassificationStoreDataTypeService
         }
 
         if ($transformationResultType) {
-            if ($loadAdvancedRelations) {
+            if ($options->loadAdvancedRelations) {
                 $transformationResultType = $this->transformationDataTypeService
                     ->advancedRelationTargetType($transformationResultType);
             }

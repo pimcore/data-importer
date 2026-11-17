@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ClassificationStore;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreKeyListOptions;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyParameters;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
@@ -193,7 +194,7 @@ class ClassificationStoreKeyListTest extends Unit
             $this->classId,
             ClassificationStoreFixture::FIELD_NON_LOCALIZED,
             $transformationResultType,
-            limit: 100
+            new ClassificationStoreKeyListOptions(limit: 100)
         );
 
         return array_map(static fn ($relation): int => $relation->getKeyId(), $list->load());

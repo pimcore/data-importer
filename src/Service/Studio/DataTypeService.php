@@ -20,6 +20,7 @@ use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\UnitDataEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydratorInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreKeyReference;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreKeyListOptions;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyNameResponse;
@@ -93,13 +94,17 @@ final readonly class DataTypeService implements DataTypeServiceInterface
             strip_tags($parameters->getClassId() ?? ''),
             strip_tags($parameters->getFieldName() ?? ''),
             strip_tags($parameters->getTransformationResultType() ?? ''),
-            $sortParams['orderKey'] ?? 'name',
-            $sortParams['order'] ?? 'ASC',
-            $parameters->getStart(),
-            $parameters->getLimit(),
-            $parameters->getSearchfilter() !== null ? strip_tags($parameters->getSearchfilter()) : null,
-            $parameters->getFilter() !== null ? strip_tags($parameters->getFilter()) : null,
-            $parameters->getLoadAdvancedRelations()
+            new ClassificationStoreKeyListOptions(
+                orderKey: $sortParams['orderKey'] ?? 'name',
+                order: $sortParams['order'] ?? 'ASC',
+                start: $parameters->getStart(),
+                limit: $parameters->getLimit(),
+                searchString: $parameters->getSearchfilter() !== null
+                    ? strip_tags($parameters->getSearchfilter())
+                    : null,
+                filterString: $parameters->getFilter() !== null ? strip_tags($parameters->getFilter()) : null,
+                loadAdvancedRelations: $parameters->getLoadAdvancedRelations()
+            )
         );
 
         DataObject\Classificationstore\DefinitionCache::load(array_map(
