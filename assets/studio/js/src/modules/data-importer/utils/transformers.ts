@@ -331,6 +331,25 @@ function normalizeConfigObject<T> (value: T | undefined): T | undefined {
   return Array.isArray(value) ? undefined : value
 }
 
+/**
+ * The mapping list, as a list. A document written outside the editor can carry it keyed by
+ * index or wrapped in a key of its own, and the form binds a list - reading `.map` off the
+ * object form throws mid-render and takes the whole surface down with it.
+ */
+function normalizeMappingList (value: unknown): MappingConfigItem[] {
+  if (Array.isArray(value)) return value as MappingConfigItem[]
+  if (value === null || typeof value !== 'object') return []
+
+  const rows: MappingConfigItem[] = []
+  for (const entry of Object.values(value)) {
+    for (const row of (Array.isArray(entry) ? entry : [entry])) {
+      if (typeof row === 'object' && row !== null) rows.push(row as MappingConfigItem)
+    }
+  }
+
+  return rows
+}
+
 function normalizeResolverConfig (resolver: BackendConfiguration['resolverConfig']): BackendConfiguration['resolverConfig'] {
   const normalized = normalizeConfigObject(resolver)
   if (normalized === undefined) return undefined
@@ -358,7 +377,7 @@ export function transformBackendToForm (
   backendConfig: BackendConfiguration,
   configName: string
 ): DataImporterFormValues {
-  const mappingConfig = (backendConfig.mappingConfig ?? []).map((item) => ({
+  const mappingConfig = normalizeMappingList(backendConfig.mappingConfig).map((item) => ({
     ...ensureMappingId(item)
   }))
 

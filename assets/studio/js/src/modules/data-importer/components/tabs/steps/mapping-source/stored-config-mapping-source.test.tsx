@@ -91,6 +91,35 @@ describe('storedConfigQueries', () => {
   })
 })
 
+describe('storedConfigQueries under a review', () => {
+  it('carries the change set and its context on every request', () => {
+    const queries = storedConfigQueries('products', { previewScope: 'cs-1', previewContext: 'agent-session:7' })
+    const scope = { previewScope: 'cs-1', previewContext: 'agent-session:7' }
+
+    queries.useColumnHeadersQuery({ currentConfig: {} })
+    queries.usePreviewQuery({ recordNumber: 2 })
+    queries.useTransformationResultTypeQuery({ currentConfig: { dataSourceIndex: ['0'] } })
+    queries.useTransformationResultQuery({ recordNumber: 1 })
+
+    expect(headersQuery).toHaveBeenCalledWith(
+      { name: 'products', bundleDataImporterCopyPreviewParameters: { currentConfig: {}, ...scope } },
+      { skip: false }
+    )
+    expect(previewQuery).toHaveBeenCalledWith(
+      { name: 'products', bundleDataImporterLoadPreviewParameters: { recordNumber: 2, ...scope } },
+      { skip: false }
+    )
+    expect(typeQuery).toHaveBeenCalledWith(
+      { name: 'products', bundleDataImporterCalculateTransformationResultTypeParameters: { currentConfig: { dataSourceIndex: ['0'] }, ...scope } },
+      { skip: false }
+    )
+    expect(resultQuery).toHaveBeenCalledWith(
+      { name: 'products', bundleDataImporterLoadPreviewParameters: { recordNumber: 1, ...scope } },
+      { skip: false }
+    )
+  })
+})
+
 describe('DataSetupTab', () => {
   it('hands the mapping step the stored configuration as its source', () => {
     getQuery.mockReturnValue({ data: { configuration: { general: {} } }, isSuccess: true, requestId: 'r1' })
