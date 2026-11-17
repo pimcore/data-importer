@@ -34,6 +34,10 @@ class StructuredValueOperatorTest extends Unit
 {
     private const UNIT_ID = 'svo_mm';
 
+    private const URL = 'https://example.com/a.png';
+
+    private const UNIT_SOURCE = 'unitSourceSelect';
+
     private const UNIT_ABBREVIATION = 'svo-mm';
 
     /**
@@ -118,7 +122,7 @@ class StructuredValueOperatorTest extends Unit
     {
         $this->unit();
         $operator = $this->quantityValueRange();
-        $operator->setSettings(['unitSourceSelect' => 'abbr']);
+        $operator->setSettings([self::UNIT_SOURCE => 'abbr']);
 
         $result = $operator->process(['3', '7', self::UNIT_ABBREVIATION]);
 
@@ -130,7 +134,7 @@ class StructuredValueOperatorTest extends Unit
     {
         $this->unit();
         $operator = $this->quantityValueRange();
-        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => self::UNIT_ID]);
+        $operator->setSettings([self::UNIT_SOURCE => 'static', 'staticUnitSelect' => self::UNIT_ID]);
 
         $result = $operator->process(['3', '7']);
 
@@ -175,7 +179,7 @@ class StructuredValueOperatorTest extends Unit
     public function testQuantityValueRangeRefusesASingleSourceEvenWithAStaticUnit(): void
     {
         $operator = $this->quantityValueRange();
-        $operator->setSettings(['unitSourceSelect' => 'static', 'staticUnitSelect' => self::UNIT_ID]);
+        $operator->setSettings([self::UNIT_SOURCE => 'static', 'staticUnitSelect' => self::UNIT_ID]);
 
         $this->expectException(InvalidConfigurationException::class);
 
@@ -184,10 +188,10 @@ class StructuredValueOperatorTest extends Unit
 
     public function testExternalImageWrapsAUrl(): void
     {
-        $result = $this->externalImage()->process('https://example.com/a.png');
+        $result = $this->externalImage()->process(self::URL);
 
         static::assertInstanceOf(ExternalImage::class, $result);
-        static::assertSame('https://example.com/a.png', $result->getUrl());
+        static::assertSame(self::URL, $result->getUrl());
     }
 
     public function testExternalImageWritesNothingForAnEmptyCell(): void
@@ -217,9 +221,9 @@ class StructuredValueOperatorTest extends Unit
 
     public function testExternalImagePreviewNamesTheUrl(): void
     {
-        $preview = $this->externalImage()->generateResultPreview(new ExternalImage('https://example.com/a.png'));
+        $preview = $this->externalImage()->generateResultPreview(new ExternalImage(self::URL));
 
-        static::assertStringContainsString('https://example.com/a.png', $preview);
+        static::assertStringContainsString(self::URL, $preview);
     }
 
     private function unit(): QuantityValueUnit

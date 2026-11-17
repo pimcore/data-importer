@@ -82,6 +82,13 @@ Assigns the value to one key of a classification store field.
 - **Field Name**: the classification store field.
 - **Classification Store Key**: the group and key to write, saved as `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>`. The integer
   form `<GROUP_ID>-<KEY_ID>` of older entries is still read, and is saved for a group or key that has no identifier.
+  The keys offered are those whose type the pipeline's result type can fill, exactly as for a class attribute, plus
+  keys of the `multiValue` type over such a type. A result type no key type can hold offers no key at all — the three
+  array result types the `Classification Store Batch` target takes (`quantityValueArray`, `inputQuantityValueArray`,
+  `dateArray`) are of that kind, because a single key holds one value and not a list of them. Keys of the two advanced
+  relation types are offered for `assetArray` and `dataObjectArray` only when the listing is asked for the advanced
+  relations, and their values are written as relation metadata with no columns filled, as for a class attribute
+  written through `Many-to-Many Relation`.
 - **Variant**: shown when the selected key declares variants. The variant is part of the reference,
   `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>#<VARIANT>`, so one mapping entry per variant writes the variants of one key side
   by side. Without one, the default variant is written. Variants are written by this target only, not by

@@ -39,22 +39,46 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
 
     private const ENGINE_DOCUMENT = 'document';
 
+    private const TYPE_INPUT = 'input';
+
+    private const TYPE_MULTISELECT = 'multiselect';
+
+    private const TYPE_LANGUAGE_MULTISELECT = 'languagemultiselect';
+
+    private const TYPE_NUMERIC_RANGE = 'numericRange';
+
+    private const TYPE_QUANTITY_VALUE_RANGE = 'quantityValueRange';
+
+    private const TYPE_EXTERNAL_IMAGE = 'externalImage';
+
+    private const TYPE_DATE = 'date';
+
+    private const TYPE_QUANTITY_VALUE = 'quantityValue';
+
+    private const TYPE_RELATION = 'manyToManyRelation';
+
+    private const TYPE_OBJECT_RELATION = 'manyToManyObjectRelation';
+
+    private const TYPE_ADVANCED_RELATION = 'advancedManyToManyRelation';
+
+    private const TYPE_ADVANCED_OBJECT_RELATION = 'advancedManyToManyObjectRelation';
+
     /**
      * The key types a key is created for, under the name the key row carries.
      */
     private const KEY_TYPES = [
-        'input',
-        'multiselect',
-        'languagemultiselect',
-        'numericRange',
-        'quantityValueRange',
-        'externalImage',
-        'date',
-        'quantityValue',
-        'manyToManyRelation',
-        'manyToManyObjectRelation',
-        'advancedManyToManyRelation',
-        'advancedManyToManyObjectRelation',
+        self::TYPE_INPUT,
+        self::TYPE_MULTISELECT,
+        self::TYPE_LANGUAGE_MULTISELECT,
+        self::TYPE_NUMERIC_RANGE,
+        self::TYPE_QUANTITY_VALUE_RANGE,
+        self::TYPE_EXTERNAL_IMAGE,
+        self::TYPE_DATE,
+        self::TYPE_QUANTITY_VALUE,
+        self::TYPE_RELATION,
+        self::TYPE_OBJECT_RELATION,
+        self::TYPE_ADVANCED_RELATION,
+        self::TYPE_ADVANCED_OBJECT_RELATION,
     ];
 
     /**
@@ -96,9 +120,9 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
     {
         $offered = $this->offeredKeyIds(TransformationDataTypeService::DEFAULT_ARRAY);
 
-        static::assertContains($this->keyIds['languagemultiselect'], $offered, 'the renamed type');
-        static::assertContains($this->keyIds['multiselect'], $offered, 'a type listed beside it');
-        static::assertNotContains($this->keyIds['input'], $offered, 'a type the result cannot fill');
+        static::assertContains($this->keyIds[self::TYPE_LANGUAGE_MULTISELECT], $offered, 'the renamed type');
+        static::assertContains($this->keyIds[self::TYPE_MULTISELECT], $offered, 'a type listed beside it');
+        static::assertNotContains($this->keyIds[self::TYPE_INPUT], $offered, 'a type the result cannot fill');
     }
 
     /**
@@ -116,7 +140,7 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
 
         static::assertSame([], $offered, 'a result type with no key type of its own');
         static::assertContains(
-            $this->keyIds['date'],
+            $this->keyIds[self::TYPE_DATE],
             $this->offeredKeyIds(TransformationDataTypeService::DATE),
             'the same listing still offers the key type the sibling result type names'
         );
@@ -126,10 +150,10 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
     {
         $offered = $this->offeredKeyIds(TransformationDataTypeService::NUMERIC_RANGE);
 
-        static::assertContains($this->keyIds['numericRange'], $offered);
-        static::assertNotContains($this->keyIds['input'], $offered, 'a type the result cannot fill');
+        static::assertContains($this->keyIds[self::TYPE_NUMERIC_RANGE], $offered);
+        static::assertNotContains($this->keyIds[self::TYPE_INPUT], $offered, 'a type the result cannot fill');
         static::assertNotContains(
-            $this->keyIds['quantityValueRange'],
+            $this->keyIds[self::TYPE_QUANTITY_VALUE_RANGE],
             $offered,
             'the other range type, which carries a unit'
         );
@@ -139,21 +163,21 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
     {
         $offered = $this->offeredKeyIds(TransformationDataTypeService::QUANTITY_VALUE_RANGE);
 
-        static::assertContains($this->keyIds['quantityValueRange'], $offered);
+        static::assertContains($this->keyIds[self::TYPE_QUANTITY_VALUE_RANGE], $offered);
         static::assertNotContains(
-            $this->keyIds['quantityValue'],
+            $this->keyIds[self::TYPE_QUANTITY_VALUE],
             $offered,
             'the single-valued quantity value type'
         );
-        static::assertNotContains($this->keyIds['numericRange'], $offered, 'the range without a unit');
+        static::assertNotContains($this->keyIds[self::TYPE_NUMERIC_RANGE], $offered, 'the range without a unit');
     }
 
     public function testAnExternalImageKeyIsOfferedForAnExternalImageResult(): void
     {
         $offered = $this->offeredKeyIds(TransformationDataTypeService::EXTERNAL_IMAGE);
 
-        static::assertContains($this->keyIds['externalImage'], $offered);
-        static::assertNotContains($this->keyIds['input'], $offered, 'the plain text type a URL arrives as');
+        static::assertContains($this->keyIds[self::TYPE_EXTERNAL_IMAGE], $offered);
+        static::assertNotContains($this->keyIds[self::TYPE_INPUT], $offered, 'the plain text type a URL arrives as');
     }
 
     /**
@@ -164,24 +188,24 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
     public function testAnAdvancedRelationKeyIsOfferedOnlyWhenAdvancedRelationsAreAsked(): void
     {
         $plain = $this->offeredKeyIds(TransformationDataTypeService::DATA_OBJECT_ARRAY);
-        static::assertNotContains($this->keyIds['advancedManyToManyObjectRelation'], $plain);
-        static::assertContains($this->keyIds['manyToManyObjectRelation'], $plain, 'the plain relation');
+        static::assertNotContains($this->keyIds[self::TYPE_ADVANCED_OBJECT_RELATION], $plain);
+        static::assertContains($this->keyIds[self::TYPE_OBJECT_RELATION], $plain, 'the plain relation');
 
         $advanced = $this->offeredKeyIds(TransformationDataTypeService::DATA_OBJECT_ARRAY, true);
-        static::assertContains($this->keyIds['advancedManyToManyObjectRelation'], $advanced);
-        static::assertContains($this->keyIds['manyToManyObjectRelation'], $advanced, 'still the plain one');
-        static::assertNotContains($this->keyIds['date'], $advanced, 'a type no relation result covers');
+        static::assertContains($this->keyIds[self::TYPE_ADVANCED_OBJECT_RELATION], $advanced);
+        static::assertContains($this->keyIds[self::TYPE_OBJECT_RELATION], $advanced, 'still the plain one');
+        static::assertNotContains($this->keyIds[self::TYPE_DATE], $advanced, 'a type no relation result covers');
     }
 
     public function testAnAdvancedAssetRelationKeyIsOfferedOnlyWhenAdvancedRelationsAreAsked(): void
     {
         $plain = $this->offeredKeyIds(TransformationDataTypeService::ASSET_ARRAY);
-        static::assertNotContains($this->keyIds['advancedManyToManyRelation'], $plain);
-        static::assertContains($this->keyIds['manyToManyRelation'], $plain, 'the plain relation');
+        static::assertNotContains($this->keyIds[self::TYPE_ADVANCED_RELATION], $plain);
+        static::assertContains($this->keyIds[self::TYPE_RELATION], $plain, 'the plain relation');
 
         $advanced = $this->offeredKeyIds(TransformationDataTypeService::ASSET_ARRAY, true);
-        static::assertContains($this->keyIds['advancedManyToManyRelation'], $advanced);
-        static::assertNotContains($this->keyIds['date'], $advanced, 'a type no relation result covers');
+        static::assertContains($this->keyIds[self::TYPE_ADVANCED_RELATION], $advanced);
+        static::assertNotContains($this->keyIds[self::TYPE_DATE], $advanced, 'a type no relation result covers');
     }
 
     /**
