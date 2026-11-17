@@ -38,6 +38,11 @@ final class ClassificationStoreDataTypeService
     private const DELEGATE_TYPE = 'JSON_UNQUOTE(JSON_EXTRACT('
         . DataObject\Classificationstore\KeyConfig\Dao::TABLE_NAME_KEYS . '.`definition`, \'$.delegateDatatype\'))';
 
+    /**
+     * `type IN ()` is not valid SQL, so an empty key-type list is spelled out as a predicate.
+     */
+    private const REFUSE_EVERY_KEY = '1 = 0';
+
     public function __construct(
         private readonly TransformationDataTypeService $transformationDataTypeService,
         private readonly KeyTypeSupport $keyTypeSupport,
@@ -95,7 +100,13 @@ final class ClassificationStoreDataTypeService
 
         if ($transformationResultType) {
             $pimcoreTypes = $this->transformationDataTypeService->getPimcoreTypesByTransformationTargetType($transformationResultType);
-            if (!empty($pimcoreTypes)) {
+            if ($pimcoreTypes === []) {
+                // A result type no key type can hold refuses every key rather than passing all of
+                // them: `dateArray`, `quantityValueArray` and `inputQuantityValueArray` are really
+                // produced and name no key type, and the class-attribute listing reading the same
+                // table already answers nothing for them.
+                $list->addConditionParam(self::REFUSE_EVERY_KEY);
+            } else {
                 $quoted = implode(',', array_map($list->quote(...), $pimcoreTypes));
                 $list->addConditionParam(sprintf(
                     '(type IN (%1$s) OR (type = %2$s AND %3$s IN (%1$s)))',

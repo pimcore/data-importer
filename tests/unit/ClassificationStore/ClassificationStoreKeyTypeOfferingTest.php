@@ -98,6 +98,27 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
     }
 
     /**
+     * `dateArray`, `quantityValueArray` and `inputQuantityValueArray` are result types a pipeline
+     * really produces, and the transformation table names no key type for any of them. The listing
+     * used to skip its own filter for an empty list and offer every key in the store, so a pipeline
+     * ending in one of them could be pointed at a key of any type at all.
+     *
+     * The class-attribute listing that reads the same table has always refused in that case, so
+     * refusing here is what makes the two consumers of one table agree.
+     */
+    public function testAResultTypeNoKeyTypeCanFillOffersNoKeyAtAll(): void
+    {
+        $offered = $this->offeredKeyIds(TransformationDataTypeService::DATE_ARRAY);
+
+        static::assertSame([], $offered, 'a result type with no key type of its own');
+        static::assertContains(
+            $this->keyIds['date'],
+            $this->offeredKeyIds(TransformationDataTypeService::DATE),
+            'the same listing still offers the key type the sibling result type names'
+        );
+    }
+
+    /**
      * @return int[]
      */
     private function offeredKeyIds(string $transformationResultType): array
