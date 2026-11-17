@@ -283,6 +283,16 @@ trait ClassificationstoreKeyTrait
     }
 
     /**
+     * The definition of the VALUE a key holds, which for a wrapper is its delegate's and not its own:
+     * the one boundary core resolves an inner type at ({@see ClassificationstoreService::getValueDefinition()}).
+     * A wrapper naming no inner type answers itself.
+     */
+    private function resolveValueDefinition(?Data $definition): ?Data
+    {
+        return ClassificationstoreService::getValueDefinition($definition);
+    }
+
+    /**
      * An advanced relation key holds one metadata object per relation, while a pipeline produces
      * the plain elements - the same value a plain relation key takes, because no operator knows
      * about metadata columns. For a class attribute the choice is made by picking the
@@ -292,6 +302,11 @@ trait ClassificationstoreKeyTrait
      *
      * Without this a key of either advanced relation type is refused on save with
      * `Expected DataObject\Data\ObjectMetadata`, so the type could not be imported at all.
+     *
+     * Dispatched on the definition of the VALUE, not on the key's own: a `multiValue` key over an
+     * advanced relation is a key type of its own - its type column reads `multiValue` and the picker
+     * offers it on its delegate's type - and matching the wrapper left its elements unwrapped, which
+     * is the same refusal on save.
      */
     private function wrapAdvancedRelations(mixed $value, ?Data $definition): mixed
     {
@@ -299,11 +314,13 @@ trait ClassificationstoreKeyTrait
             return $value;
         }
 
+        // the key's own name, which a wrapper carries and its delegate blob need not
         $fieldname = $definition?->getName();
+        $valueDefinition = $this->resolveValueDefinition($definition);
         $wrap = match (true) {
-            $definition instanceof AdvancedManyToManyObjectRelation => static fn (mixed $element): mixed
+            $valueDefinition instanceof AdvancedManyToManyObjectRelation => static fn (mixed $element): mixed
                 => $element instanceof Concrete ? new ObjectMetadata($fieldname, [], $element) : $element,
-            $definition instanceof AdvancedManyToManyRelation => static fn (mixed $element): mixed
+            $valueDefinition instanceof AdvancedManyToManyRelation => static fn (mixed $element): mixed
                 => $element instanceof ElementInterface ? new ElementMetadata($fieldname, [], $element) : $element,
             default => null,
         };

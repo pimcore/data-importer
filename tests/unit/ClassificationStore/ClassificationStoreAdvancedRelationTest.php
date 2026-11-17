@@ -18,9 +18,11 @@ use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ClassificationStoreFixture;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AdvancedManyToManyObjectRelation;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AdvancedManyToManyRelation;
 use Pimcore\Model\DataObject\ClassDefinition\Data\ManyToManyObjectRelation;
+use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue as MultiValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore as ClassificationstoreModel;
 use Pimcore\Model\DataObject\Classificationstore\Engine\EngineResolver;
 use Pimcore\Model\DataObject\Classificationstore\StoreConfig;
@@ -50,6 +52,24 @@ class ClassificationStoreAdvancedRelationTest extends Unit
 
     private const KEY_PLAIN_OBJECTS = 'diPlainRelObjects';
 
+    /**
+     * The same three key types once more behind a `multiValue` wrapper, which the key picker offers
+     * on its delegate's type: such a key's own type column reads `multiValue` whatever it wraps.
+     */
+    private const KEY_WRAPPED_OBJECTS = 'diAdvRelWrappedObjects';
+
+    private const KEY_WRAPPED_ELEMENTS = 'diAdvRelWrappedElements';
+
+    private const KEY_WRAPPED_PLAIN_OBJECTS = 'diPlainRelWrappedObjects';
+
+    private const TYPE_MULTI_VALUE = 'multiValue';
+
+    private const TYPE_ADVANCED_OBJECTS = 'advancedManyToManyObjectRelation';
+
+    private const TYPE_ADVANCED_ELEMENTS = 'advancedManyToManyRelation';
+
+    private const TYPE_PLAIN_OBJECTS = 'manyToManyObjectRelation';
+
     private const ENGINE_DOCUMENT = 'document';
 
     /**
@@ -77,15 +97,28 @@ class ClassificationStoreAdvancedRelationTest extends Unit
 
         // each definition is configured to accept the related object, so that a save which still
         // fails fails on the metadata shape and not on an allowed-class rule
-        $advancedObjects = new AdvancedManyToManyObjectRelation();
-        $advancedObjects->setAllowedClassId(self::CLASS_NAME);
-        $advancedElements = new AdvancedManyToManyRelation();
-        $advancedElements->setObjectsAllowed(true);
-
         $definitions = [
-            self::KEY_ADVANCED_OBJECTS => ['advancedManyToManyObjectRelation', $advancedObjects],
-            self::KEY_ADVANCED_ELEMENTS => ['advancedManyToManyRelation', $advancedElements],
-            self::KEY_PLAIN_OBJECTS => ['manyToManyObjectRelation', new ManyToManyObjectRelation()],
+            self::KEY_ADVANCED_OBJECTS => [self::TYPE_ADVANCED_OBJECTS, $this->relationDefinition(
+                self::TYPE_ADVANCED_OBJECTS
+            )],
+            self::KEY_ADVANCED_ELEMENTS => [self::TYPE_ADVANCED_ELEMENTS, $this->relationDefinition(
+                self::TYPE_ADVANCED_ELEMENTS
+            )],
+            self::KEY_PLAIN_OBJECTS => [self::TYPE_PLAIN_OBJECTS, $this->relationDefinition(
+                self::TYPE_PLAIN_OBJECTS
+            )],
+            self::KEY_WRAPPED_OBJECTS => [self::TYPE_MULTI_VALUE, $this->wrapped(
+                self::KEY_WRAPPED_OBJECTS,
+                self::TYPE_ADVANCED_OBJECTS
+            )],
+            self::KEY_WRAPPED_ELEMENTS => [self::TYPE_MULTI_VALUE, $this->wrapped(
+                self::KEY_WRAPPED_ELEMENTS,
+                self::TYPE_ADVANCED_ELEMENTS
+            )],
+            self::KEY_WRAPPED_PLAIN_OBJECTS => [self::TYPE_MULTI_VALUE, $this->wrapped(
+                self::KEY_WRAPPED_PLAIN_OBJECTS,
+                self::TYPE_PLAIN_OBJECTS
+            )],
         ];
 
         $sorter = 0;
@@ -139,6 +172,40 @@ class ClassificationStoreAdvancedRelationTest extends Unit
         static::assertSame($this->related->getId(), $value[0]->getId());
     }
 
+    public function testAMultiValueKeyOverAnAdvancedObjectRelationIsWrappedToo(): void
+    {
+        $value = $this->roundTrip(self::KEY_WRAPPED_OBJECTS, [$this->related]);
+
+        static::assertIsArray($value);
+        static::assertCount(1, $value, 'the related object reached the store through the wrapper');
+        static::assertInstanceOf(ObjectMetadata::class, $value[0]);
+        static::assertSame($this->related->getId(), $value[0]->getObject()?->getId());
+    }
+
+    public function testAMultiValueKeyOverAnAdvancedElementRelationIsWrappedToo(): void
+    {
+        $value = $this->roundTrip(self::KEY_WRAPPED_ELEMENTS, [$this->related]);
+
+        static::assertIsArray($value);
+        static::assertCount(1, $value, 'the related element reached the store through the wrapper');
+        static::assertInstanceOf(ElementMetadata::class, $value[0]);
+        static::assertSame($this->related->getId(), $value[0]->getElement()?->getId());
+    }
+
+    /**
+     * The second control: the wrapper itself does not decide the wrapping, its delegate does, so a
+     * `multiValue` key over a PLAIN relation still takes the elements as they arrive.
+     */
+    public function testAMultiValueKeyOverAPlainObjectRelationIsStillWrittenUnwrapped(): void
+    {
+        $value = $this->roundTrip(self::KEY_WRAPPED_PLAIN_OBJECTS, [$this->related]);
+
+        static::assertIsArray($value);
+        static::assertCount(1, $value);
+        static::assertInstanceOf(Concrete::class, $value[0], 'no metadata wrapper here');
+        static::assertSame($this->related->getId(), $value[0]->getId());
+    }
+
     public function testTheBatchTargetWrapsAnAdvancedRelationValueToo(): void
     {
         $element = (new ClassificationStoreFixture())->newObject(
@@ -161,6 +228,44 @@ class ClassificationStoreAdvancedRelationTest extends Unit
         static::assertIsArray($value);
         static::assertCount(1, $value);
         static::assertInstanceOf(ObjectMetadata::class, $value[0]);
+    }
+
+    /**
+     * One relation definition of the given type, configured to accept the related object.
+     */
+    private function relationDefinition(string $type): Data
+    {
+        if ($type === self::TYPE_ADVANCED_OBJECTS) {
+            $definition = new AdvancedManyToManyObjectRelation();
+            $definition->setAllowedClassId(self::CLASS_NAME);
+
+            return $definition;
+        }
+
+        if ($type === self::TYPE_ADVANCED_ELEMENTS) {
+            $definition = new AdvancedManyToManyRelation();
+            $definition->setObjectsAllowed(true);
+
+            return $definition;
+        }
+
+        return new ManyToManyObjectRelation();
+    }
+
+    /**
+     * A `multiValue` key over one of the relation types, declaring no variants - the shape the key
+     * picker offers whenever a key's `delegateDatatype` matches the result type of the pipeline.
+     */
+    private function wrapped(string $name, string $delegateType): MultiValueDefinition
+    {
+        $delegate = $this->relationDefinition($delegateType);
+        $delegate->setName($name);
+
+        $definition = new MultiValueDefinition();
+        $definition->setDelegateDatatype($delegateType);
+        $definition->setDelegate($delegate);
+
+        return $definition;
     }
 
     /**
