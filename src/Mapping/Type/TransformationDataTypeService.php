@@ -69,6 +69,8 @@ final class TransformationDataTypeService
 
     public const COUNTRY_ARRAY = 'countryArray';
 
+    public const NUMERIC_RANGE = 'numericRange';
+
     public const CALCULATED = 'calculated';
 
     public function __construct(private readonly LocalizationResolver $localizationResolver)
@@ -164,6 +166,9 @@ final class TransformationDataTypeService
         ],
         self::COUNTRY_ARRAY => [
             'countrymultiselect'
+        ],
+        self::NUMERIC_RANGE => [
+            'numericRange'
         ],
         self::CALCULATED =>[
             'calculatedValue'

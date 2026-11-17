@@ -45,5 +45,6 @@ export {
   DynamicTypeTransformerAsGeobounds,
   DynamicTypeTransformerAsGeopoint,
   DynamicTypeTransformerAsGeopolygon,
-  DynamicTypeTransformerAsGeopolyline
+  DynamicTypeTransformerAsGeopolyline,
+  DynamicTypeTransformerAsNumericRange
 } from './dynamic-type-transformer-no-settings'

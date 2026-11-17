@@ -122,6 +122,19 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
         );
     }
 
+    public function testANumericRangeKeyIsOfferedForANumericRangeResult(): void
+    {
+        $offered = $this->offeredKeyIds(TransformationDataTypeService::NUMERIC_RANGE);
+
+        static::assertContains($this->keyIds['numericRange'], $offered);
+        static::assertNotContains($this->keyIds['input'], $offered, 'a type the result cannot fill');
+        static::assertNotContains(
+            $this->keyIds['quantityValueRange'],
+            $offered,
+            'the other range type, which carries a unit'
+        );
+    }
+
     /**
      * An advanced relation key is reachable the way an advanced relation class field is: the caller
      * asks for the advanced relations, and the plain relation result type is read as its advanced

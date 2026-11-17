@@ -96,6 +96,7 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Transformer/AsGeopoint': 'DataImporter/DynamicTypes/Transformer/AsGeopoint',
   'DataImporter/DynamicTypes/Transformer/AsGeopolygon': 'DataImporter/DynamicTypes/Transformer/AsGeopolygon',
   'DataImporter/DynamicTypes/Transformer/AsGeopolyline': 'DataImporter/DynamicTypes/Transformer/AsGeopolyline',
+  'DataImporter/DynamicTypes/Transformer/AsNumericRange': 'DataImporter/DynamicTypes/Transformer/AsNumericRange',
   'DataImporter/DynamicTypes/Transformer/LoadDataObject': 'DataImporter/DynamicTypes/Transformer/LoadDataObject',
   'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset',
 

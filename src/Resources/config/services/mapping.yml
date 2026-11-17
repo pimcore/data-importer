@@ -139,6 +139,10 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "asCountries" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsNumericRange:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asNumericRange" }
+
 
     # ---------------------
     # data target services

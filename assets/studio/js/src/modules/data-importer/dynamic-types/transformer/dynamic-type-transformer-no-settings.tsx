@@ -59,3 +59,4 @@ export const DynamicTypeTransformerAsGeobounds = makeNoSettings('asGeobounds', '
 export const DynamicTypeTransformerAsGeopoint = makeNoSettings('asGeopoint', 'As Geopoint', 'dataTypes')
 export const DynamicTypeTransformerAsGeopolygon = makeNoSettings('asGeopolygon', 'As Geopolygon', 'dataTypes')
 export const DynamicTypeTransformerAsGeopolyline = makeNoSettings('asGeopolyline', 'As Geopolyline', 'dataTypes')
+export const DynamicTypeTransformerAsNumericRange = makeNoSettings('asNumericRange', 'As Numeric Range', 'dataTypes')
