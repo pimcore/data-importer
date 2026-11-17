@@ -351,6 +351,29 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     }
 
     /**
+     * A JSON array in a cell is no longer a list, so a `multiValue` key over a quantity value casts it
+     * exactly as a plain quantity-value key does rather than being warned about and skipped. Pinned
+     * against the plain key so that reintroducing a list-specific skip cannot pass unnoticed.
+     */
+    public function testAJsonArrayCellCastsTheSameOnAWrappedAndOnAPlainQuantityValueKey(): void
+    {
+        $json = json_encode(['1', '2']);
+
+        $element = $this->object();
+        $this->target()->assignData($element, [
+            $this->batchKey(self::KEY_QUANTITY_VALUE) => $json,
+            $this->batchKey(self::KEY_WRAPPED_QUANTITY_VALUE) => $json,
+        ]);
+
+        // the plain key's own answer is the reference: whatever it makes of the cell, the wrapped key
+        // makes the same, which is the thing a reintroduced list-specific skip would break
+        static::assertEquals(
+            $this->keyValue($element, self::KEY_QUANTITY_VALUE),
+            $this->keyValue($element, self::KEY_WRAPPED_QUANTITY_VALUE)
+        );
+    }
+
+    /**
      * The unit source is decided by the type of the value the key holds, so no unit setting can reach the dispatch
      * through the configuration. Asserted on the trait's own properties rather than on a resolved
      * unit: with the source fixed per key type, a honoured `unitSourceSelect` would leave no trace

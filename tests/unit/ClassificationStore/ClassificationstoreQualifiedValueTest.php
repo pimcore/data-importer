@@ -136,6 +136,30 @@ class ClassificationstoreQualifiedValueTest extends Unit
     }
 
     /**
+     * The same on a named variant: the qualified write path builds one entry, so a JSON array reaches
+     * the variant whole rather than being split across it.
+     */
+    public function testAJsonArrayWrittenToANamedVariantIsThatVariantsOneValue(): void
+    {
+        $json = json_encode(['a', 'b']);
+        $element = $this->newElement();
+        $this->write('single', $element, self::KEY_VARIANT, $json, null, '#' . self::VARIANT_METRIC);
+        $element->save();
+
+        $store = $this->store($this->reload($element));
+        $keyId = $this->keyIds[self::KEY_VARIANT];
+        static::assertSame(
+            [$json],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_METRIC)
+        );
+        static::assertSame(
+            [],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_IMPERIAL),
+            'the other variant is untouched'
+        );
+    }
+
+    /**
      * Pins the meaning an array value had before a key could declare several values: it is the one value.
      */
     public function testAnArrayValueOnAKeyWithoutAListStaysTheSingleValue(): void
