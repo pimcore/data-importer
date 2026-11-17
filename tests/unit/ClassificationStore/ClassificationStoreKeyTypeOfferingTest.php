@@ -135,6 +135,27 @@ class ClassificationStoreKeyTypeOfferingTest extends Unit
         );
     }
 
+    public function testAQuantityValueRangeKeyIsOfferedForAQuantityValueRangeResult(): void
+    {
+        $offered = $this->offeredKeyIds(TransformationDataTypeService::QUANTITY_VALUE_RANGE);
+
+        static::assertContains($this->keyIds['quantityValueRange'], $offered);
+        static::assertNotContains(
+            $this->keyIds['quantityValue'],
+            $offered,
+            'the single-valued quantity value type'
+        );
+        static::assertNotContains($this->keyIds['numericRange'], $offered, 'the range without a unit');
+    }
+
+    public function testAnExternalImageKeyIsOfferedForAnExternalImageResult(): void
+    {
+        $offered = $this->offeredKeyIds(TransformationDataTypeService::EXTERNAL_IMAGE);
+
+        static::assertContains($this->keyIds['externalImage'], $offered);
+        static::assertNotContains($this->keyIds['input'], $offered, 'the plain text type a URL arrives as');
+    }
+
     /**
      * An advanced relation key is reachable the way an advanced relation class field is: the caller
      * asks for the advanced relations, and the plain relation result type is read as its advanced

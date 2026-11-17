@@ -71,6 +71,10 @@ final class TransformationDataTypeService
 
     public const NUMERIC_RANGE = 'numericRange';
 
+    public const QUANTITY_VALUE_RANGE = 'quantityValueRange';
+
+    public const EXTERNAL_IMAGE = 'externalImage';
+
     public const CALCULATED = 'calculated';
 
     public function __construct(private readonly LocalizationResolver $localizationResolver)
@@ -169,6 +173,12 @@ final class TransformationDataTypeService
         ],
         self::NUMERIC_RANGE => [
             'numericRange'
+        ],
+        self::QUANTITY_VALUE_RANGE => [
+            'quantityValueRange'
+        ],
+        self::EXTERNAL_IMAGE => [
+            'externalImage'
         ],
         self::CALCULATED =>[
             'calculatedValue'

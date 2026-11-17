@@ -60,3 +60,4 @@ export const DynamicTypeTransformerAsGeopoint = makeNoSettings('asGeopoint', 'As
 export const DynamicTypeTransformerAsGeopolygon = makeNoSettings('asGeopolygon', 'As Geopolygon', 'dataTypes')
 export const DynamicTypeTransformerAsGeopolyline = makeNoSettings('asGeopolyline', 'As Geopolyline', 'dataTypes')
 export const DynamicTypeTransformerAsNumericRange = makeNoSettings('asNumericRange', 'As Numeric Range', 'dataTypes')
+export const DynamicTypeTransformerAsExternalImage = makeNoSettings('asExternalImage', 'As External Image', 'dataTypes')

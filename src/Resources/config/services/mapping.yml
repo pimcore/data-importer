@@ -143,6 +143,14 @@ services:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "asNumericRange" }
 
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueRange:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "quantityValueRange" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsExternalImage:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asExternalImage" }
+
 
     # ---------------------
     # data target services
