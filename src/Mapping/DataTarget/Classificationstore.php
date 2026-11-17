@@ -91,7 +91,7 @@ final class Classificationstore implements DataTargetInterface, ConfigNameAwareI
                     $groupId,
                     $keyId,
                     $this->keyReference->variant,
-                    $this->resolveDeclaration($relation)
+                    $this->resolveDefinition($relation)
                 ),
                 $data,
                 $this->resolveLanguage($element, $this->fieldName, $keyId, $this->language)

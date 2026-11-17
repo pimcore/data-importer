@@ -27,7 +27,13 @@ final readonly class ClassificationStoreKeyParameters
         private int $limit = 15,
         private ?string $searchfilter = null,
         private ?string $filter = null,
+        private bool $loadAdvancedRelations = false,
     ) {
+    }
+
+    public function getLoadAdvancedRelations(): bool
+    {
+        return $this->loadAdvancedRelations;
     }
 
     public function getClassId(): ?string

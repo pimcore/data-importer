@@ -38,6 +38,11 @@ final class ClassificationStoreDataTypeService
     private const DELEGATE_TYPE = 'JSON_UNQUOTE(JSON_EXTRACT('
         . DataObject\Classificationstore\KeyConfig\Dao::TABLE_NAME_KEYS . '.`definition`, \'$.delegateDatatype\'))';
 
+    /**
+     * `type IN ()` is not valid SQL, so an empty key-type list is spelled out as a predicate.
+     */
+    private const REFUSE_EVERY_KEY = '1 = 0';
+
     public function __construct(
         private readonly TransformationDataTypeService $transformationDataTypeService,
         private readonly KeyTypeSupport $keyTypeSupport,
@@ -46,8 +51,17 @@ final class ClassificationStoreDataTypeService
     ) {
     }
 
-    public function listClassificationStoreKeyList(string $classId, string $fieldName, string $transformationResultType, string $orderKey = 'name', string $order = 'ASC', int $start = 0, int $limit = 15, ?string $searchString = null, ?string $filterString = null): DataObject\Classificationstore\KeyGroupRelation\Listing
-    {
+    public function listClassificationStoreKeyList(
+        string $classId,
+        string $fieldName,
+        string $transformationResultType,
+        ?ClassificationStoreKeyListOptions $options = null
+    ): DataObject\Classificationstore\KeyGroupRelation\Listing {
+        $options ??= new ClassificationStoreKeyListOptions();
+        $orderKey = $options->orderKey;
+        $searchString = $options->searchString;
+        $filterString = $options->filterString;
+
         $classDefinition = DataObject\ClassDefinition::getById($classId);
         $field = $classDefinition->getFieldDefinition($fieldName);
         if ($field instanceof DataObject\ClassDefinition\Data\Classificationstore) {
@@ -67,9 +81,9 @@ final class ClassificationStoreDataTypeService
         }
 
         $list = new DataObject\Classificationstore\KeyGroupRelation\Listing();
-        $list->setLimit($limit);
-        $list->setOffset($start);
-        $list->setOrder($order);
+        $list->setLimit($options->limit);
+        $list->setOffset($options->start);
+        $list->setOrder($options->order);
         $list->setOrderKey($orderKey);
 
         $conditionParts = [];
@@ -94,8 +108,19 @@ final class ClassificationStoreDataTypeService
         }
 
         if ($transformationResultType) {
+            if ($options->loadAdvancedRelations) {
+                $transformationResultType = $this->transformationDataTypeService
+                    ->advancedRelationTargetType($transformationResultType);
+            }
+
             $pimcoreTypes = $this->transformationDataTypeService->getPimcoreTypesByTransformationTargetType($transformationResultType);
-            if (!empty($pimcoreTypes)) {
+            if ($pimcoreTypes === []) {
+                // A result type no key type can hold refuses every key rather than passing all of
+                // them: `dateArray`, `quantityValueArray` and `inputQuantityValueArray` are really
+                // produced and name no key type, and the class-attribute listing reading the same
+                // table already answers nothing for them.
+                $list->addConditionParam(self::REFUSE_EVERY_KEY);
+            } else {
                 $quoted = implode(',', array_map($list->quote(...), $pimcoreTypes));
                 $list->addConditionParam(sprintf(
                     '(type IN (%1$s) OR (type = %2$s AND %3$s IN (%1$s)))',

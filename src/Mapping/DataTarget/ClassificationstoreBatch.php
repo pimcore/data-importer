@@ -18,7 +18,6 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueUnit
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AbstractQuantityValue as AbstractQuantityValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
-use Pimcore\Model\DataObject\Classificationstore\Service as ClassificationstoreService;
 use Pimcore\Model\DataObject\Data\AbstractQuantityValue;
 use Pimcore\Model\DataObject\Data\InputQuantityValue;
 use Pimcore\Model\DataObject\Data\QuantityValue;
@@ -180,7 +179,13 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
 
         $this->writeKeyValue(
             $classificationStore,
-            new ClassificationstoreKeySlot($reference->token, $groupId, $keyId, null, $declaration),
+            new ClassificationstoreKeySlot(
+                $reference->token,
+                $groupId,
+                $keyId,
+                null,
+                $this->resolveDefinition($relation)
+            ),
             $value,
             $this->resolveLanguage($element, $this->fieldName, $keyId, $this->language)
         );
@@ -292,14 +297,11 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
     }
 
     /**
-     * The definition of the VALUE a key holds, which for a wrapper is its delegate's and not its own:
-     * the one boundary core resolves an inner type at ({@see ClassificationstoreService::getValueDefinition()}).
-     * A wrapper naming no inner type answers itself.
+     * The definition of the VALUE the key of this assignment holds,
+     * {@see ClassificationstoreKeyTrait::resolveValueDefinition()}.
      */
     private function valueDefinition(KeyGroupRelation $relation): ?Data
     {
-        return ClassificationstoreService::getValueDefinition(
-            ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation)
-        );
+        return $this->resolveValueDefinition($this->resolveDefinition($relation));
     }
 }

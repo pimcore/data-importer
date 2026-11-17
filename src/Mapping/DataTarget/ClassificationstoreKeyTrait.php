@@ -17,6 +17,9 @@ use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScopeAwareTrait;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
+use Pimcore\Model\DataObject\ClassDefinition\Data;
+use Pimcore\Model\DataObject\ClassDefinition\Data\AdvancedManyToManyObjectRelation;
+use Pimcore\Model\DataObject\ClassDefinition\Data\AdvancedManyToManyRelation;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore as ClassificationstoreDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue as MultiValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore as ClassificationstoreModel;
@@ -28,7 +31,9 @@ use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation\Listing as Key
 use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Classificationstore\Service as ClassificationstoreService;
 use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\DataObject\Data\ElementMetadata;
 use Pimcore\Model\DataObject\Data\MultiValue;
+use Pimcore\Model\DataObject\Data\ObjectMetadata;
 use Pimcore\Model\DataObject\Exception\UnsupportedEngineFeatureException;
 use Pimcore\Model\Element\ElementInterface;
 
@@ -265,9 +270,62 @@ trait ClassificationstoreKeyTrait
             return null;
         }
 
-        $definition = ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation);
+        $definition = $this->resolveDefinition($relation);
 
         return $definition instanceof MultiValueDefinition ? $definition : null;
+    }
+
+    private function resolveDefinition(?KeyGroupRelation $relation): ?Data
+    {
+        return $relation instanceof KeyGroupRelation
+            ? ClassificationstoreService::getFieldDefinitionFromKeyConfig($relation)
+            : null;
+    }
+
+    /**
+     * The definition of the VALUE a key holds, which for a wrapper is its delegate's and not its own:
+     * the one boundary core resolves an inner type at ({@see ClassificationstoreService::getValueDefinition()}).
+     * A wrapper naming no inner type answers itself.
+     */
+    private function resolveValueDefinition(?Data $definition): ?Data
+    {
+        return ClassificationstoreService::getValueDefinition($definition);
+    }
+
+    /**
+     * An advanced relation key holds one metadata object per relation, while a pipeline produces
+     * the plain elements - the same value a plain relation key takes, because no operator knows
+     * about metadata columns. For a class attribute the choice is made by picking the
+     * {@see ManyToManyRelation} data target, which wraps them; a classification store key has no
+     * such second target, so the value is wrapped here. The metadata columns stay empty, exactly
+     * as they do for a class attribute written that way.
+     *
+     * Without this a key of either advanced relation type is refused on save with
+     * `Expected DataObject\Data\ObjectMetadata`, so the type could not be imported at all.
+     *
+     * Dispatched on the definition of the VALUE, not on the key's own: a `multiValue` key over an
+     * advanced relation is a key type of its own - its type column reads `multiValue` and the picker
+     * offers it on its delegate's type - and matching the wrapper left its elements unwrapped, which
+     * is the same refusal on save.
+     */
+    private function wrapAdvancedRelations(mixed $value, ?Data $definition): mixed
+    {
+        if (!is_array($value) || $value === []) {
+            return $value;
+        }
+
+        // the key's own name, which a wrapper carries and its delegate blob need not
+        $fieldname = $definition?->getName();
+        $valueDefinition = $this->resolveValueDefinition($definition);
+        $wrap = match (true) {
+            $valueDefinition instanceof AdvancedManyToManyObjectRelation => static fn (mixed $element): mixed
+                => $element instanceof Concrete ? new ObjectMetadata($fieldname, [], $element) : $element,
+            $valueDefinition instanceof AdvancedManyToManyRelation => static fn (mixed $element): mixed
+                => $element instanceof ElementInterface ? new ElementMetadata($fieldname, [], $element) : $element,
+            default => null,
+        };
+
+        return $wrap === null ? $value : array_map($wrap, $value);
     }
 
     /**
@@ -282,6 +340,8 @@ trait ClassificationstoreKeyTrait
         mixed $value,
         ?string $language
     ): void {
+        $value = $this->wrapAdvancedRelations($value, $slot->definition);
+
         $variant = $slot->variant;
         if ($variant === null) {
             $classificationStore->setLocalizedKeyValue($slot->groupId, $slot->keyId, $value, $language);
@@ -289,7 +349,7 @@ trait ClassificationstoreKeyTrait
             return;
         }
 
-        if (!in_array($variant, $slot->declaration?->getVariantNames() ?? [], true)) {
+        if (!in_array($variant, $slot->declaration()?->getVariantNames() ?? [], true)) {
             throw new InvalidConfigurationException(
                 self::KEY_MESSAGE_PREFIX . $slot->token . ' does not declare the variant `' . $variant . '`.'
             );

@@ -7,6 +7,13 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.4.0
 
+- Added: the `As Numeric Range`, `Quantity Value Range` and `As External Image` operators, and a `languagemultiselect`
+  field or key is now offered for an `array` result type.
+- [Classification Store] Changed: the key picker offers no key at all for a result type no key type can hold - it used
+  to offer every key in the store for `dateArray`, `quantityValueArray` and `inputQuantityValueArray`.
+- [Classification Store] Added: a key of either advanced relation type can be imported; it is offered for `assetArray`
+  and `dataObjectArray` when the key listing is asked for the advanced relations, and its value is written as relation
+  metadata.
 - `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
   `instanceof ImportAsset` no longer matches the **Load Asset** operator.
 - [Classification Store] Added: `Write If Source Is Empty` on both classification store data targets, in force on a
