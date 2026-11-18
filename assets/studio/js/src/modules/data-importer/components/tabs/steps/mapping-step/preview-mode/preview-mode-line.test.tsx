@@ -117,15 +117,18 @@ const settled = <T, >(data: T | undefined): MappingSourceQuery<T> => ({
 })
 
 // a stored configuration whose preview file was never uploaded: the preview has no records
+// (constant responses, as a query hook returns the same data until it refetches)
+const noColumnHeaders = { columnHeaders: [] }
+const noRecords = { dataPreview: [], previewRecordIndex: 0 }
 const storedWithoutPreviewFile: MappingSource = {
   id: 'stored',
   configuration: { resolverConfig: { dataObjectClassId: 'Product' }, mappingConfig: [] },
   isConfigurationLoaded: true,
   revision: '1',
-  useColumnHeadersQuery: (request) => settled(request === undefined ? undefined : { columnHeaders: [] }),
-  usePreviewQuery: (request) => settled(request === undefined ? undefined : { dataPreview: [] }),
-  useTransformationResultTypeQuery: () => settled(undefined),
-  useTransformationResultQuery: () => settled(undefined)
+  useColumnHeadersQuery: (request) => settled(request === undefined ? undefined : noColumnHeaders),
+  usePreviewQuery: (request) => settled(request === undefined ? undefined : noRecords),
+  useTransformationResultTypeQuery: () => settled<never>(undefined),
+  useTransformationResultQuery: () => settled<never>(undefined)
 }
 
 const StoredHost = (): React.JSX.Element => {

@@ -274,7 +274,7 @@ export const useStyles = createStyles(({ css, token }) => {
     mappingsContent: css`
       flex: 1;
       padding: 0 ${token.paddingMD}px ${token.paddingMD}px 0;
-      margin-top: -10px;
+      margin-top: 0;
     `,
 
     // ── Empty state ───────────────────────────────────────────────────────
