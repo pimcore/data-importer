@@ -42,15 +42,15 @@ export const useStyles = createStyles(({ css, token }) => ({
 
   hint: css`
     display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
     align-items: center;
-    gap: ${token.marginXXS}px;
+    gap: 0 ${token.marginXXS}px;
     min-width: 0;
   `,
 
   hintText: css`
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 0;
     color: ${token.colorTextDescription};
   `,
 
