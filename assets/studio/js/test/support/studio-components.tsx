@@ -82,5 +82,64 @@ export const SearchInput = ({ onChange, placeholder, value }: { onChange?: React
   />
 )
 
+export const IconTextButton = ({ children, onClick }: WithChildren & { onClick?: () => void }): React.JSX.Element => (
+  <button
+    onClick={ onClick }
+    type="button"
+  >
+    { children }
+  </button>
+)
+
+export const Divider = (): React.JSX.Element => <hr />
+
+export const Switch = ({ checked, disabled, labelRight, onChange, ...props }: { 'aria-label'?: string, checked?: boolean, disabled?: boolean, labelRight?: React.ReactNode, onChange?: (checked: boolean) => void }): React.JSX.Element => (
+  <label>
+    <input
+      aria-label={ props['aria-label'] }
+      checked={ checked === true }
+      disabled={ disabled }
+      onChange={ (event) => { onChange?.(event.target.checked) } }
+      role="switch"
+      type="checkbox"
+    />
+    { labelRight }
+  </label>
+)
+
+// the tooltip's content shows beside its target, so tests can read it
+export const Tooltip = ({ children, title }: WithChildren & { title?: React.ReactNode }): React.JSX.Element => (
+  <span>
+    { children }
+    <span role="tooltip">{ title }</span>
+  </span>
+)
+
+// a small real preview-mode context, as Studio's PreviewModeProvider keeps it
+interface PreviewModeItem { data: { id?: string | number, [key: string]: any } }
+interface PreviewModeValue {
+  enabled: boolean
+  setEnabled: (enabled: boolean) => void
+  item: PreviewModeItem | null
+  setItem: (item: PreviewModeItem | null) => void
+  fallbackItem: { id: string | number } | null
+}
+
+const PreviewModeContext = React.createContext<PreviewModeValue | undefined>(undefined)
+
+export const PreviewModeProvider = ({ children, defaultEnabled = false, fallbackItem = null }: WithChildren & { defaultEnabled?: boolean, fallbackItem?: { id: string | number } | null }): React.JSX.Element => {
+  const [enabled, setEnabled] = React.useState(defaultEnabled)
+  const [item, setItem] = React.useState<PreviewModeItem | null>(null)
+  const value = React.useMemo(() => ({ enabled, setEnabled, item, setItem, fallbackItem }), [enabled, item, fallbackItem?.id])
+
+  return <PreviewModeContext.Provider value={ value }>{ children }</PreviewModeContext.Provider>
+}
+
+export const usePreviewMode = (): PreviewModeValue => {
+  const value = React.useContext(PreviewModeContext)
+  if (value === undefined) throw new Error('usePreviewMode must be used within a PreviewModeProvider')
+  return value
+}
+
 export const useFormModal = (): { confirm: () => void } => ({ confirm: () => undefined })
 export const useMessage = (): { warning: () => Promise<void> } => ({ warning: async () => { await Promise.resolve() } })
