@@ -208,7 +208,8 @@ final readonly class ImportConfigCheck
     private function cleanupProblem(array $processing): ?string
     {
         $strategy = $processing['cleanup']['strategy'] ?? null;
-        if (empty($processing['cleanup']['doCleanup']) || $strategy === '') {
+        // a strategy nobody switched on is never loaded
+        if (empty($processing['cleanup']['doCleanup'])) {
             return null;
         }
 

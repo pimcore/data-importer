@@ -357,6 +357,7 @@ class ImportConfigCheckTest extends Unit
     {
         return [
             'missing' => [null, self::NOT_A_STRING],
+            'empty' => ['', ''],
             'a number' => [0, '0'],
             'a list' => [['delete'], self::NOT_A_STRING],
         ];
@@ -364,8 +365,16 @@ class ImportConfigCheckTest extends Unit
 
     public function testACleanupStrategyTheImportCanLoadIsNoProblem(): void
     {
-        foreach (['delete', ''] as $strategy) {
-            $state = self::with(self::CONFIGURATION, self::CLEANUP, ['doCleanup' => true, 'strategy' => $strategy]);
+        $state = self::with(self::CONFIGURATION, self::CLEANUP, ['doCleanup' => true, 'strategy' => 'delete']);
+
+        static::assertSame([], $this->check->problems($state, null));
+    }
+
+    /** the import never loads a strategy while cleanup is off */
+    public function testAnyCleanupStrategyIsNoProblemWhileCleanupIsOff(): void
+    {
+        foreach ([['doCleanup' => false, 'strategy' => ''], ['doCleanup' => false]] as $cleanup) {
+            $state = self::with(self::CONFIGURATION, self::CLEANUP, $cleanup);
             static::assertSame([], $this->check->problems($state, null));
         }
     }
