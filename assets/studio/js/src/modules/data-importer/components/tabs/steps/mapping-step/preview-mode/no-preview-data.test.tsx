@@ -77,32 +77,39 @@ const storedPreviews = records.map((record, index) => ({
   dataPreview: columns.map(column => ({ dataIndex: column.dataIndex, label: column.label, data: record[column.dataIndex as 'sku' | 'name'] }))
 }))
 
-// load-preview as RTK Query keeps it: answered once per argument and kept until refetched,
-// a failed one asked again when it is subscribed to anew; a refetch is fetching until it is answered
+// load-preview as RTK Query keeps it: one cache entry per record, shared by every hook asking for it;
+// a failed entry is asked again when it is subscribed to anew and keeps its error until the new answer
+const answers = new Map<number, { stored: boolean }>()
+
 const useLoadPreview = (arg: { bundleDataImporterLoadPreviewParameters: { recordNumber?: number } }, options?: { skip?: boolean }): object => {
   const skip = options?.skip === true
   const recordNumber = arg.bundleDataImporterLoadPreviewParameters.recordNumber ?? 0
-  const [answer, setAnswer] = useState<{ stored: boolean } | undefined>(undefined)
-  const [refetching, setRefetching] = useState(false)
-  const fetchPreview = useCallback((): void => { setAnswer({ stored: previewFileStored }) }, [recordNumber])
+  const [answer, setAnswer] = useState<{ stored: boolean } | undefined>(() => answers.get(recordNumber))
+  const [fetching, setFetching] = useState(false)
+  const fetchPreview = useCallback(async (): Promise<void> => {
+    setFetching(true)
+    await Promise.resolve()
+    const next = { stored: previewFileStored }
+    answers.set(recordNumber, next)
+    setAnswer(next)
+    setFetching(false)
+  }, [recordNumber])
 
   useEffect(() => {
-    if (!skip && answer?.stored !== true) fetchPreview()
+    if (skip) return
+    const cached = answers.get(recordNumber)
+    setAnswer(cached)
+    if (cached?.stored !== true) void fetchPreview()
   }, [skip, fetchPreview])
 
   return {
     data: !skip && answer?.stored === true ? storedPreviews[recordNumber] : undefined,
     isLoading: false,
-    isFetching: !skip && (answer === undefined || refetching),
-    isError: !skip && answer?.stored === false,
-    isSuccess: !skip && answer?.stored === true,
+    isFetching: !skip && (answer === undefined || fetching),
+    isError: !skip && !fetching && answer?.stored === false,
+    isSuccess: !skip && !fetching && answer?.stored === true,
     error: !skip && answer?.stored === false ? noPreviewData : undefined,
-    refetch: async () => {
-      setRefetching(true)
-      await Promise.resolve()
-      fetchPreview()
-      setRefetching(false)
-    }
+    refetch: fetchPreview
   }
 }
 
@@ -148,6 +155,7 @@ const switchOn = async (): Promise<void> => {
 beforeEach(() => {
   mockTransformationQueries()
   previewFileStored = false
+  answers.clear()
   jest.mocked(gen.useBundleDataImporterConfigLoadPreviewQuery).mockImplementation(useLoadPreview as never)
   jest.mocked(gen.useBundleDataImporterConfigCopyPreviewMutation).mockImplementation((() => [copyPreview, { isLoading: false }]) as never)
 })
