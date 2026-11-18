@@ -12,6 +12,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Form, PreviewModeProvider, usePreviewMode } from '@pimcore/studio-ui-bundle/components'
 import { type BackendConfiguration } from '../../../../../utils/transformers'
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
+import { isNotFoundError } from '../../../../../utils/api-error-message'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
 
 // the rows' one transformation request waits this long after the last edit or record change
@@ -23,10 +24,17 @@ export interface MappingPreviewRequest {
 }
 
 export interface MappingPreviewModeValue {
+  // switched on and running on preview data
   enabled: boolean
   setEnabled: (enabled: boolean) => void
   // false while the source has no preview record to run the mappings on
   available: boolean
+  // switched on, but no preview file was uploaded or copied yet: a hint instead of the previews
+  noPreviewData: boolean
+  // a request found no preview data (404)
+  markNoPreviewData: () => void
+  // a preview file was uploaded or copied: read it again and run the previews
+  previewDataChanged: () => void
   // zero-based record of the preview file the mappings run on
   recordNumber: number
   setRecordNumber: (recordNumber: number) => void
@@ -45,6 +53,9 @@ const inactive: MappingPreviewModeValue = {
   enabled: false,
   setEnabled: () => undefined,
   available: false,
+  noPreviewData: false,
+  markNoPreviewData: () => undefined,
+  previewDataChanged: () => undefined,
   recordNumber: 0,
   setRecordNumber: () => undefined,
   record: [],
@@ -63,12 +74,16 @@ export const useMappingPreviewMode = (): MappingPreviewModeValue => useContext(M
 interface MappingPreviewModeStateProps {
   available: boolean
   getCurrentConfig: () => BackendConfiguration
+  onPreviewDataChange: () => void
   children: React.ReactNode
 }
 
-const MappingPreviewModeState = ({ available, getCurrentConfig, children }: MappingPreviewModeStateProps): React.JSX.Element => {
+const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataChange, children }: MappingPreviewModeStateProps): React.JSX.Element => {
   const { enabled: switchedOn, setEnabled, item, setItem, fallbackItem } = usePreviewMode()
-  const enabled = switchedOn && available
+  // a preview request answered that the configuration has no preview data
+  const [previewDataMissing, setPreviewDataMissing] = useState(false)
+  const noPreviewData = switchedOn && (!available || previewDataMissing)
+  const enabled = switchedOn && !noPreviewData
   const recordNumber = Number(item?.data.id ?? fallbackItem?.id ?? 0)
   const [previewRequest, setPreviewRequest] = useState<MappingPreviewRequest | null>(null)
   const [previewPending, setPreviewPending] = useState(false)
@@ -98,11 +113,32 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, children }: Mapp
     return () => { clearTimeout(timer) }
   }, [enabled, recordNumber, formFingerprint, getCurrentConfig])
 
-  const { dataPreview, load } = usePreviewRecordQuery({ enabled, getCurrentConfig })
+  // the record is read while the source has preview records, so a 404 on it shows the hint
+  const recordQueryEnabled = switchedOn && available
+  const { dataPreview, error: recordError, load } = usePreviewRecordQuery({ enabled: recordQueryEnabled, getCurrentConfig })
 
   useEffect(() => {
-    if (enabled) load(recordNumber)
-  }, [enabled, recordNumber, load])
+    if (recordQueryEnabled) load(recordNumber)
+  }, [recordQueryEnabled, recordNumber, load])
+
+  useEffect(() => {
+    if (recordQueryEnabled && isNotFoundError(recordError)) setPreviewDataMissing(true)
+  }, [recordQueryEnabled, recordError])
+
+  // switched on again, the preview data is looked for anew
+  useEffect(() => {
+    if (!switchedOn) setPreviewDataMissing(false)
+  }, [switchedOn])
+
+  const markNoPreviewData = useCallback((): void => {
+    setPreviewDataMissing(true)
+  }, [])
+
+  const previewDataChanged = useCallback((): void => {
+    setPreviewDataMissing(false)
+    onPreviewDataChange()
+    if (recordQueryEnabled) load(recordNumber, { forceRefetch: true })
+  }, [onPreviewDataChange, recordQueryEnabled, recordNumber, load])
 
   const record = useMemo(() => (enabled ? dataPreview.map(normalizeDataRow) : []), [enabled, dataPreview])
 
@@ -110,6 +146,9 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, children }: Mapp
     enabled,
     setEnabled,
     available,
+    noPreviewData,
+    markNoPreviewData,
+    previewDataChanged,
     recordNumber,
     setRecordNumber,
     record,
@@ -118,7 +157,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, children }: Mapp
     previewError,
     setPreviewError,
     getCurrentConfig
-  }), [enabled, setEnabled, available, recordNumber, setRecordNumber, record, previewRequest, previewPending, previewError, getCurrentConfig])
+  }), [enabled, setEnabled, available, noPreviewData, markNoPreviewData, previewDataChanged, recordNumber, setRecordNumber, record, previewRequest, previewPending, previewError, getCurrentConfig])
 
   return (
     <MappingPreviewModeContext.Provider value={ value }>
@@ -132,17 +171,20 @@ export interface MappingPreviewModeProviderProps {
   available: boolean
   // the form's configuration, unsaved edits included
   getCurrentConfig: () => BackendConfiguration
+  // a preview file was uploaded or copied: the step reads it again
+  onPreviewDataChange: () => void
   children: React.ReactNode
 }
 
 // off on each open: nothing of it is stored; the "Sources with preview" panel shows the first record
 const FALLBACK_RECORD = { id: 0 }
 
-export const MappingPreviewModeProvider = ({ available, getCurrentConfig, children }: MappingPreviewModeProviderProps): React.JSX.Element => (
+export const MappingPreviewModeProvider = ({ available, getCurrentConfig, onPreviewDataChange, children }: MappingPreviewModeProviderProps): React.JSX.Element => (
   <PreviewModeProvider fallbackItem={ FALLBACK_RECORD }>
     <MappingPreviewModeState
       available={ available }
       getCurrentConfig={ getCurrentConfig }
+      onPreviewDataChange={ onPreviewDataChange }
     >
       { children }
     </MappingPreviewModeState>

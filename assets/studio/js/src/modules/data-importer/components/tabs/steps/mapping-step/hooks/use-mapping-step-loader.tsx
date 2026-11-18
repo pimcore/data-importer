@@ -418,11 +418,21 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
     })
   }, [mappingAttrMapKeyList, initialLoadDone, classId])
 
+  // the stored preview file changed (an upload or a copy): read its columns and first record again
+  const reloadPreviewData = useCallback((): void => {
+    if (headersRequest === undefined || previewRequest === undefined) return
+    void Promise.all([
+      refetchHeaders().catch(() => undefined),
+      refetchPreview().catch(() => undefined)
+    ])
+  }, [headersRequest, previewRequest, refetchHeaders, refetchPreview])
+
   return {
     columnHeaderOptions,
     initialLoadDone,
     sourceRows,
     hasPreviewError,
+    reloadPreviewData,
     attributesMap,
     setAttributesMap,
     classId,

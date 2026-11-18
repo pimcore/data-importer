@@ -36,7 +36,8 @@ jest.mock('../../../../../data-importer-api-slice-enhanced', () => ({
 }))
 jest.mock('../../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterMappingCalculateTransformationResultTypeQuery: jest.fn(),
-  useBundleDataImporterMappingLoadTransformationResultQuery: jest.fn()
+  useBundleDataImporterMappingLoadTransformationResultQuery: jest.fn(),
+  useBundleDataImporterConfigCopyPreviewMutation: () => [async () => ({ data: {} }), { isLoading: false }]
 }))
 
 // what the context holds, and a way to set its error as F3's rows do

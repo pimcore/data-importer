@@ -40,6 +40,20 @@ export const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextDescription};
   `,
 
+  hint: css`
+    display: flex;
+    align-items: center;
+    gap: ${token.marginXXS}px;
+    min-width: 0;
+  `,
+
+  hintText: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: ${token.colorTextDescription};
+  `,
+
   error: css`
     min-width: 0;
     overflow: hidden;

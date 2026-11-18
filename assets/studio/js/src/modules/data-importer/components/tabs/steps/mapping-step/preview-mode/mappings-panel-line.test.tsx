@@ -13,6 +13,8 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { MappingsPanelContent, type MappingsPanelContentProps } from '../mappings-panel/mappings-panel-content'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+// the line's upload/copy hint is out of scope here
+jest.mock('../../../../../data-importer-api-slice.gen', () => ({}))
 // the rows are out of scope here
 jest.mock('../mapping-item', () => ({
   MappingDropZone: () => null,
