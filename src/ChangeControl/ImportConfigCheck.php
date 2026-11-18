@@ -231,18 +231,24 @@ final readonly class ImportConfigCheck
     {
         if (($execution['scheduleType'] ?? null) === JobScheduler::NAME) {
             $at = $execution['scheduledAt'] ?? null;
+            if (empty($at) || (is_string($at) && $this->isScheduledAt($at))) {
+                return null;
+            }
 
-            return empty($at) || (is_string($at) && $this->isScheduledAt($at)) ? null : sprintf(
+            return sprintf(
                 'executionConfig.scheduledAt "%s" is not a date and time like "31-12-2026 23:30" (d-m-Y H:i).',
-                is_scalar($at) ? $at : self::NOT_A_STRING,
+                self::printable($at),
             );
         }
 
         $cron = $execution['cronDefinition'] ?? null;
+        if (empty($cron) || (is_string($cron) && CronExpression::isValidExpression($cron))) {
+            return null;
+        }
 
-        return empty($cron) || (is_string($cron) && CronExpression::isValidExpression($cron)) ? null : sprintf(
+        return sprintf(
             'executionConfig.cronDefinition "%s" is not a cron expression like "0 3 * * *".',
-            is_scalar($cron) ? $cron : self::NOT_A_STRING,
+            self::printable($cron),
         );
     }
 
@@ -317,13 +323,22 @@ final readonly class ImportConfigCheck
             return null;
         }
 
-        return $missing ? sprintf(
+        if (!$missing) {
+            return null;
+        }
+
+        return sprintf(
             '%s.dataTarget.settings.fieldName "%s" is not %s of class %s.',
             $where,
-            is_scalar($fieldName) ? $fieldName : self::NOT_A_STRING,
+            self::printable($fieldName),
             $kind,
             $class->getName(),
-        ) : null;
+        );
+    }
+
+    private static function printable(mixed $value): string
+    {
+        return is_scalar($value) ? (string) $value : self::NOT_A_STRING;
     }
 
     /**

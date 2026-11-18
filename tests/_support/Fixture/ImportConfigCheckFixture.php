@@ -14,38 +14,14 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\Fixture;
 
-use Doctrine\DBAL\Connection;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigCheck;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
-use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
-use Pimcore\Bundle\DataImporterBundle\Cleanup\DeleteStrategy;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\CsvFileInterpreter;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\JsonFileInterpreter;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XmlFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
-use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
-use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Direct;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
-use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
-use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\Trim;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Factory\DataObjectFactory;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Load\AttributeStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Load\IdStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Load\NotLoadStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Location\NoChangeStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Location\StaticPathStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\AlwaysPublishStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Publish\NoChangeUnpublishNewStrategy;
-use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
-use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
-use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Cache\RuntimeCache;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\Objectbrick;
-use ReflectionClass;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -73,31 +49,10 @@ final class ImportConfigCheckFixture
                 'asset' => static fn (): AssetLoader => new AssetLoader(),
                 'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
             ])),
-            new InterpreterFactory([
-                'csv' => self::blueprint(CsvFileInterpreter::class),
-                'json' => self::blueprint(JsonFileInterpreter::class),
-                'xml' => self::blueprint(XmlFileInterpreter::class),
-            ]),
-            new ResolverFactory(
-                new Resolver(),
-                [
-                    'id' => self::blueprint(IdStrategy::class),
-                    'attribute' => new AttributeStrategy(self::blueprint(Connection::class), new DataObjectLoader()),
-                    'notLoad' => new NotLoadStrategy(),
-                ],
-                ['staticPath' => new StaticPathStrategy(), 'noChange' => new NoChangeStrategy()],
-                [
-                    'alwaysPublish' => new AlwaysPublishStrategy(),
-                    'noChangeUnpublishNew' => new NoChangeUnpublishNewStrategy(),
-                ],
-                ['dataObject' => self::blueprint(DataObjectFactory::class)],
-            ),
-            new MappingConfigurationFactory(
-                new MappingConfiguration(),
-                ['trim' => self::blueprint(Trim::class)],
-                ['direct' => new Direct(), 'classificationstore' => new Classificationstore()],
-            ),
-            new CleanupStrategyFactory(['delete' => self::blueprint(DeleteStrategy::class)]),
+            ImporterBlueprints::interpreters(),
+            ResolverBlueprints::resolvers(),
+            ImporterBlueprints::mappings(),
+            ImporterBlueprints::cleanupStrategies(),
         );
     }
 
@@ -154,19 +109,5 @@ final class ImportConfigCheckFixture
         $input->setName($name);
 
         return $input;
-    }
-
-    /**
-     * A component as the container holds it, without the services only an import uses.
-     *
-     * @template T of object
-     *
-     * @param class-string<T> $class
-     *
-     * @return T
-     */
-    private static function blueprint(string $class): object
-    {
-        return (new ReflectionClass($class))->newInstanceWithoutConstructor();
     }
 }
