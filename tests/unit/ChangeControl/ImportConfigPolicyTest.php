@@ -168,13 +168,14 @@ class ImportConfigPolicyTest extends Unit
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
+        // where and groupBy are optional; connection is not
         $problems = $policy->problems(['loaderConfig' => ['type' => 'sql', 'settings' => [
-            'connection' => 'default', 'select' => '*', 'from' => 'cars',
+            'select' => '*', 'from' => 'cars',
         ]]], true);
 
         static::assertCount(1, $problems);
         static::assertStringStartsWith('loaderConfig: the "sql" loader cannot read its settings', $problems[0]);
-        static::assertStringContainsString('where', $problems[0]);
+        static::assertStringContainsString('connection', $problems[0]);
     }
 
     public function testASettingOfTheWrongTypeIsAProblem(): void
@@ -252,12 +253,12 @@ class ImportConfigPolicyTest extends Unit
             ['sql' => static fn (): SqlLoader => new SqlLoader(new Filesystem())],
         );
 
-        // a review amendment "" -> null never met the propose tool's checks, and the loader cannot read it
+        // a review amendment "default" -> null never met the propose tool's checks, and the loader cannot read it
         static::assertSame(
             ['loaderConfig: a setting of the "sql" loader is missing or has the wrong type.'],
             $policy->problems([
                 'general' => ['name' => 'dealer-feed'],
-                'loaderConfig' => ['type' => 'sql', 'settings' => ['where' => null] + $settings],
+                'loaderConfig' => ['type' => 'sql', 'settings' => ['connection' => null] + $settings],
             ], false)
         );
 
