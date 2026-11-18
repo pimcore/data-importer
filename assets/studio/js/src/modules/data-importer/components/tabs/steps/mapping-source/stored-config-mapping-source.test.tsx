@@ -150,7 +150,7 @@ describe('DataSetupTab', () => {
     expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 1)
   })
 
-  it('AC2: an upload or copy in the mapping step reloads the column lists too', () => {
+  it('an upload or copy in the mapping step reloads the column lists too', () => {
     getQuery.mockReturnValue({ data: { configuration: { general: {} } }, isSuccess: true, requestId: 'r1' })
     render(<DataSetupTab configName="products" />)
     expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 0)
