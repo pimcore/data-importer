@@ -23,9 +23,9 @@ use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\AdapterAvailabilityServiceInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetImportConfigTool;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListImportConfigsTool;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalWidgetEmitter;
 use Pimcore\Bundle\PimcoreAgentBundle\Security\BoundSessionReferenceResolver;
 use Pimcore\Bundle\PimcoreAgentBundle\Service\AgentSessionServiceInterface;
@@ -33,7 +33,6 @@ use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\User;
 use ReflectionClass;
-use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class ImportConfigReadToolsTest extends Unit
@@ -83,7 +82,7 @@ class ImportConfigReadToolsTest extends Unit
         );
         $this->policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
             $stored,
         );
     }

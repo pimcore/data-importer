@@ -17,7 +17,7 @@ namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 use ErrorException;
 
 /**
- * A PHP warning or notice raised while a loader reads proposed settings, turned into an exception
+ * A PHP warning or notice raised while an importer component reads proposed settings, turned into an exception
  * so the check can name it.
  *
  * @internal

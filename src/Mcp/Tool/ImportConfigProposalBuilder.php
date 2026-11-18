@@ -20,8 +20,8 @@ use function is_array;
 use function json_decode;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\ConfigDocument;
+use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigCheck;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\MappingRowIds;
 use function sprintf;
 use Symfony\Component\Yaml\Yaml;
@@ -37,7 +37,7 @@ final readonly class ImportConfigProposalBuilder
 {
     public function __construct(
         private ImportConfigVocabulary $vocabulary,
-        private LoaderSettingsCheck $loaderSettings,
+        private ImportConfigCheck $check,
     ) {
     }
 
@@ -61,10 +61,18 @@ final readonly class ImportConfigProposalBuilder
         $state = ProposedImportConfiguration::fold($stored, $this->readSections($configuration, $stored));
 
         $this->assertRecordable($state, $stored, $existing);
+        $state = $this->withSubjectIdentity($state, $name, $existing);
+
+        // a configuration the importer could not load fails the next import; a stored section the
+        // proposal leaves alone is not the proposal's to refuse
+        $problems = $this->check->problems($state, $existing === null ? null : $stored);
+        if ($problems !== []) {
+            throw new ProposalRefusedException(implode("\n", $problems));
+        }
 
         // the subject reads its state without the editor's row ids; a changed mapping list keeps the
         // stored ids it names, so the approval saves each row under its own
-        return MappingRowIds::recorded($this->withSubjectIdentity($state, $name, $existing), $stored);
+        return MappingRowIds::recorded($state, $stored);
     }
 
     /**
@@ -151,15 +159,6 @@ final readonly class ImportConfigProposalBuilder
         $unknownValues = ProposedImportConfiguration::unknownValues($state, $this->vocabulary->all());
         if ($unknownValues !== []) {
             throw new ProposalRefusedException(implode("\n", $unknownValues));
-        }
-
-        // a loader that cannot run fails the next import; a stored one nobody touches is not
-        // the proposal's to refuse
-        if ($existing === null || ($state['loaderConfig'] ?? null) !== ($stored['loaderConfig'] ?? null)) {
-            $loaderProblems = $this->loaderSettings->problems($state);
-            if ($loaderProblems !== []) {
-                throw new ProposalRefusedException(implode("\n", $loaderProblems));
-            }
         }
 
         // a change the import would ignore is not worth a reviewer's turn; a create is

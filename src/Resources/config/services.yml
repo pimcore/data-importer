@@ -48,6 +48,8 @@ services:
         arguments:
             $loaders: !tagged_locator { tag: 'pimcore.datahub.data_importer.loader', index_by: 'type' }
 
+    Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigCheck: ~
+
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader:
         tags:
             - { name: "pimcore.datahub.data_importer.loader", type: "asset" }
