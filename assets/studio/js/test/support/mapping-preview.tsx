@@ -103,8 +103,9 @@ const useTransformationResult = (arg: unknown, options?: { skip?: boolean }): Ma
     return () => { listeners.delete(rerender) }
   }, [])
 
+  // a failed request is sent again when a row subscribes to it anew, as RTK Query does
   useEffect(() => {
-    if (key === null || entries.has(key)) return
+    if (key === null || (entries.has(key) && entries.get(key)?.status !== 'failed')) return
     entries.set(key, { status: 'pending' })
     sent.push(arg)
     notify()

@@ -174,12 +174,20 @@ describe('Preview mode line', () => {
     expect(screen.getByTestId('preview-request').textContent).toBe('null')
   })
 
-  it('AC2: without an uploaded preview file the toggle is disabled with the upload hint', async () => {
+  it('AC2: without an uploaded preview file the toggle stays usable and turning it on shows the upload hint', async () => {
     render(<StoredHost />)
     await loaded()
 
-    expect(previewSwitch().disabled).toBe(true)
-    expect(screen.getByRole('tooltip').textContent).toBe('data-importer.mapping.preview-mode.no-preview-data')
+    expect(previewSwitch().disabled).toBe(false)
+    expect(screen.queryByText('data-importer.mapping.preview-mode.no-preview-data')).toBeNull()
+
+    fireEvent.click(previewSwitch())
+
+    expect(previewSwitch().checked).toBe(true)
+    expect(screen.getByText('data-importer.mapping.preview-mode.no-preview-data')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' })).toBeNull()
+    await afterDebounce()
+    expect(screen.getByTestId('preview-request').textContent).toBe('null')
   })
 
   it('AC2: on a posted mapping source the toggle is enabled and the posted record is selected', async () => {

@@ -143,3 +143,22 @@ export const usePreviewMode = (): PreviewModeValue => {
 
 export const useFormModal = (): { confirm: () => void } => ({ confirm: () => undefined })
 export const useMessage = (): { warning: () => Promise<void> } => ({ warning: async () => { await Promise.resolve() } })
+
+// an upload dialog whose upload a test finishes with one click
+export const ImportModal = ({ open, title, onUploadSuccess }: { open?: boolean, title?: string, onUploadSuccess?: () => void }): React.JSX.Element | null => {
+  if (open !== true) return null
+
+  return (
+    <dialog
+      aria-label={ title }
+      open
+    >
+      <button
+        onClick={ () => { onUploadSuccess?.() } }
+        type="button"
+      >
+        finish upload
+      </button>
+    </dialog>
+  )
+}
