@@ -50,6 +50,10 @@ class ClassificationStoreRoundTripAuditTest extends Unit
 
     private const KEY_PREFIX = 'diAudit_';
 
+    private const ENGINE_DOCUMENT = 'document';
+
+    private const ENGINE_EAV = 'eav';
+
     private const TARGET_SINGLE_KEY = 'classificationstore';
 
     private const TARGET_BATCH = 'classificationstoreBatch';
@@ -145,7 +149,9 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         $this->language = (string)(reset($languages) ?: 'en');
 
         $fixture = new ClassificationStoreFixture();
-        $store = $fixture->store(self::STORE);
+        // every audited type is declared on an engine that offers all of them, the store moved after
+        $store = $fixture->store(self::STORE, self::ENGINE_DOCUMENT);
+        $fixture->flipEngine($store, self::ENGINE_DOCUMENT);
         $group = $fixture->group($store->getId(), self::GROUP);
         $this->groupId = $group->getId();
 
@@ -161,6 +167,7 @@ class ClassificationStoreRoundTripAuditTest extends Unit
             $this->keyIds[$type] = $key->getId();
         }
 
+        $fixture->flipEngine($store, self::ENGINE_EAV);
         $fixture->classDefinition(self::CLASS_NAME, $store->getId());
     }
 

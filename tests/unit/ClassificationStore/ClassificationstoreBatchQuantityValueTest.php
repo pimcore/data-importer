@@ -37,6 +37,10 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
 {
     private const STORE = 'diQvStore';
 
+    private const ENGINE_DOCUMENT = 'document';
+
+    private const ENGINE_EAV = 'eav';
+
     private const GROUP = 'diQvGroup';
 
     private const KEY_QUANTITY_VALUE = 'diQvKey';
@@ -75,7 +79,9 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
         $this->unit(self::SOURCE_UNIT);
 
         $fixture = new ClassificationStoreFixture();
-        $store = $fixture->store(self::STORE);
+        // the wrapped key is declared on an engine that offers multiValue and the store moved after
+        $store = $fixture->store(self::STORE, self::ENGINE_DOCUMENT);
+        $fixture->flipEngine($store, self::ENGINE_DOCUMENT);
         $group = $fixture->group($store->getId(), self::GROUP);
 
         $quantityValue = new QuantityValueDefinition();
@@ -103,6 +109,7 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
             $this->keyIds[$name] = $key->getId();
         }
 
+        $fixture->flipEngine($store, self::ENGINE_EAV);
         $fixture->classDefinition(self::CLASS_NAME, $store->getId());
         $this->groupId = $group->getId();
     }

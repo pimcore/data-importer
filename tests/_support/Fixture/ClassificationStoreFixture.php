@@ -50,7 +50,9 @@ final class ClassificationStoreFixture
     }
 
     /**
-     * @param string|null $engine the engine a store created here is flipped to, null for the default one
+     * A store saved rather than created writes no engine column, which means the default engine.
+     *
+     * @param string|null $engine the engine the store is created on, null for the default one
      */
     public function store(string $name, ?string $engine = null): StoreConfig
     {
@@ -68,6 +70,15 @@ final class ClassificationStoreFixture
         $store->save();
 
         return $store;
+    }
+
+    /**
+     * Moves a saved store onto another engine, leaving the declarations of its keys as they stand.
+     */
+    public function flipEngine(StoreConfig $store, string $engine): void
+    {
+        $store->setEngine($engine);
+        $store->save();
     }
 
     public function group(int $storeId, string $name, ?string $identifier = null): GroupConfig

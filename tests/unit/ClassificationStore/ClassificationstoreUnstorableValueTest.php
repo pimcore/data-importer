@@ -35,6 +35,10 @@ class ClassificationstoreUnstorableValueTest extends Unit
 {
     private const STORE = 'diEavStore';
 
+    private const ENGINE_DOCUMENT = 'document';
+
+    private const ENGINE_EAV = 'eav';
+
     private const GROUP = 'diEavGroup';
 
     private const GROUP_IDENTIFIER = 'di-eav-group';
@@ -65,7 +69,9 @@ class ClassificationstoreUnstorableValueTest extends Unit
     protected function _before(): void
     {
         $fixture = new ClassificationStoreFixture();
-        $store = $fixture->store(self::STORE);
+        // the variant key is declared on an engine that offers variants and the store moved after
+        $store = $fixture->store(self::STORE, self::ENGINE_DOCUMENT);
+        $fixture->flipEngine($store, self::ENGINE_DOCUMENT);
         $group = $fixture->group($store->getId(), self::GROUP, self::GROUP_IDENTIFIER);
 
         $variant = new MultiValue();
@@ -89,6 +95,7 @@ class ClassificationstoreUnstorableValueTest extends Unit
             $this->keyIds[$name] = $key->getId();
         }
 
+        $fixture->flipEngine($store, self::ENGINE_EAV);
         $fixture->classDefinition(self::CLASS_NAME, $store->getId());
         $this->groupId = $group->getId();
         $this->language = (string)(Tool::getValidLanguages()[0] ?? 'en');
