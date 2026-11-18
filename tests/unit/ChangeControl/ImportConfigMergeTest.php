@@ -21,10 +21,9 @@ use Pimcore\Bundle\DataHubBundle\Proposal\ChangeControl\ConfigStateShape;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
-use Symfony\Component\DependencyInjection\ServiceLocator;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
 
 /**
  * Approval merges a proposal over the configuration as stored then, against the state stored
@@ -32,6 +31,9 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
  */
 class ImportConfigMergeTest extends Unit
 {
+    /** an XML interpreter the importer can load */
+    private const array XML_INTERPRETER = ['type' => 'xml', 'settings' => ['xpath' => '/cars/car', 'schema' => '']];
+
     private EditableDataMerge $merge;
 
     protected function _before(): void
@@ -46,7 +48,7 @@ class ImportConfigMergeTest extends Unit
     public function testALaterEditOfAFieldTheProposalChangedRefusesTheApproval(): void
     {
         $base = $this->stored();
-        $proposed = $this->propose($base, ['interpreterConfig' => ['type' => 'xml']]);
+        $proposed = $this->propose($base, ['interpreterConfig' => self::XML_INTERPRETER]);
         $main = $base;
         $main['interpreterConfig']['type'] = 'csv';
 
@@ -58,7 +60,7 @@ class ImportConfigMergeTest extends Unit
     public function testALaterEditOfAnotherFieldSurvivesTheApproval(): void
     {
         $base = $this->stored();
-        $proposed = $this->propose($base, ['interpreterConfig' => ['type' => 'xml']]);
+        $proposed = $this->propose($base, ['interpreterConfig' => self::XML_INTERPRETER]);
         $main = $base;
         $main['loaderConfig']['settings']['assetPath'] = '/feeds/trucks.json';
         $delta = $this->merge->deltaOf($base, $proposed);
@@ -199,7 +201,7 @@ class ImportConfigMergeTest extends Unit
     {
         return new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
             $this->createStub(StoredConfigurationsInterface::class),
         );
     }
@@ -218,7 +220,7 @@ class ImportConfigMergeTest extends Unit
 
         $builder = new ImportConfigProposalBuilder(
             new ImportConfigVocabulary([]),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
         );
 
         return $builder->build('dealer-feed', $document, $existing);
