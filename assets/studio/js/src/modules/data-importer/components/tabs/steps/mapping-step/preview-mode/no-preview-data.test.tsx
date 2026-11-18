@@ -78,11 +78,12 @@ const storedPreviews = records.map((record, index) => ({
 }))
 
 // load-preview as RTK Query keeps it: answered once per argument and kept until refetched,
-// a failed one asked again when it is subscribed to anew
+// a failed one asked again when it is subscribed to anew; a refetch is fetching until it is answered
 const useLoadPreview = (arg: { bundleDataImporterLoadPreviewParameters: { recordNumber?: number } }, options?: { skip?: boolean }): object => {
   const skip = options?.skip === true
   const recordNumber = arg.bundleDataImporterLoadPreviewParameters.recordNumber ?? 0
   const [answer, setAnswer] = useState<{ stored: boolean } | undefined>(undefined)
+  const [refetching, setRefetching] = useState(false)
   const fetchPreview = useCallback((): void => { setAnswer({ stored: previewFileStored }) }, [recordNumber])
 
   useEffect(() => {
@@ -92,11 +93,16 @@ const useLoadPreview = (arg: { bundleDataImporterLoadPreviewParameters: { record
   return {
     data: !skip && answer?.stored === true ? storedPreviews[recordNumber] : undefined,
     isLoading: false,
-    isFetching: !skip && answer === undefined,
+    isFetching: !skip && (answer === undefined || refetching),
     isError: !skip && answer?.stored === false,
     isSuccess: !skip && answer?.stored === true,
     error: !skip && answer?.stored === false ? noPreviewData : undefined,
-    refetch: async () => { fetchPreview() }
+    refetch: async () => {
+      setRefetching(true)
+      await Promise.resolve()
+      fetchPreview()
+      setRefetching(false)
+    }
   }
 }
 

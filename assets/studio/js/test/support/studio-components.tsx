@@ -30,7 +30,8 @@ export const Content = ({ children, loading }: WithChildren & { loading?: boolea
     aria-busy={ loading === true }
     data-testid="content"
   >
-    { children }
+    { /* as Studio's Content: a spinner instead of the children while loading */ }
+    { loading !== true && children }
   </div>
 )
 
