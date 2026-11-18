@@ -17,7 +17,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\Unit\ChangeControl;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigCheck;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\SqlLoader;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
+use Symfony\Component\Filesystem\Filesystem;
 
 class ImportConfigCheckTest extends Unit
 {
@@ -102,6 +104,29 @@ class ImportConfigCheckTest extends Unit
         static::assertSame([], $this->check->problems($state, null));
 
         static::assertSame([], $this->check->problems(self::with(self::CONFIGURATION, self::MAPPING, []), null));
+    }
+
+    public function testAnSqlLoaderWithoutWhereAndGroupByIsNoProblem(): void
+    {
+        $check = ImportConfigCheckFixture::check([
+            'sql' => static fn (): SqlLoader => new SqlLoader(new Filesystem()),
+        ]);
+        $state = self::with(self::CONFIGURATION, self::LOADER, [
+            'type' => 'sql',
+            'settings' => ['connection' => 'default', 'select' => '*', 'from' => 'cars'],
+        ]);
+
+        static::assertSame([], $check->problems($state, null));
+    }
+
+    public function testAnXmlInterpreterWithoutASchemaIsNoProblem(): void
+    {
+        $state = self::with(self::CONFIGURATION, self::INTERPRETER, [
+            'type' => 'xml',
+            'settings' => ['xpath' => '/cars/car'],
+        ]);
+
+        static::assertSame([], $this->check->problems($state, null));
     }
 
     public function testAnXmlInterpreterWithoutItsXPathIsAProblem(): void
