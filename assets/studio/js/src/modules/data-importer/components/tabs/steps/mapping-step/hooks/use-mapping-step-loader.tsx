@@ -167,10 +167,16 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
     setHasPreviewError(true)
   }, [isPreviewError])
 
+  // set while a new preview file is read again: the step stays on screen meanwhile, preview mode included
+  const reloadingPreviewDataRef = useRef(false)
+
   useEffect(() => {
     const headersDone = headersRequest !== undefined && !isHeadersFetching
     const previewDone = previewRequest !== undefined && !isPreviewFetching
-    setInitialLoadDone(headersDone && attrsDone && previewDone)
+    const done = headersDone && attrsDone && previewDone
+    if (done) reloadingPreviewDataRef.current = false
+    else if (reloadingPreviewDataRef.current) return
+    setInitialLoadDone(done)
   }, [headersRequest, previewRequest, isHeadersFetching, isPreviewFetching, attrsDone])
 
   const loaderConfigType = Form.useWatch(['loaderConfig', 'type']) as string | undefined
@@ -421,6 +427,7 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
   // the stored preview file changed (an upload or a copy): read its columns and first record again
   const reloadPreviewData = useCallback((): void => {
     if (headersRequest === undefined || previewRequest === undefined) return
+    reloadingPreviewDataRef.current = true
     void Promise.all([
       refetchHeaders().catch(() => undefined),
       refetchPreview().catch(() => undefined)

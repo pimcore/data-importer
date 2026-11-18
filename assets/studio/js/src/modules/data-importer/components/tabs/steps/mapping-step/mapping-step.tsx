@@ -49,9 +49,11 @@ function isMappingDebugEnabled (): boolean {
 // reads its source data from the surrounding MappingSourceContext
 export interface MappingStepProps {
   isActive: boolean
+  // a preview file was uploaded or copied in this step
+  onPreviewDataChange?: () => void
 }
 
-export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = React.memo(({ isActive, onPreviewDataChange }: MappingStepProps): React.JSX.Element => {
   const { styles } = useStyles()
   const { t } = useTranslation()
   const theme = useTheme()
@@ -73,6 +75,12 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
     getMappingConfig,
     getBackendConfig
   } = useMappingStepLoader(isActive)
+
+  // the new preview file is read here, and the other steps' column lists follow
+  const handlePreviewDataChange = useCallback((): void => {
+    reloadPreviewData()
+    onPreviewDataChange?.()
+  }, [reloadPreviewData, onPreviewDataChange])
 
   const {
     dataPreview: autofillPreviewData,
@@ -487,7 +495,7 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
         <MappingPreviewModeProvider
           available={ sourceRows.length > 0 }
           getCurrentConfig={ getBackendConfig }
-          onPreviewDataChange={ reloadPreviewData }
+          onPreviewDataChange={ handlePreviewDataChange }
         >
           <Flex className={ styles.mappingLayout }>
             <div className={ styles.mappingLayoutLeft }>
