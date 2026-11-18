@@ -34,6 +34,8 @@ export interface MappingPreviewModeValue {
   record: DataRow[]
   // the form's current configuration and the record, debounced; null while preview mode is off
   previewRequest: MappingPreviewRequest | null
+  // a mapping or the record changed and its request waits for the debounce
+  previewPending: boolean
   previewError: string | null
   setPreviewError: (message: string | null) => void
   getCurrentConfig: () => BackendConfiguration
@@ -47,6 +49,7 @@ const inactive: MappingPreviewModeValue = {
   setRecordNumber: () => undefined,
   record: [],
   previewRequest: null,
+  previewPending: false,
   previewError: null,
   setPreviewError: () => undefined,
   getCurrentConfig: () => ({})
@@ -68,6 +71,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, children }: Mapp
   const enabled = switchedOn && available
   const recordNumber = Number(item?.data.id ?? fallbackItem?.id ?? 0)
   const [previewRequest, setPreviewRequest] = useState<MappingPreviewRequest | null>(null)
+  const [previewPending, setPreviewPending] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
   // serialized, so only a changed value of the form starts a new request
@@ -80,12 +84,15 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, children }: Mapp
   useEffect(() => {
     if (!enabled) {
       setPreviewRequest(null)
+      setPreviewPending(false)
       setPreviewError(null)
       return
     }
 
+    setPreviewPending(true)
     const timer = setTimeout(() => {
       setPreviewRequest({ currentConfig: getCurrentConfig(), recordNumber })
+      setPreviewPending(false)
     }, PREVIEW_REQUEST_DEBOUNCE_MS)
 
     return () => { clearTimeout(timer) }
@@ -107,10 +114,11 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, children }: Mapp
     setRecordNumber,
     record,
     previewRequest,
+    previewPending,
     previewError,
     setPreviewError,
     getCurrentConfig
-  }), [enabled, setEnabled, available, recordNumber, setRecordNumber, record, previewRequest, previewError, getCurrentConfig])
+  }), [enabled, setEnabled, available, recordNumber, setRecordNumber, record, previewRequest, previewPending, previewError, getCurrentConfig])
 
   return (
     <MappingPreviewModeContext.Provider value={ value }>
