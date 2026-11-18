@@ -26,10 +26,13 @@ class OptionalSettingsTest extends Unit
 
     private const SQL_REQUIRED = ['connection' => 'default', 'select' => 'id', 'from' => 'objects'];
 
-    private function withWarningsAsErrors(callable $callable): void
+    private function assertNoWarnings(callable $callable): void
     {
-        set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
-            throw new \ErrorException($message, 0, $severity, $file, $line);
+        $warnings = [];
+        set_error_handler(static function (int $severity, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
         });
 
         try {
@@ -37,6 +40,8 @@ class OptionalSettingsTest extends Unit
         } finally {
             restore_error_handler();
         }
+
+        $this->assertSame([], $warnings);
     }
 
     private function readProperty(object $object, string $name): mixed
@@ -48,7 +53,7 @@ class OptionalSettingsTest extends Unit
     {
         $loader = (new \ReflectionClass(SqlLoader::class))->newInstanceWithoutConstructor();
 
-        $this->withWarningsAsErrors(static fn () => $loader->setSettings(self::SQL_REQUIRED));
+        $this->assertNoWarnings(static fn () => $loader->setSettings(self::SQL_REQUIRED));
 
         $this->assertSame('', $this->readProperty($loader, 'where'));
         $this->assertSame('', $this->readProperty($loader, 'groupBy'));
@@ -68,7 +73,7 @@ class OptionalSettingsTest extends Unit
     {
         $interpreter = (new \ReflectionClass(XmlFileInterpreter::class))->newInstanceWithoutConstructor();
 
-        $this->withWarningsAsErrors(static fn () => $interpreter->setSettings(['xpath' => '/Items/Item']));
+        $this->assertNoWarnings(static fn () => $interpreter->setSettings(['xpath' => '/Items/Item']));
 
         $this->assertNull($this->readProperty($interpreter, 'schema'));
     }
