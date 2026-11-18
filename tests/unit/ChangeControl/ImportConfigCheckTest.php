@@ -50,6 +50,10 @@ class ImportConfigCheckTest extends Unit
 
     private const string MISSING_FIELD = 'doesNotExist';
 
+    private const string CLEANUP = 'processingConfig.cleanup';
+
+    private const string NOT_A_STRING = 'non-string';
+
     private const string TARGET_FIELD = 'dataTarget.settings.fieldName';
 
     private const array CONFIGURATION = [
@@ -285,6 +289,11 @@ class ImportConfigCheckTest extends Unit
             [],
             $this->check->problems(self::with(self::CONFIGURATION, self::CRON, '0 3 * * *'), null)
         );
+        static::assertSame(
+            ['executionConfig.cronDefinition "0" is not a cron expression like "0 3 * * *".'],
+            $this->check->problems(self::with(self::CONFIGURATION, self::CRON, '0'), null)
+        );
+        static::assertSame([], $this->check->problems(self::with(self::CONFIGURATION, self::CRON, null), null));
     }
 
     /**
@@ -313,6 +322,7 @@ class ImportConfigCheckTest extends Unit
     {
         return [
             'another format' => ['2026-12-31 23:30'],
+            'a zero' => ['0'],
             'a day that does not exist' => ['32-13-2026 23:30'],
         ];
     }
@@ -327,9 +337,42 @@ class ImportConfigCheckTest extends Unit
         static::assertSame([], $this->check->problems($state, null));
     }
 
+    /**
+     * @dataProvider unloadableCleanupStrategies
+     */
+    public function testACleanupStrategyTheImportCannotLoadIsAProblem(mixed $strategy, string $printed): void
+    {
+        $state = self::with(self::CONFIGURATION, self::CLEANUP, ['doCleanup' => true, 'strategy' => $strategy]);
+
+        static::assertSame(
+            [sprintf('processingConfig.cleanup.strategy "%s" is not a cleanup strategy here.', $printed)],
+            $this->check->problems($state, null)
+        );
+    }
+
+    /**
+     * @return array<string, array{mixed, string}>
+     */
+    public static function unloadableCleanupStrategies(): array
+    {
+        return [
+            'missing' => [null, self::NOT_A_STRING],
+            'a number' => [0, '0'],
+            'a list' => [['delete'], self::NOT_A_STRING],
+        ];
+    }
+
+    public function testACleanupStrategyTheImportCanLoadIsNoProblem(): void
+    {
+        foreach (['delete', ''] as $strategy) {
+            $state = self::with(self::CONFIGURATION, self::CLEANUP, ['doCleanup' => true, 'strategy' => $strategy]);
+            static::assertSame([], $this->check->problems($state, null));
+        }
+    }
+
     public function testACleanupStrategyTheInstallationLacksIsAProblem(): void
     {
-        $state = self::with(self::CONFIGURATION, 'processingConfig.cleanup', [
+        $state = self::with(self::CONFIGURATION, self::CLEANUP, [
             'doCleanup' => true,
             'strategy' => 'archive',
         ]);

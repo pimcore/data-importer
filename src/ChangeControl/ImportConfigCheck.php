@@ -208,14 +208,18 @@ final readonly class ImportConfigCheck
     private function cleanupProblem(array $processing): ?string
     {
         $strategy = $processing['cleanup']['strategy'] ?? null;
-        if (empty($processing['cleanup']['doCleanup']) || !is_string($strategy) || $strategy === '') {
+        if (empty($processing['cleanup']['doCleanup']) || $strategy === '') {
             return null;
         }
 
         try {
-            $this->cleanupStrategies->loadCleanupStrategy($strategy);
+            // the import hands the strategy to loadCleanupStrategy(string) as it is stored
+            $this->cleanupStrategies->loadCleanupStrategy(is_string($strategy) ? $strategy : '');
         } catch (InvalidConfigurationException) {
-            return sprintf('processingConfig.cleanup.strategy "%s" is not a cleanup strategy here.', $strategy);
+            return sprintf(
+                'processingConfig.cleanup.strategy "%s" is not a cleanup strategy here.',
+                self::printable($strategy),
+            );
         }
 
         return null;
@@ -231,7 +235,7 @@ final readonly class ImportConfigCheck
     {
         if (($execution['scheduleType'] ?? null) === JobScheduler::NAME) {
             $at = $execution['scheduledAt'] ?? null;
-            if (empty($at) || (is_string($at) && $this->isScheduledAt($at))) {
+            if (self::isUnset($at) || (is_string($at) && $this->isScheduledAt($at))) {
                 return null;
             }
 
@@ -242,7 +246,7 @@ final readonly class ImportConfigCheck
         }
 
         $cron = $execution['cronDefinition'] ?? null;
-        if (empty($cron) || (is_string($cron) && CronExpression::isValidExpression($cron))) {
+        if (self::isUnset($cron) || (is_string($cron) && CronExpression::isValidExpression($cron))) {
             return null;
         }
 
@@ -334,6 +338,12 @@ final readonly class ImportConfigCheck
             $kind,
             $class->getName(),
         );
+    }
+
+    /** "0" is a value the scheduler has to read, unlike empty() suggests */
+    private static function isUnset(mixed $value): bool
+    {
+        return $value === null || $value === '';
     }
 
     private static function printable(mixed $value): string
