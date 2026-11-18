@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Form, PreviewModeProvider, usePreviewMode } from '@pimcore/studio-ui-bundle/components'
 import { type BackendConfiguration } from '../../../../../utils/transformers'
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
@@ -115,15 +115,26 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
 
   // the record is read while the source has preview records, so a 404 on it shows the hint
   const recordQueryEnabled = switchedOn && available
-  const { dataPreview, error: recordError, load } = usePreviewRecordQuery({ enabled: recordQueryEnabled, getCurrentConfig })
+  const { dataPreview, error: recordError, isFetching: isRecordFetching, load } = usePreviewRecordQuery({ enabled: recordQueryEnabled, getCurrentConfig })
 
   useEffect(() => {
     if (recordQueryEnabled) load(recordNumber)
   }, [recordQueryEnabled, recordNumber, load])
 
+  // a 404 counts once the record was asked for since: until then the query shows an earlier answer,
+  // e.g. the one from before a copy or upload
+  const recordAskedRef = useRef(false)
   useEffect(() => {
-    if (recordQueryEnabled && isNotFoundError(recordError)) setPreviewDataMissing(true)
-  }, [recordQueryEnabled, recordError])
+    if (!recordQueryEnabled) {
+      recordAskedRef.current = false
+      return
+    }
+    if (isRecordFetching) {
+      recordAskedRef.current = true
+      return
+    }
+    if (recordAskedRef.current && isNotFoundError(recordError)) setPreviewDataMissing(true)
+  }, [recordQueryEnabled, isRecordFetching, recordError])
 
   // switched on again, the preview data is looked for anew
   useEffect(() => {
@@ -135,6 +146,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
   }, [])
 
   const previewDataChanged = useCallback((): void => {
+    recordAskedRef.current = false
     setPreviewDataMissing(false)
     onPreviewDataChange()
     if (recordQueryEnabled) load(recordNumber, { forceRefetch: true })
