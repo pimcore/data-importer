@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\Unit\ChangeControl;
 
 use Codeception\Test\Unit;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigCheck;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
@@ -183,7 +182,9 @@ class ImportConfigCheckTest extends Unit
         );
     }
 
-    #[DataProvider('missingFields')]
+    /**
+     * @dataProvider missingFields
+     */
     public function testAFieldTheClassLacksIsAProblem(string $fieldName): void
     {
         $state = self::with(self::CONFIGURATION, self::FIRST_FIELD, $fieldName);
@@ -205,7 +206,9 @@ class ImportConfigCheckTest extends Unit
         ];
     }
 
-    #[DataProvider('writableFields')]
+    /**
+     * @dataProvider writableFields
+     */
     public function testAFieldTheImporterCanWriteIsNoProblem(string $fieldName): void
     {
         $state = self::with(self::CONFIGURATION, self::FIRST_FIELD, $fieldName);
@@ -259,7 +262,9 @@ class ImportConfigCheckTest extends Unit
         );
     }
 
-    #[DataProvider('unreadableDates')]
+    /**
+     * @dataProvider unreadableDates
+     */
     public function testAScheduledDateTheSchedulerCannotReadIsAProblem(string $scheduledAt): void
     {
         $state = self::with(self::CONFIGURATION, self::EXECUTION, [
