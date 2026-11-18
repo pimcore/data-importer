@@ -208,6 +208,7 @@ data-importer.mapping.new-modal.source-label: Columna de origen
 data-importer.mapping.new-modal.source-required: Por favor, seleccione una columna de origen
 data-importer.mapping.collapse-all: Contraer todo
 data-importer.mapping.expand-all: Expandir todo
+data-importer.mapping.preview-mode.no-preview-data: Sube o copia un archivo de vista previa para ver los resultados
 data-importer.mapping.auto-fill: Autocompletar
 data-importer.mapping.autofill-suggestions.title: Sugerencias de autocompletado de Copilot
 data-importer.mapping.autofill-suggestions.score: Puntuación

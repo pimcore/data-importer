@@ -208,6 +208,7 @@ data-importer.mapping.new-modal.source-label: Kildekolonne
 data-importer.mapping.new-modal.source-required: Vennligst velg en kildekolonne
 data-importer.mapping.collapse-all: Skjul alle
 data-importer.mapping.expand-all: Vis alle
+data-importer.mapping.preview-mode.no-preview-data: Last opp eller kopier en forhåndsvisningsfil for å se resultater
 data-importer.mapping.auto-fill: Autoutfyll
 data-importer.mapping.autofill-suggestions.title: Copilot autoutfyll-forslag
 data-importer.mapping.autofill-suggestions.score: Score

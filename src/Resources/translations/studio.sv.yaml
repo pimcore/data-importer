@@ -208,6 +208,7 @@ data-importer.mapping.new-modal.source-label: Källkolumn
 data-importer.mapping.new-modal.source-required: Välj en källkolumn
 data-importer.mapping.collapse-all: Fäll ihop alla
 data-importer.mapping.expand-all: Expandera alla
+data-importer.mapping.preview-mode.no-preview-data: Ladda upp eller kopiera en förhandsvisningsfil för att se resultat
 data-importer.mapping.auto-fill: Autofyll
 data-importer.mapping.autofill-suggestions.title: Copilot autofyll-förslag
 data-importer.mapping.autofill-suggestions.score: Poäng
