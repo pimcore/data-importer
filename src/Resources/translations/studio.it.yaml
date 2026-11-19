@@ -211,6 +211,8 @@ data-importer.mapping.expand-all: Espandi tutti
 data-importer.mapping.preview-mode.switch: Modalità anteprima
 data-importer.mapping.preview-mode.no-preview-data: Carica o copia un file di anteprima per vedere i risultati
 data-importer.mapping.preview-mode.record: 'Record {{number}}'
+data-importer.mapping.preview-mode.record-label: Record
+data-importer.mapping.preview-mode.of-records: 'di {{total}}'
 data-importer.mapping.preview-mode.preview-item: Elemento di anteprima
 data-importer.mapping.preview-mode.picker.select: Seleziona
 data-importer.mapping.preview-mode.picker.cancel: Annulla

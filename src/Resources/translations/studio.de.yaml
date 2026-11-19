@@ -211,6 +211,8 @@ data-importer.mapping.expand-all: Alle ausklappen
 data-importer.mapping.preview-mode.switch: Vorschaumodus
 data-importer.mapping.preview-mode.no-preview-data: Laden Sie eine Vorschaudatei hoch oder kopieren Sie eine, um Ergebnisse zu sehen
 data-importer.mapping.preview-mode.record: 'Datensatz {{number}}'
+data-importer.mapping.preview-mode.record-label: Datensatz
+data-importer.mapping.preview-mode.of-records: 'von {{total}}'
 data-importer.mapping.preview-mode.preview-item: Vorschau-Element
 data-importer.mapping.preview-mode.picker.select: Auswählen
 data-importer.mapping.preview-mode.picker.cancel: Abbrechen

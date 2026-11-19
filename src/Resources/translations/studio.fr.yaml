@@ -211,6 +211,8 @@ data-importer.mapping.expand-all: Tout développer
 data-importer.mapping.preview-mode.switch: Mode aperçu
 data-importer.mapping.preview-mode.no-preview-data: 'Téléversez ou copiez un fichier d''aperçu pour voir les résultats'
 data-importer.mapping.preview-mode.record: 'Enregistrement {{number}}'
+data-importer.mapping.preview-mode.record-label: Enregistrement
+data-importer.mapping.preview-mode.of-records: 'sur {{total}}'
 data-importer.mapping.preview-mode.preview-item: 'Élément d''aperçu'
 data-importer.mapping.preview-mode.picker.select: Sélectionner
 data-importer.mapping.preview-mode.picker.cancel: Annuler

@@ -28,6 +28,10 @@ export const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextDescription};
   `,
 
+  recordInput: css`
+    width: 64px;
+  `,
+
   recordValue: css`
     max-width: 240px;
     overflow: hidden;
@@ -63,31 +67,5 @@ export const useStyles = createStyles(({ css, token }) => ({
 
   collapseAll: css`
     margin-left: auto;
-  `,
-
-  pickerHeader: css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: ${token.paddingXS}px;
-    font-weight: 600;
-  `,
-
-  pickerColumns: css`
-    margin: 0;
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: ${token.marginXXS}px ${token.marginSM}px;
-  `,
-
-  pickerLabel: css`
-    color: ${token.colorTextDescription};
-  `,
-
-  pickerValue: css`
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   `
 }))

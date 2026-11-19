@@ -38,6 +38,9 @@ export interface MappingPreviewModeValue {
   // zero-based record of the preview file the mappings run on
   recordNumber: number
   setRecordNumber: (recordNumber: number) => void
+  // the number of records in the preview data, once an answer told it (a record past the last one is answered
+  // with the last one); null until then
+  recordCount: number | null
   // the selected record's columns, empty until loaded
   record: DataRow[]
   // the form's current configuration and the record, debounced; null while preview mode is off
@@ -58,6 +61,7 @@ const inactive: MappingPreviewModeValue = {
   previewDataChanged: () => undefined,
   recordNumber: 0,
   setRecordNumber: () => undefined,
+  recordCount: null,
   record: [],
   previewRequest: null,
   previewPending: false,
@@ -88,6 +92,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
   const [previewRequest, setPreviewRequest] = useState<MappingPreviewRequest | null>(null)
   const [previewPending, setPreviewPending] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const [recordCount, setRecordCount] = useState<number | null>(null)
 
   // serialized, so only a changed value of the form starts a new request
   const formFingerprint = Form.useWatch((values: object) => JSON.stringify(values), { preserve: true }) as string | undefined
@@ -115,11 +120,26 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
 
   // the record is read while the source has preview records, so a 404 on it shows the hint
   const recordQueryEnabled = switchedOn && available
-  const { dataPreview, error: recordError, isFetching: isRecordFetching, load } = usePreviewRecordQuery({ enabled: recordQueryEnabled, getCurrentConfig })
+  const { dataPreview, currentRecordIndex, error: recordError, isFetching: isRecordFetching, load } = usePreviewRecordQuery({ enabled: recordQueryEnabled, getCurrentConfig })
 
+  // the record asked for last, and the answer shown when it was asked: only a later answer belongs to it
+  const askedRecordRef = useRef<{ recordNumber: number, answerBefore: unknown } | null>(null)
   useEffect(() => {
-    if (recordQueryEnabled) load(recordNumber)
+    if (!recordQueryEnabled) return
+    askedRecordRef.current = { recordNumber, answerBefore: dataPreview }
+    load(recordNumber)
   }, [recordQueryEnabled, recordNumber, load])
+
+  // a record past the last one is answered with the last one: that tells the number of records, and the
+  // last one becomes the selected record
+  useEffect(() => {
+    const asked = askedRecordRef.current
+    if (asked === null || dataPreview === asked.answerBefore || dataPreview.length === 0) return
+    if (currentRecordIndex < asked.recordNumber) {
+      setRecordCount(currentRecordIndex + 1)
+      setRecordNumber(currentRecordIndex)
+    }
+  }, [dataPreview, currentRecordIndex, setRecordNumber])
 
   // a 404 counts once the record was asked for since: until then the query shows an earlier answer,
   // e.g. the one from before a copy or upload
@@ -148,6 +168,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
   const previewDataChanged = useCallback((): void => {
     recordAskedRef.current = false
     setPreviewDataMissing(false)
+    setRecordCount(null)
     onPreviewDataChange()
     if (recordQueryEnabled) load(recordNumber, { forceRefetch: true })
   }, [onPreviewDataChange, recordQueryEnabled, recordNumber, load])
@@ -163,13 +184,14 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
     previewDataChanged,
     recordNumber,
     setRecordNumber,
+    recordCount,
     record,
     previewRequest,
     previewPending,
     previewError,
     setPreviewError,
     getCurrentConfig
-  }), [enabled, setEnabled, available, noPreviewData, markNoPreviewData, previewDataChanged, recordNumber, setRecordNumber, record, previewRequest, previewPending, previewError, getCurrentConfig])
+  }), [enabled, setEnabled, available, noPreviewData, markNoPreviewData, previewDataChanged, recordNumber, setRecordNumber, recordCount, record, previewRequest, previewPending, previewError, getCurrentConfig])
 
   return (
     <MappingPreviewModeContext.Provider value={ value }>

@@ -170,7 +170,7 @@ describe('Record number field in the preview line', () => {
     expect(screen.getByRole('tooltip').textContent).toBe('Product 20')
     // the "Sources with preview" panel and the mappings' request follow the chosen record
     expect(screen.getByRole('list', { name: 'sources' }).textContent).toContain('name=Product 20')
-    expect(screen.getByTestId('preview-request').textContent).toBe('19')
+    await waitFor(() => { expect(screen.getByTestId('preview-request').textContent).toBe('19') })
   })
 
   it('AC1: Enter loads the typed record at once, without waiting for the pause', async () => {
@@ -221,7 +221,7 @@ describe('Record number field in the preview line', () => {
 
     expect(askedSince(before)).toEqual([4])
     expect(shownValue()).toBe('Product 5')
-    expect(screen.getByTestId('preview-request').textContent).toBe('4')
+    await waitFor(() => { expect(screen.getByTestId('preview-request').textContent).toBe('4') })
 
     fireEvent.click(previous())
     await afterSettle()
@@ -262,7 +262,7 @@ describe('Record number field in the preview line', () => {
     expect(screen.getByText('data-importer.mapping.preview-mode.of-records(150)')).toBeTruthy()
     expect(next().disabled).toBe(true)
     await afterSettle()
-    expect(screen.getByTestId('preview-request').textContent).toBe('149')
+    await waitFor(() => { expect(screen.getByTestId('preview-request').textContent).toBe('149') })
 
     // once the number of records is known, a larger number is refused while typed and kept to it on Enter
     const before = asked.length

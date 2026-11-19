@@ -211,6 +211,8 @@ data-importer.mapping.expand-all: Rozwiń wszystko
 data-importer.mapping.preview-mode.switch: Tryb podglądu
 data-importer.mapping.preview-mode.no-preview-data: Prześlij lub skopiuj plik podglądu, aby zobaczyć wyniki
 data-importer.mapping.preview-mode.record: 'Rekord {{number}}'
+data-importer.mapping.preview-mode.record-label: Rekord
+data-importer.mapping.preview-mode.of-records: 'z {{total}}'
 data-importer.mapping.preview-mode.preview-item: Element podglądu
 data-importer.mapping.preview-mode.picker.select: Wybierz
 data-importer.mapping.preview-mode.picker.cancel: Anuluj

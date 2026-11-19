@@ -99,7 +99,7 @@ export const InputNumber = ({ disabled, id, onBlur, onChange, onPressEnter, stat
   />
 )
 
-export const SearchInput =({ onChange, placeholder, value }: { onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => (
+export const SearchInput = ({ onChange, placeholder, value }: { onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => (
   <input
     onChange={ onChange }
     placeholder={ placeholder }

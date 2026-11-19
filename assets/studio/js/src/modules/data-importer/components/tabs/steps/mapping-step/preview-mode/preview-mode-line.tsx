@@ -8,13 +8,13 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useState } from 'react'
+import React, { useId } from 'react'
 import { Button, Switch, Text, Tooltip } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useMappingSource } from '../../mapping-source/mapping-source'
 import { usePreviewDataActions } from '../../shared/use-preview-data-actions'
 import { useMappingPreviewMode } from './mapping-preview-mode'
-import { RecordPicker } from './record-picker'
+import { RecordNumberField } from './record-number-field'
 import { useStyles } from './preview-mode.styles'
 
 export interface PreviewModeLineProps {
@@ -24,16 +24,15 @@ export interface PreviewModeLineProps {
   onCollapseAll: () => void
 }
 
-const SelectedRecord = (): React.JSX.Element => {
-  const { t } = useTranslation()
+const SelectedRecord = ({ fieldId }: { fieldId: string }): React.JSX.Element => {
   const { styles } = useStyles()
-  const { recordNumber, record } = useMappingPreviewMode()
+  const { record } = useMappingPreviewMode()
   // the record is told apart by its first source column
   const value = record[0]?.value
 
   return (
     <span className={ styles.record }>
-      <span>{ t('data-importer.mapping.preview-mode.record', { number: recordNumber + 1 }) }</span>
+      <RecordNumberField id={ fieldId } />
       { value !== undefined && value !== '' && (
         <>
           <span className={ styles.separator }>{ '│' }</span>
@@ -98,7 +97,15 @@ export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }
   const { t } = useTranslation()
   const { styles } = useStyles()
   const { enabled, setEnabled, noPreviewData, previewError } = useMappingPreviewMode()
-  const [pickerOpen, setPickerOpen] = useState(false)
+  const recordFieldId = useId()
+
+  const focusRecordField = (): void => {
+    const field = document.getElementById(recordFieldId)
+    if (field instanceof HTMLInputElement) {
+      field.focus()
+      field.select()
+    }
+  }
 
   return (
     <div
@@ -119,9 +126,9 @@ export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }
 
       { enabled && (
         <>
-          <SelectedRecord />
+          <SelectedRecord fieldId={ recordFieldId } />
 
-          <Button onClick={ () => { setPickerOpen(true) } }>
+          <Button onClick={ focusRecordField }>
             { t('data-importer.mapping.preview-mode.preview-item') }
           </Button>
 
@@ -147,10 +154,6 @@ export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }
             ? t('data-importer.mapping.expand-all')
             : t('data-importer.mapping.collapse-all') }
         </Button>
-      ) }
-
-      { enabled && pickerOpen && (
-        <RecordPicker onClose={ () => { setPickerOpen(false) } } />
       ) }
     </div>
   )

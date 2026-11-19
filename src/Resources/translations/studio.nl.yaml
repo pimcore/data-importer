@@ -211,6 +211,8 @@ data-importer.mapping.expand-all: Alles uitvouwen
 data-importer.mapping.preview-mode.switch: Voorbeeldmodus
 data-importer.mapping.preview-mode.no-preview-data: Upload of kopieer een voorbeeldbestand om resultaten te zien
 data-importer.mapping.preview-mode.record: 'Record {{number}}'
+data-importer.mapping.preview-mode.record-label: Record
+data-importer.mapping.preview-mode.of-records: 'van {{total}}'
 data-importer.mapping.preview-mode.preview-item: Voorbeelditem
 data-importer.mapping.preview-mode.picker.select: Selecteren
 data-importer.mapping.preview-mode.picker.cancel: Annuleren
