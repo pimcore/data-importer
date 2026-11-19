@@ -60,4 +60,14 @@ describe('Studio translations of the mapping preview', () => {
       expect({ key, placeholders: placeholders(text ?? '') }).toEqual({ key, placeholders: placeholders(english.get(key) ?? '') })
     }
   })
+
+  it('AC2: Studio in German shows the preview texts in German, not in English', () => {
+    const german = readTranslations('de')
+
+    for (const key of previewKeys) {
+      const text = german.get(key) ?? ''
+
+      expect({ key, translated: text !== '' && text !== english.get(key) }).toEqual({ key, translated: true })
+    }
+  })
 })
