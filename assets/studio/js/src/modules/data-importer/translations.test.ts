@@ -39,11 +39,15 @@ const readTranslations = (language: string): Map<string, string> => {
 const placeholders = (text: string): string[] => (text.match(/{{\s*\w+\s*}}/g) ?? []).sort()
 
 const english = readTranslations('en')
-const previewKeys = [...english.keys()].filter(key => key.startsWith('data-importer.mapping.preview-mode.'))
+const previewKeys = [
+  ...[...english.keys()].filter(key => key.startsWith('data-importer.mapping.preview-mode.')),
+  'data-importer.mapping.advanced-modal.preview-error'
+]
 
 describe('Studio translations of the mapping preview', () => {
   it('finds the preview keys in the English file', () => {
-    expect(previewKeys.length).toBeGreaterThanOrEqual(11)
+    expect(previewKeys.length).toBeGreaterThanOrEqual(12)
+    expect(english.get('data-importer.mapping.advanced-modal.preview-error')).toBeDefined()
   })
 
   it.each(['de', 'es', 'fr', 'it', 'nl', 'no', 'pl', 'sv'])('AC1: every preview key is translated with the same placeholders in %s', (language) => {
