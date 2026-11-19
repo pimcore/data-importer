@@ -15,6 +15,8 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ImportAsset;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\HttpStreamStub;
+use Pimcore\Model\Asset;
 use Pimcore\Tests\Support\Util\TestHelper;
 
 class ImportAssetTest extends Unit
@@ -31,6 +33,11 @@ class ImportAssetTest extends Unit
      */
     private $localFile;
 
+    /**
+     * @var string[]
+     */
+    private $stubbedSchemes = [];
+
     protected function _before()
     {
         $this->localFile = tempnam(sys_get_temp_dir(), 'import-asset-test-');
@@ -39,6 +46,7 @@ class ImportAssetTest extends Unit
 
     protected function _after()
     {
+        $this->restoreHttpWrappers();
         unlink($this->localFile);
         TestHelper::cleanUp();
     }
@@ -80,5 +88,57 @@ class ImportAssetTest extends Unit
         ], true);
 
         $this->assertEquals([], $data);
+    }
+
+    public function testProcessDownloadsHttpAndHttpsUrls()
+    {
+        $urls = ['http://example.com/files/first.txt', 'https://example.com/files/second.txt'];
+
+        // created up front, so nothing but the download itself runs while the wrappers are stubbed
+        Asset\Service::createFolderByPath(self::PARENT_FOLDER);
+        $service = $this->createService();
+        $service->setSettings(['parentFolder' => self::PARENT_FOLDER]);
+
+        $this->stubHttpWrappers();
+
+        try {
+            $assets = $service->process($urls, true);
+        } finally {
+            $this->restoreHttpWrappers();
+        }
+
+        static::assertSame($urls, HttpStreamStub::$requestedUrls);
+        static::assertCount(2, $assets);
+        static::assertSame(self::PARENT_FOLDER . '/first.txt', $assets[0]->getRealFullPath());
+        static::assertSame(self::PARENT_FOLDER . '/second.txt', $assets[1]->getRealFullPath());
+        static::assertSame(HttpStreamStub::BODY, $assets[0]->getData());
+        static::assertSame(HttpStreamStub::BODY, $assets[1]->getData());
+    }
+
+    /**
+     * Replaces PHP's http and https stream wrappers with HttpStreamStub, so the allowed download
+     * path runs without a network.
+     */
+    private function stubHttpWrappers(): void
+    {
+        HttpStreamStub::$requestedUrls = [];
+
+        foreach (['http', 'https'] as $scheme) {
+            if (in_array($scheme, stream_get_wrappers(), true)) {
+                stream_wrapper_unregister($scheme);
+                $this->stubbedSchemes[] = $scheme;
+            }
+
+            stream_wrapper_register($scheme, HttpStreamStub::class);
+        }
+    }
+
+    private function restoreHttpWrappers(): void
+    {
+        foreach ($this->stubbedSchemes as $scheme) {
+            stream_wrapper_restore($scheme);
+        }
+
+        $this->stubbedSchemes = [];
     }
 }
