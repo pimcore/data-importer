@@ -208,6 +208,17 @@ data-importer.mapping.new-modal.source-label: Quellspalte
 data-importer.mapping.new-modal.source-required: Bitte wählen Sie eine Quellspalte aus
 data-importer.mapping.collapse-all: Alle einklappen
 data-importer.mapping.expand-all: Alle ausklappen
+data-importer.mapping.preview-mode.switch: Vorschaumodus
+data-importer.mapping.preview-mode.no-preview-data: Laden Sie eine Vorschaudatei hoch oder kopieren Sie eine, um Ergebnisse zu sehen
+data-importer.mapping.preview-mode.record: 'Datensatz {{number}}'
+data-importer.mapping.preview-mode.preview-item: Vorschau-Element
+data-importer.mapping.preview-mode.picker.select: Auswählen
+data-importer.mapping.preview-mode.picker.cancel: Abbrechen
+data-importer.mapping.preview-mode.preview: Vorschau
+data-importer.mapping.preview-mode.no-value: Kein Wert
+data-importer.mapping.preview-mode.unavailable: Vorschau nicht verfügbar
+data-importer.mapping.preview-mode.warning.advanced-setup: Erfordert erweiterte Einrichtung
+data-importer.mapping.preview-mode.warning.further-configuration: Erfordert weitere Konfiguration
 data-importer.mapping.auto-fill: Automatisch ausfüllen
 data-importer.mapping.autofill-suggestions.title: Copilot-Autofill-Vorschläge
 data-importer.mapping.autofill-suggestions.score: Übereinstimmung
