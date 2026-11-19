@@ -28,6 +28,15 @@ export const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextDescription};
   `,
 
+  recordNumber: css`
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: ${token.marginXS}px;
+    white-space: nowrap;
+    color: ${token.colorTextDescription};
+  `,
+
   recordInput: css`
     width: 64px;
   `,

@@ -31,10 +31,13 @@ const SelectedRecord = ({ fieldId }: { fieldId: string }): React.JSX.Element => 
   const value = record[0]?.value
 
   return (
-    <span className={ styles.record }>
-      <RecordNumberField id={ fieldId } />
+    <>
+      <span className={ styles.recordNumber }>
+        <RecordNumberField id={ fieldId } />
+      </span>
       { value !== undefined && value !== '' && (
-        <>
+        // only the value gives way in a narrow panel; the number and its buttons keep their width
+        <span className={ styles.record }>
           <span className={ styles.separator }>{ '│' }</span>
           <Tooltip title={ value }>
             <span
@@ -44,9 +47,9 @@ const SelectedRecord = ({ fieldId }: { fieldId: string }): React.JSX.Element => 
               { value }
             </span>
           </Tooltip>
-        </>
+        </span>
       ) }
-    </span>
+    </>
   )
 }
 
