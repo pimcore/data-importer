@@ -12,7 +12,12 @@
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./js",
+    "outDir": "./dist/build/types",
+    "declarationDir": "./dist/build/types"
   },
 
   "include": [
