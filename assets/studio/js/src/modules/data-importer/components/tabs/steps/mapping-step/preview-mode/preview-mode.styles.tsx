@@ -13,18 +13,22 @@ import { createStyles } from 'antd-style'
 export const useStyles = createStyles(({ css, token }) => ({
   line: css`
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: ${token.marginSM}px;
+    gap: ${token.marginXXS}px ${token.marginSM}px;
     min-height: 32px;
     padding: 0 ${token.paddingMD}px ${token.paddingXS}px 0;
     flex-shrink: 0;
   `,
 
+  // the leftover room of the line; what does not fit there moves to a second row
   record: css`
     display: flex;
+    flex: 1 1 0;
     align-items: center;
     gap: ${token.marginXS}px;
     min-width: 0;
+    max-width: 260px;
     color: ${token.colorTextDescription};
   `,
 
