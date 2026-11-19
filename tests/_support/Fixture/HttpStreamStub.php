@@ -16,7 +16,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\Fixture;
 /**
  * Stream wrapper that stands in for PHP's http and https wrappers, so a download through
  * file_get_contents() can be tested without a network: every URL answers with BODY and is
- * recorded in $requestedUrls. The method names are dictated by PHP's streamWrapper prototype.
+ * recorded in $requestedUrls.
  */
 class HttpStreamStub
 {
@@ -36,15 +36,15 @@ class HttpStreamStub
 
     private int $position = 0;
 
-    public function stream_open(string $path): bool
+    public function stream_open(string $path): bool // NOSONAR - name set by PHP's streamWrapper
     {
-        self::$requestedUrls[] = $path;
+        static::$requestedUrls[] = $path;
         $this->position = 0;
 
         return true;
     }
 
-    public function stream_read(int $count): string
+    public function stream_read(int $count): string // NOSONAR - name set by PHP's streamWrapper
     {
         $chunk = substr(self::BODY, $this->position, $count);
         $this->position += strlen($chunk);
@@ -52,12 +52,12 @@ class HttpStreamStub
         return $chunk;
     }
 
-    public function stream_eof(): bool
+    public function stream_eof(): bool // NOSONAR - name set by PHP's streamWrapper
     {
         return $this->position >= strlen(self::BODY);
     }
 
-    public function stream_stat(): array
+    public function stream_stat(): array // NOSONAR - name set by PHP's streamWrapper
     {
         return [];
     }
