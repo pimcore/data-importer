@@ -208,6 +208,17 @@ data-importer.mapping.new-modal.source-label: Source column
 data-importer.mapping.new-modal.source-required: Please select a source column
 data-importer.mapping.collapse-all: Collapse all
 data-importer.mapping.expand-all: Expand all
+data-importer.mapping.preview-mode.switch: Preview mode
+data-importer.mapping.preview-mode.no-preview-data: Upload or copy a preview file to see results
+data-importer.mapping.preview-mode.record: 'Record {{number}}'
+data-importer.mapping.preview-mode.preview-item: Preview item
+data-importer.mapping.preview-mode.picker.select: Select
+data-importer.mapping.preview-mode.picker.cancel: Cancel
+data-importer.mapping.preview-mode.preview: Preview
+data-importer.mapping.preview-mode.no-value: No value
+data-importer.mapping.preview-mode.unavailable: Preview unavailable
+data-importer.mapping.preview-mode.warning.advanced-setup: Requires advanced setup
+data-importer.mapping.preview-mode.warning.further-configuration: Requires further configuration
 data-importer.mapping.auto-fill: Autofill
 data-importer.mapping.autofill-suggestions.title: Copilot autofill suggestions
 data-importer.mapping.autofill-suggestions.score: Score

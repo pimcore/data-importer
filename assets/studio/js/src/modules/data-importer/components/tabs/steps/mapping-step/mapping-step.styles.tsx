@@ -213,6 +213,14 @@ export const useStyles = createStyles(({ css, token }) => {
         transition: border-color 0.15s, border-style 0.15s;
       }
 
+      // with preview mode on the panel and its Preview row read as one bordered box: the
+      // panel opens its bottom, the row draws the box's sides and bottom
+      &:has([data-preview-row]) .ant-collapse {
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom-color: transparent !important;
+      }
+
       &.dnd--drag-active .ant-collapse {
         border-style: dashed !important;
         border-color: ${token.colorBorder} !important;
@@ -274,7 +282,7 @@ export const useStyles = createStyles(({ css, token }) => {
     mappingsContent: css`
       flex: 1;
       padding: 0 ${token.paddingMD}px ${token.paddingMD}px 0;
-      margin-top: -10px;
+      margin-top: 0;
     `,
 
     // ── Empty state ───────────────────────────────────────────────────────
@@ -406,10 +414,17 @@ export const useStyles = createStyles(({ css, token }) => {
     `,
 
     // Warning indicator: small orange exclamation circle shown above the arrow
-    arrowWarningBadge: css`
+    // a mapping in its warning state: the icon before its title, the title in warning colour
+    warningTitle: css`
+      display: inline-flex;
+      align-items: center;
+      gap: ${token.marginXS}px;
+      min-width: 0;
+      color: ${token.colorWarningText};
+    `,
+    warningTitleIcon: css`
       display: flex;
       align-items: center;
-      justify-content: center;
       color: ${token.colorWarning};
       font-size: ${token.fontSizeLG}px;
       line-height: 1;
