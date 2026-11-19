@@ -75,7 +75,31 @@ export const IconButton = ({ disabled, icon, onClick }: { disabled?: boolean, ic
   />
 )
 
-export const SearchInput = ({ onChange, placeholder, value }: { onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => (
+// antd's number field as a plain input: the typed number (null when empty) on change, Enter as onPressEnter,
+// the error status as aria-invalid
+export const InputNumber = ({ disabled, id, onBlur, onChange, onPressEnter, status, value, ...props }: {
+  'aria-label'?: string
+  disabled?: boolean
+  id?: string
+  onBlur?: React.FocusEventHandler<HTMLInputElement>
+  onChange?: (value: number | null) => void
+  onPressEnter?: React.KeyboardEventHandler<HTMLInputElement>
+  status?: 'error' | 'warning'
+  value?: number | null
+}): React.JSX.Element => (
+  <input
+    aria-invalid={ status === 'error' }
+    aria-label={ props['aria-label'] }
+    disabled={ disabled }
+    id={ id }
+    onBlur={ onBlur }
+    onChange={ (event) => { onChange?.(event.target.value === '' ? null : Number(event.target.value)) } }
+    onKeyDown={ (event) => { if (event.key === 'Enter') onPressEnter?.(event) } }
+    value={ value ?? '' }
+  />
+)
+
+export const SearchInput =({ onChange, placeholder, value }: { onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => (
   <input
     onChange={ onChange }
     placeholder={ placeholder }

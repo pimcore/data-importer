@@ -144,6 +144,8 @@ const StoredHost = (): React.JSX.Element => {
   )
 }
 
+const recordField = (): HTMLInputElement => screen.getByRole('textbox', { name: 'data-importer.mapping.preview-mode.record-label' })
+
 const previewSwitch = (): HTMLInputElement => screen.getByRole('switch', { name: 'data-importer.mapping.preview-mode.switch' })
 
 const loaded = async (): Promise<void> => {
@@ -200,7 +202,7 @@ describe('Preview mode line', () => {
 
     fireEvent.click(previewSwitch())
 
-    await waitFor(() => { expect(screen.getByText('data-importer.mapping.preview-mode.record(1)')).toBeTruthy() })
+    await waitFor(() => { expect(recordField().value).toBe('1') })
     expect(screen.getByTestId('record-number').textContent).toBe('0')
   })
 
@@ -211,7 +213,7 @@ describe('Preview mode line', () => {
     fireEvent.click(previewSwitch())
 
     await waitFor(() => { expect(screen.getByText('A-1 with a long article number', { selector: '[data-record-value]' })).toBeTruthy() })
-    expect(screen.getByText('data-importer.mapping.preview-mode.record(1)')).toBeTruthy()
+    expect(recordField().value).toBe('1')
     expect(screen.getByRole('tooltip').textContent).toBe('A-1 with a long article number')
     expect(screen.getByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' })).toBeTruthy()
 
@@ -221,22 +223,17 @@ describe('Preview mode line', () => {
     expect(request.currentConfig.mappingConfig).toEqual([expect.objectContaining({ dataSourceIndex: ['name'] })])
   })
 
-  it('AC4: picking another record through Preview item selects it in the context and the line', async () => {
+  it('AC4: typing another record number selects it in the context and the line', async () => {
     render(<PostedHost />)
     await loaded()
     fireEvent.click(previewSwitch())
+    await waitFor(() => { expect(screen.getByText('A-1 with a long article number', { selector: '[data-record-value]' })).toBeTruthy() })
 
-    fireEvent.click(await screen.findByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' }))
-    const picker = await screen.findByRole('dialog', { name: 'data-importer.mapping.preview-mode.preview-item' })
-    expect(picker.textContent).toContain('A-1 with a long article number')
+    fireEvent.change(recordField(), { target: { value: '2' } })
+    fireEvent.keyDown(recordField(), { key: 'Enter' })
 
-    fireEvent.click(screen.getByRole('button', { name: 'chevron-right' }))
-    await waitFor(() => { expect(picker.textContent).toContain('Tisch') })
-    fireEvent.click(screen.getByRole('button', { name: 'data-importer.mapping.preview-mode.picker.select' }))
-
-    await waitFor(() => { expect(screen.getByText('data-importer.mapping.preview-mode.record(2)')).toBeTruthy() })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.getByText('A-2', { selector: '[data-record-value]' })).toBeTruthy()
+    await waitFor(() => { expect(screen.getByText('A-2', { selector: '[data-record-value]' })).toBeTruthy() })
+    expect(recordField().value).toBe('2')
     expect(screen.getByTestId('record-number').textContent).toBe('1')
     // the "Sources with preview" panel shows the same record
     expect(screen.getByRole('list', { name: 'sources' }).textContent).toContain('name=Tisch')
@@ -257,7 +254,7 @@ describe('Preview mode line', () => {
     fireEvent.click(previewSwitch())
 
     expect(screen.queryByText('The mapping could not be run')).toBeNull()
-    expect(screen.queryByText('data-importer.mapping.preview-mode.record(1)')).toBeNull()
+    expect(screen.queryByRole('textbox', { name: 'data-importer.mapping.preview-mode.record-label' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' })).toBeNull()
     expect(screen.getByRole('button', { name: 'data-importer.mapping.collapse-all' })).toBeTruthy()
     expect(screen.getByTestId('preview-request').textContent).toBe('null')
