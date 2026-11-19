@@ -19,6 +19,8 @@ use Pimcore\Tests\Support\Util\TestHelper;
 
 class ImportAssetTest extends Unit
 {
+    private const PARENT_FOLDER = '/import-asset-test';
+
     /**
      * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
      */
@@ -53,7 +55,7 @@ class ImportAssetTest extends Unit
     public function testProcessRejectsLocalFilesystemPath()
     {
         $service = $this->createService();
-        $service->setSettings(['parentFolder' => '/import-asset-test']);
+        $service->setSettings(['parentFolder' => self::PARENT_FOLDER]);
 
         $this->assertNull($service->process($this->localFile, true));
     }
@@ -61,7 +63,7 @@ class ImportAssetTest extends Unit
     public function testProcessRejectsFileScheme()
     {
         $service = $this->createService();
-        $service->setSettings(['parentFolder' => '/import-asset-test']);
+        $service->setSettings(['parentFolder' => self::PARENT_FOLDER]);
 
         $this->assertNull($service->process('file://' . $this->localFile, true));
     }
@@ -69,7 +71,7 @@ class ImportAssetTest extends Unit
     public function testProcessRejectsOtherStreamWrapperSchemes()
     {
         $service = $this->createService();
-        $service->setSettings(['parentFolder' => '/import-asset-test']);
+        $service->setSettings(['parentFolder' => self::PARENT_FOLDER]);
 
         $data = $service->process([
             'php://filter/resource=' . $this->localFile,

@@ -106,9 +106,10 @@ class ImportAsset extends AbstractOperator
                 $context = stream_context_create($options);
 
                 if (!$this->isHttpUrl($fileUrl)) {
-                    $this->applicationLogger->error("Could not import asset data from `$fileUrl`: only http and https URLs are supported", [
-                        'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
-                    ]);
+                    $this->applicationLogger->error(
+                        "Could not import asset data from `$fileUrl`: only http and https URLs are supported",
+                        ['component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName]
+                    );
                 } elseif ($assetData = @file_get_contents($fileUrl, false, $context)) {
                     if ($asset === null) {
                         $parent = Asset\Service::createFolderByPath($this->parentFolderPath);
