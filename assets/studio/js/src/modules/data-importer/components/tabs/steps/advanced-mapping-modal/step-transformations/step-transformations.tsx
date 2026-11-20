@@ -23,6 +23,7 @@ import { useStyles } from './step-transformations.styles'
 import { type PipelineItemWithId } from './transformer-card/transformer-card'
 import { TransformersDndList } from './transformers-dnd-list'
 import { StepTransformationsRightColumn } from './step-transformations-right-column'
+import { useConfigEditorReadOnly } from '../../../../config-editor-mode'
 
 const enrichWithId = (item: TransformationPipelineItem): PipelineItemWithId => ({
   ...item,
@@ -48,6 +49,7 @@ export const StepTransformations = ({
 }: StepTransformationsProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const readOnly = useConfigEditorReadOnly()
 
   /**
    * Local array with stable UUIDs attached.
@@ -162,21 +164,23 @@ export const StepTransformations = ({
             { t('data-importer.mapping.advanced-modal.step-transformations') }
           </span>
 
-          <Dropdown
-            menu={ {
-              items: transformerDropdownItems,
-              onClick: ({ key }) => { addTransformer(String(key)) }
-            } }
-            trigger={ ['click'] }
-          >
-            <IconTextButton
-              icon={ { value: 'add' } }
-              size="small"
-              type="default"
+          { !readOnly && (
+            <Dropdown
+              menu={ {
+                items: transformerDropdownItems,
+                onClick: ({ key }) => { addTransformer(String(key)) }
+              } }
+              trigger={ ['click'] }
             >
-              { t('data-importer.mapping.add') }
-            </IconTextButton>
-          </Dropdown>
+              <IconTextButton
+                icon={ { value: 'add' } }
+                size="small"
+                type="default"
+              >
+                { t('data-importer.mapping.add') }
+              </IconTextButton>
+            </Dropdown>
+          ) }
         </Flex>
 
         <Flex

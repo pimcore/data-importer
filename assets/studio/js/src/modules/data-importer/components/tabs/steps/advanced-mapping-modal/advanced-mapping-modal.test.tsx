@@ -34,9 +34,12 @@ jest.mock('./step-transformations/step-transformations', () => ({
 }))
 jest.mock('./step-target/step-target', () => {
   const { ResultPreview } = jest.requireActual<typeof ResultPreviewModule>('./result-preview/result-preview')
+  // antd's fields take disabled from this context unless told otherwise
+  const DisabledContext: React.Context<boolean> = jest.requireActual('antd/lib/config-provider/DisabledContext').default
   return {
     StepTarget: ({ attributesMap, transformationResultType }: { attributesMap: Record<string, ClassAttribute[]>, transformationResultType?: string }) => (
       <div data-testid="target">
+        <span data-testid="target-fields-disabled">{ String(React.useContext(DisabledContext)) }</span>
         <span data-testid="target-attributes">
           { Object.entries(attributesMap).map(([key, attributes]) => `${key}:${attributes.map(a => a.key).join(',')}`).join(';') }
         </span>
@@ -116,6 +119,18 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
     expect(within(screen.getByTestId('target')).getByText('trimmed A-1')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'data-importer.mapping.advanced-modal.save' })).toBeNull()
     expect(screen.getByRole('button', { name: 'refresh' }).hasAttribute('disabled')).toBe(false)
+  })
+
+  it('disables the fields of a reader\'s dialog even outside a disabled form', () => {
+    renderDialog({}, jest.fn(), true)
+
+    expect(screen.getByTestId('target-fields-disabled').textContent).toBe('true')
+  })
+
+  it('leaves the fields of an editor\'s dialog enabled', () => {
+    renderDialog()
+
+    expect(screen.getByTestId('target-fields-disabled').textContent).toBe('false')
   })
 
   it('loads the default class attributes when its host has none', () => {
