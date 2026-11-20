@@ -18,6 +18,7 @@ import {
   SECTION_TARGET,
   toFormPath
 } from './config-review-model'
+import { annotationKey } from './studio-form-annotations'
 import type { ReviewPayload } from './review-payload'
 import type { BackendConfiguration } from '../utils/transformers'
 
@@ -97,6 +98,35 @@ describe('config review model', () => {
     })
     expect(toFormPath('general.modificationDate')).toBeUndefined()
     expect(toFormPath('general.description')).toBe('description')
+  })
+
+  it('marks a changed host, password and cron where their form items sit, and lands on Data Setup and Execution', () => {
+    const scheduled: ReviewPayload = {
+      slots: {
+        dataSource: {
+          shape: 'record',
+          current: { 'loaderConfig.settings.host': 'old.example.com', 'loaderConfig.settings.password': 'old-secret' },
+          proposed: { 'loaderConfig.settings.host': 'new.example.com', 'loaderConfig.settings.password': 'new-secret' }
+        },
+        execution: {
+          shape: 'record',
+          current: { 'executionConfig.cronDefinition': '' },
+          proposed: { 'executionConfig.cronDefinition': '0 3 * * *' }
+        }
+      }
+    }
+    const changes = configChanges(scheduled)
+
+    // the names the SFTP settings and the cron section bind their Form.Items under
+    expect(annotationsFor(changes)).toEqual({
+      [annotationKey(['loaderConfig', 'settings', 'host'])]: { status: 'changed' },
+      [annotationKey(['loaderConfig', 'settings', 'password'])]: { status: 'changed' },
+      [annotationKey(['executionConfig', 'cronDefinition'])]: { status: 'changed' }
+    })
+    expect(groupChanges(changes).map((group) => SECTION_TARGET[group.section])).toEqual([
+      { tab: 'data-setup', step: 0 },
+      { tab: 'execution' }
+    ])
   })
 
   it('marks a changed mapping row on the row', () => {
