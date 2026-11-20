@@ -10,9 +10,10 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Form, PreviewModeProvider, usePreviewMode } from '@pimcore/studio-ui-bundle/components'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type BackendConfiguration } from '../../../../../utils/transformers'
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
-import { isNotFoundError } from '../../../../../utils/api-error-message'
+import { apiErrorMessage, isNotFoundError } from '../../../../../utils/api-error-message'
 import { usePreviewRecordQuery } from '../../shared/use-preview-record-query'
 
 // the rows' one transformation request waits this long after the last edit or record change
@@ -31,6 +32,9 @@ export interface MappingPreviewModeValue {
   available: boolean
   // switched on, but no preview file was uploaded or copied yet: a hint instead of the previews
   noPreviewData: boolean
+  // switched on, but reading the preview data failed otherwise (e.g. an invalid preview file): its error
+  // instead of the hint
+  loadError: string | null
   // a request found no preview data (404)
   markNoPreviewData: () => void
   // a preview file was uploaded or copied: read it again and run the previews
@@ -57,6 +61,7 @@ const inactive: MappingPreviewModeValue = {
   setEnabled: () => undefined,
   available: false,
   noPreviewData: false,
+  loadError: null,
   markNoPreviewData: () => undefined,
   previewDataChanged: () => undefined,
   recordNumber: 0,
@@ -77,17 +82,23 @@ export const useMappingPreviewMode = (): MappingPreviewModeValue => useContext(M
 
 interface MappingPreviewModeStateProps {
   available: boolean
+  loadError?: unknown
   getCurrentConfig: () => BackendConfiguration
   onPreviewDataChange: () => void
   children: React.ReactNode
 }
 
-const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataChange, children }: MappingPreviewModeStateProps): React.JSX.Element => {
+const MappingPreviewModeState = ({ available, loadError: loadFailure, getCurrentConfig, onPreviewDataChange, children }: MappingPreviewModeStateProps): React.JSX.Element => {
+  const { t } = useTranslation()
   const { enabled: switchedOn, setEnabled, item, setItem, fallbackItem } = usePreviewMode()
   // a preview request answered that the configuration has no preview data
   const [previewDataMissing, setPreviewDataMissing] = useState(false)
-  const noPreviewData = switchedOn && (!available || previewDataMissing)
-  const enabled = switchedOn && !noPreviewData
+  // only a missing preview file (404) asks for an upload or copy; any other failure is shown as it is
+  const loadError = switchedOn && loadFailure !== undefined && loadFailure !== null && !isNotFoundError(loadFailure)
+    ? apiErrorMessage(loadFailure) ?? t('data-importer.mapping.preview-mode.unavailable')
+    : null
+  const noPreviewData = switchedOn && loadError === null && (!available || previewDataMissing)
+  const enabled = switchedOn && !noPreviewData && loadError === null
   const recordNumber = Number(item?.data.id ?? fallbackItem?.id ?? 0)
   const [previewRequest, setPreviewRequest] = useState<MappingPreviewRequest | null>(null)
   const [previewPending, setPreviewPending] = useState(false)
@@ -180,6 +191,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
     setEnabled,
     available,
     noPreviewData,
+    loadError,
     markNoPreviewData,
     previewDataChanged,
     recordNumber,
@@ -191,7 +203,7 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
     previewError,
     setPreviewError,
     getCurrentConfig
-  }), [enabled, setEnabled, available, noPreviewData, markNoPreviewData, previewDataChanged, recordNumber, setRecordNumber, recordCount, record, previewRequest, previewPending, previewError, getCurrentConfig])
+  }), [enabled, setEnabled, available, noPreviewData, loadError, markNoPreviewData, previewDataChanged, recordNumber, setRecordNumber, recordCount, record, previewRequest, previewPending, previewError, getCurrentConfig])
 
   return (
     <MappingPreviewModeContext.Provider value={ value }>
@@ -203,6 +215,8 @@ const MappingPreviewModeState = ({ available, getCurrentConfig, onPreviewDataCha
 export interface MappingPreviewModeProviderProps {
   // the source has a preview record (an uploaded preview file or a posted record)
   available: boolean
+  // why reading the preview data failed, if it did: a 404 means no preview file yet
+  loadError?: unknown
   // the form's configuration, unsaved edits included
   getCurrentConfig: () => BackendConfiguration
   // a preview file was uploaded or copied: the step reads it again
@@ -213,11 +227,12 @@ export interface MappingPreviewModeProviderProps {
 // off on each open: nothing of it is stored; the "Sources with preview" panel shows the first record
 const FALLBACK_RECORD = { id: 0 }
 
-export const MappingPreviewModeProvider = ({ available, getCurrentConfig, onPreviewDataChange, children }: MappingPreviewModeProviderProps): React.JSX.Element => (
+export const MappingPreviewModeProvider = ({ available, loadError, getCurrentConfig, onPreviewDataChange, children }: MappingPreviewModeProviderProps): React.JSX.Element => (
   <PreviewModeProvider fallbackItem={ FALLBACK_RECORD }>
     <MappingPreviewModeState
       available={ available }
       getCurrentConfig={ getCurrentConfig }
+      loadError={ loadError }
       onPreviewDataChange={ onPreviewDataChange }
     >
       { children }

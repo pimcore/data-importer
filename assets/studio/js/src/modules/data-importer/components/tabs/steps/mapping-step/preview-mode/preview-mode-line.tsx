@@ -96,7 +96,7 @@ const NoPreviewDataHint = (): React.JSX.Element => {
 export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }: PreviewModeLineProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const { enabled, setEnabled, noPreviewData, previewError } = useMappingPreviewMode()
+  const { enabled, setEnabled, noPreviewData, loadError, previewError } = useMappingPreviewMode()
   const recordFieldId = useId()
 
   const focusRecordField = (): void => {
@@ -116,13 +116,22 @@ export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }
       { /* usable without preview data too: switched on, it says how to provide some */ }
       <Switch
         aria-label={ t('data-importer.mapping.preview-mode.switch') }
-        checked={ enabled || noPreviewData }
+        checked={ enabled || noPreviewData || loadError !== null }
         labelRight={ t('data-importer.mapping.preview-mode.switch') }
         onChange={ setEnabled }
         size="small"
       />
 
       { noPreviewData && <NoPreviewDataHint /> }
+
+      { loadError !== null && (
+        <Text
+          className={ styles.error }
+          type="danger"
+        >
+          { loadError }
+        </Text>
+      ) }
 
       { enabled && (
         <>

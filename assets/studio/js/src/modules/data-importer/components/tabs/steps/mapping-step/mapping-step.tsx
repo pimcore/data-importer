@@ -69,6 +69,7 @@ export const MappingStep = React.memo(({ isActive, onPreviewDataChange }: Mappin
     initialLoadDone,
     sourceRows,
     hasPreviewError,
+    previewLoadError,
     reloadPreviewData,
     attributesMap,
     classId,
@@ -495,6 +496,7 @@ export const MappingStep = React.memo(({ isActive, onPreviewDataChange }: Mappin
         <MappingPreviewModeProvider
           available={ sourceRows.length > 0 }
           getCurrentConfig={ getBackendConfig }
+          loadError={ previewLoadError }
           onPreviewDataChange={ handlePreviewDataChange }
         >
           <Flex className={ styles.mappingLayout }>
