@@ -137,7 +137,12 @@ describe('ImportConfigReviewSurface landing', () => {
         execution: { current: { 'executionConfig.cronDefinition': '' }, proposed: { 'executionConfig.cronDefinition': '0 * * * *' } }
       }
     } as unknown as ReviewPayload
-    rerender(<ImportConfigReviewSurface { ...props } changeSetId="cs-2" />)
+    rerender(
+      <ImportConfigReviewSurface
+        { ...props }
+        changeSetId="cs-2"
+      />
+    )
 
     expect(last(editorProps)).toMatchObject({ activeTab: 'execution', changedTabs: ['execution'] })
     expect(last(listProps).activeSection).toBe('execution')
