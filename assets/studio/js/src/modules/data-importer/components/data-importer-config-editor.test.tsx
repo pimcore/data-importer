@@ -20,12 +20,17 @@ jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   isBundleActive: () => false
 }))
 
+const mockFormProps: Array<Record<string, unknown>> = []
+
 jest.mock('@pimcore/studio-ui-bundle/components', () => ({
   Content: ({ children }: { children?: React.ReactNode }) => <>{ children }</>,
   ContentLayout: ({ children }: { children?: React.ReactNode }) => <>{ children }</>,
-  FormKit: ({ children }: { children?: React.ReactNode }) => <>{ children }</>,
-  Tabs: ({ items }: { items: Array<{ key: string, label: React.ReactNode }> }) => (
-    <ul>{ items.map((item) => <li key={ item.key }>{ item.label }</li>) }</ul>
+  FormKit: ({ children, formProps }: { children?: React.ReactNode, formProps: Record<string, unknown> }) => {
+    mockFormProps.push(formProps)
+    return <>{ children }</>
+  },
+  Tabs: ({ items }: { items: Array<{ key: string, label: React.ReactNode, children?: React.ReactNode }> }) => (
+    <ul>{ items.map((item) => <li key={ item.key }>{ item.label }{ item.children }</li>) }</ul>
   )
 }))
 
@@ -35,22 +40,29 @@ jest.mock('@pimcore/data-hub', () => ({
   PermissionsTab: () => null
 }))
 
-jest.mock('./tabs/data-setup-tab', () => ({ DataSetupTab: () => null }))
+// the mapping step's buttons read the editor's mode; the stand-in shows what they would read
+jest.mock('./tabs/data-setup-tab', () => {
+  const { useConfigEditorReadOnly } = jest.requireActual('./config-editor-mode')
+  return { DataSetupTab: () => <span data-testid="data-setup-read-only">{ String(useConfigEditorReadOnly()) }</span> }
+})
 jest.mock('./tabs/execution-tab', () => ({ ExecutionTab: () => null }))
 jest.mock('./tabs/import-logs-tab', () => ({ ImportLogsTab: () => null }))
 jest.mock('./config-editor-shell.styles', () => ({ useEditorShellStyles: () => ({ styles: {} }) }))
 
-const editor = (changedTabs?: string[]): React.JSX.Element => (
+const editor = (changedTabs?: string[], isWriteable = false): React.JSX.Element => (
   <DataImporterConfigEditor
     changedTabs={ changedTabs }
     configName="car-import"
     configuration={ {} as any }
-    isWriteable={ false }
+    isWriteable={ isWriteable }
     onSave={ async () => await Promise.resolve({}) }
   />
 )
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  mockFormProps.length = 0
+})
 
 describe('DataImporterConfigEditor', () => {
   it('puts a change dot on each tab that holds a change', () => {
@@ -67,5 +79,19 @@ describe('DataImporterConfigEditor', () => {
 
     expect(screen.queryAllByTestId(/^tab-changed-/)).toHaveLength(0)
     expect(screen.getByText('data-importer.tabs.general')).toBeTruthy()
+  })
+
+  it('disables the form and tells the steps they are read, not edited, when not writeable', () => {
+    render(editor())
+
+    expect(mockFormProps[mockFormProps.length - 1].disabled).toBe(true)
+    expect(screen.getByTestId('data-setup-read-only').textContent).toBe('true')
+  })
+
+  it('leaves the form editable when writeable', () => {
+    render(editor(undefined, true))
+
+    expect(mockFormProps[mockFormProps.length - 1].disabled).toBe(false)
+    expect(screen.getByTestId('data-setup-read-only').textContent).toBe('false')
   })
 })

@@ -13,6 +13,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { type ClassAttribute, type MappingConfigItem } from '../../../../types'
 import { PostedMappingSource } from '../mapping-source/posted-mapping-source'
 import { AdvancedMappingModal } from '.'
+import { ConfigEditorModeProvider } from '../../../config-editor-mode'
 import type * as ResultPreviewModule from './result-preview/result-preview'
 
 const typeQuery = jest.fn()
@@ -62,24 +63,26 @@ const typeResult = settled({ type: 'numeric' })
 const previewResult = settled({ transformationResultPreviews: ['trimmed A-1'] })
 const attributesResult = settled({ attributes: [{ key: 'sku', title: 'SKU' }] })
 
-const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}, onSave: (updated: MappingConfigItem) => void = () => undefined): void => {
+const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}, onSave: (updated: MappingConfigItem) => void = () => undefined, readOnly = false): void => {
   render(
-    <PostedMappingSource
-      columns={ columns }
-      configuration={ { mappingConfig: [item] } }
-      id="format"
-      records={ records }
-    >
-      <AdvancedMappingModal
-        attributesMap={ attributesMap }
-        classId="Product"
-        columnHeaderOptions={ [{ value: 'sku', label: 'SKU' }] }
-        item={ item }
-        onClose={ () => undefined }
-        onSave={ onSave }
-        open
-      />
-    </PostedMappingSource>
+    <ConfigEditorModeProvider readOnly={ readOnly }>
+      <PostedMappingSource
+        columns={ columns }
+        configuration={ { mappingConfig: [item] } }
+        id="format"
+        records={ records }
+      >
+        <AdvancedMappingModal
+          attributesMap={ attributesMap }
+          classId="Product"
+          columnHeaderOptions={ [{ value: 'sku', label: 'SKU' }] }
+          item={ item }
+          onClose={ () => undefined }
+          onSave={ onSave }
+          open
+        />
+      </PostedMappingSource>
+    </ConfigEditorModeProvider>
   )
 }
 
@@ -105,6 +108,14 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
       { bundleDataImporterTransformationResultParameters: { mappingConfig: [item], dataRow: records[0] } },
       { refetchOnMountOrArgChange: false, skip: false }
     )
+  })
+
+  it('shows a reader the entry and its preview but offers no save', () => {
+    renderDialog({}, jest.fn(), true)
+
+    expect(within(screen.getByTestId('target')).getByText('trimmed A-1')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'data-importer.mapping.advanced-modal.save' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'refresh' }).hasAttribute('disabled')).toBe(false)
   })
 
   it('loads the default class attributes when its host has none', () => {
