@@ -119,6 +119,30 @@ describe('ImportConfigReviewSurface landing', () => {
     expect(last(editorProps).changedTabs).toEqual(['data-setup', 'execution'])
   })
 
+  it('lands on the next change set\'s first change, not on the tab picked in the previous one', () => {
+    review.data = {
+      slots: {
+        dataSource: { current: { 'loaderConfig.settings.host': 'old.example.com' }, proposed: { 'loaderConfig.settings.host': 'new.example.com' } }
+      }
+    } as unknown as ReviewPayload
+
+    const { rerender } = render(<ImportConfigReviewSurface { ...props } />)
+    expect(last(editorProps)).toMatchObject({ activeTab: 'data-setup', activeStep: 0 })
+
+    act(() => { last(editorProps).onTabChange('general') })
+    expect(last(editorProps).activeTab).toBe('general')
+
+    review.data = {
+      slots: {
+        execution: { current: { 'executionConfig.cronDefinition': '' }, proposed: { 'executionConfig.cronDefinition': '0 * * * *' } }
+      }
+    } as unknown as ReviewPayload
+    rerender(<ImportConfigReviewSurface { ...props } changeSetId="cs-2" />)
+
+    expect(last(editorProps)).toMatchObject({ activeTab: 'execution', changedTabs: ['execution'] })
+    expect(last(listProps).activeSection).toBe('execution')
+  })
+
   it('opens a new configuration on General with no tab singled out', () => {
     review.data = { slots: { general: { current: {}, proposed: { 'general.name': 'new-import' } } } } as unknown as ReviewPayload
     liveQuery.data = undefined

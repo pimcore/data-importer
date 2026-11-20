@@ -25,9 +25,13 @@ const text = (value: unknown): string | undefined =>
 
 const SCALAR = new Set(['string', 'number', 'boolean'])
 
+/** credentials (the SFTP password, the push loader's API key, …): the rail says only that they changed */
+const SECRET = /(password|secret|token|apikey)$/i
+const isSecret = (address: string): boolean => SECRET.test(address.split('.').pop() ?? '')
+
 /** a changed value read as "old → new"; a list by its size, as Data Hub's rail does */
 const valueChange = (change: ConfigChange): string | undefined => {
-  if (change.status !== 'changed') return undefined
+  if (change.status !== 'changed' || isSecret(change.address)) return undefined
   const { current, proposed } = change
   if (Array.isArray(current) && Array.isArray(proposed)) {
     return current.length === proposed.length ? undefined : `${current.length} → ${proposed.length}`
