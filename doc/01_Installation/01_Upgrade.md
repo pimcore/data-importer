@@ -13,7 +13,7 @@ description: Breaking changes and migration steps per release.
   value is skipped: a path on the server such as `/var/import/image.jpg`, `file://`, `ftp://`, and PHP stream
   wrappers such as `php://` or `phar://`.
 - A skipped value is written to the application log as an error (`only http and https URLs are supported`). The
-  import continues, and the row gets no asset from this operator.
+  import continues, and the skipped value produces no asset. Other valid values of the same row are still imported.
 - If your import data points to files on the server, review it before the first import after the upgrade: serve
   the files over `http` or `https`, or bring them into Pimcore as assets first and reference them with the
   **Load Asset** operator.
