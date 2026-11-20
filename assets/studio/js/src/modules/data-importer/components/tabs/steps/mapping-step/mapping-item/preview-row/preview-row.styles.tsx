@@ -11,9 +11,12 @@
 import { createStyles } from 'antd-style'
 
 export const useStyles = createStyles(({ css, token }) => ({
-  // draws the sides and bottom of the box the panel opens (panelDndWrapper); its top border is the divider
+  // draws the sides and bottom of the box the panel opens (panelDndWrapper); its top border is the divider;
+  // a fieldset (the native group), so its own margin and min-content width are reset
   row: css`
     display: flex;
+    min-width: 0;
+    margin: 0;
     align-items: center;
     gap: ${token.marginSM}px;
     min-height: 48px;

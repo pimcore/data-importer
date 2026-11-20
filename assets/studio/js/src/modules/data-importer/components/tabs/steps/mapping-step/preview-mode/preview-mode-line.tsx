@@ -66,10 +66,7 @@ const NoPreviewDataHint = (): React.JSX.Element => {
   })
 
   return (
-    <span
-      className={ styles.hint }
-      role="status"
-    >
+    <output className={ styles.hint }>
       <span className={ styles.hintText }>{ t('data-importer.mapping.preview-mode.no-preview-data') }</span>
       { configName !== undefined && (
         <>
@@ -91,7 +88,7 @@ const NoPreviewDataHint = (): React.JSX.Element => {
           { uploadModal }
         </>
       ) }
-    </span>
+    </output>
   )
 }
 

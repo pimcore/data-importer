@@ -57,15 +57,14 @@ export const PreviewRow = ({ fieldIndex, expanded, warning }: PreviewRowProps): 
   })()
 
   return (
-    <div
+    <fieldset
       aria-busy={ warning === null && preview.status === 'loading' }
       aria-label={ t('data-importer.mapping.preview-mode.preview') }
       className={ cx(styles.row, expanded && styles.rowExpanded) }
       data-preview-row
-      role="group"
     >
       <span className={ styles.label }>{ t('data-importer.mapping.preview-mode.preview') }</span>
       { content }
-    </div>
+    </fieldset>
   )
 }
