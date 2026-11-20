@@ -36,9 +36,19 @@ jest.mock('../../../../data-importer-api-slice.gen', () => ({
 jest.mock('../mapping-step', () => {
   const { useMappingSource } = jest.requireActual<typeof MappingSourceModule>('./mapping-source')
   return {
-    MappingStep: () => {
+    MappingStep: ({ onPreviewDataChange }: { onPreviewDataChange?: () => void }) => {
       const source = useMappingSource()
-      return <span data-testid="mapping-source">{ `${source.id}:${String(source.revision)}` }</span>
+      return (
+        <>
+          <span data-testid="mapping-source">{ `${source.id}:${String(source.revision)}` }</span>
+          <button
+            onClick={ onPreviewDataChange }
+            type="button"
+          >
+            copied in the mapping step
+          </button>
+        </>
+      )
     }
   }
 })
@@ -136,6 +146,16 @@ describe('DataSetupTab', () => {
     expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 0)
 
     fireEvent.click(screen.getByRole('button', { name: 'preview data changed' }))
+
+    expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 1)
+  })
+
+  it('an upload or copy in the mapping step reloads the column lists too', () => {
+    getQuery.mockReturnValue({ data: { configuration: { general: {} } }, isSuccess: true, requestId: 'r1' })
+    render(<DataSetupTab configName="products" />)
+    expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'copied in the mapping step' }))
 
     expect(columnHeaderOptions).toHaveBeenLastCalledWith('products', false, 1)
   })

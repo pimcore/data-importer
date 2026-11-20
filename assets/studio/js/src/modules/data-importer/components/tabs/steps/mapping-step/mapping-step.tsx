@@ -30,7 +30,6 @@ import { type MappingConfigItem } from '../../../../types'
 import { normalizeDataRow } from '../../../../utils/normalize-data-row'
 import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
 import { useStyles } from './mapping-step.styles'
-import { SourcesPanel } from './sources-panel/sources-panel'
 import { MappingsPanel } from './mappings-panel/mappings-panel'
 import { SourcePickerContent } from './source-picker-content/source-picker-content'
 import { useMappingStepLoader } from './hooks/use-mapping-step-loader'
@@ -40,6 +39,8 @@ import { PanelArrowIcon } from './panel-arrow-icon.inline'
 import { MappingItemContextProvider } from './mapping-item-context'
 import { type MappingSuggestion, computeAutofillSuggestions } from './utils/compute-autofill-suggestions'
 import { AutofillSuggestionsPanel, applySelectedSuggestions } from './autofill-suggestions-panel'
+import { MappingPreviewModeProvider } from './preview-mode/mapping-preview-mode'
+import { PreviewSourcesPanel } from './preview-mode/preview-sources-panel'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -48,9 +49,11 @@ function isMappingDebugEnabled (): boolean {
 // reads its source data from the surrounding MappingSourceContext
 export interface MappingStepProps {
   isActive: boolean
+  // a preview file was uploaded or copied in this step
+  onPreviewDataChange?: () => void
 }
 
-export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JSX.Element => {
+export const MappingStep = React.memo(({ isActive, onPreviewDataChange }: MappingStepProps): React.JSX.Element => {
   const { styles } = useStyles()
   const { t } = useTranslation()
   const theme = useTheme()
@@ -66,11 +69,18 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
     initialLoadDone,
     sourceRows,
     hasPreviewError,
+    reloadPreviewData,
     attributesMap,
     classId,
     getMappingConfig,
     getBackendConfig
   } = useMappingStepLoader(isActive)
+
+  // the new preview file is read here, and the other steps' column lists follow
+  const handlePreviewDataChange = useCallback((): void => {
+    reloadPreviewData()
+    onPreviewDataChange?.()
+  }, [reloadPreviewData, onPreviewDataChange])
 
   const {
     dataPreview: autofillPreviewData,
@@ -482,51 +492,57 @@ export const MappingStep = React.memo(({ isActive }: MappingStepProps): React.JS
   return (
     <Content loading={ !initialLoadDone }>
       <MappingItemContextProvider value={ mappingItemContextValue }>
-        <Flex className={ styles.mappingLayout }>
-          <div className={ styles.mappingLayoutLeft }>
-            <SourcesPanel
-              activeFilter={ activeFilter }
-              hasPreviewError={ hasPreviewError }
-              onAddMappingFromSource={ handleAddMappingFromSource }
-              onSetFilter={ setActiveFilter }
-              sourceRows={ sourceRows }
-            />
-          </div>
+        <MappingPreviewModeProvider
+          available={ sourceRows.length > 0 }
+          getCurrentConfig={ getBackendConfig }
+          onPreviewDataChange={ handlePreviewDataChange }
+        >
+          <Flex className={ styles.mappingLayout }>
+            <div className={ styles.mappingLayoutLeft }>
+              <PreviewSourcesPanel
+                activeFilter={ activeFilter }
+                hasPreviewError={ hasPreviewError }
+                onAddMappingFromSource={ handleAddMappingFromSource }
+                onSetFilter={ setActiveFilter }
+                sourceRows={ sourceRows }
+              />
+            </div>
 
-          <Flex
-            align="center"
-            className={ styles.mappingLayoutCenter }
-            vertical
-          >
             <Flex
               align="center"
-              className={ styles.mappingLayoutCenterArrow }
-              justify="center"
+              className={ styles.mappingLayoutCenter }
+              vertical
             >
-              <PanelArrowIcon />
+              <Flex
+                align="center"
+                className={ styles.mappingLayoutCenterArrow }
+                justify="center"
+              >
+                <PanelArrowIcon />
+              </Flex>
             </Flex>
-          </Flex>
 
-          <div className={ styles.mappingLayoutRight }>
-            <FieldWidthProvider fieldWidthValues={ { small: 9999, medium: 9999, large: 9999 } }>
-              <MappingsPanel
-                activeFilter={ activeFilter }
-                activeFilterLabel={ activeFilterLabel }
-                expandAllPending={ expandAllPending }
-                expandedKeys={ expandedKeys }
-                getMappingIdByIndex={ getMappingIdByIndex }
-                onAddItem={ handleAddItem }
-                onAddMappingForFilter={ handleAddMappingForFilter }
-                onCollapseAll={ collapseAll }
-                onInsertItem={ handleInsertItem }
-                onNewKey={ handleNewKey }
-                onOpenAutofillSuggestions={ handleOpenAutofillSuggestions }
-                onRemoveItem={ handleRemoveItem }
-                onToggleKey={ handleToggleKey }
-              />
-            </FieldWidthProvider>
-          </div>
-        </Flex>
+            <div className={ styles.mappingLayoutRight }>
+              <FieldWidthProvider fieldWidthValues={ { small: 9999, medium: 9999, large: 9999 } }>
+                <MappingsPanel
+                  activeFilter={ activeFilter }
+                  activeFilterLabel={ activeFilterLabel }
+                  expandAllPending={ expandAllPending }
+                  expandedKeys={ expandedKeys }
+                  getMappingIdByIndex={ getMappingIdByIndex }
+                  onAddItem={ handleAddItem }
+                  onAddMappingForFilter={ handleAddMappingForFilter }
+                  onCollapseAll={ collapseAll }
+                  onInsertItem={ handleInsertItem }
+                  onNewKey={ handleNewKey }
+                  onOpenAutofillSuggestions={ handleOpenAutofillSuggestions }
+                  onRemoveItem={ handleRemoveItem }
+                  onToggleKey={ handleToggleKey }
+                />
+              </FieldWidthProvider>
+            </div>
+          </Flex>
+        </MappingPreviewModeProvider>
       </MappingItemContextProvider>
 
       <Modal

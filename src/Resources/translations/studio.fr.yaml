@@ -208,6 +208,19 @@ data-importer.mapping.new-modal.source-label: Colonne source
 data-importer.mapping.new-modal.source-required: Veuillez sélectionner une colonne source
 data-importer.mapping.collapse-all: Tout réduire
 data-importer.mapping.expand-all: Tout développer
+data-importer.mapping.preview-mode.switch: Mode aperçu
+data-importer.mapping.preview-mode.no-preview-data: 'Téléversez ou copiez un fichier d''aperçu pour voir les résultats'
+data-importer.mapping.preview-mode.record: 'Enregistrement {{number}}'
+data-importer.mapping.preview-mode.record-label: Enregistrement
+data-importer.mapping.preview-mode.of-records: 'sur {{total}}'
+data-importer.mapping.preview-mode.preview-item: 'Élément d''aperçu'
+data-importer.mapping.preview-mode.picker.select: Sélectionner
+data-importer.mapping.preview-mode.picker.cancel: Annuler
+data-importer.mapping.preview-mode.preview: Aperçu
+data-importer.mapping.preview-mode.no-value: Aucune valeur
+data-importer.mapping.preview-mode.unavailable: Aperçu indisponible
+data-importer.mapping.preview-mode.warning.advanced-setup: Nécessite une configuration avancée
+data-importer.mapping.preview-mode.warning.further-configuration: Nécessite une configuration supplémentaire
 data-importer.mapping.auto-fill: Remplissage automatique
 data-importer.mapping.autofill-suggestions.title: Suggestions de remplissage automatique Copilot
 data-importer.mapping.autofill-suggestions.score: Score
