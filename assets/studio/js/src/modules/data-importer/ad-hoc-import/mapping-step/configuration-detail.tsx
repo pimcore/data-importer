@@ -16,6 +16,8 @@ import { type ImportConfiguration } from './configuration-state'
 
 const LABEL_WIDTH = 160
 const CONFIGURATION = 'data-importer.ad-hoc-import.configuration'
+// the Data Importer's own loaders; one another bundle registers is named by its type
+const KNOWN_SOURCES = ['sftp', 'http', 'asset', 'upload', 'push', 'sql']
 
 const useStyles = createStyles(({ token, css }) => ({
   title: css`
@@ -34,6 +36,9 @@ const useStyles = createStyles(({ token, css }) => ({
     font-weight: ${token.fontWeightStrong};
   `
 }))
+
+const sourceOf = (t: ReturnType<typeof useTranslation>['t'], source: string): string =>
+  KNOWN_SOURCES.includes(source) ? t(`${CONFIGURATION}.source.${source}`) : source
 
 // the file format as the configuration reads it: type, sheet and header row
 const formatOf = (t: ReturnType<typeof useTranslation>['t'], configuration: ImportConfiguration): string => [
@@ -81,7 +86,7 @@ export const ConfigurationDetail = ({ configuration, inspected, fileName, match 
               { configuration.source !== null && (
                 <>
                   <s className={ styles.replaced }>
-                    { [t(`${CONFIGURATION}.source.${configuration.source}`), configuration.sourcePath ?? ''].join(' ').trim() }
+                    { [sourceOf(t, configuration.source), configuration.sourcePath ?? ''].join(' ').trim() }
                   </s>
                   { ' → ' }
                 </>

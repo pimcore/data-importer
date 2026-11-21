@@ -329,6 +329,23 @@ describe('the mapping with a configuration', () => {
     expect(summary.queryByText(/header row/)).toBeNull()
   })
 
+  it('names a source another bundle loads from by its type', () => {
+    render(
+      <ConfigurationChoice
+        chosen="products"
+        configurations={ [configuration({ source: 'ftp', sourcePath: null })] }
+        fileName="products.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = screen.getByRole('region', { name: 'products' })
+    expect(summary.querySelector('s')?.textContent).toBe('ftp')
+    expect(summary.textContent).not.toContain('data-importer.ad-hoc-import.configuration.source.')
+  })
+
   it('names only this upload for a configuration whose source is unknown', () => {
     render(
       <ConfigurationChoice
