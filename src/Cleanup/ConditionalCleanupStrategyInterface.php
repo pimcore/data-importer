@@ -10,7 +10,6 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-
 namespace Pimcore\Bundle\DataImporterBundle\Cleanup;
 
 use Pimcore\Model\Element\ElementInterface;
