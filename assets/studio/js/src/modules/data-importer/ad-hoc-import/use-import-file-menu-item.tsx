@@ -18,19 +18,24 @@ import { openAdHocImport } from './dialog-store'
 
 export const AD_HOC_IMPORT_PERMISSION = 'plugin_data_importer_ad_hoc_import'
 
+const useCanImportFile = (node: TreeNodeProps): boolean => {
+  const { isTreeActionAllowed } = useTreePermission()
+
+  return node.type === 'folder' &&
+    isAllowed(AD_HOC_IMPORT_PERMISSION) &&
+    isTreeActionAllowed(TreePermission.AddObject) &&
+    checkElementPermission(node.permissions, 'create') &&
+    checkElementPermission(node.permissions, 'save')
+}
+
 export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
   const { t } = useTranslation()
-  const { isTreeActionAllowed } = useTreePermission()
 
   return {
     label: t('data-importer.ad-hoc-import.menu-item'),
     key: 'importFile',
     icon: <Icon value="upload-import" />,
-    hidden: node.type !== 'folder' ||
-      !isAllowed(AD_HOC_IMPORT_PERMISSION) ||
-      !isTreeActionAllowed(TreePermission.AddObject) ||
-      !checkElementPermission(node.permissions, 'create') ||
-      !checkElementPermission(node.permissions, 'save'),
+    hidden: !useCanImportFile(node),
     onClick: () => {
       openAdHocImport({
         folderId: Number.parseInt(node.id),
@@ -39,4 +44,9 @@ export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
       })
     }
   }
+}
+
+// sets the entry off from adding above and editing below; only where the entry shows
+export const useImportFileDivider = (node: TreeNodeProps, key: string): ItemType => {
+  return useCanImportFile(node) ? { type: 'divider', key } : null
 }

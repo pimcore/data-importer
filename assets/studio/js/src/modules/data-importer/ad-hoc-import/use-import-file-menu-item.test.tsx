@@ -11,7 +11,7 @@
 import { act, renderHook } from '@testing-library/react'
 import type { TreeNodeProps } from '@pimcore/studio-ui-bundle/components'
 import { closeAdHocImport, useAdHocImportTarget } from './dialog-store'
-import { useImportFileMenuItem, AD_HOC_IMPORT_PERMISSION } from './use-import-file-menu-item'
+import { useImportFileDivider, useImportFileMenuItem, AD_HOC_IMPORT_PERMISSION } from './use-import-file-menu-item'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../test/support/ad-hoc-import'))
 jest.mock('@pimcore/studio-ui-bundle/components', () => ({
@@ -94,5 +94,16 @@ describe('the menu item', () => {
     act(() => { menuItem.onClick() })
 
     expect(result.current).toEqual({ folderId: 77, folderPath: '/home', folderLabel: 'home' })
+  })
+
+  it('sets the entry off with a divider where it shows', () => {
+    expect(renderHook(() => useImportFileDivider(folder(), 'before')).result.current).toEqual({ type: 'divider', key: 'before' })
+  })
+
+  it('leaves out the divider where the entry does not show', () => {
+    expect(renderHook(() => useImportFileDivider(folder({ type: 'object' }), 'before')).result.current).toBeNull()
+
+    mockIsAllowed.mockReturnValue(false)
+    expect(renderHook(() => useImportFileDivider(folder(), 'before')).result.current).toBeNull()
   })
 })

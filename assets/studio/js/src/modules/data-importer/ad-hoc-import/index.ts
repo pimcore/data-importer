@@ -18,17 +18,28 @@ import {
   type DataObjectTreeContextMenuProps
 } from '@pimcore/studio-ui-bundle/modules/app'
 import { AdHocImportHost } from './ad-hoc-import-host'
-import { useImportFileMenuItem } from './use-import-file-menu-item'
+import { useImportFileDivider, useImportFileMenuItem } from './use-import-file-menu-item'
 
 export const AdHocImportModule: AbstractModule = {
   onInit () {
     const config = contextMenuConfig.dataObjectTree
 
-    container.get<ContextMenuRegistry>(serviceIds['App/ContextMenuRegistry/ContextMenuRegistry']).registerToSlot(config.name, {
-      name: 'importFile',
-      // beside what else adds to the folder
+    const contextMenu = container.get<ContextMenuRegistry>(serviceIds['App/ContextMenuRegistry/ContextMenuRegistry'])
+    // after what else adds to the folder, between two dividers
+    contextMenu.registerToSlot(config.name, {
+      name: 'importFileDividerBefore',
       priority: config.priority.addFolder + 1,
+      useMenuItem: (context: DataObjectTreeContextMenuProps) => useImportFileDivider(context.target, 'importFileDividerBefore')
+    })
+    contextMenu.registerToSlot(config.name, {
+      name: 'importFile',
+      priority: config.priority.addFolder + 2,
       useMenuItem: (context: DataObjectTreeContextMenuProps) => useImportFileMenuItem(context.target)
+    })
+    contextMenu.registerToSlot(config.name, {
+      name: 'importFileDividerAfter',
+      priority: config.priority.addFolder + 3,
+      useMenuItem: (context: DataObjectTreeContextMenuProps) => useImportFileDivider(context.target, 'importFileDividerAfter')
     })
 
     // always mounted, so the dialog outlives the menu; it renders nothing until opened

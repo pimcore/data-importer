@@ -25,17 +25,27 @@ jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   componentConfig: { leftSidebar: { slot: { name: 'leftSidebar.slot' } } }
 }))
 jest.mock('./ad-hoc-import-host', () => ({ AdHocImportHost: () => null }))
-jest.mock('./use-import-file-menu-item', () => ({ useImportFileMenuItem: () => ({ key: 'importFile' }) }))
+jest.mock('./use-import-file-menu-item', () => ({
+  useImportFileMenuItem: () => ({ key: 'importFile' }),
+  useImportFileDivider: (_node: unknown, key: string) => ({ type: 'divider', key })
+}))
 
 describe('AdHocImportModule', () => {
-  it('adds the menu item to the data object tree, between adding and renaming', () => {
+  it('adds the menu item to the data object tree between two dividers, after adding and before renaming', () => {
+    mockContextMenu.registerToSlot.mockClear()
     AdHocImportModule.onInit()
 
-    const [slot, entry] = mockContextMenu.registerToSlot.mock.calls[0]
-    expect(slot).toBe('data-object.tree')
-    expect(entry.priority).toBeGreaterThan(120)
-    expect(entry.priority).toBeLessThan(200)
-    expect(entry.useMenuItem({ target: {} })).toEqual({ key: 'importFile' })
+    const entries = mockContextMenu.registerToSlot.mock.calls
+      .map(([slot, entry]: [string, { priority: number, useMenuItem: (context: object) => unknown }]) => ({ slot, ...entry }))
+      .sort((a, b) => a.priority - b.priority)
+    expect(entries.map(({ slot }) => slot)).toEqual(['data-object.tree', 'data-object.tree', 'data-object.tree'])
+    expect(entries.map(({ useMenuItem }) => useMenuItem({ target: {} }))).toEqual([
+      { type: 'divider', key: 'importFileDividerBefore' },
+      { key: 'importFile' },
+      { type: 'divider', key: 'importFileDividerAfter' }
+    ])
+    expect(entries[0].priority).toBeGreaterThan(120)
+    expect(entries[2].priority).toBeLessThan(200)
   })
 
   it('keeps the host of the dialog mounted', () => {
