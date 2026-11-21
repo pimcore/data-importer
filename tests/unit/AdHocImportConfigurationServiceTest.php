@@ -406,7 +406,89 @@ class AdHocImportConfigurationServiceTest extends Unit
             'columns' => [],
             'columnsBy' => 'name',
             'unusable' => 'class',
+            'format' => null,
+            'sheet' => null,
+            'headerRow' => false,
+            'source' => null,
+            'sourcePath' => null,
+            'fieldCount' => 0,
+            'transformedCount' => 0,
         ], $configuration);
+    }
+
+    public function testItDescribesItsSourceFileFormatAndMapping(): void
+    {
+        $mapping = [
+            ['dataSourceIndex' => ['SKU'], 'transformationPipeline' => [['type' => 'trim']]],
+            ['dataSourceIndex' => ['Name'], 'transformationPipeline' => []],
+            ['dataSourceIndex' => ['Price']],
+            'broken',
+        ];
+
+        [$configuration] = $this->service([$this->configuration('products', $this->config(
+            mapping: $mapping,
+            interpreter: ['type' => 'xlsx', 'settings' => ['sheetName' => 'Products', 'skipFirstRow' => true]],
+            loader: ['type' => 'sftp', 'settings' => ['host' => 'files', 'password' => 'secret', 'remotePath' => '/in/p.xlsx']],
+        ))])->listConfigurations()->getConfigurations();
+
+        $this->assertSame('xlsx', $configuration['format']);
+        $this->assertSame('Products', $configuration['sheet']);
+        $this->assertTrue($configuration['headerRow']);
+        $this->assertSame('sftp', $configuration['source']);
+        $this->assertSame('/in/p.xlsx', $configuration['sourcePath']);
+        $this->assertSame(3, $configuration['fieldCount']);
+        $this->assertSame(1, $configuration['transformedCount']);
+        $this->assertStringNotContainsString('secret', (string)json_encode($configuration));
+    }
+
+    /**
+     * @dataProvider sourcesWithoutAPath
+     *
+     * @param array<string, mixed> $loader
+     * @param array<string, mixed> $interpreter
+     */
+    public function testOnlyAnSftpFileOrAnAssetNamesItsPathAndOnlyAnXlsxItsSheet(
+        array $loader,
+        array $interpreter,
+        ?string $sourcePath,
+        bool $headerRow
+    ): void {
+        [$configuration] = $this->service([$this->configuration('products', $this->config(
+            interpreter: $interpreter,
+            loader: $loader,
+        ))])->listConfigurations()->getConfigurations();
+
+        $this->assertSame($sourcePath, $configuration['sourcePath']);
+        $this->assertNull($configuration['sheet']);
+        $this->assertSame($headerRow, $configuration['headerRow']);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, mixed>, string|null, bool}>
+     */
+    public static function sourcesWithoutAPath(): array
+    {
+        return [
+            'an asset' => [
+                ['type' => 'asset', 'settings' => ['assetPath' => '/imports/p.csv']],
+                ['type' => 'csv', 'settings' => ['skipFirstRow' => true]],
+                '/imports/p.csv',
+                true,
+            ],
+            'a URL, which may hold credentials' => [
+                ['type' => 'http', 'settings' => ['url' => 'https://user:pw@example.org/p.csv']],
+                ['type' => 'csv', 'settings' => []],
+                null,
+                false,
+            ],
+            'an upload' => [['type' => 'upload', 'settings' => []], ['type' => 'csv'], null, false],
+            'a JSON with a sheet setting' => [
+                ['type' => 'upload'],
+                ['type' => 'json', 'settings' => ['sheetName' => 'x', 'skipFirstRow' => true]],
+                null,
+                false,
+            ],
+        ];
     }
 
     /**
@@ -414,6 +496,7 @@ class AdHocImportConfigurationServiceTest extends Unit
      * @param array<string, mixed>|null $location
      * @param array<mixed> $mapping
      * @param array<string, mixed>|null $interpreter
+     * @param array<string, mixed>|null $loader
      *
      * @return array<string, mixed>
      */
@@ -423,8 +506,10 @@ class AdHocImportConfigurationServiceTest extends Unit
         ?array $location = null,
         array $mapping = [],
         ?array $interpreter = null,
+        ?array $loader = null,
     ): array {
         return [
+            'loaderConfig' => $loader ?? ['type' => 'upload', 'settings' => []],
             'interpreterConfig' => $interpreter ?? ['type' => 'csv', 'settings' => []],
             'resolverConfig' => [
                 'elementType' => 'dataObject',

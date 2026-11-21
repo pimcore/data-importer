@@ -29,7 +29,14 @@ use OpenApi\Attributes\Schema;
  *     newObjectsFolder: string|null,
  *     columns: list<string>,
  *     columnsBy: 'name'|'position',
- *     unusable: string|null
+ *     unusable: string|null,
+ *     format: string|null,
+ *     sheet: string|null,
+ *     headerRow: bool,
+ *     source: string|null,
+ *     sourcePath: string|null,
+ *     fieldCount: int,
+ *     transformedCount: int
  * }
  *
  * @internal
@@ -62,6 +69,13 @@ final readonly class AdHocImportConfigurationsResponse
                     'columns',
                     'columnsBy',
                     'unusable',
+                    'format',
+                    'sheet',
+                    'headerRow',
+                    'source',
+                    'sourcePath',
+                    'fieldCount',
+                    'transformedCount',
                 ],
                 properties: [
                     new Property(
@@ -141,6 +155,52 @@ final readonly class AdHocImportConfigurationsResponse
                         type: 'string',
                         example: null,
                         nullable: true
+                    ),
+                    new Property(
+                        property: 'format',
+                        description: 'The type of file or data it reads: csv, xlsx, json, xml or sql',
+                        type: 'string',
+                        example: 'xlsx',
+                        nullable: true
+                    ),
+                    new Property(
+                        property: 'sheet',
+                        description: 'The sheet an XLSX configuration reads',
+                        type: 'string',
+                        example: 'Products',
+                        nullable: true
+                    ),
+                    new Property(
+                        property: 'headerRow',
+                        description: 'Whether its CSV or XLSX file starts with a header row',
+                        type: 'boolean',
+                        example: true
+                    ),
+                    new Property(
+                        property: 'source',
+                        description: 'Where it loads its data from: sftp, http, asset, upload, push or sql',
+                        type: 'string',
+                        example: 'sftp',
+                        nullable: true
+                    ),
+                    new Property(
+                        property: 'sourcePath',
+                        description: 'The remote path of an SFTP source or the asset path of an asset source',
+                        type: 'string',
+                        example: '/in/products.xlsx',
+                        nullable: true
+                    ),
+                    new Property(
+                        property: 'fieldCount',
+                        description: 'The rows of its mapping',
+                        type: 'integer',
+                        example: 18
+                    ),
+                    new Property(
+                        property: 'transformedCount',
+                        description: 'The rows of its mapping with transformations',
+                        type: 'integer',
+                        example: 6
                     ),
                 ],
                 type: 'object'

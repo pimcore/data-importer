@@ -167,6 +167,12 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             $columns = array_values(array_unique([$match['column'], ...$columns]));
         }
 
+        $mapping = is_array($data['mappingConfig'] ?? null) ? $data['mappingConfig'] : [];
+        $interpreter = is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : [];
+        $interpreterSettings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
+        $format = $this->text($interpreter['type'] ?? null);
+        $loader = is_array($data['loaderConfig'] ?? null) ? $data['loaderConfig'] : [];
+
         return [
             'name' => (string)$configuration->getName(),
             'classId' => $classId,
@@ -181,7 +187,35 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
                 is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []
             )->value,
             'unusable' => $unusable?->value,
+            'format' => $format,
+            'sheet' => $format === 'xlsx' ? $this->text($interpreterSettings['sheetName'] ?? null) : null,
+            'headerRow' => in_array($format, ['csv', 'xlsx'], true) && (bool)($interpreterSettings['skipFirstRow'] ?? false),
+            'source' => $this->text($loader['type'] ?? null),
+            'sourcePath' => $this->sourcePath($loader),
+            'fieldCount' => count(array_filter($mapping, is_array(...))),
+            'transformedCount' => count(array_filter(
+                $mapping,
+                static fn (mixed $row): bool => is_array($row)
+                    && is_array($row['transformationPipeline'] ?? null)
+                    && $row['transformationPipeline'] !== []
+            )),
         ];
+    }
+
+    /**
+     * The path a source reads, for those that name one without credentials: an SFTP file and an asset.
+     *
+     * @param array<mixed> $loader
+     */
+    private function sourcePath(array $loader): ?string
+    {
+        $settings = is_array($loader['settings'] ?? null) ? $loader['settings'] : [];
+
+        return match ($loader['type'] ?? null) {
+            'sftp' => $this->text($settings['remotePath'] ?? null),
+            'asset' => $this->text($settings['assetPath'] ?? null),
+            default => null,
+        };
     }
 
     /**
