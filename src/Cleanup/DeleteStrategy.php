@@ -19,9 +19,8 @@ use Pimcore\Model\Element\ElementInterface;
  */
 final class DeleteStrategy implements CleanupStrategyInterface
 {
-    public function doCleanup(ElementInterface $element): bool
+    public function doCleanup(ElementInterface $element): void
     {
         $element->delete();
-        return true;
     }
 }
