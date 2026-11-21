@@ -85,10 +85,15 @@ class AdHocImportRunObjectsServiceTest extends Unit
     {
         $this->runs->save($this->endedRun());
 
-        $answer = $this->service()->objects(AdHocRunFixtures::FILE_ID, 'updated', 2, 1);
+        $service = $this->service();
+        $first = $service->objects(AdHocRunFixtures::FILE_ID, 'updated', 1, 1);
+        $hidden = $service->objects(AdHocRunFixtures::FILE_ID, 'updated', 2, 1);
+        $third = $service->objects(AdHocRunFixtures::FILE_ID, 'updated', 3, 1);
 
-        $this->assertSame(3, $answer->getTotalItems());
-        $this->assertSame([12], array_column($answer->getItems(), 'id'));
+        $this->assertSame(3, $third->getTotalItems());
+        $this->assertSame([11], array_column($first->getItems(), 'id'));
+        $this->assertSame([], $hidden->getItems(), 'a page keeps its place when its object is hidden');
+        $this->assertSame([12], array_column($third->getItems(), 'id'));
     }
 
     public function testAnObjectDeletedSinceIsLeftOut(): void

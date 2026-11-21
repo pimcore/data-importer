@@ -48,6 +48,7 @@ use Symfony\Component\Messenger\Stamp\DelayStamp;
 class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every collaborator of the merge
 {
     private const string MAY_NOT_SAVE = 'may not save';
+    private const string BEING_MERGED = 'Branch is being merged.';
 
     private string $storage;
 
@@ -655,7 +656,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testAMergeThatCannotStartClosesTheBranchAndFailsTheRows(): void
     {
-        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+        $this->branches->mergeAnswers = [new BranchNotWritableException(self::BEING_MERGED)];
 
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
 
@@ -667,7 +668,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testAFailedMergeListsNoObjectAsSaved(): void
     {
-        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+        $this->branches->mergeAnswers = [new BranchNotWritableException(self::BEING_MERGED)];
 
         $this->merge()->rowsWritten(
             $this->branchRun(['updatedIds' => [42, 43]]),
@@ -758,7 +759,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testABranchThatCannotBeClosedAfterAFailedMergeIsLogged(): void
     {
-        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+        $this->branches->mergeAnswers = [new BranchNotWritableException(self::BEING_MERGED)];
         $this->branches->discardRefusal = new BranchNotWritableException('still merging');
 
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
