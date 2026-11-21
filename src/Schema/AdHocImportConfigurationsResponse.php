@@ -58,24 +58,9 @@ final readonly class AdHocImportConfigurationsResponse
             type: 'array',
             items: new Items(
                 required: [
-                    'name',
-                    'classId',
-                    'className',
-                    'matchBy',
-                    'matchField',
-                    'matchLanguage',
-                    'matchColumn',
-                    'newObjectsFolder',
-                    'columns',
-                    'columnsBy',
-                    'unusable',
-                    'format',
-                    'sheet',
-                    'headerRow',
-                    'source',
-                    'sourcePath',
-                    'fieldCount',
-                    'transformedCount',
+                    'name', 'classId', 'className', 'matchBy', 'matchField', 'matchLanguage', 'matchColumn',
+                    'newObjectsFolder', 'columns', 'columnsBy', 'unusable', 'format', 'sheet', 'headerRow',
+                    'source', 'sourcePath', 'fieldCount', 'transformedCount',
                 ],
                 properties: [
                     new Property(

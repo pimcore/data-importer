@@ -167,12 +167,6 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             $columns = array_values(array_unique([$match['column'], ...$columns]));
         }
 
-        $mapping = is_array($data['mappingConfig'] ?? null) ? $data['mappingConfig'] : [];
-        $interpreter = is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : [];
-        $interpreterSettings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
-        $format = $this->text($interpreter['type'] ?? null);
-        $loader = is_array($data['loaderConfig'] ?? null) ? $data['loaderConfig'] : [];
-
         return [
             'name' => (string)$configuration->getName(),
             'classId' => $classId,
@@ -187,9 +181,37 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
                 is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []
             )->value,
             'unusable' => $unusable?->value,
+            ...$this->fileAndMapping($data),
+        ];
+    }
+
+    /**
+     * What it reads and how much it maps: the file format, the source and the counts of its mapping rows.
+     *
+     * @param array<mixed> $data
+     *
+     * @return array{
+     *     format: string|null,
+     *     sheet: string|null,
+     *     headerRow: bool,
+     *     source: string|null,
+     *     sourcePath: string|null,
+     *     fieldCount: int,
+     *     transformedCount: int
+     * }
+     */
+    private function fileAndMapping(array $data): array
+    {
+        $mapping = is_array($data['mappingConfig'] ?? null) ? $data['mappingConfig'] : [];
+        $interpreter = is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : [];
+        $settings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
+        $format = $this->text($interpreter['type'] ?? null);
+        $loader = is_array($data['loaderConfig'] ?? null) ? $data['loaderConfig'] : [];
+
+        return [
             'format' => $format,
-            'sheet' => $format === 'xlsx' ? $this->text($interpreterSettings['sheetName'] ?? null) : null,
-            'headerRow' => in_array($format, ['csv', 'xlsx'], true) && (bool)($interpreterSettings['skipFirstRow'] ?? false),
+            'sheet' => $format === 'xlsx' ? $this->text($settings['sheetName'] ?? null) : null,
+            'headerRow' => in_array($format, ['csv', 'xlsx'], true) && (bool)($settings['skipFirstRow'] ?? false),
             'source' => $this->text($loader['type'] ?? null),
             'sourcePath' => $this->sourcePath($loader),
             'fieldCount' => count(array_filter($mapping, is_array(...))),

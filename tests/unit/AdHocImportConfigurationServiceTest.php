@@ -425,11 +425,14 @@ class AdHocImportConfigurationServiceTest extends Unit
             'broken',
         ];
 
-        [$configuration] = $this->service([$this->configuration('products', $this->config(
+        $configuration = $this->described($this->config(
             mapping: $mapping,
             interpreter: ['type' => 'xlsx', 'settings' => ['sheetName' => 'Products', 'skipFirstRow' => true]],
-            loader: ['type' => 'sftp', 'settings' => ['host' => 'files', 'password' => 'secret', 'remotePath' => '/in/p.xlsx']],
-        ))])->listConfigurations()->getConfigurations();
+            loader: [
+                'type' => 'sftp',
+                'settings' => ['host' => 'files', 'password' => 'secret', 'remotePath' => '/in/p.xlsx'],
+            ],
+        ));
 
         $this->assertSame('xlsx', $configuration['format']);
         $this->assertSame('Products', $configuration['sheet']);
@@ -453,10 +456,7 @@ class AdHocImportConfigurationServiceTest extends Unit
         ?string $sourcePath,
         bool $headerRow
     ): void {
-        [$configuration] = $this->service([$this->configuration('products', $this->config(
-            interpreter: $interpreter,
-            loader: $loader,
-        ))])->listConfigurations()->getConfigurations();
+        $configuration = $this->described($this->config(interpreter: $interpreter, loader: $loader));
 
         $this->assertSame($sourcePath, $configuration['sourcePath']);
         $this->assertNull($configuration['sheet']);
@@ -541,6 +541,20 @@ class AdHocImportConfigurationServiceTest extends Unit
                 && $permission === 'read'
                 && $user === $this->user
         );
+
+        return $configuration;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function described(array $data): array
+    {
+        [$configuration] = $this->service([$this->configuration('products', $data)])
+            ->listConfigurations()
+            ->getConfigurations();
 
         return $configuration;
     }
