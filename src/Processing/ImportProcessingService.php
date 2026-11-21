@@ -15,6 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
+use Pimcore\Bundle\DataImporterBundle\Cleanup\ConditionalCleanupStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
@@ -406,6 +407,10 @@ final class ImportProcessingService
                 $element = $resolver->loadElementByIdentifier($identifier);
                 if ($element) {
                     $cleanupStrategy = $this->cleanupStrategyFactory->loadCleanupStrategy($cleanupConfig['strategy']);
+                    if ($cleanupStrategy instanceof ConditionalCleanupStrategyInterface
+                        && !$cleanupStrategy->needsCleanup($element)) {
+                        return;
+                    }
                     $cleanupStrategy->doCleanup($element);
 
                     $message = "Element {$identifier} cleaned up ({$cleanupConfig['strategy']}) successfully.";
