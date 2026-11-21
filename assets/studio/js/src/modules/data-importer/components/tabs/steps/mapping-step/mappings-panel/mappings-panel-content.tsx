@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
-import { Button, Divider, Flex, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
+import { Divider, Flex, IconTextButton, Text } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type MappingConfigItem } from '../../../../../types'
 import { useStyles } from '../mapping-step.styles'
@@ -17,6 +17,7 @@ import { MappingDropZone, MappingItemWithFilter } from '../mapping-item'
 import { EmptyDropZone } from './empty-drop-zone'
 import { FilteredEmptyState } from './filtered-empty-state'
 import { useConfigEditorReadOnly } from '../../../../config-editor-mode'
+import { PreviewModeLine } from '../preview-mode/preview-mode-line'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -216,21 +217,14 @@ export const MappingsPanelContent = React.memo(({
               </IconTextButton>
             </>
           ) }
-
-          { hasItems && (
-            <Button
-              onClick={ () => { onCollapseAll(visibleKeys) } }
-              size="small"
-              style={ { marginLeft: 'auto' } }
-              type="link"
-            >
-              { allVisibleCollapsed
-                ? t('data-importer.mapping.expand-all')
-                : t('data-importer.mapping.collapse-all') }
-            </Button>
-          ) }
         </Flex>
       </Flex>
+
+      <PreviewModeLine
+        allCollapsed={ allVisibleCollapsed }
+        onCollapseAll={ () => { onCollapseAll(visibleKeys) } }
+        showCollapseAll={ hasItems }
+      />
 
       <Flex
         className={ styles.mappingsContent }

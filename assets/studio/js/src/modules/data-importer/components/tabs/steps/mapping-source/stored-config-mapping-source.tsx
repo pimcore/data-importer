@@ -76,6 +76,7 @@ export const StoredConfigMappingSource = ({ configName, children }: StoredConfig
 
   const source = useMemo((): MappingSource => ({
     id: configName,
+    configName,
     configuration,
     isConfigurationLoaded: isSuccess,
     revision: requestId,

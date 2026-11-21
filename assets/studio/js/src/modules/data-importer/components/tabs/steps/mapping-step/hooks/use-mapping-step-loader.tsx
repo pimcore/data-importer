@@ -68,6 +68,7 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
   const [initialLoadDone, setInitialLoadDone] = useState(false)
   const [sourceRows, setSourceRows] = useState<SourceRow[]>([])
   const [hasPreviewError, setHasPreviewError] = useState(false)
+  const [previewLoadError, setPreviewLoadError] = useState<unknown>(undefined)
   const [attributesMap, setAttributesMap] = useState<Record<string, ClassAttribute[]>>({})
   // The class the attributesMap entries belong to. The class can be changed in the resolver
   // step without saving, so entries loaded for another class must never be reused.
@@ -92,7 +93,8 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
     refetch: refetchPreview,
     isFetching: isPreviewFetching,
     isError: isPreviewError,
-    isSuccess: isPreviewSuccess
+    isSuccess: isPreviewSuccess,
+    error: previewQueryError
   } = source.usePreviewQuery(
     previewRequest,
     { refetchOnMountOrArgChange: false }
@@ -159,18 +161,26 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
     const rows = dataPreview.map((row: Record<string, any>) => normalizeDataRow(row))
     setSourceRows(rows)
     setHasPreviewError(rows.length === 0)
+    setPreviewLoadError(undefined)
   }, [isPreviewSuccess, previewResult])
 
   useEffect(() => {
     if (!isPreviewError) return
     setSourceRows([])
     setHasPreviewError(true)
-  }, [isPreviewError])
+    setPreviewLoadError(previewQueryError)
+  }, [isPreviewError, previewQueryError])
+
+  // set while a new preview file is read again: the step stays on screen meanwhile, preview mode included
+  const reloadingPreviewDataRef = useRef(false)
 
   useEffect(() => {
     const headersDone = headersRequest !== undefined && !isHeadersFetching
     const previewDone = previewRequest !== undefined && !isPreviewFetching
-    setInitialLoadDone(headersDone && attrsDone && previewDone)
+    const done = headersDone && attrsDone && previewDone
+    if (done) reloadingPreviewDataRef.current = false
+    else if (reloadingPreviewDataRef.current) return
+    setInitialLoadDone(done)
   }, [headersRequest, previewRequest, isHeadersFetching, isPreviewFetching, attrsDone])
 
   const loaderConfigType = Form.useWatch(['loaderConfig', 'type']) as string | undefined
@@ -418,11 +428,23 @@ export function useMappingStepLoader (isActive: boolean): UseMappingStepLoaderRe
     })
   }, [mappingAttrMapKeyList, initialLoadDone, classId])
 
+  // the stored preview file changed (an upload or a copy): read its columns and first record again
+  const reloadPreviewData = useCallback((): void => {
+    if (headersRequest === undefined || previewRequest === undefined) return
+    reloadingPreviewDataRef.current = true
+    void Promise.all([
+      refetchHeaders().catch(() => undefined),
+      refetchPreview().catch(() => undefined)
+    ])
+  }, [headersRequest, previewRequest, refetchHeaders, refetchPreview])
+
   return {
     columnHeaderOptions,
     initialLoadDone,
     sourceRows,
     hasPreviewError,
+    previewLoadError,
+    reloadPreviewData,
     attributesMap,
     setAttributesMap,
     classId,
