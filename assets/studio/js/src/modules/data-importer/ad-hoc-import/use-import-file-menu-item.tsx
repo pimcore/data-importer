@@ -46,7 +46,18 @@ export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
   }
 }
 
-// sets the entry off from adding above and editing below; only where the entry shows
-export const useImportFileDivider = (node: TreeNodeProps, key: string): ItemType => {
-  return useCanImportFile(node) ? { type: 'divider', key } : null
+// sets the entry off from adding above and editing below; only where the entry shows and the menu has an item on that side
+export const useImportFileDivider = (node: TreeNodeProps, key: string, hasItemOnThatSide: boolean = true): ItemType => {
+  return useCanImportFile(node) && hasItemOnThatSide ? { type: 'divider', key } : null
+}
+
+interface MenuItemProvider {
+  useMenuItem: (context: any) => ItemType | null
+}
+
+// the menu drops hidden items but keeps a divider at its edge, so a divider needs a visible item beside it
+export const useShowsAnyItem = (providers: MenuItemProvider[], context: unknown): boolean => {
+  return providers
+    .map(provider => provider.useMenuItem(context) as { type?: string, hidden?: boolean } | null)
+    .some(item => item !== null && item !== undefined && item.type !== 'divider' && item.hidden !== true)
 }

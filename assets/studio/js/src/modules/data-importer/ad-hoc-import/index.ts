@@ -18,18 +18,23 @@ import {
   type DataObjectTreeContextMenuProps
 } from '@pimcore/studio-ui-bundle/modules/app'
 import { AdHocImportHost } from './ad-hoc-import-host'
-import { useImportFileDivider, useImportFileMenuItem } from './use-import-file-menu-item'
+import { useImportFileDivider, useImportFileMenuItem, useShowsAnyItem } from './use-import-file-menu-item'
 
 export const AdHocImportModule: AbstractModule = {
   onInit () {
     const config = contextMenuConfig.dataObjectTree
 
     const contextMenu = container.get<ContextMenuRegistry>(serviceIds['App/ContextMenuRegistry/ContextMenuRegistry'])
+    const dividerBeforePriority = config.priority.addFolder + 1
+    // read at render: other modules may register after this one
+    const providersAbove = (): ReturnType<ContextMenuRegistry['getSlotProviders']> => contextMenu.getSlotProviders(config.name)
+      .filter(provider => (provider.priority ?? 999) < dividerBeforePriority)
     // after what else adds to the folder, between two dividers
     contextMenu.registerToSlot(config.name, {
       name: 'importFileDividerBefore',
-      priority: config.priority.addFolder + 1,
-      useMenuItem: (context: DataObjectTreeContextMenuProps) => useImportFileDivider(context.target, 'importFileDividerBefore')
+      priority: dividerBeforePriority,
+      useMenuItem: (context: DataObjectTreeContextMenuProps) =>
+        useImportFileDivider(context.target, 'importFileDividerBefore', useShowsAnyItem(providersAbove(), context))
     })
     contextMenu.registerToSlot(config.name, {
       name: 'importFile',
