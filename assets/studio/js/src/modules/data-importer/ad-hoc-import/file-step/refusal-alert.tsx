@@ -13,6 +13,9 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert } from '@pimcore/studio-ui-bundle/components'
 import { type InspectedFile } from './file-step-state'
 
+// compact, as the refusal sits right under the file card
+const ALERT_STYLE = { maxWidth: 560, padding: '8px 12px' }
+
 // Studio's Alert with a description draws the first line larger; the refusal keeps both at the text size
 const TwoLines = ({ first, second }: { first: string, second: string }): React.JSX.Element => (
   <>
@@ -42,7 +45,7 @@ export const RefusalAlert = ({ inspected }: RefusalAlertProps): React.JSX.Elemen
               second={ t('data-importer.ad-hoc-import.refused.too-many-rows-hint') }
             />
           ) }
-          style={ { maxWidth: 560 } }
+          style={ ALERT_STYLE }
           type="error"
         />
       )
@@ -55,7 +58,7 @@ export const RefusalAlert = ({ inspected }: RefusalAlertProps): React.JSX.Elemen
               second={ t('data-importer.ad-hoc-import.refused.too-many-rows-hint') }
             />
           ) }
-          style={ { maxWidth: 560 } }
+          style={ ALERT_STYLE }
           type="error"
         />
       )
@@ -63,7 +66,7 @@ export const RefusalAlert = ({ inspected }: RefusalAlertProps): React.JSX.Elemen
       return (
         <Alert
           message={ t('data-importer.ad-hoc-import.refused.unreadable', { type: (inspected.type ?? '').toUpperCase() }) }
-          style={ { maxWidth: 560 } }
+          style={ ALERT_STYLE }
           type="error"
         />
       )
@@ -71,7 +74,7 @@ export const RefusalAlert = ({ inspected }: RefusalAlertProps): React.JSX.Elemen
       return (
         <Alert
           message={ t('data-importer.ad-hoc-import.refused.wrong-format') }
-          style={ { maxWidth: 560 } }
+          style={ ALERT_STYLE }
           type="error"
         />
       )

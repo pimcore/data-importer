@@ -11,7 +11,7 @@
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Modal } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
@@ -52,11 +52,10 @@ import { isDone, isSettled } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
 import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
+import { DialogSteps, STEPS } from './dialog-steps'
 
 const DIALOG_WIDTH = 1160
-const STEPS_WIDTH = 720
 
-const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
 const RUN_POLLING_MS = 1000
 
@@ -500,13 +499,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
-        <Steps
-          current={ isDone(run) ? STEPS.length : step }
-          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-          size="small"
-        />
-      </div>
+      <DialogSteps current={ isDone(run) ? STEPS.length : step } />
       { step === 0 && (
         <FileStep
           isInspecting={ isInspecting }

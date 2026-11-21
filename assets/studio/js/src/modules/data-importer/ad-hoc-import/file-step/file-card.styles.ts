@@ -14,7 +14,7 @@ export const useStyles = createStyles(({ token, css }) => ({
   card: css`
     max-width: 560px;
     box-sizing: border-box;
-    border: 1px solid ${token.colorBorderSecondary};
+    border: 1px solid ${token.colorBorderContainer};
     border-radius: ${token.borderRadiusLG}px;
     padding: ${token.paddingSM}px ${token.paddingSM}px ${token.paddingSM}px ${token.padding}px;
     display: flex;
@@ -37,9 +37,10 @@ export const useStyles = createStyles(({ token, css }) => ({
     align-items: center;
     justify-content: center;
   `,
+  // colorErrorText reads 3:1 on colorErrorBg, too little for the badge's small text
   badgeRefused: css`
     background: ${token.colorErrorBg};
-    color: ${token.colorErrorText};
+    color: ${token.red7};
   `,
   text: css`
     flex-grow: 1;
@@ -55,7 +56,7 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   detail: css`
     font-size: ${token.fontSizeSM}px;
-    color: ${token.colorTextSecondary};
+    color: ${token.colorTextDescription};
   `,
   progress: css`
     display: flex;

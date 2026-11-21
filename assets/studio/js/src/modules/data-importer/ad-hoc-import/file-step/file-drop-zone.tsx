@@ -14,15 +14,24 @@ import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Icon } from '@pimcore/studio-ui-bundle/components'
 
 const useStyles = createStyles(({ token, css }) => ({
+  // antd's Dragger draws its own neutral fill and larger text; the drop zone takes Studio's faint brand fill
   zone: css`
     max-width: 560px;
+
+    .ant-upload.ant-upload-drag {
+      background: ${token.colorFillQuaternary};
+      border-color: ${token.colorBorder};
+      border-radius: ${token.borderRadiusLG}px;
+    }
   `,
   icons: css`
     color: ${token.colorIcon};
   `,
   label: css`
     text-align: center;
-    color: ${token.colorTextSecondary};
+    font-size: ${token.fontSize}px;
+    line-height: ${token.lineHeight};
+    color: ${token.colorTextDescription};
   `
 }))
 

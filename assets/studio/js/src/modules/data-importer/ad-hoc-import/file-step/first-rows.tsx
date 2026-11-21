@@ -10,7 +10,7 @@
 
 import React, { useMemo } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Grid } from '@pimcore/studio-ui-bundle/components'
 import { type InspectedFile } from './file-step-state'
 
@@ -19,6 +19,14 @@ const MORE_COLUMN_WIDTH = 72
 
 type Row = Array<string | null>
 
+// a note on the columns left out, not a column name
+const useStyles = createStyles(({ token, css }) => ({
+  more: css`
+    font-weight: normal;
+    color: ${token.colorTextDescription};
+  `
+}))
+
 export interface FirstRowsProps {
   inspected: InspectedFile
   isLoading: boolean
@@ -26,6 +34,7 @@ export interface FirstRowsProps {
 
 export const FirstRows = ({ inspected, isLoading }: FirstRowsProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
   const hiddenColumns = inspected.columns.length - VISIBLE_COLUMNS
 
@@ -42,11 +51,11 @@ export const FirstRows = ({ inspected, isLoading }: FirstRowsProps): React.JSX.E
 
     return [...visible, {
       id: 'more-columns',
-      header: t('data-importer.ad-hoc-import.first-rows.more-columns', { count: hiddenColumns }),
+      header: () => <span className={ styles.more }>{ t('data-importer.ad-hoc-import.first-rows.more-columns', { count: hiddenColumns }) }</span>,
       accessorFn: () => '',
       size: MORE_COLUMN_WIDTH
     }]
-  }, [inspected.columns, hiddenColumns, t])
+  }, [inspected.columns, hiddenColumns, styles.more, t])
 
   return (
     <Grid

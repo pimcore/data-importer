@@ -43,7 +43,7 @@ export const FileStep = ({ phase, isInspecting, objects, onFile, onRemoveFile, o
       <Space
         className="w-full"
         direction="vertical"
-        size="small"
+        size="normal"
       >
         <FormKit.Panel
           title={ t('data-importer.ad-hoc-import.file.title') }
