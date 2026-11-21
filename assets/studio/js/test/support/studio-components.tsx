@@ -10,6 +10,9 @@
 
 // Plain stand-ins for the Studio components the mapping step and dialog render; Form is antd's own
 import React from 'react'
+import DisabledContext from 'antd/lib/config-provider/DisabledContext'
+
+import { Button as AntdButton } from 'antd'
 
 export { Form } from 'antd'
 
@@ -65,22 +68,27 @@ export const Button = ({ children, disabled, onClick }: WithChildren & { disable
   </button>
 )
 
+// Studio's IconButton is antd's Button, so a surrounding ConfigProvider disables it unless disabled is passed
 export const IconButton = ({ disabled, icon, onClick }: { disabled?: boolean, icon: { value: string }, onClick?: () => void }): React.JSX.Element => (
-  <button
+  <AntdButton
     aria-label={ icon.value }
     disabled={ disabled }
     onClick={ onClick }
-    type="button"
   />
 )
 
-export const SearchInput = ({ onChange, placeholder, value }: { onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => (
-  <input
-    onChange={ onChange }
-    placeholder={ placeholder }
-    value={ value }
-  />
-)
+// Studio's SearchInput is antd's Input.Search, which takes disabled from the surrounding ConfigProvider
+export const SearchInput = ({ disabled, onChange, placeholder, value }: { disabled?: boolean, onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => {
+  const contextDisabled = React.useContext(DisabledContext)
+  return (
+    <input
+      disabled={ disabled ?? contextDisabled }
+      onChange={ onChange }
+      placeholder={ placeholder }
+      value={ value }
+    />
+  )
+}
 
 export const useFormModal = (): { confirm: () => void } => ({ confirm: () => undefined })
 export const useMessage = (): { warning: () => Promise<void> } => ({ warning: async () => { await Promise.resolve() } })

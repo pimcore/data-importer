@@ -11,6 +11,7 @@
 /* eslint-disable max-lines */
 
 import React, { useEffect, useRef, useState } from 'react'
+import { ConfigProvider } from 'antd'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { IconButton, SearchInput, Flex, Space, Spin } from '@pimcore/studio-ui-bundle/components'
 import { normalizeDataRow, type DataRow } from '../../../../../utils/normalize-data-row'
@@ -217,14 +218,17 @@ export const PreviewPanel = (props: PreviewPanelProps): React.JSX.Element => {
       >
         { renderHeader(t('data-importer.mapping.advanced-modal.step-source.import-preview'), hasPrev, importLoading || isImportFetching, handleImportPrev, handleImportNext) }
 
-        <SearchInput
-          maxWidth={ '100%' }
-          onChange={ (e) => { setSearchText(e.target.value) } }
-          placeholder={ t('data-importer.mapping.advanced-modal.step-source.search-placeholder') }
-          value={ searchText }
-          withClear
-          withPrefix
-        />
+        { /* filtering the preview changes nothing, so a reader of a disabled dialog keeps it */ }
+        <ConfigProvider componentDisabled={ false }>
+          <SearchInput
+            maxWidth={ '100%' }
+            onChange={ (e) => { setSearchText(e.target.value) } }
+            placeholder={ t('data-importer.mapping.advanced-modal.step-source.search-placeholder') }
+            value={ searchText }
+            withClear
+            withPrefix
+          />
+        </ConfigProvider>
 
         <div className={ styles.tableWrapper }>
           <div className={ styles.tableHeader }>

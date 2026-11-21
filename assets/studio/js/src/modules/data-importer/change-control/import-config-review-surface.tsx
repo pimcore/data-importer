@@ -92,8 +92,24 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
     }))
   }, [liveMissing, payload, configuration, subjectRef, dispatch])
 
-  const [tab, setTab] = useState('general')
-  const [step, setStep] = useState<number | undefined>(undefined)
+  // the sections that hold a change, in the editor's order; a new configuration is reviewed whole
+  const changedSections = useMemo(() => isNew
+    ? []
+    : Object.keys(SECTION_TARGET).filter((section) => section === 'mapping'
+        ? changedMappings.length > 0
+        : groups.some((group) => group.section === section)),
+  [isNew, groups, changedMappings])
+  const changedTabs = useMemo(() => [...new Set(changedSections.map((section) => SECTION_TARGET[section].tab))], [changedSections])
+
+  // land where the first change sits until the reader picks a place; derived rather than set
+  // from an effect, as the payload arrives after mount. A pick holds only for its change set
+  const [picked, setPicked] = useState<{ changeSetId?: string, tab: string, step?: number }>()
+  const first = changedSections.length > 0 ? SECTION_TARGET[changedSections[0]] : undefined
+  const place = picked !== undefined && picked.changeSetId === changeSetId ? picked : first ?? { tab: 'general' }
+  const tab = place.tab
+  const step = place.step
+  const setTab = (next: string): void => { setPicked({ changeSetId, tab: next, step }) }
+  const setStep = (next: number): void => { setPicked({ changeSetId, tab, step: next }) }
 
   // a jump lands on the first marked field of the section, not on the section's top: the
   // step may still be rendering or the tab still sliding in, so the scroll is checked and
@@ -150,9 +166,8 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
       return
     }
     scrollPending.current = true
-    setTab(destination.tab)
-    setStep(destination.step)
-  }, [tab, step, scrollToMark])
+    setPicked({ changeSetId, tab: destination.tab, step: destination.step })
+  }, [changeSetId, tab, step, scrollToMark])
 
   const labelFor = useCallback(
     (change: ConfigChange): string => fieldLabel(change.address, configuration, t),
@@ -179,6 +194,7 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
       <DataImporterConfigEditor
         activeStep={ step }
         activeTab={ tab }
+        changedTabs={ changedTabs }
         configName={ subjectRef }
         configuration={ configuration }
         isWriteable={ false }

@@ -20,6 +20,7 @@ import { useStyles } from './advanced-mapping-modal.styles'
 import { useAutoRecalculateType } from './hooks/use-auto-recalculate-type'
 import { ResultPreviewProvider } from './result-preview/result-preview-context'
 import { useConfigEditorReadOnly } from '../../../config-editor-mode'
+import { ConfigProvider } from 'antd'
 
 export { type ClassAttribute } from '../../../../types'
 export interface AdvancedMappingModalProps {
@@ -195,79 +196,82 @@ export const AdvancedMappingModal = ({
         isFetchingAttributes={ isFetchingExtraAttributes || isCalculating }
         previewRefreshToken={ previewRefreshToken }
       >
-        <Flex
-          gap="small"
-          vertical
-        >
-          { header }
-          <div className={ styles.sectionPanel }>
-            <Panel
-              active={ expanded.source }
-              collapsible
-              onChange={ () => { openSection('source') } }
-              theme="default"
-              title={ (
-                <>
-                  <span className={ styles.stepBadge }>1</span>
-                  { t('data-importer.mapping.advanced-modal.step-source') }
-                </>
-              ) }
-            >
-              <StepSource
-                columnHeaderOptions={ columnHeaderOptions }
-                dataSourceIndex={ localItem.dataSourceIndex ?? [] }
-                forceRefreshToken={ forceRefreshToken }
-                onDataSourceIndexChange={ updateDataSourceIndex }
-              />
-            </Panel>
-          </div>
+        { /* the dialog may open outside a disabled form; a reader sees every field, changes none */ }
+        <ConfigProvider componentDisabled={ readOnly ? true : undefined }>
+          <Flex
+            gap="small"
+            vertical
+          >
+            { header }
+            <div className={ styles.sectionPanel }>
+              <Panel
+                active={ expanded.source }
+                collapsible
+                onChange={ () => { openSection('source') } }
+                theme="default"
+                title={ (
+                  <>
+                    <span className={ styles.stepBadge }>1</span>
+                    { t('data-importer.mapping.advanced-modal.step-source') }
+                  </>
+                ) }
+              >
+                <StepSource
+                  columnHeaderOptions={ columnHeaderOptions }
+                  dataSourceIndex={ localItem.dataSourceIndex ?? [] }
+                  forceRefreshToken={ forceRefreshToken }
+                  onDataSourceIndexChange={ updateDataSourceIndex }
+                />
+              </Panel>
+            </div>
 
-          <div className={ styles.sectionPanel }>
-            <Panel
-              active={ expanded.transformations }
-              collapsible
-              onChange={ () => { openSection('transformations') } }
-              theme="default"
-              title={ (
-                <>
-                  <span className={ styles.stepBadge }>2</span>
-                  { t('data-importer.mapping.advanced-modal.step-transformations') }
-                </>
-              ) }
-            >
-              <StepTransformations
-                columnHeaderOptions={ columnHeaderOptions }
-                dataSourceIndex={ localItem.dataSourceIndex ?? [] }
-                onDataSourceIndexChange={ updateDataSourceIndex }
-                onPipelineChange={ updatePipeline }
-                pipeline={ pipeline }
-              />
-            </Panel>
-          </div>
+            <div className={ styles.sectionPanel }>
+              <Panel
+                active={ expanded.transformations }
+                collapsible
+                onChange={ () => { openSection('transformations') } }
+                theme="default"
+                title={ (
+                  <>
+                    <span className={ styles.stepBadge }>2</span>
+                    { t('data-importer.mapping.advanced-modal.step-transformations') }
+                  </>
+                ) }
+              >
+                <StepTransformations
+                  columnHeaderOptions={ columnHeaderOptions }
+                  dataSourceIndex={ localItem.dataSourceIndex ?? [] }
+                  onDataSourceIndexChange={ updateDataSourceIndex }
+                  onPipelineChange={ updatePipeline }
+                  pipeline={ pipeline }
+                />
+              </Panel>
+            </div>
 
-          <div className={ styles.sectionPanel }>
-            <Panel
-              active={ expanded.target }
-              collapsible
-              onChange={ () => { openSection('target') } }
-              theme="default"
-              title={ (
-                <>
-                  <span className={ styles.stepBadge }>3</span>
-                  { t('data-importer.mapping.advanced-modal.step-target') }
-                </>
-              ) }
-            >
-              <StepTarget
-                attributesMap={ mergedAttributesMap }
-                classId={ classId }
-                dataTarget={ localItem.dataTarget }
-                onDataTargetChange={ (dataTarget) => { setLocalItem(prev => ({ ...prev, dataTarget })) } }
-                transformationResultType={ localItem.transformationResultType }
-              />
-            </Panel>
-          </div>
-        </Flex>
+            <div className={ styles.sectionPanel }>
+              <Panel
+                active={ expanded.target }
+                collapsible
+                onChange={ () => { openSection('target') } }
+                theme="default"
+                title={ (
+                  <>
+                    <span className={ styles.stepBadge }>3</span>
+                    { t('data-importer.mapping.advanced-modal.step-target') }
+                  </>
+                ) }
+              >
+                <StepTarget
+                  attributesMap={ mergedAttributesMap }
+                  classId={ classId }
+                  dataTarget={ localItem.dataTarget }
+                  onDataTargetChange={ (dataTarget) => { setLocalItem(prev => ({ ...prev, dataTarget })) } }
+                  transformationResultType={ localItem.transformationResultType }
+                />
+              </Panel>
+            </div>
+          </Flex>
+        </ConfigProvider>
       </ResultPreviewProvider>
     </Modal>
   )
