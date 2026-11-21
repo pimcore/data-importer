@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+import type React from 'react'
 import { container, type AbstractModule } from '@pimcore/studio-ui-bundle'
 import { serviceIds } from '@pimcore/studio-ui-bundle/app'
 import {
@@ -17,7 +18,10 @@ import {
   type ContextMenuRegistry,
   type DataObjectTreeContextMenuProps
 } from '@pimcore/studio-ui-bundle/modules/app'
+import { type WidgetRegistry } from '@pimcore/studio-ui-bundle/modules/widget-manager'
 import { AdHocImportHost } from './ad-hoc-import-host'
+import { ImportObjectsWidget } from './import-objects/import-objects-widget'
+import { IMPORT_OBJECTS_WIDGET } from './import-objects/open-import-objects'
 import { useImportFileMenuItem } from './use-import-file-menu-item'
 
 export const AdHocImportModule: AbstractModule = {
@@ -35,6 +39,12 @@ export const AdHocImportModule: AbstractModule = {
     container.get<ComponentRegistryInterface>(serviceIds['App/ComponentRegistry/ComponentRegistry']).registerToSlot(componentConfig.leftSidebar.slot.name, {
       name: 'dataImporterAdHocImport',
       component: AdHocImportHost
+    })
+
+    // the objects an import saved, in a tab of their own
+    container.get<WidgetRegistry>(serviceIds.widgetManager).registerWidget({
+      name: IMPORT_OBJECTS_WIDGET,
+      component: ImportObjectsWidget as React.ComponentType
     })
   }
 }

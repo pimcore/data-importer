@@ -581,6 +581,16 @@ data-importer.ad-hoc-import.result.column.why: Why it was not saved
 data-importer.ad-hoc-import.result.download-failed: 'Download failed rows ({{count}})'
 data-importer.ad-hoc-import.result.close: Close
 data-importer.ad-hoc-import.result.merged-as: 'Merged as {{user}} · {{time}}'
+data-importer.ad-hoc-import.result.show-list: Show in a list
+data-importer.ad-hoc-import.saved-objects.title: 'Import · {{file}}'
+data-importer.ad-hoc-import.saved-objects.updated: 'Updated {{count}}'
+data-importer.ad-hoc-import.saved-objects.created: 'Created {{count}}'
+data-importer.ad-hoc-import.saved-objects.imported-by: 'Imported {{time}} by {{user}} · columns: the fields the file wrote'
+data-importer.ad-hoc-import.saved-objects.export: Export CSV
+data-importer.ad-hoc-import.saved-objects.filtered: 'The grid of the folder, filtered to the objects of this import'
+data-importer.ad-hoc-import.saved-objects.modified: Modified
+data-importer.ad-hoc-import.saved-objects.path: Path
+data-importer.ad-hoc-import.saved-objects.gone: 'This import''s objects can no longer be listed: the import was closed, or it ended more than a day ago.'
 data-importer.ad-hoc-import.run.branch.written: Written into a branch
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objects'
 data-importer.ad-hoc-import.run.branch.checking: 'Checking: rights, keys, values'

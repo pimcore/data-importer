@@ -13,6 +13,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
+import { useWidgetManager } from '@pimcore/studio-ui-bundle/modules/widget-manager'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
   useBundleDataImporterAdHocImportDiscardRunMutation,
@@ -48,8 +49,9 @@ import { transformationSourceOf } from './mapping-step/transformations-editor'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 import { dryRunParameters, previewCounts, type DryRun, type DryRunParameters, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
-import { isDone, isSettled } from './import-step/import-state'
+import { isDone, isSettled, type ObjectsKind } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
+import { importObjectsTab } from './import-objects/open-import-objects'
 import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
 
@@ -100,6 +102,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [discardRun] = useBundleDataImporterAdHocImportDiscardRunMutation()
   const [mergeLeavingOut] = useBundleDataImporterAdHocImportMergeLeavingOutMutation()
   const [withdrawRun] = useBundleDataImporterAdHocImportWithdrawRunMutation()
+  const { openMainWidget } = useWidgetManager()
   const { data: run, fulfilledTimeStamp: runAnsweredAt, refetch: refetchRun } = useBundleDataImporterAdHocImportLoadRunQuery(
     { fileId: runFileId ?? '' },
     { skip: runFileId === null, pollingInterval: runPolling }
@@ -361,6 +364,18 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     onClose()
   }
 
+  // the run stays for the list, which closes the dialog; the run ends by itself with the server's temporary store
+  const showList = (kind: ObjectsKind): void => {
+    if (runFileId === null || !isDone(run)) {
+      return
+    }
+    openMainWidget(importObjectsTab(runFileId, run, kind, t('data-importer.ad-hoc-import.saved-objects.title', {
+      file: run.fileName,
+      interpolation: { escapeValue: false }
+    })))
+    onClose()
+  }
+
   // the server answers the run as its merge starts; the dialog follows it from there
   const mergeWithoutFailed = (): void => {
     if (runFileId === null) {
@@ -534,6 +549,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       { step === IMPORT_STEP && (phase.kind === 'inspected' || runFileId !== null) && (
         <ImportStep
           fileId={ runFileId ?? inspectedFileId() ?? '' }
+          onShowList={ showList }
           run={ run }
           total={ importCount }
           waitingFile={ waitingFile }

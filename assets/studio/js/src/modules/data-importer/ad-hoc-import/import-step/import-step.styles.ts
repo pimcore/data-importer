@@ -25,13 +25,8 @@ export const useStyles = createStyles(({ token, css }) => ({
   muted: css`
     color: ${token.colorTextSecondary};
   `,
-  step: css`
-    display: flex;
-    justify-content: space-between;
-    padding: ${token.paddingXS}px 0;
-    margin-top: ${token.marginSM}px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-weight: 700;
+  stepDetail: css`
+    color: ${token.colorTextSecondary};
   `,
   hint: css`
     margin-top: ${token.marginSM}px;
@@ -55,13 +50,20 @@ export const useStyles = createStyles(({ token, css }) => ({
   resultBarCreated: css`
     background: ${token.colorPrimary};
   `,
+  // light grey, as the design draws it: the theme's disabled text is darkened for contrast, which a bar needs not
   resultBarSkipped: css`
-    background: ${token.colorTextDisabled};
+    background: ${token.colorBorder};
   `,
   resultContent: css`
-    display: flex;
-    gap: ${token.marginXL}px;
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: ${token.marginXXL}px;
     padding: ${token.paddingLG}px ${token.paddingXL}px;
+  `,
+  summary: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${token.marginXXS}px;
   `,
   resultFootnote: css`
     padding: ${token.paddingSM}px ${token.paddingXL}px;
@@ -72,21 +74,26 @@ export const useStyles = createStyles(({ token, css }) => ({
   complete: css`
     display: flex;
     align-items: center;
-    gap: ${token.marginXXS}px;
-    color: ${token.colorSuccess};
+    gap: ${token.marginXS}px;
+    color: ${token.colorSuccessText};
     font-weight: 700;
   `,
   imported: css`
-    font-size: 36px;
-    line-height: 1.2;
+    font-size: ${token.fontSizeHeading1}px;
+    line-height: ${token.lineHeightHeading1};
     font-weight: 700;
+    letter-spacing: -0.5px;
+  `,
+  objectsFrom: css`
+    font-size: ${token.fontSizeLG}px;
+    line-height: ${token.lineHeightLG};
   `,
   lines: css`
-    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   `,
   dot: css`
-    flex: none;
-    align-self: center;
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -98,20 +105,29 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorPrimary};
   `,
   dotSkipped: css`
-    background: ${token.colorTextDisabled};
+    background: ${token.colorBorder};
   `,
+  // dot, label, count and action each in their own column, so the counts and actions line up
   line: css`
-    display: flex;
-    gap: ${token.marginSM}px;
-    align-items: baseline;
-    padding: ${token.paddingSM}px 0;
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) 48px 120px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
     border-bottom: 1px solid ${token.colorBorderSecondary};
-  `,
-  lineLabel: css`
-    flex: 1 1 0;
   `,
   lineCount: css`
     font-weight: 700;
+    text-align: right;
+  `,
+  lineAction: css`
+    display: flex;
+    justify-content: flex-end;
+
+    .ant-btn {
+      padding: 0;
+      height: auto;
+    }
   `,
   notSaved: css`
     margin-bottom: ${token.marginSM}px;

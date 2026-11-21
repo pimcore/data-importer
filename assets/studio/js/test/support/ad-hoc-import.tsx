@@ -114,6 +114,14 @@ export const components = {
       )) }
     </div>
   ),
+  Content: ({ children, loading }: WithChildren & { loading?: boolean }) => <main aria-busy={ loading }>{ children }</main>,
+  ContentLayout: ({ children, renderTopBar, renderToolbar }: WithChildren & { renderTopBar?: React.ReactNode, renderToolbar?: React.ReactNode }) => (
+    <div>
+      <header>{ renderTopBar }</header>
+      { children }
+      <footer>{ renderToolbar }</footer>
+    </div>
+  ),
   Flex: ({ children, role, onClick, onFocus, 'aria-label': label, 'aria-labelledby': labelledBy, 'aria-current': current }: WithChildren & { role?: string, onClick?: () => void, onFocus?: () => void, 'aria-label'?: string, 'aria-labelledby'?: string, 'aria-current'?: 'true' }) => (
     <div
       aria-current={ current }
@@ -325,6 +333,7 @@ export const components = {
       )) }
     </ol>
   ),
+  Toolbar: ({ children }: WithChildren) => <div role="toolbar">{ children }</div>,
   Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
   Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (

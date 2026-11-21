@@ -10,40 +10,12 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Card, Icon, Progress, Spin } from '@pimcore/studio-ui-bundle/components'
+import { Card, Progress } from '@pimcore/studio-ui-bundle/components'
 import { branchStepOf, percentOf, type ImportRun } from './import-state'
 import { useStyles } from './import-step.styles'
+import { StepLine, type StepState } from './step-line'
 
 const CARD_PADDING = { x: 'extra-large', y: 'large' } as const
-
-type StepState = 'done' | 'active' | 'pending'
-
-interface StepLineProps {
-  label: string
-  state: StepState
-  detail?: string
-}
-
-const StepLine = ({ label, state, detail }: StepLineProps): React.JSX.Element => {
-  const { styles } = useStyles()
-
-  return (
-    <div
-      aria-current={ state === 'active' ? 'step' : undefined }
-      className={ styles.branchStep }
-    >
-      { state === 'done' && (
-        <span className={ styles.branchStepDone }>
-          <Icon value="check-circle" />
-        </span>
-      ) }
-      { state === 'active' && <Spin type="classic" /> }
-      { state === 'pending' && <span className={ styles.branchStepPending } /> }
-      <span className={ `${styles.branchStepLabel} ${state === 'active' ? styles.branchStepActive : ''}` }>{ label }</span>
-      { detail !== undefined && <span className={ styles.muted }>{ detail }</span> }
-    </div>
-  )
-}
 
 /**
  * An import through a Change Control branch: its rows are written into the branch, which is checked, then merged.

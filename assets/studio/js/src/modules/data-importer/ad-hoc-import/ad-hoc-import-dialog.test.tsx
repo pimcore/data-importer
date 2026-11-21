@@ -64,8 +64,10 @@ jest.mock('../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [async () => await new Promise(() => {})]
 }))
 jest.mock('@pimcore/studio-ui-bundle/modules/element', () => ({ useElementHelper: () => ({ openElement: jest.fn() }) }))
+jest.mock('@pimcore/studio-ui-bundle/modules/widget-manager', () => ({ useWidgetManager: () => ({ openMainWidget: mockOpenMainWidget }) }))
 
 const mockTrackError = jest.fn()
+const mockOpenMainWidget = jest.fn()
 const mockClasses = jest.fn()
 const mockUploadFile = jest.fn()
 const mockInspectFile = jest.fn()
@@ -1422,6 +1424,21 @@ describe('the preview step', () => {
       expect(mockDiscardRun).toHaveBeenCalledWith({ fileId: 'file-1' })
       expect(mockDeleteFile).not.toHaveBeenCalled()
       expect(onClose).toHaveBeenCalled()
+    })
+
+    it('opens the objects the run updated in a tab of their own, keeping the run for it', async () => {
+      mockLoadRun.mockReturnValue({ refetch: mockRefetchRun, data: runAnswer({ state: 'done', processed: 2, updated: 2, finishedAt: 1_800_000_000 }) })
+      await startImport()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show in a list' }))
+
+      expect(mockOpenMainWidget).toHaveBeenCalledWith(expect.objectContaining({
+        id: 'data-importer-ad-hoc-import-objects-file-1',
+        component: 'data-importer-ad-hoc-import-objects',
+        config: expect.objectContaining({ label: 'Import · prices.csv', fileId: 'file-1', kind: 'updated', updated: 2 })
+      }))
+      expect(onClose).toHaveBeenCalled()
+      expect(mockDiscardRun).not.toHaveBeenCalled()
     })
 
     it('tells the user when forgetting the run fails', async () => {

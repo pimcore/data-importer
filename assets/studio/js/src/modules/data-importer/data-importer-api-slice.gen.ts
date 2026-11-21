@@ -430,6 +430,20 @@ const injectedRtkApi = api
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
+            bundleDataImporterAdHocImportListRunObjects: build.query<
+                BundleDataImporterAdHocImportListRunObjectsApiResponse,
+                BundleDataImporterAdHocImportListRunObjectsApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/${queryArg.fileId}/run/objects`,
+                    params: {
+                        kind: queryArg.kind,
+                        page: queryArg.page,
+                        pageSize: queryArg.pageSize,
+                    },
+                }),
+                providesTags: ["Bundle Data Importer"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -697,6 +711,18 @@ export type BundleDataImporterAdHocImportListWaitingRunsApiResponse =
 export type BundleDataImporterAdHocImportListWaitingRunsApiArg = {
     /** The folder */
     folderId: number;
+};
+export type BundleDataImporterAdHocImportListRunObjectsApiResponse =
+    /** status 200 The objects on the page */ BundleDataImporterAdHocImportRunObjectsResponse;
+export type BundleDataImporterAdHocImportListRunObjectsApiArg = {
+    /** FileId of the file */
+    fileId: string;
+    /** updated or created */
+    kind: string;
+    /** Page, from 1 */
+    page?: number;
+    /** Objects per page, at most 200 */
+    pageSize?: number;
 };
 export type BundleDataImporterAdHocImportDryRunApiResponse =
     /** status 200 Every row of the file with what its import would do */ BundleDataImporterAdHocImportDryRunResponse;
@@ -1232,6 +1258,24 @@ export type BundleDataImporterAdHocImportRunResponse = {
         message: string;
     }[];
 };
+export type BundleDataImporterAdHocImportRunObjectsResponse = {
+    /** The objects of the kind the run saved */
+    totalItems: number;
+    /** The fields the file wrote, in the order of the values */
+    fields: {
+        key: string;
+        label: string;
+    }[];
+    /** The objects on the page; one deleted since or no longer visible to the user is left out */
+    items: {
+        id: number;
+        fullPath: string;
+        /** As a timestamp */
+        modificationDate: number | null;
+        /** Per field, its value as the object holds it now */
+        values: (string | null)[];
+    }[];
+};
 export type BundleDataImporterAdHocImportWaitingRunsResponse = {
     /** The imports into the folder that wait for a decision of the user */
     items: {
@@ -1370,4 +1414,5 @@ export const {
     useBundleDataImporterAdHocImportMergeLeavingOutMutation,
     useBundleDataImporterAdHocImportWithdrawRunMutation,
     useBundleDataImporterAdHocImportListWaitingRunsQuery,
+    useBundleDataImporterAdHocImportListRunObjectsQuery,
 } = injectedRtkApi;

@@ -145,6 +145,10 @@ export const api = baseApi.enhanceEndpoints({
     // asked once as the dialog opens
     bundleDataImporterAdHocImportListWaitingRuns: {
       providesTags: []
+    },
+    // what an ended run saved does not change
+    bundleDataImporterAdHocImportListRunObjects: {
+      providesTags: []
     }
   }
 })
@@ -172,7 +176,8 @@ export const {
   useBundleDataImporterAdHocImportDiscardRunMutation,
   useBundleDataImporterAdHocImportMergeLeavingOutMutation,
   useBundleDataImporterAdHocImportWithdrawRunMutation,
-  useBundleDataImporterAdHocImportListWaitingRunsQuery
+  useBundleDataImporterAdHocImportListWaitingRunsQuery,
+  useBundleDataImporterAdHocImportListRunObjectsQuery
 } = api
 
 export type * from './data-importer-api-slice.gen'

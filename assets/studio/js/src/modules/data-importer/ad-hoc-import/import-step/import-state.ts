@@ -48,4 +48,8 @@ export const branchStepOf = (run: ImportRun): BranchStep => {
 
 export const failedRowsUrl = (fileId: string): string => `${fileUrl(fileId)}/failed-rows`
 
+export type ObjectsKind = 'updated' | 'created'
+
+export const objectsExportUrl = (fileId: string, kind: ObjectsKind): string => `${fileUrl(fileId)}/run/objects/export?kind=${kind}`
+
 export const skippedRowsUrl = (fileId: string, errorMode: ErrorMode): string => `${fileUrl(fileId)}/skipped-rows?errorMode=${errorMode}`
