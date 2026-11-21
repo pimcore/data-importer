@@ -263,6 +263,13 @@ class AdHocImportEndpointsTest extends Unit
             'columns' => [self::NAME_COLUMN],
             'columnsBy' => 'name',
             'unusable' => null,
+            'format' => 'xlsx',
+            'sheet' => 'Products',
+            'headerRow' => true,
+            'source' => 'sftp',
+            'sourcePath' => '/in/products.xlsx',
+            'fieldCount' => 18,
+            'transformedCount' => 6,
         ];
         $answer = json_decode(
             $serializer->serialize(new AdHocImportConfigurationsResponse([$configuration]), 'json'),
