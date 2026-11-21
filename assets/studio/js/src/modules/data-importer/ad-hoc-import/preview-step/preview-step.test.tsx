@@ -15,7 +15,7 @@ import { type DryRun, type DryRunRow } from './preview-state'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: { error: 'error', warning: 'warning' } })
+  createStyles: () => () => ({ styles: { error: 'error', warning: 'warning', rowNumber: 'row-number' } })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 
@@ -117,6 +117,18 @@ describe('the preview step', () => {
 
     expect(cells()[0][2]).toBe('skipped')
     expect(cells()[0][5]).toBe('Basics › height is required')
+  })
+
+  it('sets the row number apart from the values', () => {
+    render(<PreviewStep
+      dryRun={ dryRun() }
+      errorMode="skip"
+           />)
+
+    const numbers = within(screen.getByRole('table')).getAllByRole('row').slice(1)
+      .map((tableRow) => within(tableRow).getAllByRole('cell')[0].querySelector('span'))
+    expect(numbers.map((cell) => [cell?.textContent, cell?.classList.contains('row-number')]))
+      .toEqual([['2', true], ['3', true], ['4', true], ['5', true]])
   })
 
   it('marks the message of a skipped row as an error and of a row imported without values as a warning', () => {

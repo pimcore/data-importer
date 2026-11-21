@@ -81,6 +81,7 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
         id: 'row',
         header: t('data-importer.ad-hoc-import.preview.column.row'),
         accessorFn: (row) => String(row.row),
+        cell: ({ getValue }) => <span className={ `${styles.cell} ${styles.rowNumber}` }>{ getValue<string>() }</span>,
         size: 64
       },
       {

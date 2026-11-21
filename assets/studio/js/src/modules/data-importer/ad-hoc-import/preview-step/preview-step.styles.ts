@@ -65,11 +65,15 @@ export const useStyles = createStyles(({ token, css }) => ({
   matchValue: css`
     font-weight: ${token.fontWeightStrong};
   `,
+  rowNumber: css`
+    color: ${token.colorTextTertiary};
+  `,
+  // the error text tokens fail AA contrast on the tinted rows, these darker shades of the same hues pass
   error: css`
-    color: ${token.colorErrorText};
+    color: ${token.red7};
   `,
   warning: css`
-    color: ${token.colorWarningText};
+    color: ${token.Colors.Brand.Warning.colorWarningText};
   `,
   // Studio's grid takes no class per row, a row is tinted through what its cells hold
   grid: css`
