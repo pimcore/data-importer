@@ -22,6 +22,7 @@ import { settingsOf } from '../file-step/file-settings'
 import { type FilePhase } from '../file-step/file-step-state'
 import { type MappingField, type MappingRow, type TransformationStep } from './mapping-state'
 import { DEFAULT_SETTINGS, mapListsDiffer, TransformationSettings } from './transformation-settings'
+import { inPreviewTurn } from './preview-turn'
 
 // a pause in typing before the values are run again
 const PREVIEW_DELAY = 300
@@ -117,8 +118,9 @@ export const useTransformationPreview = (
     setIsLoading(true)
 
     const timer = setTimeout(() => {
-      void preview(transformationRequest(source, row.column, field.key, steps)).then((result) => {
-        if (request !== latest.current) {
+      const wanted = (): boolean => request === latest.current
+      void inPreviewTurn(wanted, async () => await preview(transformationRequest(source, row.column, field.key, steps))).then((result) => {
+        if (result === null || !wanted()) {
           return
         }
         setIsLoading(false)
@@ -132,7 +134,11 @@ export const useTransformationPreview = (
       })
     }, PREVIEW_DELAY)
 
-    return () => { clearTimeout(timer) }
+    return () => {
+      clearTimeout(timer)
+      // an unmounted row or changed steps no longer want the answer, so a queued request is not sent
+      latest.current += 1
+    }
     // the settings by their values: another object with the same ones asks nothing new
   }, [steps, source?.fileId, source?.classId, settingsKey, row.column, field?.key, preview])
 

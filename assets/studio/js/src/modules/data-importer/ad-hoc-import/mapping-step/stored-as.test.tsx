@@ -134,6 +134,73 @@ describe('what a column is stored as', () => {
   })
 })
 
+const answerAll = async (pending: Array<() => void>): Promise<void> => {
+  for (let round = 0; round < 3; round++) {
+    await act(async () => {
+      pending.splice(0).forEach((resolve) => { resolve() })
+      for (let tick = 0; tick < 6; tick++) {
+        await Promise.resolve()
+      }
+    })
+  }
+}
+
+const renderRows = (columns: MappingRow[]): void => {
+  render(
+    <ul>
+      { columns.map((shown) => (
+        <MappingRowView
+          fields={ [price] }
+          isActive={ false }
+          key={ shown.column }
+          languages={ ['en'] }
+          mapping={ { basis: '', rows: columns } }
+          onChange={ () => {} }
+          onOpenField={ () => {} }
+          onPickStoreKey={ () => {} }
+          onSkip={ () => {} }
+          row={ shown }
+          source={ source }
+        />
+      )) }
+    </ul>
+  )
+}
+
+describe('many mapped columns', () => {
+  it('asks the server for a few columns at a time, not for all of them at once', async () => {
+    const pending: Array<() => void> = []
+    mockPreview.mockImplementation(async () => await new Promise((resolve) => {
+      pending.push(() => { resolve({ data: answer() }) })
+    }))
+    const columns = Array.from({ length: 12 }, (_, index) => ({ ...row, column: `Preis ${index}`, label: `Preis ${index}` }))
+    renderRows(columns)
+    await settle()
+
+    expect(mockPreview).toHaveBeenCalledTimes(4)
+
+    await answerAll(pending)
+
+    expect(mockPreview).toHaveBeenCalledTimes(12)
+    expect(screen.getAllByText('1189.9')).toHaveLength(12)
+  })
+
+  it('does not send a waiting request once its column is gone', async () => {
+    const pending: Array<() => void> = []
+    mockPreview.mockImplementation(async () => await new Promise((resolve) => {
+      pending.push(() => { resolve({ data: answer() }) })
+    }))
+    const columns = Array.from({ length: 12 }, (_, index) => ({ ...row, column: `Preis ${index}`, label: `Preis ${index}` }))
+    renderRows(columns)
+    await settle()
+    cleanup()
+
+    await answerAll(pending)
+
+    expect(mockPreview).toHaveBeenCalledTimes(4)
+  })
+})
+
 describe('a column\'s field in the table', () => {
   it('offers its suggestion by name, as the button\'s name says', () => {
     renderRow({ choice: undefined, auto: false, suggestion: { field: 'price', language: null, score: 90 } })
