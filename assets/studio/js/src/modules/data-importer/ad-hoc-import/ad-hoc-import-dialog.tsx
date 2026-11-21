@@ -364,7 +364,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     onClose()
   }
 
-  // the run stays for the list, which closes the dialog; the run ends by itself with the server's temporary store
+  // the run stays for the list, so the dialog closes without forgetting it; the server's temporary store drops it in a week
   const showList = (kind: ObjectsKind): void => {
     if (runFileId === null || !isDone(run)) {
       return

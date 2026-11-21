@@ -590,7 +590,7 @@ data-importer.ad-hoc-import.saved-objects.export: Export CSV
 data-importer.ad-hoc-import.saved-objects.filtered: 'The grid of the folder, filtered to the objects of this import'
 data-importer.ad-hoc-import.saved-objects.modified: Modified
 data-importer.ad-hoc-import.saved-objects.path: Path
-data-importer.ad-hoc-import.saved-objects.gone: 'This import''s objects can no longer be listed: the import was closed, or it ended more than a day ago.'
+data-importer.ad-hoc-import.saved-objects.gone: 'This import''s objects can no longer be listed: the import was closed, or it ended more than a week ago.'
 data-importer.ad-hoc-import.run.branch.written: Written into a branch
 data-importer.ad-hoc-import.run.branch.objects: '{{count}} objects'
 data-importer.ad-hoc-import.run.branch.checking: 'Checking: rights, keys, values'
