@@ -54,13 +54,19 @@ class AdHocImportRunObjectsServiceTest extends Unit
         $answer = $this->service()->objects(AdHocRunFixtures::FILE_ID, 'updated', 1, 50);
 
         $this->assertSame(3, $answer->getTotalItems(), 'every object the run updated counts');
-        $this->assertSame([['key' => 'name', 'label' => 'Name'], ['key' => 'price', 'label' => 'Price']], $answer->getFields());
+        $this->assertSame(
+            [['key' => 'name', 'label' => 'Name'], ['key' => 'price', 'label' => 'Price']],
+            $answer->getFields()
+        );
         $this->assertSame(
             [
                 [11, '/Products/Outdoor/NH-1001', ['Trail jacket', '189.9']],
                 [12, '/Products/Outdoor/NH-1002', ['Rain pants', null]],
             ],
-            array_map(static fn (array $item): array => [$item['id'], $item['fullPath'], $item['values']], $answer->getItems()),
+            array_map(
+                static fn (array $item): array => [$item['id'], $item['fullPath'], $item['values']],
+                $answer->getItems()
+            ),
             'an object the user may no longer see is left out'
         );
     }

@@ -69,7 +69,17 @@ class AdHocRunRecordTest extends Unit
             AdHocRunFixtures::writer(),
             AdHocRunFixtures::writer(key: 'price'),
         ];
-        $plan = new DryRunPlan([], 2, $this->createStub(RowMatcherInterface::class), $writers, [0, 1, 2, 3], 'SKU', '/', '/', AdHocRunFixtures::user());
+        $plan = new DryRunPlan(
+            [],
+            2,
+            $this->createStub(RowMatcherInterface::class),
+            $writers,
+            [0, 1, 2, 3],
+            'SKU',
+            '/',
+            '/',
+            AdHocRunFixtures::user()
+        );
 
         $this->assertSame(
             [

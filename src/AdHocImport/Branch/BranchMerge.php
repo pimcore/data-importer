@@ -334,9 +334,11 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
 
     /**
      * Every row still in the branch fails with the same reason, and the run ends.
+     * No merge wrote anything, so no object counts as saved by the run.
      */
     private function failRemaining(RunRecord $run, User $user, string $message): RunRecord
     {
+        $run = $run->withObjects([], []);
         $failures = $this->storedFailures($run);
         foreach ($this->runs->recorded($run) as $row) {
             $run = $run->failedAfterWrite($row->action);

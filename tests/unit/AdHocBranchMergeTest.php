@@ -665,6 +665,25 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $this->assertSame(array_fill(2, 3, 'data-importer.ad-hoc-import.run.save-failed-unknown'), $this->failures());
     }
 
+    public function testAFailedMergeListsNoObjectAsSaved(): void
+    {
+        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+
+        $this->merge()->rowsWritten(
+            $this->branchRun(['updatedIds' => [42, 43]]),
+            null,
+            AdHocRunFixtures::user(),
+            []
+        );
+
+        $run = $this->stored();
+        $this->assertSame(
+            [[], []],
+            [$run->updatedIds, $run->createdIds],
+            'the objects counted while writing into the branch were never saved'
+        );
+    }
+
     public function testABranchWithoutARowIsClosedWithoutAMerge(): void
     {
         $run = $this->branchRun(['updated' => 0, 'created' => 0, 'total' => 1]);
