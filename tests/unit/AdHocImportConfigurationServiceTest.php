@@ -192,6 +192,13 @@ class AdHocImportConfigurationServiceTest extends Unit
             'columns' => [self::NAME_COLUMN, 'Price'],
             'columnsBy' => 'name',
             'unusable' => null,
+            'format' => 'csv',
+            'sheet' => null,
+            'headerRow' => true,
+            'source' => 'upload',
+            'sourcePath' => null,
+            'fieldCount' => 2,
+            'transformedCount' => 0,
         ], $configuration);
     }
 
