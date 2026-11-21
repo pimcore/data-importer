@@ -44,6 +44,13 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   columns: ['1', '0'],
   columnsBy: 'position',
   unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0,
   ...given
 })
 

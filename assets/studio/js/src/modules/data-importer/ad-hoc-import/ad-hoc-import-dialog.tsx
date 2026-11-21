@@ -521,7 +521,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       { step === 1 && objects.classId !== undefined && (
         <MappingStep
           classId={ objects.classId }
-          configuration={ configurationMapping.choice }
+          configuration={ { ...configurationMapping.choice, fileName: phase.kind === 'inspected' ? phase.file.name : undefined } }
           fields={ fields }
           isLoading={ isLoadingMapping }
           mapWith={ configurationMapping.mapWith }

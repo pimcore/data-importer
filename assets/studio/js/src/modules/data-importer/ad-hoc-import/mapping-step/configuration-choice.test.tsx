@@ -63,6 +63,13 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   columns: ['Name DE', 'Preis'],
   columnsBy: 'name',
   unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0,
   ...given
 })
 
@@ -117,7 +124,7 @@ describe('the mapping with a configuration', () => {
     expect(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }).getAttribute('aria-checked')).toBe('true')
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
     expect(cards().map((shown) => shown.getAttribute('aria-label'))).toEqual(['products', 'prices'])
-    expect(cards().map(detailOf)).toEqual(['Product', 'Product'])
+    expect(cards().map(detailOf)).toEqual(['Product · CSV · 2 fields', 'Product · CSV · 2 fields'])
     expect(screen.getByText('Only those you may read in the Data Hub')).toBeTruthy()
     expect(screen.getByText('Choose a configuration')).toBeTruthy()
   })
@@ -226,9 +233,10 @@ describe('the mapping with a configuration', () => {
 
     const summary = within(screen.getByRole('region', { name: 'products' }))
     expect(summary.getByText('Product')).toBeTruthy()
-    expect(summary.getByText('name (de) from column Name DE')).toBeTruthy()
+    expect(summary.getByText('name (de) ← Name DE')).toBeTruthy()
     expect(summary.getByText('/Products & more/Imported')).toBeTruthy()
-    expect(screen.queryByText(/Columns it reads/)).toBeNull()
+    expect(summary.getByText('read only')).toBeTruthy()
+    expect(screen.queryByText(/the configuration reads/)).toBeNull()
   })
 
   it('names the match of one without a language, and of one by the object ID', () => {
@@ -239,11 +247,11 @@ describe('the mapping with a configuration', () => {
       ]
     })
     choose('products')
-    expect(screen.getByText('name from column Name DE')).toBeTruthy()
+    expect(screen.getByText('name ← Name DE')).toBeTruthy()
 
     choose('by-id')
     const summary = within(screen.getByRole('region', { name: 'by-id' }))
-    expect(summary.getByText('Object ID from column Artikelnr')).toBeTruthy()
+    expect(summary.getByText('Object ID ← Artikelnr')).toBeTruthy()
     expect(summary.getByText('PROD')).toBeTruthy()
   })
 
@@ -261,15 +269,83 @@ describe('the mapping with a configuration', () => {
     useConfiguration({ configurations: [configuration({ columns: ['Name DE', 'EAN', 'Weight & size'] })] })
     choose('products')
 
-    expect(screen.getByText('Columns it reads that the file does not have: EAN, Weight & size')).toBeTruthy()
+    expect(screen.getByText('2 columns the configuration reads are missing in this file: “EAN”, “Weight & size”. Those fields stay as they are.')).toBeTruthy()
   })
 
   it('finds the columns of one that names them by position in a file with a header row', () => {
     useConfiguration({ configurations: [configuration({ columnsBy: 'position', matchColumn: '1', columns: ['1', '2', '7'] })] })
     choose('products')
 
-    expect(screen.getByText('name (de) from column Name DE')).toBeTruthy()
-    expect(screen.getByText('Columns it reads that the file does not have: 7')).toBeTruthy()
+    expect(screen.getByText('name (de) ← Name DE')).toBeTruthy()
+    expect(screen.getByText('1 column the configuration reads is missing in this file: “7”. That field stays as it is.')).toBeTruthy()
+  })
+
+  it('shows the source it reads instead of this upload, its file format and its mapping', () => {
+    render(
+      <ConfigurationChoice
+        chosen="northhike"
+        configurations={ [configuration({
+          name: 'northhike',
+          format: 'xlsx',
+          sheet: 'Products & more',
+          source: 'sftp',
+          sourcePath: '/in/northhike',
+          fieldCount: 18,
+          transformedCount: 6
+        })] }
+        fileName="autumn & winter.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = screen.getByRole('region', { name: 'northhike' })
+    expect(summary.querySelector('s')?.textContent).toBe('SFTP /in/northhike')
+    expect(summary.textContent).toContain('SFTP /in/northhike → this upload: autumn & winter.csv')
+    expect(within(summary).getByText(/^XLSX, sheet “Products & more”, header row 1/)).toBeTruthy()
+    // the file is a CSV, so the format does not match it
+    expect(within(summary).queryByText('matches the file')).toBeNull()
+    expect(within(summary).getByText('18 fields, 6 with transformations')).toBeTruthy()
+    expect(detailOf(card('northhike'))).toBe('Product · XLSX · 18 fields')
+  })
+
+  it('says the format matches the file, and names an upload without a path and one field', () => {
+    render(
+      <ConfigurationChoice
+        chosen="products"
+        configurations={ [configuration({ headerRow: false, fieldCount: 1, transformedCount: 0 })] }
+        fileName="products.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = within(screen.getByRole('region', { name: 'products' }))
+    expect(summary.getByText('Upload')).toBeTruthy()
+    expect(summary.getByText('matches the file')).toBeTruthy()
+    expect(summary.getByText('1 field, 0 with transformations')).toBeTruthy()
+    expect(summary.queryByText(/header row/)).toBeNull()
+  })
+
+  it('names only this upload for a configuration whose source is unknown', () => {
+    render(
+      <ConfigurationChoice
+        chosen="products"
+        configurations={ [configuration({ source: null, format: null })] }
+        fileName="products.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = screen.getByRole('region', { name: 'products' })
+    expect(summary.querySelector('s')).toBeNull()
+    expect(within(summary).getByText('this upload: products.csv')).toBeTruthy()
+    expect(within(summary).queryByText('matches the file')).toBeNull()
+    expect(detailOf(card('products'))).toBe('Product · 2 fields')
   })
 
   it('shows a failed listing instead of saying there is none', () => {

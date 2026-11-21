@@ -193,7 +193,14 @@ const productsConfiguration = {
   newObjectsFolder: '/Products/Imported',
   columns: ['Artikelnr', 'Bezeichnung'],
   columnsBy: 'name',
-  unusable: null
+  unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0
 }
 
 const closedConfiguration = { ...productsConfiguration, name: 'closed', unusable: 'folder-not-allowed' }
