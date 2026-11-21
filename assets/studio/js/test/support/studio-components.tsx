@@ -12,6 +12,8 @@
 import React from 'react'
 import DisabledContext from 'antd/lib/config-provider/DisabledContext'
 
+import { Button as AntdButton } from 'antd'
+
 export { Form } from 'antd'
 
 interface WithChildren {
@@ -66,12 +68,12 @@ export const Button = ({ children, disabled, onClick }: WithChildren & { disable
   </button>
 )
 
+// Studio's IconButton is antd's Button, so a surrounding ConfigProvider disables it unless disabled is passed
 export const IconButton = ({ disabled, icon, onClick }: { disabled?: boolean, icon: { value: string }, onClick?: () => void }): React.JSX.Element => (
-  <button
+  <AntdButton
     aria-label={ icon.value }
     disabled={ disabled }
     onClick={ onClick }
-    type="button"
   />
 )
 
