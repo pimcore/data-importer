@@ -65,6 +65,13 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorPrimary};
     color: ${token.colorTextLightSolid};
   `,
+  chipConversion: css`
+    padding: 0 6px;
+    border: 1px dashed ${token.colorBorder};
+    border-radius: ${token.borderRadiusSM}px;
+    background: ${token.colorBgContainer};
+    color: ${token.colorTextSecondary};
+  `,
   chipResult: css`
     padding: 0 6px;
     border: 1px solid ${token.colorSuccessBorder};

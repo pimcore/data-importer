@@ -30,6 +30,8 @@ jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
 }))
 // loads its keys from the server, which the field panel's test stands in for
 jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
+// what a column is stored as asks the server on its own; its own tests count those requests
+jest.mock('./stored-as', () => ({ StoredAs: () => null }))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [mockPreview]
 }))

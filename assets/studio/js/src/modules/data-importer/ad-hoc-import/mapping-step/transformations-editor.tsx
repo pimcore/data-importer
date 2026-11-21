@@ -9,8 +9,8 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Flex, IconButton, Text } from '@pimcore/studio-ui-bundle/components'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { Alert, Button, Card, Flex, Text } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import { useBundleDataImporterAdHocImportPreviewTransformationsMutation } from '../../data-importer-api-slice-enhanced'
 import {
@@ -27,6 +27,26 @@ import { DEFAULT_SETTINGS, mapListsDiffer, TransformationSettings } from './tran
 const PREVIEW_DELAY = 300
 
 const PREFIX = 'data-importer.ad-hoc-import.transformations'
+
+const useStyles = createStyles(({ token, css }) => ({
+  step: css`
+    &, &.ant-card {
+      border-color: ${token.colorPrimaryBorder};
+    }
+  `,
+  grow: css`
+    flex-grow: 1;
+  `,
+  offered: css`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+
+    .ant-btn {
+      justify-content: flex-start;
+    }
+  `
+}))
 
 // what the transformations run on: the stored file under its settings, and the class imported into
 export interface TransformationSource {
@@ -128,6 +148,7 @@ export interface TransformationsEditorProps {
 
 export const TransformationsEditor = ({ field, steps, preview: { answer, isLoading }, onChange }: TransformationsEditorProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const label = (type: string): string => t(`${PREFIX}.type.${type}`)
 
   const add = (type: string): void => {
@@ -164,47 +185,56 @@ export const TransformationsEditor = ({ field, steps, preview: { answer, isLoadi
           const value = answer?.steps[position]?.values[firstValueRow(answer)]
 
           return (
-            <Flex
-              gap="small"
+            <Card
+              className={ styles.step }
+              contentPadding={ { x: 'small', y: 'small' } }
               key={ `${position}-${step.type}` }
               role="listitem"
-              vertical
             >
               <Flex
-                align="center"
                 gap="small"
+                vertical
               >
-                <Text strong>{ `${position + 1}. ${label(step.type)}` }</Text>
-                { value !== undefined && <Text type="secondary">{ `→ ${cellText(t, value)}` }</Text> }
-                <IconButton
-                  aria-label={ t(`${PREFIX}.remove`, { step: label(step.type) }) }
-                  icon={ { value: 'trash' } }
-                  onClick={ () => { remove(position) } }
-                  type="link"
+                <Flex
+                  align="center"
+                  gap="small"
+                >
+                  <Text
+                    className={ styles.grow }
+                    strong
+                  >
+                    { `${position + 1}. ${label(step.type)}` }
+                  </Text>
+                  { value !== undefined && <Text type="secondary">{ `→ ${cellText(t, value)}` }</Text> }
+                  <Button
+                    aria-label={ t(`${PREFIX}.remove`, { step: label(step.type) }) }
+                    danger
+                    onClick={ () => { remove(position) } }
+                    type="link"
+                  >
+                    { t(`${PREFIX}.remove-short`) }
+                  </Button>
+                </Flex>
+                <TransformationSettings
+                  id={ `transformation-${position}` }
+                  onChange={ (settings) => { change(position, settings) } }
+                  step={ step }
                 />
+                { error !== null && error !== undefined && (
+                  <Alert
+                    message={ t(mapListsDiffer(step) ? `${PREFIX}.map.unequal` : `${PREFIX}.step-error`) }
+                    showIcon
+                    type="error"
+                  />
+                ) }
               </Flex>
-              <TransformationSettings
-                id={ `transformation-${position}` }
-                onChange={ (settings) => { change(position, settings) } }
-                step={ step }
-              />
-              { error !== null && error !== undefined && (
-                <Alert
-                  message={ t(mapListsDiffer(step) ? `${PREFIX}.map.unequal` : `${PREFIX}.step-error`) }
-                  showIcon
-                  type="error"
-                />
-              ) }
-            </Flex>
+            </Card>
           )
         }) }
       </Flex>
 
       <Text strong>{ t(`${PREFIX}.add`) }</Text>
-      <Flex
-        gap="small"
-        wrap="wrap"
-      >
+      <div className={ styles.offered }>
         { offered.map((type) => (
           <Button
             disabled={ !settled }
@@ -214,7 +244,7 @@ export const TransformationsEditor = ({ field, steps, preview: { answer, isLoadi
             { `+ ${label(type)}` }
           </Button>
         )) }
-      </Flex>
+      </div>
 
       { answer !== null && !answer.fits && (
         <Alert

@@ -17,7 +17,10 @@ import { TransformationSettings } from './transformation-settings'
 import { TransformationsEditor, useTransformationPreview, transformationSourceOf, type TransformationSource } from './transformations-editor'
 import { type InspectedFile } from '../file-step/file-step-state'
 
-jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../../test/support/ad-hoc-import'))
+jest.mock('@pimcore/studio-ui-bundle/app', () => ({
+  ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
+  createStyles: () => () => ({ styles: {} })
+}))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   ApiError: class { constructor (readonly details: unknown) {} },

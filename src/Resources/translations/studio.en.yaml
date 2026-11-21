@@ -392,6 +392,9 @@ data-importer.ad-hoc-import.mapping.dont-import: Don't import
 data-importer.ad-hoc-import.mapping.required-field: '{{field}} (required)'
 data-importer.ad-hoc-import.mapping.choose-field: Choose field
 data-importer.ad-hoc-import.mapping.use-suggestion: 'Use {{field}}?'
+data-importer.ad-hoc-import.mapping.use-suggestion.lead: Use
+data-importer.ad-hoc-import.mapping.use-suggestion.end: '?'
+data-importer.ad-hoc-import.mapping.change-field: Change field
 data-importer.ad-hoc-import.mapping.object-id: Object ID
 data-importer.ad-hoc-import.mapping.match: Finds the objects
 data-importer.ad-hoc-import.mapping.auto: auto
@@ -418,6 +421,7 @@ data-importer.ad-hoc-import.mapping.auto-note.pending-one: 1 column has a sugges
 data-importer.ad-hoc-import.mapping.head.column: Column in your file
 data-importer.ad-hoc-import.mapping.head.field: Goes into field
 data-importer.ad-hoc-import.mapping.head.transformations: Transformations
+data-importer.ad-hoc-import.mapping.head.stored-as: Stored as
 data-importer.ad-hoc-import.mapping.sample: 'e.g. “{{value}}”'
 data-importer.ad-hoc-import.mapping.skip: Skip
 data-importer.ad-hoc-import.mapping.skip-column: 'Don''t import {{column}}'
@@ -452,11 +456,32 @@ data-importer.ad-hoc-import.configuration.unusable.folder-missing: its folder fo
 data-importer.ad-hoc-import.configuration.unusable.folder-not-allowed: you may not create objects in its folder
 data-importer.ad-hoc-import.configuration.unusable.match-column: 'the file has no column {{column}} to match by'
 data-importer.ad-hoc-import.configuration.replaces: 'Used as it is, read only; its class, matching and folder replace those from File.'
-data-importer.ad-hoc-import.configuration.match-object-id: 'Object ID from column {{column}}'
-data-importer.ad-hoc-import.configuration.match-field: '{{field}} from column {{column}}'
-data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) from column {{column}}'
+data-importer.ad-hoc-import.configuration.match-object-id: 'Object ID ← {{column}}'
+data-importer.ad-hoc-import.configuration.match-field: '{{field}} ← {{column}}'
+data-importer.ad-hoc-import.configuration.match-field-language: '{{field}} ({{language}}) ← {{column}}'
 data-importer.ad-hoc-import.configuration.match-none: Every row creates a new object, keyed by the file step's column
-data-importer.ad-hoc-import.configuration.missing-columns: 'Columns it reads that the file does not have: {{columns}}'
+data-importer.ad-hoc-import.configuration.missing-columns: '{{count}} columns the configuration reads are missing in this file: {{columns}}. Those fields stay as they are.'
+data-importer.ad-hoc-import.configuration.missing-columns-one: '1 column the configuration reads is missing in this file: {{columns}}. That field stays as it is.'
+data-importer.ad-hoc-import.configuration.field-count: '{{count}} fields'
+data-importer.ad-hoc-import.configuration.field-count-one: 1 field
+data-importer.ad-hoc-import.configuration.read-only: read only
+data-importer.ad-hoc-import.configuration.source: Source
+data-importer.ad-hoc-import.configuration.source.sftp: SFTP
+data-importer.ad-hoc-import.configuration.source.http: HTTP
+data-importer.ad-hoc-import.configuration.source.asset: Asset
+data-importer.ad-hoc-import.configuration.source.upload: Upload
+data-importer.ad-hoc-import.configuration.source.push: Push
+data-importer.ad-hoc-import.configuration.source.sql: SQL
+data-importer.ad-hoc-import.configuration.source.this-upload: 'this upload: {{file}}'
+data-importer.ad-hoc-import.configuration.file-format: File format
+data-importer.ad-hoc-import.configuration.format.sheet: 'sheet “{{sheet}}”'
+data-importer.ad-hoc-import.configuration.format.header-row: header row 1
+data-importer.ad-hoc-import.configuration.format.matches: matches the file
+data-importer.ad-hoc-import.configuration.match-by: Match by
+data-importer.ad-hoc-import.configuration.new-objects-go-to: New objects go to
+data-importer.ad-hoc-import.configuration.mapping: Mapping
+data-importer.ad-hoc-import.configuration.mapping-count: '{{count}} fields, {{transformed}} with transformations'
+data-importer.ad-hoc-import.configuration.mapping-count-one: '1 field, {{transformed}} with transformations'
 data-importer.ad-hoc-import.mapping.transformations: Transformations
 data-importer.ad-hoc-import.mapping.transform: Transform…
 data-importer.ad-hoc-import.mapping.transformation-one: 1 transformation
@@ -467,6 +492,7 @@ data-importer.ad-hoc-import.mapping.not-fitting: 'Columns whose values do not fi
 data-importer.ad-hoc-import.transformations.intro: Applied top to bottom to this column's value, before the automatic conversion for the field's type.
 data-importer.ad-hoc-import.transformations.add: Add transformation
 data-importer.ad-hoc-import.transformations.remove: 'Remove {{step}}'
+data-importer.ad-hoc-import.transformations.remove-short: Remove
 data-importer.ad-hoc-import.transformations.type.trim: Trim
 data-importer.ad-hoc-import.transformations.type.stringReplace: Replace text
 data-importer.ad-hoc-import.transformations.type.conditionalConversion: Map values
@@ -494,6 +520,11 @@ data-importer.ad-hoc-import.transformations.conversion.date: Converted to a date
 data-importer.ad-hoc-import.transformations.conversion.asArray: Converted to a list of one value for the field.
 data-importer.ad-hoc-import.transformations.conversion.gallery: Converted to a gallery for the field.
 data-importer.ad-hoc-import.transformations.conversion.boolean: Converted to yes or no for the field.
+data-importer.ad-hoc-import.transformations.conversion-short.numeric: number
+data-importer.ad-hoc-import.transformations.conversion-short.date: date
+data-importer.ad-hoc-import.transformations.conversion-short.asArray: list
+data-importer.ad-hoc-import.transformations.conversion-short.gallery: gallery
+data-importer.ad-hoc-import.transformations.conversion-short.boolean: yes / no
 data-importer.ad-hoc-import.transformations.empty: (empty)
 data-importer.ad-hoc-import.transformations.failed: Cannot be converted
 data-importer.ad-hoc-import.check.object-id: Object ID

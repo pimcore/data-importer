@@ -15,6 +15,8 @@ import { chooseField, fitsField, type Mapping, type MappingField, type MappingRo
 import { chooseLanguage, freeLanguages } from './mapping-choices'
 import { canGoInto, takenFields } from './taken-fields'
 import { useStyles } from './mapping-row.styles'
+import { StoredAs } from './stored-as'
+import { type TransformationSource } from './transformations-editor'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
 
@@ -40,6 +42,8 @@ export interface MappingRowViewProps {
   onOpenField: (column: string) => void
   onOpenTransformations?: (column: string) => void
   onSkip: (column: string) => void
+  // what the column's values run on to show what they are stored as; none, nothing is shown
+  source: TransformationSource | null
 }
 
 type ChoiceDetailsProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'languages' | 'onChange' | 'onPickStoreKey'>
@@ -127,11 +131,15 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         </button>
         { offered && (
           <button
+            aria-label={ t(`${MAPPING}.use-suggestion`, { field: suggested.title, interpolation: { escapeValue: false } }) }
             className={ styles.suggestion }
             onClick={ () => { onChange(chooseField(mapping, column, suggested.key)) } }
             type="button"
           >
-            { t(`${MAPPING}.use-suggestion`, { field: suggested.title, interpolation: { escapeValue: false } }) }
+            <span className={ styles.suggestionIcon }><Icon value="auto-save" /></span>
+            <span className={ styles.suggestionLead }>{ t(`${MAPPING}.use-suggestion.lead`) }</span>
+            <strong>{ suggested.title }</strong>
+            { t(`${MAPPING}.use-suggestion.end`) }
           </button>
         ) }
       </Flex>
@@ -147,6 +155,7 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         aria-label={ openLabel }
         className={ styles.fieldButton }
         onClick={ () => { onOpenField(column) } }
+        title={ t(`${MAPPING}.change-field`) }
         type="button"
       >
         <span className={ styles.fieldIcon }><Icon value={ iconOf(field) } /></span>
@@ -160,6 +169,12 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
             { t(`${MAPPING}.auto`) }
           </Tag>
         ) }
+        <span
+          aria-hidden
+          className={ `${styles.pen} field-pen` }
+        >
+          <Icon value="edit-pen" />
+        </span>
       </button>
       <ChoiceDetails
         languages={ languages }
@@ -182,7 +197,8 @@ export const MappingRowView = ({
   onPickStoreKey,
   onOpenField,
   onOpenTransformations,
-  onSkip
+  onSkip,
+  source
 }: MappingRowViewProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -242,6 +258,13 @@ export const MappingRowView = ({
           </Button>
         ) }
         { !fitsField(row, fields) && <Tag color="warning">{ t(`${MAPPING}.needs-transformation`) }</Tag> }
+      </div>
+      <div className={ styles.cell }>
+        <StoredAs
+          field={ fields.find(({ key }) => key === choice?.field) }
+          row={ row }
+          source={ source }
+        />
       </div>
       <div className={ styles.skip }>
         { !isMatch && (

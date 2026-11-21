@@ -11,7 +11,7 @@
 import { createStyles } from '@pimcore/studio-ui-bundle/app'
 
 // the grid of a row and of the table's head
-export const ROW_COLUMNS = '16px 240px 24px minmax(0, 1fr) 150px 110px'
+export const ROW_COLUMNS = '16px 240px 24px minmax(0, 1fr) 150px 200px 110px'
 
 export const useStyles = createStyles(({ token, css }) => ({
   row: css`
@@ -71,6 +71,15 @@ export const useStyles = createStyles(({ token, css }) => ({
     &:focus-visible {
       outline: 2px solid ${token.colorPrimaryBorder};
     }
+
+    &:hover .field-pen, &:focus-visible .field-pen {
+      opacity: 1;
+    }
+  `,
+  pen: css`
+    flex: none;
+    color: ${token.colorPrimary};
+    opacity: 0;
   `,
   fieldIcon: css`
     flex: none;
@@ -102,6 +111,14 @@ export const useStyles = createStyles(({ token, css }) => ({
     &:focus-visible {
       outline: 2px solid ${token.colorPrimaryBorder};
     }
+  `,
+  suggestionIcon: css`
+    display: flex;
+    flex: none;
+    color: ${token.colorPrimary};
+  `,
+  suggestionLead: css`
+    color: ${token.colorTextTertiary};
   `,
   skip: css`
     display: flex;

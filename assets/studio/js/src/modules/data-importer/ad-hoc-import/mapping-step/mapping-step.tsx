@@ -200,6 +200,7 @@ export const MappingStep = ({
           <span />
           <span className={ styles.headCell }>{ t(`${MAPPING}.head.field`) }</span>
           <span className={ styles.headCell }>{ t(`${MAPPING}.head.transformations`) }</span>
+          <span className={ styles.headCell }>{ t(`${MAPPING}.head.stored-as`) }</span>
           <span />
         </div>
         <ul
@@ -219,6 +220,7 @@ export const MappingStep = ({
               onPickStoreKey={ (column, field) => { setStoreKeyFor({ column, field }) } }
               onSkip={ skip }
               row={ row }
+              source={ source }
             />
           )) }
         </ul>

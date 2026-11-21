@@ -55,6 +55,12 @@ const ValueChain = ({ row, field, preview: { answer } }: ValueChainProps): React
           <span className={ styles.chip }>{ cellText(t, step.values[valueRow]) }</span>
         </React.Fragment>
       ))) }
+      { answer?.conversion !== null && answer?.conversion !== undefined && field !== undefined && (
+        <>
+          <span aria-hidden>→</span>
+          <span className={ styles.chipConversion }>{ t(`data-importer.ad-hoc-import.transformations.conversion-short.${answer.conversion}`) }</span>
+        </>
+      ) }
       <span aria-hidden>→</span>
       { field === undefined
         ? <span className={ styles.chipOpen }>{ t(`${PANEL}.choose-field`) }</span>
