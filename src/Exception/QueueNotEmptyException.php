@@ -12,6 +12,6 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Exception;
 
-class QueueNotEmptyException extends \Exception
+final class QueueNotEmptyException extends \Exception
 {
 }

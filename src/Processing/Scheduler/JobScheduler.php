@@ -14,18 +14,17 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing\Scheduler;
 
 use DateTime;
 
-class JobScheduler implements SchedulerInterface
+/**
+ * @internal
+ */
+final class JobScheduler implements SchedulerInterface
 {
-    const NAME = 'job';
+    public const NAME = 'job';
 
-    private DateTime $scheduledAt;
-
-    private DateTime $modifiedAt;
-
-    public function __construct(DateTime $scheduledAt, DateTime $modifiedAt)
-    {
-        $this->scheduledAt = $scheduledAt;
-        $this->modifiedAt = $modifiedAt;
+    public function __construct(
+        private readonly DateTime $scheduledAt,
+        private readonly DateTime $modifiedAt,
+    ) {
     }
 
     public function isExecutable(?DateTime $executedAt): bool

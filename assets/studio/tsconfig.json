@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "es2017",
+    "moduleResolution": "bundler",
+    "types": ["reflect-metadata", "@types/webpack-env", "@types/jest" ],
+    "baseUrl": "./assets/js/",
+    "strictNullChecks": true,
+    "jsx": "react",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./js",
+    "outDir": "./dist/build/types",
+    "declarationDir": "./dist/build/types"
+  },
+
+  "include": [
+    "./js/**/*",
+  ],
+}

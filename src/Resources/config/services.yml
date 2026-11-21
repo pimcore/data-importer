@@ -12,22 +12,23 @@ services:
         # if you need to do this, you can override this setting on individual services
         public: false
 
-    # controllers are imported separately to make sure they're public
-    # and have a tag that allows actions to type-hint services
-    Pimcore\Bundle\DataImporterBundle\Controller\:
-        resource: '../../Controller'
-        public: true
-        tags: ['controller.service_arguments']
-
     Pimcore\Bundle\DataImporterBundle\Command\:
         resource: '../../Command'
         tags: ['console.command']
 
+    Pimcore\Bundle\DataImporterBundle\Controller\PushImportController:
+        tags: ["controller.service_arguments"]
 
     Pimcore\Bundle\DataImporterBundle\Queue\QueueService: ~
     Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess: ~
+    # change_control.yml binds scopes to change sets when Change Control is installed
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewScopeResolverInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Preview\NoPreviewScopeResolver
+
+    Pimcore\Bundle\DataImporterBundle\Preview\PreviewEventApplier: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener:
         tags:
@@ -37,7 +38,17 @@ services:
         tags:
             - { name: pimcore.maintenance.task, type: data_importer.restart_queue_workers }
 
+    Pimcore\Bundle\DataImporterBundle\Maintenance\ScopedPreviewCleanupTask:
+        tags:
+            - { name: pimcore.maintenance.task, type: data_importer.scoped_preview_cleanup }
+
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory: ~
+
+    Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck:
+        arguments:
+            $loaders: !tagged_locator { tag: 'pimcore.datahub.data_importer.loader', index_by: 'type' }
+
+    Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigCheck: ~
 
     Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader:
         tags:
@@ -114,6 +125,8 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory: ~
     Pimcore\Bundle\DataImporterBundle\Resolver\Resolver: ~
+    Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherFactory:
+        public: true
 
     Pimcore\Bundle\DataImporterBundle\Resolver\Load\IdStrategy:
         tags:

@@ -17,23 +17,16 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ParallelProcessQueueCommand extends ParallelizationAbstractCommand
+/**
+ * @internal
+ */
+final class ParallelProcessQueueCommand extends ParallelizationAbstractCommand
 {
-    /**
-     * @var ImportProcessingService
-     */
-    protected $importProcessingService;
-
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
-
-    public function __construct(ImportProcessingService $importProcessingService, QueueService $queueService)
-    {
+    public function __construct(
+        private readonly ImportProcessingService $importProcessingService,
+        private readonly QueueService $queueService,
+    ) {
         parent::__construct();
-        $this->importProcessingService = $importProcessingService;
-        $this->queueService = $queueService;
     }
 
     protected function configure(): void

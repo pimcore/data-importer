@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\GeopolyAbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 
-class AsGeopolyline extends GeopolyAbstractOperator
+/**
+ * @internal
+ */
+final class AsGeopolyline extends GeopolyAbstractOperator
 {
     /**
      * @param string $inputType

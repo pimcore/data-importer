@@ -15,27 +15,18 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 
-class MappingConfiguration
+/**
+ * @internal
+ */
+final class MappingConfiguration
 {
-    /**
-     * @var string
-     */
-    protected $label;
+    private string $label;
 
-    /**
-     * @var mixed
-     */
-    protected $dataSourceIndex;
+    private mixed $dataSourceIndex;
 
-    /**
-     * @var array
-     */
-    protected $transformationPipeline;
+    private array $transformationPipeline;
 
-    /**
-     * @var DataTargetInterface
-     */
-    protected $dataTarget;
+    private DataTargetInterface $dataTarget;
 
     public function getLabel(): string
     {

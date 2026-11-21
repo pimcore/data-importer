@@ -18,7 +18,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService
 use Pimcore\Model\DataObject\Data\Geobounds;
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
-class AsGeobounds extends AbstractOperator
+/**
+ * @internal
+ */
+final class AsGeobounds extends AbstractOperator
 {
     /**
      * @param mixed $inputData

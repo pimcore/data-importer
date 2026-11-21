@@ -14,21 +14,17 @@ namespace Pimcore\Bundle\DataImporterBundle\DataSource\Loader;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 
-class DataLoaderFactory
+/**
+ * @internal
+ */
+final class DataLoaderFactory
 {
     /**
-     * @var DataLoaderInterface[]
-     */
-    protected $dataLoaderBluePrints;
-
-    /**
-     * DataLoaderFactory constructor.
-     *
      * @param DataLoaderInterface[] $dataLoaderBluePrints
      */
-    public function __construct(array $dataLoaderBluePrints)
-    {
-        $this->dataLoaderBluePrints = $dataLoaderBluePrints;
+    public function __construct(
+        private readonly array $dataLoaderBluePrints,
+    ) {
     }
 
     /**

@@ -15,7 +15,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Load;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Model\Element\ElementInterface;
 
-class IdStrategy extends AbstractLoad
+/**
+ * @internal
+ */
+final class IdStrategy extends AbstractLoad
 {
     /**
      * @param string $identifier

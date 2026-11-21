@@ -16,14 +16,12 @@ use Pimcore\Bundle\DataImporterBundle\Migrations\Version20240715160305;
 use Pimcore\Extension\Bundle\Installer\SettingsStoreAwareInstaller;
 use Pimcore\Model\User\Permission;
 
-class Installer extends SettingsStoreAwareInstaller
+/**
+ * @internal
+ */
+final class Installer extends SettingsStoreAwareInstaller
 {
-    const DATAHUB_ADAPTER_PERMISSION = 'plugin_datahub_adapter_dataImporterDataObject';
-
-    public function needsReloadAfterInstall(): bool
-    {
-        return true;
-    }
+    public const DATAHUB_ADAPTER_PERMISSION = 'plugin_datahub_adapter_dataImporterDataObject';
 
     /**
      * {@inheritdoc}
@@ -46,7 +44,7 @@ class Installer extends SettingsStoreAwareInstaller
         parent::install();
     }
 
-    public function getLastMigrationVersionClassName(): ?string
+    public function getLastMigrationVersionClassName(): string
     {
         return Version20240715160305::class;
     }

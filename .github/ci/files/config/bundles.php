@@ -1,6 +1,7 @@
 <?php
 
 return [
-    \Pimcore\Bundle\AdminBundle\PimcoreAdminBundle::class => ['all' => true],
-    \Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle::class => ['all' => true]
+    Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle::class => ['all' => true],
+    Pimcore\Bundle\StudioBackendBundle\PimcoreStudioBackendBundle::class => ['all' => true],
+    Pimcore\Bundle\StudioUiBundle\PimcoreStudioUiBundle::class => ['all' => true],
 ];

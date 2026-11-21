@@ -23,28 +23,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Lock\LockFactory;
 use Symfony\Component\Lock\LockInterface;
 
-class SequentialProcessQueueCommand extends AbstractCommand
+/**
+ * @internal
+ */
+final class SequentialProcessQueueCommand extends AbstractCommand
 {
-    /**
-     * @var ImportProcessingService
-     */
-    protected $importProcessingService;
+    private ?LockInterface $lock = null;
 
-    /**
-     * @var QueueService
-     */
-    protected $queueService;
-
-    /**
-     * @var LockInterface|null
-     */
-    private $lock;
-
-    public function __construct(ImportProcessingService $importProcessingService, QueueService $queueService)
-    {
+    public function __construct(
+        private readonly ImportProcessingService $importProcessingService,
+        private readonly QueueService $queueService,
+    ) {
         parent::__construct();
-        $this->importProcessingService = $importProcessingService;
-        $this->queueService = $queueService;
     }
 
     public function configure(): void
@@ -69,7 +59,10 @@ class SequentialProcessQueueCommand extends AbstractCommand
     {
         if (!$this->lock()) {
             $this->writeError('The command is already running.');
-            exit(1);
+
+            // Not exit(): that would skip the console.terminate event and everything
+            // else the Application does after a command. The other run processes the queue.
+            return self::SUCCESS;
         }
 
         try {

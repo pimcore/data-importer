@@ -12,19 +12,13 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Event;
 
-class PostPreparationEvent
+final readonly class PostPreparationEvent
 {
-    protected string $configName;
-
-    protected string $executionType;
-
-    protected bool $fileInterpreted;
-
-    public function __construct(string $configName, string $executionType, bool $fileInterpreted)
-    {
-        $this->configName = $configName;
-        $this->executionType = $executionType;
-        $this->fileInterpreted = $fileInterpreted;
+    public function __construct(
+        private string $configName,
+        private string $executionType,
+        private bool $fileInterpreted,
+    ) {
     }
 
     public function getConfigName(): string

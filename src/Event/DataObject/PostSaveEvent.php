@@ -15,6 +15,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Event\DataObject;
 /**
  * Fired just after an imported data object is saved
  */
-class PostSaveEvent extends AbstractDataObjectImportEvent
+final class PostSaveEvent extends AbstractDataObjectImportEvent
 {
 }

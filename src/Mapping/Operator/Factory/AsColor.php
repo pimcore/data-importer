@@ -16,7 +16,10 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Model\DataObject\Data\RgbaColor;
 
-class AsColor extends AbstractOperator
+/**
+ * @internal
+ */
+final class AsColor extends AbstractOperator
 {
     /**
      * @throws \Exception

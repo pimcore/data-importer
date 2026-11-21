@@ -17,28 +17,12 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 abstract class AbstractDataObjectImportEvent extends Event
 {
-    /**
-     * @var string
-     */
-    protected $configName;
+    protected string $configName;
 
-    /**
-     * @var array
-     */
-    protected $rawData;
+    protected array $rawData;
 
-    /**
-     * @var ElementInterface
-     */
-    protected $dataObject;
+    protected ElementInterface $dataObject;
 
-    /**
-     * AbstractDataObjectImportEvent constructor.
-     *
-     * @param string $configName
-     * @param array $rawData
-     * @param ElementInterface $dataObject
-     */
     public function __construct(string $configName, array $rawData, ElementInterface $dataObject)
     {
         $this->configName = $configName;

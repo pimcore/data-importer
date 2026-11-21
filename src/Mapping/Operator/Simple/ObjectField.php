@@ -13,13 +13,19 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScopeAwareTrait;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\AbstractOperator;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\PimcoreDataImporterBundle;
 use Pimcore\Model\Element\ElementInterface;
 
-class ObjectField extends AbstractOperator
+/**
+ * @internal
+ */
+final class ObjectField extends AbstractOperator
 {
+    use MappingApplicationScopeAwareTrait;
+
     private string $attribute;
 
     private string $forwardParameter;
@@ -33,6 +39,10 @@ class ObjectField extends AbstractOperator
 
     private function logWarning(string $logMessage): void
     {
+        if ($this->reportWarningIfAppliedWithoutSaving($logMessage)) {
+            return;
+        }
+
         $this->applicationLogger->warning($logMessage . ' ', [
             'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $this->configName,
         ]);

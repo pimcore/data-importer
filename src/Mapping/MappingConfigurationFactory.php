@@ -16,33 +16,21 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 
-class MappingConfigurationFactory
+/**
+ * @internal
+ */
+final class MappingConfigurationFactory
 {
-    /**
-     * @var MappingConfiguration
-     */
-    protected $mappingConfigurationBluePrint;
-
-    /**
-     * @var OperatorInterface[]
-     */
-    protected $operatorBluePrints;
-
-    /**
-     * @var DataTargetInterface[]
-     */
-    protected $dataTargetBluePrints;
-
     /**
      * @param MappingConfiguration $mappingConfigurationBluePrint
      * @param OperatorInterface[] $operatorBluePrints
      * @param DataTargetInterface[] $dataTargetBluePrints
      */
-    public function __construct(MappingConfiguration $mappingConfigurationBluePrint, array $operatorBluePrints, array $dataTargetBluePrints)
-    {
-        $this->mappingConfigurationBluePrint = $mappingConfigurationBluePrint;
-        $this->operatorBluePrints = $operatorBluePrints;
-        $this->dataTargetBluePrints = $dataTargetBluePrints;
+    public function __construct(
+        private readonly MappingConfiguration $mappingConfigurationBluePrint,
+        private readonly array $operatorBluePrints,
+        private readonly array $dataTargetBluePrints,
+    ) {
     }
 
     /**
@@ -53,7 +41,7 @@ class MappingConfigurationFactory
      *
      * @throws InvalidConfigurationException
      */
-    protected function buildTransformationPipeline(string $configName, array $configArray): array
+    private function buildTransformationPipeline(string $configName, array $configArray): array
     {
         $transformationPipeline = [];
 
@@ -79,7 +67,7 @@ class MappingConfigurationFactory
      *
      * @throws InvalidConfigurationException
      */
-    protected function buildDataTarget(array $config): DataTargetInterface
+    private function buildDataTarget(array $config): DataTargetInterface
     {
         if (empty($config['type']) || !array_key_exists($config['type'], $this->dataTargetBluePrints)) {
             throw new InvalidConfigurationException('Unknown data target type `' . ($config['type'] ?? '') . '`');

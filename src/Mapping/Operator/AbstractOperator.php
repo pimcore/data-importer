@@ -12,8 +12,11 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator;
 
-use Pimcore\Log\ApplicationLogger;
+use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 
+/**
+ * @internal
+ */
 abstract class AbstractOperator implements OperatorInterface
 {
     /**

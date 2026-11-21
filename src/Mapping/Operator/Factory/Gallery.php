@@ -19,7 +19,10 @@ use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject\Data\Hotspotimage;
 use Pimcore\Model\DataObject\Data\ImageGallery;
 
-class Gallery extends AbstractOperator
+/**
+ * @internal
+ */
+final class Gallery extends AbstractOperator
 {
     /**
      * @param mixed $inputData

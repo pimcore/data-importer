@@ -14,7 +14,10 @@ namespace Pimcore\Bundle\DataImporterBundle\Resolver\Publish;
 
 use Pimcore\Model\Element\ElementInterface;
 
-class AlwaysPublishStrategy implements PublishStrategyInterface
+/**
+ * @internal
+ */
+final class AlwaysPublishStrategy implements PublishStrategyInterface
 {
     public function setSettings(array $settings): void
     {

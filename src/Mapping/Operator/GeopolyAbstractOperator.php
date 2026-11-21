@@ -14,6 +14,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Mapping\Operator;
 
 use Pimcore\Model\DataObject\Data\GeoCoordinates;
 
+/**
+ * @internal
+ */
 abstract class GeopolyAbstractOperator extends AbstractOperator
 {
     /**

@@ -14,21 +14,19 @@ namespace Pimcore\Bundle\DataImporterBundle\Cleanup;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 
-class CleanupStrategyFactory
+/**
+ * @internal
+ */
+final class CleanupStrategyFactory
 {
-    /**
-     * @var CleanupStrategyInterface[]
-     */
-    protected $cleanupStrategies;
-
     /**
      * CleanupStrategyFactory constructor.
      *
      * @param CleanupStrategyInterface[] $cleanupStrategies
      */
-    public function __construct(array $cleanupStrategies)
-    {
-        $this->cleanupStrategies = $cleanupStrategies;
+    public function __construct(
+        private readonly array $cleanupStrategies,
+    ) {
     }
 
     /**

@@ -15,13 +15,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Migrations;
 use Doctrine\DBAL\Schema\Schema;
 use Pimcore\Migrations\BundleAwareMigration;
 
-class Version20211110174732 extends BundleAwareMigration
+/**
+ * @internal
+ */
+final class Version20211110174732 extends BundleAwareMigration
 {
-    protected const DELTA_CACHE_TABLE = 'bundle_data_hub_data_importer_delta_cache';
+    private const DELTA_CACHE_TABLE = 'bundle_data_hub_data_importer_delta_cache';
 
-    protected const LAST_CRON_TABLE = 'bundle_data_hub_data_importer_last_cron_execution';
+    private const LAST_CRON_TABLE = 'bundle_data_hub_data_importer_last_cron_execution';
 
-    protected const IMPORTER_QUEUE_TABLE = 'bundle_data_hub_data_importer_queue';
+    private const IMPORTER_QUEUE_TABLE = 'bundle_data_hub_data_importer_queue';
 
     protected function getBundleName(): string
     {
