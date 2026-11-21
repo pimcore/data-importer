@@ -60,7 +60,13 @@ class CleanupElementTest extends Unit
         $appLogger = $this->createMock(ApplicationLogger::class);
         $appLogger->expects($this->once())->method('info');
 
-        $this->runCleanup($appLogger, $this->createMock(LoggerInterface::class), new UnpublishStrategy(), 'unpublish', $element);
+        $this->runCleanup(
+            $appLogger,
+            $this->createMock(LoggerInterface::class),
+            new UnpublishStrategy(),
+            'unpublish',
+            $element
+        );
     }
 
     public function testDisabledInfoLogsKeepTheCleanupOutOfTheApplicationLog(): void
@@ -71,7 +77,14 @@ class CleanupElementTest extends Unit
         $appLogger = $this->createMock(ApplicationLogger::class);
         $appLogger->expects($this->never())->method('info');
 
-        $this->runCleanup($appLogger, $this->createMock(LoggerInterface::class), new DeleteStrategy(), 'delete', $element, ['disableInfoLogs' => true]);
+        $this->runCleanup(
+            $appLogger,
+            $this->createMock(LoggerInterface::class),
+            new DeleteStrategy(),
+            'delete',
+            $element,
+            ['disableInfoLogs' => true]
+        );
     }
 
     public function testStrategyWithoutConditionalInterfaceIsAlwaysRunAndLogged(): void
@@ -82,16 +95,23 @@ class CleanupElementTest extends Unit
         $appLogger = $this->createMock(ApplicationLogger::class);
         $appLogger->expects($this->once())->method('info');
 
-        $this->runCleanup($appLogger, $this->createMock(LoggerInterface::class), $strategy, 'custom', $this->createMock(Concrete::class));
+        $this->runCleanup(
+            $appLogger,
+            $this->createMock(LoggerInterface::class),
+            $strategy,
+            'custom',
+            $this->createMock(Concrete::class)
+        );
     }
 
     public function testLoadErrorIsLoggedWithoutAnElement(): void
     {
         $appLogger = $this->createMock(ApplicationLogger::class);
         $appLogger->expects($this->once())->method('error')
-            ->with('Error cleaning up element: load failed', $this->callback(
-                static fn (array $context): bool => $context['relatedObject'] === null
-            ));
+            ->with(
+                'Error cleaning up element: load failed',
+                $this->callback(static fn (array $context): bool => $context['relatedObject'] === null)
+            );
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())->method('error')->with('Error cleaning up element: load failed');
 
