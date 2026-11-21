@@ -326,6 +326,7 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
             $failures[] = $row->failure($messages[$row->row] ?? $this->messages->mergeInterrupted($user));
         }
 
+        $run = $run->withObjects(...self::savedIds($status, $written));
         $this->afterSave($run, $status->written, $written);
 
         return $this->finish($run->withNotice($notice), $failures, $user);
@@ -500,6 +501,33 @@ final readonly class BranchMerge implements BranchMergeInterface // NOSONAR php:
         ksort($byRow);
 
         return array_values($byRow);
+    }
+
+    /**
+     * @param list<RecordedRow> $rows the rows whose object was saved
+     *
+     * @return array{0: list<int>, 1: list<int>} the objects updated, and those created, which only the merge gave an id
+     */
+    private static function savedIds(MergeStatus $status, array $rows): array
+    {
+        $idsByToken = [];
+        foreach ([...$status->written, ...$status->leftOut] as $object) {
+            if ($object->token !== null && $object->id !== null) {
+                $idsByToken[$object->token] = $object->id;
+            }
+        }
+
+        $updated = [];
+        $created = [];
+        foreach ($rows as $row) {
+            if ($row->token === null) {
+                $updated[(int) $row->objectId] = true;
+            } elseif (isset($idsByToken[$row->token])) {
+                $created[$idsByToken[$row->token]] = true;
+            }
+        }
+
+        return [array_keys($updated), array_keys($created)];
     }
 
     private static function refOf(RecordedRow $row): ObjectRef

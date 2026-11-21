@@ -260,6 +260,11 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         );
         $run = $this->stored();
         $this->assertSame([RunRecord::DONE, 2, 1, 0], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame(
+            [[42, 43], [77]],
+            [$run->updatedIds, $run->createdIds],
+            'the new object is known by the id the merge gave it, for the list of the import\'s objects'
+        );
         $this->assertNotNull($run->finishedAt);
         $this->assertSame(
             [[42, ['sku' => 'SKU-2']], [43, ['sku' => 'SKU-3']], [77, ['sku' => 'SKU-4']]],
@@ -502,6 +507,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
         $run = $this->stored();
         $this->assertSame([RunRecord::DONE, 1, 0, 2], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([[42], []], [$run->updatedIds, $run->createdIds], 'only the objects written are listed');
         $this->assertSame([
             3 => 'data-importer.ad-hoc-import.merge.interrupted',
             4 => 'data-importer.ad-hoc-import.run.save-failed-unknown',

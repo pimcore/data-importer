@@ -96,6 +96,9 @@ services:
         class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunService
         public: true
 
+    Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunObjectsServiceInterface:
+        class: Pimcore\Bundle\DataImporterBundle\Service\Studio\AdHocImportRunObjectsService
+
     Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunStoreInterface:
         class: Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\TmpStoreRunStore
 

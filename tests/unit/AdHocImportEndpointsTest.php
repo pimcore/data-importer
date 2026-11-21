@@ -23,8 +23,10 @@ use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DiscardRunCo
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadFailedRowsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DownloadSkippedRowsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\DryRunController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ExportRunObjectsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\InspectFileController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListConfigurationsController;
+use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListRunObjectsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\ListWaitingRunsController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadClassificationStoreKeysController;
 use Pimcore\Bundle\DataImporterBundle\Controller\Studio\AdHocImport\LoadMappingController;
@@ -116,6 +118,18 @@ class AdHocImportEndpointsTest extends Unit
             '/ad-hoc-import/file/{fileId}/run/merge',
         ],
         WithdrawRunController::class => ['withdrawRun', 'withdraw_run', 'POST', self::RUN_PATH . '/withdraw'],
+        ListRunObjectsController::class => [
+            'listRunObjects',
+            'list_run_objects',
+            'GET',
+            self::RUN_PATH . '/objects',
+        ],
+        ExportRunObjectsController::class => [
+            'exportRunObjects',
+            'export_run_objects',
+            'GET',
+            self::RUN_PATH . '/objects/export',
+        ],
         ListWaitingRunsController::class => [
             'listWaitingRuns',
             'list_waiting_runs',

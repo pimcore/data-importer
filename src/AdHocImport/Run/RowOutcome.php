@@ -29,18 +29,26 @@ final readonly class RowOutcome
     /**
      * @param string|null $action update or create, as far as the row got; null if it found no object
      * @param string|null $message why the row was not saved
+     * @param int|null $objectId the object saved; null while a branch holds a new one
      */
     private function __construct(
         public string $result,
         public string $matchValue,
         public ?string $action,
         public ?string $message,
+        public ?int $objectId = null,
     ) {
     }
 
-    public static function saved(bool $isNew, string $matchValue): self
+    public static function saved(bool $isNew, string $matchValue, ?int $objectId = null): self
     {
-        return new self($isNew ? self::CREATED : self::UPDATED, $matchValue, $isNew ? 'create' : 'update', null);
+        return new self(
+            $isNew ? self::CREATED : self::UPDATED,
+            $matchValue,
+            $isNew ? 'create' : 'update',
+            null,
+            $objectId
+        );
     }
 
     public static function failed(string $matchValue, ?string $action, string $message): self

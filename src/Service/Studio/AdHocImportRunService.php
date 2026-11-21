@@ -108,7 +108,8 @@ final readonly class AdHocImportRunService implements AdHocImportRunServiceInter
             $checked->plan->dryRun->newObjectFolder,
             $checked->plan->newObjectFolderId,
             trim($user->getFirstname() . ' ' . $user->getLastname()) ?: $user->getName(),
-            targetFolder: $checked->plan->dryRun->targetFolder
+            targetFolder: $checked->plan->dryRun->targetFolder,
+            fields: RunRecord::fieldsOf($checked->plan->dryRun)
         );
 
         $this->runs->save($run);

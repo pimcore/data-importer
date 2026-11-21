@@ -14,11 +14,13 @@ declare(strict_types=1);
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RecordedRow;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowFailure;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RowOutcome;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\Run\RunRecord;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Matching\RowMatcherInterface;
 
 class AdHocRunRecordTest extends Unit
 {
@@ -37,6 +39,56 @@ class AdHocRunRecordTest extends Unit
         $this->assertSame(1, $run->failed);
         $this->assertTrue($run->isComplete(), 'a failed row counts, so a run always ends');
         $this->assertTrue($run->isRunning(), 'until it is finished');
+    }
+
+    public function testARunKeepsTheObjectsItSavedByWhetherTheyExistedBefore(): void
+    {
+        $run = AdHocRunFixtures::run(['total' => 4])
+            ->counted(RowOutcome::saved(false, 'SKU-1', 11))
+            ->counted(RowOutcome::saved(true, 'SKU-2', 21))
+            ->counted(RowOutcome::saved(true, 'SKU-3'))
+            ->counted(RowOutcome::failed('SKU-4', 'update', 'no'));
+
+        $this->assertSame([11], $run->objectIds(RowOutcome::UPDATED));
+        $this->assertSame([21], $run->objectIds(RowOutcome::CREATED), 'a new object a branch holds has no id yet');
+        $this->assertSame([], $run->objectIds(RowOutcome::FAILED));
+
+        $run = $run->withObjects([11, 12], [21, 22]);
+        $this->assertSame([[11, 12], [21, 22]], [$run->updatedIds, $run->createdIds], 'the merge knows them all');
+
+        $run = $run->nothingSaved();
+        $this->assertSame([[], []], [$run->updatedIds, $run->createdIds], 'nothing saved, nothing to list');
+    }
+
+    public function testTheListOfTheRunsObjectsShowsTheFieldsThePreviewShowsThatItCanRead(): void
+    {
+        $writers = [
+            AdHocRunFixtures::writer(),
+            AdHocRunFixtures::writer(language: 'en'),
+            AdHocRunFixtures::writer(key: null),
+            AdHocRunFixtures::writer(),
+            AdHocRunFixtures::writer(key: 'price'),
+        ];
+        $plan = new DryRunPlan([], 2, $this->createStub(RowMatcherInterface::class), $writers, [0, 1, 2, 3], 'SKU', '/', '/', AdHocRunFixtures::user());
+
+        $this->assertSame(
+            [
+                ['key' => 'name', 'language' => null, 'storeKey' => null, 'label' => 'Name'],
+                ['key' => 'name', 'language' => 'en', 'storeKey' => null, 'label' => 'Name'],
+            ],
+            RunRecord::fieldsOf($plan),
+            'a field another target writes cannot be read, one written twice is shown once, one not shown is not'
+        );
+    }
+
+    public function testAStoredRunOfAnEarlierVersionHasNoObjectsToList(): void
+    {
+        $stored = AdHocRunFixtures::run()->toArray();
+        unset($stored['updatedIds'], $stored['createdIds'], $stored['fields']);
+
+        $run = RunRecord::fromArray($stored);
+
+        $this->assertSame([[], [], []], [$run->updatedIds, $run->createdIds, $run->fields]);
     }
 
     public function testARowOnlyTheEndFoundToHaveFailedMovesFromWrittenToFailed(): void
