@@ -91,7 +91,7 @@ const useStyles = createStyles(({ token, css }) => ({
     padding: ${token.padding}px ${token.paddingLG}px ${token.margin}px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
-  // a done step is a light circle with the check in the primary colour, the steps ahead grey
+  // a done step keeps Studio's filled circle with its white check, the steps ahead grey
   steps: css`
     max-width: ${STEPS_WIDTH}px;
 
@@ -105,15 +105,6 @@ const useStyles = createStyles(({ token, css }) => ({
 
     && .ant-steps-item-process .ant-steps-item-title {
       font-weight: ${token.fontWeightStrong};
-    }
-
-    && .ant-steps-item-finish .ant-steps-item-icon {
-      background: ${token.colorPrimaryBg};
-      border-color: ${token.colorPrimaryBg};
-    }
-
-    && .ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon {
-      color: ${token.colorPrimary};
     }
 
     && .ant-steps-item-wait .ant-steps-item-icon {
