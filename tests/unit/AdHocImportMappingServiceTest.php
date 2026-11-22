@@ -137,7 +137,7 @@ class AdHocImportMappingServiceTest extends Unit
 
         $this->assertSame([
             'key' => 'attributes',
-            'title' => 'Attributes [attributes]',
+            'title' => 'Attributes',
             'localized' => true,
             'transformationResultType' => 'default',
             'mandatory' => false,
@@ -146,6 +146,34 @@ class AdHocImportMappingServiceTest extends Unit
             'takesColumnAsIs' => true,
         ], $mapping->getFields()[1]);
         $this->assertFalse($mapping->getFields()[0]['classificationStore']);
+    }
+
+    public function testTheFieldsAreTitledWithoutTheKeyTheConfigurationEditorAdds(): void
+    {
+        $suggestions = $this->createStub(MappingSuggestionServiceInterface::class);
+        $suggestions->method('loadTargets')->willReturn([
+            ['key' => 'name', 'title' => 'Name [name]', 'localized' => true, 'transformationResultType' => 'default'],
+            [
+                'key' => 'technical.Engine.power',
+                'title' => 'Power [technical.Engine.power]',
+                'localized' => false,
+                'transformationResultType' => 'default',
+            ],
+            ['key' => 'ean', 'title' => 'EAN [code]', 'localized' => false, 'transformationResultType' => 'default'],
+            ['key' => 'untitled', 'title' => ' [untitled]', 'localized' => false, 'transformationResultType' => 'default'],
+        ]);
+        $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
+
+        $mapping = $this->service(creatableClasses: ['PROD'], suggestions: $suggestions)
+            ->loadMapping(new MappingSuggestionParameters('PROD', []));
+
+        $this->assertSame([
+            'name' => 'Name',
+            'technical.Engine.power' => 'Power',
+            // only its own key is taken off
+            'ean' => 'EAN [code]',
+            'untitled' => 'untitled',
+        ], array_column($mapping->getFields(), 'title', 'key'));
     }
 
     public function testTheMappingSaysWhichFieldsTakeAColumnWithoutATransformation(): void
