@@ -41,9 +41,6 @@ export const translate = (key: string, values: Record<string, unknown> = {}): st
   return text.replace(/{{(\w+)}}/g, (_, name: string) => String(values[name]))
 }
 
-// class names are not under test; each style key becomes its own name
-export const createStyles = () => () => ({ styles: new Proxy({}, { get: (_target, key) => String(key) }) })
-
 export const useTranslation = (): { t: typeof translate, i18n: { language: string } } => ({ t: translate, i18n: { language: 'en' } })
 
 interface WithChildren {
