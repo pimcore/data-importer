@@ -54,6 +54,10 @@ describe('the menu item', () => {
     expect(mockIsAllowed).toHaveBeenCalledWith(AD_HOC_IMPORT_PERMISSION)
   })
 
+  it('carries its own hover style', () => {
+    expect(item(folder())).toMatchObject({ className: 'item' })
+  })
+
   it('does not show on an object', () => {
     expect(item(folder({ type: 'object' })).hidden).toBe(true)
   })
