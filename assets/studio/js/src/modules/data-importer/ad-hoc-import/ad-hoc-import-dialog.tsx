@@ -52,11 +52,11 @@ import { isDone, isSettled } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
 import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
+import { useStyles } from './ad-hoc-import-dialog.styles'
 
 const DIALOG_WIDTH = 1160
 // close to the top, so the whole dialog with its footer fits a small screen
 const DIALOG_TOP = 20
-const STEPS_WIDTH = 720
 
 const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
@@ -75,6 +75,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
@@ -503,8 +504,9 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
+      <div className={ styles.header }>
         <Steps
+          className={ styles.steps }
           current={ isDone(run) ? STEPS.length : step }
           items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
           size="small"
