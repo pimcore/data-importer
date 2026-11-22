@@ -10,8 +10,8 @@
 
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { Alert, Modal } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
@@ -52,11 +52,27 @@ import { isDone, isSettled } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
 import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
+import { DialogSteps, STEPS } from './dialog-steps'
+import { BOLD } from './dialog-layout'
 
 const DIALOG_WIDTH = 1160
-const STEPS_WIDTH = 720
+// what the dialog takes beside the file step: its margins, header, steps and footer
+const FILE_STEP_OFFSET = 240
 
-const STEPS = ['file', 'mapping', 'preview', 'import']
+const useStyles = createStyles(({ css }) => ({
+  // Studio's Modal sets its title in 900
+  dialog: css`
+    .ant-modal-content .ant-modal-header .ant-modal-title {
+      font-weight: ${BOLD};
+    }
+  `,
+  // the file step scrolls under the steps, so the footer stays in view
+  fileStep: css`
+    max-height: calc(100vh - ${FILE_STEP_OFFSET}px);
+    overflow-y: auto;
+  `
+}))
+
 const IMPORT_STEP = 3
 const RUN_POLLING_MS = 1000
 
@@ -73,6 +89,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
@@ -484,6 +501,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   return (
     <Modal
+      centered
+      className={ styles.dialog }
       footer={ footer() }
       maskClosable={ false }
       onCancel={ close }
@@ -500,23 +519,19 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
-        <Steps
-          current={ isDone(run) ? STEPS.length : step }
-          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-          size="small"
-        />
-      </div>
+      <DialogSteps current={ isDone(run) ? STEPS.length : step } />
       { step === 0 && (
-        <FileStep
-          isInspecting={ isInspecting }
-          objects={ objects }
-          onFile={ onFile }
-          onObjectsChange={ setObjects }
-          onRemoveFile={ onRemoveFile }
-          onSettingsChange={ onSettingsChange }
-          phase={ phase }
-        />
+        <div className={ styles.fileStep }>
+          <FileStep
+            isInspecting={ isInspecting }
+            objects={ objects }
+            onFile={ onFile }
+            onObjectsChange={ setObjects }
+            onRemoveFile={ onRemoveFile }
+            onSettingsChange={ onSettingsChange }
+            phase={ phase }
+          />
+        </div>
       ) }
       { step === 1 && objects.classId !== undefined && (
         <MappingStep

@@ -18,17 +18,33 @@ import {
   type DataObjectTreeContextMenuProps
 } from '@pimcore/studio-ui-bundle/modules/app'
 import { AdHocImportHost } from './ad-hoc-import-host'
-import { useImportFileMenuItem } from './use-import-file-menu-item'
+import { useImportFileDivider, useImportFileMenuItem, useShowsAnyItem } from './use-import-file-menu-item'
 
 export const AdHocImportModule: AbstractModule = {
   onInit () {
     const config = contextMenuConfig.dataObjectTree
 
-    container.get<ContextMenuRegistry>(serviceIds['App/ContextMenuRegistry/ContextMenuRegistry']).registerToSlot(config.name, {
+    const contextMenu = container.get<ContextMenuRegistry>(serviceIds['App/ContextMenuRegistry/ContextMenuRegistry'])
+    const dividerBeforePriority = config.priority.addFolder + 1
+    // read at render: other modules may register after this one
+    const providersAbove = (): ReturnType<ContextMenuRegistry['getSlotProviders']> => contextMenu.getSlotProviders(config.name)
+      .filter(provider => (provider.priority ?? 999) < dividerBeforePriority)
+    // after what else adds to the folder, between two dividers
+    contextMenu.registerToSlot(config.name, {
+      name: 'importFileDividerBefore',
+      priority: dividerBeforePriority,
+      useMenuItem: (context: DataObjectTreeContextMenuProps) =>
+        useImportFileDivider(context.target, 'importFileDividerBefore', useShowsAnyItem(providersAbove(), context))
+    })
+    contextMenu.registerToSlot(config.name, {
       name: 'importFile',
-      // beside what else adds to the folder
-      priority: config.priority.addFolder + 1,
+      priority: config.priority.addFolder + 2,
       useMenuItem: (context: DataObjectTreeContextMenuProps) => useImportFileMenuItem(context.target)
+    })
+    contextMenu.registerToSlot(config.name, {
+      name: 'importFileDividerAfter',
+      priority: config.priority.addFolder + 3,
+      useMenuItem: (context: DataObjectTreeContextMenuProps) => useImportFileDivider(context.target, 'importFileDividerAfter')
     })
 
     // always mounted, so the dialog outlives the menu; it renders nothing until opened

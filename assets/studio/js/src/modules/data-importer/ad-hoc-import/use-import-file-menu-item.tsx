@@ -9,28 +9,57 @@
  */
 
 import React from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Icon, useTreePermission, type ItemType, type TreeNodeProps } from '@pimcore/studio-ui-bundle/components'
 import { isAllowed } from '@pimcore/studio-ui-bundle/modules/auth'
 import { checkElementPermission } from '@pimcore/studio-ui-bundle/modules/element'
 import { TreePermission } from '@pimcore/studio-ui-bundle/modules/perspectives'
+import { BOLD } from './dialog-layout'
 import { openAdHocImport } from './dialog-store'
 
 export const AD_HOC_IMPORT_PERMISSION = 'plugin_data_importer_ad_hoc_import'
 
-export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
-  const { t } = useTranslation()
-  const { isTreeActionAllowed } = useTreePermission()
+// Studio's menu item replaces the item's className, so the hover is styled from the label up to its entry;
+// one selector per rule: emotion leaves the & in :has() unresolved inside a selector list
+const useStyles = createStyles(({ token, css }) => {
+  const hovered = `
+    background-color: ${token.purple1} !important;
+    color: ${token.purple9};
+    font-weight: ${BOLD};
+  `
 
   return {
-    label: t('data-importer.ad-hoc-import.menu-item'),
+    label: css`
+      .ant-dropdown-menu .ant-dropdown-menu-item:has(&):hover {
+        ${hovered}
+      }
+
+      .ant-dropdown-menu .ant-dropdown-menu-item-active:has(&) {
+        ${hovered}
+      }
+    `
+  }
+})
+
+const useCanImportFile = (node: TreeNodeProps): boolean => {
+  const { isTreeActionAllowed } = useTreePermission()
+
+  return node.type === 'folder' &&
+    isAllowed(AD_HOC_IMPORT_PERMISSION) &&
+    isTreeActionAllowed(TreePermission.AddObject) &&
+    checkElementPermission(node.permissions, 'create') &&
+    checkElementPermission(node.permissions, 'save')
+}
+
+export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
+  const { t } = useTranslation()
+  const { styles } = useStyles()
+
+  return {
+    label: <span className={ styles.label }>{t('data-importer.ad-hoc-import.menu-item')}</span>,
     key: 'importFile',
     icon: <Icon value="upload-import" />,
-    hidden: node.type !== 'folder' ||
-      !isAllowed(AD_HOC_IMPORT_PERMISSION) ||
-      !isTreeActionAllowed(TreePermission.AddObject) ||
-      !checkElementPermission(node.permissions, 'create') ||
-      !checkElementPermission(node.permissions, 'save'),
+    hidden: !useCanImportFile(node),
     onClick: () => {
       openAdHocImport({
         folderId: Number.parseInt(node.id),
@@ -39,4 +68,20 @@ export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
       })
     }
   }
+}
+
+// sets the entry off from adding above and editing below; only where the entry shows and the menu has an item on that side
+export const useImportFileDivider = (node: TreeNodeProps, key: string, hasItemOnThatSide: boolean = true): ItemType => {
+  return useCanImportFile(node) && hasItemOnThatSide ? { type: 'divider', key } : null
+}
+
+interface MenuItemProvider {
+  useMenuItem: (context: any) => ItemType | null
+}
+
+// the menu drops hidden items but keeps a divider at its edge, so a divider needs a visible item beside it
+export const useShowsAnyItem = (providers: MenuItemProvider[], context: unknown): boolean => {
+  return providers
+    .map(provider => provider.useMenuItem(context) as { type?: string, hidden?: boolean } | null)
+    .some(item => item !== null && item !== undefined && item.type !== 'divider' && item.hidden !== true)
 }

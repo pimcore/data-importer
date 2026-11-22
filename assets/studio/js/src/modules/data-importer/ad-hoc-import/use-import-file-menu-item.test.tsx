@@ -8,10 +8,11 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { act, renderHook } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { act, render, renderHook, screen } from '@testing-library/react'
 import type { TreeNodeProps } from '@pimcore/studio-ui-bundle/components'
 import { closeAdHocImport, useAdHocImportTarget } from './dialog-store'
-import { useImportFileMenuItem, AD_HOC_IMPORT_PERMISSION } from './use-import-file-menu-item'
+import { useImportFileDivider, useImportFileMenuItem, useShowsAnyItem, AD_HOC_IMPORT_PERMISSION } from './use-import-file-menu-item'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => jest.requireActual<object>('../../../../test/support/ad-hoc-import'))
 jest.mock('@pimcore/studio-ui-bundle/components', () => ({
@@ -36,8 +37,8 @@ const folder = (given: object = {}): TreeNodeProps => ({
   ...given
 }) as unknown as TreeNodeProps
 
-const item = (node: TreeNodeProps): { hidden: boolean, label: string, onClick: () => void } =>
-  renderHook(() => useImportFileMenuItem(node)).result.current as unknown as { hidden: boolean, label: string, onClick: () => void }
+const item = (node: TreeNodeProps): { hidden: boolean, label: ReactElement, onClick: () => void } =>
+  renderHook(() => useImportFileMenuItem(node)).result.current as unknown as { hidden: boolean, label: ReactElement, onClick: () => void }
 
 beforeEach(() => {
   mockDeniedTreeAction = undefined
@@ -50,8 +51,16 @@ afterEach(() => {
 
 describe('the menu item', () => {
   it('shows on a folder for a user with the right and create and save on it', () => {
-    expect(item(folder())).toMatchObject({ hidden: false, label: 'Import file…' })
+    const shown = item(folder())
+    expect(shown.hidden).toBe(false)
+    render(shown.label)
+    expect(screen.getByText('Import file…')).toBeTruthy()
     expect(mockIsAllowed).toHaveBeenCalledWith(AD_HOC_IMPORT_PERMISSION)
+  })
+
+  it('marks its label so its entry gets its own hover', () => {
+    render(item(folder()).label)
+    expect(screen.getByText('Import file…').className).toBe('label')
   })
 
   it('does not show on an object', () => {
@@ -94,5 +103,46 @@ describe('the menu item', () => {
     act(() => { menuItem.onClick() })
 
     expect(result.current).toEqual({ folderId: 77, folderPath: '/home', folderLabel: 'home' })
+  })
+
+  it('sets the entry off with a divider where it shows', () => {
+    expect(renderHook(() => useImportFileDivider(folder(), 'before')).result.current).toEqual({ type: 'divider', key: 'before' })
+  })
+
+  it('leaves out the divider where the entry does not show', () => {
+    expect(renderHook(() => useImportFileDivider(folder({ type: 'object' }), 'before')).result.current).toBeNull()
+
+    mockIsAllowed.mockReturnValue(false)
+    expect(renderHook(() => useImportFileDivider(folder(), 'before')).result.current).toBeNull()
+  })
+
+  it('leaves out the divider where the menu has no item on its side', () => {
+    expect(renderHook(() => useImportFileDivider(folder(), 'before', false)).result.current).toBeNull()
+  })
+})
+
+describe('whether the menu shows an item', () => {
+  const provider = (item: object | null): { useMenuItem: () => any } => ({ useMenuItem: () => item })
+
+  it('is true when one item shows', () => {
+    const providers = [provider({ key: 'addObject', hidden: true }), provider({ key: 'addFolder', hidden: false })]
+
+    expect(renderHook(() => useShowsAnyItem(providers, {})).result.current).toBe(true)
+  })
+
+  it('is false when every item is hidden, a divider or left out', () => {
+    const providers = [provider({ key: 'addObject', hidden: true }), provider({ type: 'divider', key: 'line' }), provider(null)]
+
+    expect(renderHook(() => useShowsAnyItem(providers, {})).result.current).toBe(false)
+    expect(renderHook(() => useShowsAnyItem([], {})).result.current).toBe(false)
+  })
+
+  it('asks each provider with the menu context', () => {
+    const useMenuItem = jest.fn().mockReturnValue({ key: 'addFolder' })
+    const context = { target: folder() }
+
+    renderHook(() => useShowsAnyItem([{ useMenuItem }], context))
+
+    expect(useMenuItem).toHaveBeenCalledWith(context)
   })
 })

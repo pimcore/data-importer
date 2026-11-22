@@ -15,7 +15,8 @@ import { Flex, Form, FormKit, ManyToOneRelationPath, Segmented, Select } from '@
 import { useBundleDataImporterAdHocImportLoadMatchFieldsQuery } from '../../data-importer-api-slice-enhanced'
 import { parseClassAttribute } from '../../components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.types'
 import { filterByLabel } from '../../utils/select-utils'
-import { type InspectedFile, type MatchBy, type ObjectsSettings } from './file-step-state'
+import { fieldName, type InspectedFile, type MatchBy, type ObjectsSettings } from './file-step-state'
+import { PANEL_PADDING } from '../dialog-layout'
 
 const CLASS_WIDTH = 200
 const MATCH_WIDTH = 140
@@ -25,6 +26,21 @@ const FORM_ITEM_STYLE = { marginBottom: 0 }
 const useStyles = createStyles(({ token, css }) => ({
   quiet: css`
     color: ${token.colorTextTertiary};
+  `,
+  // Studio's Segmented draws a bordered light track and fills the choice; here the choice is lifted off a grey track
+  matchBy: css`
+    .ant-segmented .ant-segmented-group {
+      border-color: transparent;
+      background: ${token.colorFillTertiary};
+      box-shadow: none;
+
+      .ant-segmented-item.ant-segmented-item-selected,
+      .ant-segmented-thumb {
+        background: ${token.colorBgContainer};
+        border-color: ${token.colorBgContainer};
+        box-shadow: ${token.boxShadowTertiary};
+      }
+    }
   `
 }))
 
@@ -62,7 +78,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
     () => (fields?.attributes ?? [])
       .map(parseClassAttribute)
       .filter(({ localized }) => !localized)
-      .map(({ key, title }) => ({ value: key, label: title })),
+      .map(({ key, title }) => ({ value: key, label: fieldName(title, key) })),
     [fields]
   )
 
@@ -78,6 +94,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
 
   return (
     <FormKit.Panel
+      contentPadding={ PANEL_PADDING }
       title={ t('data-importer.ad-hoc-import.objects.title') }
     >
       <Form.Item
@@ -106,15 +123,17 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
           align="center"
           gap="small"
         >
-          <Segmented
-            onChange={ (next) => { onChange({ ...objects, matchBy: next as MatchBy }) } }
-            options={ [
-              { value: 'id', label: t('data-importer.ad-hoc-import.objects.match-by.object-id') },
-              { value: 'field', label: t('data-importer.ad-hoc-import.objects.match-by.field') },
-              { value: 'none', label: t('data-importer.ad-hoc-import.objects.match-by.none') }
-            ] }
-            value={ matchBy }
-          />
+          <div className={ styles.matchBy }>
+            <Segmented
+              onChange={ (next) => { onChange({ ...objects, matchBy: next as MatchBy }) } }
+              options={ [
+                { value: 'id', label: t('data-importer.ad-hoc-import.objects.match-by.object-id') },
+                { value: 'field', label: t('data-importer.ad-hoc-import.objects.match-by.field') },
+                { value: 'none', label: t('data-importer.ad-hoc-import.objects.match-by.none') }
+              ] }
+              value={ matchBy }
+            />
+          </div>
           { matchBy === 'field' && (
             <Select
               aria-label={ t('data-importer.ad-hoc-import.objects.match-by.field') }

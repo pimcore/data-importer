@@ -41,6 +41,9 @@ export const translate = (key: string, values: Record<string, unknown> = {}): st
   return text.replace(/{{(\w+)}}/g, (_, name: string) => String(values[name]))
 }
 
+// class names are not under test; each style key becomes its own name
+export const createStyles = () => () => ({ styles: new Proxy({}, { get: (_target, key) => String(key) }) })
+
 export const useTranslation = (): { t: typeof translate, i18n: { language: string } } => ({ t: translate, i18n: { language: 'en' } })
 
 interface WithChildren {
@@ -144,7 +147,7 @@ export const components = {
   Grid: ({ columns, data, isLoading, setRowId }: {
     columns: Array<{
       id: string
-      header: string
+      header: string | (() => React.ReactNode)
       accessorFn: (row: unknown) => string
       cell?: (context: { getValue: () => string, row: { original: unknown } }) => React.ReactNode
     }>
@@ -154,7 +157,7 @@ export const components = {
   }) => (
     <table aria-busy={ isLoading }>
       <thead>
-        <tr>{ columns.map((column) => <th key={ column.id }>{ column.header }</th>) }</tr>
+        <tr>{ columns.map((column) => <th key={ column.id }>{ typeof column.header === 'function' ? column.header() : column.header }</th>) }</tr>
       </thead>
       <tbody>
         { data.map((row) => (

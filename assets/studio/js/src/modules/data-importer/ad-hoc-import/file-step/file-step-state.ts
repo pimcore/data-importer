@@ -98,3 +98,10 @@ export const canContinue = (phase: FilePhase, objects: ObjectsSettings): boolean
 
 export const fileBadge = (phase: FilePhase & { kind: 'uploading' | 'inspected' }): string =>
   (phase.file.name.split('.').pop() ?? '').toUpperCase().slice(0, 4)
+
+// the server titles a field with its key in brackets; the select names the field
+export const fieldName = (title: string, key: string): string => {
+  const suffix = ` [${key}]`
+
+  return key !== '' && title.endsWith(suffix) && title.length > suffix.length ? title.slice(0, -suffix.length) : title
+}

@@ -10,19 +10,29 @@
 
 import React from 'react'
 import { Upload } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Icon } from '@pimcore/studio-ui-bundle/components'
 
 const useStyles = createStyles(({ token, css }) => ({
+  // antd's Dragger draws its own neutral fill and larger text; the drop zone takes Studio's faint brand fill
   zone: css`
     max-width: 560px;
+
+    .ant-upload.ant-upload-drag {
+      background: ${token.colorFillQuaternary};
+      border-color: ${token.colorBorder};
+      border-radius: ${token.borderRadiusLG}px;
+    }
   `,
   icons: css`
     color: ${token.colorIcon};
   `,
   label: css`
     text-align: center;
-    color: ${token.colorTextSecondary};
+    font-size: ${token.fontSize}px;
+    line-height: ${token.lineHeight};
+    color: ${token.colorTextDescription};
   `
 }))
 
@@ -67,10 +77,8 @@ export const FileDropZone = ({ onFile }: FileDropZoneProps): React.JSX.Element =
                 options={ { height: 20, width: 20 } }
                 value="new"
               />
-              <Icon
-                options={ { height: 20, width: 20 } }
-                value="drop-target"
-              />
+              { /* Studio has no arrow into a tray; its import icon is a tray under a plus */ }
+              <DownloadOutlined style={ { fontSize: 20 } } />
             </Flex>
           </div>
           <div className={ styles.label }>{ t('data-importer.ad-hoc-import.file.drop') }</div>
