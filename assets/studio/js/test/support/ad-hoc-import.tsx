@@ -114,6 +114,14 @@ export const components = {
       )) }
     </div>
   ),
+  Content: ({ children, loading }: WithChildren & { loading?: boolean }) => <main aria-busy={ loading }>{ children }</main>,
+  ContentLayout: ({ children, renderTopBar, renderToolbar }: WithChildren & { renderTopBar?: React.ReactNode, renderToolbar?: React.ReactNode }) => (
+    <div>
+      <header>{ renderTopBar }</header>
+      { children }
+      <footer>{ renderToolbar }</footer>
+    </div>
+  ),
   Flex: ({ children, role, onClick, onFocus, 'aria-label': label, 'aria-labelledby': labelledBy, 'aria-current': current }: WithChildren & { role?: string, onClick?: () => void, onFocus?: () => void, 'aria-label'?: string, 'aria-labelledby'?: string, 'aria-current'?: 'true' }) => (
     <div
       aria-current={ current }
@@ -147,6 +155,8 @@ export const components = {
       header: string
       accessorFn: (row: unknown) => string
       cell?: (context: { getValue: () => string, row: { original: unknown } }) => React.ReactNode
+      size?: number
+      meta?: { autoWidth?: boolean }
     }>
     data: unknown[]
     isLoading?: boolean
@@ -154,7 +164,17 @@ export const components = {
   }) => (
     <table aria-busy={ isLoading }>
       <thead>
-        <tr>{ columns.map((column) => <th key={ column.id }>{ column.header }</th>) }</tr>
+        <tr>
+          { columns.map((column) => (
+            <th
+              data-auto-width={ column.meta?.autoWidth === true ? 'true' : undefined }
+              data-size={ column.size }
+              key={ column.id }
+            >
+              { column.header }
+            </th>
+          )) }
+        </tr>
       </thead>
       <tbody>
         { data.map((row) => (
@@ -325,8 +345,21 @@ export const components = {
       )) }
     </ol>
   ),
+  Toolbar: ({ children, theme }: WithChildren & { theme?: 'primary' | 'secondary' }) => (
+    <div
+      data-theme={ theme ?? 'primary' }
+      role="toolbar"
+    >
+      { children }
+    </div>
+  ),
   Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
-  Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
+  Text: ({ children, id, ellipsis }: WithChildren & { id?: string, ellipsis?: unknown }) => (
+    <span
+      data-ellipsis={ ellipsis === undefined ? undefined : 'true' }
+      id={ id }
+    >{ children }</span>
+  ),
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>
       <input

@@ -9,8 +9,10 @@
  */
 
 import React from 'react'
+import { ConfigProvider } from 'antd'
+import { useTheme } from 'antd-style'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Flex, ModalFooter, Select } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, ModalFooter as StudioModalFooter, Select } from '@pimcore/studio-ui-bundle/components'
 import { failedRowsUrl, importedCount, isDeciding, isDone, type ImportRun } from './import-step/import-state'
 import { type ErrorMode } from './preview-step/preview-state'
 
@@ -22,6 +24,17 @@ const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorSuccess};
   `
 }))
+
+// the footer's line in the same quiet colour as the line under the steps, not the divider's purple
+const ModalFooter = (props: React.ComponentProps<typeof StudioModalFooter>): React.JSX.Element => {
+  const theme = useTheme()
+
+  return (
+    <ConfigProvider theme={ { components: { Divider: { colorSplit: theme.colorBorderTertiary } } } }>
+      <StudioModalFooter { ...props } />
+    </ConfigProvider>
+  )
+}
 
 const ERROR_MODE_WIDTH = 260
 const ERROR_MODE_ID = 'ad-hoc-import-error-mode'

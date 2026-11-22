@@ -27,11 +27,24 @@ export const isSettled = (run: ImportRun | undefined): boolean => isDone(run) ||
 
 const percent = (done: number, total: number): number => total === 0 ? 100 : Math.floor((done / total) * 100)
 
-// what the bar shows: all of it once nothing is left, however many rows failed; through a branch, the merge once it
-// writes (the check before it reports nothing to count, so the rows written stay on the bar)
-export const percentOf = (run: ImportRun): number => run.state === 'merging' && run.mergeDone > 0
+// what the bar shows: the running step's share, all of it once nothing is left, however many rows failed; through a
+// branch, from the check on the merge's, so it is never full while the branch is still checked or merged
+export const percentOf = (run: ImportRun): number => run.state === 'merging'
   ? percent(run.mergeDone, run.mergeTotal)
   : percent(run.processed, run.total)
+
+// a time as the result shows it: the time alone for today, else a short date, never seconds
+export const shortTimeOf = (timestamp: number | null, today: (time: string) => string, now: Date = new Date()): string => {
+  if (timestamp === null) {
+    return ''
+  }
+  const date = new Date(timestamp * 1000)
+  if (date.toDateString() === now.toDateString()) {
+    return today(date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))
+  }
+
+  return date.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+}
 
 export const importedCount = (run: ImportRun): number => run.updated + run.created
 
@@ -47,5 +60,9 @@ export const branchStepOf = (run: ImportRun): BranchStep => {
 }
 
 export const failedRowsUrl = (fileId: string): string => `${fileUrl(fileId)}/failed-rows`
+
+export type ObjectsKind = 'updated' | 'created'
+
+export const objectsExportUrl = (fileId: string, kind: ObjectsKind): string => `${fileUrl(fileId)}/run/objects/export?kind=${kind}`
 
 export const skippedRowsUrl = (fileId: string, errorMode: ErrorMode): string => `${fileUrl(fileId)}/skipped-rows?errorMode=${errorMode}`

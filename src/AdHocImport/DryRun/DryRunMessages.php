@@ -96,7 +96,7 @@ final readonly class DryRunMessages
     }
 
     /**
-     * @param 'row'|'error' $name
+     * @param 'row'|'error'|'id'|'path' $name
      */
     public function columnName(string $name, User $user): string
     {

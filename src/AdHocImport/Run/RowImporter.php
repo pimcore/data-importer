@@ -107,7 +107,7 @@ final readonly class RowImporter
                 $run
             ));
 
-            return RowOutcome::saved($isNew, $match->matchValue);
+            return RowOutcome::saved($isNew, $match->matchValue, $object->getId());
         } catch (\Throwable $throwable) { // NOSONAR php:S2221 one row must not end the run, whatever stops it
             $this->logger->error(sprintf(
                 'Ad hoc import, row %d of %s: %s',

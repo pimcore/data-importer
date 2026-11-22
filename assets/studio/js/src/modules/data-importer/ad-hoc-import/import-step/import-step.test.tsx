@@ -8,6 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
+/* eslint-disable max-lines */
 import React from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { ImportStep } from './import-step'
@@ -75,7 +76,8 @@ describe('the running import', () => {
 
     expect(screen.getByText('Importing 306 objects')).toBeTruthy()
     expect(screen.getAllByText('184 of 306')).toHaveLength(2)
-    expect(screen.getByText('Saving')).toBeTruthy()
+    expect(screen.getByText('Saving').parentElement!.getAttribute('aria-current')).toBe('step')
+    expect(within(screen.getByText('Saving').parentElement!).getByRole('status')).toBeTruthy()
     expect(screen.getByRole('progressbar').getAttribute('value')).toBe('60')
     expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
   })
@@ -113,6 +115,32 @@ describe('an import that saved every row', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Open folder' }))
     expect(mockOpenElement).toHaveBeenCalledWith({ id: 7, type: 'data-object' })
+  })
+
+  it('opens the updated objects in a list', () => {
+    const onShowList = jest.fn()
+    render(<ImportStep
+      fileId="file-1"
+      onShowList={ onShowList }
+      run={ run({}) }
+      total={ 309 }
+           />)
+
+    const line = screen.getByText('Updated').parentElement!
+    expect(within(line).getByText('298')).toBeTruthy()
+    fireEvent.click(within(line).getByRole('button', { name: 'Show in a list' }))
+    expect(onShowList).toHaveBeenCalledWith('updated')
+  })
+
+  it('offers no list where nothing was updated', () => {
+    render(<ImportStep
+      fileId="file-1"
+      onShowList={ jest.fn() }
+      run={ run({ updated: 0, created: 309 }) }
+      total={ 309 }
+           />)
+
+    expect(screen.queryByRole('button', { name: 'Show in a list' })).toBeNull()
   })
 
   it('draws each outcome of the result bar by its share', () => {
@@ -222,15 +250,16 @@ describe('an import through a branch', () => {
     expect(within(screen.getByText('Merging as Jo Doe').parentElement!).getByText('184 of 306')).toBeTruthy()
   })
 
-  it('shows no count while the branch is checked, as the check reports none, and keeps the rows written on the bar', () => {
+  it('counts the merge in the header while the branch is checked, and starts the bar again from it', () => {
     render(<ImportStep
       fileId="file-1"
       run={ run({ state: 'merging', throughBranch: true, total: 306, processed: 306, mergeTotal: 306, mergeDone: 0, failed: 0 }) }
       total={ 306 }
            />)
 
-    expect(screen.queryByText('0 of 306')).toBeNull()
-    expect(screen.getByRole('progressbar').getAttribute('value')).toBe('100')
+    expect(screen.getByText('0 of 306')).toBeTruthy()
+    expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).queryByText('0 of 306')).toBeNull()
+    expect(screen.getByRole('progressbar').getAttribute('value')).toBe('0')
     expect(screen.getByRole('progressbar').getAttribute('data-status')).toBe('normal')
     expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
     expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).getByRole('status')).toBeTruthy()

@@ -20,18 +20,15 @@ export const useStyles = createStyles(({ token, css }) => ({
     margin-bottom: ${token.marginXS}px;
   `,
   title: css`
+    font-size: ${token.fontSizeLG}px;
+    line-height: ${token.lineHeightLG};
     font-weight: 700;
   `,
   muted: css`
     color: ${token.colorTextSecondary};
   `,
-  step: css`
-    display: flex;
-    justify-content: space-between;
-    padding: ${token.paddingXS}px 0;
-    margin-top: ${token.marginSM}px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-weight: 700;
+  stepDetail: css`
+    color: ${token.colorTextSecondary};
   `,
   hint: css`
     margin-top: ${token.marginSM}px;
@@ -55,13 +52,20 @@ export const useStyles = createStyles(({ token, css }) => ({
   resultBarCreated: css`
     background: ${token.colorPrimary};
   `,
+  // Studio raises colorTextQuaternary to 55 % for text contrast; a bar segment is not text and takes antd's 25 % grey
   resultBarSkipped: css`
-    background: ${token.colorTextDisabled};
+    background: var(--ant-color-text-quaternary, rgba(0, 0, 0, 0.25));
   `,
   resultContent: css`
-    display: flex;
-    gap: ${token.marginXL}px;
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: ${token.marginXXL}px;
     padding: ${token.paddingLG}px ${token.paddingXL}px;
+  `,
+  summary: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${token.marginXXS}px;
   `,
   resultFootnote: css`
     padding: ${token.paddingSM}px ${token.paddingXL}px;
@@ -72,21 +76,27 @@ export const useStyles = createStyles(({ token, css }) => ({
   complete: css`
     display: flex;
     align-items: center;
-    gap: ${token.marginXXS}px;
-    color: ${token.colorSuccess};
+    gap: ${token.marginXS}px;
+    // the theme's success text is the light green, below AA on white; green 7 reaches it
+    color: ${token.green7};
     font-weight: 700;
   `,
   imported: css`
-    font-size: 36px;
-    line-height: 1.2;
+    font-size: ${token.fontSizeHeading1}px;
+    line-height: ${token.lineHeightHeading1};
     font-weight: 700;
+    letter-spacing: -0.5px;
+  `,
+  objectsFrom: css`
+    font-size: ${token.fontSizeLG}px;
+    line-height: ${token.lineHeightLG};
   `,
   lines: css`
-    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   `,
   dot: css`
-    flex: none;
-    align-self: center;
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -97,21 +107,31 @@ export const useStyles = createStyles(({ token, css }) => ({
   dotCreated: css`
     background: ${token.colorPrimary};
   `,
+  // same grey as the skipped bar segment
   dotSkipped: css`
-    background: ${token.colorTextDisabled};
+    background: var(--ant-color-text-quaternary, rgba(0, 0, 0, 0.25));
   `,
+  // dot, label, count and action each in their own column, so the counts and actions line up
   line: css`
-    display: flex;
-    gap: ${token.marginSM}px;
-    align-items: baseline;
-    padding: ${token.paddingSM}px 0;
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr) 48px 120px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
     border-bottom: 1px solid ${token.colorBorderSecondary};
-  `,
-  lineLabel: css`
-    flex: 1 1 0;
   `,
   lineCount: css`
     font-weight: 700;
+    text-align: right;
+  `,
+  lineAction: css`
+    display: flex;
+    justify-content: flex-end;
+
+    .ant-btn {
+      padding: 0;
+      height: auto;
+    }
   `,
   notSaved: css`
     margin-bottom: ${token.marginSM}px;
@@ -126,7 +146,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     height: 100%;
     padding: ${token.paddingXXS}px ${token.paddingXS}px;
-    color: ${token.colorError};
+    // the theme's error text is the light red, below AA on white; red 7 reaches it
+    color: ${token.red7};
     white-space: normal;
     overflow-wrap: anywhere;
   `,
@@ -143,13 +164,39 @@ export const useStyles = createStyles(({ token, css }) => ({
   branchStepActive: css`
     font-weight: 700;
   `,
-  branchStepDone: css`
-    color: ${token.colorSuccess};
+  // a filled circle with a white check, as no Studio icon draws one
+  doneIcon: css`
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: ${token.colorSuccess};
+    color: ${token.colorTextLightSolid};
+  `,
+  // the spinner takes the box of the other steps' icons, so every label starts at the same place
+  branchStepActiveIcon: css`
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
+    color: ${token.colorPrimary};
+  `,
+  // a cell of one's own loses the grid's padding
+  rowNumber: css`
+    display: block;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    color: ${token.colorTextTertiary};
   `,
   branchStepPending: css`
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border: 1px solid ${token.colorBorder};
     border-radius: 50%;
   `,

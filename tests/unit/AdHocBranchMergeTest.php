@@ -48,6 +48,7 @@ use Symfony\Component\Messenger\Stamp\DelayStamp;
 class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every collaborator of the merge
 {
     private const string MAY_NOT_SAVE = 'may not save';
+    private const string BEING_MERGED = 'Branch is being merged.';
 
     private string $storage;
 
@@ -260,6 +261,11 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         );
         $run = $this->stored();
         $this->assertSame([RunRecord::DONE, 2, 1, 0], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame(
+            [[42, 43], [77]],
+            [$run->updatedIds, $run->createdIds],
+            'the new object is known by the id the merge gave it, for the list of the import\'s objects'
+        );
         $this->assertNotNull($run->finishedAt);
         $this->assertSame(
             [[42, ['sku' => 'SKU-2']], [43, ['sku' => 'SKU-3']], [77, ['sku' => 'SKU-4']]],
@@ -502,6 +508,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
         $run = $this->stored();
         $this->assertSame([RunRecord::DONE, 1, 0, 2], [$run->state, $run->updated, $run->created, $run->failed]);
+        $this->assertSame([[42], []], [$run->updatedIds, $run->createdIds], 'only the objects written are listed');
         $this->assertSame([
             3 => 'data-importer.ad-hoc-import.merge.interrupted',
             4 => 'data-importer.ad-hoc-import.run.save-failed-unknown',
@@ -649,7 +656,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testAMergeThatCannotStartClosesTheBranchAndFailsTheRows(): void
     {
-        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+        $this->branches->mergeAnswers = [new BranchNotWritableException(self::BEING_MERGED)];
 
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);
 
@@ -657,6 +664,25 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
         $run = $this->stored();
         $this->assertSame([RunRecord::DONE, 0, 0, 3], [$run->state, $run->updated, $run->created, $run->failed]);
         $this->assertSame(array_fill(2, 3, 'data-importer.ad-hoc-import.run.save-failed-unknown'), $this->failures());
+    }
+
+    public function testAFailedMergeListsNoObjectAsSaved(): void
+    {
+        $this->branches->mergeAnswers = [new BranchNotWritableException(self::BEING_MERGED)];
+
+        $this->merge()->rowsWritten(
+            $this->branchRun(['updatedIds' => [42, 43]]),
+            null,
+            AdHocRunFixtures::user(),
+            []
+        );
+
+        $run = $this->stored();
+        $this->assertSame(
+            [[], []],
+            [$run->updatedIds, $run->createdIds],
+            'the objects counted while writing into the branch were never saved'
+        );
     }
 
     public function testABranchWithoutARowIsClosedWithoutAMerge(): void
@@ -733,7 +759,7 @@ class AdHocBranchMergeTest extends Unit // NOSONAR php:S1200 a fake for every co
 
     public function testABranchThatCannotBeClosedAfterAFailedMergeIsLogged(): void
     {
-        $this->branches->mergeAnswers = [new BranchNotWritableException('Branch is being merged.')];
+        $this->branches->mergeAnswers = [new BranchNotWritableException(self::BEING_MERGED)];
         $this->branches->discardRefusal = new BranchNotWritableException('still merging');
 
         $this->merge()->rowsWritten($this->branchRun(), null, AdHocRunFixtures::user(), []);

@@ -187,3 +187,11 @@ bundle_data_importer_ad_hoc_import_download_failed_rows: Download the Rows Not S
 bundle_data_importer_ad_hoc_import_download_failed_rows_description: Download the rows an import could not save, with why, as CSV; only the user who started it can
 bundle_data_importer_ad_hoc_import_download_failed_rows_summary: Download the Rows Not Saved
 bundle_data_importer_ad_hoc_import_download_failed_rows_success_response: The rows not saved as CSV
+bundle_data_importer_ad_hoc_import_list_run_objects: List the Objects of an Import
+bundle_data_importer_ad_hoc_import_list_run_objects_description: The objects an ended import updated or created, a page at a time, with the values of the fields its file wrote; only the user who started it can
+bundle_data_importer_ad_hoc_import_list_run_objects_summary: List the Objects of an Import
+bundle_data_importer_ad_hoc_import_list_run_objects_success_response: The objects on the page
+bundle_data_importer_ad_hoc_import_export_run_objects: Export the Objects of an Import
+bundle_data_importer_ad_hoc_import_export_run_objects_description: The objects an ended import updated or created, with the values of the fields its file wrote, as CSV; only the user who started it can
+bundle_data_importer_ad_hoc_import_export_run_objects_summary: Export the Objects of an Import
+bundle_data_importer_ad_hoc_import_export_run_objects_success_response: The objects as CSV

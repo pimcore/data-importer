@@ -214,4 +214,10 @@ describe('the ad hoc import endpoints', () => {
       expect(hooks.useBundleDataImporterAdHocImportDiscardRunMutation).toBe(discardRun)
     }
   })
+
+  it('ask for a page of the objects a run saved, of one kind', async () => {
+    await store.dispatch(api.endpoints.bundleDataImporterAdHocImportListRunObjects.initiate({ fileId: 'id-1', kind: 'created', page: 2, pageSize: 50 }))
+
+    expect(sent).toEqual([{ url: `${FILE_URL}/id-1/run/objects`, params: { kind: 'created', page: 2, pageSize: 50 } }])
+  })
 })

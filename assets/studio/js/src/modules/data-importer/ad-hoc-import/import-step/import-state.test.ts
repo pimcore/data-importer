@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { branchStepOf, failedRowsUrl, importedCount, isDeciding, isDone, isSettled, percentOf, skippedRowsUrl, type ImportRun } from './import-state'
+import { branchStepOf, failedRowsUrl, importedCount, isDeciding, isDone, isSettled, percentOf, shortTimeOf, skippedRowsUrl, type ImportRun } from './import-state'
 
 jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/custom/api' }))
 
@@ -80,7 +80,34 @@ describe('an import through a branch', () => {
     expect(percentOf(run({ state: 'merging', processed: 4, total: 4, mergeTotal: 0, mergeDone: 0 }))).toBe(100)
   })
 
-  it('keeps the rows written on the bar while the branch is checked', () => {
-    expect(percentOf(run({ state: 'merging', processed: 4, total: 4, mergeTotal: 4, mergeDone: 0 }))).toBe(100)
+  it('starts the bar again from the merge while the branch is checked', () => {
+    expect(percentOf(run({ state: 'merging', processed: 4, total: 4, mergeTotal: 4, mergeDone: 0 }))).toBe(0)
+    expect(percentOf(run({ state: 'merging', processed: 306, total: 306, mergeTotal: 306, mergeDone: 184 }))).toBe(60)
+  })
+})
+
+describe('shortTimeOf', () => {
+  const now = new Date(2026, 10, 22, 15, 30)
+  const at = (date: Date): number => date.getTime() / 1000
+  const today = (time: string): string => `today ${time}`
+
+  it('names only the time for today, without seconds', () => {
+    const finished = new Date(2026, 10, 22, 10, 42, 17)
+
+    expect(shortTimeOf(at(finished), today, now)).toBe(`today ${finished.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`)
+    expect(shortTimeOf(at(finished), today, now)).not.toContain('17')
+  })
+
+  it('gives a short date and time for an earlier day', () => {
+    const finished = new Date(2026, 10, 20, 9, 5, 33)
+    const shown = shortTimeOf(at(finished), today, now)
+
+    expect(shown).toBe(finished.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }))
+    expect(shown).not.toContain('today')
+    expect(shown).not.toContain('33')
+  })
+
+  it('shows nothing before the import finished', () => {
+    expect(shortTimeOf(null, today, now)).toBe('')
   })
 })

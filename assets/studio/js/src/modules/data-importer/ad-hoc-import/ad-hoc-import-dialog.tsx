@@ -10,9 +10,10 @@
 
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
+import { useWidgetManager } from '@pimcore/studio-ui-bundle/modules/widget-manager'
 import {
   useBundleDataImporterAdHocImportDeleteFileMutation,
   useBundleDataImporterAdHocImportDiscardRunMutation,
@@ -48,8 +49,9 @@ import { transformationSourceOf } from './mapping-step/transformations-editor'
 import { useConfigurationMapping } from './mapping-step/use-import-configurations'
 import { dryRunParameters, previewCounts, type DryRun, type DryRunParameters, type ErrorMode } from './preview-step/preview-state'
 import { PreviewStep } from './preview-step/preview-step'
-import { isDone, isSettled } from './import-step/import-state'
+import { isDone, isSettled, type ObjectsKind } from './import-step/import-state'
 import { ImportStep } from './import-step/import-step'
+import { importObjectsTab } from './import-objects/open-import-objects'
 import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
 
@@ -59,6 +61,31 @@ const STEPS_WIDTH = 720
 const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
 const RUN_POLLING_MS = 1000
+
+// the modal's own padding, which the line under the steps spans
+const MODAL_PADDING = 24
+
+const useStyles = createStyles(({ token, css }) => ({
+  // the header ends under the steps with a line across the dialog; the steps sit apart from the title
+  steps: css`
+    margin: ${token.marginMD}px -${MODAL_PADDING}px ${token.marginMD}px;
+    padding: 0 ${MODAL_PADDING}px ${token.paddingMD}px;
+    border-bottom: 1px solid ${token.colorBorderTertiary};
+
+    // the small steps keep their 24px icons, their titles the dialog's larger text;
+    // antd's own small-steps rule is more specific than a plain title selector
+    .ant-steps.ant-steps-small .ant-steps-item-title {
+      font-size: ${token.fontSizeLG}px;
+    }
+
+    .ant-steps-item-process .ant-steps-item-title {
+      font-weight: 700;
+    }
+  `,
+  stepsInner: css`
+    max-width: ${STEPS_WIDTH}px;
+  `
+}))
 
 const titlePath = ({ folderPath, folderLabel }: AdHocImportTarget): string => {
   const path = folderPath.split('/').filter((part) => part !== '').join(' / ')
@@ -73,6 +100,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
@@ -100,6 +128,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
   const [discardRun] = useBundleDataImporterAdHocImportDiscardRunMutation()
   const [mergeLeavingOut] = useBundleDataImporterAdHocImportMergeLeavingOutMutation()
   const [withdrawRun] = useBundleDataImporterAdHocImportWithdrawRunMutation()
+  const { openMainWidget } = useWidgetManager()
   const { data: run, fulfilledTimeStamp: runAnsweredAt, refetch: refetchRun } = useBundleDataImporterAdHocImportLoadRunQuery(
     { fileId: runFileId ?? '' },
     { skip: runFileId === null, pollingInterval: runPolling }
@@ -361,6 +390,18 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
     onClose()
   }
 
+  // the run stays for the list, so the dialog closes without forgetting it; the server's temporary store drops it in a week
+  const showList = (kind: ObjectsKind): void => {
+    if (runFileId === null || !isDone(run)) {
+      return
+    }
+    openMainWidget(importObjectsTab(runFileId, run, kind, t('data-importer.ad-hoc-import.saved-objects.title', {
+      file: run.fileName,
+      interpolation: { escapeValue: false }
+    })))
+    onClose()
+  }
+
   // the server answers the run as its merge starts; the dialog follows it from there
   const mergeWithoutFailed = (): void => {
     if (runFileId === null) {
@@ -500,12 +541,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
-        <Steps
-          current={ isDone(run) ? STEPS.length : step }
-          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-          size="small"
-        />
+      <div className={ styles.steps }>
+        <div className={ styles.stepsInner }>
+          <Steps
+            current={ isDone(run) ? STEPS.length : step }
+            items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
+            size="small"
+          />
+        </div>
       </div>
       { step === 0 && (
         <FileStep
@@ -534,6 +577,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       { step === IMPORT_STEP && (phase.kind === 'inspected' || runFileId !== null) && (
         <ImportStep
           fileId={ runFileId ?? inspectedFileId() ?? '' }
+          onShowList={ showList }
           run={ run }
           total={ importCount }
           waitingFile={ waitingFile }

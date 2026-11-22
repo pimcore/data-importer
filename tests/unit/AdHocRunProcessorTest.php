@@ -226,9 +226,10 @@ class AdHocRunProcessorTest extends Unit // NOSONAR php:S1200 a fake for every c
         };
     }
 
-    private function saved(): Concrete
+    private function saved(?int $id = null): Concrete
     {
         $object = $this->createStub(Concrete::class);
+        $object->method('getId')->willReturn($id);
         $object->method('isAllowed')->willReturn(true);
         $object->method('setUserModification')->willReturnSelf();
         $object->method('getRealPath')->willReturn(self::FOLDER_PATH);
@@ -267,8 +268,8 @@ class AdHocRunProcessorTest extends Unit // NOSONAR php:S1200 a fake for every c
         $user = AdHocRunFixtures::user();
         $plan = AdHocRunFixtures::plan(
             [
-                new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved()),
-                new RowMatch(RowMatchOutcome::Existing, 'SKU-2', $this->saved()),
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-1', $this->saved(11)),
+                new RowMatch(RowMatchOutcome::Existing, 'SKU-2', $this->saved(12)),
             ],
             [],
             $user,
@@ -292,6 +293,7 @@ class AdHocRunProcessorTest extends Unit // NOSONAR php:S1200 a fake for every c
 
         $run = $this->runs->find(AdHocRunFixtures::USER_ID, $fileId);
         $this->assertSame(2, $run->updated);
+        $this->assertSame([11, 12], $run->updatedIds, 'the objects saved, for the list of the import\'s objects');
         $this->assertFalse($run->isRunning());
         $this->assertNotNull($run->finishedAt);
         $this->assertNull($this->files->findType(AdHocRunFixtures::USER_ID, $fileId), self::UPLOAD_DELETED);

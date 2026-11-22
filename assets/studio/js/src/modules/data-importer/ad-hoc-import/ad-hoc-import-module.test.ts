@@ -10,21 +10,30 @@
 
 import { AdHocImportModule } from '.'
 import { AdHocImportHost } from './ad-hoc-import-host'
+import { ImportObjectsWidget } from './import-objects/import-objects-widget'
 
 const mockContextMenu = { registerToSlot: jest.fn() }
 const mockComponents = { registerToSlot: jest.fn() }
+const mockWidgets = { registerWidget: jest.fn() }
 
 jest.mock('@pimcore/studio-ui-bundle', () => ({
-  container: { get: (id: string) => id === 'context-menu' ? mockContextMenu : mockComponents }
+  container: {
+    get: (id: string) => ({ 'context-menu': mockContextMenu, widgets: mockWidgets })[id] ?? mockComponents
+  }
 }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
-  serviceIds: { 'App/ContextMenuRegistry/ContextMenuRegistry': 'context-menu', 'App/ComponentRegistry/ComponentRegistry': 'components' }
+  serviceIds: {
+    'App/ContextMenuRegistry/ContextMenuRegistry': 'context-menu',
+    'App/ComponentRegistry/ComponentRegistry': 'components',
+    widgetManager: 'widgets'
+  }
 }))
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
   contextMenuConfig: { dataObjectTree: { name: 'data-object.tree', priority: { addFolder: 120, rename: 200 } } },
   componentConfig: { leftSidebar: { slot: { name: 'leftSidebar.slot' } } }
 }))
 jest.mock('./ad-hoc-import-host', () => ({ AdHocImportHost: () => null }))
+jest.mock('./import-objects/import-objects-widget', () => ({ ImportObjectsWidget: () => null }))
 jest.mock('./use-import-file-menu-item', () => ({ useImportFileMenuItem: () => ({ key: 'importFile' }) }))
 
 describe('AdHocImportModule', () => {
@@ -44,5 +53,13 @@ describe('AdHocImportModule', () => {
     const [slot, entry] = mockComponents.registerToSlot.mock.calls[0]
     expect(slot).toBe('leftSidebar.slot')
     expect(entry.component).toBe(AdHocImportHost)
+  })
+
+  it('registers the tab that lists the objects an import saved', () => {
+    AdHocImportModule.onInit()
+
+    const [widget] = mockWidgets.registerWidget.mock.calls[0]
+    expect(widget.name).toBe('data-importer-ad-hoc-import-objects')
+    expect(widget.component).toBe(ImportObjectsWidget)
   })
 })

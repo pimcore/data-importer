@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\AdHocImport\Run;
 
+use Pimcore\Bundle\DataImporterBundle\AdHocImport\DryRun\DryRunPlan;
 use Pimcore\Bundle\DataImporterBundle\AdHocImport\FileType;
 
 /**
@@ -49,6 +50,10 @@ final readonly class RunRecord
      * @param string|null $notice what went wrong that belongs to no row, in the user's words
      * @param list<string> $columns the file's columns, for the rows a later step finds it cannot save
      * @param int|null $checkedAt when it was last looked how the merge goes
+     * @param list<int> $updatedIds the objects the run saved that existed before
+     * @param list<int> $createdIds the objects the run created
+     * @param list<array{key: string, language: string|null, storeKey: string|null, label: string}> $fields the
+     *     fields the file writes, for the list of the objects the run saved
      */
     public function __construct(
         public int $userId,
@@ -77,7 +82,35 @@ final readonly class RunRecord
         public ?string $notice = null,
         public array $columns = [],
         public ?int $checkedAt = null,
+        public array $updatedIds = [],
+        public array $createdIds = [],
+        public array $fields = [],
     ) {
+    }
+
+    /**
+     * The fields the preview shows that the list of the run's objects can read, each once.
+     *
+     * @return list<array{key: string, language: string|null, storeKey: string|null, label: string}>
+     */
+    public static function fieldsOf(DryRunPlan $plan): array
+    {
+        $fields = [];
+        foreach ($plan->shown as $position) {
+            $field = ($plan->writers[$position] ?? null)?->field();
+            if ($field?->key === null) {
+                continue;
+            }
+            $storeKey = $field->storeKey?->id();
+            $fields[json_encode([$field->key, $field->language, $storeKey])] = [
+                'key' => $field->key,
+                'language' => $field->language,
+                'storeKey' => $storeKey,
+                'label' => $field->label,
+            ];
+        }
+
+        return array_values($fields);
     }
 
     public static function queueName(string $fileId): string
@@ -170,7 +203,53 @@ final readonly class RunRecord
 
     public function counted(RowOutcome $outcome): self
     {
-        return self::fromArray([...$this->toArray(), $outcome->result => $this->{$outcome->result} + 1]);
+        $stored = [...$this->toArray(), $outcome->result => $this->{$outcome->result} + 1];
+        $ids = self::idsOf($outcome->result);
+        if ($ids !== null && $outcome->objectId !== null) {
+            $stored[$ids] = [...$this->{$ids}, $outcome->objectId];
+        }
+
+        return self::fromArray($stored);
+    }
+
+    /**
+     * The objects a merge has written, which only it knows for the ones a branch created.
+     *
+     * @param list<int> $updatedIds
+     * @param list<int> $createdIds
+     */
+    public function withObjects(array $updatedIds, array $createdIds): self
+    {
+        return self::fromArray([...$this->toArray(), 'updatedIds' => $updatedIds, 'createdIds' => $createdIds]);
+    }
+
+    /**
+     * @param list<array{key: string, language: string|null, storeKey: string|null, label: string}> $fields
+     */
+    public function withFields(array $fields): self
+    {
+        return self::fromArray([...$this->toArray(), 'fields' => $fields]);
+    }
+
+    /**
+     * @return list<int> the objects the run saved of the kind, updated or created
+     */
+    public function objectIds(string $kind): array
+    {
+        return match ($kind) {
+            RowOutcome::UPDATED => $this->updatedIds,
+            RowOutcome::CREATED => $this->createdIds,
+            default => [],
+        };
+    }
+
+    private static function idsOf(string $result): ?string
+    {
+        return match ($result) {
+            RowOutcome::UPDATED => 'updatedIds',
+            RowOutcome::CREATED => 'createdIds',
+            default => null,
+        };
     }
 
     /**
@@ -205,6 +284,8 @@ final readonly class RunRecord
             RowOutcome::UPDATED => 0,
             RowOutcome::CREATED => 0,
             RowOutcome::FAILED => $this->processed(),
+            'updatedIds' => [],
+            'createdIds' => [],
         ]);
     }
 
