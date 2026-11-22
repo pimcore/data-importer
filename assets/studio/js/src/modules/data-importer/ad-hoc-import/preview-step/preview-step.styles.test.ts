@@ -41,16 +41,17 @@ describe('the preview grid', () => {
     expect(styles.rowNumber).toMatch(/color: grey;/)
   })
 
-  it('separates rows only, as the board does, and lets them be one line high', () => {
+  it('separates rows only, as the board does, and lets a long value wrap instead of cutting it off', () => {
     expect(styles.grid).toMatch(/&& \.ant-table-cell \{\s*border-left-width: 0;\s*border-right-width: 0;/)
     expect(styles.grid).toMatch(/&& \.ant-table-row \{\s*height: auto;/)
-    expect(styles.cell).toMatch(/white-space: nowrap;/)
-    expect(styles.cell).toMatch(/text-overflow: ellipsis;/)
+    expect(styles.cell).toMatch(/white-space: normal;/)
+    expect(styles.cell).toMatch(/overflow-wrap: anywhere;/)
+    expect(styles.cell).not.toMatch(/text-overflow: ellipsis;/)
   })
 
   // a body that follows its rows pushes the footer below a 720px high screen
   it('gives the table a body of its own height that scrolls', () => {
-    expect(styles.table).toMatch(/height: clamp\(160px, calc\(100vh - 410px\), 430px\);/)
+    expect(styles.table).toMatch(/height: clamp\(160px, calc\(100vh - 443px\), 430px\);/)
     expect(styles.table).toMatch(/overflow: auto;/)
     expect(styles.table).toMatch(/border: 1px solid light-grey;/)
   })

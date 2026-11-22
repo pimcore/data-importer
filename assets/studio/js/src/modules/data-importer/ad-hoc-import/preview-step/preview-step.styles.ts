@@ -52,15 +52,14 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorTextTertiary};
     flex-grow: 1;
   `,
-  // a cell of one's own loses the grid's padding and its vertical centering; one line each, as on the board
+  // a cell of one's own loses the grid's padding and its vertical centering; a long value wraps, as the board's message does
   cell: css`
     display: block;
     width: 100%;
     padding: ${token.paddingXXS}px ${token.paddingXS}px;
     line-height: ${token.lineHeight};
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
   `,
   matchValue: css`
     font-weight: ${token.fontWeightStrong};
@@ -77,7 +76,7 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   // a body of its own height that scrolls, so the footer stays in view on a small screen
   table: css`
-    height: clamp(160px, calc(100vh - 410px), 430px);
+    height: clamp(160px, calc(100vh - 443px), 430px);
     overflow: auto;
     border: ${token.lineWidth}px solid ${token.colorBorderContainer};
     border-radius: ${token.borderRadius}px;
