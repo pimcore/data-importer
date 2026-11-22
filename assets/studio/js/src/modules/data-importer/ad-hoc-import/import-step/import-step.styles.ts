@@ -173,8 +173,15 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorSuccess};
     color: ${token.colorTextLightSolid};
   `,
+  // the spinner takes the box of the other steps' icons, so every label starts at the same place
   branchStepActiveIcon: css`
     display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 14px;
     color: ${token.colorPrimary};
   `,
   // a cell of one's own loses the grid's padding
