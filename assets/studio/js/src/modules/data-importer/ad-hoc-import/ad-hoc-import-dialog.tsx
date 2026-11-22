@@ -66,14 +66,15 @@ const RUN_POLLING_MS = 1000
 const MODAL_PADDING = 24
 
 const useStyles = createStyles(({ token, css }) => ({
-  // the header ends under the steps with a line across the dialog
+  // the header ends under the steps with a line across the dialog; the steps sit apart from the title
   steps: css`
-    margin: 0 -${MODAL_PADDING}px ${token.marginMD}px;
+    margin: ${token.marginMD}px -${MODAL_PADDING}px ${token.marginMD}px;
     padding: 0 ${MODAL_PADDING}px ${token.paddingMD}px;
     border-bottom: 1px solid ${token.colorBorderTertiary};
 
-    // the small steps keep their 24px icons, their titles the dialog's larger text
-    .ant-steps-item-title {
+    // the small steps keep their 24px icons, their titles the dialog's larger text;
+    // antd's own small-steps rule is more specific than a plain title selector
+    .ant-steps.ant-steps-small .ant-steps-item-title {
       font-size: ${token.fontSizeLG}px;
     }
 
