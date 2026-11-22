@@ -89,8 +89,15 @@ export const useStyles = createStyles(({ token, css }) => ({
       border-right-width: 0;
     }
 
+    // the docked grid drops the border under its last row, which in the header is the one row it has
     && .ant-table-thead .ant-table-cell {
       border-top: 0 !important;
+      border-bottom: ${token.lineWidth}px solid ${token.colorBorderContainer} !important;
+    }
+
+    // the board's header has no split lines between its column titles
+    && .ant-table-thead > tr > th:not(:last-child)::before {
+      background-color: transparent !important;
     }
 
     && .ant-table-row {

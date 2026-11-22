@@ -49,6 +49,11 @@ describe('the preview grid', () => {
     expect(styles.cell).not.toMatch(/text-overflow: ellipsis;/)
   })
 
+  it('draws a line under the header and no split lines between its column titles, as the board does', () => {
+    expect(styles.grid).toMatch(/&& \.ant-table-thead \.ant-table-cell \{[^}]*border-bottom: 1px solid light-grey !important;/)
+    expect(styles.grid).toMatch(/&& \.ant-table-thead > tr > th:not\(:last-child\)::before \{\s*background-color: transparent !important;/)
+  })
+
   // a body that follows its rows pushes the footer below a 720px high screen
   it('gives the table a body of its own height that scrolls', () => {
     expect(styles.table).toMatch(/height: clamp\(160px, calc\(100vh - 443px\), 430px\);/)
