@@ -10,11 +10,14 @@
 
 import React from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
-import { StepFooter } from './dialog-footers'
+import { PreviewFooter, StepFooter } from './dialog-footers'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: {} })
+  // each class name is its css with every token read as its own name
+  createStyles: (build: (theme: { token: object, css: typeof String.raw }) => object) => () => ({
+    styles: build({ token: new Proxy({}, { get: (_, key) => String(key) }), css: String.raw })
+  })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../test/support/ad-hoc-import').components)
 
@@ -46,5 +49,21 @@ describe('the footer of a step', () => {
     footer()
 
     expect(screen.queryByText(/decided/)).toBeNull()
+  })
+})
+
+describe('the footer of the preview', () => {
+  it('writes the label of the error mode in the secondary text colour', () => {
+    render(
+      <PreviewFooter
+        errorMode="skip"
+        importCount={ 2 }
+        onBack={ () => {} }
+        onErrorModeChange={ () => {} }
+        onImport={ () => {} }
+      />
+    )
+
+    expect(screen.getByText('Rows with errors').className).toMatch(/color: colorTextSecondary;/)
   })
 })

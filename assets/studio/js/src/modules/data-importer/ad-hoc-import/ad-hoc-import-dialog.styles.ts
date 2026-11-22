@@ -26,6 +26,17 @@ export const useStyles = createStyles(({ token, css }) => ({
       font-size: ${token.fontSizeLG}px;
     }
 
+    /* the board draws the step numbers at the small font size */
+    && .ant-steps-item-icon {
+      font-size: ${token.fontSizeSM}px;
+      line-height: 1;
+    }
+
+    && .ant-steps-item-icon .ant-steps-icon {
+      font-size: inherit;
+      line-height: inherit;
+    }
+
     && .ant-steps-item-process .ant-steps-item-title {
       font-weight: ${token.fontWeightStrong};
     }

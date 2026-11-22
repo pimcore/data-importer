@@ -23,6 +23,7 @@ describe('the dialog header', () => {
       lineWidth: 1,
       colorBorderSecondary: 'light-grey',
       fontSizeLG: 14,
+      fontSizeSM: 12,
       fontWeightStrong: 700,
       colorPrimary: 'purple',
       colorPrimaryBg: 'light-purple'
@@ -40,6 +41,11 @@ describe('the dialog header', () => {
     expect(styles.steps).toMatch(/max-width: 720px;/)
     expect(styles.steps).toMatch(/\.ant-steps-item-title \{\s*font-size: 14px;/)
     expect(styles.steps).toMatch(/\.ant-steps-item-process \.ant-steps-item-title \{\s*font-weight: 700;/)
+  })
+
+  it('writes the step numbers at the small font size', () => {
+    expect(styles.steps).toMatch(/\.ant-steps-item-icon \{\s*font-size: 12px;\s*line-height: 1;/)
+    expect(styles.steps).toMatch(/\.ant-steps-item-icon \.ant-steps-icon \{\s*font-size: inherit;\s*line-height: inherit;/)
   })
 
   it('draws a finished step as a light circle with the check in the primary colour', () => {

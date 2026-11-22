@@ -23,6 +23,9 @@ const useStyles = createStyles(({ token, css }) => ({
     padding: ${token.paddingSM}px ${DIALOG_PADDING}px 0;
     border-top: ${token.lineWidth}px solid ${token.colorBorderContainer};
   `,
+  errorModeLabel: css`
+    color: ${token.colorTextSecondary};
+  `,
   undecided: css`
     color: ${token.colorWarningText};
   `,
@@ -56,7 +59,10 @@ export const PreviewFooter = ({ errorMode, importCount, onBack, onErrorModeChang
         align="center"
         gap="small"
       >
-        <label htmlFor={ ERROR_MODE_ID }>{ t('data-importer.ad-hoc-import.preview.rows-with-errors') }</label>
+        <label
+          className={ styles.errorModeLabel }
+          htmlFor={ ERROR_MODE_ID }
+        >{ t('data-importer.ad-hoc-import.preview.rows-with-errors') }</label>
         <Select
           id={ ERROR_MODE_ID }
           onChange={ (value: ErrorMode) => { onErrorModeChange(value) } }
