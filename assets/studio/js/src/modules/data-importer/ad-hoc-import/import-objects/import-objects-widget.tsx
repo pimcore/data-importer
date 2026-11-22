@@ -20,7 +20,7 @@ import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/
 
 export const PAGE_SIZE = 50
 const FIELD_COLUMN_SIZE = 80
-const MODIFIED_COLUMN_SIZE = 120
+const MODIFIED_COLUMN_SIZE = 130
 
 type ImportedObject = BundleDataImporterAdHocImportRunObjectsResponse['items'][number]
 
@@ -43,8 +43,10 @@ const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     min-width: 0;
   `,
+  // the toolbar's scroll box keeps its text on one line; the info line wraps instead
   info: css`
     min-width: 0;
+    white-space: normal;
     overflow-wrap: anywhere;
   `,
   noShrink: css`
@@ -95,8 +97,8 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
       id: 'modified',
       header: t('data-importer.ad-hoc-import.saved-objects.modified'),
       accessorFn: (object: ImportedObject) => timeOf(object.modificationDate),
-      size: MODIFIED_COLUMN_SIZE,
-      meta: { autoWidth: true }
+      // a fixed width, so the date stays on one line while the fields share the rest
+      size: MODIFIED_COLUMN_SIZE
     }
   ], [fields, t])
 
