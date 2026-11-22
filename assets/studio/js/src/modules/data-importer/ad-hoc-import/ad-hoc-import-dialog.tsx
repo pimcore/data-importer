@@ -10,7 +10,7 @@
 
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import { useWidgetManager } from '@pimcore/studio-ui-bundle/modules/widget-manager'
@@ -62,6 +62,25 @@ const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
 const RUN_POLLING_MS = 1000
 
+// the modal's own padding, which the line under the steps spans
+const MODAL_PADDING = 24
+
+const useStyles = createStyles(({ token, css }) => ({
+  // the header ends under the steps with a line across the dialog
+  steps: css`
+    margin: 0 -${MODAL_PADDING}px ${token.marginMD}px;
+    padding: 0 ${MODAL_PADDING}px ${token.paddingMD}px;
+    border-bottom: 1px solid ${token.colorBorderTertiary};
+
+    .ant-steps-item-process .ant-steps-item-title {
+      font-weight: 700;
+    }
+  `,
+  stepsInner: css`
+    max-width: ${STEPS_WIDTH}px;
+  `
+}))
+
 const titlePath = ({ folderPath, folderLabel }: AdHocImportTarget): string => {
   const path = folderPath.split('/').filter((part) => part !== '').join(' / ')
 
@@ -75,6 +94,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
@@ -515,12 +535,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
-        <Steps
-          current={ isDone(run) ? STEPS.length : step }
-          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-          size="small"
-        />
+      <div className={ styles.steps }>
+        <div className={ styles.stepsInner }>
+          <Steps
+            current={ isDone(run) ? STEPS.length : step }
+            items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
+            size="small"
+          />
+        </div>
       </div>
       { step === 0 && (
         <FileStep

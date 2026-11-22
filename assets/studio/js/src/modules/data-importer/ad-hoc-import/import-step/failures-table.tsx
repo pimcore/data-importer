@@ -24,26 +24,31 @@ export const FailuresTable = ({ run, why }: { run: ImportRun, why: string }): Re
       id: 'row',
       header: t('data-importer.ad-hoc-import.result.column.row'),
       accessorFn: (failure) => String(failure.row),
-      size: 64
+      cell: ({ getValue }) => <span className={ styles.rowNumber }>{ getValue<string>() }</span>,
+      size: 56
     },
     {
       id: 'match',
       header: run.matchColumn,
-      accessorFn: (failure) => failure.matchValue
+      accessorFn: (failure) => failure.matchValue,
+      size: 100
     },
     {
       id: 'action',
       header: t('data-importer.ad-hoc-import.result.column.action'),
-      accessorFn: (failure) => failure.action === null ? '' : t(`data-importer.ad-hoc-import.preview.action.${failure.action}`)
+      accessorFn: (failure) => failure.action === null ? '' : t(`data-importer.ad-hoc-import.preview.action.${failure.action}`),
+      size: 72
     },
     {
       id: 'why',
       header: why,
       accessorFn: (failure) => failure.message,
       // a cell of one's own loses the grid's padding
-      cell: ({ getValue }) => <span className={ styles.error }>{ getValue<string>() }</span>
+      cell: ({ getValue }) => <span className={ styles.error }>{ getValue<string>() }</span>,
+      // the reason takes the rest of the width, so it stays on one line
+      meta: { autoWidth: true }
     }
-  ], [run.matchColumn, styles.error, t, why])
+  ], [run.matchColumn, styles.error, styles.rowNumber, t, why])
 
   return (
     <Grid

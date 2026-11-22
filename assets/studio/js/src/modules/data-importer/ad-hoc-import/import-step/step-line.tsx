@@ -20,6 +20,19 @@ interface StepLineProps {
   detail?: string
 }
 
+export const DoneIcon = (): React.JSX.Element => {
+  const { styles } = useStyles()
+
+  return (
+    <span className={ styles.doneIcon }>
+      <Icon
+        options={ { width: 12, height: 12 } }
+        value="check"
+      />
+    </span>
+  )
+}
+
 // one step of a running import, with an icon for how far it got
 export const StepLine = ({ label, state, detail }: StepLineProps): React.JSX.Element => {
   const { styles } = useStyles()
@@ -29,12 +42,12 @@ export const StepLine = ({ label, state, detail }: StepLineProps): React.JSX.Ele
       aria-current={ state === 'active' ? 'step' : undefined }
       className={ styles.branchStep }
     >
-      { state === 'done' && (
-        <span className={ styles.branchStepDone }>
-          <Icon value="check-circle" />
+      { state === 'done' && <DoneIcon /> }
+      { state === 'active' && (
+        <span className={ styles.branchStepActiveIcon }>
+          <Spin type="classic" />
         </span>
       ) }
-      { state === 'active' && <Spin type="classic" /> }
       { state === 'pending' && <span className={ styles.branchStepPending } /> }
       <span className={ `${styles.branchStepLabel} ${state === 'active' ? styles.branchStepActive : ''}` }>{ label }</span>
       { detail !== undefined && <span className={ styles.stepDetail }>{ detail }</span> }

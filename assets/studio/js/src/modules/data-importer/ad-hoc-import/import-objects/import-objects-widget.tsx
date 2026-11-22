@@ -16,7 +16,7 @@ import {
   useBundleDataImporterAdHocImportListRunObjectsQuery,
   type BundleDataImporterAdHocImportRunObjectsResponse
 } from '../../data-importer-api-slice-enhanced'
-import { objectsExportUrl, type ObjectsKind } from '../import-step/import-state'
+import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/import-state'
 
 export const PAGE_SIZE = 50
 
@@ -33,11 +33,22 @@ export interface ImportObjectsWidgetProps {
 }
 
 const useStyles = createStyles(({ token, css }) => ({
+  // the toolbar scrolls what does not fit: the info line gives way first, so the export stays in view
   bar: css`
     display: flex;
     align-items: center;
     gap: ${token.marginSM}px;
     width: 100%;
+    min-width: 0;
+  `,
+  info: css`
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  noShrink: css`
+    flex-shrink: 0;
   `,
   spacer: css`
     flex-grow: 1;
@@ -48,10 +59,9 @@ const useStyles = createStyles(({ token, css }) => ({
     justify-content: space-between;
     gap: ${token.marginSM}px;
     width: 100%;
+    min-width: 0;
   `
 }))
-
-const timeOf = (timestamp: number | null): string => timestamp === null ? '' : new Date(timestamp * 1000).toLocaleString()
 
 /**
  * The objects an ad hoc import updated or created, with the fields its file wrote.
@@ -59,6 +69,7 @@ const timeOf = (timestamp: number | null): string => timestamp === null ? '' : n
 export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, created, kind: firstKind }: ImportObjectsWidgetProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const timeOf = (timestamp: number | null): string => shortTimeOf(timestamp, (time) => t('data-importer.ad-hoc-import.result.today', { time }))
   const [kind, setKind] = useState<ObjectsKind>(firstKind)
   const [page, setPage] = useState(1)
   const { data, isLoading, isFetching, isError } = useBundleDataImporterAdHocImportListRunObjectsQuery({ fileId, kind, page, pageSize: PAGE_SIZE })
@@ -69,17 +80,21 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
       ? [{
           id: 'path',
           header: t('data-importer.ad-hoc-import.saved-objects.path'),
-          accessorFn: (object: ImportedObject) => object.fullPath
+          accessorFn: (object: ImportedObject) => object.fullPath,
+          meta: { autoWidth: true }
         }]
       : fields.map((field, position) => ({
           id: `field-${position}`,
           header: field.label,
-          accessorFn: (object: ImportedObject) => object.values[position] ?? ''
+          accessorFn: (object: ImportedObject) => object.values[position] ?? '',
+          // every column shares the width, so all of them and the modified date fit the panel
+          meta: { autoWidth: true }
         }))),
     {
       id: 'modified',
       header: t('data-importer.ad-hoc-import.saved-objects.modified'),
-      accessorFn: (object: ImportedObject) => timeOf(object.modificationDate)
+      accessorFn: (object: ImportedObject) => timeOf(object.modificationDate),
+      meta: { autoWidth: true }
     }
   ], [fields, t])
 
@@ -96,8 +111,14 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
           size="auto"
         >
           <div className={ styles.footer }>
-            <Text type="secondary">{ t('data-importer.ad-hoc-import.saved-objects.filtered') }</Text>
+            <Text
+              className={ styles.info }
+              type="secondary"
+            >
+              { t('data-importer.ad-hoc-import.saved-objects.filtered') }
+            </Text>
             <Pagination
+              className={ styles.noShrink }
               current={ page }
               defaultPageSize={ PAGE_SIZE }
               onChange={ (next: number) => { setPage(next) } }
@@ -116,6 +137,7 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
         >
           <div className={ styles.bar }>
             <Segmented
+              className={ styles.noShrink }
               onChange={ (value: string) => { choose(value as ObjectsKind) } }
               options={ [
                 { value: 'updated', label: t('data-importer.ad-hoc-import.saved-objects.updated', { count: updated }), disabled: updated === 0 },
@@ -123,7 +145,10 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
               ] }
               value={ kind }
             />
-            <Text type="secondary">
+            <Text
+              className={ styles.info }
+              type="secondary"
+            >
               { t('data-importer.ad-hoc-import.saved-objects.imported-by', {
                 time: timeOf(finishedAt),
                 user: userName,
@@ -131,7 +156,10 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
               }) }
             </Text>
             <span className={ styles.spacer } />
-            <Button href={ objectsExportUrl(fileId, kind) }>
+            <Button
+              className={ styles.noShrink }
+              href={ objectsExportUrl(fileId, kind) }
+            >
               { t('data-importer.ad-hoc-import.saved-objects.export') }
             </Button>
           </div>
@@ -152,6 +180,8 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
             )
           : (
             <Grid
+              allowMultipleAutoWidthColumns
+              autoWidth
               columns={ columns }
               data={ data?.items ?? [] }
               isLoading={ isFetching }

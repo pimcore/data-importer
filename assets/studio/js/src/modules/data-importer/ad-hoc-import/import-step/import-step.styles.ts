@@ -75,7 +75,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     align-items: center;
     gap: ${token.marginXS}px;
-    color: ${token.colorSuccessText};
+    // the theme's success text is the light green, below AA on white; green 7 reaches it
+    color: ${token.green7};
     font-weight: 700;
   `,
   imported: css`
@@ -142,7 +143,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     height: 100%;
     padding: ${token.paddingXXS}px ${token.paddingXS}px;
-    color: ${token.colorError};
+    // the theme's error text is the light red, below AA on white; red 7 reaches it
+    color: ${token.red7};
     white-space: normal;
     overflow-wrap: anywhere;
   `,
@@ -159,13 +161,32 @@ export const useStyles = createStyles(({ token, css }) => ({
   branchStepActive: css`
     font-weight: 700;
   `,
-  branchStepDone: css`
-    color: ${token.colorSuccess};
+  // a filled circle with a white check, as no Studio icon draws one
+  doneIcon: css`
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: ${token.colorSuccess};
+    color: ${token.colorTextLightSolid};
+  `,
+  branchStepActiveIcon: css`
+    display: inline-flex;
+    color: ${token.colorPrimary};
+  `,
+  // a cell of one's own loses the grid's padding
+  rowNumber: css`
+    display: block;
+    padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    color: ${token.colorTextTertiary};
   `,
   branchStepPending: css`
     display: inline-block;
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border: 1px solid ${token.colorBorder};
     border-radius: 50%;
   `,

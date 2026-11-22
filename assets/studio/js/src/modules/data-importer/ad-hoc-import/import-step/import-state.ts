@@ -33,6 +33,19 @@ export const percentOf = (run: ImportRun): number => run.state === 'merging' && 
   ? percent(run.mergeDone, run.mergeTotal)
   : percent(run.processed, run.total)
 
+// a time as the result shows it: the time alone for today, else a short date, never seconds
+export const shortTimeOf = (timestamp: number | null, today: (time: string) => string, now: Date = new Date()): string => {
+  if (timestamp === null) {
+    return ''
+  }
+  const date = new Date(timestamp * 1000)
+  if (date.toDateString() === now.toDateString()) {
+    return today(date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }))
+  }
+
+  return date.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+}
+
 export const importedCount = (run: ImportRun): number => run.updated + run.created
 
 export type BranchStep = 'written' | 'checking' | 'merging'

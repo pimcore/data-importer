@@ -10,15 +10,15 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Button, Card, Icon, Progress } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Button, Card, Progress } from '@pimcore/studio-ui-bundle/components'
 import { useElementHelper } from '@pimcore/studio-ui-bundle/modules/element'
 import { useStyles as usePreviewStyles } from '../preview-step/preview-step.styles'
 import { BranchRunning } from './branch-running'
 import { Decision } from './decision'
 import { FailuresTable, Notice, SummaryLine } from './failures-table'
-import { importedCount, isDeciding, isDone, percentOf, skippedRowsUrl, type ImportRun, type ObjectsKind } from './import-state'
+import { importedCount, isDeciding, isDone, percentOf, shortTimeOf, skippedRowsUrl, type ImportRun, type ObjectsKind } from './import-state'
 import { ResultBar } from './result-bar'
-import { StepLine } from './step-line'
+import { DoneIcon, StepLine } from './step-line'
 import { useStyles } from './import-step.styles'
 
 const CARD_PADDING = { x: 'extra-large', y: 'large' } as const
@@ -111,7 +111,7 @@ const Complete = ({ fileId, run, onShowList }: CompleteProps): React.JSX.Element
         <div className={ styles.resultContent }>
           <div className={ styles.summary }>
             <div className={ styles.complete }>
-              <Icon value="check-circle" />
+              <DoneIcon />
               { t('data-importer.ad-hoc-import.result.complete') }
             </div>
             <div className={ styles.imported }>{ importedCount(run) }</div>
@@ -124,7 +124,7 @@ const Complete = ({ fileId, run, onShowList }: CompleteProps): React.JSX.Element
             <div className={ styles.muted }>
               { t(run.throughBranch ? 'data-importer.ad-hoc-import.result.merged-as' : 'data-importer.ad-hoc-import.result.saved-as', {
                 user: run.userName,
-                time: run.finishedAt === null ? '' : new Date(run.finishedAt * 1000).toLocaleString(),
+                time: shortTimeOf(run.finishedAt, (time) => t('data-importer.ad-hoc-import.result.today', { time })),
                 interpolation: { escapeValue: false }
               }) }
             </div>
