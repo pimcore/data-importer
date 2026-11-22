@@ -26,6 +26,21 @@ const FORM_ITEM_STYLE = { marginBottom: 0 }
 const useStyles = createStyles(({ token, css }) => ({
   quiet: css`
     color: ${token.colorTextTertiary};
+  `,
+  // Studio's Segmented draws a bordered light track and fills the choice; here the choice is lifted off a grey track
+  matchBy: css`
+    .ant-segmented .ant-segmented-group {
+      border-color: transparent;
+      background: ${token.colorFillTertiary};
+      box-shadow: none;
+
+      .ant-segmented-item.ant-segmented-item-selected,
+      .ant-segmented-thumb {
+        background: ${token.colorBgContainer};
+        border-color: ${token.colorBgContainer};
+        box-shadow: ${token.boxShadowTertiary};
+      }
+    }
   `
 }))
 
@@ -108,15 +123,17 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
           align="center"
           gap="small"
         >
-          <Segmented
-            onChange={ (next) => { onChange({ ...objects, matchBy: next as MatchBy }) } }
-            options={ [
-              { value: 'id', label: t('data-importer.ad-hoc-import.objects.match-by.object-id') },
-              { value: 'field', label: t('data-importer.ad-hoc-import.objects.match-by.field') },
-              { value: 'none', label: t('data-importer.ad-hoc-import.objects.match-by.none') }
-            ] }
-            value={ matchBy }
-          />
+          <div className={ styles.matchBy }>
+            <Segmented
+              onChange={ (next) => { onChange({ ...objects, matchBy: next as MatchBy }) } }
+              options={ [
+                { value: 'id', label: t('data-importer.ad-hoc-import.objects.match-by.object-id') },
+                { value: 'field', label: t('data-importer.ad-hoc-import.objects.match-by.field') },
+                { value: 'none', label: t('data-importer.ad-hoc-import.objects.match-by.none') }
+              ] }
+              value={ matchBy }
+            />
+          </div>
           { matchBy === 'field' && (
             <Select
               aria-label={ t('data-importer.ad-hoc-import.objects.match-by.field') }

@@ -10,6 +10,7 @@
 
 import React from 'react'
 import { Upload } from 'antd'
+import { DownloadOutlined } from '@ant-design/icons'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Icon } from '@pimcore/studio-ui-bundle/components'
 
@@ -76,10 +77,8 @@ export const FileDropZone = ({ onFile }: FileDropZoneProps): React.JSX.Element =
                 options={ { height: 20, width: 20 } }
                 value="new"
               />
-              <Icon
-                options={ { height: 20, width: 20 } }
-                value="import"
-              />
+              { /* Studio has no arrow into a tray; its import icon is a tray under a plus */ }
+              <DownloadOutlined style={ { fontSize: 20 } } />
             </Flex>
           </div>
           <div className={ styles.label }>{ t('data-importer.ad-hoc-import.file.drop') }</div>

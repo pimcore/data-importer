@@ -33,6 +33,10 @@ const useStyles = createStyles(({ token, css }) => ({
       border-left: 0;
     }
 
+    .ant-table-wrapper .ant-table-thead > tr > th.ant-table-cell::before {
+      display: none;
+    }
+
     .ant-table-wrapper .ant-table-row {
       height: ${ROW_HEIGHT}px;
     }
