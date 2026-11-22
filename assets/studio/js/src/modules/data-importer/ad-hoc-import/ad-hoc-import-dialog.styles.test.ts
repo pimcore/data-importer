@@ -44,6 +44,6 @@ describe('the dialog header', () => {
 
   it('draws a finished step as a light circle with the check in the primary colour', () => {
     expect(styles.steps).toMatch(/\.ant-steps-item-finish \.ant-steps-item-icon \{\s*background-color: light-purple;\s*border-color: light-purple;/)
-    expect(styles.steps).toMatch(/\.ant-steps-item-finish \.ant-steps-item-icon \.ant-steps-icon \{\s*color: purple;/)
+    expect(styles.steps).toMatch(/\.ant-steps-item-finish \.ant-steps-item-icon \.ant-steps-icon \{\s*color: purple !important;/)
   })
 })
