@@ -72,6 +72,11 @@ const useStyles = createStyles(({ token, css }) => ({
     padding: 0 ${MODAL_PADDING}px ${token.paddingMD}px;
     border-bottom: 1px solid ${token.colorBorderTertiary};
 
+    // the small steps keep their 24px icons, their titles the dialog's larger text
+    .ant-steps-item-title {
+      font-size: ${token.fontSizeLG}px;
+    }
+
     .ant-steps-item-process .ant-steps-item-title {
       font-weight: 700;
     }

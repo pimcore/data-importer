@@ -20,6 +20,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     margin-bottom: ${token.marginXS}px;
   `,
   title: css`
+    font-size: ${token.fontSizeLG}px;
+    line-height: ${token.lineHeightLG};
     font-weight: 700;
   `,
   muted: css`

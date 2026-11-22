@@ -32,8 +32,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorErrorBg};
   `,
   number: css`
-    font-size: ${token.fontSizeHeading4}px;
-    line-height: ${token.lineHeightHeading4};
+    font-size: ${token.fontSizeHeading3}px;
+    line-height: ${token.lineHeightHeading3};
     font-weight: ${token.fontWeightStrong};
   `,
   label: css`
