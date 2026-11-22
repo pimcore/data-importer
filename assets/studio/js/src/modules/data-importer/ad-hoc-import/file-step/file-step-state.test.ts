@@ -10,6 +10,7 @@
 
 import {
   canContinue,
+  fieldName,
   fileBadge,
   hasAcceptedExtension,
   initialObjects,
@@ -156,5 +157,20 @@ describe('fileBadge', () => {
   it('shows the extension in capitals', () => {
     expect(fileBadge({ kind: 'uploading', file, loaded: 0, total: 1 })).toBe('CSV')
     expect(fileBadge({ kind: 'uploading', file: { name: 'a.b.xlsx', size: 1 }, loaded: 0, total: 1 })).toBe('XLSX')
+  })
+})
+
+describe('fieldName', () => {
+  it('names a field without the key the server appends', () => {
+    expect(fieldName('Series [series]', 'series')).toBe('Series')
+  })
+
+  it('keeps a title that does not end in its key', () => {
+    expect(fieldName('Series [range]', 'series')).toBe('Series [range]')
+    expect(fieldName('Series', 'series')).toBe('Series')
+  })
+
+  it('keeps a title that is nothing but its key', () => {
+    expect(fieldName(' [series]', 'series')).toBe(' [series]')
   })
 })

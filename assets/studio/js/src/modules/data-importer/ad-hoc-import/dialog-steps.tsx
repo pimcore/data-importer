@@ -11,13 +11,11 @@
 import React from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Steps } from '@pimcore/studio-ui-bundle/components'
+import { BOLD, DIALOG_PADDING } from './dialog-layout'
 
 const STEPS_WIDTH = 720
 
 export const STEPS = ['file', 'mapping', 'preview', 'import']
-
-// the modal's content padding, which the band spans so its line runs across the dialog
-const DIALOG_PADDING = 24
 
 const useStyles = createStyles(({ token, css }) => ({
   band: css`
@@ -25,15 +23,21 @@ const useStyles = createStyles(({ token, css }) => ({
     padding: 0 ${DIALOG_PADDING}px ${token.padding}px;
     border-bottom: ${token.lineWidth}px solid ${token.colorBorderContainer};
   `,
+  // the small steps keep their 24px circles; the numbers and titles take the default size's text, which antd's
+  // small-size rules would otherwise win over
   steps: css`
     max-width: ${STEPS_WIDTH}px;
 
-    .ant-steps-item-title {
+    .ant-steps.ant-steps-small .ant-steps-item-icon {
+      font-size: ${token.fontSize}px;
+    }
+
+    .ant-steps.ant-steps-small .ant-steps-item-title {
       font-size: ${token.fontSizeLG}px;
     }
 
-    .ant-steps-item-process .ant-steps-item-title {
-      font-weight: ${token.fontWeightStrong};
+    .ant-steps.ant-steps-small .ant-steps-item-process .ant-steps-item-title {
+      font-weight: ${BOLD};
     }
   `
 }))

@@ -78,7 +78,7 @@ export const FileDropZone = ({ onFile }: FileDropZoneProps): React.JSX.Element =
               />
               <Icon
                 options={ { height: 20, width: 20 } }
-                value="drop-target"
+                value="import"
               />
             </Flex>
           </div>

@@ -15,7 +15,8 @@ import { Flex, Form, FormKit, ManyToOneRelationPath, Segmented, Select } from '@
 import { useBundleDataImporterAdHocImportLoadMatchFieldsQuery } from '../../data-importer-api-slice-enhanced'
 import { parseClassAttribute } from '../../components/tabs/steps/mapping-step/hooks/use-mapping-step-loader.types'
 import { filterByLabel } from '../../utils/select-utils'
-import { type InspectedFile, type MatchBy, type ObjectsSettings } from './file-step-state'
+import { fieldName, type InspectedFile, type MatchBy, type ObjectsSettings } from './file-step-state'
+import { PANEL_PADDING } from '../dialog-layout'
 
 const CLASS_WIDTH = 200
 const MATCH_WIDTH = 140
@@ -62,7 +63,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
     () => (fields?.attributes ?? [])
       .map(parseClassAttribute)
       .filter(({ localized }) => !localized)
-      .map(({ key, title }) => ({ value: key, label: title })),
+      .map(({ key, title }) => ({ value: key, label: fieldName(title, key) })),
     [fields]
   )
 
@@ -78,6 +79,7 @@ export const ObjectsPanel = ({ inspected, objects, onChange }: ObjectsPanelProps
 
   return (
     <FormKit.Panel
+      contentPadding={ PANEL_PADDING }
       title={ t('data-importer.ad-hoc-import.objects.title') }
     >
       <Form.Item

@@ -9,6 +9,7 @@
  */
 
 import { createStyles } from '@pimcore/studio-ui-bundle/app'
+import { BOLD } from '../dialog-layout'
 
 export const useStyles = createStyles(({ token, css }) => ({
   card: css`
@@ -31,7 +32,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     border-radius: ${token.borderRadius}px;
     background: ${token.colorPrimaryBg};
     color: ${token.colorPrimary};
-    font-weight: ${token.fontWeightStrong};
+    font-weight: ${BOLD};
     font-size: 10px;
     display: flex;
     align-items: center;
@@ -49,7 +50,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     flex-direction: column;
   `,
   name: css`
-    font-weight: ${token.fontWeightStrong};
+    font-weight: ${BOLD};
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
