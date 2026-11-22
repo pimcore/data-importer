@@ -57,7 +57,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: 6px 10px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
-    background: ${token.colorBgLayout};
+    background: ${token.colorFillAlter};
   `,
   chip: css`
     padding: 0 6px;
@@ -91,13 +91,17 @@ export const useStyles = createStyles(({ token, css }) => ({
     border: 1px solid ${token.colorWarningBorder};
     border-radius: ${token.borderRadiusSM}px;
     background: ${token.colorWarningBg};
-    color: ${token.colorWarningText};
+    color: ${token.colorWarningTextActive};
   `,
   tabs: css`
     flex: 1 1 auto;
     min-height: 0;
     padding: 0 ${token.padding}px;
     overflow: auto;
+
+    .ant-tabs-tab-active .ant-tabs-tab-btn {
+      font-weight: ${token.fontWeightStrong};
+    }
   `,
   actions: css`
     display: flex;

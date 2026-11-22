@@ -156,6 +156,13 @@ describe('the mapping step', () => {
     expect(within(rowOf('Name DE')).getByText('de')).toBeTruthy()
   })
 
+  it('marks what was mapped automatically with a sparkle, in the row and in the notice', () => {
+    renderStep()
+
+    expect(within(rowOf('Name DE')).getByText('auto').querySelector('[data-icon="sparkle"]')).not.toBeNull()
+    expect(screen.getByText('1 column was mapped automatically').closest('div')?.querySelector('[data-icon="sparkle"]')).not.toBeNull()
+  })
+
   it('offers a weaker suggestion to take at once', () => {
     renderStep()
 
@@ -523,12 +530,10 @@ describe('the mapping step', () => {
       fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
       expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
-      expect(screen.getByText('Columns whose values do not fit their field yet: Notiz')).toBeTruthy()
 
       await settle()
 
       expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
-      expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
     })
 
     describe('a column left before the answer', () => {

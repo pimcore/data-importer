@@ -10,7 +10,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Flex, Skeleton } from '@pimcore/studio-ui-bundle/components'
+import { Flex, Skeleton } from '@pimcore/studio-ui-bundle/components'
 import { ColumnPanel, type ColumnPanelTab } from './column-panel'
 import {
   autoRowCount,
@@ -24,7 +24,6 @@ import {
   skipOpenColumns,
   skippedRows,
   takeAllSuggestions,
-  unfitRows,
   visibleRows,
   type Mapping,
   type MappingField,
@@ -88,10 +87,10 @@ export const MappingStep = ({
   const change = (next: Mapping): void => { onChange(settle(next)) }
 
   const required = useMemo(() => mapping === null ? [] : requiredFields(mapping, fields), [mapping, fields])
-  const unfit = useMemo(() => mapping === null ? [] : unfitRows(mapping, fields), [mapping, fields])
 
   const mapWithSwitch = (
     <MapWithSwitch
+      divided={ mapWith === 'configuration' }
       onChange={ onMapWithChange }
       value={ mapWith }
     />
@@ -178,17 +177,6 @@ export const MappingStep = ({
         skipped={ skipped.length }
         total={ mapping.rows.length }
       />
-
-      { unfit.length > 0 && (
-        <Alert
-          message={ t(`${MAPPING}.not-fitting`, {
-            columns: unfit.map(({ label }) => label).join(', '),
-            interpolation: { escapeValue: false }
-          }) }
-          showIcon
-          type="warning"
-        />
-      ) }
 
       <div className={ styles.table }>
         <div

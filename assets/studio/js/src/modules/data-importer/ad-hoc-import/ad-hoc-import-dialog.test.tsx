@@ -1046,7 +1046,9 @@ describe('the mapping step', () => {
     pickField('Bezeichnung', 'Image')
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText('Columns whose values do not fit their field yet: Bezeichnung')).toBeTruthy()
+    // the row says so, no notice over the table repeats it
+    expect(screen.getByText('Needs a transformation')).toBeTruthy()
+    expect(screen.queryByText(/do not fit their field/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
 
     pickField('Bezeichnung', 'Title')

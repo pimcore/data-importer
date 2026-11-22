@@ -10,7 +10,7 @@
 
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
@@ -56,6 +56,22 @@ import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
 
+// the step list ends the dialog's head: a divider across its whole width, the current step's name bold
+const useStyles = createStyles(({ token, css }) => ({
+  head: css`
+    margin: 0 -${token.paddingLG}px ${token.margin}px;
+    padding: 0 ${token.paddingLG}px ${token.margin}px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+  steps: css`
+    max-width: ${STEPS_WIDTH}px;
+
+    .ant-steps-item-process .ant-steps-item-title {
+      font-weight: ${token.fontWeightStrong};
+    }
+  `
+}))
+
 const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
 const RUN_POLLING_MS = 1000
@@ -73,6 +89,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
@@ -500,12 +517,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
-        <Steps
-          current={ isDone(run) ? STEPS.length : step }
-          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-          size="small"
-        />
+      <div className={ styles.head }>
+        <div className={ styles.steps }>
+          <Steps
+            current={ isDone(run) ? STEPS.length : step }
+            items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
+            size="small"
+          />
+        </div>
       </div>
       { step === 0 && (
         <FileStep

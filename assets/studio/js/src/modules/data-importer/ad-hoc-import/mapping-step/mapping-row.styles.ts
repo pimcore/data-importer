@@ -57,7 +57,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: ${token.marginXS}px;
     min-width: 0;
     height: 30px;
     padding: 0 ${token.paddingXS}px 0 ${token.paddingXXS}px;
@@ -82,14 +82,44 @@ export const useStyles = createStyles(({ token, css }) => ({
     opacity: 0;
   `,
   fieldIcon: css`
+    display: flex;
     flex: none;
+    align-items: center;
     color: ${token.colorPrimary};
   `,
   fieldName: css`
+    min-width: 0;
+    overflow: hidden;
     font-weight: ${token.fontWeightStrong};
     white-space: nowrap;
+    text-overflow: ellipsis;
   `,
+  // the small chip of the design, not the default tag's size
+  auto: css`
+    &.ant-tag {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 3px;
+      margin: 0;
+      padding: 0 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      line-height: 16px;
+    }
+
+    & > span + span {
+      margin-inline-start: 0;
+    }
+  `,
+  needsTransformation: css`
+    &.ant-tag {
+      color: ${token.colorWarningTextActive};
+    }
+  `,
+  // the group gives way before the field's name
   crumb: css`
+    flex: 0 10 auto;
     min-width: 0;
     overflow: hidden;
     color: ${token.colorTextDescription};
@@ -101,9 +131,11 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     align-items: center;
     gap: ${token.marginXXS}px;
+    flex: none;
     height: 24px;
     padding: 0 ${token.paddingXS}px;
     border-radius: 12px;
+    white-space: nowrap;
     background: ${token.colorPrimaryBg};
     color: ${token.colorPrimaryActive};
     cursor: pointer;

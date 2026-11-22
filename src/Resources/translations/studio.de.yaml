@@ -463,7 +463,6 @@ data-importer.ad-hoc-import.mapping.transformation-one: 1 Transformation
 data-importer.ad-hoc-import.mapping.transformations-count: '{{count}} Transformationen'
 data-importer.ad-hoc-import.mapping.transformations-of: 'Transformationen von {{column}}'
 data-importer.ad-hoc-import.mapping.needs-transformation: Benötigt eine Transformation
-data-importer.ad-hoc-import.mapping.not-fitting: 'Spalten, deren Werte noch nicht zu ihrem Feld passen: {{columns}}'
 data-importer.ad-hoc-import.transformations.intro: Von oben nach unten auf den Wert dieser Spalte angewendet, vor der automatischen Umwandlung für den Typ des Felds.
 data-importer.ad-hoc-import.transformations.add: Transformation hinzufügen
 data-importer.ad-hoc-import.transformations.remove: '{{step}} entfernen'

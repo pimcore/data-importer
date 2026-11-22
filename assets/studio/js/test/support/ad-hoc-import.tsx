@@ -325,7 +325,7 @@ export const components = {
       )) }
     </ol>
   ),
-  Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
+  Tag: ({ children, icon }: WithChildren & { icon?: React.ReactNode }) => <mark>{ icon }{ children }</mark>,
   Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>

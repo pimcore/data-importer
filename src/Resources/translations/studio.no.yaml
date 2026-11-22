@@ -463,7 +463,6 @@ data-importer.ad-hoc-import.mapping.transformation-one: 1 transformasjon
 data-importer.ad-hoc-import.mapping.transformations-count: '{{count}} transformasjoner'
 data-importer.ad-hoc-import.mapping.transformations-of: 'Transformasjoner av {{column}}'
 data-importer.ad-hoc-import.mapping.needs-transformation: Trenger en transformasjon
-data-importer.ad-hoc-import.mapping.not-fitting: 'Kolonner der verdiene ikke passer til feltet ennå: {{columns}}'
 data-importer.ad-hoc-import.transformations.intro: Brukes ovenfra og ned på denne kolonnens verdi, før den automatiske konverteringen for felttypen.
 data-importer.ad-hoc-import.transformations.add: Legg til transformasjon
 data-importer.ad-hoc-import.transformations.remove: 'Fjern {{step}}'

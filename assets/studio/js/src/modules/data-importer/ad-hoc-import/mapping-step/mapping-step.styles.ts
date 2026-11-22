@@ -59,7 +59,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorPrimary};
   `,
   table: css`
-    max-height: calc(100vh - 500px);
+    max-height: calc(100vh - 440px);
     min-height: 120px;
     overflow: auto;
   `,

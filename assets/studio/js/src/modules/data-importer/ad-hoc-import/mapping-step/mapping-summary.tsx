@@ -10,9 +10,10 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Flex, Icon, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { type RequiredField, type RowFilter } from './mapping-state'
 import { useStyles } from './mapping-step.styles'
+import { SparkleIcon } from './sparkle-icon'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
 const FILTERS: RowFilter[] = ['all', 'open', 'mapped']
@@ -80,8 +81,8 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
         </Flex>
         { counts.open > 0 && (
           <Button
+            color="secondary"
             onClick={ onSkipOpen }
-            size="small"
           >
             { t(`${MAPPING}.skip-open`, { count: counts.open }) }
           </Button>
@@ -108,7 +109,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
 
       { (auto > 0 || pending > 0) && (
         <div className={ styles.note }>
-          <span className={ styles.noteIcon }><Icon value="auto-save" /></span>
+          <span className={ styles.noteIcon }><SparkleIcon withSecond /></span>
           { auto === 0
             ? <span><strong>{ pendingLead }</strong></span>
             : (

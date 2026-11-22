@@ -28,6 +28,16 @@ const useStyles = createStyles(({ token, css }) => ({
     grid-template-columns: ${LABEL_WIDTH}px minmax(0, 1fr);
     gap: ${token.marginXS}px ${token.margin}px;
   `,
+  // a small mark beside the name, not a tag of the default size
+  readOnly: css`
+    &.ant-tag {
+      margin: 0;
+      padding: 0 6px;
+      background: ${token.colorFillTertiary};
+      font-size: 10px;
+      line-height: 18px;
+    }
+  `,
   replaced: css`
     color: ${token.colorTextQuaternary};
   `,
@@ -77,7 +87,7 @@ export const ConfigurationDetail = ({ configuration, inspected, fileName, match 
           >
             { configuration.name }
           </Text>
-          <Tag>{ t(`${CONFIGURATION}.read-only`) }</Tag>
+          <Tag className={ styles.readOnly }>{ t(`${CONFIGURATION}.read-only`) }</Tag>
         </Flex>
         <Card>
           <div className={ styles.facts }>

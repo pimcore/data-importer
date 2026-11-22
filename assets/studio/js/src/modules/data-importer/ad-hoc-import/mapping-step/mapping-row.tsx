@@ -15,6 +15,7 @@ import { chooseField, fitsField, type Mapping, type MappingField, type MappingRo
 import { chooseLanguage, freeLanguages } from './mapping-choices'
 import { canGoInto, takenFields } from './taken-fields'
 import { useStyles } from './mapping-row.styles'
+import { SparkleIcon } from './sparkle-icon'
 import { StoredAs } from './stored-as'
 import { type TransformationSource } from './transformations-editor'
 
@@ -119,7 +120,6 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
       <Flex
         align="center"
         gap="small"
-        wrap="wrap"
       >
         <button
           aria-label={ openLabel }
@@ -136,7 +136,7 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
             onClick={ () => { onChange(chooseField(mapping, column, suggested.key)) } }
             type="button"
           >
-            <span className={ styles.suggestionIcon }><Icon value="auto-save" /></span>
+            <span className={ styles.suggestionIcon }><SparkleIcon size={ 12 } /></span>
             <span className={ styles.suggestionLead }>{ t(`${MAPPING}.use-suggestion.lead`) }</span>
             <strong>{ suggested.title }</strong>
             { t(`${MAPPING}.use-suggestion.end`) }
@@ -163,8 +163,10 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         <span className={ styles.crumb }>{ field?.group.join(' › ') }</span>
         { auto && (
           <Tag
+            bordered={ false }
+            className={ styles.auto }
             color="purple"
-            iconName="auto-save"
+            icon={ <SparkleIcon size={ 10 } /> }
           >
             { t(`${MAPPING}.auto`) }
           </Tag>
@@ -257,7 +259,14 @@ export const MappingRowView = ({
             { transformationsLabel(t, transformations.length) }
           </Button>
         ) }
-        { !fitsField(row, fields) && <Tag color="warning">{ t(`${MAPPING}.needs-transformation`) }</Tag> }
+        { !fitsField(row, fields) && (
+          <Tag
+            className={ styles.needsTransformation }
+            color="warning"
+          >
+            { t(`${MAPPING}.needs-transformation`) }
+          </Tag>
+        ) }
       </div>
       <div className={ styles.cell }>
         <StoredAs

@@ -15,8 +15,9 @@ import { failedRowsUrl, importedCount, isDeciding, isDone, type ImportRun } from
 import { type ErrorMode } from './preview-step/preview-state'
 
 const useStyles = createStyles(({ token, css }) => ({
+  // the light warning text does not reach the contrast a sentence needs
   undecided: css`
-    color: ${token.colorWarningText};
+    color: ${token.colorWarningTextActive};
   `,
   decided: css`
     color: ${token.colorSuccess};

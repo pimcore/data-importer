@@ -180,13 +180,19 @@ export const ColumnPanel = ({
             </Flex>
             <IconButton
               aria-label={ t(`${PANEL}.previous`) }
+              color="secondary"
               icon={ { value: 'chevron-left' } }
               onClick={ onPrevious }
+              theme="secondary"
+              type="default"
             />
             <IconButton
               aria-label={ t(`${PANEL}.next`) }
+              color="secondary"
               icon={ { value: 'chevron-right' } }
               onClick={ onNext }
+              theme="secondary"
+              type="default"
             />
             <IconButton
               aria-label={ t(`${PANEL}.close`) }
@@ -237,8 +243,20 @@ export const ColumnPanel = ({
           onChange={ (next: string) => { onTabChange(next as ColumnPanelTab) } }
         />
         <div className={ styles.actions }>
-          { row.choice !== undefined && <Button onClick={ onRemoveField }>{ t(`${PANEL}.remove-field`) }</Button> }
-          <Button onClick={ onSkip }>{ t('data-importer.ad-hoc-import.mapping.dont-import') }</Button>
+          { row.choice !== undefined && (
+            <Button
+              color="secondary"
+              onClick={ onRemoveField }
+            >
+              { t(`${PANEL}.remove-field`) }
+            </Button>
+          ) }
+          <Button
+            color="secondary"
+            onClick={ onSkip }
+          >
+            { t('data-importer.ad-hoc-import.mapping.dont-import') }
+          </Button>
           <span className={ styles.grow } />
           <Button
             onClick={ onNext }
