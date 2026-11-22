@@ -18,7 +18,7 @@ import { canGoInto, takenFields } from './taken-fields'
 const PICKER_TEST_ID = 'ad-hoc-import-field-picker'
 
 // Studio's tree grows to its widest label; here it keeps the panel's width and height, long labels end in an ellipsis,
-// and a field another column already fills is greyed, with a green dot
+// and a field another column already fills cannot be picked and ends in a green dot
 const useStyles = createStyles(({ token, css }) => ({
   picker: css`
     display: flex;
@@ -44,10 +44,19 @@ const useStyles = createStyles(({ token, css }) => ({
       max-width: 100%;
     }
 
+    /* every row centres its label, so a row with the dot keeps the height of one without */
     .ant-tree .ant-tree-node-content-wrapper {
+      display: flex;
       flex: 1 1 auto;
+      align-items: center;
+      gap: ${token.marginXS}px;
       min-width: 0;
       overflow: hidden;
+    }
+
+    .ant-tree .ant-tree-title {
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
     .ant-tree .ant-tree-title,
@@ -59,23 +68,13 @@ const useStyles = createStyles(({ token, css }) => ({
       text-overflow: ellipsis;
     }
 
+    /* the field stays readable as in the design; the dot and the cursor say another column fills it */
     .ant-tree .ant-tree-treenode-disabled .ant-tree-title__btn {
-      color: ${token.colorTextDisabled};
+      color: ${token.colorText};
       cursor: not-allowed;
     }
 
     /* a field another column fills ends in a green dot */
-    .ant-tree .ant-tree-treenode-disabled .ant-tree-node-content-wrapper {
-      display: flex;
-      align-items: center;
-      gap: ${token.marginXS}px;
-    }
-
-    .ant-tree .ant-tree-treenode-disabled .ant-tree-title {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
     .ant-tree .ant-tree-treenode-disabled .ant-tree-node-content-wrapper::after {
       content: '';
       flex: 0 0 6px;
