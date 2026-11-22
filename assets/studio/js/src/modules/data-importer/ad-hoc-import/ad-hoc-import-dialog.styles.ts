@@ -29,5 +29,15 @@ export const useStyles = createStyles(({ token, css }) => ({
     && .ant-steps-item-process .ant-steps-item-title {
       font-weight: ${token.fontWeightStrong};
     }
+
+    /* a finished step is a light circle with the check in the primary colour, as on the board */
+    && .ant-steps-item-finish .ant-steps-item-icon {
+      background-color: ${token.colorPrimaryBg};
+      border-color: ${token.colorPrimaryBg};
+    }
+
+    && .ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon {
+      color: ${token.colorPrimary};
+    }
   `
 }))
