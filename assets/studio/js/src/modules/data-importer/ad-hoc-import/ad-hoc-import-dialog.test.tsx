@@ -1048,7 +1048,7 @@ describe('the mapping step', () => {
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
     // the row says so, no notice over the table repeats it
-    expect(screen.getByText('Needs a transformation')).toBeTruthy()
+    expect(screen.getByTitle('Needs a transformation')).toBeTruthy()
     expect(screen.queryByText(/do not fit their field/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
 

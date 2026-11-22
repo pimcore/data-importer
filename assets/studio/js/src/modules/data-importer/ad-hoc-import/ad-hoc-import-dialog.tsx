@@ -60,22 +60,20 @@ const STEPS_WIDTH = 720
 const useStyles = createStyles(({ token, css }) => ({
   // the dialog keeps within the viewport, its body scrolls, so the footer stays in view; the footer's divider runs across, as the head's
   dialog: css`
-    &&.ant-modal {
-      top: ${token.marginLG}px;
-      padding-bottom: 0;
-    }
-
     && .ant-modal-content {
       display: flex;
       flex-direction: column;
       max-height: calc(100vh - ${2 * token.marginLG}px);
     }
 
+    /* the scrolling body spans the content's padding, so the dividers of the head and the steps run edge to edge */
     && .ant-modal-body {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
       min-height: 0;
+      margin: 0 -${token.paddingLG}px;
+      padding: 0 ${token.paddingLG}px;
       overflow: auto;
     }
 
@@ -90,14 +88,42 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   head: css`
     margin: 0 -${token.paddingLG}px ${token.margin}px;
-    padding: 0 ${token.paddingLG}px ${token.margin}px;
+    padding: ${token.padding}px ${token.paddingLG}px ${token.margin}px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
+  // a done step is a light circle with the check in the primary colour, the steps ahead grey
   steps: css`
     max-width: ${STEPS_WIDTH}px;
 
-    .ant-steps-item-process .ant-steps-item-title {
+    && .ant-steps-item-icon .ant-steps-icon {
+      font-size: ${token.fontSize}px;
+    }
+
+    && .ant-steps-item-title {
+      font-size: ${token.fontSizeLG}px;
+    }
+
+    && .ant-steps-item-process .ant-steps-item-title {
       font-weight: ${token.fontWeightStrong};
+    }
+
+    && .ant-steps-item-finish .ant-steps-item-icon {
+      background: ${token.colorPrimaryBg};
+      border-color: ${token.colorPrimaryBg};
+    }
+
+    && .ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon {
+      color: ${token.colorPrimary};
+    }
+
+    && .ant-steps-item-wait .ant-steps-item-icon {
+      background: ${token.colorFillSecondary};
+      border-color: transparent;
+    }
+
+    && .ant-steps-item-wait .ant-steps-item-icon .ant-steps-icon,
+    && .ant-steps-item-wait .ant-steps-item-title {
+      color: ${token.colorTextTertiary};
     }
   `
 }))
@@ -531,6 +557,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   return (
     <Modal
+      centered
       className={ styles.dialog }
       footer={ footer() }
       maskClosable={ false }

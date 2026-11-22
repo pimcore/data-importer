@@ -39,8 +39,4 @@ describe('the field of a mapping row', () => {
     expect(styles.crumb).toMatch(/flex: 1 1 0;/)
     expect(styles.crumb).toMatch(/text-overflow: ellipsis;/)
   })
-
-  it('writes the transformation tag in the dark warning text', () => {
-    expect(styles.needsTransformation).toMatch(/color: dark-warning;/)
-  })
 })

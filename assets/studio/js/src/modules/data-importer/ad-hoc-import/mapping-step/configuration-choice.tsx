@@ -53,6 +53,8 @@ const useStyles = createStyles(({ token, css }) => ({
     flex: 0 0 ${LIST_WIDTH}px;
     max-height: ${LIST_MAX_HEIGHT}px;
     overflow-y: auto;
+    && [role='radiogroup'] { gap: ${token.marginXS}px; } /* compact cards, close together, as the design's list */
+    && .ant-card-body { padding: ${token.paddingXS}px ${token.paddingSM}px; }
   `,
   detail: css`
     flex: 1 1 0;
@@ -259,7 +261,6 @@ export const ConfigurationChoice = ({
         <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.list-hint') }</Text>
         <Flex
           aria-labelledby="ad-hoc-import-configurations"
-          gap="small"
           role="radiogroup"
           vertical
         >

@@ -112,11 +112,6 @@ export const useStyles = createStyles(({ token, css }) => ({
       margin-inline-start: 0;
     }
   `,
-  needsTransformation: css`
-    &.ant-tag {
-      color: ${token.Colors.Brand.Warning.colorWarningText};
-    }
-  `,
   // the group gives way before the field's name, down to nothing
   crumb: css`
     flex: 1 1 0;

@@ -206,6 +206,8 @@ export const MappingRowView = ({
   const { styles } = useStyles()
   const { column, label, sample, choice, isMatch, transformations } = row
   const isMapped = isMatch || choice !== undefined
+  const fits = fitsField(row, fields)
+  const needsTransformation = t(`${MAPPING}.needs-transformation`)
 
   return (
     <li
@@ -213,7 +215,17 @@ export const MappingRowView = ({
       className={ isActive ? `${styles.row} ${styles.active}` : styles.row }
     >
       <div className={ styles.dotCell }>
-        <span className={ `${styles.dot} ${isMapped ? styles.dotMapped : styles.dotOpen}` } />
+        { fits
+          ? <span className={ `${styles.dot} ${isMapped ? styles.dotMapped : styles.dotOpen}` } />
+          : (
+            // a column that cannot go into its field as it is stays open; the dot says why
+            <span
+              aria-label={ needsTransformation }
+              className={ `${styles.dot} ${styles.dotOpen}` }
+              role="img"
+              title={ needsTransformation }
+            />
+            ) }
       </div>
       <Flex
         className={ styles.cell }
@@ -258,14 +270,6 @@ export const MappingRowView = ({
           >
             { transformationsLabel(t, transformations.length) }
           </Button>
-        ) }
-        { !fitsField(row, fields) && (
-          <Tag
-            className={ styles.needsTransformation }
-            color="warning"
-          >
-            { t(`${MAPPING}.needs-transformation`) }
-          </Tag>
         ) }
       </div>
       <div className={ styles.cell }>

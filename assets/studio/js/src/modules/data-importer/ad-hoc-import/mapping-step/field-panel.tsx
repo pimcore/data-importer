@@ -30,6 +30,11 @@ const useStyles = createStyles(({ token, css }) => ({
       width: 100%;
     }
 
+    /* the field search is a plain field, without the magnifier ColumnPicker puts before it */
+    & > [data-testid='${PICKER_TEST_ID}'] .ant-input-affix-wrapper .ant-input-prefix {
+      display: none;
+    }
+
     .ant-tree .ant-tree-list-holder-inner {
       min-width: 0;
     }

@@ -529,11 +529,11 @@ describe('the mapping step', () => {
       openPanel('Notiz')
       fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
-      expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+      expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
 
       await settle()
 
-      expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+      expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
     })
 
     describe('a column left before the answer', () => {
@@ -559,7 +559,7 @@ describe('the mapping step', () => {
         await settle()
 
         expect(mockPreview).toHaveBeenCalledTimes(1)
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
         expect(canContinue()).toBe('false')
       })
 
@@ -572,7 +572,7 @@ describe('the mapping step', () => {
         fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Next column ›' }))
         await settle()
 
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
       })
 
       it('fits a field that does not take it as it is, once the answer says so', async () => {
@@ -587,7 +587,7 @@ describe('the mapping step', () => {
         closePanel('Notiz')
         await settle()
 
-        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+        expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
         expect(canContinue()).toBe('true')
       })
 
@@ -600,7 +600,7 @@ describe('the mapping step', () => {
         closePanel('Notiz')
         await settle()
 
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
         expect(canContinue()).toBe('false')
       })
 
@@ -617,7 +617,7 @@ describe('the mapping step', () => {
           await settle()
 
           expect(mockPreview).toHaveBeenCalledTimes(1)
-          expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+          expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
           expect(canContinue()).toBe('true')
         })
 
@@ -670,8 +670,8 @@ describe('the mapping step', () => {
           await Promise.resolve()
         })
 
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
-        expect(within(rowOf('Name DE')).getByText('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
+        expect(within(rowOf('Name DE')).getByTitle('Needs a transformation')).toBeTruthy()
       })
 
       it('drops an answer to steps changed since', async () => {
@@ -692,7 +692,7 @@ describe('the mapping step', () => {
           await Promise.resolve()
         })
 
-        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+        expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
       })
     })
 
