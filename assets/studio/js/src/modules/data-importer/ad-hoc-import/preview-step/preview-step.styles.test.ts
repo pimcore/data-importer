@@ -23,6 +23,8 @@ describe('the preview grid', () => {
       colorTextTertiary: 'grey',
       colorBorderContainer: 'light-grey',
       lineWidth: 1,
+      fontSizeHeading3: 20,
+      lineHeightHeading3: 1.4,
       Colors: { Brand: { Warning: { colorWarningText: 'dark-gold' } } }
     },
     css: String.raw
@@ -35,6 +37,11 @@ describe('the preview grid', () => {
 
   it('writes the message of a row imported without its invalid values in Studio\'s warning text colour', () => {
     expect(styles.warning).toMatch(/color: dark-gold;/)
+  })
+
+  // Studio's fourth heading is 16px on its 12px base, the board's counts are 20px on 28px
+  it('sets the counts in the size of the board\'s figures', () => {
+    expect(styles.number).toMatch(/font-size: 20px;\s*line-height: 1.4;/)
   })
 
   it('writes the row number in the tertiary text colour', () => {
