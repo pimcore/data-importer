@@ -103,35 +103,41 @@ describe('the objects an import saved', () => {
 })
 
 describe('fieldColumnSize', () => {
-  it('keeps a short header at the shared width', () => {
-    expect(fieldColumnSize(28, 8)).toBe(64)
+  it('keeps a short text at the shared width', () => {
+    expect(fieldColumnSize(20, 8)).toBe(48)
   })
 
-  it('widens a column to its measured header and the cell padding', () => {
+  it('widens a column to its measured text and the cell padding', () => {
     expect(fieldColumnSize(97.3, 8)).toBe(118)
   })
 })
 
 describe('autoWidthColumnOf', () => {
-  it('gives the width left to the column with the shortest header', () => {
+  it('gives the width left to the narrowest column', () => {
     expect(autoWidthColumnOf([80, 64, 118, 64])).toBe(1)
   })
 })
 
 describe('the object list columns', () => {
-  it('fixes every field column to its header and lets only the shortest take the width left', () => {
+  it('fixes every column to its widest header or value and lets only the narrowest take the width left', () => {
     mockListObjects.mockReturnValue({
-      data: { ...answer, fields: [{ key: 'series', label: 'Series' }, { key: 'name', label: 'Name' }, { key: 'manufacturer', label: 'Manufacturer' }] },
+      data: {
+        totalItems: 2,
+        fields: [{ key: 'series', label: 'Series' }, { key: 'name', label: 'Name' }, { key: 'manufacturer', label: 'Manufacturer' }],
+        items: [
+          { id: 1, fullPath: '/upload/new/C769-10', modificationDate: null, values: ['C769-10', 'Roadster', 'MG'] },
+          { id: 2, fullPath: '/upload/new/C769-1', modificationDate: null, values: ['C769-1', 'Coupe', 'Alfa Romeo'] }
+        ]
+      },
       isLoading: false,
       isFetching: false,
       isError: false
     })
     renderWidget()
 
+    // ten pixels a letter, the padding on both sides and the slack
     const headers = screen.getAllByRole('columnheader')
-    expect(headers.map((header) => header.getAttribute('data-auto-width'))).toEqual([null, 'true', null, null])
-    expect(Number(headers[2].getAttribute('data-size'))).toBeGreaterThanOrEqual(120)
-    expect(Number(headers[2].getAttribute('data-size'))).toBeGreaterThan(Number(headers[0].getAttribute('data-size')))
-    expect(headers[3].getAttribute('data-size')).toBe('112')
+    expect(headers.map((header) => header.getAttribute('data-size'))).toEqual(['90', '100', '140', '100'])
+    expect(headers.map((header) => header.getAttribute('data-auto-width'))).toEqual(['true', null, null, null])
   })
 })

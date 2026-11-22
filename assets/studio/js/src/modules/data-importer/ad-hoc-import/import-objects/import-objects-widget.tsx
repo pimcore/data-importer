@@ -21,29 +21,37 @@ import {
 import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/import-state'
 
 export const PAGE_SIZE = 50
-const FIELD_COLUMN_SIZE = 64
-const MODIFIED_COLUMN_SIZE = 112
-// the header cell's border and the rounding of the measured text
-const HEADER_SLACK = 4
+const FIELD_COLUMN_SIZE = 48
+// the cell's border and the rounding of the measured text
+const CELL_SLACK = 4
 
-// a header is never cut: its column is as wide as its text in the header's font and the cell's padding
+// neither a header nor a value is cut or wrapped: a column is as wide as its widest text and the cell's padding
 export const fieldColumnSize = (textWidth: number, cellPadding: number): number =>
-  Math.max(FIELD_COLUMN_SIZE, Math.ceil(textWidth) + 2 * cellPadding + HEADER_SLACK)
+  Math.max(FIELD_COLUMN_SIZE, Math.ceil(textWidth) + 2 * cellPadding + CELL_SLACK)
 
-// the one column that takes the width the others leave: the one with the shortest header
+// the one column that takes the width the others leave: the narrowest
 export const autoWidthColumnOf = (widths: number[]): number => widths.indexOf(Math.min(...widths))
 
-const useHeaderTextWidth = (): ((label: string) => number) => {
+interface TextWidth {
+  header: (text: string) => number
+  cell: (text: string) => number
+}
+
+const useTextWidth = (): TextWidth => {
   const theme = useTheme()
 
   return useMemo(() => {
     const context = document.createElement('canvas').getContext('2d') ?? null
     if (context === null) {
-      return () => 0
+      return { header: () => 0, cell: () => 0 }
     }
-    context.font = `${theme.fontWeightStrong} ${theme.fontSize}px ${theme.fontFamily}`
+    const measure = (weight: number | string) => (text: string): number => {
+      context.font = `${weight} ${theme.fontSize}px ${theme.fontFamily}`
 
-    return (label: string) => context.measureText(label).width
+      return context.measureText(text).width
+    }
+
+    return { header: measure(theme.fontWeightStrong), cell: measure('normal') }
   }, [theme.fontWeightStrong, theme.fontSize, theme.fontFamily])
 }
 
@@ -100,7 +108,7 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
   const { t } = useTranslation()
   const { styles } = useStyles()
   const theme = useTheme()
-  const headerTextWidth = useHeaderTextWidth()
+  const textWidth = useTextWidth()
   const timeOf = (timestamp: number | null): string => shortTimeOf(timestamp, (time) => t('data-importer.ad-hoc-import.result.today', { time }))
   const importedBy = t('data-importer.ad-hoc-import.saved-objects.imported-by', {
     time: timeOf(finishedAt),
@@ -112,9 +120,14 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
   const { data, isLoading, isFetching, isError } = useBundleDataImporterAdHocImportListRunObjectsQuery({ fileId, kind, page, pageSize: PAGE_SIZE })
 
   const fields = data?.fields
+  const items = data?.items
   const columns = useMemo<Array<ColumnDef<ImportedObject>>>(() => {
-    const sizes = (fields ?? []).map((field) => fieldColumnSize(headerTextWidth(field.label), theme.paddingXS))
+    const sizeOf = (header: string, values: string[]): number =>
+      fieldColumnSize(Math.max(textWidth.header(header), ...values.map(textWidth.cell)), theme.paddingXS)
+    const sizes = (fields ?? []).map((field, position) =>
+      sizeOf(field.label, (items ?? []).map((object) => String(object.values[position] ?? ''))))
     const autoWidth = autoWidthColumnOf(sizes)
+    const modifiedHeader = t('data-importer.ad-hoc-import.saved-objects.modified')
 
     return [
       ...(fields === undefined || fields.length === 0
@@ -128,19 +141,18 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
             id: `field-${position}`,
             header: field.label,
             accessorFn: (object: ImportedObject) => object.values[position] ?? '',
-            // fixed to its header, so no header is cut; one column takes the width left and never shrinks below it
+            // fixed to its widest text, so nothing is cut or wrapped; one column takes the width left and never shrinks below it
             size: sizes[position],
             ...(position === autoWidth ? { meta: { autoWidth: true } } : {})
           }))),
       {
         id: 'modified',
-        header: t('data-importer.ad-hoc-import.saved-objects.modified'),
+        header: modifiedHeader,
         accessorFn: (object: ImportedObject) => timeOf(object.modificationDate),
-        // a fixed width, so the date stays on one line while the fields share the rest
-        size: MODIFIED_COLUMN_SIZE
+        size: sizeOf(modifiedHeader, (items ?? []).map((object) => timeOf(object.modificationDate)))
       }
     ]
-  }, [fields, t, headerTextWidth, theme.paddingXS])
+  }, [fields, items, t, textWidth, theme.paddingXS])
 
   // the chosen kind in the primary colour, as a filter that is on; Studio's Segmented draws its selection from these
   const selectedKind = { colorFill: theme.colorPrimary, itemSelectedColor: theme.colorTextLightSolid }
