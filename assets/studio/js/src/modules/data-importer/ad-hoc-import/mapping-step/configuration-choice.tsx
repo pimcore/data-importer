@@ -87,9 +87,7 @@ const useStyles = createStyles(({ token, css }) => ({
       color: ${token.colorTextDisabled};
     }
   `,
-  detailLine: css`
-    color: ${token.colorTextSecondary};
-  `
+  detailLine: css`color: ${token.colorTextSecondary};`
 }))
 
 // what a card says of a usable configuration: what it reads, how many fields it maps and when it runs
@@ -202,6 +200,7 @@ export const ConfigurationChoice = ({
         aria-disabled={ reason !== null }
         aria-label={ shown.name }
         className={ [styles.card, isChosen ? styles.chosen : '', reason === null ? '' : styles.unusable].join(' ') }
+        contentPadding="none"
         key={ shown.name }
         onClick={ choose }
         onKeyDown={ (event: React.KeyboardEvent<HTMLElement>) => {
