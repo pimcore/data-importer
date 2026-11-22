@@ -21,6 +21,11 @@ import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/
 export const PAGE_SIZE = 50
 const FIELD_COLUMN_SIZE = 80
 const MODIFIED_COLUMN_SIZE = 130
+// a header is never cut: a column takes at least its header's width, and a narrow tab scrolls the grid instead
+const HEADER_CHAR_WIDTH = 7
+const HEADER_PADDING = 24
+
+export const fieldColumnSize = (label: string): number => Math.max(FIELD_COLUMN_SIZE, label.length * HEADER_CHAR_WIDTH + HEADER_PADDING)
 
 type ImportedObject = BundleDataImporterAdHocImportRunObjectsResponse['items'][number]
 
@@ -90,7 +95,7 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
           header: field.label,
           accessorFn: (object: ImportedObject) => object.values[position] ?? '',
           // every column shares the width; an auto width column never shrinks below its size
-          size: FIELD_COLUMN_SIZE,
+          size: fieldColumnSize(field.label),
           meta: { autoWidth: true }
         }))),
     {

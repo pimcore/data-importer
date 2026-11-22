@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { ImportObjectsWidget, PAGE_SIZE } from './import-objects-widget'
+import { fieldColumnSize, ImportObjectsWidget, PAGE_SIZE } from './import-objects-widget'
 
 jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
@@ -91,5 +91,15 @@ describe('the objects an import saved', () => {
 
     expect(screen.getByRole('alert').textContent).toContain('can no longer be listed')
     expect(screen.queryByRole('table')).toBeNull()
+  })
+})
+
+describe('fieldColumnSize', () => {
+  it('keeps a short header at the shared width', () => {
+    expect(fieldColumnSize('Name')).toBe(80)
+  })
+
+  it('widens a column to its long header', () => {
+    expect(fieldColumnSize('Production year')).toBe(129)
   })
 })
