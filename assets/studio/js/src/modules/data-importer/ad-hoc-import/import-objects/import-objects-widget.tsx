@@ -163,6 +163,7 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
         <Toolbar
           position="bottom"
           size="auto"
+          theme="secondary"
         >
           <div className={ styles.footer }>
             <Text
@@ -188,7 +189,6 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
         <Toolbar
           position="top"
           size="auto"
-          theme="secondary"
         >
           <div className={ styles.bar }>
             <ConfigProvider theme={ { token: selectedKind } }>

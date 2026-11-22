@@ -73,6 +73,14 @@ describe('the objects an import saved', () => {
       .toBe('/pimcore-studio/api/bundle/data-importer/ad-hoc-import/file/file-1/run/objects/export?kind=updated')
   })
 
+  it('puts the switch and export on the tinted toolbar and the pager on the plain one', () => {
+    mockListObjects.mockReturnValue({ data: answer, isLoading: false, isFetching: false, isError: false })
+    renderWidget()
+
+    expect(within(screen.getByRole('banner')).getByRole('toolbar').getAttribute('data-theme')).toBe('primary')
+    expect(within(screen.getByRole('contentinfo')).getByRole('toolbar').getAttribute('data-theme')).toBe('secondary')
+  })
+
   it('switches to the created objects from their first page, and exports those', () => {
     mockListObjects.mockReturnValue({ data: answer, isLoading: false, isFetching: false, isError: false })
     renderWidget()

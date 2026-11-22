@@ -345,7 +345,14 @@ export const components = {
       )) }
     </ol>
   ),
-  Toolbar: ({ children }: WithChildren) => <div role="toolbar">{ children }</div>,
+  Toolbar: ({ children, theme }: WithChildren & { theme?: 'primary' | 'secondary' }) => (
+    <div
+      data-theme={ theme ?? 'primary' }
+      role="toolbar"
+    >
+      { children }
+    </div>
+  ),
   Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
   Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (

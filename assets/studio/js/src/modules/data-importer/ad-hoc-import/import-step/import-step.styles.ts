@@ -52,9 +52,8 @@ export const useStyles = createStyles(({ token, css }) => ({
   resultBarCreated: css`
     background: ${token.colorPrimary};
   `,
-  // light grey, as the design draws it: the theme's disabled text is darkened for contrast, which a bar needs not
   resultBarSkipped: css`
-    background: ${token.colorBorder};
+    background: ${token.colorTextQuaternary};
   `,
   resultContent: css`
     display: grid;
@@ -108,7 +107,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorPrimary};
   `,
   dotSkipped: css`
-    background: ${token.colorBorder};
+    background: ${token.colorTextQuaternary};
   `,
   // dot, label, count and action each in their own column, so the counts and actions line up
   line: css`
