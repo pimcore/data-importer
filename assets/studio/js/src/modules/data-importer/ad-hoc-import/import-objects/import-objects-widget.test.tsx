@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { autoWidthColumnOf, fieldColumnSize, ImportObjectsWidget, PAGE_SIZE } from './import-objects-widget'
+import { fieldColumnSize, ImportObjectsWidget, PAGE_SIZE } from './import-objects-widget'
 
 jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
@@ -112,14 +112,8 @@ describe('fieldColumnSize', () => {
   })
 })
 
-describe('autoWidthColumnOf', () => {
-  it('gives the width left to the narrowest column', () => {
-    expect(autoWidthColumnOf([80, 64, 118, 64])).toBe(1)
-  })
-})
-
 describe('the object list columns', () => {
-  it('fixes every column to its widest header or value and lets only the narrowest take the width left', () => {
+  it('sizes every column to its widest header or value and leaves none to take the width left alone', () => {
     mockListObjects.mockReturnValue({
       data: {
         totalItems: 2,
@@ -138,6 +132,6 @@ describe('the object list columns', () => {
     // ten pixels a letter, the padding on both sides and the slack
     const headers = screen.getAllByRole('columnheader')
     expect(headers.map((header) => header.getAttribute('data-size'))).toEqual(['90', '100', '140', '100'])
-    expect(headers.map((header) => header.getAttribute('data-auto-width'))).toEqual(['true', null, null, null])
+    expect(headers.map((header) => header.getAttribute('data-auto-width'))).toEqual([null, null, null, null])
   })
 })

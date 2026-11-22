@@ -29,9 +29,6 @@ const CELL_SLACK = 4
 export const fieldColumnSize = (textWidth: number, cellPadding: number): number =>
   Math.max(FIELD_COLUMN_SIZE, Math.ceil(textWidth) + 2 * cellPadding + CELL_SLACK)
 
-// the one column that takes the width the others leave: the narrowest
-export const autoWidthColumnOf = (widths: number[]): number => widths.indexOf(Math.min(...widths))
-
 interface TextWidth {
   header: (text: string) => number
   cell: (text: string) => number
@@ -126,7 +123,6 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
       fieldColumnSize(Math.max(textWidth.header(header), ...values.map(textWidth.cell)), theme.paddingXS)
     const sizes = (fields ?? []).map((field, position) =>
       sizeOf(field.label, (items ?? []).map((object) => String(object.values[position] ?? ''))))
-    const autoWidth = autoWidthColumnOf(sizes)
     const modifiedHeader = t('data-importer.ad-hoc-import.saved-objects.modified')
 
     return [
@@ -141,9 +137,8 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
             id: `field-${position}`,
             header: field.label,
             accessorFn: (object: ImportedObject) => object.values[position] ?? '',
-            // fixed to its widest text, so nothing is cut or wrapped; one column takes the width left and never shrinks below it
-            size: sizes[position],
-            ...(position === autoWidth ? { meta: { autoWidth: true } } : {})
+            // at least its widest text, so nothing is cut or wrapped; the full-width table shares the width left by these sizes
+            size: sizes[position]
           }))),
       {
         id: 'modified',
