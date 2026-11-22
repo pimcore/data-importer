@@ -54,6 +54,8 @@ import { useLanguages } from './mapping-step/use-languages'
 import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
 
 const DIALOG_WIDTH = 1160
+// close to the top, so the whole dialog with its footer fits a small screen
+const DIALOG_TOP = 20
 const STEPS_WIDTH = 720
 
 const STEPS = ['file', 'mapping', 'preview', 'import']
@@ -488,6 +490,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       maskClosable={ false }
       onCancel={ close }
       open
+      style={ { top: DIALOG_TOP } }
       title={ fileInTitle === undefined
         ? t('data-importer.ad-hoc-import.title', {
             path: titlePath(target),

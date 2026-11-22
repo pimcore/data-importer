@@ -14,6 +14,8 @@ import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Flex, Grid, Pagination, Skeleton, Switch } from '@pimcore/studio-ui-bundle/components'
 import {
   cellText,
+  FOLD_SEPARATOR,
+  foldedFields,
   isSkipped,
   lastPageWithin,
   PAGE_SIZE,
@@ -26,6 +28,19 @@ import {
   type ErrorMode
 } from './preview-state'
 import { ROW_ERROR_MARK, ROW_WARNING_MARK, useStyles } from './preview-step.styles'
+
+// the board's proportions inside the dialog, so every column fits without a horizontal scroll
+const COLUMN_WIDTH = { row: 64, match: 120, action: 190, field: 160, rest: 240 }
+
+// one line, cut off at the column's edge; the whole text on hover
+const CellText = ({ className, value }: { className: string, value: string }): React.JSX.Element => (
+  <span
+    className={ className }
+    title={ value }
+  >
+    { value }
+  </span>
+)
 
 export interface PreviewStepProps {
   dryRun: DryRun | null
@@ -76,45 +91,86 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
           })).join('; ')
     }
 
+    const { shown, folded } = foldedFields(dryRun.fields)
+    const header = (field: DryRun['fields'][number]): string => field.language === null ? field.label : `${field.label} (${field.language})`
+
     return [
       {
         id: 'row',
         header: t('data-importer.ad-hoc-import.preview.column.row'),
         accessorFn: (row) => String(row.row),
-        cell: ({ getValue }) => <span className={ `${styles.cell} ${styles.rowNumber}` }>{ getValue<string>() }</span>,
-        size: 64
+        cell: ({ getValue }) => (
+          <CellText
+            className={ `${styles.cell} ${styles.rowNumber}` }
+            value={ getValue<string>() }
+          />
+        ),
+        size: COLUMN_WIDTH.row
       },
       {
         id: 'match',
         header: dryRun.matchColumn,
         accessorFn: (row) => row.matchValue,
-        cell: ({ getValue }) => <span className={ `${styles.cell} ${styles.matchValue}` }>{ getValue<string>() }</span>
+        cell: ({ getValue }) => (
+          <CellText
+            className={ `${styles.cell} ${styles.matchValue}` }
+            value={ getValue<string>() }
+          />
+        ),
+        size: COLUMN_WIDTH.match
       },
       {
         id: 'action',
         header: t('data-importer.ad-hoc-import.preview.column.action'),
-        accessorFn: actionText
+        accessorFn: actionText,
+        cell: ({ getValue }) => (
+          <CellText
+            className={ styles.cell }
+            value={ getValue<string>() }
+          />
+        ),
+        size: COLUMN_WIDTH.action
       },
-      ...dryRun.fields.map((field, position): ColumnDef<DryRunRow> => ({
+      ...shown.map((field, position): ColumnDef<DryRunRow> => ({
         id: `field-${position}`,
-        header: field.language === null ? field.label : `${field.label} (${field.language})`,
-        accessorFn: (row) => cellText(row, position)
+        header: header(field),
+        accessorFn: (row) => cellText(row, position),
+        cell: ({ getValue }) => (
+          <CellText
+            className={ styles.cell }
+            value={ getValue<string>() }
+          />
+        ),
+        size: COLUMN_WIDTH.field
       })),
       {
-        id: 'message',
-        header: t('data-importer.ad-hoc-import.preview.column.message'),
-        accessorFn: messageText,
+        // the fields past the shown ones share the last column, whose place a row's message takes
+        id: 'rest',
+        header: folded.length === 0
+          ? t('data-importer.ad-hoc-import.preview.column.message')
+          : folded.map(header).join(FOLD_SEPARATOR),
+        accessorFn: (row) => rowTone(row, errorMode) === 'none'
+          ? folded.map((_, position) => cellText(row, shown.length + position)).join(FOLD_SEPARATOR)
+          : messageText(row),
         cell: ({ getValue, row }) => {
-          const tone = rowTone(row.original, errorMode)
-
+          const value = String(getValue())
           const toneClass = {
             none: undefined,
             error: `${styles.error} ${ROW_ERROR_MARK}`,
             warning: `${styles.warning} ${ROW_WARNING_MARK}`
-          }[tone]
+          }[rowTone(row.original, errorMode)]
 
-          return <span className={ styles.cell }><span className={ toneClass }>{ getValue<string>() }</span></span>
-        }
+          return (
+            <span
+              className={ styles.cell }
+              title={ value }
+            >
+              <span className={ toneClass }>{ value }</span>
+            </span>
+          )
+        },
+        size: COLUMN_WIDTH.rest,
+        meta: { autoWidth: true }
       }
     ]
   }, [dryRun, errorMode, styles, t])
@@ -158,18 +214,23 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
           size="small"
         />
       </div>
-      <Grid
-        autoWidth
-        className={ styles.grid }
-        columns={ columns }
-        data={ pageOf(rows, current, pageSize) }
-        setRowId={ (row: DryRunRow) => String(row.row) }
-        size="small"
-      />
+      <div className={ styles.table }>
+        <Grid
+          autoWidth
+          className={ styles.grid }
+          columns={ columns }
+          data={ pageOf(rows, current, pageSize) }
+          docked
+          setRowId={ (row: DryRunRow) => String(row.row) }
+          size="small"
+        />
+      </div>
       <Flex
+        align="center"
         className={ styles.pagination }
         justify="flex-end"
       >
+        <span className={ styles.total }>{ t('data-importer.ad-hoc-import.preview.total', { total: rows.length }) }</span>
         <Pagination
           current={ current }
           defaultPageSize={ PAGE_SIZE }
@@ -178,7 +239,6 @@ export const PreviewStep = ({ dryRun, errorMode }: PreviewStepProps): React.JSX.
             setPageSize(nextPageSize)
           } }
           showSizeChanger
-          showTotal={ (total: number) => t('data-importer.ad-hoc-import.preview.total', { total }) }
           total={ rows.length }
         />
       </Flex>

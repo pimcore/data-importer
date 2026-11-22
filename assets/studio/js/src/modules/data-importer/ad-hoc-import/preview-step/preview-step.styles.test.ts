@@ -21,6 +21,8 @@ describe('the preview grid', () => {
       colorErrorText: 'light-red',
       colorWarningText: 'light-gold',
       colorTextTertiary: 'grey',
+      colorBorderContainer: 'light-grey',
+      lineWidth: 1,
       Colors: { Brand: { Warning: { colorWarningText: 'dark-gold' } } }
     },
     css: String.raw
@@ -37,5 +39,25 @@ describe('the preview grid', () => {
 
   it('writes the row number in the tertiary text colour', () => {
     expect(styles.rowNumber).toMatch(/color: grey;/)
+  })
+
+  it('separates rows only, as the board does, and lets them be one line high', () => {
+    expect(styles.grid).toMatch(/&& \.ant-table-cell \{\s*border-left-width: 0;\s*border-right-width: 0;/)
+    expect(styles.grid).toMatch(/&& \.ant-table-row \{\s*height: auto;/)
+    expect(styles.cell).toMatch(/white-space: nowrap;/)
+    expect(styles.cell).toMatch(/text-overflow: ellipsis;/)
+  })
+
+  // a body that follows its rows pushes the footer below a 720px high screen
+  it('gives the table a body of its own height that scrolls', () => {
+    expect(styles.table).toMatch(/height: clamp\(160px, calc\(100vh - 410px\), 430px\);/)
+    expect(styles.table).toMatch(/overflow: auto;/)
+    expect(styles.table).toMatch(/border: 1px solid light-grey;/)
+  })
+
+  it('sets the total apart from the pager with a line and narrows its page field and page-size select', () => {
+    expect(styles.total).toMatch(/border-right: 1px solid light-grey;/)
+    expect(styles.pagination).toMatch(/input \{\s*width: 38px;/)
+    expect(styles.pagination).toMatch(/\.ant-select \{\s*width: 94px !important;/)
   })
 })
