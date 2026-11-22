@@ -96,10 +96,10 @@ describe('the objects an import saved', () => {
 
 describe('fieldColumnSize', () => {
   it('keeps a short header at the shared width', () => {
-    expect(fieldColumnSize('Name')).toBe(80)
+    expect(fieldColumnSize('Name')).toBe(64)
   })
 
   it('widens a column to its long header', () => {
-    expect(fieldColumnSize('Production year')).toBe(129)
+    expect(fieldColumnSize('Production year')).toBe(108)
   })
 })

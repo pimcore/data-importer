@@ -19,11 +19,12 @@ import {
 import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/import-state'
 
 export const PAGE_SIZE = 50
-const FIELD_COLUMN_SIZE = 80
-const MODIFIED_COLUMN_SIZE = 130
-// a header is never cut: a column takes at least its header's width, and a narrow tab scrolls the grid instead
-const HEADER_CHAR_WIDTH = 7
-const HEADER_PADDING = 24
+// small enough that six columns fit a narrow tab; the auto width columns share what is left
+const FIELD_COLUMN_SIZE = 64
+const MODIFIED_COLUMN_SIZE = 112
+// a header is never cut: a column takes at least its header's width
+const HEADER_CHAR_WIDTH = 6
+const HEADER_PADDING = 18
 
 export const fieldColumnSize = (label: string): number => Math.max(FIELD_COLUMN_SIZE, label.length * HEADER_CHAR_WIDTH + HEADER_PADDING)
 
@@ -40,7 +41,7 @@ export interface ImportObjectsWidgetProps {
 }
 
 const useStyles = createStyles(({ token, css }) => ({
-  // a narrow tab wraps the info line instead of cutting it, so the export stays in view
+  // one row, so the export stays in view beside the info line
   bar: css`
     display: flex;
     align-items: center;
@@ -48,17 +49,13 @@ const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     min-width: 0;
   `,
-  // the toolbar's scroll box keeps its text on one line; the info line wraps instead
+  // one line that takes the room left and ends in an ellipsis where it does not fit, the whole text on hover
   info: css`
+    flex: 1 1 auto;
     min-width: 0;
-    white-space: normal;
-    overflow-wrap: anywhere;
   `,
   noShrink: css`
     flex-shrink: 0;
-  `,
-  spacer: css`
-    flex-grow: 1;
   `,
   footer: css`
     display: flex;
@@ -77,6 +74,11 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
   const { t } = useTranslation()
   const { styles } = useStyles()
   const timeOf = (timestamp: number | null): string => shortTimeOf(timestamp, (time) => t('data-importer.ad-hoc-import.result.today', { time }))
+  const importedBy = t('data-importer.ad-hoc-import.saved-objects.imported-by', {
+    time: timeOf(finishedAt),
+    user: userName,
+    interpolation: { escapeValue: false }
+  })
   const [kind, setKind] = useState<ObjectsKind>(firstKind)
   const [page, setPage] = useState(1)
   const { data, isLoading, isFetching, isError } = useBundleDataImporterAdHocImportListRunObjectsQuery({ fileId, kind, page, pageSize: PAGE_SIZE })
@@ -122,6 +124,7 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
           <div className={ styles.footer }>
             <Text
               className={ styles.info }
+              ellipsis={ { tooltip: t('data-importer.ad-hoc-import.saved-objects.filtered') } }
               type="secondary"
             >
               { t('data-importer.ad-hoc-import.saved-objects.filtered') }
@@ -156,15 +159,11 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
             />
             <Text
               className={ styles.info }
+              ellipsis={ { tooltip: importedBy } }
               type="secondary"
             >
-              { t('data-importer.ad-hoc-import.saved-objects.imported-by', {
-                time: timeOf(finishedAt),
-                user: userName,
-                interpolation: { escapeValue: false }
-              }) }
+              { importedBy }
             </Text>
-            <span className={ styles.spacer } />
             <Button
               className={ styles.noShrink }
               href={ objectsExportUrl(fileId, kind) }
