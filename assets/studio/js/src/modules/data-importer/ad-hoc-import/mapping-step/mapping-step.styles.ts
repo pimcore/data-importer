@@ -58,10 +58,22 @@ export const useStyles = createStyles(({ token, css }) => ({
   noteIcon: css`
     color: ${token.colorPrimary};
   `,
+  // the table takes the dialog's height left and scrolls itself
+  fill: css`
+    flex: 1 1 auto;
+    min-height: 0;
+  `,
   table: css`
-    max-height: calc(100vh - 440px);
+    flex: 1 1 auto;
     min-height: 120px;
     overflow: auto;
+  `,
+  // the filters and the skip button of the design are one height
+  summaryButton: css`
+    &.ant-btn {
+      height: ${token.controlHeight - token.paddingXXS}px;
+      padding-inline: 10px;
+    }
   `,
   rows: css`
     margin: 0;

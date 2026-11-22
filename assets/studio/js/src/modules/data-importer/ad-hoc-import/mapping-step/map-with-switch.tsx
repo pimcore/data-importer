@@ -16,9 +16,16 @@ import { type MapWith } from './configuration-state'
 // the chosen way stands out from the track: on the container's background, its label bold
 const useStyles = createStyles(({ token, css }) => ({
   switch: css`
-    .ant-segmented-item-selected {
+    &.ant-segmented .ant-segmented-group {
+      background: ${token.Colors.Neutral.Fill.colorFillTertiary};
+    }
+
+    &.ant-segmented .ant-segmented-group .ant-segmented-item.ant-segmented-item-selected {
+      border-color: ${token.colorBgContainer};
       background: ${token.colorBgContainer};
+      color: ${token.itemSelectedColor};
       font-weight: ${token.fontWeightStrong};
+      box-shadow: ${token.boxShadow};
     }
   `,
   divided: css`

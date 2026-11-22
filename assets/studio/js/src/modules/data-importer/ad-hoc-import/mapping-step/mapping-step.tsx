@@ -155,6 +155,7 @@ export const MappingStep = ({
 
   return (
     <Flex
+      className={ styles.fill }
       gap="normal"
       vertical
     >

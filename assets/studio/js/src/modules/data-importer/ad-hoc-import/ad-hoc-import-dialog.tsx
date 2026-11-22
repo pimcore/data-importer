@@ -58,6 +58,36 @@ const STEPS_WIDTH = 720
 
 // the step list ends the dialog's head: a divider across its whole width, the current step's name bold
 const useStyles = createStyles(({ token, css }) => ({
+  // the dialog keeps within the viewport, its body scrolls, so the footer stays in view; the footer's divider runs across, as the head's
+  dialog: css`
+    &&.ant-modal {
+      top: ${token.marginLG}px;
+      padding-bottom: 0;
+    }
+
+    && .ant-modal-content {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - ${2 * token.marginLG}px);
+    }
+
+    && .ant-modal-body {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    && .ant-modal-footer {
+      flex: none;
+      align-self: stretch;
+      width: auto;
+      margin: ${token.marginSM}px -${token.paddingLG}px 0;
+      padding: ${token.paddingSM}px ${token.paddingLG}px 0;
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
   head: css`
     margin: 0 -${token.paddingLG}px ${token.margin}px;
     padding: 0 ${token.paddingLG}px ${token.margin}px;
@@ -501,6 +531,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   return (
     <Modal
+      className={ styles.dialog }
       footer={ footer() }
       maskClosable={ false }
       onCancel={ close }

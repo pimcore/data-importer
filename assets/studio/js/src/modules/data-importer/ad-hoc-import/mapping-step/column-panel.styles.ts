@@ -57,7 +57,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: 6px 10px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
-    background: ${token.colorFillAlter};
+    background: ${token.Colors.Neutral.Fill.colorFillTertiary};
   `,
   chip: css`
     padding: 0 6px;
@@ -91,13 +91,29 @@ export const useStyles = createStyles(({ token, css }) => ({
     border: 1px solid ${token.colorWarningBorder};
     border-radius: ${token.borderRadiusSM}px;
     background: ${token.colorWarningBg};
-    color: ${token.colorWarningTextActive};
+    color: ${token.Colors.Brand.Warning.colorWarningText};
   `,
+  // the field tree fills the panel and scrolls itself; the other tabs scroll in their pane
   tabs: css`
+    display: flex;
     flex: 1 1 auto;
+    flex-direction: column;
     min-height: 0;
     padding: 0 ${token.padding}px;
-    overflow: auto;
+    overflow: hidden;
+
+    .ant-tabs-content-holder {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .ant-tabs-content, .ant-tabs-tabpane-active {
+      height: 100%;
+    }
+
+    .ant-tabs-tabpane-active {
+      overflow: auto;
+    }
 
     .ant-tabs-tab-active .ant-tabs-tab-btn {
       font-weight: ${token.fontWeightStrong};

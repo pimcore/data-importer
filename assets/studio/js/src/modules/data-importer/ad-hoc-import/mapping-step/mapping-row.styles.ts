@@ -58,6 +58,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     align-items: center;
     gap: ${token.marginXS}px;
+    flex: 0 1 auto;
     min-width: 0;
     height: 30px;
     padding: 0 ${token.paddingXS}px 0 ${token.paddingXXS}px;
@@ -87,12 +88,11 @@ export const useStyles = createStyles(({ token, css }) => ({
     align-items: center;
     color: ${token.colorPrimary};
   `,
+  // the field's name stays whole; the group path gives way
   fieldName: css`
-    min-width: 0;
-    overflow: hidden;
+    flex: none;
     font-weight: ${token.fontWeightStrong};
     white-space: nowrap;
-    text-overflow: ellipsis;
   `,
   // the small chip of the design, not the default tag's size
   auto: css`
@@ -114,12 +114,12 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   needsTransformation: css`
     &.ant-tag {
-      color: ${token.colorWarningTextActive};
+      color: ${token.Colors.Brand.Warning.colorWarningText};
     }
   `,
-  // the group gives way before the field's name
+  // the group gives way before the field's name, down to nothing
   crumb: css`
-    flex: 0 10 auto;
+    flex: 1 1 0;
     min-width: 0;
     overflow: hidden;
     color: ${token.colorTextDescription};

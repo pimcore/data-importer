@@ -70,6 +70,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
         <Flex gap="mini">
           { FILTERS.map((value) => (
             <Button
+              className={ styles.summaryButton }
               key={ value }
               onClick={ () => { onFilter(value) } }
               size="small"
@@ -81,8 +82,10 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
         </Flex>
         { counts.open > 0 && (
           <Button
+            className={ styles.summaryButton }
             color="secondary"
             onClick={ onSkipOpen }
+            size="small"
           >
             { t(`${MAPPING}.skip-open`, { count: counts.open }) }
           </Button>

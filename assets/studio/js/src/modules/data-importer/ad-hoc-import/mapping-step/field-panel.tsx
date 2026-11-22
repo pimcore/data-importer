@@ -15,10 +15,20 @@ import { buildFieldGroups } from './field-groups'
 import { type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { canGoInto, takenFields } from './taken-fields'
 
-// Studio's tree grows to its widest label; here it keeps the panel's width and long labels end in an ellipsis
-const useStyles = createStyles(({ css }) => ({
+const PICKER_TEST_ID = 'ad-hoc-import-field-picker'
+
+// Studio's tree grows to its widest label; here it keeps the panel's width and height, long labels end in an ellipsis,
+// and a field another column already fills is greyed
+const useStyles = createStyles(({ token, css }) => ({
   picker: css`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     min-width: 0;
+
+    & > [data-testid='${PICKER_TEST_ID}'] {
+      width: 100%;
+    }
 
     .ant-tree .ant-tree-list-holder-inner {
       min-width: 0;
@@ -42,6 +52,11 @@ const useStyles = createStyles(({ css }) => ({
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+    }
+
+    .ant-tree .ant-tree-treenode-disabled .ant-tree-title__btn {
+      color: ${token.colorTextDisabled};
+      cursor: not-allowed;
     }
   `
 }))
@@ -72,7 +87,9 @@ export const FieldPanel = ({ row, mapping, fields, languages, onPick }: FieldPan
   return (
     <div className={ styles.picker }>
       <ColumnPicker
+        data-testid={ PICKER_TEST_ID }
         emptyText={ t('data-importer.ad-hoc-import.mapping.no-fields') }
+        fillHeight
         groups={ groups }
         onSelect={ ({ meta }) => { if (meta !== undefined) { onPick(row, meta) } } }
         searchPlaceholder={ t('data-importer.ad-hoc-import.mapping.find-field') }
