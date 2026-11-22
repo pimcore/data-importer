@@ -155,6 +155,8 @@ export const components = {
       header: string
       accessorFn: (row: unknown) => string
       cell?: (context: { getValue: () => string, row: { original: unknown } }) => React.ReactNode
+      size?: number
+      meta?: { autoWidth?: boolean }
     }>
     data: unknown[]
     isLoading?: boolean
@@ -162,7 +164,17 @@ export const components = {
   }) => (
     <table aria-busy={ isLoading }>
       <thead>
-        <tr>{ columns.map((column) => <th key={ column.id }>{ column.header }</th>) }</tr>
+        <tr>
+          { columns.map((column) => (
+            <th
+              data-auto-width={ column.meta?.autoWidth === true ? 'true' : undefined }
+              data-size={ column.size }
+              key={ column.id }
+            >
+              { column.header }
+            </th>
+          )) }
+        </tr>
       </thead>
       <tbody>
         { data.map((row) => (

@@ -10,7 +10,7 @@
 
 import React from 'react'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { fieldColumnSize, ImportObjectsWidget, PAGE_SIZE } from './import-objects-widget'
+import { autoWidthColumnOf, fieldColumnSize, ImportObjectsWidget, PAGE_SIZE } from './import-objects-widget'
 
 jest.mock('@pimcore/studio-ui-bundle/api', () => ({ getPrefix: () => '/pimcore-studio/api' }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
@@ -45,9 +45,17 @@ const renderWidget = (): void => {
          />)
 }
 
+// jsdom draws no text: a header is as wide as ten pixels per letter
+beforeEach(() => {
+  const measureText = (text: string): { width: number } => ({ width: text.length * 10 })
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext')
+    .mockReturnValue({ font: '', measureText } as unknown as CanvasRenderingContext2D)
+})
+
 afterEach(() => {
   cleanup()
   jest.resetAllMocks()
+  jest.restoreAllMocks()
 })
 
 describe('the objects an import saved', () => {
@@ -96,10 +104,34 @@ describe('the objects an import saved', () => {
 
 describe('fieldColumnSize', () => {
   it('keeps a short header at the shared width', () => {
-    expect(fieldColumnSize('Name')).toBe(64)
+    expect(fieldColumnSize(28, 8)).toBe(64)
   })
 
-  it('widens a column to its long header', () => {
-    expect(fieldColumnSize('Production year')).toBe(108)
+  it('widens a column to its measured header and the cell padding', () => {
+    expect(fieldColumnSize(97.3, 8)).toBe(118)
+  })
+})
+
+describe('autoWidthColumnOf', () => {
+  it('gives the width left to the column with the shortest header', () => {
+    expect(autoWidthColumnOf([80, 64, 118, 64])).toBe(1)
+  })
+})
+
+describe('the object list columns', () => {
+  it('fixes every field column to its header and lets only the shortest take the width left', () => {
+    mockListObjects.mockReturnValue({
+      data: { ...answer, fields: [{ key: 'series', label: 'Series' }, { key: 'name', label: 'Name' }, { key: 'manufacturer', label: 'Manufacturer' }] },
+      isLoading: false,
+      isFetching: false,
+      isError: false
+    })
+    renderWidget()
+
+    const headers = screen.getAllByRole('columnheader')
+    expect(headers.map((header) => header.getAttribute('data-auto-width'))).toEqual([null, 'true', null, null])
+    expect(Number(headers[2].getAttribute('data-size'))).toBeGreaterThanOrEqual(120)
+    expect(Number(headers[2].getAttribute('data-size'))).toBeGreaterThan(Number(headers[0].getAttribute('data-size')))
+    expect(headers[3].getAttribute('data-size')).toBe('112')
   })
 })

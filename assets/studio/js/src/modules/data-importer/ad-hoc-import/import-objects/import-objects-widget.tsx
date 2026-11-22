@@ -10,6 +10,8 @@
 
 import React, { useMemo, useState } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
+import { ConfigProvider } from 'antd'
+import { useTheme } from 'antd-style'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Button, Content, ContentLayout, Grid, Pagination, Segmented, Text, Toolbar } from '@pimcore/studio-ui-bundle/components'
 import {
@@ -19,14 +21,31 @@ import {
 import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/import-state'
 
 export const PAGE_SIZE = 50
-// small enough that six columns fit a narrow tab; the auto width columns share what is left
 const FIELD_COLUMN_SIZE = 64
 const MODIFIED_COLUMN_SIZE = 112
-// a header is never cut: a column takes at least its header's width
-const HEADER_CHAR_WIDTH = 6
-const HEADER_PADDING = 18
+// the header cell's border and the rounding of the measured text
+const HEADER_SLACK = 4
 
-export const fieldColumnSize = (label: string): number => Math.max(FIELD_COLUMN_SIZE, label.length * HEADER_CHAR_WIDTH + HEADER_PADDING)
+// a header is never cut: its column is as wide as its text in the header's font and the cell's padding
+export const fieldColumnSize = (textWidth: number, cellPadding: number): number =>
+  Math.max(FIELD_COLUMN_SIZE, Math.ceil(textWidth) + 2 * cellPadding + HEADER_SLACK)
+
+// the one column that takes the width the others leave: the one with the shortest header
+export const autoWidthColumnOf = (widths: number[]): number => widths.indexOf(Math.min(...widths))
+
+const useHeaderTextWidth = (): ((label: string) => number) => {
+  const theme = useTheme()
+
+  return useMemo(() => {
+    const context = document.createElement('canvas').getContext('2d') ?? null
+    if (context === null) {
+      return () => 0
+    }
+    context.font = `${theme.fontWeightStrong} ${theme.fontSize}px ${theme.fontFamily}`
+
+    return (label: string) => context.measureText(label).width
+  }, [theme.fontWeightStrong, theme.fontSize, theme.fontFamily])
+}
 
 type ImportedObject = BundleDataImporterAdHocImportRunObjectsResponse['items'][number]
 
@@ -57,6 +76,13 @@ const useStyles = createStyles(({ token, css }) => ({
   noShrink: css`
     flex-shrink: 0;
   `,
+  kinds: css`
+    flex-shrink: 0;
+
+    .ant-segmented-item-selected {
+      font-weight: ${token.fontWeightStrong};
+    }
+  `,
   footer: css`
     display: flex;
     align-items: center;
@@ -73,6 +99,8 @@ const useStyles = createStyles(({ token, css }) => ({
 export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, created, kind: firstKind }: ImportObjectsWidgetProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const theme = useTheme()
+  const headerTextWidth = useHeaderTextWidth()
   const timeOf = (timestamp: number | null): string => shortTimeOf(timestamp, (time) => t('data-importer.ad-hoc-import.result.today', { time }))
   const importedBy = t('data-importer.ad-hoc-import.saved-objects.imported-by', {
     time: timeOf(finishedAt),
@@ -84,30 +112,38 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
   const { data, isLoading, isFetching, isError } = useBundleDataImporterAdHocImportListRunObjectsQuery({ fileId, kind, page, pageSize: PAGE_SIZE })
 
   const fields = data?.fields
-  const columns = useMemo<Array<ColumnDef<ImportedObject>>>(() => [
-    ...(fields === undefined || fields.length === 0
-      ? [{
-          id: 'path',
-          header: t('data-importer.ad-hoc-import.saved-objects.path'),
-          accessorFn: (object: ImportedObject) => object.fullPath,
-          meta: { autoWidth: true }
-        }]
-      : fields.map((field, position) => ({
-          id: `field-${position}`,
-          header: field.label,
-          accessorFn: (object: ImportedObject) => object.values[position] ?? '',
-          // every column shares the width; an auto width column never shrinks below its size
-          size: fieldColumnSize(field.label),
-          meta: { autoWidth: true }
-        }))),
-    {
-      id: 'modified',
-      header: t('data-importer.ad-hoc-import.saved-objects.modified'),
-      accessorFn: (object: ImportedObject) => timeOf(object.modificationDate),
-      // a fixed width, so the date stays on one line while the fields share the rest
-      size: MODIFIED_COLUMN_SIZE
-    }
-  ], [fields, t])
+  const columns = useMemo<Array<ColumnDef<ImportedObject>>>(() => {
+    const sizes = (fields ?? []).map((field) => fieldColumnSize(headerTextWidth(field.label), theme.paddingXS))
+    const autoWidth = autoWidthColumnOf(sizes)
+
+    return [
+      ...(fields === undefined || fields.length === 0
+        ? [{
+            id: 'path',
+            header: t('data-importer.ad-hoc-import.saved-objects.path'),
+            accessorFn: (object: ImportedObject) => object.fullPath,
+            meta: { autoWidth: true }
+          }]
+        : fields.map((field, position) => ({
+            id: `field-${position}`,
+            header: field.label,
+            accessorFn: (object: ImportedObject) => object.values[position] ?? '',
+            // fixed to its header, so no header is cut; one column takes the width left and never shrinks below it
+            size: sizes[position],
+            ...(position === autoWidth ? { meta: { autoWidth: true } } : {})
+          }))),
+      {
+        id: 'modified',
+        header: t('data-importer.ad-hoc-import.saved-objects.modified'),
+        accessorFn: (object: ImportedObject) => timeOf(object.modificationDate),
+        // a fixed width, so the date stays on one line while the fields share the rest
+        size: MODIFIED_COLUMN_SIZE
+      }
+    ]
+  }, [fields, t, headerTextWidth, theme.paddingXS])
+
+  // the chosen kind in the primary colour, as a filter that is on; Studio's Segmented draws its selection from these
+  const selectedKind = { colorFill: theme.colorPrimary, itemSelectedColor: theme.colorTextLightSolid }
 
   const choose = (next: ObjectsKind): void => {
     setKind(next)
@@ -148,15 +184,17 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
           theme="secondary"
         >
           <div className={ styles.bar }>
-            <Segmented
-              className={ styles.noShrink }
-              onChange={ (value: string) => { choose(value as ObjectsKind) } }
-              options={ [
-                { value: 'updated', label: t('data-importer.ad-hoc-import.saved-objects.updated', { count: updated }), disabled: updated === 0 },
-                { value: 'created', label: t('data-importer.ad-hoc-import.saved-objects.created', { count: created }), disabled: created === 0 }
-              ] }
-              value={ kind }
-            />
+            <ConfigProvider theme={ { token: selectedKind } }>
+              <Segmented
+                className={ styles.kinds }
+                onChange={ (value: string) => { choose(value as ObjectsKind) } }
+                options={ [
+                  { value: 'updated', label: t('data-importer.ad-hoc-import.saved-objects.updated', { count: updated }), disabled: updated === 0 },
+                  { value: 'created', label: t('data-importer.ad-hoc-import.saved-objects.created', { count: created }), disabled: created === 0 }
+                ] }
+                value={ kind }
+              />
+            </ConfigProvider>
             <Text
               className={ styles.info }
               ellipsis={ { tooltip: importedBy } }
@@ -188,7 +226,6 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
             )
           : (
             <Grid
-              allowMultipleAutoWidthColumns
               autoWidth
               columns={ columns }
               data={ data?.items ?? [] }
