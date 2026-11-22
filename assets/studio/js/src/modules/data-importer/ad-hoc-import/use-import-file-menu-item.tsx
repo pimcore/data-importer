@@ -14,21 +14,32 @@ import { Icon, useTreePermission, type ItemType, type TreeNodeProps } from '@pim
 import { isAllowed } from '@pimcore/studio-ui-bundle/modules/auth'
 import { checkElementPermission } from '@pimcore/studio-ui-bundle/modules/element'
 import { TreePermission } from '@pimcore/studio-ui-bundle/modules/perspectives'
+import { BOLD } from './dialog-layout'
 import { openAdHocImport } from './dialog-store'
 
 export const AD_HOC_IMPORT_PERMISSION = 'plugin_data_importer_ad_hoc_import'
 
-// Studio's menu item replaces the item's className, so the hover is styled from the label up to its entry
-const useStyles = createStyles(({ token, css }) => ({
-  label: css`
-    .ant-dropdown-menu .ant-dropdown-menu-item:has(&):hover,
-    .ant-dropdown-menu .ant-dropdown-menu-item-active:has(&) {
-      background-color: ${token.purple1} !important;
-      color: ${token.purple9};
-      font-weight: ${token.fontWeightStrong};
-    }
+// Studio's menu item replaces the item's className, so the hover is styled from the label up to its entry;
+// one selector per rule: emotion leaves the & in :has() unresolved inside a selector list
+const useStyles = createStyles(({ token, css }) => {
+  const hovered = `
+    background-color: ${token.purple1} !important;
+    color: ${token.purple9};
+    font-weight: ${BOLD};
   `
-}))
+
+  return {
+    label: css`
+      .ant-dropdown-menu .ant-dropdown-menu-item:has(&):hover {
+        ${hovered}
+      }
+
+      .ant-dropdown-menu .ant-dropdown-menu-item-active:has(&) {
+        ${hovered}
+      }
+    `
+  }
+})
 
 const useCanImportFile = (node: TreeNodeProps): boolean => {
   const { isTreeActionAllowed } = useTreePermission()
