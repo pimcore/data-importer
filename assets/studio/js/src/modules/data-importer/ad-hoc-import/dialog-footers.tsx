@@ -14,7 +14,18 @@ import { Button, Flex, ModalFooter, Select } from '@pimcore/studio-ui-bundle/com
 import { failedRowsUrl, importedCount, isDeciding, isDone, type ImportRun } from './import-step/import-state'
 import { type ErrorMode } from './preview-step/preview-state'
 
+// the modal's content padding, which the footer's line spans so it runs across the dialog
+const DIALOG_PADDING = 24
+
 const useStyles = createStyles(({ token, css }) => ({
+  footer: css`
+    margin: 0 -${DIALOG_PADDING}px;
+    padding: ${token.paddingSM}px ${DIALOG_PADDING}px 0;
+    border-top: ${token.lineWidth}px solid ${token.colorBorderContainer};
+  `,
+  errorModeLabel: css`
+    color: ${token.colorTextSecondary};
+  `,
   undecided: css`
     color: ${token.colorWarningText};
   `,
@@ -37,17 +48,21 @@ interface PreviewFooterProps {
 
 export const PreviewFooter = ({ errorMode, importCount, onBack, onErrorModeChange, onImport }: PreviewFooterProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
   return (
     <ModalFooter
-      divider
+      className={ styles.footer }
       justify="space-between"
     >
       <Flex
         align="center"
         gap="small"
       >
-        <label htmlFor={ ERROR_MODE_ID }>{ t('data-importer.ad-hoc-import.preview.rows-with-errors') }</label>
+        <label
+          className={ styles.errorModeLabel }
+          htmlFor={ ERROR_MODE_ID }
+        >{ t('data-importer.ad-hoc-import.preview.rows-with-errors') }</label>
         <Select
           id={ ERROR_MODE_ID }
           onChange={ (value: ErrorMode) => { onErrorModeChange(value) } }
@@ -87,10 +102,11 @@ interface DecisionFooterProps {
 
 const DecisionFooter = ({ isDeciding, onBackToMapping, onDiscard, onMerge, run, runFileId }: DecisionFooterProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
   return (
     <ModalFooter
-      divider
+      className={ styles.footer }
       justify="space-between"
     >
       <Flex gap="small">
@@ -135,6 +151,7 @@ interface ImportFooterProps {
 
 export const ImportFooter = ({ onClose, run, runFileId, decision }: ImportFooterProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
   if (run !== undefined && isDeciding(run) && runFileId !== null && decision !== undefined) {
     return (
@@ -148,7 +165,7 @@ export const ImportFooter = ({ onClose, run, runFileId, decision }: ImportFooter
 
   return (
     <ModalFooter
-      divider
+      className={ styles.footer }
       justify={ isDone(run) && run.failed > 0 ? 'space-between' : 'flex-end' }
     >
       { isDone(run) && run.failed > 0 && runFileId !== null && (
@@ -196,7 +213,7 @@ export const StepFooter = ({ canGoOn, isFirstStep, undecided, onBack, onClose, o
   )
 
   if (undecided === undefined) {
-    return <ModalFooter divider>{ buttons }</ModalFooter>
+    return <ModalFooter className={ styles.footer }>{ buttons }</ModalFooter>
   }
 
   let undecidedText = t('data-importer.ad-hoc-import.mapping.all-decided')
@@ -208,7 +225,7 @@ export const StepFooter = ({ canGoOn, isFirstStep, undecided, onBack, onClose, o
 
   return (
     <ModalFooter
-      divider
+      className={ styles.footer }
       justify="space-between"
     >
       <span className={ undecided === 0 ? styles.decided : styles.undecided }>

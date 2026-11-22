@@ -168,3 +168,15 @@ export const rowTone = (row: DryRunRow, mode: ErrorMode): RowTone => {
 
   return isSkipped(row, mode) ? 'error' : 'warning'
 }
+
+export const SHOWN_FIELDS = 2
+export const FOLD_SEPARATOR = ' · '
+
+/**
+ * The grid shows the first fields in columns of their own; the others share one last column, so the preview fits
+ * the dialog however many fields a file maps.
+ */
+export const foldedFields = <T>(fields: T[]): { shown: T[], folded: T[] } => ({
+  shown: fields.slice(0, SHOWN_FIELDS),
+  folded: fields.slice(SHOWN_FIELDS)
+})

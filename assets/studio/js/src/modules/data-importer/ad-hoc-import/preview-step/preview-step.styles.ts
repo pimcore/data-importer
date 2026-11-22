@@ -32,8 +32,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorErrorBg};
   `,
   number: css`
-    font-size: ${token.fontSizeHeading4}px;
-    line-height: ${token.lineHeightHeading4};
+    font-size: ${token.fontSizeHeading3}px;
+    line-height: ${token.lineHeightHeading3};
     font-weight: ${token.fontWeightStrong};
   `,
   label: css`
@@ -52,27 +52,58 @@ export const useStyles = createStyles(({ token, css }) => ({
     color: ${token.colorTextTertiary};
     flex-grow: 1;
   `,
-  // a cell of one's own loses the grid's padding and its vertical centering
+  // a cell of one's own loses the grid's padding and its vertical centering; a long value wraps, as the board's message does
   cell: css`
-    display: flex;
-    align-items: center;
+    display: block;
     width: 100%;
-    height: 100%;
     padding: ${token.paddingXXS}px ${token.paddingXS}px;
+    line-height: ${token.lineHeight};
     white-space: normal;
     overflow-wrap: anywhere;
   `,
   matchValue: css`
     font-weight: ${token.fontWeightStrong};
   `,
+  rowNumber: css`
+    color: ${token.colorTextTertiary};
+  `,
+  // the error text tokens fail AA contrast on the tinted rows, these darker shades of the same hues pass
   error: css`
-    color: ${token.colorErrorText};
+    color: ${token.red7};
   `,
   warning: css`
-    color: ${token.colorWarningText};
+    color: ${token.Colors.Brand.Warning.colorWarningText};
   `,
-  // Studio's grid takes no class per row, a row is tinted through what its cells hold
+  // a body of its own height that scrolls, so the footer stays in view on a small screen
+  table: css`
+    height: clamp(160px, calc(100vh - 443px), 430px);
+    overflow: auto;
+    border: ${token.lineWidth}px solid ${token.colorBorderContainer};
+    border-radius: ${token.borderRadius}px;
+  `,
+  // Studio's grid takes no class per row, a row is tinted through what its cells hold;
+  // the board separates rows only, and its rows are as high as one line of text
   grid: css`
+    && .ant-table-cell {
+      border-left-width: 0;
+      border-right-width: 0;
+    }
+
+    // the docked grid drops the border under its last row, which in the header is the one row it has
+    && .ant-table-thead .ant-table-cell {
+      border-top: 0 !important;
+      border-bottom: ${token.lineWidth}px solid ${token.colorBorderContainer} !important;
+    }
+
+    // the board's header has no split lines between its column titles
+    && .ant-table-thead > tr > th:not(:last-child)::before {
+      background-color: transparent !important;
+    }
+
+    && .ant-table-row {
+      height: auto;
+    }
+
     tr:has(.${ROW_ERROR_MARK}) > td {
       background: ${token.colorErrorBg};
     }
@@ -83,5 +114,20 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   pagination: css`
     margin-top: ${token.marginXS}px;
+
+    // the board's page field and page-size select are narrower than the pager's defaults
+    && .ant-pagination.ant-pagination-simple .ant-pagination-simple-pager input {
+      width: 38px;
+      font-size: ${token.fontSize}px;
+    }
+
+    && .ant-select {
+      width: 94px !important;
+    }
+  `,
+  total: css`
+    padding-right: ${token.paddingXS}px;
+    border-right: ${token.lineWidth}px solid ${token.colorBorderContainer};
+    white-space: nowrap;
   `
 }))

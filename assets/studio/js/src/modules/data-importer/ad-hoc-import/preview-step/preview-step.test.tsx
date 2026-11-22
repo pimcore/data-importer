@@ -15,7 +15,7 @@ import { type DryRun, type DryRunRow } from './preview-state'
 
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   ...jest.requireActual<object>('../../../../../test/support/ad-hoc-import'),
-  createStyles: () => () => ({ styles: { error: 'error', warning: 'warning' } })
+  createStyles: () => () => ({ styles: { error: 'error', warning: 'warning', rowNumber: 'row-number', total: 'total' } })
 }))
 jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ components: object }>('../../../../../test/support/ad-hoc-import').components)
 
@@ -119,6 +119,18 @@ describe('the preview step', () => {
     expect(cells()[0][5]).toBe('Basics › height is required')
   })
 
+  it('sets the row number apart from the values', () => {
+    render(<PreviewStep
+      dryRun={ dryRun() }
+      errorMode="skip"
+           />)
+
+    const numbers = within(screen.getByRole('table')).getAllByRole('row').slice(1)
+      .map((tableRow) => within(tableRow).getAllByRole('cell')[0].querySelector('span'))
+    expect(numbers.map((cell) => [cell?.textContent, cell?.classList.contains('row-number')]))
+      .toEqual([['2', true], ['3', true], ['4', true], ['5', true]])
+  })
+
   it('marks the message of a skipped row as an error and of a row imported without values as a warning', () => {
     const tones = (): Array<string | null> => within(screen.getByRole('table')).getAllByRole('row').slice(1)
       .map((tableRow) => within(tableRow).getAllByRole('cell')[5].querySelector('span span')?.classList[0] ?? null)
@@ -151,6 +163,49 @@ describe('the preview step', () => {
            />)
 
     expect(marks()).toEqual([[false, false], [false, false], [false, true], [true, false]])
+  })
+
+  it('folds the fields past the second into one last column, whose place a row\'s message takes', () => {
+    const fields = [
+      { key: 'price', language: null, label: 'Price' },
+      { key: 'color', language: null, label: 'Color' },
+      { key: 'brand', language: null, label: 'Brand' },
+      { key: 'title', language: 'en', label: 'Title' }
+    ]
+    const values = [{ old: '99.00', new: '99.00' }, { old: 'blue', new: 'navy' }, { old: 'Northhike', new: 'Northhike' }, { old: null, new: 'Shell' }]
+    const folding = {
+      ...dryRun(),
+      fields,
+      rows: [
+        row({ values }),
+        row({ row: 3, values, invalid: [{ field: 1, label: 'Color', value: 'Türkis', message: 'Color “Türkis” is no option of Color' }] }),
+        row({ row: 4, action: null, error: '2 objects have SKU NH-1001', values })
+      ]
+    }
+
+    render(<PreviewStep
+      dryRun={ folding }
+      errorMode="values"
+           />)
+
+    expect(within(screen.getByRole('table')).getAllByRole('columnheader').map((cell) => cell.textContent))
+      .toEqual(['Row', 'SKU', 'Action', 'Price', 'Color', 'Brand · Title (en)'])
+    expect(cells()).toEqual([
+      ['2', 'NH-1001', 'update', '99.00', 'blue → navy', 'Northhike · — → Shell'],
+      ['3', 'NH-1001', 'update, without Color', '99.00', 'navy', 'Color “Türkis” → left unchanged'],
+      ['4', 'NH-1001', 'skipped', '99.00', 'navy', '2 objects have SKU NH-1001']
+    ])
+  })
+
+  it('shows the total apart from the pager', () => {
+    render(<PreviewStep
+      dryRun={ dryRun() }
+      errorMode="skip"
+           />)
+
+    const total = screen.getByText('Total 4 items')
+    expect(total.closest('nav')).toBeNull()
+    expect(total.classList.contains('total')).toBe(true)
   })
 
   it('shows only the rows with errors when asked to', () => {
