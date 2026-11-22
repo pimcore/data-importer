@@ -160,7 +160,12 @@ class AdHocImportMappingServiceTest extends Unit
                 'transformationResultType' => 'default',
             ],
             ['key' => 'ean', 'title' => 'EAN [code]', 'localized' => false, 'transformationResultType' => 'default'],
-            ['key' => 'untitled', 'title' => ' [untitled]', 'localized' => false, 'transformationResultType' => 'default'],
+            [
+                'key' => 'untitled',
+                'title' => ' [untitled]',
+                'localized' => false,
+                'transformationResultType' => 'default',
+            ],
         ]);
         $suggestions->method('suggest')->willReturn(new MappingSuggestionsResponse([]));
 
