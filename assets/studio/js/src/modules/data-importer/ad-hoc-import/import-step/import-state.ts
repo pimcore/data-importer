@@ -27,9 +27,9 @@ export const isSettled = (run: ImportRun | undefined): boolean => isDone(run) ||
 
 const percent = (done: number, total: number): number => total === 0 ? 100 : Math.floor((done / total) * 100)
 
-// what the bar shows: all of it once nothing is left, however many rows failed; through a branch, the merge once it
-// writes (the check before it reports nothing to count, so the rows written stay on the bar)
-export const percentOf = (run: ImportRun): number => run.state === 'merging' && run.mergeDone > 0
+// what the bar shows: the running step's share, all of it once nothing is left, however many rows failed; through a
+// branch, from the check on the merge's, so it is never full while the branch is still checked or merged
+export const percentOf = (run: ImportRun): number => run.state === 'merging'
   ? percent(run.mergeDone, run.mergeTotal)
   : percent(run.processed, run.total)
 

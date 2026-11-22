@@ -34,7 +34,7 @@ export const BranchRunning = ({ run }: { run: ImportRun }): React.JSX.Element =>
     >
       <div className={ styles.header }>
         <span className={ styles.title }>{ t('data-importer.ad-hoc-import.run.importing', { count: run.total }) }</span>
-        { step !== 'checking' && <span className={ styles.muted }>{ step === 'written' ? rows : merged }</span> }
+        <span className={ styles.muted }>{ step === 'written' ? rows : merged }</span>
       </div>
       <Progress
         aria-label={ t('data-importer.ad-hoc-import.step.import') }

@@ -250,15 +250,16 @@ describe('an import through a branch', () => {
     expect(within(screen.getByText('Merging as Jo Doe').parentElement!).getByText('184 of 306')).toBeTruthy()
   })
 
-  it('shows no count while the branch is checked, as the check reports none, and keeps the rows written on the bar', () => {
+  it('counts the merge in the header while the branch is checked, and starts the bar again from it', () => {
     render(<ImportStep
       fileId="file-1"
       run={ run({ state: 'merging', throughBranch: true, total: 306, processed: 306, mergeTotal: 306, mergeDone: 0, failed: 0 }) }
       total={ 306 }
            />)
 
-    expect(screen.queryByText('0 of 306')).toBeNull()
-    expect(screen.getByRole('progressbar').getAttribute('value')).toBe('100')
+    expect(screen.getByText('0 of 306')).toBeTruthy()
+    expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).queryByText('0 of 306')).toBeNull()
+    expect(screen.getByRole('progressbar').getAttribute('value')).toBe('0')
     expect(screen.getByRole('progressbar').getAttribute('data-status')).toBe('normal')
     expect(screen.getByRole('progressbar').getAttribute('data-stroke')).toBe('primary')
     expect(within(screen.getByText('Checking: rights, keys, values').parentElement!).getByRole('status')).toBeTruthy()
