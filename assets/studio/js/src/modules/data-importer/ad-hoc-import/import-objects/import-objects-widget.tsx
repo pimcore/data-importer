@@ -19,6 +19,8 @@ import {
 import { objectsExportUrl, shortTimeOf, type ObjectsKind } from '../import-step/import-state'
 
 export const PAGE_SIZE = 50
+const FIELD_COLUMN_SIZE = 80
+const MODIFIED_COLUMN_SIZE = 120
 
 type ImportedObject = BundleDataImporterAdHocImportRunObjectsResponse['items'][number]
 
@@ -33,7 +35,7 @@ export interface ImportObjectsWidgetProps {
 }
 
 const useStyles = createStyles(({ token, css }) => ({
-  // the toolbar scrolls what does not fit: the info line gives way first, so the export stays in view
+  // a narrow tab wraps the info line instead of cutting it, so the export stays in view
   bar: css`
     display: flex;
     align-items: center;
@@ -43,9 +45,7 @@ const useStyles = createStyles(({ token, css }) => ({
   `,
   info: css`
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   `,
   noShrink: css`
     flex-shrink: 0;
@@ -87,13 +87,15 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
           id: `field-${position}`,
           header: field.label,
           accessorFn: (object: ImportedObject) => object.values[position] ?? '',
-          // every column shares the width, so all of them and the modified date fit the panel
+          // every column shares the width; an auto width column never shrinks below its size
+          size: FIELD_COLUMN_SIZE,
           meta: { autoWidth: true }
         }))),
     {
       id: 'modified',
       header: t('data-importer.ad-hoc-import.saved-objects.modified'),
       accessorFn: (object: ImportedObject) => timeOf(object.modificationDate),
+      size: MODIFIED_COLUMN_SIZE,
       meta: { autoWidth: true }
     }
   ], [fields, t])
