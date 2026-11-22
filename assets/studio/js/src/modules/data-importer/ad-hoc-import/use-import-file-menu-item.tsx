@@ -9,7 +9,7 @@
  */
 
 import React from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Icon, useTreePermission, type ItemType, type TreeNodeProps } from '@pimcore/studio-ui-bundle/components'
 import { isAllowed } from '@pimcore/studio-ui-bundle/modules/auth'
 import { checkElementPermission } from '@pimcore/studio-ui-bundle/modules/element'
@@ -17,6 +17,18 @@ import { TreePermission } from '@pimcore/studio-ui-bundle/modules/perspectives'
 import { openAdHocImport } from './dialog-store'
 
 export const AD_HOC_IMPORT_PERMISSION = 'plugin_data_importer_ad_hoc_import'
+
+// Studio's menu item replaces the item's className, so the hover is styled from the label up to its entry
+const useStyles = createStyles(({ token, css }) => ({
+  label: css`
+    .ant-dropdown-menu .ant-dropdown-menu-item:has(&):hover,
+    .ant-dropdown-menu .ant-dropdown-menu-item-active:has(&) {
+      background-color: ${token.purple1} !important;
+      color: ${token.purple9};
+      font-weight: ${token.fontWeightStrong};
+    }
+  `
+}))
 
 const useCanImportFile = (node: TreeNodeProps): boolean => {
   const { isTreeActionAllowed } = useTreePermission()
@@ -30,9 +42,10 @@ const useCanImportFile = (node: TreeNodeProps): boolean => {
 
 export const useImportFileMenuItem = (node: TreeNodeProps): ItemType => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
 
   return {
-    label: t('data-importer.ad-hoc-import.menu-item'),
+    label: <span className={ styles.label }>{t('data-importer.ad-hoc-import.menu-item')}</span>,
     key: 'importFile',
     icon: <Icon value="upload-import" />,
     hidden: !useCanImportFile(node),

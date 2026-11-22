@@ -8,7 +8,8 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import { act, renderHook } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { act, render, renderHook, screen } from '@testing-library/react'
 import type { TreeNodeProps } from '@pimcore/studio-ui-bundle/components'
 import { closeAdHocImport, useAdHocImportTarget } from './dialog-store'
 import { useImportFileDivider, useImportFileMenuItem, useShowsAnyItem, AD_HOC_IMPORT_PERMISSION } from './use-import-file-menu-item'
@@ -36,8 +37,8 @@ const folder = (given: object = {}): TreeNodeProps => ({
   ...given
 }) as unknown as TreeNodeProps
 
-const item = (node: TreeNodeProps): { hidden: boolean, label: string, onClick: () => void } =>
-  renderHook(() => useImportFileMenuItem(node)).result.current as unknown as { hidden: boolean, label: string, onClick: () => void }
+const item = (node: TreeNodeProps): { hidden: boolean, label: ReactElement, onClick: () => void } =>
+  renderHook(() => useImportFileMenuItem(node)).result.current as unknown as { hidden: boolean, label: ReactElement, onClick: () => void }
 
 beforeEach(() => {
   mockDeniedTreeAction = undefined
@@ -50,8 +51,16 @@ afterEach(() => {
 
 describe('the menu item', () => {
   it('shows on a folder for a user with the right and create and save on it', () => {
-    expect(item(folder())).toMatchObject({ hidden: false, label: 'Import file…' })
+    const shown = item(folder())
+    expect(shown.hidden).toBe(false)
+    render(shown.label)
+    expect(screen.getByText('Import file…')).toBeTruthy()
     expect(mockIsAllowed).toHaveBeenCalledWith(AD_HOC_IMPORT_PERMISSION)
+  })
+
+  it('marks its label so its entry gets its own hover', () => {
+    render(item(folder()).label)
+    expect(screen.getByText('Import file…').className).toBe('label')
   })
 
   it('does not show on an object', () => {
