@@ -199,6 +199,7 @@ class AdHocImportConfigurationServiceTest extends Unit
             'sourcePath' => null,
             'fieldCount' => 2,
             'transformedCount' => 0,
+            'schedule' => null,
         ], $configuration);
     }
 
@@ -420,6 +421,7 @@ class AdHocImportConfigurationServiceTest extends Unit
             'sourcePath' => null,
             'fieldCount' => 0,
             'transformedCount' => 0,
+            'schedule' => null,
         ], $configuration);
     }
 
@@ -449,6 +451,31 @@ class AdHocImportConfigurationServiceTest extends Unit
         $this->assertSame(3, $configuration['fieldCount']);
         $this->assertSame(1, $configuration['transformedCount']);
         $this->assertStringNotContainsString('secret', (string)json_encode($configuration));
+    }
+
+    /**
+     * @dataProvider schedules
+     */
+    public function testItNamesTheCronDefinitionItRunsOnOrNoneWhenItRunsByHand(mixed $cron, ?string $schedule): void
+    {
+        $data = $this->config();
+        if ($cron !== null) {
+            $data['executionConfig'] = ['cronDefinition' => $cron];
+        }
+
+        $this->assertSame($schedule, $this->described($data)['schedule']);
+    }
+
+    /**
+     * @return array<string, array{mixed, string|null}>
+     */
+    public static function schedules(): array
+    {
+        return [
+            'nightly' => ['0 2 * * *', '0 2 * * *'],
+            'no cron definition' => ['', null],
+            'no execution settings' => [null, null],
+        ];
     }
 
     /**

@@ -36,7 +36,8 @@ use OpenApi\Attributes\Schema;
  *     source: string|null,
  *     sourcePath: string|null,
  *     fieldCount: int,
- *     transformedCount: int
+ *     transformedCount: int,
+ *     schedule: string|null
  * }
  *
  * @internal
@@ -61,6 +62,7 @@ final readonly class AdHocImportConfigurationsResponse
                     'name', 'classId', 'className', 'matchBy', 'matchField', 'matchLanguage', 'matchColumn',
                     'newObjectsFolder', 'columns', 'columnsBy', 'unusable', 'format', 'sheet', 'headerRow',
                     'source', 'sourcePath', 'fieldCount', 'transformedCount',
+                    'schedule',
                 ],
                 properties: [
                     new Property(
@@ -186,6 +188,13 @@ final readonly class AdHocImportConfigurationsResponse
                         description: 'The rows of its mapping with transformations',
                         type: 'integer',
                         example: 6
+                    ),
+                    new Property(
+                        property: 'schedule',
+                        description: 'The cron definition it runs on, null when it runs only by hand',
+                        type: 'string',
+                        example: '0 2 * * *',
+                        nullable: true
                     ),
                 ],
                 type: 'object'

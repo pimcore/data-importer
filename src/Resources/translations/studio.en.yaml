@@ -464,6 +464,8 @@ data-importer.ad-hoc-import.configuration.missing-columns: '{{count}} columns th
 data-importer.ad-hoc-import.configuration.missing-columns-one: '1 column the configuration reads is missing in this file: {{columns}}. That field stays as it is.'
 data-importer.ad-hoc-import.configuration.field-count: '{{count}} fields'
 data-importer.ad-hoc-import.configuration.field-count-one: 1 field
+data-importer.ad-hoc-import.configuration.schedule.manual: manual
+data-importer.ad-hoc-import.configuration.schedule.cron: '{{cron}}'
 data-importer.ad-hoc-import.configuration.read-only: read only
 data-importer.ad-hoc-import.configuration.source: Source
 data-importer.ad-hoc-import.configuration.source.sftp: SFTP

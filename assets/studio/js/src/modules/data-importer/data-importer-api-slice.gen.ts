@@ -1141,6 +1141,8 @@ export type BundleDataImporterAdHocImportConfigurationsResponse = {
         fieldCount: number;
         /** The rows of its mapping with transformations */
         transformedCount: number;
+        /** The cron definition it runs on, null when it runs only by hand */
+        schedule: string | null;
     }[];
 };
 export type BundleDataImporterAdHocImportTransformationParameters = {

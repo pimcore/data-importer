@@ -90,12 +90,20 @@ const useStyles = createStyles(({ token, css }) => ({
   `
 }))
 
-// what a card says of a usable configuration: its class, what it reads and how many fields it maps
-const summaryOf = (t: ReturnType<typeof useTranslation>['t'], configuration: ImportConfiguration): string => [
-  configuration.className ?? configuration.classId ?? '',
+// what a card says of a usable configuration: what it reads, how many fields it maps and when it runs
+export const summaryOf = (t: ReturnType<typeof useTranslation>['t'], configuration: ImportConfiguration): string => [
   configuration.format?.toUpperCase() ?? '',
-  t(`${CONFIGURATION}.${configuration.fieldCount === 1 ? 'field-count-one' : 'field-count'}`, { count: configuration.fieldCount })
+  t(`${CONFIGURATION}.${configuration.fieldCount === 1 ? 'field-count-one' : 'field-count'}`, { count: configuration.fieldCount }),
+  configuration.schedule === null
+    ? t(`${CONFIGURATION}.schedule.manual`)
+    : t(`${CONFIGURATION}.schedule.cron`, { cron: configuration.schedule, interpolation: { escapeValue: false } })
 ].filter((part) => part !== '').join(' · ')
+
+// the usable configurations first, each part in the server's order
+export const usableFirst = <T, >(configurations: T[], isUsable: (configuration: T) => boolean): T[] => [
+  ...configurations.filter(isUsable),
+  ...configurations.filter((configuration) => !isUsable(configuration))
+]
 
 export interface ConfigurationChoiceProps {
   inspected?: InspectedFile
@@ -255,7 +263,7 @@ export const ConfigurationChoice = ({
           role="radiogroup"
           vertical
         >
-          { configurations.map((shown, index) => card(shown, index)) }
+          { usableFirst(configurations, (shown) => reasonOf(shown) === null).map((shown, index) => card(shown, index)) }
         </Flex>
       </Flex>
 

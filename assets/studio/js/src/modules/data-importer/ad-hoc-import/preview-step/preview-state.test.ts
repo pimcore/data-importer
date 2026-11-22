@@ -95,7 +95,8 @@ const configuration: ImportConfiguration = {
   source: 'upload',
   sourcePath: null,
   fieldCount: 2,
-  transformedCount: 0
+  transformedCount: 0,
+  schedule: null
 }
 
 const row = (given: Partial<DryRunRow>): DryRunRow => ({

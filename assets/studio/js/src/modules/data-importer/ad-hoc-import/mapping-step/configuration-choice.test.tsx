@@ -70,6 +70,7 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   sourcePath: null,
   fieldCount: 2,
   transformedCount: 0,
+  schedule: null,
   ...given
 })
 
@@ -124,9 +125,29 @@ describe('the mapping with a configuration', () => {
     expect(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }).getAttribute('aria-checked')).toBe('true')
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
     expect(cards().map((shown) => shown.getAttribute('aria-label'))).toEqual(['products', 'prices'])
-    expect(cards().map(detailOf)).toEqual(['Product · CSV · 2 fields', 'Product · CSV · 2 fields'])
+    expect(cards().map(detailOf)).toEqual(['CSV · 2 fields · manual', 'CSV · 2 fields · manual'])
     expect(screen.getByText('Only those you may read in the Data Hub')).toBeTruthy()
     expect(screen.getByText('Choose a configuration')).toBeTruthy()
+  })
+
+  it('names when a usable one runs: its cron definition, unescaped, or manual', () => {
+    useConfiguration({ configurations: [configuration({ name: 'nightly', schedule: '0 2 * * 1-5 & more' }), configuration({ name: 'by hand' })] })
+
+    expect(cards().map(detailOf)).toEqual(['CSV · 2 fields · 0 2 * * 1-5 & more', 'CSV · 2 fields · manual'])
+  })
+
+  it('lists the ones it cannot use after the usable ones, each part in the server\'s order', () => {
+    useConfiguration({
+      configurations: [
+        configuration({ name: 'car-import', unusable: 'matching' }),
+        configuration({ name: 'products' }),
+        configuration({ name: 'closed', unusable: 'folder-not-allowed' }),
+        configuration({ name: 'prices' })
+      ]
+    })
+
+    expect(cards().map((shown) => shown.getAttribute('aria-label'))).toEqual(['products', 'prices', 'car-import', 'closed'])
+    expect(cards().map((shown) => shown.getAttribute('aria-disabled'))).toEqual(['false', 'false', 'true', 'true'])
   })
 
   it('offers one it cannot use only with the reason on its second line, unescaped', () => {
@@ -181,9 +202,10 @@ describe('the mapping with a configuration', () => {
       ]
     })
 
-    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, 0, -1])
+    // the one it cannot use is listed last
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([0, -1, -1])
     choose('prices')
-    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, 0])
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, 0, -1])
   })
 
   it('moves to and chooses the next or previous usable one with the arrow keys, wrapping around', () => {
@@ -194,10 +216,11 @@ describe('the mapping with a configuration', () => {
         configuration({ name: 'prices' })
       ]
     })
+    // listed as products, prices, closed: the one it cannot use last
     const checked = (): Array<string | null> => cards().map((shown) => shown.getAttribute('aria-checked'))
 
     fireEvent.keyDown(card('products'), { key: 'ArrowDown' })
-    expect(checked()).toEqual(['false', 'false', 'true'])
+    expect(checked()).toEqual(['false', 'true', 'false'])
     expect(document.activeElement).toBe(card('prices'))
 
     fireEvent.keyDown(card('prices'), { key: 'ArrowRight' })
@@ -205,7 +228,7 @@ describe('the mapping with a configuration', () => {
     expect(document.activeElement).toBe(card('products'))
 
     fireEvent.keyDown(card('products'), { key: 'ArrowUp' })
-    expect(checked()).toEqual(['false', 'false', 'true'])
+    expect(checked()).toEqual(['false', 'true', 'false'])
 
     fireEvent.keyDown(card('prices'), { key: 'ArrowLeft' })
     expect(checked()).toEqual(['true', 'false', 'false'])
@@ -307,7 +330,7 @@ describe('the mapping with a configuration', () => {
     // the file is a CSV, so the format does not match it
     expect(within(summary).queryByText('matches the file')).toBeNull()
     expect(within(summary).getByText('18 fields, 6 with transformations')).toBeTruthy()
-    expect(detailOf(card('northhike'))).toBe('Product · XLSX · 18 fields')
+    expect(detailOf(card('northhike'))).toBe('XLSX · 18 fields · manual')
   })
 
   it('says the format matches the file, and names an upload without a path and one field', () => {
@@ -362,7 +385,7 @@ describe('the mapping with a configuration', () => {
     expect(summary.querySelector('s')).toBeNull()
     expect(within(summary).getByText('this upload: products.csv')).toBeTruthy()
     expect(within(summary).queryByText('matches the file')).toBeNull()
-    expect(detailOf(card('products'))).toBe('Product · 2 fields')
+    expect(detailOf(card('products'))).toBe('2 fields · manual')
   })
 
   it('shows a failed listing instead of saying there is none', () => {

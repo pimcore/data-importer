@@ -200,7 +200,8 @@ const productsConfiguration = {
   source: 'upload',
   sourcePath: null,
   fieldCount: 2,
-  transformedCount: 0
+  transformedCount: 0,
+  schedule: null
 }
 
 const closedConfiguration = { ...productsConfiguration, name: 'closed', unusable: 'folder-not-allowed' }

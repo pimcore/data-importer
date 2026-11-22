@@ -51,6 +51,7 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   sourcePath: null,
   fieldCount: 2,
   transformedCount: 0,
+  schedule: null,
   ...given
 })
 

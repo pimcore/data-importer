@@ -186,7 +186,8 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
     }
 
     /**
-     * What it reads and how much it maps: the file format, the source and the counts of its mapping rows.
+     * What it reads, how much it maps and when it runs: the file format, the source, the counts of its mapping rows
+     * and its cron definition.
      *
      * @param array<mixed> $data
      *
@@ -197,7 +198,8 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
      *     source: string|null,
      *     sourcePath: string|null,
      *     fieldCount: int,
-     *     transformedCount: int
+     *     transformedCount: int,
+     *     schedule: string|null
      * }
      */
     private function fileAndMapping(array $data): array
@@ -207,6 +209,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         $settings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
         $format = $this->text($interpreter['type'] ?? null);
         $loader = is_array($data['loaderConfig'] ?? null) ? $data['loaderConfig'] : [];
+        $execution = is_array($data['executionConfig'] ?? null) ? $data['executionConfig'] : [];
 
         return [
             'format' => $format,
@@ -221,6 +224,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
                     && is_array($row['transformationPipeline'] ?? null)
                     && $row['transformationPipeline'] !== []
             )),
+            'schedule' => $this->text($execution['cronDefinition'] ?? null),
         ];
     }
 
