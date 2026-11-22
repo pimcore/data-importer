@@ -81,6 +81,14 @@ describe('the objects an import saved', () => {
     expect(within(screen.getByRole('contentinfo')).getByRole('toolbar').getAttribute('data-theme')).toBe('secondary')
   })
 
+  it('shows the info line and the footer note whole instead of cutting them off', () => {
+    mockListObjects.mockReturnValue({ data: answer, isLoading: false, isFetching: false, isError: false })
+    renderWidget()
+
+    expect(screen.getByText(/^Imported .* by Jo Doe/).getAttribute('data-ellipsis')).toBeNull()
+    expect(within(screen.getByRole('contentinfo')).getByText('The grid of the folder, filtered to the objects of this import').getAttribute('data-ellipsis')).toBeNull()
+  })
+
   it('switches to the created objects from their first page, and exports those', () => {
     mockListObjects.mockReturnValue({ data: answer, isLoading: false, isFetching: false, isError: false })
     renderWidget()

@@ -52,8 +52,9 @@ export const useStyles = createStyles(({ token, css }) => ({
   resultBarCreated: css`
     background: ${token.colorPrimary};
   `,
+  // Studio raises colorTextQuaternary to 55 % for text contrast; a bar segment is not text and takes antd's 25 % grey
   resultBarSkipped: css`
-    background: ${token.colorTextQuaternary};
+    background: var(--ant-color-text-quaternary, rgba(0, 0, 0, 0.25));
   `,
   resultContent: css`
     display: grid;
@@ -106,8 +107,9 @@ export const useStyles = createStyles(({ token, css }) => ({
   dotCreated: css`
     background: ${token.colorPrimary};
   `,
+  // same grey as the skipped bar segment
   dotSkipped: css`
-    background: ${token.colorTextQuaternary};
+    background: var(--ant-color-text-quaternary, rgba(0, 0, 0, 0.25));
   `,
   // dot, label, count and action each in their own column, so the counts and actions line up
   line: css`

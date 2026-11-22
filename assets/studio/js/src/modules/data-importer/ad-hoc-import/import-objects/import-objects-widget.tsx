@@ -73,10 +73,12 @@ const useStyles = createStyles(({ token, css }) => ({
     width: 100%;
     min-width: 0;
   `,
-  // one line that takes the room left and ends in an ellipsis where it does not fit, the whole text on hover
+  // takes the room left and wraps to a second line where it does not fit, so the text stays whole
   info: css`
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-width: 0;
+    white-space: normal;
+    overflow-wrap: break-word;
   `,
   noShrink: css`
     flex-shrink: 0;
@@ -168,7 +170,6 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
           <div className={ styles.footer }>
             <Text
               className={ styles.info }
-              ellipsis={ { tooltip: t('data-importer.ad-hoc-import.saved-objects.filtered') } }
               type="secondary"
             >
               { t('data-importer.ad-hoc-import.saved-objects.filtered') }
@@ -204,7 +205,6 @@ export const ImportObjectsWidget = ({ fileId, userName, finishedAt, updated, cre
             </ConfigProvider>
             <Text
               className={ styles.info }
-              ellipsis={ { tooltip: importedBy } }
               type="secondary"
             >
               { importedBy }

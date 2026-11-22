@@ -354,7 +354,12 @@ export const components = {
     </div>
   ),
   Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
-  Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
+  Text: ({ children, id, ellipsis }: WithChildren & { id?: string, ellipsis?: unknown }) => (
+    <span
+      data-ellipsis={ ellipsis === undefined ? undefined : 'true' }
+      id={ id }
+    >{ children }</span>
+  ),
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>
       <input
