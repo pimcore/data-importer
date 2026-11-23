@@ -98,11 +98,11 @@ describe('ImportConfigReviewSurface landing', () => {
 
     render(<ImportConfigReviewSurface { ...props } />)
 
-    expect(last(editorProps)).toMatchObject({ activeTab: 'data-setup', activeStep: 3, changedTabs: ['data-setup'] })
+    expect(last(editorProps)).toMatchObject({ activeTab: 'data-setup', activeStep: 3 })
     expect(last(listProps).activeSection).toBe('mapping')
   })
 
-  it('marks every tab that holds a change and keeps a tab the reader picks', () => {
+  it('lands on the first change in the editor\'s order and keeps a tab the reader picks', () => {
     review.data = {
       slots: {
         execution: { current: { 'executionConfig.cronDefinition': '' }, proposed: { 'executionConfig.cronDefinition': '0 * * * *' } },
@@ -112,11 +112,10 @@ describe('ImportConfigReviewSurface landing', () => {
 
     render(<ImportConfigReviewSurface { ...props } />)
     // the editor's order, not the payload's
-    expect(last(editorProps)).toMatchObject({ activeTab: 'data-setup', activeStep: 0, changedTabs: ['data-setup', 'execution'] })
+    expect(last(editorProps)).toMatchObject({ activeTab: 'data-setup', activeStep: 0 })
 
     act(() => { last(editorProps).onTabChange('general') })
     expect(last(editorProps).activeTab).toBe('general')
-    expect(last(editorProps).changedTabs).toEqual(['data-setup', 'execution'])
   })
 
   it('lands on the next change set\'s first change, not on the tab picked in the previous one', () => {
@@ -144,7 +143,7 @@ describe('ImportConfigReviewSurface landing', () => {
       />
     )
 
-    expect(last(editorProps)).toMatchObject({ activeTab: 'execution', changedTabs: ['execution'] })
+    expect(last(editorProps)).toMatchObject({ activeTab: 'execution' })
     expect(last(listProps).activeSection).toBe('execution')
   })
 
@@ -155,6 +154,6 @@ describe('ImportConfigReviewSurface landing', () => {
 
     render(<ImportConfigReviewSurface { ...props } />)
 
-    expect(last(editorProps)).toMatchObject({ activeTab: 'general', changedTabs: [] })
+    expect(last(editorProps)).toMatchObject({ activeTab: 'general' })
   })
 })

@@ -99,7 +99,6 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
         ? changedMappings.length > 0
         : groups.some((group) => group.section === section)),
   [isNew, groups, changedMappings])
-  const changedTabs = useMemo(() => [...new Set(changedSections.map((section) => SECTION_TARGET[section].tab))], [changedSections])
 
   // land where the first change sits until the reader picks a place; derived rather than set
   // from an effect, as the payload arrives after mount. A pick holds only for its change set
@@ -194,7 +193,6 @@ export const ImportConfigReviewSurface = (props: ImportConfigReviewSurfaceProps)
       <DataImporterConfigEditor
         activeStep={ step }
         activeTab={ tab }
-        changedTabs={ changedTabs }
         configName={ subjectRef }
         configuration={ configuration }
         isWriteable={ false }
