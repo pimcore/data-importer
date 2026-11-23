@@ -56,7 +56,7 @@ const useStyles = createStyles(({ token, css }) => ({
     flex: 0 0 ${LIST_WIDTH}px;
     max-height: ${LIST_MAX_HEIGHT}px;
     overflow-y: auto;
-    && [role='radiogroup'] { gap: ${token.marginXS}px; } /* compact cards, close together, as the design's list */
+    && [role='radiogroup'] { gap: ${token.marginXS}px; margin-top: ${token.marginXXS}px; } /* compact cards as the design's; the hint sits closer to the heading */
     && .ant-card-body { padding: ${token.paddingXS}px ${token.paddingSM}px; }
   `,
   detail: css`
@@ -246,7 +246,7 @@ export const ConfigurationChoice = ({
     <Flex gap="large">
       <Flex
         className={ styles.list }
-        gap="small"
+        gap="extra-small"
         vertical
       >
         <Text

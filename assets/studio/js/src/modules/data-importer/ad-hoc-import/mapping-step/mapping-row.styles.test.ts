@@ -54,3 +54,16 @@ describe('the Skip button of a mapping row', () => {
     expect(styles.skipButton).toMatch(/color: description-colour;/)
   })
 })
+
+describe('the target button of a mapping row', () => {
+  const styles = (useStyles as unknown as Build)({
+    token: { Colors: { Brand: { Warning: { colorWarningText: 'dark-warning' } } } },
+    css: String.raw
+  })
+
+  // as the design: the type icon 10px before the field, the field in bold
+  it('keeps the icon 10px from a bold field name', () => {
+    expect(styles.fieldButton).toMatch(/gap: 10px;/)
+    expect(styles.fieldName).toMatch(/font-weight: 700;/)
+  })
+})

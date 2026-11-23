@@ -44,8 +44,9 @@ const useStyles = createStyles(({ token, css }) => ({
       max-width: 100%;
     }
 
-    /* every row centres its label, so a row with the dot keeps the height of one without */
+    /* every row centres its label at the design's 26px, so a row with the dot keeps the height of one without */
     .ant-tree .ant-tree-node-content-wrapper {
+      min-height: 26px;
       display: flex;
       flex: 1 1 auto;
       align-items: center;

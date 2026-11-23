@@ -66,7 +66,7 @@ export const useStyles = createStyles(({ token, css }) => ({
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: ${token.marginXS}px;
+    gap: 10px;
     flex: 0 1 auto;
     min-width: 0;
     height: 30px;
@@ -100,7 +100,7 @@ export const useStyles = createStyles(({ token, css }) => ({
   // the field's name stays whole; the group path gives way
   fieldName: css`
     flex: none;
-    font-weight: ${token.fontWeightStrong};
+    font-weight: 700;
     white-space: nowrap;
   `,
   // the small chip of the design, not the default tag's size
