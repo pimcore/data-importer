@@ -17,13 +17,8 @@ import { useStyles } from './preview-mode.styles'
 // a typed number or a click on ‹ › selects its record this long after the last one; Enter and leaving the field at once
 export const RECORD_INPUT_DEBOUNCE_MS = 400
 
-export interface RecordNumberFieldProps {
-  // the field's id, so "Preview item" can put the cursor into it
-  id: string
-}
-
 /** "Record [20] of 150 ‹ ›": the selected record's one-based number, typed or stepped, kept within 1..N */
-export const RecordNumberField = ({ id }: RecordNumberFieldProps): React.JSX.Element => {
+export const RecordNumberField = (): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
   const { recordNumber, setRecordNumber, recordCount } = useMappingPreviewMode()
@@ -94,7 +89,6 @@ export const RecordNumberField = ({ id }: RecordNumberFieldProps): React.JSX.Ele
         aria-label={ t('data-importer.mapping.preview-mode.record-label') }
         className={ styles.recordInput }
         controls={ false }
-        id={ id }
         onBlur={ settle }
         onChange={ handleChange }
         onPressEnter={ settle }

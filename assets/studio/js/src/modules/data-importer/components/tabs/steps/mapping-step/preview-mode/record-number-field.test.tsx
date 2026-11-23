@@ -184,14 +184,6 @@ describe('Record number field in the preview line', () => {
     expect(askedSince(before)).toEqual([6])
   })
 
-  it('AC1: Preview item puts the cursor into the record field', async () => {
-    await openPreview()
-
-    fireEvent.click(screen.getByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' }))
-
-    expect(document.activeElement).toBe(field())
-  })
-
   it('AC2: typing quickly sends one request, for the number typed last', async () => {
     await openPreview()
     const before = asked.length

@@ -213,7 +213,6 @@ data-importer.mapping.preview-mode.no-preview-data: Sube o copia un archivo de v
 data-importer.mapping.preview-mode.record: 'Registro {{number}}'
 data-importer.mapping.preview-mode.record-label: Registro
 data-importer.mapping.preview-mode.of-records: 'de {{total}}'
-data-importer.mapping.preview-mode.preview-item: Elemento de vista previa
 data-importer.mapping.preview-mode.picker.select: Seleccionar
 data-importer.mapping.preview-mode.picker.cancel: Cancelar
 data-importer.mapping.preview-mode.preview: Vista previa

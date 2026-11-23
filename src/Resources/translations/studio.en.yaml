@@ -213,7 +213,6 @@ data-importer.mapping.preview-mode.no-preview-data: Upload or copy a preview fil
 data-importer.mapping.preview-mode.record: 'Record {{number}}'
 data-importer.mapping.preview-mode.record-label: Record
 data-importer.mapping.preview-mode.of-records: 'of {{total}}'
-data-importer.mapping.preview-mode.preview-item: Preview item
 data-importer.mapping.preview-mode.picker.select: Select
 data-importer.mapping.preview-mode.picker.cancel: Cancel
 data-importer.mapping.preview-mode.preview: Preview

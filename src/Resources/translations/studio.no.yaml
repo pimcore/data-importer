@@ -213,7 +213,6 @@ data-importer.mapping.preview-mode.no-preview-data: Last opp eller kopier en for
 data-importer.mapping.preview-mode.record: 'Post {{number}}'
 data-importer.mapping.preview-mode.record-label: Post
 data-importer.mapping.preview-mode.of-records: 'av {{total}}'
-data-importer.mapping.preview-mode.preview-item: Forhåndsvisningselement
 data-importer.mapping.preview-mode.picker.select: Velg
 data-importer.mapping.preview-mode.picker.cancel: Avbryt
 data-importer.mapping.preview-mode.preview: Forhåndsvisning
