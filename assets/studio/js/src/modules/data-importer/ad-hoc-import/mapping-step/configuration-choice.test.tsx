@@ -167,15 +167,15 @@ describe('the mapping with a configuration', () => {
     })
 
     expect(cards().map(detailOf)).toEqual([
-      'CSV, it does not find objects by their ID or a field in all folders',
-      'CSV, the file has no column EAN to match by',
-      'CSV, you may not create objects in its folder'
+      'CSV · it does not find objects by their ID or a field in all folders',
+      'CSV · the file has no column EAN to match by',
+      'CSV · you may not create objects in its folder'
     ])
     expect(cards().every((shown) => shown.getAttribute('aria-disabled') === 'true')).toBe(true)
     expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, -1])
   })
 
-  it('names the class in the heading when all are of one, and else on each card it cannot use', () => {
+  it('names the class in the heading when all are of one, and else on each card', () => {
     useConfiguration({ configurations: [configuration(), configuration({ name: 'closed', unusable: 'folder-not-allowed', format: null })] })
 
     expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations for class Product' })).toBeTruthy()
@@ -190,7 +190,8 @@ describe('the mapping with a configuration', () => {
     })
 
     expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
-    expect(detailOf(card('cars'))).toBe('Car & more, XLSX, you may not create objects in its folder')
+    expect(detailOf(card('cars'))).toBe('Car & more · XLSX · you may not create objects in its folder')
+    expect(detailOf(card('products'))).toBe('Product · CSV · 2 fields · manual')
   })
 
   it('opens Data Hub\'s configurations from the chosen one for a user who may read them', () => {
@@ -293,12 +294,13 @@ describe('the mapping with a configuration', () => {
     expect(screen.queryAllByRole('region')).toHaveLength(0)
   })
 
-  it('shows the class, the match and the folder of the chosen one, which replace those of the file step', () => {
+  it('shows the match and the folder of the chosen one, which replace those of the file step, and its class in the heading', () => {
     useConfiguration({ configurations: [configuration()] })
     choose('products')
 
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations for class Product' })).toBeTruthy()
     const summary = within(screen.getByRole('region', { name: 'products' }))
-    expect(summary.getByText('Product')).toBeTruthy()
+    expect(summary.queryByText('Class')).toBeNull()
     expect(summary.getByText('name (de) ← Name DE')).toBeTruthy()
     expect(summary.getByText('/Products & more/Imported')).toBeTruthy()
     expect(summary.getByText('read only')).toBeTruthy()
@@ -318,7 +320,8 @@ describe('the mapping with a configuration', () => {
     choose('by-id')
     const summary = within(screen.getByRole('region', { name: 'by-id' }))
     expect(summary.getByText('Object ID ← Artikelnr')).toBeTruthy()
-    expect(summary.getByText('PROD')).toBeTruthy()
+    // of two classes, so the card names its class, by its ID when it has no name
+    expect(detailOf(card('by-id'))).toBe('PROD · CSV · 2 fields · manual')
   })
 
   it('says that one matching nothing creates every row, keyed by the file step\'s column', () => {
@@ -373,6 +376,9 @@ describe('the mapping with a configuration', () => {
     // the file is a CSV, so the format does not match it
     expect(within(summary).queryByText('matches the file')).toBeNull()
     expect(within(summary).getByText('18 fields, 6 with transformations')).toBeTruthy()
+    // the card and the heading name the class, the detail does not
+    expect(within(summary).queryByText('Class')).toBeNull()
+    expect(within(summary).queryByText('Product')).toBeNull()
     expect(detailOf(card('northhike'))).toBe('XLSX · 18 fields · manual')
   })
 

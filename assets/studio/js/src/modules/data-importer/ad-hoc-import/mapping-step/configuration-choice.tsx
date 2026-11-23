@@ -94,8 +94,9 @@ const useStyles = createStyles(({ token, css }) => ({
   detailLine: css`color: ${token.colorTextSecondary};`
 }))
 
-// what a card says of a usable configuration: what it reads, how many fields it maps and when it runs
-export const summaryOf = (t: ReturnType<typeof useTranslation>['t'], configuration: ImportConfiguration): string => [
+// what a card says of a usable configuration: its class unless the heading names it, what it reads, how many fields it maps and when it runs
+export const summaryOf = (t: ReturnType<typeof useTranslation>['t'], configuration: ImportConfiguration, withClass = false): string => [
+  withClass ? configuration.className ?? configuration.classId ?? '' : '',
   configuration.format?.toUpperCase() ?? '',
   t(`${CONFIGURATION}.${configuration.fieldCount === 1 ? 'field-count-one' : 'field-count'}`, { count: configuration.fieldCount }),
   configuration.schedule === null
@@ -234,7 +235,7 @@ export const ConfigurationChoice = ({
             id={ detailId }
           >
             { reason === null
-              ? summaryOf(t, shown)
+              ? summaryOf(t, shown, commonClass === undefined)
               : unusableSummaryOf(shown, reason, commonClass === undefined) }
           </Text>
         </Flex>

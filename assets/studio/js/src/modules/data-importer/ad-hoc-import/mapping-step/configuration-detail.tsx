@@ -82,7 +82,7 @@ export interface ConfigurationDetailProps {
   match: string
 }
 
-// what the chosen configuration does with this file, read only: its class, matching and folder replace the file step's
+// what the chosen configuration does with this file, read only: its matching and folder replace the file step's; its card names its class
 export const ConfigurationDetail = ({ configuration, inspected, fileName, match }: ConfigurationDetailProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -140,8 +140,6 @@ export const ConfigurationDetail = ({ configuration, inspected, fileName, match 
                 </>
               ) }
             </Text>
-            <Text type="secondary">{ t('data-importer.ad-hoc-import.objects.class') }</Text>
-            <Text>{ configuration.className ?? configuration.classId }</Text>
             <Text type="secondary">{ t(`${CONFIGURATION}.match-by`) }</Text>
             <Text>{ match }</Text>
             <Text type="secondary">{ t(`${CONFIGURATION}.new-objects-go-to`) }</Text>

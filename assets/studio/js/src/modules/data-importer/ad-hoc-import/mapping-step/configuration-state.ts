@@ -156,7 +156,7 @@ export const unusableSummaryOf = (configuration: ImportConfiguration, reason: st
   withClass ? configuration.className ?? configuration.classId ?? '' : '',
   configuration.format?.toUpperCase() ?? '',
   reason
-].filter((part) => part !== '').join(', ')
+].filter((part) => part !== '').join(' · ')
 
 // the usable configurations first, each part in the server's order
 export const usableFirst = <T, >(configurations: T[], isUsable: (configuration: T) => boolean): T[] => [
