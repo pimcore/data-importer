@@ -93,18 +93,37 @@ export const useStyles = createStyles(({ token, css }) => ({
     background: ${token.colorWarningBg};
     color: ${token.Colors.Brand.Warning.colorWarningText};
   `,
-  // the field tree fills the panel and scrolls itself; the other tabs scroll in their pane
+  // the field tree fills the panel and scrolls itself; the other tabs scroll in their pane.
+  // As in the design, the tab row spans the panel between two rules and its tabs sit side by side.
   tabs: css`
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
-    padding: 0 ${token.padding}px;
     overflow: hidden;
+
+    &.ant-tabs > .ant-tabs-nav {
+      margin: 0;
+      padding: 0 ${token.paddingXS}px;
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+
+    &.ant-tabs > .ant-tabs-nav::before {
+      border-bottom-color: ${token.colorBorderSecondary};
+    }
+
+    &.ant-tabs > .ant-tabs-nav .ant-tabs-tab {
+      padding: ${token.paddingXS}px ${token.padding}px;
+    }
+
+    &.ant-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+      margin-inline-start: 0;
+    }
 
     .ant-tabs-content-holder {
       flex: 1 1 auto;
       min-height: 0;
+      padding: ${token.paddingSM}px ${token.padding}px 0;
     }
 
     .ant-tabs-content, .ant-tabs-tabpane-active {
