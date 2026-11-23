@@ -72,7 +72,7 @@ Operators that resolve the value into an existing or newly created Pimcore eleme
 
 | Operator | Description |
 |---|---|
-| **Import Asset** | Expects an `http` or `https` URL, downloads it, and stores it as an asset in **Parent folder**. Other values, such as a path on the server, are skipped and logged. The file name is taken from the URL. **Use existing** reuses an asset of the same name instead of creating a suffixed copy, **Overwrite existing** replaces its contents. **Preg match** derives the file name from the capture groups of a regular expression, joined with `-`. |
+| **Import Asset** | Expects an `http` or `https` URL, downloads it, and stores it as an asset in **Parent folder**. Other values, such as a path on the server, are never downloaded and yield no asset, unless **Use existing** finds one. The rejected value is logged as an error whenever a download would have been attempted. The file name is taken from the URL. **Use existing** reuses an asset of the same name instead of creating a suffixed copy, **Overwrite existing** replaces its contents. **Preg match** derives the file name from the capture groups of a regular expression, joined with `-`. |
 | **Load Asset** | Loads an existing asset. **Load strategy** selects lookup by path or by id. |
 | **Load Data Object** | Loads an existing data object by id, path, or attribute. For attribute lookup, set **Class**, **Attribute name** and, for localized attributes, **Language**. **Accept partial match** matches substrings, so `foo` finds an object whose attribute is `barfoobar`. **Load unpublished** also matches unpublished objects. |
 

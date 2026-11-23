@@ -14,11 +14,16 @@ description: Breaking changes and migration steps per release.
   wrappers such as `php://` or `phar://`.
 - A skipped value is written to the application log as an error (`only http and https URLs are supported`). The
   import continues, and the skipped value produces no asset. Other valid values of the same row are still imported.
-- If your import data points to files on the server, review it before the first import after the upgrade: serve
-  the files over `http` or `https`, or bring them into Pimcore as assets first and reference them with the
-  **Load Asset** operator.
-- Rows for which **Use existing** finds an asset are not affected while **Overwrite existing** is off, because
-  nothing is downloaded for them.
+- The empty result is then passed to the data target. With the default data target settings it replaces the value
+  of the field, so an asset that an earlier import assigned is removed from the data object. The asset itself is
+  not deleted. Disable **Write If Source Is Empty** on the data target to prevent an empty value from clearing the
+  field.
+- If your import data points to files on the server or on an `ftp` server, review it before the first import after
+  the upgrade: serve the files over `http` or `https`, or bring them into Pimcore as assets first and reference
+  them by asset path or id with the **Load Asset** operator.
+- **Use existing** looks up the asset before the value is checked. While **Overwrite existing** is off, rows for
+  which it finds an asset are not affected, because nothing is downloaded for them. With **Overwrite existing** on,
+  the value is still logged as an error, and the found asset is assigned with its contents unchanged.
 
 ## Upgrade to 2026.3.3
 
