@@ -11,7 +11,7 @@
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, Icon, LanguageSelection, Tag, Text } from '@pimcore/studio-ui-bundle/components'
-import { chooseField, fitsField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
+import { chooseField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { chooseLanguage, freeLanguages } from './mapping-choices'
 import { canGoInto, takenFields } from './taken-fields'
 import { useStyles } from './mapping-row.styles'
@@ -208,8 +208,6 @@ export const MappingRowView = ({
   const { styles } = useStyles()
   const { column, label, sample, choice, isMatch, transformations } = row
   const isMapped = isMatch || choice !== undefined
-  const fits = fitsField(row, fields)
-  const needsTransformation = t(`${MAPPING}.needs-transformation`)
 
   return (
     <li
@@ -217,17 +215,7 @@ export const MappingRowView = ({
       className={ isActive ? `${styles.row} ${styles.active}` : styles.row }
     >
       <div className={ styles.dotCell }>
-        { fits
-          ? <span className={ `${styles.dot} ${isMapped ? styles.dotMapped : styles.dotOpen}` } />
-          : (
-            // a column that cannot go into its field as it is stays open; the dot says why
-            <span
-              className={ `${styles.dot} ${styles.dotOpen}` }
-              title={ needsTransformation }
-            >
-              <span className={ styles.hiddenText }>{ needsTransformation }</span>
-            </span>
-            ) }
+        <span className={ `${styles.dot} ${isMapped ? styles.dotMapped : styles.dotOpen}` } />
       </div>
       <Flex
         className={ styles.cell }
@@ -286,7 +274,10 @@ export const MappingRowView = ({
           <Button
             aria-label={ t(`${MAPPING}.skip-column`, { column: label, interpolation: { escapeValue: false } }) }
             className={ styles.skipButton }
-            icon={ <Icon value="eye-off" /> }
+            icon={ <Icon
+              options={ { width: 14, height: 14 } }
+              value="eye-off"
+                   /> }
             onClick={ () => { onSkip(column) } }
             size="small"
             type="text"

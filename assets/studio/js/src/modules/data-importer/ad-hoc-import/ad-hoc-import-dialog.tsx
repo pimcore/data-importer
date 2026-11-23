@@ -401,7 +401,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
     ? configurationMapping.canContinue
-    : mapping !== null && canContinueMapping(mapping, fields)
+    : mapping !== null && canContinueMapping(mapping)
 
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)

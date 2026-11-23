@@ -280,9 +280,9 @@ export const requiredFields = (mapping: Mapping, fields: MappingField[]): Requir
 }
 
 /**
- * Something to import beside the column that finds the objects, and every column known to fit its field.
+ * Something to import beside the column that finds the objects, and no steps still waiting for the server's answer.
+ * A column that does not fit its field holds nothing up: the preview shows its values as invalid.
  */
-export const canContinueMapping = (mapping: Mapping, fields: MappingField[]): boolean =>
+export const canContinueMapping = (mapping: Mapping): boolean =>
   mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined) &&
-  unfitRows(mapping, fields).length === 0 &&
   !mapping.rows.some(awaitsFit)

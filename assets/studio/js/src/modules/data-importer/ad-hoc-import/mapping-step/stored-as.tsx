@@ -20,6 +20,7 @@ import {
 } from './transformations-editor'
 
 const CONVERSION = 'data-importer.ad-hoc-import.transformations.conversion-short'
+const NEEDS_TRANSFORMATION = 'data-importer.ad-hoc-import.mapping.needs-transformation'
 
 const useStyles = createStyles(({ token, css }) => ({
   cell: css`
@@ -86,7 +87,17 @@ export const StoredAs = ({ row, field, source }: StoredAsProps): React.JSX.Eleme
 
   return (
     <span className={ styles.cell }>
-      <span className={ stored.failed ? `${styles.value} ${styles.failed}` : styles.value }>{ stored.text }</span>
+      { stored.failed
+        ? (
+          // red: the value does not go into its field as it is
+          <span
+            className={ `${styles.value} ${styles.failed}` }
+            title={ t(NEEDS_TRANSFORMATION) }
+          >
+            { stored.text }
+          </span>
+          )
+        : <span className={ styles.value }>{ stored.text }</span> }
       { stored.conversion !== null && <span className={ styles.conversion }>{ t(`${CONVERSION}.${stored.conversion}`) }</span> }
     </span>
   )

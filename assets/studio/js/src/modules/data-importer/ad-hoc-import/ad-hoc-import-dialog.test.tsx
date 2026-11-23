@@ -1041,19 +1041,17 @@ describe('the mapping step', () => {
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
   })
 
-  it('waits on a column whose values do not fit its field, and offers its transformations', async () => {
+  // the preview shows its values as invalid, so it does not hold up the step
+  it('goes on with a column whose values do not fit its field, and offers its transformations', async () => {
     await toMapping()
 
     pickField('Bezeichnung', 'Image')
 
-    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
-    // the row says so, no notice over the table repeats it
-    expect(screen.getByTitle('Needs a transformation')).toBeTruthy()
+    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+    // its dot stays the one of a mapped column, no notice over the table
+    expect(screen.queryByTitle('Needs a transformation')).toBeNull()
     expect(screen.queryByText(/do not fit their field/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
-
-    pickField('Bezeichnung', 'Title')
-    expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
   })
 
   it('keeps the mapping when going back and on with nothing changed', async () => {

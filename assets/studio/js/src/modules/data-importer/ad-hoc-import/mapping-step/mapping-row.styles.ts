@@ -40,15 +40,6 @@ export const useStyles = createStyles(({ token, css }) => ({
   dotOpen: css`
     background: ${token.colorWarning};
   `,
-  // read by screen readers, not shown
-  hiddenText: css`
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  `,
   cell: css`
     padding: ${token.paddingXXS}px;
     min-width: 0;
@@ -167,11 +158,6 @@ export const useStyles = createStyles(({ token, css }) => ({
       padding-inline: 8px;
       gap: 6px;
       color: ${token.colorTextDescription};
-    }
-
-    &.ant-btn svg {
-      width: 14px;
-      height: 14px;
     }
   `
 }))

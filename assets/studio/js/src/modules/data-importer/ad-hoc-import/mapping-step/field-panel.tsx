@@ -16,6 +16,8 @@ import { type Mapping, type MappingField, type MappingRow } from './mapping-stat
 import { canGoInto, takenFields } from './taken-fields'
 
 const PICKER_TEST_ID = 'ad-hoc-import-field-picker'
+const SWITCHER_WIDTH = 16
+const FIELD_INDENT = 30
 
 // Studio's tree grows to its widest label; here it keeps the panel's width and height, long labels end in an ellipsis,
 // and a field another column already fills cannot be picked and ends in a green dot
@@ -42,6 +44,20 @@ const useStyles = createStyles(({ token, css }) => ({
     .ant-tree .ant-tree-treenode {
       min-width: 0;
       max-width: 100%;
+    }
+
+    /* as in the design: a group's chevron on the search field's left edge, its fields 30px in */
+    .ant-tree .ant-tree-list-holder-inner .ant-tree-treenode {
+      padding-inline: 0;
+    }
+
+    .ant-tree .ant-tree-list-holder-inner .ant-tree-treenode .ant-tree-switcher {
+      width: ${SWITCHER_WIDTH}px;
+      justify-content: flex-start;
+    }
+
+    .ant-tree .ant-tree-indent-unit {
+      width: ${FIELD_INDENT - SWITCHER_WIDTH}px;
     }
 
     /* every row centres its label at the design's 26px, so a row with the dot keeps the height of one without */

@@ -94,6 +94,7 @@ describe('what a column is stored as', () => {
       bundleDataImporterAdHocImportTransformationParameters: { classId: 'PROD', column: 'Preis', field: 'price', transformationPipeline: [] }
     })
     expect(screen.getByText('1189.9').className).toBe('value')
+    expect(screen.getByText('1189.9').getAttribute('title')).toBeNull()
     expect(screen.getByText('number')).toBeTruthy()
   })
 
@@ -103,6 +104,8 @@ describe('what a column is stored as', () => {
     await settle()
 
     expect(screen.getByText('Cannot be converted').className).toBe('value failed')
+    // the row's dot stays green; the red value says why
+    expect(screen.getByText('Cannot be converted').getAttribute('title')).toBe('Needs a transformation')
   })
 
   it('names no conversion for a value that fits as it is', async () => {

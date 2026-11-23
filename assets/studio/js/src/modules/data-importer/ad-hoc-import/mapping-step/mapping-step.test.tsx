@@ -13,7 +13,7 @@ import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import { Modal } from 'antd'
-import { canContinueMapping, chooseField, createMapping, setTransformations, withSamples, type LoadedMapping, type Mapping } from './mapping-state'
+import { canContinueMapping, chooseField, createMapping, setTransformations, unfitRows, withSamples, type LoadedMapping, type Mapping } from './mapping-state'
 import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
 import { type TransformationSource } from './transformations-editor'
@@ -92,10 +92,14 @@ const Stateful = ({ initial, isLoading = false, withSource = source }: { initial
         onMapWithChange={ () => {} }
         source={ withSource }
       />
-      <span data-testid="can-continue">{ String(mapping !== null && canContinueMapping(mapping, loaded.fields)) }</span>
+      <span data-testid="can-continue">{ String(mapping !== null && canContinueMapping(mapping)) }</span>
+      <span data-testid="unfit">{ mapping === null ? '' : unfitRows(mapping, loaded.fields).map(({ column }) => column).join('|') }</span>
     </>
   )
 }
+
+// the columns known not to go into their field as they are
+const unfit = (): string[] => (screen.getByTestId('unfit').textContent ?? '').split('|').filter((column) => column !== '')
 
 const renderStep = (): void => {
   render(<Stateful initial={ createMapping(inspected, objects, loaded) } />)
@@ -539,12 +543,11 @@ describe('the mapping step', () => {
       openPanel('Notiz')
       fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
-      expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
-      expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+      expect(unfit()).toEqual(['Notiz'])
 
       await settle()
 
-      expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
+      expect(unfit()).not.toContain('Notiz')
     })
 
     describe('a column left before the answer', () => {
@@ -570,8 +573,9 @@ describe('the mapping step', () => {
         await settle()
 
         expect(mockPreview).toHaveBeenCalledTimes(1)
-        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
-        expect(canContinue()).toBe('false')
+        expect(unfit()).toContain('Notiz')
+        // a value that does not fit shows in the preview as invalid; it does not hold up the step
+        expect(canContinue()).toBe('true')
       })
 
       it('still gets its answer after moving on to the next column', async () => {
@@ -583,7 +587,7 @@ describe('the mapping step', () => {
         fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Next column ›' }))
         await settle()
 
-        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
+        expect(unfit()).toContain('Notiz')
       })
 
       it('fits a field that does not take it as it is, once the answer says so', async () => {
@@ -598,7 +602,7 @@ describe('the mapping step', () => {
         closePanel('Notiz')
         await settle()
 
-        expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
+        expect(unfit()).not.toContain('Notiz')
         expect(canContinue()).toBe('true')
       })
 
@@ -611,8 +615,9 @@ describe('the mapping step', () => {
         closePanel('Notiz')
         await settle()
 
-        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
-        expect(canContinue()).toBe('false')
+        expect(unfit()).toContain('Notiz')
+        // the preview runs the steps again and names the values that fail
+        expect(canContinue()).toBe('true')
       })
 
       describe('and the file read again', () => {
@@ -628,7 +633,7 @@ describe('the mapping step', () => {
           await settle()
 
           expect(mockPreview).toHaveBeenCalledTimes(1)
-          expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
+          expect(unfit()).not.toContain('Notiz')
           expect(canContinue()).toBe('true')
         })
 
@@ -681,8 +686,8 @@ describe('the mapping step', () => {
           await Promise.resolve()
         })
 
-        expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
-        expect(within(rowOf('Name DE')).getByTitle('Needs a transformation')).toBeTruthy()
+        expect(unfit()).toContain('Notiz')
+        expect(unfit()).toContain('Name DE')
       })
 
       it('drops an answer to steps changed since', async () => {
@@ -703,7 +708,7 @@ describe('the mapping step', () => {
           await Promise.resolve()
         })
 
-        expect(within(rowOf('Notiz')).queryByTitle('Needs a transformation')).toBeNull()
+        expect(unfit()).not.toContain('Notiz')
       })
     })
 
