@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\DependencyInjection;
 
 use Pimcore\Bundle\DataHubBundle\DependencyInjection\ConfigProposalLane;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\XlsxFileInterpreter;
 use Pimcore\Bundle\DataImporterBundle\EventListener\DataImporterListener;
 use Pimcore\Bundle\DataImporterBundle\Maintenance\RestartQueueWorkersTask;
 use Pimcore\Bundle\DataImporterBundle\Messenger\DataImporterHandler;
@@ -54,6 +55,12 @@ final class PimcoreDataImporterExtension extends Extension implements PrependExt
         $definition->setArgument('$workerCountLifeTime', $queue['worker_count_lifetime']);
         $definition->setArgument('$workerItemCount', $queue['worker_item_count']);
         $definition->setArgument('$workerCountParallel', $queue['worker_count_parallel']);
+
+        $definition = $container->getDefinition(XlsxFileInterpreter::class);
+        $definition->setArgument(
+            '$windowedReadCellThreshold',
+            $config['xlsx_interpreter']['windowed_read_cell_threshold']
+        );
 
         $definition = $container->getDefinition(DataImporterListener::class);
         $definition->setArgument('$messengerQueueActivated', $queue['activated']);

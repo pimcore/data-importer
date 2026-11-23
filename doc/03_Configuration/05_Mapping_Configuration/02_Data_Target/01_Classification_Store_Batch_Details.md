@@ -10,10 +10,13 @@ constraints shape how the [transformation pipeline](../01_Transformation_Pipelin
 
 ## Required Result Format
 
-The target expects an array keyed by `<GROUP_ID>-<KEY_ID>`, with the values to assign:
+The target expects an array keyed by the group and the key, with the values to assign. A key is referenced by the
+identifiers of its group and key, `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>`, which is what the editor saves for a new
+mapping entry. The integer form `<GROUP_ID>-<KEY_ID>` is still accepted, so a configuration saved with it imports as
+before, and is what the editor falls back to for a group or key that has no identifier:
 
 ```
-['1-1' => 'some value', '1-2' => 'some other value']
+['my-group:my-key' => 'some value', '1-2' => 'some other value']
 ```
 
 The pipeline has to produce that shape.
@@ -54,10 +57,24 @@ pipeline. Source data of `1-6#value 1||2-4#value 2` decodes with a chain of `Exp
 
 ## Assigning Complex Values
 
-Keys holding a `date` or a `quantityValue` need the matching operator at the end of the pipeline. One pipeline produces
-one result type, so a single mapping entry cannot mix value types.
+A `quantityValue` or an `inputQuantityValue` key does not need an operator: inside a plain `array` entry such a value is
+dispatched per value on the key's own type. Either shape works for it — a nested pair of value and unit,
+`['1-3' => [234, '<UNIT>']]`, or a plain value, `['1-3' => 234]`, which takes the unit from the key's own field
+definition. A value that already arrives as a quantity value model object, as `Quantity Value Array` produces it, is
+passed through unchanged.
 
-Split the source data by type, one field per type:
+How the unit in a pair is read follows the key's type, matching the operator for that type: a `quantityValue` key takes
+a unit **id**, as `Quantity Value` does, and an `inputQuantityValue` key takes a unit **abbreviation**, as
+`Input Quantity Value` does. A unit the key's type cannot resolve is dropped and the value is stored without one. There
+is no unit setting on the data target — the key's type decides.
+
+A key that declares variants cannot be written by this target: a token for it, with or without a `#<VARIANT>` segment,
+is refused with an error naming the key. Write such a key through a `Classification Store` entry, which takes the
+variant.
+
+A key whose value this entry cannot build is warned about in the import log and skipped, and the rest of the row is
+still written. A plain date string is the common case. Keys holding a `date` need the matching operator at the end of the pipeline, and one pipeline produces one result
+type. For those, split the source data by type, one field per type:
 
 ```json
 [

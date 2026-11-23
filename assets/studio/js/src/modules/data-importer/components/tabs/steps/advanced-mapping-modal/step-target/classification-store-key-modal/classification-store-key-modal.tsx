@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { useAppDispatch, useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import {
   Button,
   Flex,
@@ -21,7 +21,7 @@ import {
 } from '@pimcore/studio-ui-bundle/components'
 import { createColumnHelper, type ColumnDef, type RowSelectionState } from '@tanstack/react-table'
 import { useBundleDataImporterClassificationstoreLoadKeysQuery } from '../../../../../../data-importer-api-slice.gen'
-import { api } from '../../../../../../data-importer-api-slice-enhanced'
+import { keyReferenceOfRow } from '../../../../../../dynamic-types/data-target/classificationstore/classification-store-variant'
 import { useStyles } from './classification-store-key-modal.styles'
 
 interface ClassificationStoreKeyRow {
@@ -30,6 +30,7 @@ interface ClassificationStoreKeyRow {
   groupId?: number
   keyName?: string
   keyDescription?: string
+  identifier?: string | null
   groupName?: string
 }
 
@@ -54,7 +55,6 @@ export const ClassificationStoreKeyModal = ({
 }: ClassificationStoreKeyModalProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
-  const dispatch = useAppDispatch()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [page, setPage] = useState(1)
@@ -187,23 +187,8 @@ export const ClassificationStoreKeyModal = ({
           disabled={ selectedRowId === null }
           onClick={ () => {
             if (selectedRowId !== null) {
-              // Pre-seed the key-name cache from the row we already have, so the
-              // selected key's label shows immediately instead of after a refetch.
               const selectedRow = rows.find((row) => row.id === selectedRowId)
-              if (selectedRow !== undefined) {
-                void dispatch(
-                  api.util.upsertQueryData(
-                    'bundleDataImporterClassificationstoreLoadKeyName',
-                    { keyId: selectedRowId },
-                    {
-                      keyId: selectedRowId,
-                      groupName: selectedRow.groupName,
-                      keyName: selectedRow.keyName
-                    }
-                  )
-                )
-              }
-              onSelect(selectedRowId)
+              onSelect(selectedRow === undefined ? selectedRowId : keyReferenceOfRow(selectedRow))
             }
           } }
           type="primary"

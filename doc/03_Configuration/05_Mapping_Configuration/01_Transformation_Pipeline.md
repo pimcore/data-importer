@@ -61,6 +61,9 @@ Operators that convert the value into a Pimcore data type so it can be assigned 
 | **Quantity Value Array** | Same as `Quantity Value`, for an array of such pairs. Returns an array of quantity values. |
 | **Input Quantity Value** | Converts an array to an input quantity value. The first item is the value, the second the unit. See [Quantity Value operators](#quantity-value-operators). |
 | **Input Quantity Value Array** | Same as `Input Quantity Value`, for an array of such pairs. |
+| **Quantity Value Range** | Converts an array to a quantity value range. The first item is the lower bound, the second the upper one, the third the unit. See [Quantity Value operators](#quantity-value-operators). |
+| **As Numeric Range** | Converts an array to a numeric range. The first item is the lower bound, the second the upper one. An empty bound stays empty rather than becoming `0`, so a half-open range is kept. |
+| **As External Image** | Wraps a URL in an external image. Nothing is downloaded; the field holds the address. |
 | **As Geopoint** | Expects an array of latitude and longitude. |
 | **As Geobounds** | Expects an array of north-east latitude and longitude, followed by south-west latitude and longitude. |
 | **As Geopolygon** | Expects an array of latitude and longitude pairs, one pair per point. |
@@ -68,11 +71,12 @@ Operators that convert the value into a Pimcore data type so it can be assigned 
 
 #### Quantity Value operators
 
-The four quantity value operators share these settings:
+The five quantity value operators share these settings:
 
 - **Unit source**: where the unit comes from. `By Unit ID` and `By Abbreviation` read it from the second item of the input; `Static` uses the unit chosen under **Unit** and takes only the value from the input.
   - `Quantity Value` and `Input Quantity Value` look the unit up and leave it empty if it is not found. With `Static` they need a plain value as input, not an array.
   - `Quantity Value Array` and `Input Quantity Value Array` look a unit up by abbreviation, but take a unit id as given: an unknown id makes the row fail. With `Static` each element may be a plain value or an array.
+  - `Quantity Value Range` reads the unit from the **third** item, because the first two are its bounds, and looks it up as `Quantity Value` does. With `Static` it still needs the two bounds as an array.
 - **Null if no value**: if the value is empty, the operator returns `null` (for the array variants, `null` for that element) instead of a quantity value. `0` is not empty.
 
 Without a setting the operators behave as before: `Quantity Value` reads the unit by id, `Input Quantity Value` by abbreviation, and the two array variants take the unit id as given.
