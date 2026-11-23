@@ -25,6 +25,8 @@ import { DND_TYPE } from '../sources-panel/sources-panel'
 import { findMappingIndexById } from '../utils/mapping-identity'
 import { MappingItemContent } from './mapping-item-content'
 import { MappingItemTitle } from './mapping-item-title'
+import { mappingWarningOf } from './mapping-warning'
+import { PreviewRow } from './preview-row/preview-row'
 
 function isMappingDebugEnabled (): boolean {
   return (globalThis as any).__DI_MAPPING_DEBUG__ === true
@@ -92,15 +94,12 @@ const MappingItemComponent = ({
     [settings.validLanguages]
   )
 
-  const sourceCount = (dataSourceIndex ?? []).length
-  const hasSource = sourceCount > 0
-  const hasDestination = selectedFieldName !== undefined && selectedFieldName !== ''
   const isAdvanced = transformationResultType !== undefined &&
     transformationResultType !== '' &&
     transformationResultType !== 'default'
 
-  const isWarningState = hasSource && !hasDestination
-  const isInProgressState = sourceCount > 1 && !hasDestination
+  const warning = mappingWarningOf(dataSourceIndex, selectedFieldName)
+  const isInProgressState = warning === 'advanced-setup'
 
   const getCurrentIndexByMappingId = useCallback((): number => {
     return findMappingIndexById(form, mappingId)
@@ -147,6 +146,7 @@ const MappingItemComponent = ({
     <MappingItemTitle
       fieldIndex={ fieldIndex }
       label={ label }
+      warning={ warning !== null }
     />
   )
 
@@ -199,7 +199,7 @@ const MappingItemComponent = ({
               isAdvanced={ isAdvanced }
               isInProgressState={ isInProgressState }
               isLocalized={ isLocalized }
-              isWarningState={ isWarningState }
+              isWarningState={ warning !== null }
               itemLabel={ itemLabel }
               language={ language }
               languageOptions={ languageOptions }
@@ -210,6 +210,11 @@ const MappingItemComponent = ({
             />
           ) }
         </Panel>
+        <PreviewRow
+          expanded={ expanded }
+          fieldIndex={ fieldIndex }
+          warning={ warning }
+        />
       </DndClassDiv>
       { advancedOpen && (
         <AdvancedMappingModal
@@ -254,6 +259,8 @@ function areMappingItemPropsEqual (prev: MappingItemProps, next: MappingItemProp
       prev.fieldIndex === next.fieldIndex &&
       prev.mappingId === next.mappingId &&
       prev.itemLabel === next.itemLabel &&
+      // a drop on a collapsed mapping changes its warning (title icon, Preview row)
+      mappingWarningOf(prev.dataSourceIndex, prev.selectedFieldName) === mappingWarningOf(next.dataSourceIndex, next.selectedFieldName) &&
       prev.onToggle === next.onToggle &&
       prev.onRemoveItem === next.onRemoveItem &&
       prev.remove === next.remove

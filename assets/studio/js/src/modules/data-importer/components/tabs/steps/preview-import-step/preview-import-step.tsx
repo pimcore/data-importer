@@ -10,20 +10,16 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table'
-import { Dropdown, DropdownButton, Box, Flex, Grid, IconButton, ImportModal, SearchInput, Form } from '@pimcore/studio-ui-bundle/components'
+import { Dropdown, DropdownButton, Box, Flex, Grid, IconButton, SearchInput, Form } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { getPrefix } from '@pimcore/studio-ui-bundle/api'
 import { ApiError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
-import { withApiMessage } from '../../../../utils/api-error-message'
-import {
-  useBundleDataImporterConfigCopyPreviewMutation
-} from '../../../../data-importer-api-slice.gen'
+import { isNotFoundError, withApiMessage } from '../../../../utils/api-error-message'
 import { useBundleDataImporterConfigGetQuery } from '../../../../data-importer-api-slice-enhanced'
 import { transformFormToBackend, type BackendConfiguration } from '../../../../utils/transformers'
 import { type DataImporterFormValues } from '../../../../types'
 import { StepHeading } from '../step-heading/step-heading'
 import { usePreviewRecordQuery } from '../shared/use-preview-record-query'
-import { usePreviewContext, usePreviewScope } from '../../../preview-scope'
+import { usePreviewDataActions } from '../shared/use-preview-data-actions'
 import { ConfigProvider } from 'antd'
 
 export interface PreviewImportStepProps {
@@ -40,11 +36,6 @@ interface PreviewRow {
   mapped?: boolean
 }
 
-const isNotFoundError = (error: unknown): boolean => {
-  if (typeof error !== 'object' || error === null) return false
-  return (error as { status?: unknown }).status === 404
-}
-
 const columnHelper = createColumnHelper<PreviewRow>()
 
 export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }: PreviewImportStepProps): React.JSX.Element => {
@@ -53,7 +44,6 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
 
   const [recordIndex, setRecordIndex] = useState(0)
   const [searchText, setSearchText] = useState('')
-  const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   const { data: configData } = useBundleDataImporterConfigGetQuery({ name: configName })
 
@@ -64,9 +54,6 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
     return transformFormToBackend(formValues, existingConfig)
   }, [form, configData])
 
-  const [copyPreview, { isLoading: isCopying, error: copyPreviewError }] = useBundleDataImporterConfigCopyPreviewMutation()
-  const previewScope = usePreviewScope()
-  const previewContext = usePreviewContext()
   const {
     dataPreview,
     currentRecordIndex,
@@ -90,10 +77,14 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
     trackError(new ApiError(withApiMessage(previewError)))
   }, [previewError])
 
-  useEffect(() => {
-    if (copyPreviewError === undefined) return
-    trackError(new ApiError(withApiMessage(copyPreviewError)))
-  }, [copyPreviewError])
+  const { upload, copyFromSource, isCopying, uploadModal } = usePreviewDataActions({
+    configName,
+    getCurrentConfig: getBackendConfig,
+    onPreviewDataChange: () => {
+      fetchPreview(0, { forceRefetch: true })
+      onPreviewDataChange?.()
+    }
+  })
 
   const handlePrev = (): void => {
     const newIndex = Math.max(0, recordIndex - 1)
@@ -104,37 +95,17 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
     fetchPreview(recordIndex + 1)
   }
 
-  const handleCopyFromSource = async (): Promise<void> => {
-    const result = await copyPreview({
-      name: configName,
-      bundleDataImporterCopyPreviewParameters: {
-        currentConfig: getBackendConfig(),
-        previewScope,
-        previewContext
-      }
-    })
-
-    if ('error' in result) {
-      return
-    }
-
-    fetchPreview(0, { forceRefetch: true })
-    onPreviewDataChange?.()
-  }
-
   const dropdownItems = [
     {
       key: 'upload',
       label: t('data-importer.preview-import.upload-file'),
-      onClick: () => {
-        setUploadModalOpen(true)
-      }
+      onClick: upload
     },
     {
       key: 'copy',
       label: t('data-importer.preview-import.copy-from-source'),
       onClick: () => {
-        void handleCopyFromSource()
+        void copyFromSource()
       }
     }
   ]
@@ -237,21 +208,7 @@ export const PreviewImportStep = ({ configName, isActive, onPreviewDataChange }:
         isLoading={ isWorking }
       />
 
-      <ImportModal
-        action={ `${getPrefix()}/bundle/data-importer/config/${configName}/upload-preview` }
-        data={ {
-          ...(previewScope !== undefined && { previewScope }),
-          ...(previewContext !== undefined && { previewContext })
-        } }
-        onOpenChange={ (nextOpen) => { setUploadModalOpen(nextOpen) } }
-        onUploadSuccess={ () => {
-          setUploadModalOpen(false)
-          fetchPreview(0, { forceRefetch: true })
-          onPreviewDataChange?.()
-        } }
-        open={ uploadModalOpen }
-        title={ t('data-importer.preview-import.upload-file') }
-      />
+      { uploadModal }
     </>
   )
 }
