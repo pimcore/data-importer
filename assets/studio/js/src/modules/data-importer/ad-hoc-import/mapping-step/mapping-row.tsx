@@ -220,11 +220,11 @@ export const MappingRowView = ({
           : (
             // a column that cannot go into its field as it is stays open; the dot says why
             <span
-              aria-label={ needsTransformation }
               className={ `${styles.dot} ${styles.dotOpen}` }
-              role="img"
               title={ needsTransformation }
-            />
+            >
+              <span className={ styles.hiddenText }>{ needsTransformation }</span>
+            </span>
             ) }
       </div>
       <Flex

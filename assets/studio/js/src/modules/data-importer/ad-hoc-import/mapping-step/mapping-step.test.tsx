@@ -530,6 +530,7 @@ describe('the mapping step', () => {
       fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
       expect(within(rowOf('Notiz')).getByTitle('Needs a transformation')).toBeTruthy()
+      expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
 
       await settle()
 
