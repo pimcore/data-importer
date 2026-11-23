@@ -44,3 +44,4 @@ assets/studio/dist/*
 
 # Expanded frontend build is generated from build-dist/build-<id>.zip, not committed
 /src/Resources/public/studio/build/
+/src/Resources/public/studio/.studio-build-extract.lock
