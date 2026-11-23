@@ -987,7 +987,7 @@ describe('the mapping step', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Field for Bezeichnung' }))
     fireEvent.click(within(screen.getByRole('complementary', { name: 'Column Bezeichnung' })).getByRole('button', { name: 'Remove field' }))
 
-    expect(screen.getByText('1 column not decided yet: choose a field or “Don\'t import”')).toBeTruthy()
+    expect(screen.getByText('1 column not decided yet: choose a field or “Don’t import”')).toBeTruthy()
   })
 
   it('names the file in the title from the mapping on', async () => {
@@ -1030,7 +1030,7 @@ describe('the mapping step', () => {
     await toMapping()
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
-    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t import Bezeichnung' }))
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
 
     fireEvent.click(screen.getByRole('button', { name: /Not imported \(1\)/ }))
@@ -1056,7 +1056,7 @@ describe('the mapping step', () => {
 
   it('keeps the mapping when going back and on with nothing changed', async () => {
     await toMapping()
-    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t import Bezeichnung' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     await act(async () => { fireEvent.click(nextButton()) })
@@ -1067,7 +1067,7 @@ describe('the mapping step', () => {
 
   it('makes a new mapping for another column to match by', async () => {
     await toMapping()
-    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t import Bezeichnung' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     select('from column', 'Bezeichnung')
@@ -1077,7 +1077,7 @@ describe('the mapping step', () => {
     expect(screen.queryByRole('button', { name: /Not imported \(1\)/ })).toBeNull()
     // the column that finds the objects has no field to change and cannot be left out
     expect(screen.queryByRole('button', { name: 'Field for Bezeichnung' })).toBeNull()
-    expect(screen.queryByRole('button', { name: "Don't import Bezeichnung" })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Don’t import Bezeichnung' })).toBeNull()
   })
 
   describe('of a workbook read again from another sheet', () => {

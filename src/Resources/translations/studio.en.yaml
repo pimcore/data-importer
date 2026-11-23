@@ -388,7 +388,7 @@ data-importer.ad-hoc-import.mapping.use-all-suggestions: 'Use all {{count}} sugg
 data-importer.ad-hoc-import.mapping.required: 'Required fields:'
 data-importer.ad-hoc-import.mapping.columns: Columns of the file
 data-importer.ad-hoc-import.mapping.field-of: 'Field for {{column}}'
-data-importer.ad-hoc-import.mapping.dont-import: Don't import
+data-importer.ad-hoc-import.mapping.dont-import: Don’t import
 data-importer.ad-hoc-import.mapping.required-field: '{{field}} (required)'
 data-importer.ad-hoc-import.mapping.choose-field: Choose field
 data-importer.ad-hoc-import.mapping.use-suggestion: 'Use {{field}}?'
@@ -410,7 +410,7 @@ data-importer.ad-hoc-import.mapping.no-fields: No field found
 data-importer.ad-hoc-import.mapping.change-key: 'Change the key for {{column}}'
 data-importer.ad-hoc-import.mapping.map-here-hint: 'One column per field, with suggestions. Several columns in one field: use a configuration.'
 data-importer.ad-hoc-import.mapping.progress: '{{mapped}} of {{total}} columns go into a field'
-data-importer.ad-hoc-import.mapping.skip-open: 'Don''t import the {{count}} not mapped'
+data-importer.ad-hoc-import.mapping.skip-open: 'Don’t import the {{count}} not mapped'
 data-importer.ad-hoc-import.mapping.auto-note.lead: '{{count}} columns were mapped automatically'
 data-importer.ad-hoc-import.mapping.auto-note.lead-one: 1 column was mapped automatically
 data-importer.ad-hoc-import.mapping.auto-note.rest: 'when the file was read, marked “auto”. {{count}} more have a suggestion to confirm.'
@@ -424,9 +424,9 @@ data-importer.ad-hoc-import.mapping.head.transformations: Transformations
 data-importer.ad-hoc-import.mapping.head.stored-as: Stored as
 data-importer.ad-hoc-import.mapping.sample: 'e.g. “{{value}}”'
 data-importer.ad-hoc-import.mapping.skip: Skip
-data-importer.ad-hoc-import.mapping.skip-column: 'Don''t import {{column}}'
-data-importer.ad-hoc-import.mapping.undecided: '{{count}} columns not decided yet: choose a field or “Don''t import”'
-data-importer.ad-hoc-import.mapping.undecided-one: '1 column not decided yet: choose a field or “Don''t import”'
+data-importer.ad-hoc-import.mapping.skip-column: 'Don’t import {{column}}'
+data-importer.ad-hoc-import.mapping.undecided: '{{count}} columns not decided yet: choose a field or “Don’t import”'
+data-importer.ad-hoc-import.mapping.undecided-one: '1 column not decided yet: choose a field or “Don’t import”'
 data-importer.ad-hoc-import.mapping.all-decided: Every column is decided
 data-importer.ad-hoc-import.mapping.panel.aria: 'Column {{column}}'
 data-importer.ad-hoc-import.mapping.panel.column: Column

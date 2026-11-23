@@ -124,7 +124,7 @@ const choose = (column: string, field: string): void => {
 }
 
 const skip = (column: string): void => {
-  fireEvent.click(screen.getByRole('button', { name: `Don't import ${column}` }))
+  fireEvent.click(screen.getByRole('button', { name: `Don’t import ${column}` }))
 }
 
 const shownColumns = (): string[] =>
@@ -199,7 +199,7 @@ describe('the mapping step', () => {
       fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Use Price?' }))
       expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
 
-      fireEvent.click(screen.getByRole('button', { name: "Don't import Preis" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Don’t import Preis' }))
       expect(within(rowOf('Notiz')).getByRole('button', { name: 'Use Price?' })).toBeTruthy()
     })
 
@@ -230,13 +230,13 @@ describe('the mapping step', () => {
     expect(screen.queryByRole('button', { name: 'Field for Artikelnr' })).toBeNull()
     expect(within(matchRowOf('Artikelnr')).getByText('SKU')).toBeTruthy()
     expect(within(matchRowOf('Artikelnr')).queryByText('Finds the objects')).toBeNull()
-    expect(screen.queryByRole('button', { name: "Don't import Artikelnr" })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Don’t import Artikelnr' })).toBeNull()
   })
 
   it('offers Don\'t import on a column as a text button with its eye-off icon', () => {
     renderStep()
 
-    const skip = within(rowOf('Preis')).getByRole('button', { name: "Don't import Preis" })
+    const skip = within(rowOf('Preis')).getByRole('button', { name: 'Don’t import Preis' })
     expect(skip.textContent).toBe('Skip')
     expect(skip.querySelector('[data-icon="eye-off"]')).not.toBeNull()
   })
@@ -354,7 +354,7 @@ describe('the mapping step', () => {
     it('takes every open column at once, leaving the decided ones', () => {
       renderStep()
 
-      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Don’t import the 2 not mapped' }))
 
       expect(shownColumns()).toEqual(['Artikelnr', 'Name DE'])
       expect(screen.getByRole('button', { name: /Not imported \(2\)/ })).toBeTruthy()
@@ -365,7 +365,7 @@ describe('the mapping step', () => {
       renderStep()
       openPanel('Notiz')
 
-      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Don’t import the 2 not mapped' }))
 
       expect(screen.queryByRole('complementary')).toBeNull()
     })
