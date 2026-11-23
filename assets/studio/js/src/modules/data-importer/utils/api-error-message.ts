@@ -40,3 +40,9 @@ export function withApiMessage (error: unknown): Record<string, unknown> {
 
   return message === undefined ? base : { ...base, message }
 }
+
+/** The server found nothing to answer with: for a preview, no preview file was uploaded or copied yet */
+export function isNotFoundError (error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false
+  return (error as { status?: unknown }).status === 404
+}

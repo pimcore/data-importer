@@ -33,7 +33,8 @@ export const Content = ({ children, loading }: WithChildren & { loading?: boolea
     aria-busy={ loading === true }
     data-testid="content"
   >
-    { children }
+    { /* as Studio's Content: a spinner instead of the children while loading */ }
+    { loading !== true && children }
   </div>
 )
 
@@ -77,6 +78,30 @@ export const IconButton = ({ disabled, icon, onClick }: { disabled?: boolean, ic
   />
 )
 
+// antd's number field as a plain input: the typed number (null when empty) on change, Enter as onPressEnter,
+// the error status as aria-invalid
+export const InputNumber = ({ disabled, id, onBlur, onChange, onPressEnter, status, value, ...props }: {
+  'aria-label'?: string
+  disabled?: boolean
+  id?: string
+  onBlur?: React.FocusEventHandler<HTMLInputElement>
+  onChange?: (value: number | null) => void
+  onPressEnter?: React.KeyboardEventHandler<HTMLInputElement>
+  status?: 'error' | 'warning'
+  value?: number | null
+}): React.JSX.Element => (
+  <input
+    aria-invalid={ status === 'error' }
+    aria-label={ props['aria-label'] }
+    disabled={ disabled }
+    id={ id }
+    onBlur={ onBlur }
+    onChange={ (event) => { onChange?.(event.target.value === '' ? null : Number(event.target.value)) } }
+    onKeyDown={ (event) => { if (event.key === 'Enter') onPressEnter?.(event) } }
+    value={ value ?? '' }
+  />
+)
+
 // Studio's SearchInput is antd's Input.Search, which takes disabled from the surrounding ConfigProvider
 export const SearchInput = ({ disabled, onChange, placeholder, value }: { disabled?: boolean, onChange?: React.ChangeEventHandler<HTMLInputElement>, placeholder?: string, value?: string }): React.JSX.Element => {
   const contextDisabled = React.useContext(DisabledContext)
@@ -90,5 +115,83 @@ export const SearchInput = ({ disabled, onChange, placeholder, value }: { disabl
   )
 }
 
+export const IconTextButton = ({ children, onClick }: WithChildren & { onClick?: () => void }): React.JSX.Element => (
+  <button
+    onClick={ onClick }
+    type="button"
+  >
+    { children }
+  </button>
+)
+
+export const Divider = (): React.JSX.Element => <hr />
+
+export const Switch = ({ checked, disabled, labelRight, onChange, ...props }: { 'aria-label'?: string, checked?: boolean, disabled?: boolean, labelRight?: React.ReactNode, onChange?: (checked: boolean) => void }): React.JSX.Element => (
+  <label>
+    <input
+      aria-label={ props['aria-label'] }
+      checked={ checked === true }
+      disabled={ disabled }
+      onChange={ (event) => { onChange?.(event.target.checked) } }
+      role="switch"
+      type="checkbox"
+    />
+    { labelRight }
+  </label>
+)
+
+// the tooltip's content shows beside its target, so tests can read it
+export const Tooltip = ({ children, title }: WithChildren & { title?: React.ReactNode }): React.JSX.Element => (
+  <span>
+    { children }
+    <span role="tooltip">{ title }</span>
+  </span>
+)
+
+// a small real preview-mode context, as Studio's PreviewModeProvider keeps it
+interface PreviewModeItem { data: { id?: string | number, [key: string]: any } }
+interface PreviewModeValue {
+  enabled: boolean
+  setEnabled: (enabled: boolean) => void
+  item: PreviewModeItem | null
+  setItem: (item: PreviewModeItem | null) => void
+  fallbackItem: { id: string | number } | null
+}
+
+const PreviewModeContext = React.createContext<PreviewModeValue | undefined>(undefined)
+
+export const PreviewModeProvider = ({ children, defaultEnabled = false, fallbackItem = null }: WithChildren & { defaultEnabled?: boolean, fallbackItem?: { id: string | number } | null }): React.JSX.Element => {
+  const [enabled, setEnabled] = React.useState(defaultEnabled)
+  const [item, setItem] = React.useState<PreviewModeItem | null>(null)
+  const value = React.useMemo(() => ({ enabled, setEnabled, item, setItem, fallbackItem }), [enabled, item, fallbackItem?.id])
+
+  return <PreviewModeContext.Provider value={ value }>{ children }</PreviewModeContext.Provider>
+}
+
+export const usePreviewMode = (): PreviewModeValue => {
+  const value = React.useContext(PreviewModeContext)
+  if (value === undefined) throw new Error('usePreviewMode must be used within a PreviewModeProvider')
+  return value
+}
+
 export const useFormModal = (): { confirm: () => void } => ({ confirm: () => undefined })
 export const useMessage = (): { warning: () => Promise<void> } => ({ warning: async () => { await Promise.resolve() } })
+
+// an upload dialog whose upload a test finishes with one click
+export const ImportModal = ({ open, title, onUploadSuccess }: { open?: boolean, title?: string, onUploadSuccess?: () => void }): React.JSX.Element | null => {
+  if (open !== true) return null
+
+  return (
+    <dialog
+      aria-label={ title }
+      open
+    >
+      <button
+        onClick={ () => { onUploadSuccess?.() } }
+        type="button"
+      >
+        finish upload
+      </button>
+    </dialog>
+  )
+}
