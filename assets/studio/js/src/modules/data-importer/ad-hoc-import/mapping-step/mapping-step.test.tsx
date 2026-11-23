@@ -383,8 +383,8 @@ describe('the mapping step', () => {
     it('takes every suggestion waiting, marked as automatic', () => {
       renderStep()
 
-      // the notice's one action, at the default size
-      expect(screen.getByRole('button', { name: 'Use all 1 suggestions' }).getAttribute('data-size')).toBeNull()
+      // the notice's one action, as compact as the filter buttons
+      expect(screen.getByRole('button', { name: 'Use all 1 suggestions' }).getAttribute('data-size')).toBe('small')
       fireEvent.click(screen.getByRole('button', { name: 'Use all 1 suggestions' }))
 
       expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')

@@ -180,6 +180,7 @@ export const ColumnPanel = ({
             </Flex>
             <IconButton
               aria-label={ t(`${PANEL}.previous`) }
+              className={ styles.stepButton }
               color="secondary"
               icon={ { value: 'chevron-left' } }
               onClick={ onPrevious }
@@ -188,6 +189,7 @@ export const ColumnPanel = ({
             />
             <IconButton
               aria-label={ t(`${PANEL}.next`) }
+              className={ styles.stepButton }
               color="secondary"
               icon={ { value: 'chevron-right' } }
               onClick={ onNext }

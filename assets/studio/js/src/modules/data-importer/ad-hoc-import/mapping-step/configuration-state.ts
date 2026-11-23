@@ -142,3 +142,24 @@ export const canContinueWithConfiguration = (
   configuration: ImportConfiguration | undefined,
   inspected: InspectedFile | undefined
 ): boolean => configuration !== undefined && inspected !== undefined && unusableReason(configuration, inspected) === null
+
+// the class all listed configurations import into, for the heading; none when they are of several
+export const commonClassOf = (configurations: ImportConfiguration[]): string | undefined => {
+  const classes = new Set(configurations.map((configuration) => configuration.className ?? configuration.classId ?? ''))
+  const [only] = classes
+
+  return classes.size === 1 && only !== '' ? only : undefined
+}
+
+// what a card says of one it cannot use: its class unless the heading names it, its format and why
+export const unusableSummaryOf = (configuration: ImportConfiguration, reason: string, withClass: boolean): string => [
+  withClass ? configuration.className ?? configuration.classId ?? '' : '',
+  configuration.format?.toUpperCase() ?? '',
+  reason
+].filter((part) => part !== '').join(', ')
+
+// the usable configurations first, each part in the server's order
+export const usableFirst = <T, >(configurations: T[], isUsable: (configuration: T) => boolean): T[] => [
+  ...configurations.filter(isUsable),
+  ...configurations.filter((configuration) => !isUsable(configuration))
+]

@@ -127,5 +127,13 @@ export const useStyles = createStyles(({ token, css }) => ({
   `,
   grow: css`
     flex-grow: 1;
+  `,
+  // the design's compact previous and next buttons
+  stepButton: css`
+    &.ant-btn {
+      width: 28px;
+      min-width: 28px;
+      height: 28px;
+    }
   `
 }))

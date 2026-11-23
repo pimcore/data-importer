@@ -285,8 +285,10 @@ export const MappingRowView = ({
         { !isMatch && (
           <Button
             aria-label={ t(`${MAPPING}.skip-column`, { column: label, interpolation: { escapeValue: false } }) }
+            className={ styles.skipButton }
             icon={ <Icon value="eye-off" /> }
             onClick={ () => { onSkip(column) } }
+            size="small"
             type="text"
           >
             { t(`${MAPPING}.skip`) }

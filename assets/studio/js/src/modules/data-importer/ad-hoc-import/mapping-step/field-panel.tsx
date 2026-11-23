@@ -68,6 +68,15 @@ const useStyles = createStyles(({ token, css }) => ({
       text-overflow: ellipsis;
     }
 
+    /* one text colour for every field, the groups in bold as in the design */
+    .ant-tree .ant-tree-title__btn {
+      color: ${token.colorText};
+    }
+
+    .ant-tree .ant-tree-title > :not(.ant-tree-title__btn) {
+      font-weight: ${token.fontWeightStrong};
+    }
+
     /* the field stays readable as in the design; the dot and the cursor say another column fills it */
     .ant-tree .ant-tree-treenode-disabled .ant-tree-title__btn {
       color: ${token.colorText};

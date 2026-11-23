@@ -159,5 +159,19 @@ export const useStyles = createStyles(({ token, css }) => ({
   skip: css`
     display: flex;
     justify-content: flex-end;
+  `,
+  // the design's compact text button, its text at the contrast of 'Choose field'
+  skipButton: css`
+    &.ant-btn {
+      height: 28px;
+      padding-inline: 8px;
+      gap: 6px;
+      color: ${token.colorTextDescription};
+    }
+
+    &.ant-btn svg {
+      width: 14px;
+      height: 14px;
+    }
   `
 }))

@@ -10,7 +10,9 @@
 
 import React from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Card, Flex, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { Button, Card, Flex, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { isAllowed } from '@pimcore/studio-ui-bundle/modules/auth'
+import { useWidgetManager } from '@pimcore/studio-ui-bundle/modules/widget-manager'
 import { type InspectedFile } from '../file-step/file-step-state'
 import { type ImportConfiguration } from './configuration-state'
 
@@ -18,10 +20,24 @@ const LABEL_WIDTH = 160
 const CONFIGURATION = 'data-importer.ad-hoc-import.configuration'
 // the Data Importer's own loaders; one another bundle registers is named by its type
 const KNOWN_SOURCES = new Set(['sftp', 'http', 'asset', 'upload', 'push', 'sql'])
+// the permission and the widget of Data Hub's own main navigation item
+export const DATA_HUB_PERMISSION = 'plugin_datahub_config'
+export const DATA_HUB_WIDGET = {
+  name: 'Data Hub Configuration',
+  id: 'data-hub-configuration',
+  component: 'data-hub-configuration',
+  config: {
+    translationKey: 'data-hub.configuration',
+    icon: { type: 'name' as const, value: 'datahub' }
+  }
+}
 
 const useStyles = createStyles(({ token, css }) => ({
   title: css`
     font-size: ${token.fontSizeLG}px;
+  `,
+  spacer: css`
+    flex-grow: 1;
   `,
   facts: css`
     display: grid;
@@ -70,6 +86,8 @@ export interface ConfigurationDetailProps {
 export const ConfigurationDetail = ({ configuration, inspected, fileName, match }: ConfigurationDetailProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
+  const { openMainWidget } = useWidgetManager()
+  const mayOpenDataHub = isAllowed(DATA_HUB_PERMISSION)
 
   return (
     <section aria-label={ configuration.name }>
@@ -88,6 +106,15 @@ export const ConfigurationDetail = ({ configuration, inspected, fileName, match 
             { configuration.name }
           </Text>
           <Tag className={ styles.readOnly }>{ t(`${CONFIGURATION}.read-only`) }</Tag>
+          <span className={ styles.spacer } />
+          { mayOpenDataHub && (
+            <Button
+              onClick={ () => { openMainWidget(DATA_HUB_WIDGET) } }
+              type="link"
+            >
+              { t(`${CONFIGURATION}.open-in-data-hub`) }
+            </Button>
+          ) }
         </Flex>
         <Card>
           <div className={ styles.facts }>

@@ -16,7 +16,10 @@ import {
   configurationColumnLabel,
   findConfiguration,
   missingColumns,
+  commonClassOf,
   unusableReason,
+  unusableSummaryOf,
+  usableFirst,
   type ImportConfiguration
 } from './configuration-state'
 import { ConfigurationDetail } from './configuration-detail'
@@ -74,7 +77,7 @@ const useStyles = createStyles(({ token, css }) => ({
     }
 
     .configuration-name {
-      color: ${token.colorPrimary};
+      color: ${token.colorPrimaryActive};
     }
   `,
   unusable: css`
@@ -99,12 +102,6 @@ export const summaryOf = (t: ReturnType<typeof useTranslation>['t'], configurati
     ? t(`${CONFIGURATION}.schedule.manual`)
     : t(`${CONFIGURATION}.schedule.cron`, { cron: configuration.schedule, interpolation: { escapeValue: false } })
 ].filter((part) => part !== '').join(' · ')
-
-// the usable configurations first, each part in the server's order
-export const usableFirst = <T, >(configurations: T[], isUsable: (configuration: T) => boolean): T[] => [
-  ...configurations.filter(isUsable),
-  ...configurations.filter((configuration) => !isUsable(configuration))
-]
 
 export interface ConfigurationChoiceProps {
   inspected?: InspectedFile
@@ -161,6 +158,7 @@ export const ConfigurationChoice = ({
     return <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.none') }</Text>
   }
 
+  const commonClass = commonClassOf(configurations)
   const configuration = findConfiguration(configurations, chosen)
   const usable = configuration !== undefined && reasonOf(configuration) === null
   const missing = usable && inspected !== undefined ? missingColumns(configuration, inspected) : []
@@ -187,7 +185,6 @@ export const ConfigurationChoice = ({
     const reason = reasonOf(shown)
     const detailId = `ad-hoc-import-configuration-${index}-detail`
     const isChosen = usable && shown.name === chosen
-    const className = shown.className ?? shown.classId ?? ''
     const choose = (): void => {
       if (reason === null) {
         onChoose(shown.name)
@@ -238,7 +235,7 @@ export const ConfigurationChoice = ({
           >
             { reason === null
               ? summaryOf(t, shown)
-              : t('data-importer.ad-hoc-import.configuration.unusable-detail', { class: className, reason, ...plain }) }
+              : unusableSummaryOf(shown, reason, commonClass === undefined) }
           </Text>
         </Flex>
       </Card>
@@ -256,7 +253,9 @@ export const ConfigurationChoice = ({
           id="ad-hoc-import-configurations"
           strong
         >
-          { t('data-importer.ad-hoc-import.configuration.list-title') }
+          { commonClass === undefined
+            ? t(`${CONFIGURATION}.list-title`)
+            : t(`${CONFIGURATION}.list-title-class`, { class: commonClass, ...plain }) }
         </Text>
         <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.list-hint') }</Text>
         <Flex

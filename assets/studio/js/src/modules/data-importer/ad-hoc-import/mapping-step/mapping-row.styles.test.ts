@@ -40,3 +40,17 @@ describe('the field of a mapping row', () => {
     expect(styles.crumb).toMatch(/text-overflow: ellipsis;/)
   })
 })
+
+describe('the Skip button of a mapping row', () => {
+  const styles = (useStyles as unknown as Build)({
+    token: { colorTextDescription: 'description-colour', Colors: { Brand: { Warning: { colorWarningText: 'dark-warning' } } } },
+    css: String.raw
+  })
+
+  // as compact as the design's, its text at the contrast of 'Choose field'
+  it('is 28px high with 8px padding and readable text', () => {
+    expect(styles.skipButton).toMatch(/height: 28px;/)
+    expect(styles.skipButton).toMatch(/padding-inline: 8px;/)
+    expect(styles.skipButton).toMatch(/color: description-colour;/)
+  })
+})

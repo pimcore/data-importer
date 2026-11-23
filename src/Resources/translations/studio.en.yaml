@@ -444,11 +444,12 @@ data-importer.ad-hoc-import.mapping.panel.remove-field: Remove field
 data-importer.ad-hoc-import.mapping.panel.next-column: Next column ›
 data-importer.ad-hoc-import.mapping.key-taken: 'Another column already goes into this key'
 data-importer.ad-hoc-import.configuration.list-title: Data Importer configurations
+data-importer.ad-hoc-import.configuration.list-title-class: 'Data Importer configurations for class {{class}}'
+data-importer.ad-hoc-import.configuration.open-in-data-hub: 'Open in Data Hub ↗'
 data-importer.ad-hoc-import.configuration.list-hint: Only those you may read in the Data Hub
 data-importer.ad-hoc-import.configuration.choose: Choose a configuration
 data-importer.ad-hoc-import.configuration.none: There is no data object import configuration you may use.
 data-importer.ad-hoc-import.configuration.load-failed: The configurations could not be loaded.
-data-importer.ad-hoc-import.configuration.unusable-detail: '{{class}} · {{reason}}'
 data-importer.ad-hoc-import.configuration.unusable.class: you may not create objects of its class
 data-importer.ad-hoc-import.configuration.unusable.matching: it does not find objects by their ID or a field in all folders
 data-importer.ad-hoc-import.configuration.unusable.folder: it does not create new objects in one folder

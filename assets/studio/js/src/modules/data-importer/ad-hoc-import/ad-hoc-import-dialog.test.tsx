@@ -1181,7 +1181,7 @@ describe('the mapping step with a configuration', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
 
     expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: false, refetchOnMountOrArgChange: true })
-    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
+    expect(screen.getByRole('radiogroup', { name: /^Data Importer configurations/ })).toBeTruthy()
   })
 
   it('names the preview as the next step on the mapping step', async () => {

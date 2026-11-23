@@ -25,6 +25,10 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ com
 // the mapping step loads the transformations modal and the store key dialog, which no test here opens
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en'] }) }))
 jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
+const mockIsAllowed = jest.fn((_permission: string) => false)
+const mockOpenMainWidget = jest.fn()
+jest.mock('@pimcore/studio-ui-bundle/modules/auth', () => ({ isAllowed: (permission: string) => mockIsAllowed(permission) }))
+jest.mock('@pimcore/studio-ui-bundle/modules/widget-manager', () => ({ useWidgetManager: () => ({ openMainWidget: mockOpenMainWidget }) }))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [async () => await new Promise(() => {})]
 }))
@@ -104,7 +108,7 @@ const useConfiguration = (props: StatefulProps = {}): void => {
   fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
 }
 
-const configurationList = (): HTMLElement => screen.getByRole('radiogroup', { name: 'Data Importer configurations' })
+const configurationList = (): HTMLElement => screen.getByRole('radiogroup', { name: /^Data Importer configurations/ })
 
 const cards = (): HTMLElement[] => within(configurationList()).getAllByRole('radio')
 
@@ -116,6 +120,9 @@ const detailOf = (shown: HTMLElement): string | null | undefined => document.get
 
 afterEach(() => {
   cleanup()
+  mockIsAllowed.mockReset()
+  mockIsAllowed.mockReturnValue(false)
+  mockOpenMainWidget.mockReset()
 })
 
 describe('the mapping with a configuration', () => {
@@ -160,12 +167,48 @@ describe('the mapping with a configuration', () => {
     })
 
     expect(cards().map(detailOf)).toEqual([
-      'Product · it does not find objects by their ID or a field in all folders',
-      'Product · the file has no column EAN to match by',
-      'Product · you may not create objects in its folder'
+      'CSV, it does not find objects by their ID or a field in all folders',
+      'CSV, the file has no column EAN to match by',
+      'CSV, you may not create objects in its folder'
     ])
     expect(cards().every((shown) => shown.getAttribute('aria-disabled') === 'true')).toBe(true)
     expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, -1])
+  })
+
+  it('names the class in the heading when all are of one, and else on each card it cannot use', () => {
+    useConfiguration({ configurations: [configuration(), configuration({ name: 'closed', unusable: 'folder-not-allowed', format: null })] })
+
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations for class Product' })).toBeTruthy()
+    expect(detailOf(card('closed'))).toBe('you may not create objects in its folder')
+    cleanup()
+
+    useConfiguration({
+      configurations: [
+        configuration(),
+        configuration({ name: 'cars', className: 'Car & more', unusable: 'folder-not-allowed', format: 'xlsx' })
+      ]
+    })
+
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
+    expect(detailOf(card('cars'))).toBe('Car & more, XLSX, you may not create objects in its folder')
+  })
+
+  it('opens Data Hub\'s configurations from the chosen one for a user who may read them', () => {
+    mockIsAllowed.mockImplementation((permission) => permission === 'plugin_datahub_config')
+    useConfiguration({ configurations: [configuration()] })
+    choose('products')
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'products' })).getByRole('button', { name: 'Open in Data Hub ↗' }))
+
+    expect(mockOpenMainWidget).toHaveBeenCalledWith(expect.objectContaining({ id: 'data-hub-configuration', component: 'data-hub-configuration' }))
+  })
+
+  it('offers no way to Data Hub to a user who may not read its configurations', () => {
+    useConfiguration({ configurations: [configuration()] })
+    choose('products')
+
+    expect(within(screen.getByRole('region', { name: 'products' })).queryByRole('button', { name: 'Open in Data Hub ↗' })).toBeNull()
+    expect(mockIsAllowed).toHaveBeenCalledWith('plugin_datahub_config')
   })
 
   it('does not choose one it cannot use', () => {
@@ -406,7 +449,7 @@ describe('the mapping with a configuration', () => {
     useConfiguration({ isLoading: true })
 
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
-    expect(screen.queryByRole('radiogroup', { name: 'Data Importer configurations' })).toBeNull()
+    expect(screen.queryByRole('radiogroup', { name: /^Data Importer configurations/ })).toBeNull()
   })
 
   it('says when there is none to use', () => {
