@@ -180,7 +180,7 @@ describe('ImportConfigReviewSurface', () => {
     render(<ImportConfigReviewSurface { ...{ ...props, onStatsChange } } />)
 
     const editor = last(editorProps)
-    expect(editor).toMatchObject({ configName: 'car-import', isWriteable: false, showRuntime: false, activeTab: 'general' })
+    expect(editor).toMatchObject({ configName: 'car-import', isWriteable: false, showRuntime: false, activeTab: 'data-setup', activeStep: 0 })
     expect(editor.configuration.loaderConfig.settings.host).toBe('new.example.com')
     expect(editor.configuration.mappingConfig[0].dataTarget.settings.fieldName).toBe('chassis')
     await expect(editor.onSave()).resolves.toEqual({})
@@ -190,7 +190,7 @@ describe('ImportConfigReviewSurface', () => {
     const list = last(listProps)
     expect(list.groups.map((group: { section: string }) => group.section)).toEqual(['dataSource', 'resolver'])
     expect(list.mappings).toHaveLength(1)
-    expect(list.activeSection).toBe('general')
+    expect(list.activeSection).toBe('dataSource')
     const labelFor = list.labelFor as (c: ConfigChange) => string
     const first: ConfigChange = list.groups[0].changes[0]
     expect(typeof labelFor(first)).toBe('string')
