@@ -36,6 +36,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\WritesElementsInterface;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\HttpStreamStub;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Event\DataObjectEvents;
 use Pimcore\Model\Asset;
@@ -76,8 +77,6 @@ class MappingApplierTest extends Unit
 
     private ClassDefinition $class;
 
-    private ?string $tempFile = null;
-
     // unique per test, Data Hub caches configurations for the process
     private ?string $configName = null;
 
@@ -90,9 +89,6 @@ class MappingApplierTest extends Unit
     {
         if ($this->configName !== null) {
             SettingsStore::delete($this->configName, self::DATA_HUB_SCOPE);
-        }
-        if ($this->tempFile !== null && is_file($this->tempFile)) {
-            unlink($this->tempFile);
         }
         TestHelper::cleanUp();
     }
@@ -443,17 +439,23 @@ class MappingApplierTest extends Unit
 
     public function testImportWithImportAssetStillSavesTheAsset(): void
     {
-        $this->tempFile = sys_get_temp_dir() . '/apply-mapping-' . uniqid() . '.txt';
-        file_put_contents($this->tempFile, 'asset content');
         $object = $this->createObject('with-asset');
 
-        $this->import([$this->importAssetItem()], $object, ['file' => $this->tempFile]);
+        // Import Asset only downloads http(s) URLs, so the file is served by a stubbed http wrapper
+        stream_wrapper_unregister('http');
+        stream_wrapper_register('http', HttpStreamStub::class);
+
+        try {
+            $this->import([$this->importAssetItem()], $object, ['file' => 'http://example.com/apply-mapping.txt']);
+        } finally {
+            stream_wrapper_restore('http');
+        }
 
         $asset = $this->loadDetached($object)->get('file');
         $this->assertInstanceOf(Asset::class, $asset);
         $this->assertGreaterThan(0, $asset->getId());
         $this->assertSame(self::ASSET_FOLDER, $asset->getParent()?->getFullPath());
-        $this->assertSame('asset content', Asset::getById($asset->getId(), ['force' => true])?->getData());
+        $this->assertSame(HttpStreamStub::BODY, Asset::getById($asset->getId(), ['force' => true])?->getData());
     }
 
     public function testMissesAreReportedToTheCallerInsteadOfLogged(): void

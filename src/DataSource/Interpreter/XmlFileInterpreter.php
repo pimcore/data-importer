@@ -144,6 +144,6 @@ final class XmlFileInterpreter extends AbstractInterpreter
             throw new InvalidConfigurationException('Empty XPath.');
         }
         $this->xpath = $settings['xpath'];
-        $this->schema = $settings['schema'];
+        $this->schema = $settings['schema'] ?? null;
     }
 }

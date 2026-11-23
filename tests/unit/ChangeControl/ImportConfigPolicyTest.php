@@ -20,19 +20,19 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Proposal\StoredConfigurationsInterface;
 use Pimcore\Bundle\DataHubBundle\Service\Studio\ConfigurationServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\SqlLoader;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\UploadLoader;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposedImportConfiguration;
-use Symfony\Component\DependencyInjection\ServiceLocator;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
 use Symfony\Component\Filesystem\Filesystem;
 
 class ImportConfigPolicyTest extends Unit
 {
     private const string HTTP_SHAPE = 'The "http" loader needs settings.schema ("https://" or "http://") and '
         . 'settings.url (the address without its scheme, e.g. "example.com/feed.json").';
+
+    private const string MISSING_FIELD = 'doesNotExist';
 
     public function testAnApprovedConfigurationIsSavedAsProposed(): void
     {
@@ -50,7 +50,7 @@ class ImportConfigPolicyTest extends Unit
         $before = time();
         $policy = new ImportConfigPolicy(
             $configurations,
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
             $this->createStub(StoredConfigurationsInterface::class)
         );
         $policy->save('car-import', $configuration);
@@ -67,7 +67,7 @@ class ImportConfigPolicyTest extends Unit
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
             $this->createStub(StoredConfigurationsInterface::class),
         );
         $row = ['label' => 'VIN', 'dataSourceIndex' => ['vin']];
@@ -84,7 +84,7 @@ class ImportConfigPolicyTest extends Unit
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
@@ -104,9 +104,9 @@ class ImportConfigPolicyTest extends Unit
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            ImportConfigCheckFixture::check([
                 'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
-            ])),
+            ]),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
@@ -162,28 +162,27 @@ class ImportConfigPolicyTest extends Unit
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            ImportConfigCheckFixture::check([
                 'sql' => static fn (): SqlLoader => new SqlLoader(new Filesystem()),
-            ])),
+            ]),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
+        // where and groupBy are optional; connection is not
         $problems = $policy->problems(['loaderConfig' => ['type' => 'sql', 'settings' => [
-            'connection' => 'default', 'select' => '*', 'from' => 'cars',
+            'select' => '*', 'from' => 'cars',
         ]]], true);
 
-        static::assertCount(1, $problems);
-        static::assertStringStartsWith('loaderConfig: the "sql" loader cannot read its settings', $problems[0]);
-        static::assertStringContainsString('where', $problems[0]);
+        static::assertSame(['loaderConfig: Empty connection.'], $problems);
     }
 
     public function testASettingOfTheWrongTypeIsAProblem(): void
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            ImportConfigCheckFixture::check([
                 'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
-            ])),
+            ]),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
@@ -203,9 +202,9 @@ class ImportConfigPolicyTest extends Unit
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            ImportConfigCheckFixture::check([
                 'upload' => fn (): UploadLoader => new UploadLoader($this->createStub(FilesystemOperator::class)),
-            ])),
+            ]),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
@@ -217,9 +216,9 @@ class ImportConfigPolicyTest extends Unit
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            ImportConfigCheckFixture::check([
                 'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
-            ])),
+            ]),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
@@ -229,19 +228,61 @@ class ImportConfigPolicyTest extends Unit
         );
     }
 
-    public function testATypeThatNamesNoLoaderIsLeftToTheVocabulary(): void
+    /** a review amendment never met the vocabulary the propose tool refuses an unknown type with */
+    public function testATypeThatNamesNoLoaderIsAProblem(): void
     {
         $policy = new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator([
+            ImportConfigCheckFixture::check([
                 'other' => static fn (): Filesystem => new Filesystem(),
-            ])),
+            ]),
             $this->createStub(StoredConfigurationsInterface::class),
         );
 
-        static::assertSame([], $policy->problems(['loaderConfig' => ['type' => 'unknown', 'settings' => []]], true));
+        static::assertSame(
+            ['loaderConfig.type: "unknown" is not a loader here.'],
+            $policy->problems(['loaderConfig' => ['type' => 'unknown', 'settings' => []]], true)
+        );
         static::assertSame([], $policy->problems(['loaderConfig' => ['type' => 'other', 'settings' => []]], true));
-        static::assertSame([], $policy->problems(['loaderConfig' => 'http'], true));
+        static::assertSame(['loaderConfig must be an object.'], $policy->problems(['loaderConfig' => 'http'], true));
+    }
+
+    /** an amendment made in the review never met the propose tool's checks */
+    public function testABrokenReviewAmendmentIsAProblemAtApproval(): void
+    {
+        $stored = $this->dealerFeed();
+        $policy = $this->policyStoring($stored);
+
+        $amended = $stored;
+        $amended['mappingConfig'][0]['dataTarget']['settings']['fieldName'] = self::MISSING_FIELD;
+        $amended['interpreterConfig'] = ['type' => 'xml', 'settings' => []];
+
+        static::assertSame(
+            [
+                'interpreterConfig: Empty XPath.',
+                'mappingConfig[0].dataTarget.settings.fieldName "doesNotExist" is not a field of class '
+                    . ImportConfigCheckFixture::CLASS_NAME . '.',
+            ],
+            $policy->problems($amended, false)
+        );
+    }
+
+    /** an approval judges the merged state: a stored section nobody touched never blocks it */
+    public function testABrokenStoredSectionTheApprovalLeavesAloneIsNoProblem(): void
+    {
+        $stored = $this->dealerFeed();
+        $stored['mappingConfig'][0]['dataTarget']['settings']['fieldName'] = self::MISSING_FIELD;
+        $stored['executionConfig'] = ['scheduleType' => 'cron', 'cronDefinition' => 'every night'];
+        $policy = $this->policyStoring($stored);
+
+        $approved = $stored;
+        $approved['general']['active'] = true;
+        $approved['mappingConfig'][] = ['label' => '', 'dataSourceIndex' => ['model'], 'dataTarget' => [
+            'type' => 'direct',
+            'settings' => ['fieldName' => 'name'],
+        ]];
+
+        static::assertSame([], $policy->problems($approved, false));
     }
 
     public function testAStoredLoaderSettingThatChangesOnlyItsTypeIsJudged(): void
@@ -252,12 +293,12 @@ class ImportConfigPolicyTest extends Unit
             ['sql' => static fn (): SqlLoader => new SqlLoader(new Filesystem())],
         );
 
-        // a review amendment "" -> null never met the propose tool's checks, and the loader cannot read it
+        // a review amendment of a string to a list never met the propose tool's checks, and the loader cannot read it
         static::assertSame(
             ['loaderConfig: a setting of the "sql" loader is missing or has the wrong type.'],
             $policy->problems([
                 'general' => ['name' => 'dealer-feed'],
-                'loaderConfig' => ['type' => 'sql', 'settings' => ['where' => null] + $settings],
+                'loaderConfig' => ['type' => 'sql', 'settings' => ['connection' => ['default']] + $settings],
             ], false)
         );
 
@@ -269,6 +310,28 @@ class ImportConfigPolicyTest extends Unit
                 'loaderConfig' => ['settings' => array_reverse($settings), 'type' => 'sql'],
             ], false)
         );
+    }
+
+    /** @return array<string, mixed> */
+    private function dealerFeed(): array
+    {
+        return [
+            'general' => ['name' => 'dealer-feed', 'active' => false],
+            'loaderConfig' => ['type' => 'asset', 'settings' => ['assetPath' => '/feeds/cars.json']],
+            'interpreterConfig' => ['type' => 'json'],
+            'resolverConfig' => [
+                'dataObjectClassId' => ImportConfigCheckFixture::CLASS_ID,
+                'loadingStrategy' => ['type' => 'notLoad'],
+                'createLocationStrategy' => ['type' => 'staticPath', 'settings' => ['path' => '/import']],
+                'locationUpdateStrategy' => ['type' => 'noChange'],
+                'publishingStrategy' => ['type' => 'noChangeUnpublishNew'],
+            ],
+            'mappingConfig' => [[
+                'label' => 'VIN',
+                'dataSourceIndex' => ['vin'],
+                'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => 'vin']],
+            ]],
+        ];
     }
 
     /**
@@ -286,9 +349,7 @@ class ImportConfigPolicyTest extends Unit
 
         return new ImportConfigPolicy(
             $this->createStub(ConfigurationServiceInterface::class),
-            new LoaderSettingsCheck(new ServiceLocator($loaders + [
-                'asset' => static fn (): AssetLoader => new AssetLoader(),
-            ])),
+            ImportConfigCheckFixture::check($loaders),
             $configurations,
         );
     }
