@@ -18,7 +18,9 @@ use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ClassificationSto
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\ClassificationStoreKeysEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\Studio\PreResponse\UnitDataEvent;
 use Pimcore\Bundle\DataImporterBundle\Hydrator\DataTypeHydratorInterface;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreKeyReference;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService;
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreKeyListOptions;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassAttributesResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyNameResponse;
@@ -26,6 +28,8 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeyParameters;
 use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Schema\UnitDataResponse;
 use Pimcore\Model\DataObject;
+use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -37,7 +41,8 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         private TransformationDataTypeService $transformationDataTypeService,
         private ClassificationStoreDataTypeService $classificationStoreDataTypeService,
         private DataTypeHydratorInterface $dataTypeHydrator,
-        private EventDispatcherInterface $eventDispatcher
+        private EventDispatcherInterface $eventDispatcher,
+        private LocalizationResolver $localizationResolver
     ) {
     }
 
@@ -89,13 +94,23 @@ final readonly class DataTypeService implements DataTypeServiceInterface
             strip_tags($parameters->getClassId() ?? ''),
             strip_tags($parameters->getFieldName() ?? ''),
             strip_tags($parameters->getTransformationResultType() ?? ''),
-            $sortParams['orderKey'] ?? 'name',
-            $sortParams['order'] ?? 'ASC',
-            $parameters->getStart(),
-            $parameters->getLimit(),
-            $parameters->getSearchfilter() !== null ? strip_tags($parameters->getSearchfilter()) : null,
-            $parameters->getFilter() !== null ? strip_tags($parameters->getFilter()) : null
+            new ClassificationStoreKeyListOptions(
+                orderKey: $sortParams['orderKey'] ?? 'name',
+                order: $sortParams['order'] ?? 'ASC',
+                start: $parameters->getStart(),
+                limit: $parameters->getLimit(),
+                searchString: $parameters->getSearchfilter() !== null
+                    ? strip_tags($parameters->getSearchfilter())
+                    : null,
+                filterString: $parameters->getFilter() !== null ? strip_tags($parameters->getFilter()) : null,
+                loadAdvancedRelations: $parameters->getLoadAdvancedRelations()
+            )
         );
+
+        DataObject\Classificationstore\DefinitionCache::load(array_map(
+            static fn ($relation): int => $relation->getKeyId(),
+            $list->load()
+        ));
 
         $data = [];
         foreach ($list as $config) {
@@ -105,12 +120,20 @@ final readonly class DataTypeService implements DataTypeServiceInterface
                 'keyName' => $config->getName(),
                 'keyDescription' => $config->getDescription(),
                 'id' => $config->getGroupId() . '-' . $config->getKeyId(),
+                'identifier' => null,
                 'sorter' => $config->getSorter(),
             ];
 
             $groupConfig = DataObject\Classificationstore\GroupConfig::getById($config->getGroupId());
             if ($groupConfig) {
                 $item['groupName'] = $groupConfig->getName();
+            }
+
+            $keyConfig = DataObject\Classificationstore\DefinitionCache::get($config->getKeyId());
+            $groupIdentifier = $groupConfig?->getIdentifier();
+            $keyIdentifier = $keyConfig?->getIdentifier();
+            if ($groupIdentifier !== null && $keyIdentifier !== null) {
+                $item['identifier'] = $groupIdentifier . ':' . $keyIdentifier;
             }
 
             $data[] = $item;
@@ -126,33 +149,32 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         return $response;
     }
 
-    public function loadClassificationStoreKeyName(string $keyId): ClassificationStoreKeyNameResponse
-    {
-        $keyParts = explode('-', $keyId);
+    public function loadClassificationStoreKeyName(
+        string $keyId,
+        ?string $classId = null,
+        ?string $fieldName = null
+    ): ClassificationStoreKeyNameResponse {
+        $keyGroupRelation = $this->findKeyGroupRelation($keyId, $classId, $fieldName);
+        $group = $keyGroupRelation
+            ? DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId())
+            : null;
 
-        if (count($keyParts) === 2) {
-            $keyGroupRelation = DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId(
-                (int) $keyParts[0],
-                (int) $keyParts[1]
+        if ($keyGroupRelation && $group) {
+            $definition = DataObject\Classificationstore\Service::getFieldDefinitionFromKeyConfig($keyGroupRelation);
+
+            $response = $this->dataTypeHydrator->hydrateClassificationStoreKeyName(
+                groupName: $group->getName(),
+                keyName: $keyGroupRelation->getName(),
+                variants: $definition instanceof MultiValue ? $definition->getVariantNames() : [],
+                localized: $this->isKeyLocalized($keyGroupRelation->getKeyId(), $classId, $fieldName)
             );
 
-            if ($keyGroupRelation) {
-                $group = DataObject\Classificationstore\GroupConfig::getById($keyGroupRelation->getGroupId());
+            $this->eventDispatcher->dispatch(
+                new ClassificationStoreKeyNameEvent($response),
+                ClassificationStoreKeyNameEvent::EVENT_NAME
+            );
 
-                if ($group) {
-                    $response = $this->dataTypeHydrator->hydrateClassificationStoreKeyName(
-                        groupName: $group->getName(),
-                        keyName: $keyGroupRelation->getName()
-                    );
-
-                    $this->eventDispatcher->dispatch(
-                        new ClassificationStoreKeyNameEvent($response),
-                        ClassificationStoreKeyNameEvent::EVENT_NAME
-                    );
-
-                    return $response;
-                }
-            }
+            return $response;
         }
 
         $response = $this->dataTypeHydrator->hydrateClassificationStoreKeyName($keyId);
@@ -163,6 +185,50 @@ final readonly class DataTypeService implements DataTypeServiceInterface
         );
 
         return $response;
+    }
+
+    private function isKeyLocalized(int $keyId, ?string $classId, ?string $fieldName): ?bool
+    {
+        $field = $classId !== null && $fieldName !== null
+            ? DataObject\ClassDefinition::getById($classId)?->getFieldDefinition($fieldName)
+            : null;
+
+        return $field instanceof DataObject\ClassDefinition\Data\Classificationstore
+            ? $this->localizationResolver->isKeyLocalized($keyId, $field)
+            : null;
+    }
+
+    private function findKeyGroupRelation(
+        string $keyId,
+        ?string $classId,
+        ?string $fieldName
+    ): ?DataObject\Classificationstore\KeyGroupRelation {
+        $reference = ClassificationstoreKeyReference::parse($keyId);
+        if (!$reference instanceof ClassificationstoreKeyReference) {
+            return null;
+        }
+
+        if (!$reference->isIdentifier) {
+            return DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId(
+                (int) $reference->group,
+                (int) $reference->key
+            );
+        }
+
+        $field = $classId !== null && $fieldName !== null
+            ? DataObject\ClassDefinition::getById($classId)?->getFieldDefinition($fieldName)
+            : null;
+        if (!$field instanceof DataObject\ClassDefinition\Data\Classificationstore) {
+            return null;
+        }
+
+        $storeId = (int) $field->getStoreId();
+        $group = DataObject\Classificationstore\GroupConfig::getByIdentifier($reference->group, $storeId);
+        $key = DataObject\Classificationstore\KeyConfig::getByIdentifier($reference->key, $storeId);
+
+        return $group && $key
+            ? DataObject\Classificationstore\KeyGroupRelation::getByGroupAndKeyId($group->getId(), $key->getId())
+            : null;
     }
 
     public function loadUnitData(): UnitDataResponse

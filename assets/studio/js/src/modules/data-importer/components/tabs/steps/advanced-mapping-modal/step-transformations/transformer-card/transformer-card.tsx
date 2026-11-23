@@ -14,6 +14,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useSortable } from '@dnd-kit/sortable'
 import { type TransformationPipelineItem } from '../../../../../../types'
 import { useStyles } from './transformer-card.styles'
+import { useConfigEditorReadOnly } from '../../../../../config-editor-mode'
 
 export interface PipelineItemWithId extends TransformationPipelineItem {
   _id: string
@@ -38,19 +39,22 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
     removeTooltip
   } = props
   const { styles } = useStyles()
+  const readOnly = useConfigEditorReadOnly()
 
   const cardLabel = (
     <Flex
       align="center"
       gap="mini"
     >
-      <Flex
-        align="center"
-        className={ styles.dragHandle }
-        { ...dragHandleProps }
-      >
-        <span className={ styles.dragHandleIcon }>{ '⠿' }</span>
-      </Flex>
+      { !readOnly && (
+        <Flex
+          align="center"
+          className={ styles.dragHandle }
+          { ...dragHandleProps }
+        >
+          <span className={ styles.dragHandleIcon }>{ '⠿' }</span>
+        </Flex>
+      ) }
 
       <span className={ styles.transformerLabel }>
         { label }
@@ -74,7 +78,7 @@ export const CardContent = (props: CardContentProps): React.JSX.Element => {
       <CollapseItem
         bordered={ false }
         defaultActive
-        extra={ removeButton }
+        extra={ readOnly ? undefined : removeButton }
         hasContentSeparator={ false }
         label={ cardLabel }
         size="small"
@@ -104,6 +108,7 @@ export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
     onRemove,
     removeTooltip
   } = props
+  const readOnly = useConfigEditorReadOnly()
 
   const {
     attributes,
@@ -112,7 +117,7 @@ export const SortableCard = (props: SortableCardProps): React.JSX.Element => {
     transform,
     transition,
     isDragging
-  } = useSortable({ id: item._id })
+  } = useSortable({ id: item._id, disabled: readOnly })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),

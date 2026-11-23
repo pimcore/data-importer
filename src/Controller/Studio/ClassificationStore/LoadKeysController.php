@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\ClassificationStoreKeysResponse;
 use Pimcore\Bundle\DataImporterBundle\Service\Studio\DataTypeServiceInterface;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
 use Pimcore\Bundle\StudioBackendBundle\Controller\AbstractApiController;
+use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Query\BoolParameter;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Query\IntParameter;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Parameter\Query\TextFieldParameter;
 use Pimcore\Bundle\StudioBackendBundle\OpenApi\Attribute\Response\DefaultResponses;
@@ -106,6 +107,12 @@ final class LoadKeysController extends AbstractApiController
         description: 'JSON-encoded column filter configuration',
         required: false,
         example: null
+    )]
+    #[BoolParameter(
+        name: 'loadAdvancedRelations',
+        description: 'Whether to also offer keys of the advanced relation types',
+        required: false,
+        example: false
     )]
     #[SuccessResponse(
         description: 'bundle_data_importer_classificationstore_load_keys_success_response',

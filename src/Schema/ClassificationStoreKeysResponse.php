@@ -53,6 +53,13 @@ final class ClassificationStoreKeysResponse implements AdditionalAttributesInter
                         type: 'string',
                         example: '1-5'
                     ),
+                    new Property(
+                        property: 'identifier',
+                        description: 'Combined group-key identifier, null when the group or the key has none',
+                        type: 'string',
+                        example: 'dimensions:width',
+                        nullable: true
+                    ),
                     new Property(property: 'sorter', description: 'Sort order', type: 'integer', example: 0),
                     new Property(
                         property: 'groupName',

@@ -93,6 +93,57 @@ describe('ChangeList', () => {
     })
   })
 
+  it('says what a changed value was and becomes, and how much a list grew or shrank', () => {
+    const changed = (address: string, current: unknown, proposed: unknown, status: ConfigChange['status'] = 'changed'): ConfigChange => ({
+      address, unbound: false, label: address, section: 'dataSource', status, current, proposed
+    })
+    render(
+      <ChangeList
+        { ...props }
+        groups={ [group('dataSource',
+          changed('loaderConfig.settings.host', 'old.example.com', 'new.example.com'),
+          changed('loaderConfig.settings.port', 21, 22),
+          changed('loaderConfig.settings.list', ['a', 'b'], ['a']),
+          changed('loaderConfig.settings.same', ['a', 'b'], ['a', 'c']),
+          changed('loaderConfig.settings.obj', { a: 1 }, { a: 2 }),
+          changed('loaderConfig.settings.added', undefined, 'x', 'added')
+        )] }
+        mappings={ [] }
+      />
+    )
+
+    expect(last().sections[0].rows.map((row: any) => row.note)).toEqual([
+      'old.example.com → new.example.com',
+      '21 → 22',
+      '2 → 1',
+      undefined,
+      undefined,
+      undefined
+    ])
+  })
+
+  it('never prints a secret, only that it changed', () => {
+    const changed = (address: string, current: unknown, proposed: unknown): ConfigChange => ({
+      address, unbound: false, label: address, section: 'dataSource', status: 'changed', current, proposed
+    })
+    render(
+      <ChangeList
+        { ...props }
+        groups={ [group('dataSource',
+          changed('loaderConfig.settings.password', 's3cret', 'n3w'),
+          changed('loaderConfig.settings.apiKey', 'key-old', 'key-new'),
+          changed('loaderConfig.settings.clientSecret', 'a', 'b'),
+          changed('loaderConfig.settings.accessToken', 'c', 'd')
+        )] }
+        mappings={ [] }
+      />
+    )
+
+    const rows = last().sections[0].rows
+    expect(rows.map((row: any) => row.note)).toEqual([undefined, undefined, undefined, undefined])
+    expect(rows.map((row: any) => row.status)).toEqual(['changed', 'changed', 'changed', 'changed'])
+  })
+
   it('puts the mapping rows last without a resolver change, and leaves them out when there are none', () => {
     render(
       <ChangeList

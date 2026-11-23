@@ -21,6 +21,7 @@ use Pimcore\Bundle\DataImporterBundle\Schema\CalculateTransformationResultTypePa
 use Pimcore\Bundle\DataImporterBundle\Schema\TransformationResultParameters;
 use Pimcore\Bundle\DataImporterBundle\Tests\UnitTester;
 use Pimcore\Bundle\DataImporterBundle\Utils\Constants\PermissionConstants;
+use Pimcore\Bundle\StudioBackendBundle\Element\Hydrator\ValidationErrorHydratorInterface;
 use Pimcore\Bundle\StudioBackendBundle\EventSubscriber\ApiExceptionSubscriber;
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\ForbiddenException;
 use Pimcore\Model\User;
@@ -323,7 +324,11 @@ class PostedMappingTransformationTest extends Unit
             HttpKernelInterface::MAIN_REQUEST,
             $exception
         );
-        (new ApiExceptionSubscriber('dev', self::STUDIO_API))->onKernelException($event);
+        (new ApiExceptionSubscriber(
+            'dev',
+            self::STUDIO_API,
+            $this->createStub(ValidationErrorHydratorInterface::class)
+        ))->onKernelException($event);
 
         $response = $event->getResponse();
         $this->assertNotNull($response, 'Studio answers with its JSON error, not the framework error page');
