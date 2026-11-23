@@ -59,6 +59,7 @@ const useStyles = createStyles(({ token, css }) => ({
   detail: css`
     flex: 1 1 0;
     min-width: 0;
+    && .ant-alert-warning :is(.ant-alert-message, .ant-alert-title) { color: ${token.Colors.Brand.Warning.colorWarningText}; }
   `,
   card: css`
     cursor: pointer;

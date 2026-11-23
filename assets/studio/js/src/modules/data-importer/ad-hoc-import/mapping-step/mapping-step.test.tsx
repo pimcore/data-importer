@@ -225,8 +225,16 @@ describe('the mapping step', () => {
 
     expect(screen.queryByRole('button', { name: 'Field for Artikelnr' })).toBeNull()
     expect(within(matchRowOf('Artikelnr')).getByText('SKU')).toBeTruthy()
-    expect(within(matchRowOf('Artikelnr')).getByText('Finds the objects')).toBeTruthy()
+    expect(within(matchRowOf('Artikelnr')).queryByText('Finds the objects')).toBeNull()
     expect(screen.queryByRole('button', { name: "Don't import Artikelnr" })).toBeNull()
+  })
+
+  it('offers Don\'t import on a column as a text button with its eye-off icon', () => {
+    renderStep()
+
+    const skip = within(rowOf('Preis')).getByRole('button', { name: "Don't import Preis" })
+    expect(skip.textContent).toBe('Skip')
+    expect(skip.querySelector('[data-icon="eye-off"]')).not.toBeNull()
   })
 
   it('shows the object ID for a match column when matching by it', () => {
@@ -375,6 +383,8 @@ describe('the mapping step', () => {
     it('takes every suggestion waiting, marked as automatic', () => {
       renderStep()
 
+      // the notice's one action, at the default size
+      expect(screen.getByRole('button', { name: 'Use all 1 suggestions' }).getAttribute('data-size')).toBeNull()
       fireEvent.click(screen.getByRole('button', { name: 'Use all 1 suggestions' }))
 
       expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')

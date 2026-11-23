@@ -99,14 +99,16 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
   const field = fields.find(({ key }) => key === choice?.field)
   const openLabel = t(`${MAPPING}.field-of`, { column: label, interpolation: { escapeValue: false } })
 
+  // the column that finds the objects reads like any other field
   if (isMatch) {
     return (
       <Flex
         align="center"
         gap="small"
       >
+        <span className={ styles.fieldIcon }><Icon value={ iconOf(field) } /></span>
         <span className={ styles.fieldName }>{ field?.title ?? t(`${MAPPING}.object-id`) }</span>
-        <Tag>{ t(`${MAPPING}.match`) }</Tag>
+        <span className={ styles.crumb }>{ field?.group.join(' › ') }</span>
       </Flex>
     )
   }
@@ -283,6 +285,7 @@ export const MappingRowView = ({
         { !isMatch && (
           <Button
             aria-label={ t(`${MAPPING}.skip-column`, { column: label, interpolation: { escapeValue: false } }) }
+            icon={ <Icon value="eye-off" /> }
             onClick={ () => { onSkip(column) } }
             type="text"
           >

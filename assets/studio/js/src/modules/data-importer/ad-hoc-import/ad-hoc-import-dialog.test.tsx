@@ -1077,7 +1077,9 @@ describe('the mapping step', () => {
 
     expect(mockLoadMapping).toHaveBeenCalledTimes(2)
     expect(screen.queryByRole('button', { name: /Not imported \(1\)/ })).toBeNull()
-    expect(screen.getByText('Finds the objects')).toBeTruthy()
+    // the column that finds the objects has no field to change and cannot be left out
+    expect(screen.queryByRole('button', { name: 'Field for Bezeichnung' })).toBeNull()
+    expect(screen.queryByRole('button', { name: "Don't import Bezeichnung" })).toBeNull()
   })
 
   describe('of a workbook read again from another sheet', () => {

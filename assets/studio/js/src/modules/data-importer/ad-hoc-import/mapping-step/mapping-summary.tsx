@@ -126,7 +126,6 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
           { pending > 0 && (
             <Button
               onClick={ onUseSuggestions }
-              size="small"
               type="primary"
             >
               { t(`${MAPPING}.use-all-suggestions`, { count: pending }) }
