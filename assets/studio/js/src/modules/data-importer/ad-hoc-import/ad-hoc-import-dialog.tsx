@@ -66,11 +66,12 @@ const useStyles = createStyles(({ token, css }) => ({
       max-height: calc(100vh - ${2 * token.marginLG}px);
     }
 
-    /* the scrolling body spans the content's padding (width auto, antd's 100 % cut it short), so the dividers run edge to edge */
+    /* the scrolling body spans the content's padding (stretched, as the footer: the content does not stretch its items), so the dividers run edge to edge */
     && .ant-modal-body {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
+      align-self: stretch;
       width: auto;
       min-height: 0;
       margin: 0 -${token.paddingLG}px;
