@@ -49,9 +49,8 @@ jest.mock('./tabs/execution-tab', () => ({ ExecutionTab: () => null }))
 jest.mock('./tabs/import-logs-tab', () => ({ ImportLogsTab: () => null }))
 jest.mock('./config-editor-shell.styles', () => ({ useEditorShellStyles: () => ({ styles: {} }) }))
 
-const editor = (changedTabs?: string[], isWriteable = false): React.JSX.Element => (
+const editor = (isWriteable = false): React.JSX.Element => (
   <DataImporterConfigEditor
-    changedTabs={ changedTabs }
     configName="car-import"
     configuration={ {} as any }
     isWriteable={ isWriteable }
@@ -65,19 +64,11 @@ afterEach(() => {
 })
 
 describe('DataImporterConfigEditor', () => {
-  it('puts a change dot on each tab that holds a change', () => {
-    render(editor(['data-setup', 'permissions']))
+  // a review names its changes in its own list; a tab carries only its label
+  it('puts no change dot on any tab', () => {
+    const { container } = render(editor())
 
-    expect(screen.getByTestId('tab-changed-data-setup').textContent).toBe('data-importer.tabs.data-setup')
-    expect(screen.getByTestId('tab-changed-permissions')).toBeTruthy()
-    expect(screen.queryByTestId('tab-changed-general')).toBeNull()
-    expect(screen.getByTestId('tab-changed-data-setup').querySelector('.ant-badge-dot')).not.toBeNull()
-  })
-
-  it('marks no tab without changes', () => {
-    render(editor())
-
-    expect(screen.queryAllByTestId(/^tab-changed-/)).toHaveLength(0)
+    expect(container.querySelector('.ant-badge')).toBeNull()
     expect(screen.getByText('data-importer.tabs.general')).toBeTruthy()
   })
 
@@ -89,7 +80,7 @@ describe('DataImporterConfigEditor', () => {
   })
 
   it('leaves the form editable when writeable', () => {
-    render(editor(undefined, true))
+    render(editor(true))
 
     expect(mockFormProps[mockFormProps.length - 1].disabled).toBe(false)
     expect(screen.getByTestId('data-setup-read-only').textContent).toBe('false')

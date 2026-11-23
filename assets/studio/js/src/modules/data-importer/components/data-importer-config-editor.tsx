@@ -9,7 +9,6 @@
  */
 
 import React from 'react'
-import { Badge } from 'antd'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { type DataHubAdapterDetailViewProps, GeneralTab, PermissionsTab, useDetailView } from '@pimcore/data-hub'
 import { Content, ContentLayout, FormKit, Tabs } from '@pimcore/studio-ui-bundle/components'
@@ -62,8 +61,6 @@ export interface DataImporterConfigEditorProps {
   /** drive the Data Setup step from outside */
   activeStep?: number
   onStepChange?: (step: number) => void
-  /** the tabs a review marks as holding a change */
-  changedTabs?: string[]
 }
 
 /** the tab keys, so a caller can address one without repeating the strings */
@@ -94,8 +91,7 @@ export const DataImporterConfigEditor = ({
   activeTab,
   onTabChange,
   activeStep,
-  onStepChange,
-  changedTabs = []
+  onStepChange
 }: DataImporterConfigEditorProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useEditorShellStyles()
@@ -162,16 +158,6 @@ export const DataImporterConfigEditor = ({
   // navigate to a field. It holds no other logic, so nothing is lost by composing here.
   const wrappedTabs = tabs.map((tab) => ({
     ...tab,
-    // gold is the colour Studio marks a changed field with
-    label: changedTabs.includes(tab.key)
-      ? (
-        <span data-testid={ `tab-changed-${tab.key}` }><Badge
-          color='gold'
-          dot
-          offset={ [6, 0] }
-                                                       >{ tab.label }</Badge></span>
-        )
-      : tab.label,
     children: tab.fullHeight === true ? tab.children : <Content padded>{ tab.children }</Content>
   }))
 
