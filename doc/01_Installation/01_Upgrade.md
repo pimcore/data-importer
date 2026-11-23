@@ -7,100 +7,61 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.4.0
 
-- Added: the `As Numeric Range`, `Quantity Value Range` and `As External Image` operators, and a `languagemultiselect`
-  field or key is now offered for an `array` result type.
-- [Classification Store] Changed: the key picker offers no key at all for a result type no key type can hold - it used
+- Added: the `As Numeric Range`, `Quantity Value Range` and `As External Image` operators, and a
+  `languagemultiselect` field or key is now offered for an `array` result type.
+- [Classification Store] Changed: the key picker offers no key for a result type no key type can hold, where it used
   to offer every key in the store for `dateArray`, `quantityValueArray` and `inputQuantityValueArray`.
-- [Classification Store] Added: a key of either advanced relation type can be imported; it is offered for `assetArray`
-  and `dataObjectArray` when the key listing is asked for the advanced relations, and its value is written as relation
-  metadata.
-- `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
-  `instanceof ImportAsset` no longer matches the **Load Asset** operator.
-- [Classification Store] Added: `Write If Source Is Empty` on both classification store data targets, in force on a
-  mapping entry once its target type has been re-selected or the control changed - off by default on
-  `Classification Store Batch`, on by default on `Classification Store`.
-- [Classification Store] A `quantityValue` or `inputQuantityValue` key inside a plain `array` entry of
-  `Classification Store Batch` is now written as a quantity value model object instead of the raw source value, so such
-  a key imports where it previously stored nothing usable.
-- [Classification Store] Changed: the key reference of a classification store mapping entry is now saved as identifiers,
-  and a key an entry cannot build is warned about instead of silently dropped.
+- [Classification Store] Added: a key of either advanced relation type can be imported, offered for `assetArray` and
+  `dataObjectArray`, and its value is written as relation metadata.
+- [Classification Store] Added: `Write If Source Is Empty` on both classification store data targets — off by default
+  on `Classification Store Batch`, on by default on `Classification Store`. It takes effect once the entry's target
+  type is re-selected or the control is changed.
+- [Classification Store] A `quantityValue` or `inputQuantityValue` key in a plain `array` entry of
+  `Classification Store Batch` is written as a quantity value object instead of the raw source value, so such a key
+  now imports.
+- [Classification Store] Changed: a mapping entry's key reference is saved as identifiers, and a key an entry cannot
+  build is warned about instead of silently dropped.
 - [Classification Store] A key reference that is neither `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` nor two whole integers
-  now fails the entry instead of addressing a key it never named: `1-2-3` and `1.5-2` both used to import into group 1
-  key 2.
+  now fails the entry instead of addressing a key it never named — `1-2-3` and `1.5-2` both used to import into
+  group 1 key 2.
 - [Classification Store] A mapping entry writing to a non-localized classification store field no longer fails with a
   `TypeError`; it writes to the default language, unless the key itself is localized.
-- [Classification Store] Changed: both classification store data targets write a key under the configured language where
-  that key is localized and without one where it is not, as the object editor reads it; the **Language** control follows
-  the keys' own flags rather than the field's alone.
-
-## Upgrade to 2026.3.3
+- [Classification Store] Changed: both data targets write a key under the configured language where the key is
+  localized and without one where it is not, as the object editor reads it. The **Language** control follows the
+  keys' own flags rather than the field's.
 
 ### Large XLSX Imports Read the Sheet in Row Windows, and Formula Cells Prefer Cached Results
 
-- **A formula cell can now import a different value, on every XLSX import, including files below the threshold.**
-  This is a change of value, not only of speed, and nothing in the import log announces it. Until now the
-  interpreter read the sheet with `Worksheet::toArray()`, which **recalculates** every formula while reading. It
-  now reads cell by cell and prefers the result **cached in the file** (`Cell::getOldCalculatedValue()`), which is
-  the rule the import preview has always applied and is now the rule on both reads.
-  Where the cached result is stale, the old import brought in the freshly recalculated value and the new one brings
-  in the stale cached value instead. A file carries a stale cached result when its formulas were written
-  programmatically, when the spreadsheet application had calculation set to manual, or when a generator wrote the
-  formulas together with results it did not recompute. Volatile formulas (`TODAY()`, `NOW()`, `RAND()`) are stale by
-  definition from the moment the file was saved.
-  Before the first import after the upgrade, open and save such files once in a spreadsheet application with
-  automatic calculation on, so the cached results match the formulas. A file whose formula cells carry no cached
-  result at all is unaffected: those are calculated, and each one is logged - see the next entry.
-- A formula cell without a cached result is calculated on what is loaded at the time - the whole workbook below the
-  threshold, the configured sheet and the rows of the current window above it - and logged as a warning naming the
-  sheet and the cell, visible in the Import Logs tab. At most 50 such cells are listed per import run, followed by
-  one line stating how many further cells were affected.
-- **An import run does not clean up when it imported such a cell empty, and a run above the threshold does not
-  clean up when it had to calculate such a cell at all - even with cleanup switched on.** Above the threshold the
-  window cannot reach another sheet or a row outside itself, so a formula reaching there answers `#REF!` or a
-  zero; below it such a formula resolves against the whole workbook, and only one phpspreadsheet cannot calculate
-  at all leaves the cell empty. In those cases the row can reach the queue under an identifier the source does not
-  hold, and cleanup would read the element that identifier belongs to as removed from the source and delete or
-  unpublish it. Such a run therefore imports the rows as usual, logs an error naming the reason in the Import Logs
-  tab, and leaves every existing element alone. **A run below the threshold whose formulas all resolved cleans up
-  as before** - an uncached formula on its own does not switch cleanup off, so do not rely on one to protect
-  existing elements. Fix the formula or give the file cached results, and the next run cleans up again.
-- **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate; it continues with the cell
-  empty.** Until now such a formula threw out of the interpreter and failed the whole import, so a file that used
-  to fail now imports. The cell arrives empty, is named in the warning described above and counts toward the same
-  50, so it is visible in the Import Logs tab rather than silent - but a row that previously stopped the run now
-  reaches the queue with a gap in it. If an import of yours relied on that failure to catch a broken source file,
-  check the import log for these warnings instead. Windowing is why this changed: a formula referencing rows
-  outside the current window is routine, so what used to be a rare abort would otherwise have become a likely one.
-  A formula that merely evaluates to `#NAME?` or `#VALUE!` is unaffected - those are values and were always
-  imported as that text.
-- Above `pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows times columns, `200000`
-  by default) the XLSX interpreter no longer loads the whole workbook before creating queue items. It reads the
-  sheet in row windows, which lowers peak memory: a generated 100,000-row file of five columns measured 334 MB
-  before and 117 MB after. A file at or below the threshold is loaded as a whole as before, so imports that already
-  fit in memory keep the faster read. See [Installation](./README.md) for the setting.
-- Interpreting an XLSX above the threshold takes several times longer, because each window reads the file again:
-  interpreting the same 100,000-row file of five columns went from **9.3 s to 37.7 s of CPU time** (`getrusage()`,
-  user plus system), a factor of four. These are CPU figures rather than wall clock on purpose - the wall clock of
-  the same measurement varied by up to a factor of two between runs on one machine under other load, while its CPU
-  time stayed within about a tenth, so the wall clock is not reproducible enough to quote. Expect the factor rather
-  than the seconds, which depend on the machine; the memory figures, by contrast, reproduce exactly. The
-  interpretation step only creates the queue items, so this shows up as a slower start of a large import, not as a
-  slower import overall. Raise the threshold to keep a file on the faster read, lower it when an import exhausts
-  the memory limit.
-- Memory does not become flat above the threshold, it only drops: phpspreadsheet parses the whole sheet XML before
-  a row window is applied to it, which for the 100,000-row file above costs 72 MB on its own.
-- Below the threshold the file is still read in one pass, and it needs slightly less memory than before: 41 MB
-  instead of 45 MB on a 10,000-row file, 306 MB instead of 334 MB on a 100,000-row one. What it costs instead is
-  one extra pass over the file to read the sheet dimensions, not the per-cell formula rule. That pass is a fixed
-  cost, so measured against the pre-change read it is no measurable extra time on a 100,000-row file and about a
-  third more on a 10,000-row one - a fraction of a second either way, since that file interprets in about one.
-- An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields. Such a file now
-  creates no queue items at all.
-- An import whose configured sheet name is absent from the file now fails with the same
-  `InvalidConfigurationException` the preview already raised, instead of the raw phpspreadsheet exception. The
-  import failed before as well, only the message differs.
-- `PreviewRowsReadFilter` was renamed to `RowsReadFilter`, because both the preview and the import use it now. The
-  class is `@internal` and `final`.
+- **A formula cell can import a different value than before, on every XLSX import.** The interpreter now prefers the
+  result cached in the file, as the preview always has, instead of recalculating it. Where the cached result is
+  stale, the stale value is imported.
+- Open and save affected files once with automatic calculation on before the first import. Volatile formulas
+  (`TODAY()`, `NOW()`, `RAND()`) are stale from the moment the file was saved.
+- A formula cell with no cached result is calculated and logged as a warning naming the sheet and the cell, in the
+  Import Logs tab. At most 50 are listed per run, then a count of the rest.
+- **Cleanup is skipped for a run that imported such a cell empty, and above the threshold for any run that had to
+  calculate one** — even with cleanup on. The row can reach the queue under an identifier the source does not hold,
+  and cleanup would delete the element that identifier belongs to. The run imports as usual and logs the reason.
+- A run below the threshold whose formulas all resolved cleans up as before, so do not rely on an uncached formula
+  to protect existing elements.
+- **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate**; the cell arrives empty and is
+  named in that warning. A file that used to fail now imports, so check the import log rather than relying on the
+  failure.
+- Above `pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows × columns, `200000` by
+  default) the interpreter reads the sheet in row windows instead of loading the whole workbook. Peak memory on a
+  100,000-row, five-column file went from 334 MB to 117 MB. See [Installation](./README.md).
+- Interpreting above the threshold costs about four times the CPU time on that file (9.3 s to 37.7 s), because each
+  window reads the file again. It is the queue-item step, so a large import starts slower rather than running
+  slower. Raise the threshold to keep a file on the faster read, lower it when an import exhausts memory.
+- Memory above the threshold drops rather than flattens: the sheet XML is parsed in full before a window is applied
+  to it, 72 MB on that file.
+- Below the threshold the file is still read in one pass and needs slightly less memory than before, at the cost of
+  one extra pass to read the sheet dimensions.
+- An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields; it creates none.
+- An import whose configured sheet name is absent now fails with the same `InvalidConfigurationException` the
+  preview raised, instead of the raw phpspreadsheet exception.
+- `PreviewRowsReadFilter` was renamed to `RowsReadFilter`, because both the preview and the import use it. The class
+  is `@internal` and `final`.
 
 ### XML Values Keep Their Text When Typing Would Change Them
 
