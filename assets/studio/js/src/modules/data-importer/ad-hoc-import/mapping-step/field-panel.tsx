@@ -100,12 +100,11 @@ const useStyles = createStyles(({ token, css }) => ({
       cursor: not-allowed;
     }
 
-    /* a field another column fills ends in a green dot */
+    /* a field another column fills ends in a green dot, on the search field's right edge as in the design */
     .ant-tree .ant-tree-treenode-disabled .ant-tree-node-content-wrapper::after {
       content: '';
       flex: 0 0 6px;
       height: 6px;
-      margin-inline-end: ${token.marginSM}px;
       border-radius: 50%;
       background: ${token.colorSuccess};
     }
