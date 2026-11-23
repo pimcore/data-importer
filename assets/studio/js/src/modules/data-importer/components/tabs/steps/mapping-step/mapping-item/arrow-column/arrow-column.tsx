@@ -43,11 +43,7 @@ export const ArrowColumn = (props: ArrowColumnProps): React.JSX.Element => {
             <Icon value="transformation" />
           </span>
         ) }
-        { (isWarningState || isInProgressState) && (
-          <span className={ styles.arrowWarningBadge }>
-            <Icon value="warning-circle" />
-          </span>
-        ) }
+        { /* the warning icon sits in the mapping's title */ }
         { arrowSvg }
       </div>
     )
