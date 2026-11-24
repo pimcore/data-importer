@@ -19,6 +19,9 @@ import { PREVIEW_REQUEST_DEBOUNCE_MS, useMappingPreviewMode } from './mapping-pr
 import { PreviewModeLine } from './preview-mode-line'
 import { RECORD_INPUT_DEBOUNCE_MS } from './record-number-field'
 
+// the tests wait out the real debounces (up to about 2.4 s each), which leaves the 5 s default too little under load
+jest.setTimeout(15000)
+
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => options === undefined ? key : `${key}(${Object.values(options).join(',')})`
@@ -182,14 +185,6 @@ describe('Record number field in the preview line', () => {
 
     await waitFor(() => { expect(shownValue()).toBe('Product 7') })
     expect(askedSince(before)).toEqual([6])
-  })
-
-  it('AC1: Preview item puts the cursor into the record field', async () => {
-    await openPreview()
-
-    fireEvent.click(screen.getByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' }))
-
-    expect(document.activeElement).toBe(field())
   })
 
   it('AC2: typing quickly sends one request, for the number typed last', async () => {

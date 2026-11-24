@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useId } from 'react'
+import React from 'react'
 import { Button, Switch, Text, Tooltip } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { useMappingSource } from '../../mapping-source/mapping-source'
@@ -24,7 +24,7 @@ export interface PreviewModeLineProps {
   onCollapseAll: () => void
 }
 
-const SelectedRecord = ({ fieldId }: { fieldId: string }): React.JSX.Element => {
+const SelectedRecord = (): React.JSX.Element => {
   const { styles } = useStyles()
   const { record } = useMappingPreviewMode()
   // the record is told apart by its first source column
@@ -33,7 +33,7 @@ const SelectedRecord = ({ fieldId }: { fieldId: string }): React.JSX.Element => 
   return (
     <>
       <span className={ styles.recordNumber }>
-        <RecordNumberField id={ fieldId } />
+        <RecordNumberField />
       </span>
       { value !== undefined && value !== '' && (
         // only the value gives way in a narrow panel; the number and its buttons keep their width
@@ -97,15 +97,6 @@ export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }
   const { t } = useTranslation()
   const { styles } = useStyles()
   const { enabled, setEnabled, noPreviewData, loadError, previewError } = useMappingPreviewMode()
-  const recordFieldId = useId()
-
-  const focusRecordField = (): void => {
-    const field = document.getElementById(recordFieldId)
-    if (field instanceof HTMLInputElement) {
-      field.focus()
-      field.select()
-    }
-  }
 
   return (
     <div
@@ -135,11 +126,7 @@ export const PreviewModeLine = ({ showCollapseAll, allCollapsed, onCollapseAll }
 
       { enabled && (
         <>
-          <SelectedRecord fieldId={ recordFieldId } />
-
-          <Button onClick={ focusRecordField }>
-            { t('data-importer.mapping.preview-mode.preview-item') }
-          </Button>
+          <SelectedRecord />
 
           { previewError !== null && (
             <Text

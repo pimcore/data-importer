@@ -213,7 +213,6 @@ data-importer.mapping.preview-mode.no-preview-data: Upload of kopieer een voorbe
 data-importer.mapping.preview-mode.record: 'Record {{number}}'
 data-importer.mapping.preview-mode.record-label: Record
 data-importer.mapping.preview-mode.of-records: 'van {{total}}'
-data-importer.mapping.preview-mode.preview-item: Voorbeelditem
 data-importer.mapping.preview-mode.picker.select: Selecteren
 data-importer.mapping.preview-mode.picker.cancel: Annuleren
 data-importer.mapping.preview-mode.preview: Voorbeeld

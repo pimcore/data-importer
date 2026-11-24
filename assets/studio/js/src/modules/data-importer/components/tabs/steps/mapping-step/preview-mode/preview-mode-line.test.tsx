@@ -206,7 +206,7 @@ describe('Preview mode line', () => {
     expect(screen.getByTestId('record-number').textContent).toBe('0')
   })
 
-  it('AC3: turning preview mode on shows the selected record, its full value in a tooltip and Preview item', async () => {
+  it('AC3: turning preview mode on shows the selected record, its full value in a tooltip', async () => {
     render(<PostedHost />)
     await loaded()
 
@@ -215,7 +215,6 @@ describe('Preview mode line', () => {
     await waitFor(() => { expect(screen.getByText('A-1 with a long article number', { selector: '[data-record-value]' })).toBeTruthy() })
     expect(recordField().value).toBe('1')
     expect(screen.getByRole('tooltip').textContent).toBe('A-1 with a long article number')
-    expect(screen.getByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' })).toBeTruthy()
 
     await afterDebounce()
     const request = JSON.parse(screen.getByTestId('preview-request').textContent ?? 'null')
@@ -246,7 +245,7 @@ describe('Preview mode line', () => {
     render(<PostedHost />)
     await loaded()
     fireEvent.click(previewSwitch())
-    await screen.findByRole('button', { name: 'data-importer.mapping.preview-mode.preview-item' })
+    await screen.findByRole('textbox', { name: 'data-importer.mapping.preview-mode.record-label' })
 
     fireEvent.click(screen.getByRole('button', { name: 'set error' }))
     expect(screen.getAllByText('The mapping could not be run')).toHaveLength(1)

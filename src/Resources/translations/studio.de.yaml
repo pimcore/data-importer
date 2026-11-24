@@ -213,7 +213,6 @@ data-importer.mapping.preview-mode.no-preview-data: Laden Sie eine Vorschaudatei
 data-importer.mapping.preview-mode.record: 'Datensatz {{number}}'
 data-importer.mapping.preview-mode.record-label: Datensatz
 data-importer.mapping.preview-mode.of-records: 'von {{total}}'
-data-importer.mapping.preview-mode.preview-item: Vorschau-Element
 data-importer.mapping.preview-mode.picker.select: Auswählen
 data-importer.mapping.preview-mode.picker.cancel: Abbrechen
 data-importer.mapping.preview-mode.preview: Vorschau
