@@ -77,14 +77,16 @@ final class UploadPreviewController extends AbstractApiController
             ),
             new Property(
                 property: 'previewScope',
-                description: 'A change set under review: its preview data is kept beside the live '
-                    . 'configuration\'s, and a configuration that is only proposed so far is accepted',
-                type: 'string'
+                description: 'Change set under review (UUID): previews are kept apart '
+                    . 'and a proposed-only config is accepted',
+                type: 'string',
+                example: '01930f5e-7a3c-7b2d-9e4f-1a2b3c4d5e6f'
             ),
             new Property(
                 property: 'previewContext',
                 description: 'The context the change set is kept in, when its author keeps it in one',
-                type: 'string'
+                type: 'string',
+                example: 'author-context-1'
             ),
         ],
         ['file']

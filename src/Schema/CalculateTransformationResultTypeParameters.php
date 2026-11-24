@@ -48,15 +48,17 @@ final readonly class CalculateTransformationResultTypeParameters
         )]
         private array $currentConfig,
         #[Property(
-            description: 'A change set under review: its preview data is kept beside the live '
-                . 'configuration\'s, and a configuration that is only proposed so far is accepted',
+            description: 'Change set under review (UUID): previews are kept apart '
+                . 'and a proposed-only config is accepted',
             type: 'string',
+            example: '01930f5e-7a3c-7b2d-9e4f-1a2b3c4d5e6f',
         )]
         // a plain string, not ?string: the Studio codegen turns a nullable into `any`
         private string $previewScope = '',
         #[Property(
             description: 'The context the change set is kept in, when its author keeps it in one',
             type: 'string',
+            example: 'author-context-1',
         )]
         private string $previewContext = '',
     ) {
