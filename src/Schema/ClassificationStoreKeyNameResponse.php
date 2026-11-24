@@ -53,6 +53,7 @@ final class ClassificationStoreKeyNameResponse implements AdditionalAttributesIn
         #[Property(
             description: 'Whether the key is kept per language in the field it was asked for',
             type: 'boolean',
+            example: true,
             nullable: true
         )]
         private readonly ?bool $localized = null,
