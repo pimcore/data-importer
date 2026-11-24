@@ -46,7 +46,7 @@ final class ImporterBlueprints
         return new MappingConfigurationFactory(
             new MappingConfiguration(),
             ['trim' => self::blueprint(Trim::class)],
-            ['direct' => new Direct(), 'classificationstore' => new Classificationstore()],
+            ['direct' => new Direct(), 'classificationstore' => self::blueprint(Classificationstore::class)],
         );
     }
 

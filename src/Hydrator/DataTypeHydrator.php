@@ -36,12 +36,16 @@ final readonly class DataTypeHydrator implements DataTypeHydratorInterface
     public function hydrateClassificationStoreKeyName(
         ?string $keyId = null,
         ?string $groupName = null,
-        ?string $keyName = null
+        ?string $keyName = null,
+        array $variants = [],
+        ?bool $localized = null
     ): ClassificationStoreKeyNameResponse {
         return new ClassificationStoreKeyNameResponse(
             $keyId,
             $groupName,
-            $keyName
+            $keyName,
+            $variants,
+            $localized
         );
     }
 

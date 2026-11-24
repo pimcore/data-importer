@@ -126,6 +126,27 @@ These optional settings tune the messenger processing:
 | `worker_item_count` | `200` | Number of items imported per worker message. |
 | `worker_count_lifetime` | `1800` | Lifetime in seconds of the tmp store entry holding the current worker count. After it expires, the value is cleared. |
 
+## XLSX Interpreter
+
+An XLSX sheet is loaded as a whole, which is the fastest way to read it but holds every cell in memory at once. Above
+a configurable cell count the interpreter switches to reading the sheet in row windows instead: that lowers peak
+memory, but the file is parsed once per window and a large import therefore takes considerably longer to interpret.
+
+```yml
+pimcore_data_importer:
+    xlsx_interpreter:
+        windowed_read_cell_threshold: 200000
+```
+
+| Setting | Default | Description |
+|---|---|---|
+| `windowed_read_cell_threshold` | `200000` | Cell count (rows times columns) above which the sheet is read in row windows instead of being loaded as a whole. Lower it when large imports exhaust the memory limit, raise it to keep more imports on the faster whole-workbook read. |
+
+The default is the measured point where the whole-workbook read still fits a common memory limit: a generated sheet
+of 200,000 cells peaked at 132 MB, one of 500,000 cells at 306 MB. Both reads produce exactly the same rows, so the
+setting only trades memory against interpretation time. See
+[File Formats](../03_Configuration/02_File_Formats.md) for the measured figures and what the windowed read cannot do.
+
 ## Scheduled Imports
 
 An import configuration can run on a cron expression or at a fixed date and time. The

@@ -15,6 +15,7 @@ import {
 } from '../common/dynamic-type-data-target-abstract'
 import { DataTargetClassificationstoreSettings } from './data-target-classificationstore-settings'
 import { type DataTargetConfig } from '../../../types'
+import { defaultWriteSettings } from './classification-store-write-settings'
 
 export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTargetAbstract {
   readonly id = 'classificationstore'
@@ -26,7 +27,7 @@ export class DynamicTypeDataTargetClassificationstore extends DynamicTypeDataTar
 
   getDefaultSettings (currentSettings: DataTargetConfig['settings']): DataTargetConfig['settings'] {
     return {
-      ...currentSettings,
+      ...defaultWriteSettings(currentSettings, 'classificationstore'),
       overwriteMode: undefined,
       keyId: currentSettings?.keyId,
       fieldName: undefined,

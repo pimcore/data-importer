@@ -1,4 +1,6 @@
 # Loaded only when an agent can author proposals - see PimcoreDataImporterExtension.
+# The read tools need no chat session, so they also carry pimcore.studio_backend.mcp_tool and can be assigned to a
+# Studio-managed MCP server; propose_import_config records into the agent chat session and stays chat-only.
 services:
     _defaults:
         autowire: true
@@ -8,14 +10,17 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListImportConfigsTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read', description: 'List the import configurations' }
+            - { name: 'pimcore.studio_backend.mcp_tool' }
 
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\GetImportConfigTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read' }
+            - { name: 'pimcore.studio_backend.mcp_tool' }
 
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ListConfigPrincipalsTool:
         tags:
             - { name: 'pimcore.mcp_tool', group: 'pimcore-data-importer-read', description: 'List role and user names for configuration permissions' }
+            - { name: 'pimcore.studio_backend.mcp_tool' }
 
     Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary:
         arguments:
