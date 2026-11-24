@@ -323,7 +323,12 @@ class PostedMappingTransformationTest extends Unit
             HttpKernelInterface::MAIN_REQUEST,
             $exception
         );
-        (new ApiExceptionSubscriber('dev', self::STUDIO_API))->onKernelException($event);
+        // Studio 2026.x also takes a validation error hydrator; the lowest Studio does not
+        $arguments = ['dev', self::STUDIO_API];
+        if ((new ReflectionMethod(ApiExceptionSubscriber::class, '__construct'))->getNumberOfParameters() > 2) {
+            $arguments[] = $this->createStub('Pimcore\\Bundle\\StudioBackendBundle\\Element\\Hydrator\\ValidationErrorHydratorInterface');
+        }
+        (new ApiExceptionSubscriber(...$arguments))->onKernelException($event);
 
         $response = $event->getResponse();
         $this->assertNotNull($response, 'Studio answers with its JSON error, not the framework error page');
