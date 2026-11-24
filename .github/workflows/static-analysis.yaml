@@ -91,7 +91,7 @@ jobs:
       phpstan_matrix: ${{ needs.setup-matrix.outputs.phpstan_matrix }}
       private_repo: ${{ needs.setup-matrix.outputs.private_repo }}
       APP_ENV: test
-      PIMCORE_TEST: 1
+      PIMCORE_TEST: "1"
       COVERAGE: "none"
     secrets:
       SSH_PRIVATE_KEY_PIMCORE_DEPLOYMENTS_USER: ${{ secrets.SSH_PRIVATE_KEY_PIMCORE_DEPLOYMENTS_USER }}
