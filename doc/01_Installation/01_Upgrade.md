@@ -5,6 +5,25 @@ description: Breaking changes and migration steps per release.
 
 # Upgrade Notes
 
+## Upgrade to 2026.3.7
+
+### Import Asset Only Downloads `http` and `https` URLs
+
+- The **Import Asset** operator now downloads a value only when it starts with `http://` or `https://`. Every other
+  value is skipped: a path on the server such as `/var/import/image.jpg`, `file://`, `ftp://`, and PHP stream
+  wrappers such as `php://` or `phar://`.
+- A skipped value is written to the application log as an error (`only http and https URLs are supported`). The
+  import continues, and the skipped value produces no asset. Other valid values of the same row are still imported.
+- The empty result is then passed to the data target. With the default data target settings it replaces the value
+  of the field, so an asset that an earlier import assigned is removed from the data object. The asset itself is
+  not deleted. Disable **Write If Source Is Empty** on the data target to prevent an empty value from clearing the
+  field.
+- If your import data points to files on the server or on an `ftp` server, review it before the first import after
+  the upgrade: serve the files over `http` or `https`, or bring them into Pimcore as assets first and reference
+  them by asset path or id with the **Load Asset** operator.
+- **Use existing** looks up the asset before the value is checked. While **Overwrite existing** is off, a found asset is returned and reused without downloading or changing its contents. With **Overwrite existing** on,
+  the value is still logged as an error, and the found asset is assigned with its contents unchanged.
+
 ## Upgrade to 2026.3.3
 
 ### XML Values Keep Their Text When Typing Would Change Them
