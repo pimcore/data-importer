@@ -7,6 +7,8 @@ description: Breaking changes and migration steps per release.
 
 ## Upgrade to 2026.4.0
 
+- `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
+  `instanceof ImportAsset` no longer matches the **Load Asset** operator.
 - Added: the `As Numeric Range`, `Quantity Value Range` and `As External Image` operators, and a
   `languagemultiselect` field or key is now offered for an `array` result type.
 - [Classification Store] Changed: the key picker offers no key for a result type no key type can hold, where it used
