@@ -425,6 +425,12 @@ final class XlsxFileInterpreter extends AbstractInterpreter implements RowReader
             return null;
         }
 
+        // listWorksheetInfo() is declared on BaseReader, not on the IReader interface
+        // returned by createReaderForFile(); every concrete reader extends BaseReader.
+        if (!$reader instanceof BaseReader) {
+            return null;
+        }
+
         foreach ($reader->listWorksheetInfo($path) as $worksheetInfo) {
             if ($worksheetInfo['worksheetName'] === $this->sheetName) {
                 return [
