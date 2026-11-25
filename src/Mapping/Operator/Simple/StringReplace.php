@@ -45,7 +45,9 @@ class StringReplace extends AbstractOperator
         }
 
         foreach ($inputData as &$data) {
-            $data = str_replace($this->search, $this->replace, $data);
+            if ($data !== null) {
+                $data = str_replace($this->search, $this->replace, $data);
+            }
         }
 
         if ($returnScalar) {

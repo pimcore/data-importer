@@ -51,17 +51,17 @@ class Trim extends AbstractOperator
 
         if ($this->mode == self::MODE_BOTH) {
             foreach ($inputData as &$data) {
-                $data = trim($data);
+                $data = trim((string) $data);
             }
         }
         if ($this->mode == self::MODE_LEFT) {
             foreach ($inputData as &$data) {
-                $data = ltrim($data);
+                $data = ltrim((string) $data);
             }
         }
         if ($this->mode == self::MODE_RIGHT) {
             foreach ($inputData as &$data) {
-                $data = rtrim($data);
+                $data = rtrim((string) $data);
             }
         }
 
