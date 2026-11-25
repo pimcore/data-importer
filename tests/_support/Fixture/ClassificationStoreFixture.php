@@ -56,11 +56,12 @@ final class ClassificationStoreFixture
      * The engine question the batch data target asks, taken out of the container: both core
      * services behind it are declared `public: true` there, and neither can be built by hand -
      * `KeyTypeSupport` needs the object data implementation loader and the marshaller service, and
-     * `EngineResolver` needs the tagged engines.
+     * `EngineResolver` needs the tagged engines. Reached through the kernel rather than
+     * `Pimcore::getContainer()`, which is deprecated.
      */
     public function engineSupport(): ClassificationStoreEngineSupport
     {
-        $container = \Pimcore::getContainer();
+        $container = \Pimcore::getKernel()?->getContainer();
         if ($container === null) {
             throw new \RuntimeException('The Pimcore container is not booted.');
         }
