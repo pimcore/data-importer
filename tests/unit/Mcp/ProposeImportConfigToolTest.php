@@ -60,18 +60,16 @@ class ProposeImportConfigToolTest extends Unit
     {
         $attribute = (new ReflectionMethod(ProposeImportConfigTool::class, 'execute'))
             ->getAttributes(McpTool::class)[0]->newInstance();
-        $skill = (string) preg_replace(
-            '/\s+/',
-            ' ',
-            (string) file_get_contents(dirname(__DIR__, 3) . '/src/Resources/skills/data-importer-configuration/SKILL.md')
-        );
+        $path = dirname(__DIR__, 3) . '/src/Resources/skills/data-importer-configuration/SKILL.md';
+        $skill = (string) preg_replace('/\s+/u', ' ', (string) file_get_contents($path));
 
         static::assertStringContainsString('data-importer-configuration skill', $attribute->description);
         static::assertLessThanOrEqual(450, mb_strlen($attribute->description));
         foreach ([
             'It needs a loader, a file format, a target class and the four resolver strategies',
             'A new configuration starts **inactive**',
-            '`http`: `{"schema": "https://", "url": "example.com/feed.json"}`, schema `https://` or `http://`, url without the scheme',
+            '`http`: `{"schema": "https://", "url": "example.com/feed.json"}`, '
+                . 'schema `https://` or `http://`, url without the scheme',
             'Switching the type replaces the settings',
             'Anything you omit keeps its current value',
             'Take names from `list_config_principals`',
