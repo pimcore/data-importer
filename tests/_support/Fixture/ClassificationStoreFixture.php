@@ -63,7 +63,7 @@ final class ClassificationStoreFixture
     {
         $container = \Pimcore::getKernel()?->getContainer();
         if ($container === null) {
-            throw new \RuntimeException('The Pimcore container is not booted.');
+            throw new \UnexpectedValueException('The Pimcore container is not booted.');
         }
 
         /** @var KeyTypeSupport $keyTypeSupport */

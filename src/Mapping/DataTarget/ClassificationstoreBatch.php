@@ -267,7 +267,10 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
 
         try {
             $normalized = $definition->normalize($value);
-        } catch (\Throwable) {
+        } catch (\TypeError|\ErrorException) {
+            // A malformed cell, not a programmer error: a relation type hands its argument to
+            // `Element\Service::getElementType()`, and a structured type subscripts keys a wrong
+            // shape does not carry, which is a promoted warning where one is promoted.
             return $definition->getFieldtype();
         }
 
@@ -362,6 +365,15 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
             return $value;
         }
 
+        // The elements an operator hands over, rather than the descriptors `normalize()` emits.
+        // Tested before denormalizing instead of catching what subscripting them raises, so that
+        // only a malformed descriptor reaches the catch below.
+        foreach ($value as $member) {
+            if (is_object($member)) {
+                return $value;
+            }
+        }
+
         try {
             // geopoint and geobounds bind the value they build to its owner from these
             $denormalized = $definition->denormalize($value, [
@@ -369,7 +381,7 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
                 'fieldname' => $this->fieldName,
                 'language' => $language,
             ]);
-        } catch (\Throwable) {
+        } catch (\TypeError|\ErrorException) {
             return $value;
         }
 

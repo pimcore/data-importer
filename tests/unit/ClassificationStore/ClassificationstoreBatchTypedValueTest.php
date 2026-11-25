@@ -160,6 +160,40 @@ class ClassificationstoreBatchTypedValueTest extends Unit
     }
 
     /**
+     * A cell of the wrong shape for its key, which is what a source column carries when it was never
+     * meant for that key. `ManyToOneRelation::normalize()` hands it to
+     * `Element\Service::getElementType()` and that raises a `TypeError` - an `\Error`, which
+     * `ImportProcessingService::processQueueItem()` does not catch, so before this it ended the run.
+     * It is now read as a value the entry cannot build: the key is warned about and skipped, and
+     * every other key of the same entry is still written.
+     */
+    public function testAMalformedValueIsWarnedAboutWhileTheRestOfTheEntryIsWritten(): void
+    {
+        $relationToken = $this->token(self::KEY_RELATION);
+        $logger = $this->createMock(ApplicationLogger::class);
+        $logger->expects(static::once())->method('warning')->with(
+            static::callback(static fn (string $message): bool => str_contains($message, $relationToken)
+                && str_contains($message, 'manyToOneRelation')),
+            static::anything()
+        );
+
+        $element = $this->write([
+            $relationToken => 'not a relation descriptor',
+            $this->token(self::KEY_MULTISELECT) => self::MULTISELECT,
+        ], $logger);
+
+        static::assertNull(
+            $this->keyValue($element, self::KEY_RELATION),
+            'the malformed relation value was written'
+        );
+        static::assertSame(
+            self::MULTISELECT,
+            $this->keyValue($element, self::KEY_MULTISELECT),
+            'the rest of the entry was lost'
+        );
+    }
+
+    /**
      * The control for the whole change, and the one row of it that must not move: a type whose
      * normalised form IS the array keeps the value it was given, because the built value is taken
      * only where it differs from that array.
