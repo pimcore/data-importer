@@ -209,6 +209,50 @@ class ClassificationstoreBatchDateValueTest extends Unit
     }
 
     /**
+     * A number that is not a whole number of seconds. `is_numeric()` accepts all of these, and
+     * `Carbon::setTimestamp()` casts rather than refusing, so a scientific notation is the same
+     * silent 1970 the formatted string above is - `1.7672256e9` casts to 1, ten seconds past the
+     * epoch, not to the second it spells. Each is asserted to hold nothing, not merely to differ.
+     *
+     * @dataProvider nonTimestampNumbers
+     */
+    public function testANumberThatIsNoWholeSecondIsWarnedAboutAndSkipped(string $value): void
+    {
+        $token = $this->token(self::KEY_DATE);
+        $logger = $this->createMock(ApplicationLogger::class);
+        $logger->expects(static::once())->method('warning')->with(
+            static::callback(static fn (string $message): bool => str_contains($message, $token)
+                && str_contains($message, 'Date')),
+            static::anything()
+        );
+
+        $element = $this->write([$token => $value], $logger);
+
+        $stored = $this->keyValue($element, self::KEY_DATE);
+        static::assertNotInstanceOf(
+            Carbon::class,
+            $stored,
+            $value . ' was read as a timestamp; it would mean ' . self::EPOCH_YEAR
+        );
+        static::assertNull($stored, $value . ' was written to the key');
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public function nonTimestampNumbers(): array
+    {
+        return [
+            'scientific notation' => ['1.7672256e9'],
+            'an exponent beyond the integer range' => ['1e400'],
+            'a decimal' => ['1767225600.9'],
+            'surrounded by whitespace' => [' 1767225600 '],
+            'a leading plus' => ['+1767225600'],
+            'more digits than an integer holds' => ['99999999999999999999'],
+        ];
+    }
+
+    /**
      * The control: a key whose type is no point in time keeps the scalar it was given, so that the
      * numeric test of the date branch cannot reach a type whose scalar already IS its stored value.
      *

@@ -47,6 +47,11 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
      */
     private const WRITES_EMPTY_VALUES_WITHOUT_MARKER = false;
 
+    /**
+     * A whole number of seconds, optionally before 1970. {@see self::isTimestamp()}
+     */
+    private const TIMESTAMP = '/^-?[0-9]+$/';
+
     private const TYPE_QUANTITY_VALUE = 'quantityValue';
 
     private const TYPE_INPUT_QUANTITY_VALUE = 'inputQuantityValue';
@@ -419,11 +424,31 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
     private function buildPointInTime(mixed $value, ?Data $definition): mixed
     {
         // both date types are normalizers, which is the interface the timestamp is read through
-        if (!is_numeric($value) || !$definition instanceof NormalizerInterface) {
+        if (!$this->isTimestamp($value) || !$definition instanceof NormalizerInterface) {
             return $value;
         }
 
         return $definition->denormalize($value) ?? $value;
+    }
+
+    /**
+     * Whether the value is a whole number of seconds, the form `Date::normalize()` emits.
+     *
+     * Digits only, as {@see ClassificationstoreKeyReference} reads an integer id, rather than
+     * `is_numeric()`: `Carbon::setTimestamp()` casts, so a scientific notation is the same silent
+     * 1970 a formatted date string would be - `1.7672256e9` casts to 1, not to 1767225600 - and a
+     * decimal, a leading `+` or surrounding whitespace is a shape this entry cannot read either.
+     * A leading `-` is kept: a point in time before 1970 is a value, not a malformed one.
+     */
+    private function isTimestamp(mixed $value): bool
+    {
+        if (is_int($value)) {
+            return true;
+        }
+
+        return is_string($value)
+            && preg_match(self::TIMESTAMP, $value) === 1
+            && filter_var($value, FILTER_VALIDATE_INT) !== false;
     }
 
     /**
