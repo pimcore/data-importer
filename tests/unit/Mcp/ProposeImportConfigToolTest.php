@@ -56,16 +56,28 @@ class ProposeImportConfigToolTest extends Unit
         }
     }
 
-    public function testTheDescriptionShowsTheHttpLoaderShape(): void
+    public function testTheDescriptionNamesItsSkillAndTheSkillCarriesTheFormat(): void
     {
         $attribute = (new ReflectionMethod(ProposeImportConfigTool::class, 'execute'))
             ->getAttributes(McpTool::class)[0]->newInstance();
+        $path = dirname(__DIR__, 3) . '/src/Resources/skills/data-importer-configuration/SKILL.md';
+        $skill = (string) preg_replace('/\s+/u', ' ', (string) file_get_contents($path));
 
-        static::assertStringContainsString(
-            '{"type": "http", "settings": {"schema": "https://", "url": "example.com/feed.json"}}',
-            $attribute->description
-        );
-        static::assertStringContainsString('url the address without its scheme', $attribute->description);
+        static::assertStringContainsString('data-importer-configuration skill', $attribute->description);
+        static::assertLessThanOrEqual(450, mb_strlen($attribute->description));
+        foreach ([
+            'It needs a loader, a file format, a target class and the four resolver strategies',
+            'A new configuration starts **inactive**',
+            '`http`: `{"schema": "https://", "url": "example.com/feed.json"}`, '
+                . 'schema `https://` or `http://`, url without the scheme',
+            'Switching the type replaces the settings',
+            'Anything you omit keeps its current value',
+            'Take names from `list_config_principals`',
+            'Empty means open.',
+            'read: true',
+        ] as $fact) {
+            static::assertStringContainsString($fact, $skill);
+        }
     }
 
     public function testAnUnknownNameIsProposedAsNewAndOnlyRecorded(): void
