@@ -87,9 +87,15 @@ A key that declares variants is addressed by the same `#<VARIANT>` segment a `Cl
 variant the key does not declare is refused with an error naming the key. Writing several values of one key as an
 ordered list has no spelling here, nor in a `Classification Store` entry.
 
+Not every normalized form is an array. A `date` or a `datetime` key reads the **unix timestamp** that is its own
+normalized form, so `['1-4' => 1767225600]` and the numeric string `['1-4' => '1767225600']` both write 2026-01-01.
+Nothing else is read as a point in time: the type hands what it is given to `Carbon::setTimestamp()`, which would read
+`2026-01-01` as the integer 2026 and store 1970.
+
 A key whose value this entry cannot build is warned about in the import log and skipped, and the rest of the row is
-still written. A plain date string is the common case. Keys holding a `date` need the matching operator at the end of
-the pipeline, and one pipeline produces one result type. For those, split the source data by type, one field per type:
+still written. A formatted date string is the common case. A `date` key written that way needs the matching operator at
+the end of the pipeline — interpreting the format is what that operator has a setting for and this data target has
+none — and one pipeline produces one result type. For those, split the source data by type, one field per type:
 
 ```json
 [
