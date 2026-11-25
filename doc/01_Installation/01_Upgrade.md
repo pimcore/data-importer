@@ -29,9 +29,7 @@ description: Breaking changes and migration steps per release.
 - [Classification Store] `Classification Store Batch` builds the value of every key type the store can hold from its
   JSON form, so the media, geo, relation, range, `link`, `structuredTable`, `video` and `dateRange` key types now
   import, and a token may name a variant as `<KEY>#<VARIANT>`. A key whose type the engine behind the store cannot
-  hold is warned about and skipped instead of failing the whole row. A `geopolygon`, `geopolyline`, `geobounds` or
-  advanced relation value written by an earlier import keeps the raw array it was stored as and has to be imported
-  again.
+  hold is warned about and skipped instead of failing the whole row.
 - [Classification Store] Changed: both data targets write a key under the configured language where the key is
   localized and without one where it is not, as the object editor reads it. The **Language** control follows the
   keys' own flags rather than the field's.
