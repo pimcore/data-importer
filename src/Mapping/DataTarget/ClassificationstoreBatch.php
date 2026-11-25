@@ -19,6 +19,8 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueUnit
 use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreEngineSupport;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AbstractQuantityValue as AbstractQuantityValueDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Date as DateDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Datetime as DatetimeDefinition;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
 use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Data\AbstractQuantityValue;
@@ -44,6 +46,11 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
      * Without the opt-in marker this target drops every falsy value before the loop.
      */
     private const WRITES_EMPTY_VALUES_WITHOUT_MARKER = false;
+
+    /**
+     * A whole number of seconds, optionally before 1970. {@see self::isTimestamp()}
+     */
+    private const TIMESTAMP = '/^-?[0-9]+$/';
 
     private const TYPE_QUANTITY_VALUE = 'quantityValue';
 
@@ -279,8 +286,9 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
 
     /**
      * The value for one key of a mixed entry, dispatched on the type of the value the key holds: a
-     * quantity value key reads the operator's own `[value, unit]` shape here, every other type is
-     * built by the type itself out of the shape its `normalize()` emits.
+     * quantity value key reads the operator's own `[value, unit]` shape here, a point in time reads
+     * the unix timestamp its `normalize()` emits, every other type is built by the type itself out of
+     * the shape its `normalize()` emits.
      *
      * The type is read off the key's value definition rather than off the key, because those two are
      * not the same thing for a wrapper: a `multiValue` key's own type is `multiValue` whatever it
@@ -309,7 +317,9 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
         $definition = $this->valueDefinition($relation);
         $type = $definition?->getFieldtype();
         if ($type !== self::TYPE_QUANTITY_VALUE && $type !== self::TYPE_INPUT_QUANTITY_VALUE) {
-            return $this->denormalizeKeyValue($value, $definition, $element, $language);
+            return $this->holdsPointInTime($definition)
+                ? $this->buildPointInTime($value, $definition)
+                : $this->denormalizeKeyValue($value, $definition, $element, $language);
         }
 
         if (is_array($value)) {
@@ -386,6 +396,59 @@ final class ClassificationstoreBatch implements DataTargetInterface, ConfigNameA
         }
 
         return $denormalized === null || $denormalized === $value ? $value : $denormalized;
+    }
+
+    /**
+     * Whether the key holds a point in time, whose `normalize()` emits a unix timestamp rather than
+     * the array {@see self::denormalizeKeyValue()} offers - which is why the array-only build never
+     * attempted the type at all.
+     *
+     * Asked of the definition of the VALUE, so that a `multiValue` wrapping a date is answered by its
+     * delegate exactly as a wrapped quantity value key is.
+     */
+    private function holdsPointInTime(?Data $definition): bool
+    {
+        return $definition instanceof DateDefinition || $definition instanceof DatetimeDefinition;
+    }
+
+    /**
+     * The `Carbon` a date or datetime key builds out of the unix timestamp its own `normalize()`
+     * emits, which is the normalized form of those two types.
+     *
+     * Only a numeric value is offered, and `is_numeric()` is the whole test. `denormalize()` hands
+     * what it is given to `Carbon::setTimestamp()`, which reads `2026-01-01` as the integer 2026 and
+     * would store 1970 with no error at all. Interpreting a formatted string needs a format this
+     * target has no setting for, so one is left as it arrived and {@see self::unbuildableType()}
+     * warns about the key and skips it, pointing at the `Date` operator which does have that setting.
+     */
+    private function buildPointInTime(mixed $value, ?Data $definition): mixed
+    {
+        // both date types are normalizers, which is the interface the timestamp is read through
+        if (!$this->isTimestamp($value) || !$definition instanceof NormalizerInterface) {
+            return $value;
+        }
+
+        return $definition->denormalize($value) ?? $value;
+    }
+
+    /**
+     * Whether the value is a whole number of seconds, the form `Date::normalize()` emits.
+     *
+     * Digits only, as {@see ClassificationstoreKeyReference} reads an integer id, rather than
+     * `is_numeric()`: `Carbon::setTimestamp()` casts, so a scientific notation is the same silent
+     * 1970 a formatted date string would be - `1.7672256e9` casts to 1, not to 1767225600 - and a
+     * decimal, a leading `+` or surrounding whitespace is a shape this entry cannot read either.
+     * A leading `-` is kept: a point in time before 1970 is a value, not a malformed one.
+     */
+    private function isTimestamp(mixed $value): bool
+    {
+        if (is_int($value)) {
+            return true;
+        }
+
+        return is_string($value)
+            && preg_match(self::TIMESTAMP, $value) === 1
+            && filter_var($value, FILTER_VALIDATE_INT) !== false;
     }
 
     /**

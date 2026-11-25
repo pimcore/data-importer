@@ -114,7 +114,9 @@ with the code, which is the failure mode this audit exists to catch. The verdict
 advance:
 
 - **A plain date string in a mixed `array` batch entry does not survive.** It is skipped with a
-  warning that names the key and points at the `Date` operator. See *Items for the follow-up ticket*.
+  warning that names the key and points at the `Date` operator. The audit probes a date *string*; a
+  `date` or `datetime` key given the unix timestamp that is its normalized form does survive. See
+  *Items for the follow-up ticket*.
 - **A `quantityValue` or `inputQuantityValue` key in a mixed `array` batch entry reads back as a
   quantity value model object, not as the source scalar** — it is `differed` by the table's
   definition and is the intended behaviour of this change.
@@ -323,6 +325,15 @@ variant with a warning, and asking them here would drop that value instead. Asse
    mapping entry ending in the `Date` operator, which does have a format setting. The rest of the
    row is written and the element still saves. The rule is asked of the key's own field definition,
    so it holds for every type with the same property, `image` and the relation types included.
+   **Narrowed since, to the string alone:** a `date` or `datetime` key now reads the unix timestamp
+   that *is* its normalized form, as an integer or as a numeric string, so `['1-4' => 1767225600]`
+   imports. `is_numeric()` is the whole test and a formatted string is still refused, because
+   `Date::denormalize()` hands what it is given to `Carbon::setTimestamp()`, which reads `2026-01-01`
+   as the integer 2026 and would store 1970 with no error at all. The item stands for a date
+   *string*, which still needs the operator and still cannot be read without its format; what no
+   longer holds is the claim that a `date` key in a batch entry cannot be built at all. Asserted by
+   `ClassificationstoreBatchDateValueTest`, whose formatted-string rows are the guard against
+   widening the test to every scalar.
 4. *The empty test diverges from `Direct`.* See *Divergence from Direct*.
    **Not fixed here:** the classification store empty test is PHP falsiness by decision, and aligning
    it with `Direct::checkAssignData()` would change what existing configurations import.
