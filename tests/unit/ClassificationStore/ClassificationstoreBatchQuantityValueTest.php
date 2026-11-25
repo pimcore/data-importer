@@ -390,7 +390,8 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     {
         $target = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED,
@@ -433,7 +434,8 @@ class ClassificationstoreBatchQuantityValueTest extends Unit
     {
         $target = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 

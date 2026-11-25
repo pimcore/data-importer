@@ -278,7 +278,11 @@ class ClassificationStoreLocalizationTest extends Unit
             $settings = ['fieldName' => $field];
 
             if ($targetKind === self::TARGET_BATCH) {
-                $target = new ClassificationstoreBatch($logger, $resolver);
+                $target = new ClassificationstoreBatch(
+                    $logger,
+                    $resolver,
+                    (new ClassificationStoreFixture())->engineSupport()
+                );
                 $target->setSettings($settings);
                 $assign = fn (Concrete $element, string $value) => $target->assignData(
                     $element,
@@ -351,7 +355,8 @@ class ClassificationStoreLocalizationTest extends Unit
     {
         $target = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings(['fieldName' => $field, 'language' => $this->language]);
 

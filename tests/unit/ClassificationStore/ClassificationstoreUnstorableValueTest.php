@@ -120,7 +120,8 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $element = $this->newElement();
         $target = new ClassificationstoreBatch(
             $logger,
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,
@@ -199,7 +200,8 @@ class ClassificationstoreUnstorableValueTest extends Unit
         $element = $this->newElement();
         $target = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings([
             'fieldName' => ClassificationStoreFixture::FIELD_LOCALIZED,

@@ -21,7 +21,6 @@ use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AdvancedManyToManyObjectRelation;
 use Pimcore\Model\DataObject\ClassDefinition\Data\AdvancedManyToManyRelation;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore as ClassificationstoreDefinition;
-use Pimcore\Model\DataObject\ClassDefinition\Data\MultiValue as MultiValueDefinition;
 use Pimcore\Model\DataObject\Classificationstore as ClassificationstoreModel;
 use Pimcore\Model\DataObject\Classificationstore\DefinitionCache;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig\Listing as GroupConfigListing;
@@ -259,20 +258,6 @@ trait ClassificationstoreKeyTrait
         }
 
         return $this->keyGroupRelations[$cacheKey];
-    }
-
-    /**
-     * What the key declares about the qualifiers of its values, null for a key that declares none.
-     */
-    private function resolveDeclaration(?KeyGroupRelation $relation): ?MultiValueDefinition
-    {
-        if (!$relation instanceof KeyGroupRelation) {
-            return null;
-        }
-
-        $definition = $this->resolveDefinition($relation);
-
-        return $definition instanceof MultiValueDefinition ? $definition : null;
     }
 
     private function resolveDefinition(?KeyGroupRelation $relation): ?Data

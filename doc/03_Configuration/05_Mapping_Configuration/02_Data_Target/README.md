@@ -91,8 +91,8 @@ Assigns the value to one key of a classification store field.
   written through `Many-to-Many Relation`.
 - **Variant**: shown when the selected key declares variants. The variant is part of the reference,
   `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>#<VARIANT>`, so one mapping entry per variant writes the variants of one key side
-  by side. Without one, the default variant is written. Variants are written by this target only, not by
-  `Classification Store Batch`.
+  by side. Without one, the default variant is written. `Classification Store Batch` takes the same `#<VARIANT>`
+  segment in its own tokens.
 - **Language**: shown once a key is selected and the key is localized. The key's own flag decides; a key that states
   none uses the flag of the classification store field. For any other key the value is written without a language.
 - **Write If Source Is Empty**: enabled by default. Disable it to prevent an empty source value from clearing the key.
@@ -102,8 +102,9 @@ Assigns the value to one key of a classification store field.
 ## Classification Store Batch
 
 Assigns many classification store keys with a single mapping entry. The transformation pipeline has to produce an array
-keyed by `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` or the integer form `<GROUP_ID>-<KEY_ID>`, with the values to assign. A key
-that declares variants is refused by name, and a key whose value the entry cannot build is warned about and skipped.
+keyed by `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` or the integer form `<GROUP_ID>-<KEY_ID>`, each optionally followed by
+`#<VARIANT>`, with the values to assign. A key whose value the entry cannot build, and a key whose type the engine
+behind the store cannot hold, are each warned about and skipped; the rest of the entry is still written.
 
 The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray` or `dateArray`.
 
@@ -127,7 +128,9 @@ For the required data shape and worked examples, see
 
 On both classification store targets a key of type `multiValue` holds one value per variant. The import writes the
 addressed variant of the addressed language, replacing the value already held there. A JSON array in the source field
-is not a list: it is stored as the key's one value, as it is for any other key.
+is not a list: it is stored as the key's one value, as it is for any other key. A token naming no variant writes the
+default variant, and a variant the key does not declare is refused by name. Writing several values of one key as an
+ordered list has no spelling on either target.
 
 If the engine of the store cannot hold a variant, the key is written to the default variant and a warning in the import
 log names the key and says that the engine of the store has to be changed.

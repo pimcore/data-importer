@@ -48,8 +48,12 @@ A single `As Array` operator is then enough.
 ![Classification Store Batch, simple mapping](../../../img/data_target_classification_store_batch_simple.png)
 
 When the format cannot carry nested data, for example CSV, encode the pairs into one field and decode them in the
-pipeline. Source data of `1-6#value 1||2-4#value 2` decodes with a chain of `Explode` and
-`Reduce Array Key-Value Pairs` operators:
+pipeline. Source data of `1-6=value 1||2-4=value 2` decodes with a chain of `Explode` and
+`Reduce Array Key-Value Pairs` operators, splitting on `||` first and then on `=`:
+
+**Do not separate a key from its value with `#`.** A `#` inside a token addresses a variant of that key, as
+*Assigning Complex Values* below describes, so `1-6#value 1` is read as the key `1-6` and the variant `value 1`
+rather than as a key and its value. Any separator the values themselves cannot contain works; `=` is used here.
 
 <div class="image-as-lightbox"></div>
 
@@ -68,13 +72,24 @@ a unit **id**, as `Quantity Value` does, and an `inputQuantityValue` key takes a
 `Input Quantity Value` does. A unit the key's type cannot resolve is dropped and the value is stored without one. There
 is no unit setting on the data target — the key's type decides.
 
-A key that declares variants cannot be written by this target: a token for it, with or without a `#<VARIANT>` segment,
-is refused with an error naming the key. Write such a key through a `Classification Store` entry, which takes the
-variant.
+Every other key type builds its value from the shape that type's own normalized form has, so a structured value needs no
+operator either: `['1-5' => ['r' => 12, 'g' => 34, 'b' => 56, 'a' => 255]]` writes a colour,
+`['1-6' => ['latitude' => 47.8, 'longitude' => 13.0]]` writes a point, and
+`['1-7' => ['type' => 'object', 'id' => 42]]` writes a relation. A key whose value already IS an array — `multiselect`,
+`table` and the two code lists — keeps the array it was given.
+
+A key whose type the engine behind the store cannot hold is warned about in the import log and skipped, and the rest of
+the entry is still written: the warning names the key, its type and the engine, and the engine of the store has to be
+flipped to one that holds that type.
+
+A key that declares variants is addressed by the same `#<VARIANT>` segment a `Classification Store` entry uses:
+`['<GROUP>-<KEY>#imperial' => 5]` writes that variant, and a token naming no variant writes the default variant. A
+variant the key does not declare is refused with an error naming the key. Writing several values of one key as an
+ordered list has no spelling here, nor in a `Classification Store` entry.
 
 A key whose value this entry cannot build is warned about in the import log and skipped, and the rest of the row is
-still written. A plain date string is the common case. Keys holding a `date` need the matching operator at the end of the pipeline, and one pipeline produces one result
-type. For those, split the source data by type, one field per type:
+still written. A plain date string is the common case. Keys holding a `date` need the matching operator at the end of
+the pipeline, and one pipeline produces one result type. For those, split the source data by type, one field per type:
 
 ```json
 [

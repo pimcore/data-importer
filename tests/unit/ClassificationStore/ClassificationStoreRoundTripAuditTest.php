@@ -249,6 +249,7 @@ class ClassificationStoreRoundTripAuditTest extends Unit
         $files = [
             ...(array)glob(dirname(__DIR__, 3) . '/src/Mapping/DataTarget/Classificationstore*.php'),
             dirname(__DIR__, 3) . '/src/Mapping/Type/ClassificationStoreDataTypeService.php',
+            dirname(__DIR__, 3) . '/src/Mapping/Type/ClassificationStoreEngineSupport.php',
         ];
 
         foreach ($files as $file) {

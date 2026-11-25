@@ -197,7 +197,8 @@ class ClassificationStoreEmptyValueTest extends Unit
 
         $batch = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $batch->setSettings(['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
         $element = $this->object();
@@ -268,7 +269,8 @@ class ClassificationStoreEmptyValueTest extends Unit
     {
         $target = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings($settings + ['fieldName' => ClassificationStoreFixture::FIELD_NON_LOCALIZED]);
 
