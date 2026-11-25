@@ -15,7 +15,7 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\ClassificationStore;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ClassificationStoreFixture;
@@ -33,8 +33,8 @@ use Pimcore\Tool;
 
 /**
  * Both classification store targets over a store whose engine holds variants: one value per cell,
- * one declared variant per mapping entry, the refusal of a variant by the batch target, and the
- * two spellings of a key reference.
+ * one declared variant per token, the refusal of a variant the key does not declare, and the two
+ * spellings of a key reference.
  */
 class ClassificationstoreQualifiedValueTest extends Unit
 {
@@ -199,29 +199,76 @@ class ClassificationstoreQualifiedValueTest extends Unit
     }
 
     /**
-     * @dataProvider batchTokensOfAVariantKey
+     * A batch entry addresses a variant the same way a single-key entry does, by the `#<VARIANT>`
+     * segment of the token - so the two variants of one key are two tokens of one entry, and each
+     * one replaces only the slot it names.
      */
-    public function testTheBatchTargetRefusesAVariantDeclaringKeyByName(string $suffix): void
+    public function testABatchEntryWritesEachNamedVariantOfOneKey(): void
     {
         $element = $this->newElement();
-        $token = $this->groupId . '-' . $this->keyIds[self::KEY_VARIANT] . $suffix;
+        $token = $this->groupId . '-' . $this->keyIds[self::KEY_VARIANT];
 
-        try {
-            $this->batchTarget()->assignData($element, [$token => 'value']);
-            static::fail('the batch target wrote a variant declaring key');
-        } catch (InvalidInputException $exception) {
-            static::assertStringContainsString($token, $exception->getMessage());
-            static::assertStringContainsString('single-key', $exception->getMessage());
-            static::assertStringNotContainsString('Key not format', $exception->getMessage());
+        $this->batchTarget()->assignData($element, [
+            $token . '#' . self::VARIANT_METRIC => '2.5',
+            $token . '#' . self::VARIANT_IMPERIAL => '1',
+        ]);
+        $element->save();
+
+        $store = $this->store($this->reload($element));
+        $keyId = $this->keyIds[self::KEY_VARIANT];
+        static::assertSame(
+            ['2.5'],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_METRIC)
+        );
+        static::assertSame(
+            ['1'],
+            $store->getKeyValues($this->groupId, $keyId, $this->language, self::VARIANT_IMPERIAL)
+        );
+    }
+
+    /**
+     * A bare token on a key that declares variants writes the default variant - the slot a value
+     * naming no variant lives in - and leaves the named variants empty.
+     */
+    public function testABareBatchTokenOnAVariantDeclaringKeyWritesTheDefaultVariant(): void
+    {
+        $element = $this->newElement();
+        $token = $this->groupId . '-' . $this->keyIds[self::KEY_VARIANT];
+
+        $this->batchTarget()->assignData($element, [$token => 'unqualified']);
+        $element->save();
+
+        $store = $this->store($this->reload($element));
+        $keyId = $this->keyIds[self::KEY_VARIANT];
+        static::assertSame(
+            'unqualified',
+            $store->getLocalizedKeyValue($this->groupId, $keyId, $this->language)
+        );
+        foreach ([self::VARIANT_METRIC, self::VARIANT_IMPERIAL] as $variant) {
+            static::assertSame(
+                [],
+                $store->getKeyValues($this->groupId, $keyId, $this->language, $variant),
+                $variant . ' was written by a bare token'
+            );
         }
     }
 
     /**
-     * @return array<string, array{string}>
+     * A variant the key does not declare is refused by name, through the same check the single-key
+     * route is refused by: the two targets share the write.
      */
-    public function batchTokensOfAVariantKey(): array
+    public function testTheBatchTargetRefusesAVariantTheKeyDoesNotDeclare(): void
     {
-        return ['without a variant' => [''], 'with a variant' => ['#' . self::VARIANT_METRIC]];
+        $element = $this->newElement();
+        $token = $this->groupId . '-' . $this->keyIds[self::KEY_VARIANT] . '#nautical';
+
+        try {
+            $this->batchTarget()->assignData($element, [$token => 'value']);
+            static::fail('the batch target wrote an undeclared variant');
+        } catch (InvalidConfigurationException $exception) {
+            static::assertStringContainsString($token, $exception->getMessage());
+            static::assertStringContainsString('nautical', $exception->getMessage());
+        }
     }
 
     /**
@@ -282,7 +329,8 @@ class ClassificationstoreQualifiedValueTest extends Unit
     {
         $target = new ClassificationstoreBatch(
             $this->createMock(ApplicationLogger::class),
-            (new ClassificationStoreFixture())->localizationResolver()
+            (new ClassificationStoreFixture())->localizationResolver(),
+            (new ClassificationStoreFixture())->engineSupport()
         );
         $target->setSettings([
             'fieldName' => $field,

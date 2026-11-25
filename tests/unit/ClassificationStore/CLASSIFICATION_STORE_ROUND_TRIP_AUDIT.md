@@ -240,14 +240,22 @@ definition of the value the key holds, through the one boundary core resolves an
 lives on the delegate and not on the wrapper. Asserted by
 `ClassificationstoreBatchQuantityValueTest::testAWrappedQuantityValueKeyIsDispatchedOnItsDelegate()`.
 
-A wrapper declaring a **list** is deliberately left out of the dispatch: one entry value then carries
-several values, and this epic has decided no batch-entry spelling for a list of `[value, unit]`
-pairs. Such a value stays as it arrives and is therefore warned about and skipped with the single-key
-route named, which is the treatment item 3 below gives a date string for the same reason — a shape
-the batch entry cannot read is refused out loud rather than guessed at. Pinned by
-`ClassificationstoreBatchQuantityValueTest::testAListOfQuantityValuesIsWarnedAboutRatherThanBuiltFromItsJsonText()`,
-so a later dispatch over list items has to replace that test rather than silently start casting the
-list's JSON text to a number.
+**Superseded here: what the batch target refuses about a `multiValue` key.** This document used to
+record that a key declaring variants cannot be written by the batch target at all — a token for it,
+with or without a `#<VARIANT>` segment, was refused with the single-key route named — and that a
+wrapper declaring a *list* is left out of the quantity value dispatch for the same reason. The first
+half no longer holds: a batch token takes the `#<VARIANT>` segment exactly as a single-key entry
+does, a bare token on such a key writes the default variant, and only a variant the key does not
+declare is refused, by the write the two targets share. The second half has no case left to cover:
+core refuses any position above 0 on every write path
+(`Classificationstore::setKeyValues()`, `Classificationstore::setQualifiedKeyValue()` — "no write can
+put one there any more"), so a key holds one value per (language, variant) slot and an ordered list
+of several values has no spelling on either target rather than a refused one on the batch target.
+What a cell carries is still one value: a JSON array in a source field is that one value, as it is
+for any other key. Pinned by
+`ClassificationstoreQualifiedValueTest::testABatchEntryWritesEachNamedVariantOfOneKey()`,
+`::testABareBatchTokenOnAVariantDeclaringKeyWritesTheDefaultVariant()` and
+`::testTheBatchTargetRefusesAVariantTheKeyDoesNotDeclare()`.
 
 **Fixed here, because it was trivial:**
 
@@ -272,6 +280,33 @@ list's JSON text to a number.
    `inputQuantityValue` key. No unit-source setting was added to the target; the key's type decides.
    All four cells of (key type × unit spelling) are asserted by
    `ClassificationstoreBatchQuantityValueTest::testTheUnitSourceFollowsEachKeyTypesOwnOperatorDefault()`.
+
+**Also fixed here, and the reason the verdict table moved for twenty key types:** a mixed `array`
+batch entry built a model object for `quantityValue` and `inputQuantityValue` only, and handed every
+other type its raw array. Measured against the real key set of one store, that produced three
+distinct faults — fifteen types normalised the raw array to null and were warned about and skipped,
+five stored the raw array with no warning at all (`geopolygon`, `geopolyline`, the two advanced
+relation types, and `geobounds`, whose `normalize()` has an `is_array` legacy branch that answers
+non-null for one), and three relation types raised a `TypeError` out of
+`Element\Service::getElementType()`, which is an `\Error` and therefore passes the
+`catch (\Exception)` of `ImportProcessingService` — one unreadable cell ended the whole run. A key's
+value is now built by the key's own type, out of the shape that type's `normalize()` emits, through
+`NormalizerInterface::denormalize()`; the built value is taken only where it differs from the array
+and is not null, so a type whose normalized form IS the array keeps it. Two guards go with it: a
+shape the type cannot read leaves the value as it arrived — the relation operators hand the target
+elements rather than descriptors, and denormalizing those raises — and a `normalize()` that raises
+now counts as "cannot build its value", so the warn-and-skip treatment covers it instead of a fatal.
+Asserted by `ClassificationstoreBatchTypedValueTest`, whose `multiselect` and `table` rows are the
+control.
+
+**Also added here:** the batch target asks core, per key, whether the engine behind the store can
+hold a value of that key's type before it writes one, and warns and skips the key when it cannot
+rather than relying on core to raise. The question is the one the key listing asks of every key
+shape of a store at once (`Mapping/Type/ClassificationStoreEngineSupport`), and it is deliberately
+only `KeyTypeSupport::isHeldInValueColumns()` behind the `StructuredValues` gate: the features a
+*declaration* needs are answered where a qualified value is written, which degrades to the default
+variant with a warning, and asking them here would drop that value instead. Asserted by
+`ClassificationstoreBatchEngineSupportTest`.
 
 **For the follow-up ticket:**
 

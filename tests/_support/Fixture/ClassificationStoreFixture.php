@@ -13,15 +13,18 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\Tests\Fixture;
 
+use Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreEngineSupport;
 use Pimcore\Db;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Classificationstore as ClassificationstoreDefinition;
 use Pimcore\Model\DataObject\ClassDefinition\Data\Input;
 use Pimcore\Model\DataObject\ClassDefinition\Layout\Panel;
+use Pimcore\Model\DataObject\Classificationstore\Engine\EngineResolver;
 use Pimcore\Model\DataObject\Classificationstore\GroupConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyConfig;
 use Pimcore\Model\DataObject\Classificationstore\KeyGroupRelation;
+use Pimcore\Model\DataObject\Classificationstore\KeyTypeSupport;
 use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Classificationstore\StoreConfig;
 use Pimcore\Model\DataObject\Concrete;
@@ -47,6 +50,27 @@ final class ClassificationStoreFixture
     public function localizationResolver(): LocalizationResolver
     {
         return new LocalizationResolver(Db::get());
+    }
+
+    /**
+     * The engine question the batch data target asks, taken out of the container: both core
+     * services behind it are declared `public: true` there, and neither can be built by hand -
+     * `KeyTypeSupport` needs the object data implementation loader and the marshaller service, and
+     * `EngineResolver` needs the tagged engines.
+     */
+    public function engineSupport(): ClassificationStoreEngineSupport
+    {
+        $container = \Pimcore::getContainer();
+        if ($container === null) {
+            throw new \RuntimeException('The Pimcore container is not booted.');
+        }
+
+        /** @var KeyTypeSupport $keyTypeSupport */
+        $keyTypeSupport = $container->get(KeyTypeSupport::class);
+        /** @var EngineResolver $engineResolver */
+        $engineResolver = $container->get(EngineResolver::class);
+
+        return new ClassificationStoreEngineSupport($keyTypeSupport, $engineResolver);
     }
 
     /**
