@@ -13,6 +13,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { type ClassAttribute, type MappingConfigItem } from '../../../../types'
 import { PostedMappingSource } from '../mapping-source/posted-mapping-source'
 import { AdvancedMappingModal } from '.'
+import { ConfigEditorModeProvider } from '../../../config-editor-mode'
 import type * as ResultPreviewModule from './result-preview/result-preview'
 
 const typeQuery = jest.fn()
@@ -26,6 +27,22 @@ jest.mock('../../../../data-importer-api-slice.gen', () => ({
   useBundleDataImporterDataTypeLoadClassAttributesQuery: (...args: unknown[]) => attributesQuery(...args)
 }))
 jest.mock('@pimcore/studio-ui-bundle/app', () => ({ useTranslation: () => ({ t: (key: string) => key }) }))
+// a section header that reports whether it is open and toggles it
+jest.mock('@pimcore/studio-ui-bundle/components', () => ({
+  ...jest.requireActual('../../../../../../../test/support/studio-components'),
+  Panel: ({ active, children, onChange, title }: { active?: boolean, children?: React.ReactNode, onChange?: () => void, title?: React.ReactNode }) => (
+    <section>
+      <button
+        aria-expanded={ active === true }
+        onClick={ onChange }
+        type="button"
+      >
+        { title }
+      </button>
+      { children }
+    </section>
+  )
+}))
 
 // the pipeline editor is out of scope; the target step stand-in shows what the dialog hands it, next to the real result preview
 jest.mock('./step-transformations/step-transformations', () => ({
@@ -33,9 +50,18 @@ jest.mock('./step-transformations/step-transformations', () => ({
 }))
 jest.mock('./step-target/step-target', () => {
   const { ResultPreview } = jest.requireActual<typeof ResultPreviewModule>('./result-preview/result-preview')
+  // antd's fields take disabled from this context unless told otherwise
+  const DisabledContext: React.Context<boolean> = jest.requireActual('antd/lib/config-provider/DisabledContext').default
   return {
-    StepTarget: ({ attributesMap, transformationResultType }: { attributesMap: Record<string, ClassAttribute[]>, transformationResultType?: string }) => (
+    StepTarget: ({ attributesMap, onDataTargetChange, transformationResultType }: { attributesMap: Record<string, ClassAttribute[]>, onDataTargetChange: (dataTarget: unknown) => void, transformationResultType?: string }) => (
       <div data-testid="target">
+        <button
+          onClick={ () => { onDataTargetChange({ type: 'direct', settings: { fieldName: 'name' } }) } }
+          type="button"
+        >
+          pick name
+        </button>
+        <span data-testid="target-fields-disabled">{ String(React.useContext(DisabledContext)) }</span>
         <span data-testid="target-attributes">
           { Object.entries(attributesMap).map(([key, attributes]) => `${key}:${attributes.map(a => a.key).join(',')}`).join(';') }
         </span>
@@ -62,24 +88,26 @@ const typeResult = settled({ type: 'numeric' })
 const previewResult = settled({ transformationResultPreviews: ['trimmed A-1'] })
 const attributesResult = settled({ attributes: [{ key: 'sku', title: 'SKU' }] })
 
-const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}, onSave: (updated: MappingConfigItem) => void = () => undefined): void => {
+const renderDialog = (attributesMap: Record<string, ClassAttribute[]> = {}, onSave: (updated: MappingConfigItem) => void = () => undefined, readOnly = false): void => {
   render(
-    <PostedMappingSource
-      columns={ columns }
-      configuration={ { mappingConfig: [item] } }
-      id="format"
-      records={ records }
-    >
-      <AdvancedMappingModal
-        attributesMap={ attributesMap }
-        classId="Product"
-        columnHeaderOptions={ [{ value: 'sku', label: 'SKU' }] }
-        item={ item }
-        onClose={ () => undefined }
-        onSave={ onSave }
-        open
-      />
-    </PostedMappingSource>
+    <ConfigEditorModeProvider readOnly={ readOnly }>
+      <PostedMappingSource
+        columns={ columns }
+        configuration={ { mappingConfig: [item] } }
+        id="format"
+        records={ records }
+      >
+        <AdvancedMappingModal
+          attributesMap={ attributesMap }
+          classId="Product"
+          columnHeaderOptions={ [{ value: 'sku', label: 'SKU' }] }
+          item={ item }
+          onClose={ () => undefined }
+          onSave={ onSave }
+          open
+        />
+      </PostedMappingSource>
+    </ConfigEditorModeProvider>
   )
 }
 
@@ -105,6 +133,58 @@ describe('AdvancedMappingModal on a posted mapping source', () => {
       { bundleDataImporterTransformationResultParameters: { mappingConfig: [item], dataRow: records[0] } },
       { refetchOnMountOrArgChange: false, skip: false }
     )
+  })
+
+  it('shows a reader the entry and its preview but offers no save', () => {
+    renderDialog({}, jest.fn(), true)
+
+    expect(within(screen.getByTestId('target')).getByText('trimmed A-1')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'data-importer.mapping.advanced-modal.save' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'refresh' }).hasAttribute('disabled')).toBe(false)
+  })
+
+  it('disables the fields of a reader\'s dialog even outside a disabled form', () => {
+    renderDialog({}, jest.fn(), true)
+
+    expect(screen.getByTestId('target-fields-disabled').textContent).toBe('true')
+  })
+
+  it('leaves the fields of an editor\'s dialog enabled', () => {
+    renderDialog()
+
+    expect(screen.getByTestId('target-fields-disabled').textContent).toBe('false')
+  })
+
+  it('keeps one section open at a time', () => {
+    renderDialog()
+    const section = (name: RegExp): HTMLElement => screen.getByRole('button', { name })
+    const open = (): string[] => [/step-source$/, /step-transformations$/, /step-target$/]
+      .filter(name => section(name).getAttribute('aria-expanded') === 'true')
+      .map(String)
+
+    expect(open()).toEqual(['/step-source$/'])
+
+    fireEvent.click(section(/step-target$/))
+    expect(open()).toEqual(['/step-target$/'])
+
+    fireEvent.click(section(/step-transformations$/))
+    expect(open()).toEqual(['/step-transformations$/'])
+
+    fireEvent.click(section(/step-source$/))
+    expect(open()).toEqual(['/step-source$/'])
+
+    fireEvent.click(section(/step-source$/))
+    expect(open()).toEqual([])
+  })
+
+  it('saves the target the target step picked', () => {
+    const onSave = jest.fn()
+    renderDialog({}, onSave)
+
+    fireEvent.click(screen.getByRole('button', { name: 'pick name' }))
+    fireEvent.click(screen.getByRole('button', { name: 'data-importer.mapping.advanced-modal.save' }))
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1', dataTarget: { type: 'direct', settings: { fieldName: 'name' } } }))
   })
 
   it('loads the default class attributes when its host has none', () => {

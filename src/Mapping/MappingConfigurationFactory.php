@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping;
 
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ConfigNameAwareInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\DataTargetInterface;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\OperatorInterface;
 
@@ -61,19 +62,24 @@ final class MappingConfigurationFactory
     }
 
     /**
+     * @param string $configName
      * @param array $config
      *
      * @return DataTargetInterface
      *
      * @throws InvalidConfigurationException
      */
-    private function buildDataTarget(array $config): DataTargetInterface
+    private function buildDataTarget(string $configName, array $config): DataTargetInterface
     {
         if (empty($config['type']) || !array_key_exists($config['type'], $this->dataTargetBluePrints)) {
             throw new InvalidConfigurationException('Unknown data target type `' . ($config['type'] ?? '') . '`');
         }
 
         $dataTarget = clone $this->dataTargetBluePrints[$config['type']];
+        if ($dataTarget instanceof ConfigNameAwareInterface) {
+            $dataTarget->setConfigName($configName);
+        }
+
         $dataTarget->setSettings($config['settings'] ?? []);
 
         return $dataTarget;
@@ -116,7 +122,9 @@ final class MappingConfigurationFactory
         $mappingConfiguration->setDataSourceIndex($configurationEntry['dataSourceIndex'] ?? null);
         $mappingConfiguration->setTransformationPipeline($this->buildTransformationPipeline($configName, $configurationEntry['transformationPipeline'] ?? []));
         if (!$ignoreDataTarget) {
-            $mappingConfiguration->setDataTarget($this->buildDataTarget($configurationEntry['dataTarget'] ?? []));
+            $mappingConfiguration->setDataTarget(
+                $this->buildDataTarget($configName, $configurationEntry['dataTarget'] ?? [])
+            );
         }
 
         return $mappingConfiguration;

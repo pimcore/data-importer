@@ -93,10 +93,13 @@ export const bundleServiceIds = {
   'DataImporter/DynamicTypes/Transformer/QuantityValueArray': 'DataImporter/DynamicTypes/Transformer/QuantityValueArray',
   'DataImporter/DynamicTypes/Transformer/InputQuantityValue': 'DataImporter/DynamicTypes/Transformer/InputQuantityValue',
   'DataImporter/DynamicTypes/Transformer/InputQuantityValueArray': 'DataImporter/DynamicTypes/Transformer/InputQuantityValueArray',
+  'DataImporter/DynamicTypes/Transformer/QuantityValueRange': 'DataImporter/DynamicTypes/Transformer/QuantityValueRange',
   'DataImporter/DynamicTypes/Transformer/AsGeobounds': 'DataImporter/DynamicTypes/Transformer/AsGeobounds',
   'DataImporter/DynamicTypes/Transformer/AsGeopoint': 'DataImporter/DynamicTypes/Transformer/AsGeopoint',
   'DataImporter/DynamicTypes/Transformer/AsGeopolygon': 'DataImporter/DynamicTypes/Transformer/AsGeopolygon',
   'DataImporter/DynamicTypes/Transformer/AsGeopolyline': 'DataImporter/DynamicTypes/Transformer/AsGeopolyline',
+  'DataImporter/DynamicTypes/Transformer/AsNumericRange': 'DataImporter/DynamicTypes/Transformer/AsNumericRange',
+  'DataImporter/DynamicTypes/Transformer/AsExternalImage': 'DataImporter/DynamicTypes/Transformer/AsExternalImage',
   'DataImporter/DynamicTypes/Transformer/LoadDataObject': 'DataImporter/DynamicTypes/Transformer/LoadDataObject',
   'DataImporter/DynamicTypes/Transformer/ImportAsset': 'DataImporter/DynamicTypes/Transformer/ImportAsset',
 

@@ -8,6 +8,7 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Mapping\Type\TransformationDataTypeService: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreDataTypeService: ~
+    Pimcore\Bundle\DataImporterBundle\Mapping\Type\ClassificationStoreEngineSupport: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration: ~
     Pimcore\Bundle\DataImporterBundle\Mapping\Apply\MappingApplicationScope: ~
@@ -142,6 +143,18 @@ services:
     Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsCountries:
         tags:
             - { name: "pimcore.datahub.data_importer.operator", type: "asCountries" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsNumericRange:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asNumericRange" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\QuantityValueRange:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "quantityValueRange" }
+
+    Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Factory\AsExternalImage:
+        tags:
+            - { name: "pimcore.datahub.data_importer.operator", type: "asExternalImage" }
 
 
     # ---------------------

@@ -65,20 +65,11 @@ final readonly class ProposeImportConfigTool
     #[McpTool(
         name: self::TOOL_NAME,
         title: 'Propose Import Configuration Changes',
-        description: 'Propose a Data Importer configuration for user approval — changes to an existing '
-            . 'one, or a new one under a name that does not exist yet. Does NOT write — the '
-            . 'configuration rides a change set the user reviews. For a change, read the current '
-            . 'configuration first with get_import_config and send the COMPLETE document back with '
-            . 'your changes applied; anything you leave out keeps its current value. For a new one, '
-            . 'send a complete document (copy a similar configuration and adjust it): it needs a '
-            . 'loader, a file format, a target class and the resolver strategies; it starts inactive '
-            . 'unless active is set. loaderConfig is {"type": ..., "settings": {...}} with the '
-            . 'settings that loader type needs; changing the type replaces its settings. The HTTP '
-            . 'loader: {"type": "http", "settings": {"schema": "https://", "url": '
-            . '"example.com/feed.json"}}, schema "https://" or "http://", url the address without '
-            . 'its scheme. Returns {proposalId, name}. The review widget is shown '
-            . 'automatically once the proposal succeeds; end your turn after a successful proposal '
-            . 'and wait for the decision.',
+        description: 'Load the data-importer-configuration skill before the first call. Propose a Data '
+            . 'Importer configuration: a change to an existing one, or a new one under an unused name. '
+            . 'Does NOT write. Read it with get_import_config first and send the COMPLETE document back '
+            . 'with your changes applied; for a new one, copy a similar configuration and adjust it. '
+            . 'Returns {proposalId, name}; end your turn after a successful proposal.',
         annotations: new ToolAnnotations(
             readOnlyHint: false,
             destructiveHint: false,
@@ -94,17 +85,12 @@ final readonly class ProposeImportConfigTool
         string $name,
         #[Schema(
             type: 'string',
-            description: 'The configuration as JSON or YAML — the general, loaderConfig, '
-                . 'interpreterConfig, resolverConfig, processingConfig, mappingConfig, '
-                . 'executionConfig and permissions sections, with your changes applied. '
-                . 'permissions holds {"user": [...], "role": [...]}, each entry '
-                . '{"name": "...", "read": bool, "update": bool, "delete": bool}; an entry is '
-                . 'matched by name, so take names from list_config_principals and never invent '
-                . 'one. Leaving permissions empty means everyone with the Data Importer '
-                . 'permission may use the configuration.'
+            description: 'The complete configuration as JSON or YAML: general, loaderConfig, '
+                . 'interpreterConfig, resolverConfig, processingConfig, mappingConfig, executionConfig '
+                . 'and permissions. Take permission names from list_config_principals.'
         )]
         array|string $configuration,
-        #[Schema(type: 'string', description: 'One sentence saying what the change does, shown on the review card.')]
+        #[Schema(type: 'string', description: 'One sentence for the review card.')]
         ?string $summary = null,
     ): CallToolResult {
         $denied = $this->denyIfNotAllowed($this->securityService);

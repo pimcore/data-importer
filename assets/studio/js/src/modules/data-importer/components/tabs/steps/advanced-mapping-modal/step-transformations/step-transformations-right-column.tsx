@@ -14,6 +14,7 @@ import { IconButton, Select, Flex } from '@pimcore/studio-ui-bundle/components'
 import { ResultPreview } from '../result-preview/result-preview'
 import { useSharedStepStyles } from '../step-shared.styles'
 import { useStyles } from './step-transformations.styles'
+import { useConfigEditorReadOnly } from '../../../../config-editor-mode'
 
 export interface StepTransformationsRightColumnProps {
   dataSourceIndex: string[]
@@ -37,6 +38,7 @@ export const StepTransformationsRightColumn = ({
   const { t } = useTranslation()
   const { styles } = useStyles()
   const { styles: shared } = useSharedStepStyles()
+  const readOnly = useConfigEditorReadOnly()
 
   return (
     <Flex
@@ -56,13 +58,15 @@ export const StepTransformationsRightColumn = ({
           <span className={ styles.sourceSectionTitle }>
             { t('data-importer.mapping.advanced-modal.step-source.label') }
           </span>
-          <IconButton
-            icon={ { value: 'edit-pen' } }
-            onClick={ onToggleEditing }
-            size="small"
-            tooltip={ { title: t('data-importer.mapping.advanced-modal.transformer.edit-source') } }
-            type="text"
-          />
+          { !readOnly && (
+            <IconButton
+              icon={ { value: 'edit-pen' } }
+              onClick={ onToggleEditing }
+              size="small"
+              tooltip={ { title: t('data-importer.mapping.advanced-modal.transformer.edit-source') } }
+              type="text"
+            />
+          ) }
         </Flex>
 
         { editingSource

@@ -41,3 +41,4 @@ export const DynamicTypeTransformerQuantityValue = makeQuantityValueTransformer(
 export const DynamicTypeTransformerQuantityValueArray = makeQuantityValueTransformer('quantityValueArray', 'Quantity Value Array', 'id')
 export const DynamicTypeTransformerInputQuantityValue = makeQuantityValueTransformer('inputQuantityValue', 'Input Quantity Value', 'abbr')
 export const DynamicTypeTransformerInputQuantityValueArray = makeQuantityValueTransformer('inputQuantityValueArray', 'Input Quantity Value Array', 'id')
+export const DynamicTypeTransformerQuantityValueRange = makeQuantityValueTransformer('quantityValueRange', 'Quantity Value Range', 'id')

@@ -208,6 +208,18 @@ data-importer.mapping.new-modal.source-label: Bronkolom
 data-importer.mapping.new-modal.source-required: Selecteer een bronkolom
 data-importer.mapping.collapse-all: Alles samenvouwen
 data-importer.mapping.expand-all: Alles uitvouwen
+data-importer.mapping.preview-mode.switch: Voorbeeldmodus
+data-importer.mapping.preview-mode.no-preview-data: Upload of kopieer een voorbeeldbestand om resultaten te zien
+data-importer.mapping.preview-mode.record: 'Record {{number}}'
+data-importer.mapping.preview-mode.record-label: Record
+data-importer.mapping.preview-mode.of-records: 'van {{total}}'
+data-importer.mapping.preview-mode.picker.select: Selecteren
+data-importer.mapping.preview-mode.picker.cancel: Annuleren
+data-importer.mapping.preview-mode.preview: Voorbeeld
+data-importer.mapping.preview-mode.no-value: Geen waarde
+data-importer.mapping.preview-mode.unavailable: Voorbeeld niet beschikbaar
+data-importer.mapping.preview-mode.warning.advanced-setup: Vereist geavanceerde configuratie
+data-importer.mapping.preview-mode.warning.further-configuration: Vereist verdere configuratie
 data-importer.mapping.auto-fill: Automatisch invullen
 data-importer.mapping.autofill-suggestions.title: Copilot-suggesties voor automatisch invullen
 data-importer.mapping.autofill-suggestions.score: Score
@@ -296,6 +308,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Samenvoeg
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store-sleutel
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Geen sleutel geselecteerd
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: "{{key}} in groep {{group}}"
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: "Variant"
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: "Standaardvariant"
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Classification Store-sleutel selecteren
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Zoek en selecteer een sleutel voor dit Classification Store-veld
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: "Classification Store Batch vereist transformatieresultaattype: array, quantityValueArray, inputQuantityValueArray of dateArray."

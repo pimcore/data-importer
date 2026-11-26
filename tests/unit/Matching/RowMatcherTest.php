@@ -26,6 +26,7 @@ use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\RowMatcherModel;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\DataObject\Service;
 use Pimcore\Tests\Support\Util\TestHelper;
@@ -943,7 +944,9 @@ class RowMatcherTest extends Unit
     {
         /** @var RowMatcherFactory $factory */
         $factory = $this->tester->grabService(RowMatcherFactory::class);
-        $attributes = (new TransformationDataTypeService())->getPimcoreDataTypes(
+        $attributes = (new TransformationDataTypeService(
+            $this->tester->grabService(LocalizationResolver::class)
+        ))->getPimcoreDataTypes(
             $this->class->getId(),
             [TransformationDataTypeService::DEFAULT_TYPE, TransformationDataTypeService::NUMERIC],
             false,

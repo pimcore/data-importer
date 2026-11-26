@@ -13,6 +13,7 @@
 namespace Pimcore\Bundle\DataImporterBundle\Mapping\Type;
 
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\Classificationstore\LocalizationResolver;
 use Pimcore\Model\DataObject\Objectbrick\Definition;
 
 /**
@@ -68,7 +69,17 @@ final class TransformationDataTypeService
 
     public const COUNTRY_ARRAY = 'countryArray';
 
+    public const NUMERIC_RANGE = 'numericRange';
+
+    public const QUANTITY_VALUE_RANGE = 'quantityValueRange';
+
+    public const EXTERNAL_IMAGE = 'externalImage';
+
     public const CALCULATED = 'calculated';
+
+    public function __construct(private readonly LocalizationResolver $localizationResolver)
+    {
+    }
 
     private array $transformationDataTypesMapping = [
         self::DEFAULT_TYPE => [
@@ -93,7 +104,8 @@ final class TransformationDataTypeService
         self::DEFAULT_ARRAY => [
             'multiselect',
             'countrymultiselect',
-            'languages'
+            // the type was renamed in Pimcore 5; `languages` matched no field type at all
+            'languagemultiselect'
         ],
         self::QUANTITY_VALUE => [
             'quantityValue'
@@ -158,6 +170,15 @@ final class TransformationDataTypeService
         ],
         self::COUNTRY_ARRAY => [
             'countrymultiselect'
+        ],
+        self::NUMERIC_RANGE => [
+            'numericRange'
+        ],
+        self::QUANTITY_VALUE_RANGE => [
+            'quantityValueRange'
+        ],
+        self::EXTERNAL_IMAGE => [
+            'externalImage'
         ],
         self::CALCULATED =>[
             'calculatedValue'
@@ -229,16 +250,10 @@ final class TransformationDataTypeService
 
         //replace for advanced relations
         if ($includeAdvancedRelations) {
-            $transformationTargetType = array_map(function ($item) {
-                switch ($item) {
-                    case self::ASSET_ARRAY:
-                        return self::ADVANCED_ASSET_ARRAY;
-                    case self::DATA_OBJECT_ARRAY:
-                        return self::ADVANCED_DATA_OBJECT_ARRAY;
-                    default:
-                        return $item;
-                }
-            }, $transformationTargetType);
+            $transformationTargetType = array_map(
+                $this->advancedRelationTargetType(...),
+                $transformationTargetType
+            );
         }
 
         foreach ($transformationTargetType as $targetType) {
@@ -311,12 +326,25 @@ final class TransformationDataTypeService
                 $attributes[$definition->getName()] = [
                     'key' => $definition->getName(),
                     'title' => $definition->getTitle() . ' [' . $definition->getName() . ']',
-                    'localized' => $definition->isLocalized()
+                    'localized' => $this->localizationResolver->hasLocalizedKey($definition)
                 ];
             }
         }
 
         return array_values($attributes);
+    }
+
+    /**
+     * The counterpart of a relation result type that also covers the advanced relation types, where
+     * one exists. Any other result type is its own counterpart.
+     */
+    public function advancedRelationTargetType(string $transformationTargetType): string
+    {
+        return match ($transformationTargetType) {
+            self::ASSET_ARRAY => self::ADVANCED_ASSET_ARRAY,
+            self::DATA_OBJECT_ARRAY => self::ADVANCED_DATA_OBJECT_ARRAY,
+            default => $transformationTargetType,
+        };
     }
 
     /**

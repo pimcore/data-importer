@@ -23,8 +23,9 @@ use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposedImportConfiguration;
 use function time;
 
 /**
- * Import configurations as a Data Hub proposal kind. propose_import_config keeps its own
- * refusals, so only the subject and the list and read tools ask this policy.
+ * Import configurations as a Data Hub proposal kind. propose_import_config refuses what it can
+ * name before anything is recorded; the approval asks problems() again, since an amendment made
+ * in the review never met those checks.
  *
  * @internal
  */
@@ -46,7 +47,7 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
 
     public function __construct(
         private ConfigurationServiceInterface $configurations,
-        private LoaderSettingsCheck $loaderSettings,
+        private ImportConfigCheck $check,
         private StoredConfigurationsInterface $stored,
     ) {
     }
@@ -93,12 +94,7 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
 
     public function problems(array $state, bool $isNew): array
     {
-        if (!$isNew && !$this->changesStoredLoader($state)) {
-            // a stored loader the proposal leaves alone is not the proposal's to refuse
-            return [];
-        }
-
-        return $this->loaderSettings->problems($state);
+        return $this->check->problems($state, $isNew ? null : $this->storedState($state));
     }
 
     public function summarize(array $configuration): array
@@ -125,16 +121,13 @@ final readonly class ImportConfigPolicy implements ConfigProposalPolicyInterface
 
     /**
      * @param array<string, mixed> $state
+     *
+     * @return array<string, mixed>|null
      */
-    private function changesStoredLoader(array $state): bool
+    private function storedState(array $state): ?array
     {
         $name = $state['general']['name'] ?? null;
-        $stored = is_string($name) ? $this->stored->find($name) : null;
-        if ($stored === null) {
-            return true;
-        }
 
-        return KeySorted::of($state['loaderConfig'] ?? null)
-            !== KeySorted::of($stored->getConfiguration()['loaderConfig'] ?? null);
+        return is_string($name) ? $this->stored->find($name)?->getConfiguration() : null;
     }
 }

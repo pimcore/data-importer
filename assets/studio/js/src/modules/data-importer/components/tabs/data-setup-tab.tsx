@@ -8,7 +8,7 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import cn from 'classnames'
 import { Steps, type StepItem, Flex } from '@pimcore/studio-ui-bundle/components'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
@@ -40,6 +40,7 @@ export const DataSetupTab = ({ configName, activeStep, onStepChange }: DataSetup
   }
   // Bumped on preview-data change so dependent steps refresh their column lists.
   const [previewVersion, setPreviewVersion] = useState(0)
+  const bumpPreviewVersion = useCallback((): void => { setPreviewVersion((v) => v + 1) }, [])
 
   const RESOLVER_STEP_INDEX = 2
   const PROCESSING_STEP_INDEX = 4
@@ -79,7 +80,10 @@ export const DataSetupTab = ({ configName, activeStep, onStepChange }: DataSetup
         </Box>
 
         <div className={ cn(styles.stepContentMapping, !isMappingStep && styles.stepContentMappingHidden) }>
-          <MappingStep isActive={ isMappingStep } />
+          <MappingStep
+            isActive={ isMappingStep }
+            onPreviewDataChange={ bumpPreviewVersion }
+          />
         </div>
 
         <div className={ cn(styles.stepContent, currentStep !== 0 && styles.stepContentHidden) }>
@@ -90,7 +94,7 @@ export const DataSetupTab = ({ configName, activeStep, onStepChange }: DataSetup
           <PreviewImportStep
             configName={ configName }
             isActive={ currentStep === 1 }
-            onPreviewDataChange={ () => { setPreviewVersion((v) => v + 1) } }
+            onPreviewDataChange={ bumpPreviewVersion }
           />
         </div>
 

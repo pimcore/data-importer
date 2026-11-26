@@ -80,15 +80,42 @@ Assigns the value to one key of a classification store field.
 **Configuration options**
 
 - **Field Name**: the classification store field.
-- **Classification Store Key**: the group and key to write.
-- **Language**: for localized keys, the language to write.
+- **Classification Store Key**: the group and key to write, saved as `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>`. The integer
+  form `<GROUP_ID>-<KEY_ID>` of older entries is still read, and is saved for a group or key that has no identifier.
+  The keys offered are those whose type the pipeline's result type can fill, exactly as for a class attribute, plus
+  keys of the `multiValue` type over such a type. A result type no key type can hold offers no key at all — the three
+  array result types the `Classification Store Batch` target takes (`quantityValueArray`, `inputQuantityValueArray`,
+  `dateArray`) are of that kind, because a single key holds one value and not a list of them. Keys of the two advanced
+  relation types are offered for `assetArray` and `dataObjectArray` only when the listing is asked for the advanced
+  relations, and their values are written as relation metadata with no columns filled, as for a class attribute
+  written through `Many-to-Many Relation`.
+- **Variant**: shown when the selected key declares variants. The variant is part of the reference,
+  `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>#<VARIANT>`, so one mapping entry per variant writes the variants of one key side
+  by side. Without one, the default variant is written. `Classification Store Batch` takes the same `#<VARIANT>`
+  segment in its own tokens.
+- **Language**: shown once a key is selected and the key is localized. The key's own flag decides; a key that states
+  none uses the flag of the classification store field. For any other key the value is written without a language.
+- **Write If Source Is Empty**: enabled by default. Disable it to prevent an empty source value from clearing the key.
+  The setting only takes effect once it has been saved for the mapping entry at least once — see
+  [When the setting takes effect](#when-write-if-source-is-empty-takes-effect).
 
 ## Classification Store Batch
 
 Assigns many classification store keys with a single mapping entry. The transformation pipeline has to produce an array
-keyed by `<GROUP_ID>-<KEY_ID>`, with the values to assign.
+keyed by `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` or the integer form `<GROUP_ID>-<KEY_ID>`, each optionally followed by
+`#<VARIANT>`, with the values to assign. A key whose value the entry cannot build, and a key whose type the engine
+behind the store cannot hold, are each warned about and skipped; the rest of the entry is still written.
 
 The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray` or `dateArray`.
+
+**Configuration options**
+
+- **Field Name**: the classification store field.
+- **Language**: shown when the field is localized or any key of its store is. The language applies to the keys of the
+  entry that are localized, decided per key as for `Classification Store`; the other keys are written without a language.
+- **Write If Source Is Empty**: **disabled** by default, unlike every other data target. Enable it to let an empty
+  source value clear the key instead of being dropped. The setting only takes effect once it has been saved for the
+  mapping entry at least once — see [When the setting takes effect](#when-write-if-source-is-empty-takes-effect).
 
 <div class="image-as-lightbox"></div>
 
@@ -96,3 +123,28 @@ The result type must be `array`, `quantityValueArray`, `inputQuantityValueArray`
 
 For the required data shape and worked examples, see
 [Classification Store Batch Details](./01_Classification_Store_Batch_Details.md).
+
+### Keys Declaring Variants
+
+On both classification store targets a key of type `multiValue` holds one value per variant. The import writes the
+addressed variant of the addressed language, replacing the value already held there. A JSON array in the source field
+is not a list: it is stored as the key's one value, as it is for any other key. A token naming no variant writes the
+default variant, and a variant the key does not declare is refused by name. Writing several values of one key as an
+ordered list has no spelling on either target.
+
+If the engine of the store cannot hold a variant, the key is written to the default variant and a warning in the import
+log names the key and says that the engine of the store has to be changed.
+
+### When Write If Source Is Empty Takes Effect
+
+On the two classification store targets the setting is only in force on a mapping entry for which it has been decided,
+which the editor records the first time the control is changed or the target type is selected. Until then the entry
+keeps the behaviour it had before the setting reached these targets, whatever its stored value says: the
+`Classification Store` target writes every value including empty ones, and `Classification Store Batch` drops every
+empty value before writing and does not activate the group of an entry whose values are all empty. Two entries with
+identical-looking settings therefore import differently depending on whether that decision has been recorded.
+
+Open the mapping entry, set the control to what the import should do and save the configuration to put it in force.
+
+A value counts as empty when PHP counts it as empty: `null`, `false`, `0`, `0.0`, `"0"`, `""` and `[]`. Note that `0`
+is among them.

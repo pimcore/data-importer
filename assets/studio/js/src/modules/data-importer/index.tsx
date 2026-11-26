@@ -42,6 +42,9 @@ import {
   DynamicTypeTransformerAsGeopoint,
   DynamicTypeTransformerAsGeopolygon,
   DynamicTypeTransformerAsGeopolyline,
+  DynamicTypeTransformerAsNumericRange,
+  DynamicTypeTransformerAsExternalImage,
+  DynamicTypeTransformerQuantityValueRange,
   DynamicTypeTransformerLoadDataObject,
   DynamicTypeTransformerImportAsset
 } from './dynamic-types/transformer'
@@ -224,6 +227,9 @@ export const DataImporterModule: AbstractModule = {
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsGeopoint']).to(DynamicTypeTransformerAsGeopoint).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsGeopolygon']).to(DynamicTypeTransformerAsGeopolygon).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsGeopolyline']).to(DynamicTypeTransformerAsGeopolyline).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsNumericRange']).to(DynamicTypeTransformerAsNumericRange).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsExternalImage']).to(DynamicTypeTransformerAsExternalImage).inSingletonScope()
+    container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/QuantityValueRange']).to(DynamicTypeTransformerQuantityValueRange).inSingletonScope()
     container.bind(bundleServiceIds['DataImporter/DynamicTypes/Transformer/ImportAsset']).to(DynamicTypeTransformerImportAsset).inSingletonScope()
 
     // Register all types into the registry
@@ -258,6 +264,9 @@ export const DataImporterModule: AbstractModule = {
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsGeopoint'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsGeopolygon'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsGeopolyline'],
+      bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsNumericRange'],
+      bundleServiceIds['DataImporter/DynamicTypes/Transformer/AsExternalImage'],
+      bundleServiceIds['DataImporter/DynamicTypes/Transformer/QuantityValueRange'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/LoadDataObject'],
       bundleServiceIds['DataImporter/DynamicTypes/Transformer/ImportAsset']
     ] as const

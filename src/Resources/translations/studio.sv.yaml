@@ -208,6 +208,18 @@ data-importer.mapping.new-modal.source-label: Källkolumn
 data-importer.mapping.new-modal.source-required: Välj en källkolumn
 data-importer.mapping.collapse-all: Fäll ihop alla
 data-importer.mapping.expand-all: Expandera alla
+data-importer.mapping.preview-mode.switch: Förhandsvisningsläge
+data-importer.mapping.preview-mode.no-preview-data: Ladda upp eller kopiera en förhandsvisningsfil för att se resultat
+data-importer.mapping.preview-mode.record: 'Post {{number}}'
+data-importer.mapping.preview-mode.record-label: Post
+data-importer.mapping.preview-mode.of-records: 'av {{total}}'
+data-importer.mapping.preview-mode.picker.select: Välj
+data-importer.mapping.preview-mode.picker.cancel: Avbryt
+data-importer.mapping.preview-mode.preview: Förhandsvisning
+data-importer.mapping.preview-mode.no-value: Inget värde
+data-importer.mapping.preview-mode.unavailable: Förhandsvisning inte tillgänglig
+data-importer.mapping.preview-mode.warning.advanced-setup: Kräver avancerad konfiguration
+data-importer.mapping.preview-mode.warning.further-configuration: Kräver ytterligare konfiguration
 data-importer.mapping.auto-fill: Autofyll
 data-importer.mapping.autofill-suggestions.title: Copilot autofyll-förslag
 data-importer.mapping.autofill-suggestions.score: Poäng
@@ -296,6 +308,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Sammanfog
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ingen nyckel vald
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} i grupp {{group}}'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: 'Variant'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: 'Standardvariant'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Välj Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Sök och välj en nyckel för detta Classification Store-fält
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch kräver transformationsresultattyp: array, quantityValueArray, inputQuantityValueArray eller dateArray.'

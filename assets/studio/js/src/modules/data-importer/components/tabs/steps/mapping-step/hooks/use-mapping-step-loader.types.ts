@@ -23,6 +23,10 @@ export interface UseMappingStepLoaderResult {
   initialLoadDone: boolean
   sourceRows: SourceRow[]
   hasPreviewError: boolean
+  /** why reading the preview data failed, undefined after an answer */
+  previewLoadError: unknown
+  /** reads the preview file again after it was uploaded or copied */
+  reloadPreviewData: () => void
   attributesMap: Record<string, ClassAttribute[]>
   setAttributesMap: React.Dispatch<React.SetStateAction<Record<string, ClassAttribute[]>>>
   classId: string | undefined

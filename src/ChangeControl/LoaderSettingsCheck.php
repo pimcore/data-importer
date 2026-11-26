@@ -14,17 +14,12 @@ declare(strict_types=1);
 
 namespace Pimcore\Bundle\DataImporterBundle\ChangeControl;
 
-use function error_reporting;
 use function in_array;
 use function is_array;
 use function is_string;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderInterface;
-use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Psr\Container\ContainerInterface;
-use function restore_error_handler;
-use function set_error_handler;
 use function sprintf;
-use TypeError;
 
 /**
  * Whether the loader a configuration names could run with the settings it carries, judged by
@@ -36,10 +31,6 @@ final readonly class LoaderSettingsCheck
 {
     /** its file can only be uploaded in the editor once the configuration exists */
     private const array SETTINGS_FILLED_AFTER_CREATE = ['upload'];
-
-    /** what error_reporting() keeps inside an @-silenced expression */
-    private const int LEVELS_AT_SILENCE = E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR
-        | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE;
 
     /** a loader's own message names one setting; the agent needs the whole shape to fix it */
     private const array SETTINGS_SHAPES = [
@@ -64,10 +55,14 @@ final readonly class LoaderSettingsCheck
         $loaderConfig = $state['loaderConfig'] ?? null;
         $type = is_array($loaderConfig) ? ($loaderConfig['type'] ?? null) : null;
 
-        // an unknown or missing type is the vocabulary's and the create check's to name
-        if (!is_string($type) || $type === '' || !$this->loaders->has($type)
-            || in_array($type, self::SETTINGS_FILLED_AFTER_CREATE, true)) {
+        // a missing type is the create check's to name
+        if (!is_string($type) || $type === '' || in_array($type, self::SETTINGS_FILLED_AFTER_CREATE, true)) {
             return [];
+        }
+
+        // a review amendment never met the vocabulary the propose tool refuses an unknown type with
+        if (!$this->loaders->has($type)) {
+            return [sprintf('loaderConfig.type: "%s" is not a loader here.', $type)];
         }
 
         $loader = $this->loaders->get($type);
@@ -76,40 +71,16 @@ final readonly class LoaderSettingsCheck
         }
 
         $settings = $loaderConfig['settings'] ?? [];
+        $problem = SettingsRead::problem(
+            'loaderConfig',
+            sprintf('the "%s" loader', $type),
+            static function () use ($loader, $settings): void {
+                // loaders are shared services: never configure the one the importer uses
+                (clone $loader)->setSettings(is_array($settings) ? $settings : []);
+            },
+        );
 
-        // a setting the loader reads but the proposal lacks fails the import just as an empty one;
-        // a deprecation or an error the loader silences with @ does not
-        $reported = error_reporting();
-        set_error_handler(static function (int $severity, string $message) use ($reported): bool {
-            $silenced = ($reported & ~self::LEVELS_AT_SILENCE) !== 0
-                && (error_reporting() & ~self::LEVELS_AT_SILENCE) === 0;
-            if ($silenced || ($severity & (E_DEPRECATED | E_USER_DEPRECATED)) !== 0) {
-                return false;
-            }
-
-            throw new LoaderSettingsReadException($message, 0, $severity);
-        });
-
-        try {
-            // loaders are shared services: never configure the one the importer uses
-            (clone $loader)->setSettings(is_array($settings) ? $settings : []);
-        } catch (InvalidConfigurationException $e) {
-            return [$this->withShape($type, 'loaderConfig: ' . $e->getMessage())];
-        } catch (LoaderSettingsReadException $e) {
-            return [$this->withShape(
-                $type,
-                sprintf('loaderConfig: the "%s" loader cannot read its settings: %s.', $type, $e->getMessage())
-            )];
-        } catch (TypeError) {
-            return [$this->withShape(
-                $type,
-                sprintf('loaderConfig: a setting of the "%s" loader is missing or has the wrong type.', $type)
-            )];
-        } finally {
-            restore_error_handler();
-        }
-
-        return [];
+        return $problem === null ? [] : [$this->withShape($type, $problem)];
     }
 
     private function withShape(string $type, string $problem): string

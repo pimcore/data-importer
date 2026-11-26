@@ -109,8 +109,8 @@ final class SqlLoader implements DataLoaderInterface
         }
         $this->from = $settings['from'];
 
-        $this->where = $settings['where'];
-        $this->groupBy = $settings['groupBy'];
+        $this->where = $settings['where'] ?? '';
+        $this->groupBy = $settings['groupBy'] ?? '';
     }
 
     /**

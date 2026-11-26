@@ -208,6 +208,18 @@ data-importer.mapping.new-modal.source-label: Columna de origen
 data-importer.mapping.new-modal.source-required: Por favor, seleccione una columna de origen
 data-importer.mapping.collapse-all: Contraer todo
 data-importer.mapping.expand-all: Expandir todo
+data-importer.mapping.preview-mode.switch: Modo de vista previa
+data-importer.mapping.preview-mode.no-preview-data: Sube o copia un archivo de vista previa para ver los resultados
+data-importer.mapping.preview-mode.record: 'Registro {{number}}'
+data-importer.mapping.preview-mode.record-label: Registro
+data-importer.mapping.preview-mode.of-records: 'de {{total}}'
+data-importer.mapping.preview-mode.picker.select: Seleccionar
+data-importer.mapping.preview-mode.picker.cancel: Cancelar
+data-importer.mapping.preview-mode.preview: Vista previa
+data-importer.mapping.preview-mode.no-value: Sin valor
+data-importer.mapping.preview-mode.unavailable: Vista previa no disponible
+data-importer.mapping.preview-mode.warning.advanced-setup: Requiere configuración avanzada
+data-importer.mapping.preview-mode.warning.further-configuration: Requiere configuración adicional
 data-importer.mapping.auto-fill: Autocompletar
 data-importer.mapping.autofill-suggestions.title: Sugerencias de autocompletado de Copilot
 data-importer.mapping.autofill-suggestions.score: Puntuación
@@ -296,6 +308,8 @@ data-importer.mapping.advanced-modal.step-target.overwrite-mode.merge: Fusionar
 data-importer.mapping.advanced-modal.step-target.classification-store-key: Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-placeholder: Ninguna clave seleccionada
 data-importer.mapping.advanced-modal.step-target.classification-store-key-in-group: '{{key}} en grupo {{group}}'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant: 'Variante'
+data-importer.mapping.advanced-modal.step-target.classification-store-variant-default: 'Variante predeterminada'
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.title: Seleccionar Classification Store Key
 data-importer.mapping.advanced-modal.step-target.classification-store-key-modal.description: Busque y seleccione una clave para este campo de Classification Store
 data-importer.mapping.advanced-modal.step-target.type-error.classificationstoreBatch: 'Classification Store Batch requiere el tipo de resultado de transformación: array, quantityValueArray, inputQuantityValueArray o dateArray.'

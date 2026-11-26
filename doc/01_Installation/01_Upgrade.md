@@ -9,6 +9,85 @@ description: Breaking changes and migration steps per release.
 
 - `LoadAsset` no longer extends `ImportAsset`; both extend the new `AbstractAssetOperator`. A check for
   `instanceof ImportAsset` no longer matches the **Load Asset** operator.
+- Added: the `As Numeric Range`, `Quantity Value Range` and `As External Image` operators, and a
+  `languagemultiselect` field or key is now offered for an `array` result type.
+- [Classification Store] Changed: the key picker offers no key for a result type no key type can hold, where it used
+  to offer every key in the store for `dateArray`, `quantityValueArray` and `inputQuantityValueArray`.
+- [Classification Store] Added: a key of either advanced relation type can be imported, offered for `assetArray` and
+  `dataObjectArray`, and its value is written as relation metadata.
+- [Classification Store] Added: `Write If Source Is Empty` on both classification store data targets — off by default
+  on `Classification Store Batch`, on by default on `Classification Store`. It takes effect once the entry's target
+  type is re-selected or the control is changed.
+- [Classification Store] A `quantityValue` or `inputQuantityValue` key in a plain `array` entry of
+  `Classification Store Batch` is written as a quantity value object instead of the raw source value, so such a key
+  now imports.
+- [Classification Store] Changed: a mapping entry's key reference is saved as identifiers, and a key an entry cannot
+  build is warned about instead of silently dropped.
+- [Classification Store] A key reference that is neither `<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>` nor two whole integers
+  now fails the entry instead of addressing a key it never named — `1-2-3` and `1.5-2` both used to import into
+  group 1 key 2.
+- [Classification Store] A mapping entry writing to a non-localized classification store field no longer fails with a
+  `TypeError`; it writes to the default language, unless the key itself is localized.
+- [Classification Store] `Classification Store Batch` builds the value of every key type the store can hold from its
+  JSON form, so the media, geo, relation, range, `link`, `structuredTable`, `video` and `dateRange` key types now
+  import, a `date` or `datetime` key imports from a unix timestamp while a formatted date string still needs the
+  `Date` operator, and a token may name a variant as `<KEY>#<VARIANT>`. A key whose type the engine behind the store
+  cannot hold is warned about and skipped instead of failing the whole row.
+- [Classification Store] Changed: both data targets write a key under the configured language where the key is
+  localized and without one where it is not, as the object editor reads it. The **Language** control follows the
+  keys' own flags rather than the field's.
+
+### Large XLSX Imports Read the Sheet in Row Windows, and Formula Cells Prefer Cached Results
+
+- **A formula cell can import a different value than before, on every XLSX import.** The interpreter now prefers the
+  result cached in the file, as the preview always has, instead of recalculating it. Where the cached result is
+  stale, the stale value is imported.
+- Open and save affected files once with automatic calculation on before the first import. Volatile formulas
+  (`TODAY()`, `NOW()`, `RAND()`) are stale from the moment the file was saved.
+- A formula cell with no cached result is calculated and logged as a warning naming the sheet and the cell, in the
+  Import Logs tab. At most 50 are listed per run, then a count of the rest.
+- **Cleanup is skipped for a run that imported such a cell empty, and above the threshold for any run that had to
+  calculate one** — even with cleanup on. The row can reach the queue under an identifier the source does not hold,
+  and cleanup would delete the element that identifier belongs to. The run imports as usual and logs the reason.
+- A run below the threshold whose formulas all resolved cleans up as before, so do not rely on an uncached formula
+  to protect existing elements.
+- **An XLSX import no longer aborts on a formula phpspreadsheet cannot calculate**; the cell arrives empty and is
+  named in that warning. A file that used to fail now imports, so check the import log rather than relying on the
+  failure.
+- Above `pimcore_data_importer.xlsx_interpreter.windowed_read_cell_threshold` cells (rows × columns, `200000` by
+  default) the interpreter reads the sheet in row windows instead of loading the whole workbook. Peak memory on a
+  100,000-row, five-column file went from 334 MB to 117 MB. See [Installation](./README.md).
+- Interpreting above the threshold costs about four times the CPU time on that file (9.3 s to 37.7 s), because each
+  window reads the file again. It is the queue-item step, so a large import starts slower rather than running
+  slower. Raise the threshold to keep a file on the faster read, lower it when an import exhausts memory.
+- Memory above the threshold drops rather than flattens: the sheet XML is parsed in full before a window is applied
+  to it, 72 MB on that file.
+- Below the threshold the file is still read in one pass and needs slightly less memory than before, at the cost of
+  one extra pass to read the sheet dimensions.
+- An XLSX file whose sheet holds no data no longer produces a single queue item of empty fields; it creates none.
+- An import whose configured sheet name is absent now fails with the same `InvalidConfigurationException` the
+  preview raised, instead of the raw phpspreadsheet exception.
+- `PreviewRowsReadFilter` was renamed to `RowsReadFilter`, because both the preview and the import use it. The class
+  is `@internal` and `final`.
+
+## Upgrade to 2026.3.7
+
+### Import Asset Only Downloads `http` and `https` URLs
+
+- The **Import Asset** operator now downloads a value only when it starts with `http://` or `https://`. Every other
+  value is skipped: a path on the server such as `/var/import/image.jpg`, `file://`, `ftp://`, and PHP stream
+  wrappers such as `php://` or `phar://`.
+- A skipped value is written to the application log as an error (`only http and https URLs are supported`). The
+  import continues, and the skipped value produces no asset. Other valid values of the same row are still imported.
+- The empty result is then passed to the data target. With the default data target settings it replaces the value
+  of the field, so an asset that an earlier import assigned is removed from the data object. The asset itself is
+  not deleted. Disable **Write If Source Is Empty** on the data target to prevent an empty value from clearing the
+  field.
+- If your import data points to files on the server or on an `ftp` server, review it before the first import after
+  the upgrade: serve the files over `http` or `https`, or bring them into Pimcore as assets first and reference
+  them by asset path or id with the **Load Asset** operator.
+- **Use existing** looks up the asset before the value is checked. While **Overwrite existing** is off, a found asset is returned and reused without downloading or changing its contents. With **Overwrite existing** on,
+  the value is still logged as an error, and the found asset is assigned with its contents unchanged.
 
 ## Upgrade to 2026.3.3
 

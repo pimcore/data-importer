@@ -17,17 +17,16 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit\Mcp;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\AssetLoader;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\HttpLoader;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposalRefusedException;
-use Symfony\Component\DependencyInjection\ServiceLocator;
-use Symfony\Component\Filesystem\Filesystem;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
 
 class ImportConfigProposalBuilderTest extends Unit
 {
+    /** an XML interpreter the importer can load */
+    private const array XML_INTERPRETER = ['type' => 'xml', 'settings' => ['xpath' => '/cars/car', 'schema' => '']];
+
     private const string HTTP_SCHEMA = 'https://';
 
     private const string CARS_URL = 'example.com/cars.json';
@@ -38,7 +37,7 @@ class ImportConfigProposalBuilderTest extends Unit
     {
         $this->builder = new ImportConfigProposalBuilder(
             new ImportConfigVocabulary([]),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
         );
     }
 
@@ -94,7 +93,7 @@ class ImportConfigProposalBuilderTest extends Unit
 
         $state = $this->builder->build(
             'dealer-feed',
-            ['interpreterConfig' => ['type' => 'xml']],
+            ['interpreterConfig' => self::XML_INTERPRETER],
             $this->stored($stored),
         );
 
@@ -129,7 +128,7 @@ class ImportConfigProposalBuilderTest extends Unit
     {
         $builder = new ImportConfigProposalBuilder(
             new ImportConfigVocabulary(['interpreter' => ['csv' => new \stdClass()]]),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
         );
 
         $this->expectException(ProposalRefusedException::class);
@@ -236,14 +235,99 @@ class ImportConfigProposalBuilderTest extends Unit
         $this->withLoaders()->build('dealer-feed', $document, null);
     }
 
+    public function testAnInterpreterTheImporterCannotLoadIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('interpreterConfig: Empty XPath.');
+        $this->builder->build(
+            'dealer-feed',
+            ['interpreterConfig' => ['type' => 'xml', 'settings' => ['xpath' => '']]],
+            $this->stored($this->complete())
+        );
+    }
+
+    public function testAMappingEntryForAFieldTheClassLacksIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage(
+            'mappingConfig[0].dataTarget.settings.fieldName "doesNotExist" is not a field of class '
+            . ImportConfigCheckFixture::CLASS_NAME . '.'
+        );
+        $this->builder->build(
+            'dealer-feed',
+            ['mappingConfig' => [self::row('doesNotExist')]],
+            $this->stored($this->complete())
+        );
+    }
+
+    public function testAMappingEntryWithoutADataTargetIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('mappingConfig[0].dataTarget.type is missing');
+        $this->builder->build(
+            'dealer-feed',
+            ['mappingConfig' => [['label' => 'VIN', 'dataSourceIndex' => ['vin']]]],
+            $this->stored($this->complete())
+        );
+    }
+
+    public function testAScheduleTheSchedulerCannotReadIsRefused(): void
+    {
+        $this->expectException(ProposalRefusedException::class);
+        $this->expectExceptionMessage('executionConfig.cronDefinition "nightly" is not a cron expression');
+        $this->builder->build(
+            'dealer-feed',
+            ['executionConfig' => ['scheduleType' => 'cron', 'cronDefinition' => 'nightly']],
+            $this->stored($this->complete())
+        );
+    }
+
+    /** whatever the importer can load is the review's to judge */
+    public function testANewConfigurationTheReviewDecidesOnIsProposed(): void
+    {
+        $document = $this->complete();
+        $document['general'] = ['active' => true];
+        // the importer creates the folder and an import may only find the file later
+        $document['loaderConfig']['settings']['assetPath'] = '/feeds/not-uploaded-yet.json';
+        $document['resolverConfig']['createLocationStrategy']['settings']['path'] = '/import/not/created/yet';
+        $document['mappingConfig'] = [];
+
+        $state = $this->builder->build('dealer-feed', $document, null);
+
+        static::assertTrue($state['general']['active']);
+        static::assertSame([], $state['mappingConfig']);
+    }
+
+    public function testAChangeToAnUnlabelledEntryKeepsTheKeysTheInstallationStores(): void
+    {
+        $stored = $this->complete();
+        $stored['general'] = ['name' => 'dealer-feed', 'vendorFlag' => 'kept'];
+        $stored['vendorSection'] = ['kept' => true];
+
+        $document = $stored;
+        $document['mappingConfig'] = [self::row('vin', '')];
+
+        $state = $this->builder->build('dealer-feed', $document, $this->stored($stored));
+
+        static::assertSame('', $state['mappingConfig'][0]['label']);
+        static::assertSame(['kept' => true], $state['vendorSection']);
+    }
+
+    /** @return array<string, mixed> */
+    private static function row(string $fieldName, string $label = 'VIN'): array
+    {
+        return [
+            'label' => $label,
+            'dataSourceIndex' => ['vin'],
+            'dataTarget' => ['type' => 'direct', 'settings' => ['fieldName' => $fieldName]],
+        ];
+    }
+
     private function withLoaders(): ImportConfigProposalBuilder
     {
         return new ImportConfigProposalBuilder(
             new ImportConfigVocabulary([]),
-            new LoaderSettingsCheck(new ServiceLocator([
-                'asset' => static fn (): AssetLoader => new AssetLoader(),
-                'http' => static fn (): HttpLoader => new HttpLoader(new Filesystem()),
-            ])),
+            ImportConfigCheckFixture::check(),
         );
     }
 

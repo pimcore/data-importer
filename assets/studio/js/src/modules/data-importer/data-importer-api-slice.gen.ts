@@ -22,7 +22,11 @@ const injectedRtkApi = api
             >({
                 query: (queryArg) => ({
                     url: `/pimcore-studio/api/bundle/data-importer/classificationstore/key-name`,
-                    params: { keyId: queryArg.keyId },
+                    params: {
+                        keyId: queryArg.keyId,
+                        classId: queryArg.classId,
+                        fieldName: queryArg.fieldName,
+                    },
                 }),
                 providesTags: ["Bundle Data Importer"],
             }),
@@ -263,8 +267,12 @@ export type BundleDataImporterClassificationstoreLoadAttributesApiArg = {
 export type BundleDataImporterClassificationstoreLoadKeyNameApiResponse =
     /** status 200 The resolved group name and key name, or the key ID as fallback */ BundleDataImporterClassificationStoreKeyNameResponse;
 export type BundleDataImporterClassificationstoreLoadKeyNameApiArg = {
-    /** The classification store key ID in group-key format (e.g., "1-5") */
+    /** The classification store key reference: "<GROUP_IDENTIFIER>:<KEY_IDENTIFIER>" or the integer pair "<GROUP_ID>-<KEY_ID>", optionally followed by "#<VARIANT>" */
     keyId: string;
+    /** The class of the mapping, which names the store an identifier reference is resolved in */
+    classId?: string;
+    /** The classification store field of the mapping */
+    fieldName?: string;
 };
 export type BundleDataImporterClassificationstoreLoadKeysApiResponse =
     /** status 200 Paginated list of classification store key-group relations with total count */ BundleDataImporterClassificationStoreKeysResponse;
@@ -386,7 +394,7 @@ export type BundleDataImporterConfigUploadPreviewApiArg = {
     body: {
         /** Preview data file to upload */
         file: Blob;
-        /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+        /** Change set under review (UUID): previews are kept apart and a proposed-only config is accepted */
         previewScope?: string;
         /** The context the change set is kept in, when its author keeps it in one */
         previewContext?: string;
@@ -441,12 +449,16 @@ export type BundleDataImporterClassificationStoreKeyNameResponse = {
     additionalAttributes?: {
         [key: string]: string | number | boolean | object;
     };
-    /** The key ID (group-key format) */
+    /** The key reference, as it was asked for when the key could not be resolved */
     keyId?: any;
     /** The group name */
     groupName?: any;
     /** The key name */
     keyName?: any;
+    /** The variant names the key declares */
+    variants?: string[];
+    /** Whether the key is kept per language in the field it was asked for */
+    localized?: any;
 };
 export type BundleDataImporterClassificationStoreKeysResponse = {
     /** AdditionalAttributes */
@@ -465,6 +477,8 @@ export type BundleDataImporterClassificationStoreKeysResponse = {
         keyDescription?: string;
         /** Combined group-key ID */
         id?: string;
+        /** Combined group-key identifier, null when the group or the key has none */
+        identifier?: any;
         /** Sort order */
         sorter?: number;
         /** Group name */
@@ -491,7 +505,7 @@ export type BundleDataImporterCalculateTransformationResultTypeParameters = {
         transformationPipeline?: object[];
         dataTarget?: object;
     };
-    /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+    /** Change set under review (UUID): previews are kept apart and a proposed-only config is accepted */
     previewScope?: string;
     /** The context the change set is kept in, when its author keeps it in one */
     previewContext?: string;
@@ -539,7 +553,7 @@ export type BundleDataImporterCopyPreviewParameters = {
         mappingConfig?: object;
         executionConfig?: object;
     };
-    /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+    /** Change set under review (UUID): previews are kept apart and a proposed-only config is accepted */
     previewScope?: string;
     /** The context the change set is kept in, when its author keeps it in one */
     previewContext?: string;
@@ -646,7 +660,7 @@ export type BundleDataImporterLoadPreviewParameters = {
     };
     /** Zero-based record number to preview from the data source */
     recordNumber?: number;
-    /** A change set under review: its preview data is kept beside the live configuration's, and a configuration that is only proposed so far is accepted */
+    /** Change set under review (UUID): previews are kept apart and a proposed-only config is accepted */
     previewScope?: string;
     /** The context the change set is kept in, when its author keeps it in one */
     previewContext?: string;

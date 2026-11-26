@@ -21,10 +21,10 @@ use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\ChangeControl\ImportConfigPolicy;
-use Pimcore\Bundle\DataImporterBundle\ChangeControl\LoaderSettingsCheck;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposeImportConfigTool;
+use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalResolverInterface;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalResolverRegistry;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalWidgetEmitter;
@@ -37,13 +37,15 @@ use Pimcore\Bundle\StudioBackendBundle\Security\Authenticator\Mcp\McpAccessToken
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\UserInterface;
 use ReflectionMethod;
-use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use UnexpectedValueException;
 
 class ProposeImportConfigToolTest extends Unit
 {
+    /** an XML interpreter the importer can load */
+    private const array XML_INTERPRETER = ['type' => 'xml', 'settings' => ['xpath' => '/cars/car', 'schema' => '']];
+
     private const string SESSION = 'session-7';
 
     protected function _before(): void
@@ -54,16 +56,28 @@ class ProposeImportConfigToolTest extends Unit
         }
     }
 
-    public function testTheDescriptionShowsTheHttpLoaderShape(): void
+    public function testTheDescriptionNamesItsSkillAndTheSkillCarriesTheFormat(): void
     {
         $attribute = (new ReflectionMethod(ProposeImportConfigTool::class, 'execute'))
             ->getAttributes(McpTool::class)[0]->newInstance();
+        $path = dirname(__DIR__, 3) . '/src/Resources/skills/data-importer-configuration/SKILL.md';
+        $skill = (string) preg_replace('/\s+/u', ' ', (string) file_get_contents($path));
 
-        static::assertStringContainsString(
-            '{"type": "http", "settings": {"schema": "https://", "url": "example.com/feed.json"}}',
-            $attribute->description
-        );
-        static::assertStringContainsString('url the address without its scheme', $attribute->description);
+        static::assertStringContainsString('data-importer-configuration skill', $attribute->description);
+        static::assertLessThanOrEqual(450, mb_strlen($attribute->description));
+        foreach ([
+            'It needs a loader, a file format, a target class and the four resolver strategies',
+            'A new configuration starts **inactive**',
+            '`http`: `{"schema": "https://", "url": "example.com/feed.json"}`, '
+                . 'schema `https://` or `http://`, url without the scheme',
+            'Switching the type replaces the settings',
+            'Anything you omit keeps its current value',
+            'Take names from `list_config_principals`',
+            'Empty means open.',
+            'read: true',
+        ] as $fact) {
+            static::assertStringContainsString($fact, $skill);
+        }
     }
 
     public function testAnUnknownNameIsProposedAsNewAndOnlyRecorded(): void
@@ -89,7 +103,7 @@ class ProposeImportConfigToolTest extends Unit
         static::assertSame(ImportConfigPolicy::SUBJECT_TYPE, $recorded[1]['subjectType']);
         $builder = new ImportConfigProposalBuilder(
             new ImportConfigVocabulary([]),
-            new LoaderSettingsCheck(new ServiceLocator([])),
+            ImportConfigCheckFixture::check(),
         );
         static::assertSame($builder->build('dealer-feed', $this->complete(), null), $recorded[1]['subjectState']);
         static::assertSame('dealer-feed', $this->payload($result)['name']);
@@ -112,7 +126,7 @@ class ProposeImportConfigToolTest extends Unit
             });
 
         $result = $this->tool($sessions, static fn (): Configuration => $stored)
-            ->execute('dealer-feed', ['interpreterConfig' => ['type' => 'xml']]);
+            ->execute('dealer-feed', ['interpreterConfig' => self::XML_INTERPRETER]);
 
         static::assertFalse($result->isError);
         static::assertFalse($recorded['isNew']);
@@ -215,7 +229,7 @@ class ProposeImportConfigToolTest extends Unit
             $errors,
             new ImportConfigProposalBuilder(
                 new ImportConfigVocabulary([]),
-                new LoaderSettingsCheck(new ServiceLocator([])),
+                ImportConfigCheckFixture::check(),
             ),
             $find,
         );

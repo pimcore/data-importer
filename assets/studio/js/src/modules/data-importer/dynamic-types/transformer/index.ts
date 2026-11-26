@@ -28,7 +28,8 @@ export {
   DynamicTypeTransformerQuantityValue,
   DynamicTypeTransformerQuantityValueArray,
   DynamicTypeTransformerInputQuantityValue,
-  DynamicTypeTransformerInputQuantityValueArray
+  DynamicTypeTransformerInputQuantityValueArray,
+  DynamicTypeTransformerQuantityValueRange
 } from './quantity-value/dynamic-type-transformer-quantity-value'
 export { DynamicTypeTransformerImportAsset } from './import-asset/dynamic-type-transformer-import-asset'
 
@@ -46,5 +47,7 @@ export {
   DynamicTypeTransformerAsGeobounds,
   DynamicTypeTransformerAsGeopoint,
   DynamicTypeTransformerAsGeopolygon,
-  DynamicTypeTransformerAsGeopolyline
+  DynamicTypeTransformerAsGeopolyline,
+  DynamicTypeTransformerAsNumericRange,
+  DynamicTypeTransformerAsExternalImage
 } from './dynamic-type-transformer-no-settings'
