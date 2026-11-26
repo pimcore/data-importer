@@ -56,7 +56,10 @@ holding a sub-object, such as `technical_attributes` below, arrives as an array 
 ]
 ```
 
-The interpreter uses [`json_decode($content, true)`](https://www.php.net/manual/en/function.json-decode.php).
+The interpreter streams the file record by record with [`halaxa/json-machine`](https://github.com/halaxa/json-machine)
+when the **JMESPath** option is empty or a plain dotted field path, and falls back to
+[`json_decode($content, true)`](https://www.php.net/manual/en/function.json-decode.php) for any other expression. See
+[Streaming and Memory Usage](#streaming-and-memory-usage).
 
 **Configuration options**
 
@@ -110,6 +113,23 @@ items[?price > `10`]
 
 For the full expression reference see [jmespath.org](https://jmespath.org) and the
 [`mtdowling/jmespath.php`](https://github.com/jmespath/jmespath.php) library.
+
+### Streaming and Memory Usage
+
+How the file is read depends on the **JMESPath** option:
+
+| JMESPath | Example | How the file is read |
+|---|---|---|
+| Empty | | Streamed record by record. Memory usage does not grow with the file size. |
+| Plain dotted field path | `items`, `catalog.products.product` | Streamed record by record. Memory usage does not grow with the file size. |
+| Any other expression (filter, projection, index, function, quoted identifier, ...) | ``items[?price > `10`]``, `items[*]` | The whole file is loaded into memory before the expression is evaluated. |
+
+For large files, keep the expression to a plain dotted field path and filter the records in the
+[transformation pipeline](./05_Mapping_Configuration/01_Transformation_Pipeline.md) instead.
+
+With an empty or plain dotted field path, the file validation reads the complete file before the import starts. If the
+path does not exist in the document, the validation fails: the file is rejected, no queue items are created, and the
+error is written to the application log.
 
 ## XLSX (Excel)
 
