@@ -16,6 +16,7 @@ export { DynamicTypeTransformerTrim } from './trim/dynamic-type-transformer-trim
 export { DynamicTypeTransformerCombine } from './combine/dynamic-type-transformer-combine'
 export { DynamicTypeTransformerStaticText } from './static-text/dynamic-type-transformer-static-text'
 export { DynamicTypeTransformerStringReplace } from './string-replace/dynamic-type-transformer-string-replace'
+export { DynamicTypeTransformerSymfonyExpression } from './symfony-expression/dynamic-type-transformer-symfony-expression'
 export { DynamicTypeTransformerDate } from './date/dynamic-type-transformer-date'
 export { DynamicTypeTransformerNumeric } from './numeric/dynamic-type-transformer-numeric'
 export { DynamicTypeTransformerExplode } from './explode/dynamic-type-transformer-explode'
