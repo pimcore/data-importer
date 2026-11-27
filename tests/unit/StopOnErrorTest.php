@@ -301,10 +301,11 @@ class StopOnErrorTest extends Unit
         $this->processSequentialQueue();
 
         static::assertSame([], $this->infos, 'the record queued after the stop is not processed');
-        static::assertSame([], array_filter(
+        $cleanupErrors = array_filter(
             $this->errors,
             static fn (string $message): bool => str_contains($message, 'Error cleaning up element')
-        ), 'the cleanup job queued after the stop is not run');
+        );
+        static::assertSame([], $cleanupErrors, 'the cleanup job queued after the stop is not run');
         static::assertStringContainsString($this->stopMessage(1), end($this->errors));
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
     }
