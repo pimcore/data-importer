@@ -25,9 +25,11 @@ use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigProposalBuilder;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ImportConfigVocabulary;
 use Pimcore\Bundle\DataImporterBundle\Mcp\Tool\ProposeImportConfigTool;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\ImportConfigCheckFixture;
+use Pimcore\Bundle\PimcoreAgentBundle\Mcp\McpProposalContext;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalResolverInterface;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalResolverRegistry;
 use Pimcore\Bundle\PimcoreAgentBundle\Proposal\ProposalWidgetEmitter;
+use Pimcore\Bundle\PimcoreAgentBundle\Repository\AgentSessionRepository;
 use Pimcore\Bundle\PimcoreAgentBundle\Security\BoundSessionReferenceResolver;
 use Pimcore\Bundle\PimcoreAgentBundle\Service\AgentSessionServiceInterface;
 use Pimcore\Bundle\PimcoreAgentBundle\Service\TaskContextResolverInterface;
@@ -36,6 +38,7 @@ use Pimcore\Bundle\StudioBackendBundle\Mcp\Tool\McpToolErrorHandlerInterface;
 use Pimcore\Bundle\StudioBackendBundle\Security\Authenticator\Mcp\McpAccessTokenAuthenticator;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\UserInterface;
+use Pimcore\Model\Version\CoauthorContext;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -47,6 +50,8 @@ class ProposeImportConfigToolTest extends Unit
     private const array XML_INTERPRETER = ['type' => 'xml', 'settings' => ['xpath' => '/cars/car', 'schema' => '']];
 
     private const string SESSION = 'session-7';
+
+    private const string SECRET = 'test-secret';
 
     protected function _before(): void
     {
@@ -194,11 +199,31 @@ class ProposeImportConfigToolTest extends Unit
         static::assertSame('No chat session context.', $this->payload($result)['error']);
     }
 
+    public function testInAConfiguredMcpServerTheProposalGoesToTheServersSession(): void
+    {
+        $recorded = [];
+        $sessions = $this->createMock(AgentSessionServiceInterface::class);
+        $sessions->expects($this->once())
+            ->method('setProposalData')
+            ->willReturnCallback(
+                static function (string $session) use (&$recorded): void {
+                    $recorded[] = $session;
+                }
+            );
+
+        $result = $this->tool($sessions, static fn (): null => null, session: null, mcpServer: 'erp-sync')
+            ->execute('dealer-feed', $this->complete());
+
+        static::assertFalse($result->isError);
+        static::assertSame([McpProposalContext::sessionIdOf(self::SECRET, 42, 'erp-sync')], $recorded);
+    }
+
     private function tool(
         AgentSessionServiceInterface $sessions,
         Closure $find,
         bool $allowed = true,
         ?string $session = self::SESSION,
+        ?string $mcpServer = null,
     ): ProposeImportConfigTool {
         $user = $this->createStub(UserInterface::class);
         $user->method('isAllowed')->willReturn($allowed);
@@ -214,6 +239,21 @@ class ProposeImportConfigToolTest extends Unit
         $request->attributes->set(McpAccessTokenAuthenticator::REQUEST_ATTR_REFERENCE, $session);
         $requests = new RequestStack();
         $requests->push($request);
+        $mcpContext = null;
+        if ($mcpServer !== null) {
+            // an external client's call to a Studio MCP server
+            $request->attributes->set('_route', McpProposalContext::SERVER_ROUTE);
+            $request->attributes->set(McpProposalContext::SERVER_ROUTE_SLUG, $mcpServer);
+            $mcpSessions = $this->createStub(AgentSessionRepository::class);
+            $mcpSessions->method('createMcpSessionIfMissing')->willReturn(true);
+            $mcpContext = new McpProposalContext(
+                $requests,
+                new CoauthorContext(),
+                $security,
+                $mcpSessions,
+                self::SECRET,
+            );
+        }
 
         $errors = $this->createStub(McpToolErrorHandlerInterface::class);
         $errors->method('handle')->willReturn('Something went wrong.');
@@ -224,7 +264,7 @@ class ProposeImportConfigToolTest extends Unit
                 new ProposalResolverRegistry([$resolver]),
                 $this->createStub(TaskContextResolverInterface::class),
             ),
-            new BoundSessionReferenceResolver($requests),
+            new BoundSessionReferenceResolver($requests, $mcpContext),
             $security,
             $errors,
             new ImportConfigProposalBuilder(
