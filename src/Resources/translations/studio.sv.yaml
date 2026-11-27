@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: Det gick inte att avbryta importen
 data-importer.execution.status.title: Körningsstatus
 data-importer.execution.status.not-running: Körs inte
 data-importer.execution.status.finished: Alla objekt bearbetade. Ingen import körs.
+data-importer.execution.status.stopped: Stoppad efter ett fel. Ingen import körs.
 data-importer.execution.status.current-progress: Aktuellt förlopp
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} objekt bearbetade...'
 data-importer.execution.status.cancel: Avbryt körning & rensa kö

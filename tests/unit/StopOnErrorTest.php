@@ -71,6 +71,7 @@ class StopOnErrorTest extends Unit
             (new QueueService())->cleanupQueueItems($configName);
             (new DeltaChecker(Db::get()))->cleanup($configName);
             TmpStore::delete(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $configName);
+            TmpStore::delete(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $configName);
         }
     }
 
@@ -147,6 +148,7 @@ class StopOnErrorTest extends Unit
             'the delta check of the next run does not skip the discarded records'
         );
         static::assertSame(1, (new QueueService())->getQueueItemCount($this->otherConfigName));
+        static::assertTrue($this->createService()->getImportStatus($this->configName)['stoppedAfterError']);
     }
 
     public function testFailedRecordDoesNotStopTheImportByDefault(): void
@@ -162,6 +164,7 @@ class StopOnErrorTest extends Unit
         static::assertStringContainsString(self::FAILURE, $this->errors[0]);
         static::assertCount(2, $this->infos, 'the records after the failing one are processed');
         static::assertFalse($deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']));
+        static::assertFalse($this->createService()->getImportStatus($this->configName)['stoppedAfterError']);
     }
 
     public function testFailedCleanupJobStopsTheImport(): void
@@ -198,6 +201,10 @@ class StopOnErrorTest extends Unit
         static::assertCount(1, $this->errors, 'nothing was left to discard');
         static::assertStringContainsString(self::FAILURE, $this->errors[0]);
         static::assertTrue($deltaChecker->hasChanged($this->configName, 'id', ['id' => self::FAILING_ROW]));
+        static::assertFalse(
+            $this->createService()->getImportStatus($this->configName)['stoppedAfterError'],
+            'nothing was discarded, so the import ran through'
+        );
     }
 
     public function testErrorOutsideTheJobStopsTheImport(): void

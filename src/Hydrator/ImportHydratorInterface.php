@@ -29,7 +29,8 @@ interface ImportHydratorInterface
         bool $isRunning,
         int $totalItems,
         int $processedItems,
-        float $progress
+        float $progress,
+        bool $stoppedAfterError
     ): ImportProgressResponse;
 
     public function hydrateCronValidation(bool $isValid, string $message): CronValidationResponse;

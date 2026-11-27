@@ -28,6 +28,7 @@ import { DataImporterPanel } from '../../steps/data-importer-panel/data-importer
 import { ManualExecutionButton } from '../manual-execution-button/manual-execution-button'
 import { useConfigCapabilities } from '../../../config-capabilities-context'
 import { useStyles } from '../../execution-tab.styles'
+import { getIdleStatusKey } from './idle-status-key'
 
 const POLL_INTERVAL_MS = 5000
 
@@ -182,9 +183,7 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
             )
           : (
             <Text>
-              { t(hasCompleted
-                ? 'data-importer.execution.status.finished'
-                : 'data-importer.execution.status.not-running') }
+              { t(getIdleStatusKey(progressData?.stoppedAfterError === true, hasCompleted)) }
             </Text>
             ) }
       </DataImporterPanel>

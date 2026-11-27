@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: No se pudo cancelar la importación
 data-importer.execution.status.title: Estado de ejecución
 data-importer.execution.status.not-running: No está en ejecución
 data-importer.execution.status.finished: Todos los elementos procesados. No hay importación en curso.
+data-importer.execution.status.stopped: Detenida tras un error. No hay importación en curso.
 data-importer.execution.status.current-progress: Progreso actual
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} elementos procesados...'
 data-importer.execution.status.cancel: Cancelar ejecución y limpiar cola

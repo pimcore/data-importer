@@ -54,6 +54,8 @@ final class ImportProcessingService
 
     public const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
 
+    public const STOPPED_ENTRY_ID_PREFIX = 'datahub_dataimporter_stopped_';
+
     private ConfigurationPreparationService $configLoader;
 
     /**
@@ -201,6 +203,7 @@ final class ImportProcessingService
         }
 
         TmpStore::delete(self::INFO_ENTRY_ID_PREFIX . $configName);
+        TmpStore::set(self::STOPPED_ENTRY_ID_PREFIX . $configName, true);
 
         $message = sprintf(
             'Import stopped after an error: %d queued items were discarded and not processed.'
@@ -582,11 +585,14 @@ final class ImportProcessingService
             $progress = 0;
         }
 
+        $isRunning = $currentQueueItems > 0;
+
         return [
-            'isRunning' => $currentQueueItems > 0,
+            'isRunning' => $isRunning,
             'totalItems' => $totalItems,
             'processedItems' => $processedItems,
-            'progress' => $progress
+            'progress' => $progress,
+            'stoppedAfterError' => !$isRunning && TmpStore::get(self::STOPPED_ENTRY_ID_PREFIX . $configName) !== null,
         ];
     }
 
@@ -597,6 +603,7 @@ final class ImportProcessingService
     {
         $infoEntryId = self::INFO_ENTRY_ID_PREFIX . $configName;
         TmpStore::delete($infoEntryId);
+        TmpStore::delete(self::STOPPED_ENTRY_ID_PREFIX . $configName);
         $this->queueService->cleanupQueueItems($configName);
     }
 

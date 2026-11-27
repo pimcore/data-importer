@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: Import konnte nicht abgebrochen werden
 data-importer.execution.status.title: Ausführungsstatus
 data-importer.execution.status.not-running: Nicht aktiv
 data-importer.execution.status.finished: Alle Elemente verarbeitet. Kein Import aktiv.
+data-importer.execution.status.stopped: Nach einem Fehler gestoppt. Kein Import aktiv.
 data-importer.execution.status.current-progress: Aktueller Fortschritt
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} Elemente verarbeitet...'
 data-importer.execution.status.cancel: Ausführung abbrechen & Warteschlange bereinigen

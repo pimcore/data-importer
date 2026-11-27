@@ -40,6 +40,7 @@ does not count as failed.
 
 When the import stops:
 
+- The Execution Status shows **Stopped after an error. No import running.** until the next import starts.
 - Queued cleanup jobs are discarded with the records, so elements are not deleted or unpublished based on an incomplete
   run.
 - When a record failed or records were discarded, the [Delta Check](#delta-check) hashes of the import configuration

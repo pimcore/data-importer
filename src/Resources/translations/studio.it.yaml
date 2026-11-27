@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: 'Impossibile annullare l''importazione'
 data-importer.execution.status.title: Stato di esecuzione
 data-importer.execution.status.not-running: Non in esecuzione
 data-importer.execution.status.finished: Tutti gli elementi elaborati. Nessuna importazione in corso.
+data-importer.execution.status.stopped: Interrotta dopo un errore. Nessuna importazione in corso.
 data-importer.execution.status.current-progress: Avanzamento corrente
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} elementi elaborati...'
 data-importer.execution.status.cancel: Annulla esecuzione e svuota la coda

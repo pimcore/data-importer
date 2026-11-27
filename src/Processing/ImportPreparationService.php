@@ -24,6 +24,7 @@ use Pimcore\Bundle\DataImporterBundle\Processing\Scheduler\SchedulerFactory;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService;
+use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -65,6 +66,8 @@ final class ImportPreparationService
             if (!$ignoreActiveFlag && !$this->isConfigurationActive($configName, $config)) {
                 return false;
             }
+
+            TmpStore::delete(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $configName);
 
             $loader = $this->dataLoaderFactory->loadDataLoader($config['loaderConfig']);
 

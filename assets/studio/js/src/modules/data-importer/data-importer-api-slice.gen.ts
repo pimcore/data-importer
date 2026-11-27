@@ -541,6 +541,8 @@ export type BundleDataImporterImportProgressResponse = {
     processedItems: number;
     /** Progress as a ratio between 0 and 1 */
     progress: number;
+    /** Whether the last import stopped after an error, with Stop Import on Error enabled */
+    stoppedAfterError: boolean;
 };
 export type BundleDataImporterCopyPreviewParameters = {
     /** Optional unsaved in-progress configuration from the UI. When provided, the loader uses these settings instead of the saved configuration. */

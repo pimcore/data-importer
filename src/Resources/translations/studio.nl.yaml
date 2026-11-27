@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: Import annuleren mislukt
 data-importer.execution.status.title: Uitvoeringsstatus
 data-importer.execution.status.not-running: Niet actief
 data-importer.execution.status.finished: Alle items verwerkt. Geen import actief.
+data-importer.execution.status.stopped: Gestopt na een fout. Geen import actief.
 data-importer.execution.status.current-progress: Huidige voortgang
 data-importer.execution.status.processing: "{{processedItems}} / {{totalItems}} items verwerkt..."
 data-importer.execution.status.cancel: Uitvoering annuleren & wachtrij opschonen

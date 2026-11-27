@@ -24,7 +24,7 @@ use Pimcore\Bundle\StudioBackendBundle\Util\Trait\AdditionalAttributesTrait;
 #[Schema(
     schema: 'BundleDataImporterImportProgressResponse',
     title: 'Bundle Data Importer Import Progress Response',
-    required: ['isRunning', 'totalItems', 'processedItems', 'progress'],
+    required: ['isRunning', 'totalItems', 'processedItems', 'progress', 'stoppedAfterError'],
     type: 'object'
 )]
 final class ImportProgressResponse implements AdditionalAttributesInterface
@@ -57,6 +57,12 @@ final class ImportProgressResponse implements AdditionalAttributesInterface
             example: 0.42
         )]
         private readonly float $progress,
+        #[Property(
+            description: 'Whether the last import stopped after an error, with Stop Import on Error enabled',
+            type: 'boolean',
+            example: false
+        )]
+        private readonly bool $stoppedAfterError,
     ) {
     }
 
@@ -78,5 +84,10 @@ final class ImportProgressResponse implements AdditionalAttributesInterface
     public function getProgress(): float
     {
         return $this->progress;
+    }
+
+    public function getStoppedAfterError(): bool
+    {
+        return $this->stoppedAfterError;
     }
 }

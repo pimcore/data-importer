@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: Nie udało się anulować importu
 data-importer.execution.status.title: Status wykonania
 data-importer.execution.status.not-running: Nie działa
 data-importer.execution.status.finished: Wszystkie elementy przetworzone. Żaden import nie jest uruchomiony.
+data-importer.execution.status.stopped: Zatrzymano po błędzie. Żaden import nie jest uruchomiony.
 data-importer.execution.status.current-progress: Bieżący postęp
 data-importer.execution.status.processing: "Przetworzono {{processedItems}} / {{totalItems}} elementów..."
 data-importer.execution.status.cancel: Anuluj wykonanie i wyczyść kolejkę

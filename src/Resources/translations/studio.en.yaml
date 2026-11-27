@@ -337,6 +337,7 @@ data-importer.execution.cancel.error: Failed to cancel import
 data-importer.execution.status.title: Execution Status
 data-importer.execution.status.not-running: Not running
 data-importer.execution.status.finished: All items processed. No import running.
+data-importer.execution.status.stopped: Stopped after an error. No import running.
 data-importer.execution.status.current-progress: Current Progress
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} items processed...'
 data-importer.execution.status.cancel: Cancel execution & clean up queue
