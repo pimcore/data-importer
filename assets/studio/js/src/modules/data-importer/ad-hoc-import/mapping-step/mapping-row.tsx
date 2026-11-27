@@ -16,6 +16,7 @@ import { chooseLanguage, freeLanguages } from './mapping-choices'
 import { canGoInto, takenFields } from './taken-fields'
 import { useStyles } from './mapping-row.styles'
 import { SparkleIcon } from './sparkle-icon'
+import { iconOf } from './field-icon'
 import { StoredAs } from './stored-as'
 import { type TransformationSource } from './transformations-editor'
 
@@ -77,17 +78,6 @@ const ChoiceDetails = ({ row, mapping, languages, onChange, onPickStoreKey }: Ch
       ) }
     </>
   )
-}
-
-const iconOf = (field: MappingField | undefined): string => {
-  if (field?.classificationStore === true) {
-    return 'classification-store'
-  }
-  if (field?.key.includes('.') === true) {
-    return 'object-bricks'
-  }
-
-  return field?.localized === true ? 'world' : 'text-field'
 }
 
 type FieldCellProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'onChange' | 'onOpenField' | 'onPickStoreKey'>
