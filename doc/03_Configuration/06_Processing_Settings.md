@@ -30,20 +30,27 @@ child record needs the parent record imported before it.
 
 - Disabled (the default): the failing record is logged and the import continues with the next record.
 - Enabled: the failing record is logged, and all records and cleanup jobs still queued for this import configuration
-  are discarded without being processed. The application logger notes how many queue items were discarded.
+  are discarded without being processed. The application logger notes how many queue items were discarded. This entry
+  is written even when **Disable Error Logs** is enabled.
 
-A record counts as failed when loading, transforming or saving its element throws an error. A record skipped by a
-`PreSaveEvent` listener, or one without a matching element under the **Do not create** location strategy, does not.
+A record fails when loading, transforming or saving its element throws an error. A [Cleanup](#cleanup) job fails when
+loading the element or running the cleanup strategy throws an error, and stops the import the same way. A record
+skipped by a `PreSaveEvent` listener, or one without a matching element under the **Do not create** location strategy,
+does not count as failed.
 
 When the import stops:
 
-- Queued [Cleanup](#cleanup) jobs are discarded with the records, so elements are not deleted or unpublished based on
-  an incomplete run.
-- The [Delta Check](#delta-check) hashes of the import configuration are reset. The discarded records passed the delta
-  check when they were queued, so without the reset the next run would skip them. The next run processes all records.
+- Queued cleanup jobs are discarded with the records, so elements are not deleted or unpublished based on an incomplete
+  run.
+- When a record failed or records were discarded, the [Delta Check](#delta-check) hashes of the import configuration
+  are reset. These records passed the delta check when they were queued, so without the reset the next run would skip
+  them. The next run processes all records again, including the failing one.
 - With the **Parallel** execution type, records that other workers have already started are still finished.
 - The queue holds the records of the import configuration, not of a single run. Records queued by a `Push` data source
   with **Ignore Not Empty Queue** are discarded as well.
+- Records are queued while the import is prepared. When a queue worker processes the queue before the preparation has
+  finished, for example the cron job running the `process-queue-*` commands during a long import, records queued after
+  the stop are still processed.
 
 In the configuration the setting is stored as `processingConfig.stopOnError`.
 

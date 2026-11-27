@@ -39,7 +39,6 @@ use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\HttpStreamStub;
 use Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader;
-use Pimcore\Db;
 use Pimcore\Event\DataObjectEvents;
 use Pimcore\Model\Asset;
 use Pimcore\Model\DataObject;
@@ -657,7 +656,7 @@ class MappingApplierTest extends Unit
             $this->tester->grabService(CleanupStrategyFactory::class),
             $applicationLogger,
             $this->tester->grabService('event_dispatcher'),
-            new DeltaChecker(Db::get()),
+            $this->tester->grabService(DeltaChecker::class),
         );
         $processingService->setLogger(new NullLogger());
 

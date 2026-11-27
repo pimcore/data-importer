@@ -24,6 +24,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
+use Pimcore\Bundle\DataImporterBundle\Resolver\Factory\FactoryInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\DoNotCreateStrategy;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
@@ -43,14 +44,13 @@ class StopOnErrorTest extends Unit
 
     private const DATA_HUB_SCOPE = 'pimcore_data_hub';
 
-    private const BROKEN_JOB_TYPE = 'broken';
+    private const LOAD_STRATEGY = 'failOnRow';
+
+    private const FAILING_ROW = 'failing-row';
+
+    private const FAILURE = 'loading failed';
 
     private const STOP_MESSAGE = 'Import stopped after an error';
-
-    /**
-     * @var \Pimcore\Bundle\DataImporterBundle\Tests\UnitTester
-     */
-    protected $tester;
 
     // unique per test, Data Hub caches configurations for the process
     private ?string $configName = null;
@@ -123,54 +123,97 @@ class StopOnErrorTest extends Unit
         static::assertTrue($this->cleanupRow($this->createElement(), ['doCleanup' => false]));
     }
 
-    public function testFailedItemStopsTheImport(): void
+    public function testFailedRecordStopsTheImport(): void
     {
         $this->seedConfiguration(['stopOnError' => true]);
-        $this->queueItems([self::BROKEN_JOB_TYPE, ImportProcessingService::JOB_TYPE_PROCESS, ImportProcessingService::JOB_TYPE_PROCESS]);
+        $this->queueRecords(self::FAILING_ROW, 'row-1', 'row-2');
+        $this->queueCleanupJobs('element-1');
         $this->queueItemOfOtherConfiguration();
-        TmpStore::add(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName, 3);
+        TmpStore::add(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName, 4);
         $deltaChecker = new DeltaChecker(Db::get());
         $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']);
 
         $this->processSequentialQueue();
 
         static::assertCount(2, $this->errors);
-        static::assertStringContainsString('Unknown job type ' . self::BROKEN_JOB_TYPE, $this->errors[0]);
-        static::assertStringContainsString(self::STOP_MESSAGE . ': 2 queued items', $this->errors[1]);
-        static::assertSame([], $this->infos, 'no item is processed after the error');
+        static::assertStringContainsString(self::FAILURE, $this->errors[0]);
+        static::assertStringContainsString(self::STOP_MESSAGE . ': 3 queued items', $this->errors[1]);
+        static::assertSame([], $this->infos, 'no item is processed after the failing record');
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
         static::assertNull(TmpStore::get(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName));
         static::assertTrue(
             $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']),
-            'the delta check of the next run does not skip the discarded rows'
+            'the delta check of the next run does not skip the discarded records'
         );
         static::assertSame(1, (new QueueService())->getQueueItemCount($this->otherConfigName));
     }
 
-    public function testFailedItemDoesNotStopTheImportByDefault(): void
+    public function testFailedRecordDoesNotStopTheImportByDefault(): void
     {
         $this->seedConfiguration([]);
-        $this->queueItems([self::BROKEN_JOB_TYPE, ImportProcessingService::JOB_TYPE_PROCESS, ImportProcessingService::JOB_TYPE_PROCESS]);
+        $this->queueRecords(self::FAILING_ROW, 'row-1', 'row-2');
         $deltaChecker = new DeltaChecker(Db::get());
         $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']);
 
         $this->processSequentialQueue();
 
         static::assertCount(1, $this->errors);
-        static::assertStringContainsString('Unknown job type ' . self::BROKEN_JOB_TYPE, $this->errors[0]);
-        static::assertCount(2, $this->infos, 'the items after the error are processed');
+        static::assertStringContainsString(self::FAILURE, $this->errors[0]);
+        static::assertCount(2, $this->infos, 'the records after the failing one are processed');
         static::assertFalse($deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']));
     }
 
-    public function testFailedLastItemLeavesNothingToStop(): void
+    public function testFailedCleanupJobStopsTheImport(): void
     {
-        $this->seedConfiguration(['stopOnError' => true]);
-        $this->queueItems([ImportProcessingService::JOB_TYPE_PROCESS, self::BROKEN_JOB_TYPE]);
+        $this->seedConfiguration([
+            'stopOnError' => true,
+            'cleanup' => ['doCleanup' => true, 'strategy' => 'unpublish'],
+        ]);
+        $this->queueCleanupJobs(self::FAILING_ROW, 'element-1');
+        $deltaChecker = new DeltaChecker(Db::get());
+        $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']);
 
         $this->processSequentialQueue();
 
+        static::assertCount(2, $this->errors);
+        static::assertStringContainsString(self::FAILURE, $this->errors[0]);
+        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[1]);
+        static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
+        static::assertFalse(
+            $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']),
+            'no record was discarded, so the delta check keeps its hashes'
+        );
+    }
+
+    public function testFailedLastRecordIsRetriedByTheNextRun(): void
+    {
+        $this->seedConfiguration(['stopOnError' => true]);
+        $this->queueRecords('row-1', self::FAILING_ROW);
+        $deltaChecker = new DeltaChecker(Db::get());
+        $deltaChecker->hasChanged($this->configName, 'id', ['id' => self::FAILING_ROW]);
+
+        $this->processSequentialQueue();
+
+        static::assertCount(1, $this->errors, 'nothing was left to discard');
+        static::assertStringContainsString(self::FAILURE, $this->errors[0]);
+        static::assertTrue($deltaChecker->hasChanged($this->configName, 'id', ['id' => self::FAILING_ROW]));
+    }
+
+    public function testErrorOutsideTheJobStopsTheImport(): void
+    {
+        $this->seedConfiguration(['stopOnError' => true], ['throwError' => true]);
+        $this->queueRecords('row-1', 'row-2');
+
+        try {
+            $this->processSequentialQueue();
+            static::fail('the error is passed on');
+        } catch (\Error $error) {
+            static::assertSame(self::FAILURE, $error->getMessage());
+        }
+
         static::assertCount(1, $this->errors);
-        static::assertStringNotContainsString(self::STOP_MESSAGE, $this->errors[0]);
+        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[0]);
+        static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
     }
 
     private function createElement(): ElementInterface&Stub
@@ -215,7 +258,10 @@ class StopOnErrorTest extends Unit
         $configName = self::CONFIG_NAME;
 
         return Closure::bind(function () use ($configName, $resolver): bool {
-            $this->loggingConfigCache[$configName] = ['disableInfoFileObjects' => true, 'disableErrorFileObjects' => true];
+            $this->loggingConfigCache[$configName] = [
+                'disableInfoFileObjects' => true,
+                'disableErrorFileObjects' => true,
+            ];
 
             return $this->processElement($configName, ['id-1'], $resolver, [], 0, []);
         }, $service, ImportProcessingService::class)();
@@ -247,7 +293,7 @@ class StopOnErrorTest extends Unit
         return $resolver;
     }
 
-    private function seedConfiguration(array $processingConfig): void
+    private function seedConfiguration(array $processingConfig, array $loadingSettings = []): void
     {
         $this->configName = uniqid('stop-on-error-test-');
         // seeded like Data Hub stores it; saving a Configuration needs the Data Hub workspace tables
@@ -260,7 +306,8 @@ class StopOnErrorTest extends Unit
             ],
             'resolverConfig' => [
                 'elementType' => 'dataObject',
-                'loadingStrategy' => ['type' => 'notLoad'],
+                'dataObjectClassId' => 'stop-on-error-test',
+                'loadingStrategy' => ['type' => self::LOAD_STRATEGY, 'settings' => $loadingSettings],
                 'createLocationStrategy' => ['type' => 'doNotCreate'],
                 'locationUpdateStrategy' => ['type' => 'noChange'],
                 'publishingStrategy' => ['type' => 'noChangeUnpublishNew'],
@@ -278,18 +325,84 @@ class StopOnErrorTest extends Unit
         );
     }
 
-    /**
-     * @param string[] $jobTypes
-     */
-    private function queueItems(array $jobTypes): void
+    // its load strategy fails on FAILING_ROW, finds nothing else, and throws an \Error when configured with throwError
+    private function createResolverFactory(): ResolverFactory
     {
-        $queueService = new QueueService();
-        foreach ($jobTypes as $index => $jobType) {
-            $queueService->addItemToQueue(
+        $loadStrategy = new class(self::FAILING_ROW, self::FAILURE) implements LoadStrategyInterface {
+            public function __construct(
+                private readonly string $failingId,
+                private readonly string $failure,
+            ) {
+            }
+
+            public function setSettings(array $settings): void
+            {
+                if ($settings['throwError'] ?? false) {
+                    throw new \Error($this->failure);
+                }
+            }
+
+            public function loadElement(array $inputData): ?ElementInterface
+            {
+                return $this->loadElementByIdentifier($inputData['id'] ?? null);
+            }
+
+            public function loadElementByIdentifier($identifier): ?ElementInterface
+            {
+                if ($identifier === $this->failingId) {
+                    throw new \RuntimeException($this->failure);
+                }
+
+                return null;
+            }
+
+            public function extractIdentifierFromData(array $inputData)
+            {
+                return $inputData['id'] ?? null;
+            }
+
+            public function loadFullIdentifierList(): array
+            {
+                return [];
+            }
+
+            public function setDataObjectClassId($dataObjectClassId): void
+            {
+            }
+        };
+
+        return new ResolverFactory(
+            new Resolver(),
+            [self::LOAD_STRATEGY => $loadStrategy],
+            [
+                'doNotCreate' => new DoNotCreateStrategy(),
+                'noChange' => $this->createStub(LocationStrategyInterface::class),
+            ],
+            ['noChangeUnpublishNew' => $this->createStub(PublishStrategyInterface::class)],
+            ['dataObject' => $this->createStub(FactoryInterface::class)],
+        );
+    }
+
+    private function queueRecords(string ...$ids): void
+    {
+        foreach ($ids as $id) {
+            (new QueueService())->addItemToQueue(
                 $this->configName,
                 ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
-                $jobType,
-                json_encode(['id' => 'row-' . $index], JSON_THROW_ON_ERROR)
+                ImportProcessingService::JOB_TYPE_PROCESS,
+                json_encode(['id' => $id], JSON_THROW_ON_ERROR)
+            );
+        }
+    }
+
+    private function queueCleanupJobs(string ...$identifiers): void
+    {
+        foreach ($identifiers as $identifier) {
+            (new QueueService())->addItemToQueue(
+                $this->configName,
+                ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
+                ImportProcessingService::JOB_TYPE_CLEANUP,
+                $identifier
             );
         }
     }
@@ -307,15 +420,13 @@ class StopOnErrorTest extends Unit
 
     private function processSequentialQueue(): void
     {
-        $service = $this->createService(
-            $this->tester->grabService(ResolverFactory::class),
-            new DeltaChecker(Db::get()),
-        );
+        $service = $this->createService($this->createResolverFactory(), new DeltaChecker(Db::get()));
         $queueService = new QueueService();
         $ids = array_filter(
             $queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL),
             fn ($id): bool => $queueService->getQueueEntryById((int) $id)['configName'] === $this->configName
         );
+        sort($ids);
         foreach ($ids as $id) {
             $service->processQueueItem((int) $id);
         }

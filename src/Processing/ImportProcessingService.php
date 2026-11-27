@@ -95,7 +95,7 @@ final class ImportProcessingService
     {
         $configName = null;
         $queueItem = null;
-        $failed = false;
+        $failed = true;
         $stopOnError = false;
 
         try {
@@ -104,7 +104,6 @@ final class ImportProcessingService
             if (empty($queueItem)) {
                 return;
             }
-            $userOwner = $queueItem['userOwner'];
 
             //get config
             $configName = $queueItem['configName'];
@@ -123,31 +122,18 @@ final class ImportProcessingService
             if (empty($this->mappingConfigurationCache[$configName])) {
                 $this->mappingConfigurationCache[$configName] = $this->mappingConfigurationFactory->loadMappingConfiguration($configName, $config['mappingConfig']);
             }
-            $mapping = $this->mappingConfigurationCache[$configName];
 
             if (empty($this->resolverCache[$configName])) {
                 $this->resolverCache[$configName] = $this->resolverFactory->loadResolver($config['resolverConfig']);
             }
-            $resolver = $this->resolverCache[$configName];
 
-            //process element
-            if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
-                $data = json_decode($queueItem['data'], true);
-                $failed = !$this->processElement(
-                    $configName,
-                    $data,
-                    $resolver,
-                    $mapping,
-                    $userOwner,
-                    $config['processingConfig'] ?? []
-                );
-            } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
-                $failed = !$this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
-            } else {
-                throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
-            }
+            $failed = !$this->runQueueJob(
+                $queueItem,
+                $config,
+                $this->resolverCache[$configName],
+                $this->mappingConfigurationCache[$configName]
+            );
         } catch (\Exception $e) {
-            $failed = true;
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
             if (
@@ -160,32 +146,72 @@ final class ImportProcessingService
             $this->logError($configName, $e->getMessage(), $context);
         } finally {
             $this->queueService->markQueueEntryAsProcessed($id);
-        }
 
-        if ($failed && $stopOnError && $configName !== null) {
-            $this->stopImport($configName);
+            if ($failed && $stopOnError) {
+                $this->stopImport($configName, $queueItem['jobType']);
+            }
         }
     }
 
-    private function stopImport(string $configName): void
+    /**
+     * @param MappingConfiguration[] $mapping
+     *
+     * @return bool false when the job failed
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function runQueueJob(array $queueItem, array $config, Resolver $resolver, array $mapping): bool
     {
-        $discardedItems = $this->queueService->getQueueItemCount($configName);
+        if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
+            return $this->processElement(
+                $queueItem['configName'],
+                json_decode($queueItem['data'], true),
+                $resolver,
+                $mapping,
+                $queueItem['userOwner'],
+                $config['processingConfig'] ?? []
+            );
+        }
+
+        if ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
+            return $this->cleanupElement(
+                $queueItem['configName'],
+                $queueItem['data'],
+                $resolver,
+                $config['processingConfig']['cleanup'] ?? []
+            );
+        }
+
+        throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
+    }
+
+    private function stopImport(string $configName, string $failedJobType): void
+    {
+        $resetDeltaCheck = $failedJobType === self::JOB_TYPE_PROCESS
+            || $this->queueService->getQueueItemCount($configName, self::JOB_TYPE_PROCESS) > 0;
+        $discardedItems = $this->queueService->cleanupQueueItems($configName);
+
+        if ($resetDeltaCheck) {
+            // these records passed the delta check when they were queued, the next run must not skip them
+            $this->deltaChecker->cleanup($configName);
+        }
+
         if ($discardedItems === 0) {
             return;
         }
 
-        $this->cancelImportAndCleanupQueue($configName);
-        // the discarded rows passed the delta check when they were queued, the next run must not skip them
-        $this->deltaChecker->cleanup($configName);
+        TmpStore::delete(self::INFO_ENTRY_ID_PREFIX . $configName);
 
-        $this->logError(
-            $configName,
-            sprintf(
-                'Import stopped after an error: %d queued items were discarded and not processed. Fix the error and run the import again.',
-                $discardedItems
-            ),
-            ['component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName]
+        $message = sprintf(
+            'Import stopped after an error: %d queued items were discarded and not processed.'
+            . ' Fix the error and run the import again.',
+            $discardedItems
         );
+        $this->logger->error($message);
+        // logged regardless of the logging settings, like the other messages about the import as a whole
+        $this->applicationLogger->error($message, [
+            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+        ]);
     }
 
     private function flattenArray(array $arr): array
@@ -437,8 +463,12 @@ final class ImportProcessingService
     /**
      * @return bool false when the cleanup failed
      */
-    private function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig): bool
-    {
+    private function cleanupElement(
+        string $configName,
+        string $identifier,
+        Resolver $resolver,
+        array $cleanupConfig
+    ): bool {
         if ($cleanupConfig['doCleanup'] ?? false) {
             $element = null;
 
