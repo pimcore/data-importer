@@ -98,16 +98,25 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
       return
     }
 
-    if (result.data.success) {
-      void messageApi.success(t('data-importer.execution.start-import.success'))
-      // Immediately show progress bar at 0, resetting any previous run's values
-      setOptimisticProgress({ processedItems: 0, totalItems: progressData?.totalItems ?? 0, progress: 0 })
-      setOptimisticRunning(true)
-      setHasCompleted(false)
-    } else {
+    if (!result.data.success) {
       void messageApi.error(t('data-importer.execution.start-import.error'))
+      void refetchProgress()
+      return
     }
-    void refetchProgress()
+
+    void messageApi.success(t('data-importer.execution.start-import.success'))
+    // Immediately show progress bar at 0, resetting any previous run's values
+    setOptimisticProgress({ processedItems: 0, totalItems: progressData?.totalItems ?? 0, progress: 0 })
+    setOptimisticRunning(true)
+    setHasCompleted(false)
+
+    // an import can finish or stop before any poll sees it running, and then isRunning never changes
+    const { data: progressAfterStart } = await refetchProgress()
+    if (progressAfterStart?.isRunning === false) {
+      setOptimisticRunning(false)
+      setOptimisticProgress(null)
+      setHasCompleted(progressAfterStart.processedItems > 0)
+    }
   }
 
   const handleCancelExecution = async (): Promise<void> => {

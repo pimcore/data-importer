@@ -19,6 +19,7 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaC
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
+use Pimcore\Bundle\DataImporterBundle\Exception\ImportStopFailedException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
@@ -94,6 +95,9 @@ final class ImportProcessingService
         $this->configLoader = new ConfigurationPreparationService();
     }
 
+    /**
+     * @throws ImportStopFailedException when the stop of an import cannot be recorded
+     */
     public function processQueueItem(int $id): void
     {
         $configName = null;
@@ -189,6 +193,9 @@ final class ImportProcessingService
         throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
     }
 
+    /**
+     * @throws ImportStopFailedException when the stop cannot be recorded; the failing item then stays queued
+     */
     private function stopImport(string $configName, string $failedJobType, int $failedItemId): void
     {
         if ($failedJobType === self::JOB_TYPE_PROCESS
@@ -198,13 +205,21 @@ final class ImportProcessingService
             $this->deltaChecker->cleanup($configName);
         }
 
+        // the failing item itself is still queued
+        if ($this->queueService->getQueueItemCount($configName) <= 1) {
+            return;
+        }
+
+        // recorded before the queue is cleared, so that a retry of the failing item can still record it
+        if (!TmpStore::set(self::STOPPED_ENTRY_ID_PREFIX . $configName, true)) {
+            throw new ImportStopFailedException(sprintf('Could not record that import `%s` stopped.', $configName));
+        }
+        TmpStore::delete(self::INFO_ENTRY_ID_PREFIX . $configName);
+
         $discardedItems = $this->queueService->cleanupQueueItems($configName, $failedItemId);
         if ($discardedItems === 0) {
             return;
         }
-
-        TmpStore::delete(self::INFO_ENTRY_ID_PREFIX . $configName);
-        TmpStore::set(self::STOPPED_ENTRY_ID_PREFIX . $configName, true);
 
         $message = sprintf(
             'Import stopped after an error: %d queued items were discarded and not processed.'
