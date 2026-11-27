@@ -150,11 +150,12 @@ class ImportStoppedStatusTest extends Unit
         ));
         sort($ids);
 
-        static::assertSame(1, $this->createStopper()->stop(
+        $discardedItems = $this->createStopper()->stop(
             $this->configName,
             ImportProcessingService::JOB_TYPE_PROCESS,
             (int) $ids[0]
-        ));
+        );
+        static::assertSame(1, $discardedItems);
         $queueService->markQueueEntryAsProcessed((int) $ids[0]);
     }
 

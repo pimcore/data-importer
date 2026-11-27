@@ -90,9 +90,6 @@ final class ImportProcessingService
         $this->configLoader = new ConfigurationPreparationService();
     }
 
-    /**
-     * @throws \Pimcore\Bundle\DataImporterBundle\Exception\ImportStopFailedException when a stop cannot be recorded
-     */
     public function processQueueItem(int $id): void
     {
         $configName = null;
