@@ -13,11 +13,14 @@
 namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
+use League\Flysystem\FilesystemOperator;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
+use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\InterpreterFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Loader\DataLoaderFactory;
+use Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService;
@@ -31,6 +34,7 @@ use Pimcore\Db;
 use Pimcore\Model\Tool\SettingsStore;
 use Pimcore\Model\Tool\TmpStore;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\GenericEvent;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class ImportStoppedStatusTest extends Unit
@@ -77,6 +81,22 @@ class ImportStoppedStatusTest extends Unit
         $this->markStopped();
 
         $this->createProcessingService()->cancelImportAndCleanupQueue($this->configName);
+
+        static::assertFalse($this->importStatus()['stoppedAfterError']);
+    }
+
+    public function testDeletingTheConfigurationClearsTheStoppedState(): void
+    {
+        $this->markStopped();
+        $subscriber = new ConfigurationEventSubscriber(
+            new DeltaChecker(Db::get()),
+            new QueueService(),
+            new ExecutionService(),
+            $this->createStub(FilesystemOperator::class),
+            $this->createStub(FilesystemOperator::class),
+        );
+
+        $subscriber->postDelete(new GenericEvent(new Configuration('dataImporterDataObject', '', $this->configName)));
 
         static::assertFalse($this->importStatus()['stoppedAfterError']);
     }

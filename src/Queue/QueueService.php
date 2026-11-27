@@ -208,18 +208,23 @@ final class QueueService
 
     /**
      * @param string $configName
+     * @param int|null $keepItemId a queue item of the configuration that is not removed
      *
      * @return int the number of removed queue items
      *
      * @throws Exception
      */
-    public function cleanupQueueItems(string $configName): int
+    public function cleanupQueueItems(string $configName, ?int $keepItemId = null): int
     {
+        $sql = sprintf('DELETE FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME);
+        $params = [$configName];
+        if ($keepItemId !== null) {
+            $sql .= ' AND id <> ?';
+            $params[] = $keepItemId;
+        }
+
         try {
-            return (int) $this->getDb()->executeStatement(
-                sprintf('DELETE FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),
-                [$configName]
-            );
+            return (int) $this->getDb()->executeStatement($sql, $params);
         } catch (TableNotFoundException $exception) {
             $this->createQueueTableIfNotExisting();
 

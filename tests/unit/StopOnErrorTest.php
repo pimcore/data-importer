@@ -187,6 +187,27 @@ class StopOnErrorTest extends Unit
             $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']),
             'no record was discarded, so the delta check keeps its hashes'
         );
+        static::assertTrue($this->createService()->getImportStatus($this->configName)['stoppedAfterError']);
+    }
+
+    public function testFailedCleanupJobWithQueuedRecordsResetsTheDeltaCheck(): void
+    {
+        $this->seedConfiguration([
+            'stopOnError' => true,
+            'cleanup' => ['doCleanup' => true, 'strategy' => 'unpublish'],
+        ]);
+        $this->queueCleanupJobs(self::FAILING_ROW);
+        $this->queueRecords('row-1');
+        $deltaChecker = new DeltaChecker(Db::get());
+        $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']);
+
+        $this->processSequentialQueue();
+
+        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[1]);
+        static::assertTrue(
+            $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']),
+            'the discarded record is not skipped by the next run'
+        );
     }
 
     public function testFailedLastRecordIsRetriedByTheNextRun(): void
@@ -221,6 +242,48 @@ class StopOnErrorTest extends Unit
 
         static::assertCount(1, $this->errors);
         static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[0]);
+        static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
+        static::assertTrue($this->createService()->getImportStatus($this->configName)['stoppedAfterError']);
+    }
+
+    public function testErrorOutsideTheJobDoesNotStopTheImportByDefault(): void
+    {
+        $this->seedConfiguration([], ['throwError' => true]);
+        $this->queueRecords('row-1', 'row-2');
+
+        try {
+            $this->processSequentialQueue();
+            static::fail('the error is passed on');
+        } catch (\Error $error) {
+            static::assertSame(self::FAILURE, $error->getMessage());
+        }
+
+        static::assertSame([], $this->errors);
+        static::assertSame(
+            1,
+            (new QueueService())->getQueueItemCount($this->configName),
+            'the second row stays queued'
+        );
+    }
+
+    public function testFailingStopKeepsTheFailingItemForTheNextAttempt(): void
+    {
+        $this->seedConfiguration(['stopOnError' => true]);
+        $this->queueRecords(self::FAILING_ROW, 'row-1');
+        $unavailable = $this->createStub(Connection::class);
+        $unavailable->method('executeQuery')->willThrowException(new \RuntimeException('database unavailable'));
+
+        try {
+            $this->processSequentialQueue(new DeltaChecker($unavailable));
+            static::fail('the failed stop is passed on');
+        } catch (\RuntimeException $exception) {
+            static::assertSame('database unavailable', $exception->getMessage());
+        }
+        static::assertSame(2, (new QueueService())->getQueueItemCount($this->configName));
+
+        $this->processSequentialQueue();
+
+        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', end($this->errors));
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
     }
 
@@ -427,9 +490,9 @@ class StopOnErrorTest extends Unit
         );
     }
 
-    private function processSequentialQueue(): void
+    private function processSequentialQueue(?DeltaChecker $deltaChecker = null): void
     {
-        $service = $this->createService($this->createResolverFactory(), new DeltaChecker(Db::get()));
+        $service = $this->createService($this->createResolverFactory(), $deltaChecker ?? new DeltaChecker(Db::get()));
         $queueService = new QueueService();
         $ids = array_filter(
             $queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL),

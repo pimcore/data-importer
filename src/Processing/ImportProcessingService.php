@@ -54,7 +54,8 @@ final class ImportProcessingService
 
     public const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
 
-    public const STOPPED_ENTRY_ID_PREFIX = 'datahub_dataimporter_stopped_';
+    // not 'datahub_dataimporter_stopped_': config names may contain '_' and would collide with INFO_ENTRY_ID_PREFIX
+    public const STOPPED_ENTRY_ID_PREFIX = 'datahub_dataimporter-stopped_';
 
     private ConfigurationPreparationService $configLoader;
 
@@ -147,11 +148,12 @@ final class ImportProcessingService
             }
             $this->logError($configName, $e->getMessage(), $context);
         } finally {
-            $this->queueService->markQueueEntryAsProcessed($id);
-
+            // stop first: if stopping fails, the failing item stays queued and its next attempt stops again
             if ($failed && $stopOnError) {
-                $this->stopImport($configName, $queueItem['jobType']);
+                $this->stopImport($configName, $queueItem['jobType'], $id);
             }
+
+            $this->queueService->markQueueEntryAsProcessed($id);
         }
     }
 
@@ -187,17 +189,16 @@ final class ImportProcessingService
         throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
     }
 
-    private function stopImport(string $configName, string $failedJobType): void
+    private function stopImport(string $configName, string $failedJobType, int $failedItemId): void
     {
-        $resetDeltaCheck = $failedJobType === self::JOB_TYPE_PROCESS
-            || $this->queueService->getQueueItemCount($configName, self::JOB_TYPE_PROCESS) > 0;
-        $discardedItems = $this->queueService->cleanupQueueItems($configName);
-
-        if ($resetDeltaCheck) {
+        if ($failedJobType === self::JOB_TYPE_PROCESS
+            || $this->queueService->getQueueItemCount($configName, self::JOB_TYPE_PROCESS) > 0
+        ) {
             // these records passed the delta check when they were queued, the next run must not skip them
             $this->deltaChecker->cleanup($configName);
         }
 
+        $discardedItems = $this->queueService->cleanupQueueItems($configName, $failedItemId);
         if ($discardedItems === 0) {
             return;
         }

@@ -40,13 +40,16 @@ does not count as failed.
 
 When the import stops:
 
-- The Execution Status shows **Stopped after an error. No import running.** until the next import starts.
+- The Execution Status shows **Stopped after an error. No import running.** until the next import of the
+  configuration starts, for at most seven days.
 - Queued cleanup jobs are discarded with the records, so elements are not deleted or unpublished based on an incomplete
   run.
 - When a record failed or records were discarded, the [Delta Check](#delta-check) hashes of the import configuration
   are reset. These records passed the delta check when they were queued, so without the reset the next run would skip
   them. The next run processes all records again, including the failing one.
-- With the **Parallel** execution type, records that other workers have already started are still finished.
+- With the **Parallel** execution type, records that other workers have already started are still finished. The
+  number of discarded queue items in the log counts them as well. While such a record is still running, the queue
+  already looks empty, so a new import can be started; if that record then fails, it stops the new import.
 - The queue holds the records of the import configuration, not of a single run. Records queued by a `Push` data source
   with **Ignore Not Empty Queue** are discarded as well.
 - Records are queued while the import is prepared. When a queue worker processes the queue before the preparation has
