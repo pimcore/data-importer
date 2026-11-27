@@ -85,14 +85,17 @@ final class ImportProcessingService
         private readonly CleanupStrategyFactory $cleanupStrategyFactory,
         private readonly ApplicationLogger $applicationLogger,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ImportStopper $importStopper,
     ) {
         $this->configLoader = new ConfigurationPreparationService();
     }
 
-    public function processQueueItem(int $id)
+    public function processQueueItem(int $id): void
     {
         $configName = null;
         $queueItem = null;
+        $failed = true;
+        $stopOnError = false;
 
         try {
             //get queue item
@@ -100,11 +103,15 @@ final class ImportProcessingService
             if (empty($queueItem)) {
                 return;
             }
-            $userOwner = $queueItem['userOwner'];
 
             //get config
             $configName = $queueItem['configName'];
             $config = $this->configLoader->prepareConfiguration($configName, null, true);
+            $stopOnError = ($config['processingConfig']['stopOnError'] ?? false) === true;
+            if ($stopOnError && $this->importStopper->isStopped($configName)) {
+                // queued after the stop, or retried after a stop that failed: complete the stop instead of running it
+                return;
+            }
 
             if (empty($this->loggingConfigCache[$configName])) {
                 $this->loggingConfigCache[$configName] = $config['processingConfig']['logging'] ?? [];
@@ -118,29 +125,17 @@ final class ImportProcessingService
             if (empty($this->mappingConfigurationCache[$configName])) {
                 $this->mappingConfigurationCache[$configName] = $this->mappingConfigurationFactory->loadMappingConfiguration($configName, $config['mappingConfig']);
             }
-            $mapping = $this->mappingConfigurationCache[$configName];
 
             if (empty($this->resolverCache[$configName])) {
                 $this->resolverCache[$configName] = $this->resolverFactory->loadResolver($config['resolverConfig']);
             }
-            $resolver = $this->resolverCache[$configName];
 
-            //process element
-            if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
-                $data = json_decode($queueItem['data'], true);
-                $this->processElement(
-                    $configName,
-                    $data,
-                    $resolver,
-                    $mapping,
-                    $userOwner,
-                    $config['processingConfig'] ?? []
-                );
-            } elseif ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
-                $this->cleanupElement($configName, $queueItem['data'], $resolver, $config['processingConfig']['cleanup'] ?? []);
-            } else {
-                throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
-            }
+            $failed = !$this->runQueueJob(
+                $queueItem,
+                $config,
+                $this->resolverCache[$configName],
+                $this->mappingConfigurationCache[$configName]
+            );
         } catch (\Exception $e) {
             $component = $configName ? PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName : null;
             $context = ['component' => $component];
@@ -153,8 +148,63 @@ final class ImportProcessingService
             }
             $this->logError($configName, $e->getMessage(), $context);
         } finally {
+            // stop first: if stopping fails, the item stays queued and its next attempt completes the stop
+            if ($failed && $stopOnError) {
+                $this->logStop($configName, $this->importStopper->stop($configName, $queueItem['jobType'], $id));
+            }
+
             $this->queueService->markQueueEntryAsProcessed($id);
         }
+    }
+
+    /**
+     * @param MappingConfiguration[] $mapping
+     *
+     * @return bool false when the job failed
+     *
+     * @throws InvalidConfigurationException
+     */
+    private function runQueueJob(array $queueItem, array $config, Resolver $resolver, array $mapping): bool
+    {
+        if ($queueItem['jobType'] === self::JOB_TYPE_PROCESS) {
+            return $this->processElement(
+                $queueItem['configName'],
+                json_decode($queueItem['data'], true),
+                $resolver,
+                $mapping,
+                $queueItem['userOwner'],
+                $config['processingConfig'] ?? []
+            );
+        }
+
+        if ($queueItem['jobType'] === self::JOB_TYPE_CLEANUP) {
+            return $this->cleanupElement(
+                $queueItem['configName'],
+                $queueItem['data'],
+                $resolver,
+                $config['processingConfig']['cleanup'] ?? []
+            );
+        }
+
+        throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
+    }
+
+    private function logStop(string $configName, int $discardedItems): void
+    {
+        if ($discardedItems === 0) {
+            return;
+        }
+
+        $message = sprintf(
+            'Import stopped after an error: %d queued items were discarded and not processed.'
+            . ' Fix the error and run the import again.',
+            $discardedItems
+        );
+        $this->logger->error($message);
+        // logged regardless of the logging settings, like the other messages about the import as a whole
+        $this->applicationLogger->error($message, [
+            'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+        ]);
     }
 
     private function flattenArray(array $arr): array
@@ -211,6 +261,8 @@ final class ImportProcessingService
      * @param Resolver $resolver
      * @param MappingConfiguration[] $mapping
      * @param array<string, mixed> $processingConfig
+     *
+     * @return bool false when the row failed
      */
     private function processElement(
         string $configName,
@@ -219,7 +271,7 @@ final class ImportProcessingService
         array $mapping,
         int $userOwner,
         array $processingConfig,
-    ) {
+    ): bool {
         $element = null;
         $currentMapping = null;
         $importDataRowString = implode(', ', $this->flattenArray($importDataRow));
@@ -258,7 +310,7 @@ final class ImportProcessingService
                         ]);
                         $this->discardUnsavedChanges($element);
 
-                        return;
+                        return true;
                     }
 
                     $this->checkKey($element);
@@ -298,6 +350,8 @@ final class ImportProcessingService
                 }
                 $this->logInfo($configName, $message, $noMatchContext);
             }
+
+            return true;
         } catch (\Throwable $e) {
             $message = "Error processing element: {$importDataRowString}";
 
@@ -333,6 +387,8 @@ final class ImportProcessingService
             }
 
             $this->logError($configName, $message, $errorContext);
+
+            return false;
         }
     }
 
@@ -397,8 +453,15 @@ final class ImportProcessingService
         $currentMapping = null; // Success - clear current mapping
     }
 
-    private function cleanupElement(string $configName, string $identifier, Resolver $resolver, array $cleanupConfig)
-    {
+    /**
+     * @return bool false when the cleanup failed
+     */
+    private function cleanupElement(
+        string $configName,
+        string $identifier,
+        Resolver $resolver,
+        array $cleanupConfig
+    ): bool {
         if ($cleanupConfig['doCleanup'] ?? false) {
             $element = null;
 
@@ -420,8 +483,12 @@ final class ImportProcessingService
                     'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
                     'relatedObject' => $element,
                 ]);
+
+                return false;
             }
         }
+
+        return true;
     }
 
     public function evaluateTransformationResultDataType(MappingConfiguration $mappingConfiguration): string
@@ -508,11 +575,14 @@ final class ImportProcessingService
             $progress = 0;
         }
 
+        $isRunning = $currentQueueItems > 0;
+
         return [
-            'isRunning' => $currentQueueItems > 0,
+            'isRunning' => $isRunning,
             'totalItems' => $totalItems,
             'processedItems' => $processedItems,
-            'progress' => $progress
+            'progress' => $progress,
+            'stoppedAfterError' => !$isRunning && $this->importStopper->isStopped($configName),
         ];
     }
 
@@ -523,6 +593,7 @@ final class ImportProcessingService
     {
         $infoEntryId = self::INFO_ENTRY_ID_PREFIX . $configName;
         TmpStore::delete($infoEntryId);
+        $this->importStopper->forgetStop($configName);
         $this->queueService->cleanupQueueItems($configName);
     }
 

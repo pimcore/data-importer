@@ -32,9 +32,10 @@ final readonly class ImportHydrator implements ImportHydratorInterface
         bool $isRunning,
         int $totalItems,
         int $processedItems,
-        float $progress
+        float $progress,
+        bool $stoppedAfterError
     ): ImportProgressResponse {
-        return new ImportProgressResponse($isRunning, $totalItems, $processedItems, $progress);
+        return new ImportProgressResponse($isRunning, $totalItems, $processedItems, $progress, $stoppedAfterError);
     }
 
     public function hydrateCronValidation(bool $isValid, string $message): CronValidationResponse

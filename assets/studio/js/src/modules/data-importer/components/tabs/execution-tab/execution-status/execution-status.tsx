@@ -28,6 +28,7 @@ import { DataImporterPanel } from '../../steps/data-importer-panel/data-importer
 import { ManualExecutionButton } from '../manual-execution-button/manual-execution-button'
 import { useConfigCapabilities } from '../../../config-capabilities-context'
 import { useStyles } from '../../execution-tab.styles'
+import { getIdleStatusKey } from './idle-status-key'
 
 const POLL_INTERVAL_MS = 5000
 
@@ -97,16 +98,31 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
       return
     }
 
-    if (result.data.success) {
-      void messageApi.success(t('data-importer.execution.start-import.success'))
-      // Immediately show progress bar at 0, resetting any previous run's values
-      setOptimisticProgress({ processedItems: 0, totalItems: progressData?.totalItems ?? 0, progress: 0 })
-      setOptimisticRunning(true)
-      setHasCompleted(false)
-    } else {
+    if (!result.data.success) {
       void messageApi.error(t('data-importer.execution.start-import.error'))
+      void refetchProgress()
+      return
     }
-    void refetchProgress()
+
+    void messageApi.success(t('data-importer.execution.start-import.success'))
+    // Immediately show progress bar at 0, resetting any previous run's values
+    setOptimisticProgress({ processedItems: 0, totalItems: progressData?.totalItems ?? 0, progress: 0 })
+    setOptimisticRunning(true)
+    setHasCompleted(false)
+
+    // an import can finish or stop before any poll sees it running, and then isRunning never changes
+    const startedAt = Date.now()
+    let refreshed = await refetchProgress()
+    if ((refreshed.startedTimeStamp ?? 0) < startedAt) {
+      // RTK Query answered with a poll that was already running before the start
+      refreshed = await refetchProgress()
+    }
+    const progressAfterStart = refreshed.data
+    if (progressAfterStart?.isRunning === false) {
+      setOptimisticRunning(false)
+      setOptimisticProgress(null)
+      setHasCompleted(progressAfterStart.processedItems > 0)
+    }
   }
 
   const handleCancelExecution = async (): Promise<void> => {
@@ -182,9 +198,7 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
             )
           : (
             <Text>
-              { t(hasCompleted
-                ? 'data-importer.execution.status.finished'
-                : 'data-importer.execution.status.not-running') }
+              { t(getIdleStatusKey(progressData?.stoppedAfterError === true, hasCompleted)) }
             </Text>
             ) }
       </DataImporterPanel>

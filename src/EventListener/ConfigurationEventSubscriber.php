@@ -18,6 +18,7 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Logger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
@@ -34,6 +35,7 @@ final class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlia
         private readonly ExecutionService $executionService,
         private readonly FilesystemOperator $pimcoreDataImporterUploadStorage,
         private readonly FilesystemOperator $pimcoreDataImporterPreviewStorage,
+        private readonly ImportStopper $importStopper,
     ) {
     }
 
@@ -62,6 +64,7 @@ final class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlia
 
             //cleanup queue
             $this->queueService->cleanupQueueItems($config->getName());
+            $this->importStopper->forgetStop($config->getName());
 
             //cleanup preview files
             try {

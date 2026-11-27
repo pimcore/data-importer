@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Uitvoeringstype
 data-importer.processing.execution-type.tooltip: Sequentieel verwerkt items één voor één. Parallel verwerkt meerdere items tegelijk.
 data-importer.processing.execution-type.sequential: Sequentieel
 data-importer.processing.execution-type.parallel: Parallel
+data-importer.processing.stop-on-error: Import stoppen bij fout
 data-importer.processing.archive-import-file: Importbestand archiveren
 data-importer.processing.disable-versioning: Versiebeheer uitschakelen
 data-importer.processing.version-note: Versienotitie
@@ -336,6 +337,7 @@ data-importer.execution.cancel.error: Import annuleren mislukt
 data-importer.execution.status.title: Uitvoeringsstatus
 data-importer.execution.status.not-running: Niet actief
 data-importer.execution.status.finished: Alle items verwerkt. Geen import actief.
+data-importer.execution.status.stopped: Gestopt na een fout. Geen import actief.
 data-importer.execution.status.current-progress: Huidige voortgang
 data-importer.execution.status.processing: "{{processedItems}} / {{totalItems}} items verwerkt..."
 data-importer.execution.status.cancel: Uitvoering annuleren & wachtrij opschonen

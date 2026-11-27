@@ -21,6 +21,7 @@ services:
 
     Pimcore\Bundle\DataImporterBundle\Queue\QueueService: ~
     Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
+    Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper: ~
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewAccess: ~

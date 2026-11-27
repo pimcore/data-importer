@@ -46,6 +46,7 @@ final class ImportPreparationService
         private readonly ConfigurationPreparationService $configLoader,
         private readonly ExecutionService $executionService,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ImportStopper $importStopper,
     ) {
     }
 
@@ -65,6 +66,8 @@ final class ImportPreparationService
             if (!$ignoreActiveFlag && !$this->isConfigurationActive($configName, $config)) {
                 return false;
             }
+
+            $this->importStopper->forgetStop($configName);
 
             $loader = $this->dataLoaderFactory->loadDataLoader($config['loaderConfig']);
 

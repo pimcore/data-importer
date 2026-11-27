@@ -82,7 +82,8 @@ final readonly class ImportService implements ImportServiceInterface
             (bool) $status['isRunning'],
             (int) $status['totalItems'],
             (int) $status['processedItems'],
-            (float) $status['progress']
+            (float) $status['progress'],
+            (bool) $status['stoppedAfterError']
         );
 
         $this->eventDispatcher->dispatch(

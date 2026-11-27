@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Tipo di esecuzione
 data-importer.processing.execution-type.tooltip: Sequenziale elabora un elemento alla volta. Parallelo elabora più elementi contemporaneamente.
 data-importer.processing.execution-type.sequential: Sequenziale
 data-importer.processing.execution-type.parallel: Parallelo
+data-importer.processing.stop-on-error: 'Interrompi l''importazione in caso di errore'
 data-importer.processing.archive-import-file: Archivia file di importazione
 data-importer.processing.disable-versioning: Disabilita versionamento
 data-importer.processing.version-note: Nota di versione
@@ -336,6 +337,7 @@ data-importer.execution.cancel.error: 'Impossibile annullare l''importazione'
 data-importer.execution.status.title: Stato di esecuzione
 data-importer.execution.status.not-running: Non in esecuzione
 data-importer.execution.status.finished: Tutti gli elementi elaborati. Nessuna importazione in corso.
+data-importer.execution.status.stopped: Interrotta dopo un errore. Nessuna importazione in corso.
 data-importer.execution.status.current-progress: Avanzamento corrente
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} elementi elaborati...'
 data-importer.execution.status.cancel: Annulla esecuzione e svuota la coda

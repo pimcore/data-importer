@@ -14,12 +14,15 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Closure;
 use Codeception\Test\Unit;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\MockObject\MockObject;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
+use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
@@ -128,6 +131,7 @@ class ImportVersionNoteTest extends Unit
             new CleanupStrategyFactory([]),
             $this->createStub(ApplicationLogger::class),
             $this->createStub(EventDispatcherInterface::class),
+            new ImportStopper(new QueueService(), new DeltaChecker($this->createStub(Connection::class))),
         );
         $service->setLogger(new NullLogger());
 

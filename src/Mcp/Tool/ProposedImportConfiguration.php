@@ -115,6 +115,7 @@ final class ProposedImportConfiguration
         'resolverConfig.locationUpdateStrategy.type',
         'resolverConfig.publishingStrategy.type',
         'processingConfig.executionType',
+        'processingConfig.stopOnError',
         'processingConfig.idDataIndex',
         'processingConfig.doDeltaCheck',
         'processingConfig.doArchiveImportFile',

@@ -171,16 +171,20 @@ final class QueueService
         }
     }
 
-    public function getQueueItemCount(string $configName): int
+    public function getQueueItemCount(string $configName, ?string $jobType = null): int
     {
+        $sql = sprintf('SELECT count(*) as count FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME);
+        $params = [$configName];
+        if ($jobType !== null) {
+            $sql .= ' AND jobType = ?';
+            $params[] = $jobType;
+        }
+
         try {
-            return $this->getDb()->fetchOne(
-                sprintf('SELECT count(*) as count FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),
-                [$configName]
-            ) ?? 0;
+            return $this->getDb()->fetchOne($sql, $params) ?? 0;
         } catch (TableNotFoundException $exception) {
-            return $this->createQueueTableIfNotExisting(function () use ($configName) {
-                return $this->getQueueItemCount($configName);
+            return $this->createQueueTableIfNotExisting(function () use ($configName, $jobType) {
+                return $this->getQueueItemCount($configName, $jobType);
             });
         }
     }
@@ -204,18 +208,27 @@ final class QueueService
 
     /**
      * @param string $configName
+     * @param int|null $keepItemId a queue item of the configuration that is not removed
+     *
+     * @return int the number of removed queue items
      *
      * @throws Exception
      */
-    public function cleanupQueueItems(string $configName): void
+    public function cleanupQueueItems(string $configName, ?int $keepItemId = null): int
     {
+        $sql = sprintf('DELETE FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME);
+        $params = [$configName];
+        if ($keepItemId !== null) {
+            $sql .= ' AND id <> ?';
+            $params[] = $keepItemId;
+        }
+
         try {
-            $this->getDb()->executeQuery(
-                sprintf('DELETE FROM %s WHERE configName = ?', self::QUEUE_TABLE_NAME),
-                [$configName]
-            );
+            return (int) $this->getDb()->executeStatement($sql, $params);
         } catch (TableNotFoundException $exception) {
             $this->createQueueTableIfNotExisting();
+
+            return 0;
         }
     }
 }

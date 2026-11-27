@@ -54,6 +54,7 @@ const KNOWN_PATHS = new Set([
   'resolverConfig.locationUpdateStrategy.type',
   'resolverConfig.publishingStrategy.type',
   'processingConfig.executionType',
+  'processingConfig.stopOnError',
   'processingConfig.idDataIndex',
   'processingConfig.doDeltaCheck',
   'processingConfig.doArchiveImportFile',

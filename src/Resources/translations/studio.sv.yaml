@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Körningstyp
 data-importer.processing.execution-type.tooltip: Sekventiell kör ett objekt i taget. Parallell bearbetar flera objekt samtidigt.
 data-importer.processing.execution-type.sequential: Sekventiell
 data-importer.processing.execution-type.parallel: Parallell
+data-importer.processing.stop-on-error: Stoppa import vid fel
 data-importer.processing.archive-import-file: Arkivera importfil
 data-importer.processing.disable-versioning: Inaktivera versionshantering
 data-importer.processing.version-note: Versionsanteckning
@@ -336,6 +337,7 @@ data-importer.execution.cancel.error: Det gick inte att avbryta importen
 data-importer.execution.status.title: Körningsstatus
 data-importer.execution.status.not-running: Körs inte
 data-importer.execution.status.finished: Alla objekt bearbetade. Ingen import körs.
+data-importer.execution.status.stopped: Stoppad efter ett fel. Ingen import körs.
 data-importer.execution.status.current-progress: Aktuellt förlopp
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} objekt bearbetade...'
 data-importer.execution.status.cancel: Avbryt körning & rensa kö

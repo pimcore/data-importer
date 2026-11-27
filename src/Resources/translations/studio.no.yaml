@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Kjøringstype
 data-importer.processing.execution-type.tooltip: Sekvensiell behandler ett element om gangen. Parallell behandler flere elementer samtidig.
 data-importer.processing.execution-type.sequential: Sekvensiell
 data-importer.processing.execution-type.parallel: Parallell
+data-importer.processing.stop-on-error: Stopp import ved feil
 data-importer.processing.archive-import-file: Arkiver importfil
 data-importer.processing.disable-versioning: Deaktiver versjonering
 data-importer.processing.version-note: Versjonsnotat
@@ -336,6 +337,7 @@ data-importer.execution.cancel.error: Kunne ikke avbryte importen
 data-importer.execution.status.title: Kjøringsstatus
 data-importer.execution.status.not-running: Kjører ikke
 data-importer.execution.status.finished: Alle elementer behandlet. Ingen import kjører.
+data-importer.execution.status.stopped: Stoppet etter en feil. Ingen import kjører.
 data-importer.execution.status.current-progress: Gjeldende fremdrift
 data-importer.execution.status.processing: '{{processedItems}} / {{totalItems}} elementer behandlet...'
 data-importer.execution.status.cancel: Avbryt kjøring og tøm kø

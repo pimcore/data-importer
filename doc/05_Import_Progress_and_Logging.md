@@ -18,6 +18,15 @@ items.
 A status that stays at zero means no queue worker is picking the items up. See
 [Troubleshooting / FAQ](08_Troubleshooting_FAQ.md).
 
+When no import is running, the status says how the last run ended:
+
+- **All items processed. No import running.**: the last run processed all its queue items.
+- **Stopped after an error. No import running.**: the last run was stopped by
+  [Stop Import on Error](03_Configuration/06_Processing_Settings.md#stop-import-on-error). The Import Logs show the
+  stop and, unless **Disable Error Logs** is enabled, the failing record. The status stays until the next import of
+  the configuration starts, for at most seven days.
+- **Not running**: no run is known, for example because the last run was cancelled.
+
 ## Logging
 
 The importer writes to two places:
