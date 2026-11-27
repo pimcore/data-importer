@@ -41,8 +41,9 @@ export const useStyles = createStyles(({ token, css }) => ({
   barMapped: css`
     background: ${token.colorSuccess};
   `,
+  // Studio has no token for the design's #bfbfbf; its disabled text (0.55 black) is far darker, its border grey is closest
   barSkipped: css`
-    background: ${token.colorTextDisabled};
+    background: ${token.colorBorder};
   `,
   spacer: css`
     flex-grow: 1;
