@@ -22,7 +22,7 @@ final class Classificationstore implements DataTargetInterface
 {
     private string $fieldName;
 
-    private string $language;
+    private ?string $language = null;
 
     private int $keyId;
 
