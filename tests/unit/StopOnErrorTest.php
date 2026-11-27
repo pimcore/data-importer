@@ -223,10 +223,7 @@ class StopOnErrorTest extends Unit
         static::assertCount(1, $this->errors, 'nothing was left to discard');
         static::assertStringContainsString(self::FAILURE, $this->errors[0]);
         static::assertTrue($deltaChecker->hasChanged($this->configName, 'id', ['id' => self::FAILING_ROW]));
-        static::assertFalse(
-            $this->createService()->getImportStatus($this->configName)['stoppedAfterError'],
-            'nothing was discarded, so the import ran through'
-        );
+        static::assertTrue($this->createService()->getImportStatus($this->configName)['stoppedAfterError']);
     }
 
     public function testErrorOutsideTheJobStopsTheImport(): void
@@ -267,7 +264,7 @@ class StopOnErrorTest extends Unit
         );
     }
 
-    public function testFailingStopKeepsTheFailingItemForTheNextAttempt(): void
+    public function testNextAttemptCompletesAStopThatFailed(): void
     {
         $this->seedConfiguration(['stopOnError' => true]);
         $this->queueRecords(self::FAILING_ROW, 'row-1');
@@ -284,8 +281,50 @@ class StopOnErrorTest extends Unit
 
         $this->processSequentialQueue();
 
+        static::assertCount(2, $this->errors, 'the failing record is not run again');
+        static::assertStringContainsString($this->stopMessage(1), $this->errors[1]);
+        static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
+    }
+
+    public function testItemsQueuedAfterTheStopAreDiscarded(): void
+    {
+        $this->seedConfiguration([
+            'stopOnError' => true,
+            'cleanup' => ['doCleanup' => true, 'strategy' => 'unpublish'],
+        ]);
+        $this->queueRecords(self::FAILING_ROW);
+        $this->processSequentialQueue();
+
+        // the preparation of a long import still queues rows and finally the cleanup jobs
+        $this->queueRecords('row-1');
+        $this->queueCleanupJobs(self::FAILING_ROW);
+        $this->processSequentialQueue();
+
+        static::assertSame([], $this->infos, 'the record queued after the stop is not processed');
+        static::assertSame([], array_filter(
+            $this->errors,
+            static fn (string $message): bool => str_contains($message, 'Error cleaning up element')
+        ), 'the cleanup job queued after the stop is not run');
         static::assertStringContainsString($this->stopMessage(1), end($this->errors));
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
+    }
+
+    public function testStopIsLoggedWithErrorLogsDisabled(): void
+    {
+        $this->seedConfiguration([
+            'stopOnError' => true,
+            'logging' => [
+                'disableErrorLogs' => true,
+                'disableInfoFileObjects' => true,
+                'disableErrorFileObjects' => true,
+            ],
+        ]);
+        $this->queueRecords(self::FAILING_ROW, 'row-1');
+
+        $this->processSequentialQueue();
+
+        static::assertCount(1, $this->errors, 'only the stop is logged, not the failing record');
+        static::assertStringContainsString($this->stopMessage(1), $this->errors[0]);
     }
 
     private function stopMessage(int $discardedItems): string

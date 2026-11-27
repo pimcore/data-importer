@@ -108,6 +108,10 @@ final class ImportProcessingService
             $configName = $queueItem['configName'];
             $config = $this->configLoader->prepareConfiguration($configName, null, true);
             $stopOnError = ($config['processingConfig']['stopOnError'] ?? false) === true;
+            if ($stopOnError && $this->importStopper->isStopped($configName)) {
+                // queued after the stop, or retried after a stop that failed: complete the stop instead of running it
+                return;
+            }
 
             if (empty($this->loggingConfigCache[$configName])) {
                 $this->loggingConfigCache[$configName] = $config['processingConfig']['logging'] ?? [];
@@ -144,7 +148,7 @@ final class ImportProcessingService
             }
             $this->logError($configName, $e->getMessage(), $context);
         } finally {
-            // stop first: if stopping fails, the failing item stays queued and its next attempt stops again
+            // stop first: if stopping fails, the item stays queued and its next attempt completes the stop
             if ($failed && $stopOnError) {
                 $this->logStop($configName, $this->importStopper->stop($configName, $queueItem['jobType'], $id));
             }

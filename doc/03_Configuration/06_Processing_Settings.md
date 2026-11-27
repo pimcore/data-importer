@@ -41,7 +41,7 @@ does not count as failed.
 When the import stops:
 
 - The Execution Status shows **Stopped after an error. No import running.** until the next import of the
-  configuration starts, for at most seven days.
+  configuration starts, for at most seven days. This also applies when the failing record was the last one queued.
 - Queued cleanup jobs are discarded with the records, so elements are not deleted or unpublished based on an incomplete
   run.
 - When a record failed or records were discarded, the [Delta Check](#delta-check) hashes of the import configuration
@@ -52,9 +52,9 @@ When the import stops:
   already looks empty, so a new import can be started; if that record then fails, it stops the new import.
 - The queue holds the records of the import configuration, not of a single run. Records queued by a `Push` data source
   with **Ignore Not Empty Queue** are discarded as well.
-- Records are queued while the import is prepared. When a queue worker processes the queue before the preparation has
-  finished, for example the cron job running the `process-queue-*` commands during a long import, records queued after
-  the stop are still processed.
+- Records and cleanup jobs that are queued after the stop are discarded too, as soon as a queue worker reaches them.
+  This happens when a worker processes the queue while a long import is still being prepared, for example the cron job
+  running the `process-queue-*` commands.
 
 In the configuration the setting is stored as `processingConfig.stopOnError`.
 

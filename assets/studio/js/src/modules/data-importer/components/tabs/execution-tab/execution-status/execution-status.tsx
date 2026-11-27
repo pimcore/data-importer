@@ -111,7 +111,13 @@ export const ExecutionStatus = ({ configName, isDirty }: ExecutionStatusProps): 
     setHasCompleted(false)
 
     // an import can finish or stop before any poll sees it running, and then isRunning never changes
-    const { data: progressAfterStart } = await refetchProgress()
+    const startedAt = Date.now()
+    let refreshed = await refetchProgress()
+    if ((refreshed.startedTimeStamp ?? 0) < startedAt) {
+      // RTK Query answered with a poll that was already running before the start
+      refreshed = await refetchProgress()
+    }
+    const progressAfterStart = refreshed.data
     if (progressAfterStart?.isRunning === false) {
       setOptimisticRunning(false)
       setOptimisticProgress(null)

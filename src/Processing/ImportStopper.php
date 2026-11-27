@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This source file is available under the terms of the
  * Pimcore Open Core License (POCL)
@@ -12,6 +14,7 @@
 
 namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
+use Doctrine\DBAL\Exception;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Exception\ImportStopFailedException;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
@@ -23,46 +26,42 @@ use Pimcore\Model\Tool\TmpStore;
  *
  * @internal
  */
-final class ImportStopper
+final readonly class ImportStopper
 {
     // not 'datahub_dataimporter_stopped_': config names may contain '_' and would collide with the progress entry
     private const string STOPPED_ENTRY_ID_PREFIX = 'datahub_dataimporter-stopped_';
 
     public function __construct(
-        private readonly QueueService $queueService,
-        private readonly DeltaChecker $deltaChecker,
+        private QueueService $queueService,
+        private DeltaChecker $deltaChecker,
     ) {
     }
 
     /**
-     * Discards the rest of the import except the failing item, which the caller marks processed afterwards. If this
-     * fails, the failing item is still queued and its next attempt stops the import again.
+     * Discards the rest of the import except the given item, which the caller marks processed afterwards. The stop is
+     * recorded first and every step can be repeated, so the next attempt of that item completes a stop that failed.
      *
      * @return int the number of discarded queue items
      *
      * @throws ImportStopFailedException when the stop cannot be recorded
+     * @throws Exception
      */
-    public function stop(string $configName, string $failedJobType, int $failedItemId): int
+    public function stop(string $configName, string $jobType, int $itemId): int
     {
-        if ($failedJobType === ImportProcessingService::JOB_TYPE_PROCESS
+        if (!TmpStore::set(self::STOPPED_ENTRY_ID_PREFIX . $configName, true)) {
+            throw new ImportStopFailedException(sprintf('Could not record that import `%s` stopped.', $configName));
+        }
+
+        if ($jobType === ImportProcessingService::JOB_TYPE_PROCESS
             || $this->queueService->getQueueItemCount($configName, ImportProcessingService::JOB_TYPE_PROCESS) > 0
         ) {
             // these records passed the delta check when they were queued, the next run must not skip them
             $this->deltaChecker->cleanup($configName);
         }
 
-        // the failing item itself is still queued
-        if ($this->queueService->getQueueItemCount($configName) <= 1) {
-            return 0;
-        }
-
-        // recorded before the queue is cleared, so that a retry of the failing item can still record it
-        if (!TmpStore::set(self::STOPPED_ENTRY_ID_PREFIX . $configName, true)) {
-            throw new ImportStopFailedException(sprintf('Could not record that import `%s` stopped.', $configName));
-        }
         TmpStore::delete(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $configName);
 
-        return $this->queueService->cleanupQueueItems($configName, $failedItemId);
+        return $this->queueService->cleanupQueueItems($configName, $itemId);
     }
 
     public function isStopped(string $configName): bool

@@ -35,7 +35,7 @@ let progressAfterStart = NOT_RUNNING
 const refetch = jest.fn(async () => {
   progress = progressAfterStart
   progressListeners.forEach(listener => { listener() })
-  return await Promise.resolve({ data: progress })
+  return await Promise.resolve({ data: progress, startedTimeStamp: Date.now() })
 })
 const startImport = jest.fn(async () => await Promise.resolve({ data: { success: true } }))
 
@@ -129,5 +129,21 @@ describe('ExecutionStatus', () => {
            />)
 
     await startAndWaitFor('data-importer.execution.status.finished')
+  })
+
+  it('does not take the answer to a poll sent before the start for the new run', async () => {
+    progress = { ...NOT_RUNNING, totalItems: 4, stoppedAfterError: true }
+    progressAfterStart = { ...NOT_RUNNING, isRunning: true, totalItems: 4 }
+    // RTK Query answers a refetch with the poll still running, which was sent before the start
+    refetch.mockImplementationOnce(async () => await Promise.resolve({ data: progress, startedTimeStamp: Date.now() - 5000 }))
+    render(<ExecutionStatus
+      configName="feed"
+      isDirty={ false }
+           />)
+
+    fireEvent.click(screen.getByText('data-importer.execution.start-import'))
+    await waitFor(() => { expect(refetch).toHaveBeenCalledTimes(2) })
+    expect(await screen.findByText('data-importer.execution.status.processing')).toBeTruthy()
+    expect(screen.queryByText('data-importer.execution.status.stopped')).toBeNull()
   })
 })
