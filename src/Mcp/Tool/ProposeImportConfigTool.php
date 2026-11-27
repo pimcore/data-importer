@@ -99,7 +99,8 @@ final readonly class ProposeImportConfigTool
         }
 
         try {
-            $sessionId = $this->boundSessionReferenceResolver->resolve();
+            // the chat's session, or in a configured MCP server the acting user's session on that server
+            $sessionId = $this->boundSessionReferenceResolver->resolveProposalContext();
             if ($sessionId === null) {
                 return $this->errorResult('No chat session context.');
             }
