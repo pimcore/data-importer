@@ -109,6 +109,8 @@ data-importer.resolver.class-placeholder: Select class
 data-importer.resolver.element-loading: Element Loading
 data-importer.resolver.loading-strategy: Loading Strategy
 data-importer.resolver.loading-strategy.tooltip: Defines how existing elements are matched before import. If no element is found, creation rules are applied.
+data-importer.resolver.loading-strategy.locked: 'Records are found by the key column {{column}} in the field {{field}}. Change the key on the Mapping tab.'
+data-importer.resolver.loading-strategy.locked-no-key: 'No key column is set yet. Choose one on the Mapping tab.'
 data-importer.resolver.loading-strategy.notLoad: No Loading
 data-importer.resolver.loading-strategy.id: Id
 data-importer.resolver.loading-strategy.path: Path
