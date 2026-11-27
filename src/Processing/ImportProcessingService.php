@@ -15,11 +15,9 @@ namespace Pimcore\Bundle\DataImporterBundle\Processing;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\ApplicationLoggerBundle\FileObject;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\ProcessElementExceptionEvent;
-use Pimcore\Bundle\DataImporterBundle\Exception\ImportStopFailedException;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
@@ -55,9 +53,6 @@ final class ImportProcessingService
 
     public const INFO_ENTRY_ID_PREFIX = 'datahub_dataimporter_';
 
-    // not 'datahub_dataimporter_stopped_': config names may contain '_' and would collide with INFO_ENTRY_ID_PREFIX
-    public const STOPPED_ENTRY_ID_PREFIX = 'datahub_dataimporter-stopped_';
-
     private ConfigurationPreparationService $configLoader;
 
     /**
@@ -90,13 +85,13 @@ final class ImportProcessingService
         private readonly CleanupStrategyFactory $cleanupStrategyFactory,
         private readonly ApplicationLogger $applicationLogger,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly DeltaChecker $deltaChecker,
+        private readonly ImportStopper $importStopper,
     ) {
         $this->configLoader = new ConfigurationPreparationService();
     }
 
     /**
-     * @throws ImportStopFailedException when the stop of an import cannot be recorded
+     * @throws \Pimcore\Bundle\DataImporterBundle\Exception\ImportStopFailedException when a stop cannot be recorded
      */
     public function processQueueItem(int $id): void
     {
@@ -154,7 +149,7 @@ final class ImportProcessingService
         } finally {
             // stop first: if stopping fails, the failing item stays queued and its next attempt stops again
             if ($failed && $stopOnError) {
-                $this->stopImport($configName, $queueItem['jobType'], $id);
+                $this->logStop($configName, $this->importStopper->stop($configName, $queueItem['jobType'], $id));
             }
 
             $this->queueService->markQueueEntryAsProcessed($id);
@@ -193,30 +188,8 @@ final class ImportProcessingService
         throw new InvalidConfigurationException('Unknown job type ' . $queueItem['jobType']);
     }
 
-    /**
-     * @throws ImportStopFailedException when the stop cannot be recorded; the failing item then stays queued
-     */
-    private function stopImport(string $configName, string $failedJobType, int $failedItemId): void
+    private function logStop(string $configName, int $discardedItems): void
     {
-        if ($failedJobType === self::JOB_TYPE_PROCESS
-            || $this->queueService->getQueueItemCount($configName, self::JOB_TYPE_PROCESS) > 0
-        ) {
-            // these records passed the delta check when they were queued, the next run must not skip them
-            $this->deltaChecker->cleanup($configName);
-        }
-
-        // the failing item itself is still queued
-        if ($this->queueService->getQueueItemCount($configName) <= 1) {
-            return;
-        }
-
-        // recorded before the queue is cleared, so that a retry of the failing item can still record it
-        if (!TmpStore::set(self::STOPPED_ENTRY_ID_PREFIX . $configName, true)) {
-            throw new ImportStopFailedException(sprintf('Could not record that import `%s` stopped.', $configName));
-        }
-        TmpStore::delete(self::INFO_ENTRY_ID_PREFIX . $configName);
-
-        $discardedItems = $this->queueService->cleanupQueueItems($configName, $failedItemId);
         if ($discardedItems === 0) {
             return;
         }
@@ -608,7 +581,7 @@ final class ImportProcessingService
             'totalItems' => $totalItems,
             'processedItems' => $processedItems,
             'progress' => $progress,
-            'stoppedAfterError' => !$isRunning && TmpStore::get(self::STOPPED_ENTRY_ID_PREFIX . $configName) !== null,
+            'stoppedAfterError' => !$isRunning && $this->importStopper->isStopped($configName),
         ];
     }
 
@@ -619,7 +592,7 @@ final class ImportProcessingService
     {
         $infoEntryId = self::INFO_ENTRY_ID_PREFIX . $configName;
         TmpStore::delete($infoEntryId);
-        TmpStore::delete(self::STOPPED_ENTRY_ID_PREFIX . $configName);
+        $this->importStopper->forgetStop($configName);
         $this->queueService->cleanupQueueItems($configName);
     }
 

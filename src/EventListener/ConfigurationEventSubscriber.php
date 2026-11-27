@@ -18,10 +18,9 @@ use Pimcore\Bundle\DataHubBundle\Configuration;
 use Pimcore\Bundle\DataHubBundle\Event\ConfigurationEvents;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService;
-use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Logger;
-use Pimcore\Model\Tool\TmpStore;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface as EventSubscriberInterfaceAlias;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
@@ -36,6 +35,7 @@ final class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlia
         private readonly ExecutionService $executionService,
         private readonly FilesystemOperator $pimcoreDataImporterUploadStorage,
         private readonly FilesystemOperator $pimcoreDataImporterPreviewStorage,
+        private readonly ImportStopper $importStopper,
     ) {
     }
 
@@ -64,7 +64,7 @@ final class ConfigurationEventSubscriber implements EventSubscriberInterfaceAlia
 
             //cleanup queue
             $this->queueService->cleanupQueueItems($config->getName());
-            TmpStore::delete(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $config->getName());
+            $this->importStopper->forgetStop($config->getName());
 
             //cleanup preview files
             try {

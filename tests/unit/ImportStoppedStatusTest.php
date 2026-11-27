@@ -26,6 +26,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportPreparationService;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Resolver;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
@@ -52,7 +53,7 @@ class ImportStoppedStatusTest extends Unit
     {
         SettingsStore::delete($this->configName, self::DATA_HUB_SCOPE);
         (new QueueService())->cleanupQueueItems($this->configName);
-        TmpStore::delete(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $this->configName);
+        $this->createStopper()->forgetStop($this->configName);
         TmpStore::delete(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName);
     }
 
@@ -94,6 +95,7 @@ class ImportStoppedStatusTest extends Unit
             new ExecutionService(),
             $this->createStub(FilesystemOperator::class),
             $this->createStub(FilesystemOperator::class),
+            $this->createStopper(),
         );
 
         $subscriber->postDelete(new GenericEvent(new Configuration('dataImporterDataObject', '', $this->configName)));
@@ -123,6 +125,7 @@ class ImportStoppedStatusTest extends Unit
             new ConfigurationPreparationService(),
             new ExecutionService(),
             $this->createStub(EventDispatcherInterface::class),
+            $this->createStopper(),
         );
         $preparation->setLogger(new NullLogger());
 
@@ -132,7 +135,32 @@ class ImportStoppedStatusTest extends Unit
 
     private function markStopped(): void
     {
-        TmpStore::set(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $this->configName, true);
+        $queueService = new QueueService();
+        foreach (['failing', 'discarded'] as $row) {
+            $queueService->addItemToQueue(
+                $this->configName,
+                ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL,
+                ImportProcessingService::JOB_TYPE_PROCESS,
+                json_encode(['id' => $row], JSON_THROW_ON_ERROR)
+            );
+        }
+        $ids = array_values(array_filter(
+            $queueService->getAllQueueEntryIds(ImportProcessingService::EXECUTION_TYPE_SEQUENTIAL),
+            fn ($id): bool => $queueService->getQueueEntryById((int) $id)['configName'] === $this->configName
+        ));
+        sort($ids);
+
+        static::assertSame(1, $this->createStopper()->stop(
+            $this->configName,
+            ImportProcessingService::JOB_TYPE_PROCESS,
+            (int) $ids[0]
+        ));
+        $queueService->markQueueEntryAsProcessed((int) $ids[0]);
+    }
+
+    private function createStopper(): ImportStopper
+    {
+        return new ImportStopper(new QueueService(), new DeltaChecker(Db::get()));
     }
 
     private function importStatus(): array
@@ -149,7 +177,7 @@ class ImportStoppedStatusTest extends Unit
             new CleanupStrategyFactory([]),
             $this->createStub(ApplicationLogger::class),
             $this->createStub(EventDispatcherInterface::class),
-            new DeltaChecker(Db::get()),
+            $this->createStopper(),
         );
         $service->setLogger(new NullLogger());
 

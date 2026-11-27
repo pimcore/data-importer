@@ -22,6 +22,7 @@ use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaC
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Location\LocationStrategyInterface;
@@ -130,7 +131,7 @@ class ImportVersionNoteTest extends Unit
             new CleanupStrategyFactory([]),
             $this->createStub(ApplicationLogger::class),
             $this->createStub(EventDispatcherInterface::class),
-            new DeltaChecker($this->createStub(Connection::class)),
+            new ImportStopper(new QueueService(), new DeltaChecker($this->createStub(Connection::class))),
         );
         $service->setLogger(new NullLogger());
 

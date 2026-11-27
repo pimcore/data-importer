@@ -24,6 +24,7 @@ use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Factory\FactoryInterface;
 use Pimcore\Bundle\DataImporterBundle\Resolver\Load\LoadStrategyInterface;
@@ -71,7 +72,7 @@ class StopOnErrorTest extends Unit
             (new QueueService())->cleanupQueueItems($configName);
             (new DeltaChecker(Db::get()))->cleanup($configName);
             TmpStore::delete(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $configName);
-            TmpStore::delete(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $configName);
+            (new ImportStopper(new QueueService(), new DeltaChecker(Db::get())))->forgetStop($configName);
         }
     }
 
@@ -320,7 +321,10 @@ class StopOnErrorTest extends Unit
             new CleanupStrategyFactory([]),
             $applicationLogger,
             $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
-            $deltaChecker ?? new DeltaChecker($this->createStub(Connection::class)),
+            new ImportStopper(
+                new QueueService(),
+                $deltaChecker ?? new DeltaChecker($this->createStub(Connection::class))
+            ),
         );
         $service->setLogger(new NullLogger());
 

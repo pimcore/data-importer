@@ -16,7 +16,6 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests;
 use Codeception\Test\Unit;
 use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
-use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PostSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
 use Pimcore\Bundle\DataImporterBundle\Exception\InvalidConfigurationException;
@@ -35,6 +34,7 @@ use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\LoadDataObject;
 use Pimcore\Bundle\DataImporterBundle\Mapping\Operator\Simple\ObjectField;
 use Pimcore\Bundle\DataImporterBundle\Mapping\WritesElementsInterface;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
+use Pimcore\Bundle\DataImporterBundle\Processing\ImportStopper;
 use Pimcore\Bundle\DataImporterBundle\Queue\QueueService;
 use Pimcore\Bundle\DataImporterBundle\Resolver\ResolverFactory;
 use Pimcore\Bundle\DataImporterBundle\Tests\Fixture\HttpStreamStub;
@@ -656,7 +656,7 @@ class MappingApplierTest extends Unit
             $this->tester->grabService(CleanupStrategyFactory::class),
             $applicationLogger,
             $this->tester->grabService('event_dispatcher'),
-            $this->tester->grabService(DeltaChecker::class),
+            $this->tester->grabService(ImportStopper::class),
         );
         $processingService->setLogger(new NullLogger());
 
