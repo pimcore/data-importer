@@ -290,6 +290,7 @@ describe('the mapping step', () => {
     renderStep()
 
     expect(screen.getByText('Required fields:')).toBeTruthy()
+    expect(screen.getByText('✓ SKU')).toBeTruthy()
     expect(screen.getByText('✗ EAN')).toBeTruthy()
 
     choose('Notiz', 'EAN (required)')

@@ -277,6 +277,22 @@ describe('the required fields', () => {
     expect(missing(one)).toEqual(['ean'])
     expect(missing(skipColumn(one, 'Name DE'))).toEqual(['name', 'ean'])
   })
+
+  it('list the field matched by first, also when the class does not require it', () => {
+    const byPrice = createMapping(inspected, { ...objects, matchField: 'price', matchColumn: 'Preis' }, loaded)
+
+    expect(requiredFields(byPrice, fields).map(({ key, covered }) => [key, covered])).toEqual([['price', true], ['sku', true], ['name', true], ['ean', false]])
+  })
+
+  it('list a required field matched by once', () => {
+    expect(requiredFields(mapping, fields).filter(({ key }) => key === 'sku')).toHaveLength(1)
+  })
+
+  it('leave out the object ID when matching by it', () => {
+    const byId = createMapping(inspected, { ...objects, matchBy: 'id' }, loaded)
+
+    expect(requiredFields(byId, fields).map(({ key }) => key)).toEqual(['sku', 'name', 'ean'])
+  })
 })
 
 describe('the columns still open', () => {
