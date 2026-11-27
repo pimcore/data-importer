@@ -64,6 +64,7 @@ export interface LoggingConfig {
 
 export interface ProcessingConfig {
   executionType?: 'sequential' | 'parallel'
+  stopOnError?: boolean
   doArchiveImportFile?: boolean
   disableVersioning?: boolean
   versionNote?: string

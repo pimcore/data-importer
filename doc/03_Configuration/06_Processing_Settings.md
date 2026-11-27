@@ -23,6 +23,30 @@ options, and logging.
 The two modes are processed by different queue workers. See
 [Import Execution Details](../04_Import_Execution_Details.md).
 
+### Stop Import on Error
+
+Stops the import at the first record that fails. Choose this when records depend on each other, for example when a
+child record needs the parent record imported before it.
+
+- Disabled (the default): the failing record is logged and the import continues with the next record.
+- Enabled: the failing record is logged, and all records and cleanup jobs still queued for this import configuration
+  are discarded without being processed. The application logger notes how many queue items were discarded.
+
+A record counts as failed when loading, transforming or saving its element throws an error. A record skipped by a
+`PreSaveEvent` listener, or one without a matching element under the **Do not create** location strategy, does not.
+
+When the import stops:
+
+- Queued [Cleanup](#cleanup) jobs are discarded with the records, so elements are not deleted or unpublished based on
+  an incomplete run.
+- The [Delta Check](#delta-check) hashes of the import configuration are reset. The discarded records passed the delta
+  check when they were queued, so without the reset the next run would skip them. The next run processes all records.
+- With the **Parallel** execution type, records that other workers have already started are still finished.
+- The queue holds the records of the import configuration, not of a single run. Records queued by a `Push` data source
+  with **Ignore Not Empty Queue** are discarded as well.
+
+In the configuration the setting is stored as `processingConfig.stopOnError`.
+
 ### Archive Import File
 
 Archives the imported file so the import stays traceable. The importer writes an application logger entry with the

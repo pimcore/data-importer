@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Execution Type
 data-importer.processing.execution-type.tooltip: Sequential runs one item after another. Parallel processes multiple items concurrently.
 data-importer.processing.execution-type.sequential: Sequential
 data-importer.processing.execution-type.parallel: Parallel
+data-importer.processing.stop-on-error: Stop Import on Error
 data-importer.processing.archive-import-file: Archive Import File
 data-importer.processing.disable-versioning: Disable Versioning
 data-importer.processing.version-note: Version Note

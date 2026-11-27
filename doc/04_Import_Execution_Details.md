@@ -77,6 +77,12 @@ For each cleanup queue item the worker:
 
 For the strategies referenced above, see [Configuration](./03_Configuration/README.md).
 
+### Failing Queue Items
+
+A queue item that fails is logged and removed from the queue. By default the worker then continues with the next item.
+With [Stop Import on Error](./03_Configuration/06_Processing_Settings.md#stop-import-on-error) enabled, the first
+failing item discards all remaining queue items of the import configuration instead.
+
 ## Driving Imports from Outside Pimcore
 
 The panel calls a set of internal Studio endpoints, but building against them directly is not supported. Use these

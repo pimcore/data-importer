@@ -22,6 +22,7 @@ const LABEL_KEYS: Record<string, string> = {
   'resolverConfig.locationUpdateStrategy.type': 'data-importer.resolver.location-update-strategy',
   'resolverConfig.publishingStrategy.type': 'data-importer.resolver.publishing-strategy',
   'processingConfig.executionType': 'data-importer.processing.execution-type',
+  'processingConfig.stopOnError': 'data-importer.processing.stop-on-error',
   'processingConfig.idDataIndex': 'data-importer.processing.id-data-index',
   'processingConfig.doDeltaCheck': 'data-importer.processing.delta-check',
   'processingConfig.doArchiveImportFile': 'data-importer.processing.archive-import-file',

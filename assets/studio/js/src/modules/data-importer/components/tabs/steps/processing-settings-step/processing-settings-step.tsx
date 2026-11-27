@@ -86,6 +86,13 @@ export const ProcessingSettingsStep = ({ columnHeaderOptions }: ProcessingSettin
         </Form.Item>
 
         <Form.Item
+          name={ ['processingConfig', 'stopOnError'] }
+          valuePropName="checked"
+        >
+          <Switch labelRight={ t('data-importer.processing.stop-on-error') } />
+        </Form.Item>
+
+        <Form.Item
           name={ ['processingConfig', 'doArchiveImportFile'] }
           valuePropName="checked"
         >

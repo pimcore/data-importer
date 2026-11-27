@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Typ wykonania
 data-importer.processing.execution-type.tooltip: Sekwencyjne przetwarza elementy jeden po drugim. Równoległe przetwarza wiele elementów jednocześnie.
 data-importer.processing.execution-type.sequential: Sekwencyjne
 data-importer.processing.execution-type.parallel: Równoległe
+data-importer.processing.stop-on-error: Zatrzymaj import przy błędzie
 data-importer.processing.archive-import-file: Archiwizuj plik importu
 data-importer.processing.disable-versioning: Wyłącz wersjonowanie
 data-importer.processing.version-note: Notatka wersji

@@ -166,6 +166,7 @@ data-importer.processing.execution-type: Ausführungstyp
 data-importer.processing.execution-type.tooltip: Sequenziell verarbeitet ein Element nach dem anderen. Parallel verarbeitet mehrere Elemente gleichzeitig.
 data-importer.processing.execution-type.sequential: Sequenziell
 data-importer.processing.execution-type.parallel: Parallel
+data-importer.processing.stop-on-error: Import bei Fehler abbrechen
 data-importer.processing.archive-import-file: Import-Datei archivieren
 data-importer.processing.disable-versioning: Versionierung deaktivieren
 data-importer.processing.version-note: Versionsnotiz
