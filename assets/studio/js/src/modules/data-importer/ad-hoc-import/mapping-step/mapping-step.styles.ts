@@ -77,6 +77,12 @@ export const useStyles = createStyles(({ token, css }) => ({
       padding-inline: 10px;
     }
   `,
+  // the required fields' tags keep their success or error fill with the text colour, readable at AA
+  requiredTag: css`
+    &.ant-tag {
+      color: ${token.colorText};
+    }
+  `,
   rows: css`
     margin: 0;
     padding: 0;

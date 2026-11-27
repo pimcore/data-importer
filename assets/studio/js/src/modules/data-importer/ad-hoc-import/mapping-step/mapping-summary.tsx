@@ -100,6 +100,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
             <Text type="secondary">{ t(`${MAPPING}.required`) }</Text>
             { required.map(({ key, title, covered }) => (
               <Tag
+                className={ styles.requiredTag }
                 color={ covered ? 'success' : 'error' }
                 key={ key }
               >
