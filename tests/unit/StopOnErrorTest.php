@@ -20,6 +20,7 @@ use Pimcore\Bundle\ApplicationLoggerBundle\ApplicationLogger;
 use Pimcore\Bundle\DataImporterBundle\Cleanup\CleanupStrategyFactory;
 use Pimcore\Bundle\DataImporterBundle\DataSource\Interpreter\DeltaChecker\DeltaChecker;
 use Pimcore\Bundle\DataImporterBundle\Event\DataObject\PreSaveEvent;
+use Pimcore\Bundle\DataImporterBundle\Exception\InvalidInputException;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfiguration;
 use Pimcore\Bundle\DataImporterBundle\Mapping\MappingConfigurationFactory;
 use Pimcore\Bundle\DataImporterBundle\Processing\ImportProcessingService;
@@ -350,7 +351,7 @@ class StopOnErrorTest extends Unit
             public function loadElementByIdentifier($identifier): ?ElementInterface
             {
                 if ($identifier === $this->failingId) {
-                    throw new \RuntimeException($this->failure);
+                    throw new InvalidInputException($this->failure);
                 }
 
                 return null;
@@ -368,6 +369,7 @@ class StopOnErrorTest extends Unit
 
             public function setDataObjectClassId($dataObjectClassId): void
             {
+                // this load strategy never loads by class
             }
         };
 
