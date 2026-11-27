@@ -125,10 +125,19 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
       >
         <button
           aria-label={ openLabel }
-          className={ styles.fieldButton }
+          className={ `${styles.fieldButton} ${styles.chooseButton}` }
           onClick={ () => { onOpenField(column) } }
           type="button"
         >
+          <span
+            aria-hidden
+            className={ styles.chooseIcon }
+          >
+            <Icon
+              options={ { height: 12, width: 12 } }
+              value="new"
+            />
+          </span>
           <span className={ styles.crumb }>{ t(`${MAPPING}.choose-field`) }</span>
         </button>
         { offered && (

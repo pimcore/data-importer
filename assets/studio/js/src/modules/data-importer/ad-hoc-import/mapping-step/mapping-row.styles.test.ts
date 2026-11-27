@@ -67,3 +67,17 @@ describe('the target button of a mapping row', () => {
     expect(styles.fieldName).toMatch(/font-weight: 700;/)
   })
 })
+
+describe('the Choose field button of a mapping row', () => {
+  const styles = (useStyles as unknown as Build)({
+    token: { paddingXXS: 4, colorTextDescription: 'description-colour', Colors: { Brand: { Warning: { colorWarningText: 'dark-warning' } } } },
+    css: String.raw
+  })
+
+  // as the design: its plus 6px before the label, 4px padding on both sides, at the label's readable colour
+  it('keeps the plus 6px before the label', () => {
+    expect(styles.chooseButton).toMatch(/gap: 6px;/)
+    expect(styles.chooseButton).toMatch(/padding: 0 4px;/)
+    expect(styles.chooseIcon).toMatch(/color: description-colour;/)
+  })
+})

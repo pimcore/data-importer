@@ -1143,6 +1143,8 @@ describe('the mapping step', () => {
 
     expect(screen.queryByText('auto')).toBeNull()
     expect(fieldOf('Artikelnr')).toBe('Choose field')
+    // as the design: a plus before the label
+    expect(screen.getByRole('button', { name: 'Field for Artikelnr' }).querySelector('[data-icon="new"]')).not.toBeNull()
   })
 
   it('reports a mapping that could not be loaded and cannot go on', async () => {

@@ -88,6 +88,17 @@ export const useStyles = createStyles(({ token, css }) => ({
     align-items: center;
     color: ${token.colorPrimary};
   `,
+  // the design's 'Choose field': a 12px plus 6px before the label
+  chooseButton: css`
+    gap: 6px;
+    padding: 0 ${token.paddingXXS}px;
+  `,
+  chooseIcon: css`
+    display: flex;
+    flex: none;
+    align-items: center;
+    color: ${token.colorTextDescription};
+  `,
   // the field's name stays whole; the group path gives way
   fieldName: css`
     flex: none;
