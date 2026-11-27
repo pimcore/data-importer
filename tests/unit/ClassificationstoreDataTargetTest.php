@@ -14,10 +14,11 @@ namespace Pimcore\Bundle\DataImporterBundle\Tests\unit;
 
 use Codeception\Test\Unit;
 use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\Classificationstore;
+use Pimcore\Bundle\DataImporterBundle\Mapping\DataTarget\ClassificationstoreBatch;
 
 /**
  * The Studio UI only offers a language for localized classification store fields, so mappings to a non-localized
- * field are saved without `language`. Such a mapping must not throw.
+ * field are saved without `language`. Such a mapping must not throw, for the single key and the batch target.
  */
 class ClassificationstoreDataTargetTest extends Unit
 {
@@ -46,6 +47,24 @@ class ClassificationstoreDataTargetTest extends Unit
         $target = new Classificationstore();
 
         $target->setSettings(self::REQUIRED + ['language' => 'en']);
+
+        $this->assertSame('en', $this->readProperty($target, 'language'));
+    }
+
+    public function testBatchWithoutLanguage(): void
+    {
+        $target = new ClassificationstoreBatch();
+
+        $target->setSettings(['fieldName' => 'attributes']);
+
+        $this->assertNull($this->readProperty($target, 'language'));
+    }
+
+    public function testBatchKeepsLanguage(): void
+    {
+        $target = new ClassificationstoreBatch();
+
+        $target->setSettings(['fieldName' => 'attributes', 'language' => 'en']);
 
         $this->assertSame('en', $this->readProperty($target, 'language'));
     }
