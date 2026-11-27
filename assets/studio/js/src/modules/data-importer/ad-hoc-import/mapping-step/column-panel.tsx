@@ -247,6 +247,7 @@ export const ColumnPanel = ({
         <div className={ styles.actions }>
           { row.choice !== undefined && (
             <Button
+              className={ styles.quietButton }
               color="secondary"
               onClick={ onRemoveField }
             >
@@ -254,6 +255,7 @@ export const ColumnPanel = ({
             </Button>
           ) }
           <Button
+            className={ styles.quietButton }
             color="secondary"
             onClick={ onSkip }
           >

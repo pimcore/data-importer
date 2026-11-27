@@ -63,10 +63,12 @@ export const useStyles = createStyles(({ token, css }) => ({
     flex: 1 1 auto;
     min-height: 0;
   `,
+  // a row scrolled into view never sits under the sticky head
   table: css`
     flex: 1 1 auto;
     min-height: 120px;
     overflow: auto;
+    scroll-padding-top: ${token.paddingXXS * 2 + Math.round(token.fontSize * token.lineHeight)}px;
   `,
   // the filters and the skip button of the design are one height
   summaryButton: css`

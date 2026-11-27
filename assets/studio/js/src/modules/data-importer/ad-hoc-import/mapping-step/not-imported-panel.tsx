@@ -18,10 +18,20 @@ const SEARCH_WIDTH = 260
 const AREA = 'not-imported'
 
 const useStyles = createStyles(({ token, css }) => ({
-  // a flat area on the layout's background, the arrow a text mark before the bold title
+  // a light fieldset area, the arrow a text mark before the bold title
   area: css`
     margin-top: ${token.marginSM}px;
-    background: ${token.colorBgLayout};
+
+    &.collapse .ant-collapse.collapse-item--theme-default.collapse-item--bordered {
+      border-color: ${token.colorBorderTertiary};
+      border-radius: ${token.borderRadiusLG}px;
+      background: ${token.colorBgFieldset};
+    }
+
+    &.collapse .ant-collapse.ant-collapse-small > .ant-collapse-item > .ant-collapse-header {
+      min-height: 36px;
+      padding: ${token.paddingXS}px ${token.paddingSM}px;
+    }
   `,
   arrow: css`
     font-weight: ${token.fontWeightStrong};

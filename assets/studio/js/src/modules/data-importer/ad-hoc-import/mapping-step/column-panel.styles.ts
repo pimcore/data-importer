@@ -144,6 +144,16 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: ${token.paddingSM}px ${token.padding}px;
     border-top: 1px solid ${token.colorBorderSecondary};
   `,
+  // the design's quiet secondary actions; Studio's hover and active colours stay
+  quietButton: css`
+    &.ant-btn {
+      padding-inline: ${token.paddingSM}px;
+    }
+
+    &.ant-btn:not(:hover):not(:active):not(:disabled) {
+      color: ${token.colorTextDescription};
+    }
+  `,
   grow: css`
     flex-grow: 1;
   `,
