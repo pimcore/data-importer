@@ -56,7 +56,7 @@ class ImportStoppedStatusTest extends Unit
     {
         $this->markStopped();
 
-        static::assertTrue($this->status()['stoppedAfterError']);
+        static::assertTrue($this->importStatus()['stoppedAfterError']);
     }
 
     public function testRunningImportIsNotReportedAsStopped(): void
@@ -69,7 +69,7 @@ class ImportStoppedStatusTest extends Unit
             '{}'
         );
 
-        static::assertFalse($this->status()['stoppedAfterError']);
+        static::assertFalse($this->importStatus()['stoppedAfterError']);
     }
 
     public function testCancellingClearsTheStoppedState(): void
@@ -78,7 +78,7 @@ class ImportStoppedStatusTest extends Unit
 
         $this->createProcessingService()->cancelImportAndCleanupQueue($this->configName);
 
-        static::assertFalse($this->status()['stoppedAfterError']);
+        static::assertFalse($this->importStatus()['stoppedAfterError']);
     }
 
     public function testStartingAnImportClearsTheStoppedState(): void
@@ -107,7 +107,7 @@ class ImportStoppedStatusTest extends Unit
         $preparation->setLogger(new NullLogger());
 
         static::assertFalse($preparation->prepareImport($this->configName));
-        static::assertFalse($this->status()['stoppedAfterError']);
+        static::assertFalse($this->importStatus()['stoppedAfterError']);
     }
 
     private function markStopped(): void
@@ -115,7 +115,7 @@ class ImportStoppedStatusTest extends Unit
         TmpStore::set(ImportProcessingService::STOPPED_ENTRY_ID_PREFIX . $this->configName, true);
     }
 
-    private function status(): array
+    private function importStatus(): array
     {
         return $this->createProcessingService()->getImportStatus($this->configName);
     }
