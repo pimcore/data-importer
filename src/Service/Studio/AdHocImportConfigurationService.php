@@ -28,6 +28,7 @@ use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInter
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -173,6 +174,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             'className' => $class?->getName(),
             'matchBy' => $match['by'] ?? null,
             'matchField' => $match['field'] ?? null,
+            'matchFieldTitle' => $this->fieldTitle($class, $match['field'] ?? null),
             'matchLanguage' => $match['language'] ?? null,
             'matchColumn' => $match['column'] ?? null,
             'newObjectsFolder' => $folder,
@@ -297,6 +299,23 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         }
 
         return true;
+    }
+
+    // the step names the field as the class shows it; one it cannot find, or without a title, by its key
+    private function fieldTitle(?ClassDefinition $class, ?string $field): ?string
+    {
+        if ($field === null) {
+            return null;
+        }
+
+        $definition = $class?->getFieldDefinition($field);
+        $localized = $class?->getFieldDefinition('localizedfields');
+        if ($definition === null && $localized instanceof Localizedfields) {
+            $definition = $localized->getFieldDefinition($field);
+        }
+        $title = trim((string) $definition?->getTitle());
+
+        return $title === '' ? $field : $title;
     }
 
     /**

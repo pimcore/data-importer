@@ -170,9 +170,9 @@ export const ConfigurationChoice = ({
     }
 
     return shown.matchLanguage === null
-      ? t('data-importer.ad-hoc-import.configuration.match-field', { field: shown.matchField, column, ...plain })
+      ? t('data-importer.ad-hoc-import.configuration.match-field', { field: shown.matchFieldTitle ?? shown.matchField, column, ...plain })
       : t('data-importer.ad-hoc-import.configuration.match-field-language', {
-          field: shown.matchField,
+          field: shown.matchFieldTitle ?? shown.matchField,
           language: shown.matchLanguage,
           column,
           ...plain

@@ -186,6 +186,7 @@ class AdHocImportConfigurationServiceTest extends Unit
             'className' => 'Product',
             'matchBy' => 'field',
             'matchField' => 'name',
+            'matchFieldTitle' => 'Product name',
             'matchLanguage' => 'de',
             'matchColumn' => self::NAME_COLUMN,
             'newObjectsFolder' => self::FOLDER,
@@ -211,6 +212,7 @@ class AdHocImportConfigurationServiceTest extends Unit
 
         $this->assertSame('id', $configuration['matchBy']);
         $this->assertNull($configuration['matchField']);
+        $this->assertNull($configuration['matchFieldTitle']);
         $this->assertNull($configuration['matchLanguage']);
         $this->assertSame('0', $configuration['matchColumn']);
         $this->assertNull($configuration['unusable']);
@@ -348,6 +350,7 @@ class AdHocImportConfigurationServiceTest extends Unit
 
         $this->assertNull($configuration['unusable']);
         $this->assertSame('sku', $configuration['matchField']);
+        $this->assertSame('sku', $configuration['matchFieldTitle'], 'a field without a title is named by its key');
     }
 
     /**
@@ -408,6 +411,7 @@ class AdHocImportConfigurationServiceTest extends Unit
             'className' => null,
             'matchBy' => null,
             'matchField' => null,
+            'matchFieldTitle' => null,
             'matchLanguage' => null,
             'matchColumn' => null,
             'newObjectsFolder' => null,
@@ -655,7 +659,7 @@ class AdHocImportConfigurationServiceTest extends Unit
     }
 
     /**
-     * Product with `sku` to match by, a checkbox `active` the matcher cannot compare and a localized `name`.
+     * Product with `sku` (untitled) to match by, a checkbox `active` the matcher cannot compare and a localized `name`.
      */
     private function productClass(): ClassDefinition
     {
@@ -667,7 +671,9 @@ class AdHocImportConfigurationServiceTest extends Unit
 
         $localized = new Localizedfields();
         $localized->setName('localizedfields');
-        $localized->addChild($field('name', new Input()));
+        $name = $field('name', new Input());
+        $name->setTitle('Product name');
+        $localized->addChild($name);
 
         $class = new ClassDefinition();
         $class->setName('Product');

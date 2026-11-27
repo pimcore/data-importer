@@ -188,6 +188,7 @@ const productsConfiguration = {
   className: 'Product',
   matchBy: 'field',
   matchField: 'sku',
+  matchFieldTitle: null,
   matchLanguage: null,
   matchColumn: 'Artikelnr',
   newObjectsFolder: '/Products/Imported',

@@ -61,6 +61,7 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   className: 'Product',
   matchBy: 'field',
   matchField: 'name',
+  matchFieldTitle: 'Name',
   matchLanguage: 'de',
   matchColumn: 'Name DE',
   newObjectsFolder: '/Products & more/Imported',
@@ -301,21 +302,28 @@ describe('the mapping with a configuration', () => {
     expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations for class Product' })).toBeTruthy()
     const summary = within(screen.getByRole('region', { name: 'products' }))
     expect(summary.queryByText('Class')).toBeNull()
-    expect(summary.getByText('name (de) ← Name DE')).toBeTruthy()
+    expect(summary.getByText('Name (de) ← Name DE')).toBeTruthy()
     expect(summary.getByText('/Products & more/Imported')).toBeTruthy()
     expect(summary.getByText('read only')).toBeTruthy()
     expect(screen.queryByText(/the configuration reads/)).toBeNull()
+  })
+
+  it('names the match field by its key when the class gives it no title', () => {
+    useConfiguration({ configurations: [configuration({ matchLanguage: null, matchFieldTitle: null })] })
+    choose('products')
+
+    expect(screen.getByText('name ← Name DE')).toBeTruthy()
   })
 
   it('names the match of one without a language, and of one by the object ID', () => {
     useConfiguration({
       configurations: [
         configuration({ matchLanguage: null }),
-        configuration({ name: 'by-id', matchBy: 'id', matchField: null, matchLanguage: null, matchColumn: 'Artikelnr', className: null })
+        configuration({ name: 'by-id', matchBy: 'id', matchField: null, matchFieldTitle: null, matchLanguage: null, matchColumn: 'Artikelnr', className: null })
       ]
     })
     choose('products')
-    expect(screen.getByText('name ← Name DE')).toBeTruthy()
+    expect(screen.getByText('Name ← Name DE')).toBeTruthy()
 
     choose('by-id')
     const summary = within(screen.getByRole('region', { name: 'by-id' }))
@@ -326,7 +334,7 @@ describe('the mapping with a configuration', () => {
 
   it('says that one matching nothing creates every row, keyed by the file step\'s column', () => {
     useConfiguration({
-      configurations: [configuration({ name: 'new-only', matchBy: 'none', matchField: null, matchLanguage: null, matchColumn: null })]
+      configurations: [configuration({ name: 'new-only', matchBy: 'none', matchField: null, matchFieldTitle: null, matchLanguage: null, matchColumn: null })]
     })
     choose('new-only')
 
@@ -345,7 +353,7 @@ describe('the mapping with a configuration', () => {
     useConfiguration({ configurations: [configuration({ columnsBy: 'position', matchColumn: '1', columns: ['1', '2', '7'] })] })
     choose('products')
 
-    expect(screen.getByText('name (de) ← Name DE')).toBeTruthy()
+    expect(screen.getByText('Name (de) ← Name DE')).toBeTruthy()
     expect(screen.getByText('1 column the configuration reads is missing in this file: “7”. That field stays as it is.')).toBeTruthy()
   })
 

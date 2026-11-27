@@ -24,6 +24,7 @@ use OpenApi\Attributes\Schema;
  *     className: string|null,
  *     matchBy: 'id'|'field'|'none'|null,
  *     matchField: string|null,
+ *     matchFieldTitle: string|null,
  *     matchLanguage: string|null,
  *     matchColumn: string|null,
  *     newObjectsFolder: string|null,
@@ -59,7 +60,8 @@ final readonly class AdHocImportConfigurationsResponse
             type: 'array',
             items: new Items(
                 required: [
-                    'name', 'classId', 'className', 'matchBy', 'matchField', 'matchLanguage', 'matchColumn',
+                    'name', 'classId', 'className', 'matchBy', 'matchField', 'matchFieldTitle', 'matchLanguage',
+                    'matchColumn',
                     'newObjectsFolder', 'columns', 'columnsBy', 'unusable', 'format', 'sheet', 'headerRow',
                     'source', 'sourcePath', 'fieldCount', 'transformedCount',
                     'schedule',
@@ -98,6 +100,13 @@ final readonly class AdHocImportConfigurationsResponse
                         description: 'The field it finds objects by',
                         type: 'string',
                         example: 'sku',
+                        nullable: true
+                    ),
+                    new Property(
+                        property: 'matchFieldTitle',
+                        description: 'The title of the field it finds objects by, or its key when it has none',
+                        type: 'string',
+                        example: 'SKU',
                         nullable: true
                     ),
                     new Property(

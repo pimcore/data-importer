@@ -83,6 +83,7 @@ const configuration: ImportConfiguration = {
   className: 'Car',
   matchBy: 'id',
   matchField: null,
+  matchFieldTitle: null,
   matchLanguage: null,
   matchColumn: 'sku',
   newObjectsFolder: '/Cars',

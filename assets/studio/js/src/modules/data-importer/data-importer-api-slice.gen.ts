@@ -1115,6 +1115,8 @@ export type BundleDataImporterAdHocImportConfigurationsResponse = {
         matchBy: "id" | "field" | "none" | null;
         /** The field it finds objects by */
         matchField: string | null;
+        /** The title of the field it finds objects by, or its key when it has none */
+        matchFieldTitle: string | null;
         /** The language of a localized field it finds objects by */
         matchLanguage: string | null;
         /** The column holding the value it finds objects by; null when it finds none */

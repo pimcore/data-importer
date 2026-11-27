@@ -38,6 +38,7 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   className: 'Product',
   matchBy: 'field',
   matchField: 'name',
+  matchFieldTitle: null,
   matchLanguage: 'de',
   matchColumn: '1',
   newObjectsFolder: '/Products/Imported',
