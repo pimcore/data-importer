@@ -139,7 +139,7 @@ class StopOnErrorTest extends Unit
 
         static::assertCount(2, $this->errors);
         static::assertStringContainsString(self::FAILURE, $this->errors[0]);
-        static::assertStringContainsString(self::STOP_MESSAGE . ': 3 queued items', $this->errors[1]);
+        static::assertStringContainsString($this->stopMessage(3), $this->errors[1]);
         static::assertSame([], $this->infos, 'no item is processed after the failing record');
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
         static::assertNull(TmpStore::get(ImportProcessingService::INFO_ENTRY_ID_PREFIX . $this->configName));
@@ -181,7 +181,7 @@ class StopOnErrorTest extends Unit
 
         static::assertCount(2, $this->errors);
         static::assertStringContainsString(self::FAILURE, $this->errors[0]);
-        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[1]);
+        static::assertStringContainsString($this->stopMessage(1), $this->errors[1]);
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
         static::assertFalse(
             $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']),
@@ -203,7 +203,7 @@ class StopOnErrorTest extends Unit
 
         $this->processSequentialQueue();
 
-        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[1]);
+        static::assertStringContainsString($this->stopMessage(1), $this->errors[1]);
         static::assertTrue(
             $deltaChecker->hasChanged($this->configName, 'id', ['id' => 'row-1']),
             'the discarded record is not skipped by the next run'
@@ -241,7 +241,7 @@ class StopOnErrorTest extends Unit
         }
 
         static::assertCount(1, $this->errors);
-        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', $this->errors[0]);
+        static::assertStringContainsString($this->stopMessage(1), $this->errors[0]);
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
         static::assertTrue($this->createService()->getImportStatus($this->configName)['stoppedAfterError']);
     }
@@ -283,8 +283,13 @@ class StopOnErrorTest extends Unit
 
         $this->processSequentialQueue();
 
-        static::assertStringContainsString(self::STOP_MESSAGE . ': 1 queued items', end($this->errors));
+        static::assertStringContainsString($this->stopMessage(1), end($this->errors));
         static::assertSame(0, (new QueueService())->getQueueItemCount($this->configName));
+    }
+
+    private function stopMessage(int $discardedItems): string
+    {
+        return sprintf('%s: %d queued items', self::STOP_MESSAGE, $discardedItems);
     }
 
     private function createElement(): ElementInterface&Stub
