@@ -17,11 +17,20 @@ use Pimcore\Model\Element\ElementInterface;
 /**
  * @internal
  */
-final class UnpublishStrategy implements CleanupStrategyInterface
+final class UnpublishStrategy implements ConditionalCleanupStrategyInterface
 {
+    public function needsCleanup(ElementInterface $element): bool
+    {
+        if (!method_exists($element, 'setPublished')) {
+            return false;
+        }
+
+        return !method_exists($element, 'isPublished') || $element->isPublished();
+    }
+
     public function doCleanup(ElementInterface $element): void
     {
-        if (method_exists($element, 'setPublished')) {
+        if ($this->needsCleanup($element)) {
             $element->setPublished(false);
             $element->save();
         }
