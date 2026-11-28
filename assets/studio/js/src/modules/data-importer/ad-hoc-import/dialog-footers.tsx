@@ -15,8 +15,9 @@ import { failedRowsUrl, importedCount, isDeciding, isDone, type ImportRun } from
 import { type ErrorMode } from './preview-step/preview-state'
 
 const useStyles = createStyles(({ token, css }) => ({
+  // the dark warning text reaches the contrast a sentence needs
   undecided: css`
-    color: ${token.colorWarningText};
+    color: ${token.Colors.Brand.Warning.colorWarningText};
   `,
   decided: css`
     color: ${token.colorSuccess};
@@ -40,7 +41,6 @@ export const PreviewFooter = ({ errorMode, importCount, onBack, onErrorModeChang
 
   return (
     <ModalFooter
-      divider
       justify="space-between"
     >
       <Flex
@@ -90,7 +90,6 @@ const DecisionFooter = ({ isDeciding, onBackToMapping, onDiscard, onMerge, run, 
 
   return (
     <ModalFooter
-      divider
       justify="space-between"
     >
       <Flex gap="small">
@@ -148,7 +147,6 @@ export const ImportFooter = ({ onClose, run, runFileId, decision }: ImportFooter
 
   return (
     <ModalFooter
-      divider
       justify={ isDone(run) && run.failed > 0 ? 'space-between' : 'flex-end' }
     >
       { isDone(run) && run.failed > 0 && runFileId !== null && (
@@ -196,7 +194,7 @@ export const StepFooter = ({ canGoOn, isFirstStep, undecided, onBack, onClose, o
   )
 
   if (undecided === undefined) {
-    return <ModalFooter divider>{ buttons }</ModalFooter>
+    return <ModalFooter>{ buttons }</ModalFooter>
   }
 
   let undecidedText = t('data-importer.ad-hoc-import.mapping.all-decided')
@@ -208,7 +206,6 @@ export const StepFooter = ({ canGoOn, isFirstStep, undecided, onBack, onClose, o
 
   return (
     <ModalFooter
-      divider
       justify="space-between"
     >
       <span className={ undecided === 0 ? styles.decided : styles.undecided }>

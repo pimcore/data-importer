@@ -463,7 +463,6 @@ data-importer.ad-hoc-import.mapping.transformation-one: 1 transformatie
 data-importer.ad-hoc-import.mapping.transformations-count: '{{count}} transformaties'
 data-importer.ad-hoc-import.mapping.transformations-of: 'Transformaties van {{column}}'
 data-importer.ad-hoc-import.mapping.needs-transformation: Vereist een transformatie
-data-importer.ad-hoc-import.mapping.not-fitting: 'Kolommen waarvan de waarden nog niet in hun veld passen: {{columns}}'
 data-importer.ad-hoc-import.transformations.intro: Van boven naar beneden toegepast op de waarde van deze kolom, vóór de automatische conversie voor het type van het veld.
 data-importer.ad-hoc-import.transformations.add: Transformatie toevoegen
 data-importer.ad-hoc-import.transformations.remove: '{{step}} verwijderen'

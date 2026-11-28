@@ -11,7 +11,7 @@
 import { createStyles } from '@pimcore/studio-ui-bundle/app'
 
 // the grid of a row and of the table's head
-export const ROW_COLUMNS = '16px 240px 24px minmax(0, 1fr) 150px 110px'
+export const ROW_COLUMNS = '16px 240px 24px minmax(0, 1fr) 150px 200px 110px'
 
 export const useStyles = createStyles(({ token, css }) => ({
   row: css`
@@ -57,7 +57,8 @@ export const useStyles = createStyles(({ token, css }) => ({
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
+    flex: 0 1 auto;
     min-width: 0;
     height: 30px;
     padding: 0 ${token.paddingXS}px 0 ${token.paddingXXS}px;
@@ -71,16 +72,60 @@ export const useStyles = createStyles(({ token, css }) => ({
     &:focus-visible {
       outline: 2px solid ${token.colorPrimaryBorder};
     }
+
+    &:hover .field-pen, &:focus-visible .field-pen {
+      opacity: 1;
+    }
   `,
-  fieldIcon: css`
+  pen: css`
     flex: none;
     color: ${token.colorPrimary};
+    opacity: 0;
   `,
+  fieldIcon: css`
+    display: flex;
+    flex: none;
+    align-items: center;
+    color: ${token.colorPrimary};
+  `,
+  // the design's 'Choose field': a 12px plus 6px before the label
+  chooseButton: css`
+    gap: 6px;
+    padding: 0 ${token.paddingXXS}px;
+  `,
+  chooseIcon: css`
+    display: flex;
+    flex: none;
+    align-items: center;
+    color: ${token.colorTextDescription};
+  `,
+  // the field's name stays whole; the group path gives way
   fieldName: css`
-    font-weight: ${token.fontWeightStrong};
+    flex: none;
+    font-weight: 700;
     white-space: nowrap;
   `,
+  // the small chip of the design, not the default tag's size
+  auto: css`
+    &.ant-tag {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 3px;
+      margin: 0;
+      padding: 0 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      line-height: 16px;
+    }
+
+    & > span + span {
+      margin-inline-start: 0;
+    }
+  `,
+  // the group gives way before the field's name, down to nothing
   crumb: css`
+    flex: 1 1 0;
     min-width: 0;
     overflow: hidden;
     color: ${token.colorTextDescription};
@@ -92,9 +137,11 @@ export const useStyles = createStyles(({ token, css }) => ({
     display: flex;
     align-items: center;
     gap: ${token.marginXXS}px;
+    flex: none;
     height: 24px;
     padding: 0 ${token.paddingXS}px;
     border-radius: 12px;
+    white-space: nowrap;
     background: ${token.colorPrimaryBg};
     color: ${token.colorPrimaryActive};
     cursor: pointer;
@@ -103,8 +150,25 @@ export const useStyles = createStyles(({ token, css }) => ({
       outline: 2px solid ${token.colorPrimaryBorder};
     }
   `,
+  suggestionIcon: css`
+    display: flex;
+    flex: none;
+    color: ${token.colorPrimary};
+  `,
+  suggestionLead: css`
+    color: ${token.colorTextTertiary};
+  `,
   skip: css`
     display: flex;
     justify-content: flex-end;
+  `,
+  // the design's compact text button, its text at the contrast of 'Choose field'
+  skipButton: css`
+    &.ant-btn {
+      height: 28px;
+      padding-inline: 8px;
+      gap: 6px;
+      color: ${token.colorTextDescription};
+    }
   `
 }))

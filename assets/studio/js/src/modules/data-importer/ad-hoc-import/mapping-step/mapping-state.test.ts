@@ -277,6 +277,22 @@ describe('the required fields', () => {
     expect(missing(one)).toEqual(['ean'])
     expect(missing(skipColumn(one, 'Name DE'))).toEqual(['name', 'ean'])
   })
+
+  it('list the field matched by first, also when the class does not require it', () => {
+    const byPrice = createMapping(inspected, { ...objects, matchField: 'price', matchColumn: 'Preis' }, loaded)
+
+    expect(requiredFields(byPrice, fields).map(({ key, covered }) => [key, covered])).toEqual([['price', true], ['sku', true], ['name', true], ['ean', false]])
+  })
+
+  it('list a required field matched by once', () => {
+    expect(requiredFields(mapping, fields).filter(({ key }) => key === 'sku')).toHaveLength(1)
+  })
+
+  it('leave out the object ID when matching by it', () => {
+    const byId = createMapping(inspected, { ...objects, matchBy: 'id' }, loaded)
+
+    expect(requiredFields(byId, fields).map(({ key }) => key)).toEqual(['sku', 'name', 'ean'])
+  })
 })
 
 describe('the columns still open', () => {
@@ -299,27 +315,29 @@ describe('going on', () => {
   const mapping = createMapping(inspected, objects, loaded)
 
   it('needs a column to import beside the match column', () => {
-    expect(canContinueMapping(mapping, fields)).toBe(true)
+    expect(canContinueMapping(mapping)).toBe(true)
 
     const onlyMatch = ['Name DE', 'Name EN', 'Preis', 'Notiz'].reduce(skipColumn, mapping)
-    expect(canContinueMapping(onlyMatch, fields)).toBe(false)
-    expect(canContinueMapping(chooseField(restoreColumn(onlyMatch, 'Notiz'), 'Notiz', 'price'), fields)).toBe(true)
+    expect(canContinueMapping(onlyMatch)).toBe(false)
+    expect(canContinueMapping(chooseField(restoreColumn(onlyMatch, 'Notiz'), 'Notiz', 'price'))).toBe(true)
   })
 
-  it('waits while a column does not fit its field', () => {
+  // its values show in the preview as invalid, so the column is no reason to stay
+  it('goes on with a column that does not fit its field', () => {
     const image = chooseField(mapping, 'Notiz', 'image')
-    expect(canContinueMapping(image, fields)).toBe(false)
+    expect(unfitRows(image, fields).map(({ column }) => column)).toEqual(['Notiz'])
+    expect(canContinueMapping(image)).toBe(true)
 
-    expect(canContinueMapping(setTransformations(image, 'Notiz', [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }], true), fields)).toBe(true)
-    expect(canContinueMapping(skipColumn(image, 'Notiz'), fields)).toBe(true)
+    expect(canContinueMapping(setTransformations(image, 'Notiz', [{ type: 'loadAsset', settings: { loadStrategy: 'path' } }], true))).toBe(true)
+    expect(canContinueMapping(skipColumn(image, 'Notiz'))).toBe(true)
   })
 
   it('waits for the answer to steps not answered yet', () => {
     const steps = [{ type: 'trim', settings: { mode: 'both' } }]
     const pending = setTransformations(chooseField(mapping, 'Notiz', 'price'), 'Notiz', steps, undefined)
-    expect(canContinueMapping(pending, fields)).toBe(false)
-    expect(canContinueMapping(setTransformations(pending, 'Notiz', steps, true), fields)).toBe(true)
-    expect(canContinueMapping(setTransformations(pending, 'Notiz', [], undefined), fields)).toBe(true)
+    expect(canContinueMapping(pending)).toBe(false)
+    expect(canContinueMapping(setTransformations(pending, 'Notiz', steps, true))).toBe(true)
+    expect(canContinueMapping(setTransformations(pending, 'Notiz', [], undefined))).toBe(true)
   })
 })
 

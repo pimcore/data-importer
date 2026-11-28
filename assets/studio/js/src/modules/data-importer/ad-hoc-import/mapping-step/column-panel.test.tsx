@@ -215,6 +215,26 @@ describe('the side panel of a column', () => {
     expect(screen.getByText('Name (DE): Rot')).toBeTruthy()
   })
 
+  it('names the conversion into the field\'s type between the steps and the field', async () => {
+    mockPreview.mockResolvedValue({ data: answer({ conversion: 'numeric', results: [{ items: ['12.5'], failed: false }] }) })
+    renderPanel()
+    await settle()
+
+    const chips = Array.from(screen.getByRole('complementary', { name: 'Column Bezeichnung' }).querySelectorAll('span'))
+      .map(({ textContent }) => textContent)
+    expect(chips.indexOf('number')).toBeGreaterThan(chips.indexOf('Jacke'))
+    expect(chips.indexOf('number')).toBeLessThan(chips.indexOf('Name (DE): 12.5'))
+  })
+
+  it('names no conversion when the value fits the field as it is', async () => {
+    mockPreview.mockResolvedValue({ data: answer() })
+    renderPanel()
+    await settle()
+
+    expect(screen.queryByText('number')).toBeNull()
+    expect(screen.getByText('Name (DE): Jacke')).toBeTruthy()
+  })
+
   it('says that a classification store key takes no transformations', async () => {
     renderPanel({ row: { ...row, choice: { field: 'name', language: null, key: { id: '1-2', label: 'Weight' } }, transformations: [] } })
     await settle()

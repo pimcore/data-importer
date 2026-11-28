@@ -192,7 +192,7 @@ describe('picking fields', () => {
       renderStep()
       openPanel('Notiz')
 
-      fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: "Don't import" }))
+      fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Don’t import' }))
 
       expect(screen.queryByRole('complementary')).toBeNull()
       expect(screen.queryByRole('button', { name: 'Field for Notiz' })).toBeNull()

@@ -11,10 +11,14 @@
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Button, Flex, Icon, LanguageSelection, Tag, Text } from '@pimcore/studio-ui-bundle/components'
-import { chooseField, fitsField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
+import { chooseField, type Mapping, type MappingField, type MappingRow } from './mapping-state'
 import { chooseLanguage, freeLanguages } from './mapping-choices'
 import { canGoInto, takenFields } from './taken-fields'
 import { useStyles } from './mapping-row.styles'
+import { SparkleIcon } from './sparkle-icon'
+import { iconOf } from './field-icon'
+import { StoredAs } from './stored-as'
+import { type TransformationSource } from './transformations-editor'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
 
@@ -40,6 +44,8 @@ export interface MappingRowViewProps {
   onOpenField: (column: string) => void
   onOpenTransformations?: (column: string) => void
   onSkip: (column: string) => void
+  // what the column's values run on to show what they are stored as; none, nothing is shown
+  source: TransformationSource | null
 }
 
 type ChoiceDetailsProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'languages' | 'onChange' | 'onPickStoreKey'>
@@ -74,17 +80,6 @@ const ChoiceDetails = ({ row, mapping, languages, onChange, onPickStoreKey }: Ch
   )
 }
 
-const iconOf = (field: MappingField | undefined): string => {
-  if (field?.classificationStore === true) {
-    return 'classification-store'
-  }
-  if (field?.key.includes('.') === true) {
-    return 'object-bricks'
-  }
-
-  return field?.localized === true ? 'world' : 'text-field'
-}
-
 type FieldCellProps = Pick<MappingRowViewProps, 'row' | 'mapping' | 'fields' | 'languages' | 'onChange' | 'onOpenField' | 'onPickStoreKey'>
 
 const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onPickStoreKey }: FieldCellProps): React.JSX.Element => {
@@ -94,14 +89,16 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
   const field = fields.find(({ key }) => key === choice?.field)
   const openLabel = t(`${MAPPING}.field-of`, { column: label, interpolation: { escapeValue: false } })
 
+  // the column that finds the objects reads like any other field
   if (isMatch) {
     return (
       <Flex
         align="center"
         gap="small"
       >
+        <span className={ styles.fieldIcon }><Icon value={ iconOf(field) } /></span>
         <span className={ styles.fieldName }>{ field?.title ?? t(`${MAPPING}.object-id`) }</span>
-        <Tag>{ t(`${MAPPING}.match`) }</Tag>
+        <span className={ styles.crumb }>{ field?.group.join(' › ') }</span>
       </Flex>
     )
   }
@@ -115,23 +112,35 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
       <Flex
         align="center"
         gap="small"
-        wrap="wrap"
       >
         <button
           aria-label={ openLabel }
-          className={ styles.fieldButton }
+          className={ `${styles.fieldButton} ${styles.chooseButton}` }
           onClick={ () => { onOpenField(column) } }
           type="button"
         >
+          <span
+            aria-hidden
+            className={ styles.chooseIcon }
+          >
+            <Icon
+              options={ { height: 12, width: 12 } }
+              value="new"
+            />
+          </span>
           <span className={ styles.crumb }>{ t(`${MAPPING}.choose-field`) }</span>
         </button>
         { offered && (
           <button
+            aria-label={ t(`${MAPPING}.use-suggestion`, { field: suggested.title, interpolation: { escapeValue: false } }) }
             className={ styles.suggestion }
             onClick={ () => { onChange(chooseField(mapping, column, suggested.key)) } }
             type="button"
           >
-            { t(`${MAPPING}.use-suggestion`, { field: suggested.title, interpolation: { escapeValue: false } }) }
+            <span className={ styles.suggestionIcon }><SparkleIcon size={ 12 } /></span>
+            <span className={ styles.suggestionLead }>{ t(`${MAPPING}.use-suggestion.lead`) }</span>
+            <strong>{ suggested.title }</strong>
+            { t(`${MAPPING}.use-suggestion.end`) }
           </button>
         ) }
       </Flex>
@@ -147,6 +156,7 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         aria-label={ openLabel }
         className={ styles.fieldButton }
         onClick={ () => { onOpenField(column) } }
+        title={ t(`${MAPPING}.change-field`) }
         type="button"
       >
         <span className={ styles.fieldIcon }><Icon value={ iconOf(field) } /></span>
@@ -154,12 +164,20 @@ const FieldCell = ({ row, mapping, fields, languages, onChange, onOpenField, onP
         <span className={ styles.crumb }>{ field?.group.join(' › ') }</span>
         { auto && (
           <Tag
+            bordered={ false }
+            className={ styles.auto }
             color="purple"
-            iconName="auto-save"
+            icon={ <SparkleIcon size={ 10 } /> }
           >
             { t(`${MAPPING}.auto`) }
           </Tag>
         ) }
+        <span
+          aria-hidden
+          className={ `${styles.pen} field-pen` }
+        >
+          <Icon value="edit-pen" />
+        </span>
       </button>
       <ChoiceDetails
         languages={ languages }
@@ -182,7 +200,8 @@ export const MappingRowView = ({
   onPickStoreKey,
   onOpenField,
   onOpenTransformations,
-  onSkip
+  onSkip,
+  source
 }: MappingRowViewProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -241,13 +260,25 @@ export const MappingRowView = ({
             { transformationsLabel(t, transformations.length) }
           </Button>
         ) }
-        { !fitsField(row, fields) && <Tag color="warning">{ t(`${MAPPING}.needs-transformation`) }</Tag> }
+      </div>
+      <div className={ styles.cell }>
+        <StoredAs
+          field={ fields.find(({ key }) => key === choice?.field) }
+          row={ row }
+          source={ source }
+        />
       </div>
       <div className={ styles.skip }>
         { !isMatch && (
           <Button
             aria-label={ t(`${MAPPING}.skip-column`, { column: label, interpolation: { escapeValue: false } }) }
+            className={ styles.skipButton }
+            icon={ <Icon
+              options={ { width: 14, height: 14 } }
+              value="eye-off"
+                   /> }
             onClick={ () => { onSkip(column) } }
+            size="small"
             type="text"
           >
             { t(`${MAPPING}.skip`) }

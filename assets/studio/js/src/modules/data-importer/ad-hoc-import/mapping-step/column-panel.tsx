@@ -55,6 +55,12 @@ const ValueChain = ({ row, field, preview: { answer } }: ValueChainProps): React
           <span className={ styles.chip }>{ cellText(t, step.values[valueRow]) }</span>
         </React.Fragment>
       ))) }
+      { answer?.conversion !== null && answer?.conversion !== undefined && field !== undefined && (
+        <>
+          <span aria-hidden>→</span>
+          <span className={ styles.chipConversion }>{ t(`data-importer.ad-hoc-import.transformations.conversion-short.${answer.conversion}`) }</span>
+        </>
+      ) }
       <span aria-hidden>→</span>
       { field === undefined
         ? <span className={ styles.chipOpen }>{ t(`${PANEL}.choose-field`) }</span>
@@ -174,13 +180,21 @@ export const ColumnPanel = ({
             </Flex>
             <IconButton
               aria-label={ t(`${PANEL}.previous`) }
+              className={ styles.stepButton }
+              color="secondary"
               icon={ { value: 'chevron-left' } }
               onClick={ onPrevious }
+              theme="secondary"
+              type="default"
             />
             <IconButton
               aria-label={ t(`${PANEL}.next`) }
+              className={ styles.stepButton }
+              color="secondary"
               icon={ { value: 'chevron-right' } }
               onClick={ onNext }
+              theme="secondary"
+              type="default"
             />
             <IconButton
               aria-label={ t(`${PANEL}.close`) }
@@ -231,8 +245,22 @@ export const ColumnPanel = ({
           onChange={ (next: string) => { onTabChange(next as ColumnPanelTab) } }
         />
         <div className={ styles.actions }>
-          { row.choice !== undefined && <Button onClick={ onRemoveField }>{ t(`${PANEL}.remove-field`) }</Button> }
-          <Button onClick={ onSkip }>{ t('data-importer.ad-hoc-import.mapping.dont-import') }</Button>
+          { row.choice !== undefined && (
+            <Button
+              className={ styles.quietButton }
+              color="secondary"
+              onClick={ onRemoveField }
+            >
+              { t(`${PANEL}.remove-field`) }
+            </Button>
+          ) }
+          <Button
+            className={ styles.quietButton }
+            color="secondary"
+            onClick={ onSkip }
+          >
+            { t('data-importer.ad-hoc-import.mapping.dont-import') }
+          </Button>
           <span className={ styles.grow } />
           <Button
             onClick={ onNext }

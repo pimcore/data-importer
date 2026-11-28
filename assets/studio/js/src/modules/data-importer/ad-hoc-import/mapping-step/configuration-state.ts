@@ -15,8 +15,11 @@ export type ImportConfiguration = BundleDataImporterAdHocImportConfigurationsRes
 
 export type MapWith = 'here' | 'configuration'
 
-// the one reason only the file shows; the others come from the server
+// the reasons only the file shows; the others come from the server
 export const MATCH_COLUMN_MISSING = 'match-column'
+// a configuration reading records (JSON, XML, SQL) has no columns to find in a table; CSV and XLSX key them alike
+export const formatUnfit = (type: 'csv' | 'xlsx'): string => `format-${type}`
+const TABULAR = new Set(['csv', 'xlsx'])
 
 export interface ImportObjects extends ObjectsSettings {
   // for a localized field matched by: its language
@@ -77,6 +80,11 @@ export const configurationColumnLabel = (
  * Why the import cannot use the configuration with this file, or null if it can.
  */
 export const unusableReason = (configuration: ImportConfiguration, inspected: InspectedFile): string | null => {
+  const type = inspected.type ?? null
+  if (type !== null && configuration.format !== null && !TABULAR.has(configuration.format)) {
+    return formatUnfit(type)
+  }
+
   if (configuration.unusable !== null) {
     return configuration.unusable
   }
@@ -142,3 +150,24 @@ export const canContinueWithConfiguration = (
   configuration: ImportConfiguration | undefined,
   inspected: InspectedFile | undefined
 ): boolean => configuration !== undefined && inspected !== undefined && unusableReason(configuration, inspected) === null
+
+// the class all listed configurations import into, for the heading; none when they are of several
+export const commonClassOf = (configurations: ImportConfiguration[]): string | undefined => {
+  const classes = new Set(configurations.map((configuration) => configuration.className ?? configuration.classId ?? ''))
+  const [only] = classes
+
+  return classes.size === 1 && only !== '' ? only : undefined
+}
+
+// what a card says of one it cannot use: its class unless the heading names it, its format and why
+export const unusableSummaryOf = (configuration: ImportConfiguration, reason: string, withClass: boolean): string => [
+  withClass ? configuration.className ?? configuration.classId ?? '' : '',
+  configuration.format?.toUpperCase() ?? '',
+  reason
+].filter((part) => part !== '').join(' · ')
+
+// the usable configurations first, each part in the server's order
+export const usableFirst = <T, >(configurations: T[], isUsable: (configuration: T) => boolean): T[] => [
+  ...configurations.filter(isUsable),
+  ...configurations.filter((configuration) => !isUsable(configuration))
+]

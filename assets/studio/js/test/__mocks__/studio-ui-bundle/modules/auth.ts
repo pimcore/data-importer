@@ -8,4 +8,5 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-export {}
+// no permission unless a test grants it
+export const isAllowed = (): boolean => false

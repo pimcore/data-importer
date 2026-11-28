@@ -63,6 +63,7 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
             if (!in_array($target['key'], self::NO_MAPPING_TARGETS, true)) {
                 $fields[] = [
                     ...$target,
+                    'title' => self::plainTitle($target['title'], $target['key']),
                     'mandatory' => $this->isMandatory($class, $target['key']),
                     'takesColumnAsIs' => $this->transformationChain->takesColumnAsIs($accepted[$target['key']] ?? []),
                     'group' => $groups?->groupOf($target['key']) ?? [],
@@ -75,7 +76,7 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
                 $key = (string) $definition->getName();
                 $fields[] = [
                     'key' => $key,
-                    'title' => $definition->getTitle() . ' [' . $key . ']',
+                    'title' => self::plainTitle((string) $definition->getTitle(), $key),
                     'localized' => (bool) $definition->isLocalized(),
                     // a key of the store is written by the type of that key
                     'transformationResultType' => TransformationDataTypeService::DEFAULT_TYPE,
@@ -118,6 +119,18 @@ final readonly class AdHocImportMappingService implements AdHocImportMappingServ
             limit: $limit,
             searchfilter: $search === '' ? null : $search,
         ));
+    }
+
+    // the field's group says where it is: its title goes without the key the configuration editor adds,
+    // and a field without a title is named by its key
+    private static function plainTitle(string $title, string $key): string
+    {
+        $suffix = ' [' . $key . ']';
+        if (str_ends_with($title, $suffix)) {
+            $title = substr($title, 0, -strlen($suffix));
+        }
+
+        return trim($title) === '' ? $key : $title;
     }
 
     // a localized field is found among the class's localized fields,

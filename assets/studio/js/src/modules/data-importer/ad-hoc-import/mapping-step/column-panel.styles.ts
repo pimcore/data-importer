@@ -57,13 +57,20 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: 6px 10px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
-    background: ${token.colorBgLayout};
+    background: ${token.Colors.Neutral.Fill.colorFillTertiary};
   `,
   chip: css`
     padding: 0 6px;
     border-radius: ${token.borderRadiusSM}px;
     background: ${token.colorPrimary};
     color: ${token.colorTextLightSolid};
+  `,
+  chipConversion: css`
+    padding: 0 6px;
+    border: 1px dashed ${token.colorBorder};
+    border-radius: ${token.borderRadiusSM}px;
+    background: ${token.colorBgContainer};
+    color: ${token.colorTextSecondary};
   `,
   chipResult: css`
     padding: 0 6px;
@@ -84,13 +91,52 @@ export const useStyles = createStyles(({ token, css }) => ({
     border: 1px solid ${token.colorWarningBorder};
     border-radius: ${token.borderRadiusSM}px;
     background: ${token.colorWarningBg};
-    color: ${token.colorWarningText};
+    color: ${token.Colors.Brand.Warning.colorWarningText};
   `,
+  // the field tree fills the panel and scrolls itself; the other tabs scroll in their pane.
+  // As in the design, the tab row spans the panel between two rules and its tabs sit side by side.
   tabs: css`
+    display: flex;
     flex: 1 1 auto;
+    flex-direction: column;
     min-height: 0;
-    padding: 0 ${token.padding}px;
-    overflow: auto;
+    overflow: hidden;
+
+    &.ant-tabs > .ant-tabs-nav {
+      margin: 0;
+      padding: 0 ${token.paddingXS}px;
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+
+    &.ant-tabs > .ant-tabs-nav::before {
+      border-bottom-color: ${token.colorBorderSecondary};
+    }
+
+    &.ant-tabs > .ant-tabs-nav .ant-tabs-tab {
+      padding: ${token.paddingXS}px ${token.padding}px;
+    }
+
+    &.ant-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
+      margin-inline-start: 0;
+    }
+
+    .ant-tabs-content-holder {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: ${token.paddingSM}px ${token.padding}px 0;
+    }
+
+    .ant-tabs-content, .ant-tabs-tabpane-active {
+      height: 100%;
+    }
+
+    .ant-tabs-tabpane-active {
+      overflow: auto;
+    }
+
+    .ant-tabs-tab-active .ant-tabs-tab-btn {
+      font-weight: ${token.fontWeightStrong};
+    }
   `,
   actions: css`
     display: flex;
@@ -98,7 +144,25 @@ export const useStyles = createStyles(({ token, css }) => ({
     padding: ${token.paddingSM}px ${token.padding}px;
     border-top: 1px solid ${token.colorBorderSecondary};
   `,
+  // the design's quiet secondary actions; Studio's hover and active colours stay
+  quietButton: css`
+    &.ant-btn {
+      padding-inline: ${token.paddingSM}px;
+    }
+
+    &.ant-btn:not(:hover):not(:active):not(:disabled) {
+      color: ${token.colorTextDescription};
+    }
+  `,
   grow: css`
     flex-grow: 1;
+  `,
+  // the design's compact previous and next buttons
+  stepButton: css`
+    &.ant-btn {
+      width: 28px;
+      min-width: 28px;
+      height: 28px;
+    }
   `
 }))

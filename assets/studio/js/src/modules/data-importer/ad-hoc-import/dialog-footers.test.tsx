@@ -39,7 +39,7 @@ describe('the footer of a step', () => {
   it('counts the columns still open in the mapping', () => {
     footer(3)
 
-    expect(screen.getByText('3 columns not decided yet: choose a field or “Don\'t import”')).toBeTruthy()
+    expect(screen.getByText('3 columns not decided yet: choose a field or “Don’t import”')).toBeTruthy()
   })
 
   it('names nothing outside the mapping', () => {

@@ -25,6 +25,10 @@ jest.mock('@pimcore/studio-ui-bundle/components', () => jest.requireActual<{ com
 // the mapping step loads the transformations modal and the store key dialog, which no test here opens
 jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({ useSettings: () => ({ validLanguages: ['en'] }) }))
 jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
+const mockIsAllowed = jest.fn((_permission: string) => false)
+const mockOpenMainWidget = jest.fn()
+jest.mock('@pimcore/studio-ui-bundle/modules/auth', () => ({ isAllowed: (permission: string) => mockIsAllowed(permission) }))
+jest.mock('@pimcore/studio-ui-bundle/modules/widget-manager', () => ({ useWidgetManager: () => ({ openMainWidget: mockOpenMainWidget }) }))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [async () => await new Promise(() => {})]
 }))
@@ -57,12 +61,21 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   className: 'Product',
   matchBy: 'field',
   matchField: 'name',
+  matchFieldTitle: 'Name',
   matchLanguage: 'de',
   matchColumn: 'Name DE',
   newObjectsFolder: '/Products & more/Imported',
   columns: ['Name DE', 'Preis'],
   columnsBy: 'name',
   unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0,
+  schedule: null,
   ...given
 })
 
@@ -96,7 +109,7 @@ const useConfiguration = (props: StatefulProps = {}): void => {
   fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
 }
 
-const configurationList = (): HTMLElement => screen.getByRole('radiogroup', { name: 'Data Importer configurations' })
+const configurationList = (): HTMLElement => screen.getByRole('radiogroup', { name: /^Data Importer configurations/ })
 
 const cards = (): HTMLElement[] => within(configurationList()).getAllByRole('radio')
 
@@ -108,6 +121,9 @@ const detailOf = (shown: HTMLElement): string | null | undefined => document.get
 
 afterEach(() => {
   cleanup()
+  mockIsAllowed.mockReset()
+  mockIsAllowed.mockReturnValue(false)
+  mockOpenMainWidget.mockReset()
 })
 
 describe('the mapping with a configuration', () => {
@@ -117,9 +133,29 @@ describe('the mapping with a configuration', () => {
     expect(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }).getAttribute('aria-checked')).toBe('true')
     expect(screen.queryByRole('list', { name: 'Columns of the file' })).toBeNull()
     expect(cards().map((shown) => shown.getAttribute('aria-label'))).toEqual(['products', 'prices'])
-    expect(cards().map(detailOf)).toEqual(['Product', 'Product'])
+    expect(cards().map(detailOf)).toEqual(['CSV · 2 fields · manual', 'CSV · 2 fields · manual'])
     expect(screen.getByText('Only those you may read in the Data Hub')).toBeTruthy()
     expect(screen.getByText('Choose a configuration')).toBeTruthy()
+  })
+
+  it('names when a usable one runs: its cron definition, unescaped, or manual', () => {
+    useConfiguration({ configurations: [configuration({ name: 'nightly', schedule: '0 2 * * 1-5 & more' }), configuration({ name: 'by hand' })] })
+
+    expect(cards().map(detailOf)).toEqual(['CSV · 2 fields · 0 2 * * 1-5 & more', 'CSV · 2 fields · manual'])
+  })
+
+  it('lists the ones it cannot use after the usable ones, each part in the server\'s order', () => {
+    useConfiguration({
+      configurations: [
+        configuration({ name: 'car-import', unusable: 'matching' }),
+        configuration({ name: 'products' }),
+        configuration({ name: 'closed', unusable: 'folder-not-allowed' }),
+        configuration({ name: 'prices' })
+      ]
+    })
+
+    expect(cards().map((shown) => shown.getAttribute('aria-label'))).toEqual(['products', 'prices', 'car-import', 'closed'])
+    expect(cards().map((shown) => shown.getAttribute('aria-disabled'))).toEqual(['false', 'false', 'true', 'true'])
   })
 
   it('offers one it cannot use only with the reason on its second line, unescaped', () => {
@@ -132,12 +168,56 @@ describe('the mapping with a configuration', () => {
     })
 
     expect(cards().map(detailOf)).toEqual([
-      'Product · it does not find objects by their ID or a field in all folders',
-      'Product · the file has no column EAN to match by',
-      'Product · you may not create objects in its folder'
+      'CSV · it does not find objects by their ID or a field in all folders',
+      'CSV · the file has no column EAN to match by',
+      'CSV · you may not create objects in its folder'
     ])
     expect(cards().every((shown) => shown.getAttribute('aria-disabled') === 'true')).toBe(true)
     expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, -1])
+  })
+
+  it('offers one that reads records, not a table, as one that does not fit the file', () => {
+    useConfiguration({ configurations: [configuration(), configuration({ name: 'pim-sync-json', format: 'json' })] })
+
+    expect(cards().map(detailOf)[1]).toBe('JSON · does not fit a CSV file')
+    expect(cards().map((shown) => shown.getAttribute('aria-disabled'))).toEqual(['false', 'true'])
+  })
+
+  it('names the class in the heading when all are of one, and else on each card', () => {
+    useConfiguration({ configurations: [configuration(), configuration({ name: 'closed', unusable: 'folder-not-allowed', format: null })] })
+
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations for class Product' })).toBeTruthy()
+    expect(detailOf(card('closed'))).toBe('you may not create objects in its folder')
+    cleanup()
+
+    useConfiguration({
+      configurations: [
+        configuration(),
+        configuration({ name: 'cars', className: 'Car & more', unusable: 'folder-not-allowed', format: 'xlsx' })
+      ]
+    })
+
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
+    expect(detailOf(card('cars'))).toBe('Car & more · XLSX · you may not create objects in its folder')
+    expect(detailOf(card('products'))).toBe('Product · CSV · 2 fields · manual')
+  })
+
+  it('opens Data Hub\'s configurations from the chosen one for a user who may read them', () => {
+    mockIsAllowed.mockImplementation((permission) => permission === 'plugin_datahub_config')
+    useConfiguration({ configurations: [configuration()] })
+    choose('products')
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'products' })).getByRole('button', { name: 'Open in Data Hub ↗' }))
+
+    expect(mockOpenMainWidget).toHaveBeenCalledWith(expect.objectContaining({ id: 'data-hub-configuration', component: 'data-hub-configuration' }))
+  })
+
+  it('offers no way to Data Hub to a user who may not read its configurations', () => {
+    useConfiguration({ configurations: [configuration()] })
+    choose('products')
+
+    expect(within(screen.getByRole('region', { name: 'products' })).queryByRole('button', { name: 'Open in Data Hub ↗' })).toBeNull()
+    expect(mockIsAllowed).toHaveBeenCalledWith('plugin_datahub_config')
   })
 
   it('does not choose one it cannot use', () => {
@@ -174,9 +254,10 @@ describe('the mapping with a configuration', () => {
       ]
     })
 
-    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, 0, -1])
+    // the one it cannot use is listed last
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([0, -1, -1])
     choose('prices')
-    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, 0])
+    expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, 0, -1])
   })
 
   it('moves to and chooses the next or previous usable one with the arrow keys, wrapping around', () => {
@@ -187,10 +268,11 @@ describe('the mapping with a configuration', () => {
         configuration({ name: 'prices' })
       ]
     })
+    // listed as products, prices, closed: the one it cannot use last
     const checked = (): Array<string | null> => cards().map((shown) => shown.getAttribute('aria-checked'))
 
     fireEvent.keyDown(card('products'), { key: 'ArrowDown' })
-    expect(checked()).toEqual(['false', 'false', 'true'])
+    expect(checked()).toEqual(['false', 'true', 'false'])
     expect(document.activeElement).toBe(card('prices'))
 
     fireEvent.keyDown(card('prices'), { key: 'ArrowRight' })
@@ -198,7 +280,7 @@ describe('the mapping with a configuration', () => {
     expect(document.activeElement).toBe(card('products'))
 
     fireEvent.keyDown(card('products'), { key: 'ArrowUp' })
-    expect(checked()).toEqual(['false', 'false', 'true'])
+    expect(checked()).toEqual(['false', 'true', 'false'])
 
     fireEvent.keyDown(card('prices'), { key: 'ArrowLeft' })
     expect(checked()).toEqual(['true', 'false', 'false'])
@@ -220,36 +302,46 @@ describe('the mapping with a configuration', () => {
     expect(screen.queryAllByRole('region')).toHaveLength(0)
   })
 
-  it('shows the class, the match and the folder of the chosen one, which replace those of the file step', () => {
+  it('shows the match and the folder of the chosen one, which replace those of the file step, and its class in the heading', () => {
     useConfiguration({ configurations: [configuration()] })
     choose('products')
 
+    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations for class Product' })).toBeTruthy()
     const summary = within(screen.getByRole('region', { name: 'products' }))
-    expect(summary.getByText('Product')).toBeTruthy()
-    expect(summary.getByText('name (de) from column Name DE')).toBeTruthy()
+    expect(summary.queryByText('Class')).toBeNull()
+    expect(summary.getByText('Name (de) ← Name DE')).toBeTruthy()
     expect(summary.getByText('/Products & more/Imported')).toBeTruthy()
-    expect(screen.queryByText(/Columns it reads/)).toBeNull()
+    expect(summary.getByText('read only')).toBeTruthy()
+    expect(screen.queryByText(/the configuration reads/)).toBeNull()
+  })
+
+  it('names the match field by its key when the class gives it no title', () => {
+    useConfiguration({ configurations: [configuration({ matchLanguage: null, matchFieldTitle: null })] })
+    choose('products')
+
+    expect(screen.getByText('name ← Name DE')).toBeTruthy()
   })
 
   it('names the match of one without a language, and of one by the object ID', () => {
     useConfiguration({
       configurations: [
         configuration({ matchLanguage: null }),
-        configuration({ name: 'by-id', matchBy: 'id', matchField: null, matchLanguage: null, matchColumn: 'Artikelnr', className: null })
+        configuration({ name: 'by-id', matchBy: 'id', matchField: null, matchFieldTitle: null, matchLanguage: null, matchColumn: 'Artikelnr', className: null })
       ]
     })
     choose('products')
-    expect(screen.getByText('name from column Name DE')).toBeTruthy()
+    expect(screen.getByText('Name ← Name DE')).toBeTruthy()
 
     choose('by-id')
     const summary = within(screen.getByRole('region', { name: 'by-id' }))
-    expect(summary.getByText('Object ID from column Artikelnr')).toBeTruthy()
-    expect(summary.getByText('PROD')).toBeTruthy()
+    expect(summary.getByText('Object ID ← Artikelnr')).toBeTruthy()
+    // of two classes, so the card names its class, by its ID when it has no name
+    expect(detailOf(card('by-id'))).toBe('PROD · CSV · 2 fields · manual')
   })
 
   it('says that one matching nothing creates every row, keyed by the file step\'s column', () => {
     useConfiguration({
-      configurations: [configuration({ name: 'new-only', matchBy: 'none', matchField: null, matchLanguage: null, matchColumn: null })]
+      configurations: [configuration({ name: 'new-only', matchBy: 'none', matchField: null, matchFieldTitle: null, matchLanguage: null, matchColumn: null })]
     })
     choose('new-only')
 
@@ -261,15 +353,103 @@ describe('the mapping with a configuration', () => {
     useConfiguration({ configurations: [configuration({ columns: ['Name DE', 'EAN', 'Weight & size'] })] })
     choose('products')
 
-    expect(screen.getByText('Columns it reads that the file does not have: EAN, Weight & size')).toBeTruthy()
+    expect(screen.getByText('2 columns the configuration reads are missing in this file: “EAN”, “Weight & size”. Those fields stay as they are.')).toBeTruthy()
   })
 
   it('finds the columns of one that names them by position in a file with a header row', () => {
     useConfiguration({ configurations: [configuration({ columnsBy: 'position', matchColumn: '1', columns: ['1', '2', '7'] })] })
     choose('products')
 
-    expect(screen.getByText('name (de) from column Name DE')).toBeTruthy()
-    expect(screen.getByText('Columns it reads that the file does not have: 7')).toBeTruthy()
+    expect(screen.getByText('Name (de) ← Name DE')).toBeTruthy()
+    expect(screen.getByText('1 column the configuration reads is missing in this file: “7”. That field stays as it is.')).toBeTruthy()
+  })
+
+  it('shows the source it reads instead of this upload, its file format and its mapping', () => {
+    render(
+      <ConfigurationChoice
+        chosen="northhike"
+        configurations={ [configuration({
+          name: 'northhike',
+          format: 'xlsx',
+          sheet: 'Products & more',
+          source: 'sftp',
+          sourcePath: '/in/northhike',
+          fieldCount: 18,
+          transformedCount: 6
+        })] }
+        fileName="autumn & winter.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = screen.getByRole('region', { name: 'northhike' })
+    expect(summary.querySelector('s')?.textContent).toBe('SFTP /in/northhike')
+    expect(summary.textContent).toContain('SFTP /in/northhike → this upload: autumn & winter.csv')
+    expect(within(summary).getByText(/^XLSX, sheet “Products & more”, header row 1/)).toBeTruthy()
+    // the file is a CSV, so the format does not match it
+    expect(within(summary).queryByText('matches the file')).toBeNull()
+    expect(within(summary).getByText('18 fields, 6 with transformations')).toBeTruthy()
+    // the card and the heading name the class, the detail does not
+    expect(within(summary).queryByText('Class')).toBeNull()
+    expect(within(summary).queryByText('Product')).toBeNull()
+    expect(detailOf(card('northhike'))).toBe('XLSX · 18 fields · manual')
+  })
+
+  it('says the format matches the file, and names an upload without a path and one field', () => {
+    render(
+      <ConfigurationChoice
+        chosen="products"
+        configurations={ [configuration({ headerRow: false, fieldCount: 1, transformedCount: 0 })] }
+        fileName="products.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = within(screen.getByRole('region', { name: 'products' }))
+    expect(summary.getByText('Upload')).toBeTruthy()
+    expect(summary.getByText('matches the file')).toBeTruthy()
+    expect(summary.getByText('1 field, 0 with transformations')).toBeTruthy()
+    expect(summary.queryByText(/header row/)).toBeNull()
+  })
+
+  it('names a source another bundle loads from by its type', () => {
+    render(
+      <ConfigurationChoice
+        chosen="products"
+        configurations={ [configuration({ source: 'ftp', sourcePath: null })] }
+        fileName="products.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = screen.getByRole('region', { name: 'products' })
+    expect(summary.querySelector('s')?.textContent).toBe('ftp')
+    expect(summary.textContent).not.toContain('data-importer.ad-hoc-import.configuration.source.')
+  })
+
+  it('names only this upload for a configuration whose source is unknown', () => {
+    render(
+      <ConfigurationChoice
+        chosen="products"
+        configurations={ [configuration({ source: null, format: null })] }
+        fileName="products.csv"
+        inspected={ inspected }
+        isLoading={ false }
+        onChoose={ () => {} }
+      />
+    )
+
+    const summary = screen.getByRole('region', { name: 'products' })
+    expect(summary.querySelector('s')).toBeNull()
+    expect(within(summary).getByText('this upload: products.csv')).toBeTruthy()
+    expect(within(summary).queryByText('matches the file')).toBeNull()
+    expect(detailOf(card('products'))).toBe('2 fields · manual')
   })
 
   it('shows a failed listing instead of saying there is none', () => {
@@ -290,7 +470,7 @@ describe('the mapping with a configuration', () => {
     useConfiguration({ isLoading: true })
 
     expect(document.querySelector('[aria-busy="true"]')).not.toBeNull()
-    expect(screen.queryByRole('radiogroup', { name: 'Data Importer configurations' })).toBeNull()
+    expect(screen.queryByRole('radiogroup', { name: /^Data Importer configurations/ })).toBeNull()
   })
 
   it('says when there is none to use', () => {

@@ -64,13 +64,15 @@ export const components = {
       <span>{ description }</span>
     </div>
   ),
-  Button: ({ children, disabled, onClick, href, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, href?: string, 'aria-label'?: string }) => href !== undefined ? <a href={ href }>{ children }</a> : (
+  Button: ({ children, disabled, onClick, href, icon, size, 'aria-label': label }: WithChildren & { disabled?: boolean, onClick?: () => void, href?: string, icon?: React.ReactNode, size?: string, 'aria-label'?: string }) => href !== undefined ? <a href={ href }>{ children }</a> : (
     <button
       aria-label={ label }
+      data-size={ size }
       disabled={ disabled }
       onClick={ onClick }
       type="button"
     >
+      { icon }
       { children }
     </button>
   ),
@@ -171,7 +173,12 @@ export const components = {
       </tbody>
     </table>
   ),
-  Icon: () => null,
+  Icon: ({ value }: { value: string }) => (
+    <i
+      aria-hidden
+      data-icon={ value }
+    />
+  ),
   Spin: () => <output />,
   IconButton: ({ onClick, 'aria-label': label }: { onClick?: () => void, 'aria-label'?: string }) => (
     <button
@@ -325,7 +332,7 @@ export const components = {
       )) }
     </ol>
   ),
-  Tag: ({ children }: WithChildren) => <mark>{ children }</mark>,
+  Tag: ({ children, icon }: WithChildren & { icon?: React.ReactNode }) => <mark>{ icon }{ children }</mark>,
   Text: ({ children, id }: WithChildren & { id?: string }) => <span id={ id }>{ children }</span>,
   Switch: ({ checked, labelRight, onChange }: { checked?: boolean, labelRight?: string, onChange?: (checked: boolean) => void }) => (
     <label>

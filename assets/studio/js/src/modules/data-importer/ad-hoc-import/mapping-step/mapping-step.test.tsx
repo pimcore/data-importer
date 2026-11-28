@@ -13,7 +13,7 @@ import React, { useState } from 'react'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { type InspectedFile, type ObjectsSettings } from '../file-step/file-step-state'
 import { Modal } from 'antd'
-import { canContinueMapping, chooseField, createMapping, setTransformations, withSamples, type LoadedMapping, type Mapping } from './mapping-state'
+import { canContinueMapping, chooseField, createMapping, setTransformations, unfitRows, withSamples, type LoadedMapping, type Mapping } from './mapping-state'
 import { chooseStoreKey } from './mapping-choices'
 import { MappingStep } from './mapping-step'
 import { type TransformationSource } from './transformations-editor'
@@ -30,6 +30,8 @@ jest.mock('@pimcore/studio-ui-bundle/modules/app', () => ({
 }))
 // loads its keys from the server, which the field panel's test stands in for
 jest.mock('./store-key-dialog', () => ({ StoreKeyDialog: () => null }))
+// what a column is stored as asks the server on its own; its own tests count those requests
+jest.mock('./stored-as', () => ({ StoredAs: () => null }))
 jest.mock('../../data-importer-api-slice-enhanced', () => ({
   useBundleDataImporterAdHocImportPreviewTransformationsMutation: () => [mockPreview]
 }))
@@ -90,10 +92,14 @@ const Stateful = ({ initial, isLoading = false, withSource = source }: { initial
         onMapWithChange={ () => {} }
         source={ withSource }
       />
-      <span data-testid="can-continue">{ String(mapping !== null && canContinueMapping(mapping, loaded.fields)) }</span>
+      <span data-testid="can-continue">{ String(mapping !== null && canContinueMapping(mapping)) }</span>
+      <span data-testid="unfit">{ mapping === null ? '' : unfitRows(mapping, loaded.fields).map(({ column }) => column).join('|') }</span>
     </>
   )
 }
+
+// the columns known not to go into their field as they are
+const unfit = (): string[] => (screen.getByTestId('unfit').textContent ?? '').split('|').filter((column) => column !== '')
 
 const renderStep = (): void => {
   render(<Stateful initial={ createMapping(inspected, objects, loaded) } />)
@@ -118,7 +124,7 @@ const choose = (column: string, field: string): void => {
 }
 
 const skip = (column: string): void => {
-  fireEvent.click(screen.getByRole('button', { name: `Don't import ${column}` }))
+  fireEvent.click(screen.getByRole('button', { name: `Don’t import ${column}` }))
 }
 
 const shownColumns = (): string[] =>
@@ -154,6 +160,13 @@ describe('the mapping step', () => {
     expect(within(rowOf('Name DE')).getByText('de')).toBeTruthy()
   })
 
+  it('marks what was mapped automatically with a sparkle, in the row and in the notice', () => {
+    renderStep()
+
+    expect(within(rowOf('Name DE')).getByText('auto').querySelector('[data-icon="sparkle"]')).not.toBeNull()
+    expect(screen.getByText('1 column was mapped automatically').closest('div')?.querySelector('[data-icon="sparkle"]')).not.toBeNull()
+  })
+
   it('offers a weaker suggestion to take at once', () => {
     renderStep()
 
@@ -186,7 +199,7 @@ describe('the mapping step', () => {
       fireEvent.click(within(rowOf('Preis')).getByRole('button', { name: 'Use Price?' }))
       expect(within(rowOf('Notiz')).queryByRole('button', { name: 'Use Price?' })).toBeNull()
 
-      fireEvent.click(screen.getByRole('button', { name: "Don't import Preis" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Don’t import Preis' }))
       expect(within(rowOf('Notiz')).getByRole('button', { name: 'Use Price?' })).toBeTruthy()
     })
 
@@ -216,8 +229,16 @@ describe('the mapping step', () => {
 
     expect(screen.queryByRole('button', { name: 'Field for Artikelnr' })).toBeNull()
     expect(within(matchRowOf('Artikelnr')).getByText('SKU')).toBeTruthy()
-    expect(within(matchRowOf('Artikelnr')).getByText('Finds the objects')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: "Don't import Artikelnr" })).toBeNull()
+    expect(within(matchRowOf('Artikelnr')).queryByText('Finds the objects')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Don’t import Artikelnr' })).toBeNull()
+  })
+
+  it('offers Don\'t import on a column as a text button with its eye-off icon', () => {
+    renderStep()
+
+    const skip = within(rowOf('Preis')).getByRole('button', { name: 'Don’t import Preis' })
+    expect(skip.textContent).toBe('Skip')
+    expect(skip.querySelector('[data-icon="eye-off"]')).not.toBeNull()
   })
 
   it('shows the object ID for a match column when matching by it', () => {
@@ -269,6 +290,7 @@ describe('the mapping step', () => {
     renderStep()
 
     expect(screen.getByText('Required fields:')).toBeTruthy()
+    expect(screen.getByText('✓ SKU')).toBeTruthy()
     expect(screen.getByText('✗ EAN')).toBeTruthy()
 
     choose('Notiz', 'EAN (required)')
@@ -333,7 +355,7 @@ describe('the mapping step', () => {
     it('takes every open column at once, leaving the decided ones', () => {
       renderStep()
 
-      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Don’t import the 2 not mapped' }))
 
       expect(shownColumns()).toEqual(['Artikelnr', 'Name DE'])
       expect(screen.getByRole('button', { name: /Not imported \(2\)/ })).toBeTruthy()
@@ -344,7 +366,7 @@ describe('the mapping step', () => {
       renderStep()
       openPanel('Notiz')
 
-      fireEvent.click(screen.getByRole('button', { name: "Don't import the 2 not mapped" }))
+      fireEvent.click(screen.getByRole('button', { name: 'Don’t import the 2 not mapped' }))
 
       expect(screen.queryByRole('complementary')).toBeNull()
     })
@@ -366,6 +388,8 @@ describe('the mapping step', () => {
     it('takes every suggestion waiting, marked as automatic', () => {
       renderStep()
 
+      // the notice's one action, as compact as the filter buttons
+      expect(screen.getByRole('button', { name: 'Use all 1 suggestions' }).getAttribute('data-size')).toBe('small')
       fireEvent.click(screen.getByRole('button', { name: 'Use all 1 suggestions' }))
 
       expect(within(rowOf('Preis')).getByRole('button', { name: 'Field for Preis' }).textContent).toContain('Price')
@@ -520,13 +544,11 @@ describe('the mapping step', () => {
       openPanel('Notiz')
       fireEvent.click(within(panelOf('Notiz')).getByRole('treeitem', { name: 'Image' }))
 
-      expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
-      expect(screen.getByText('Columns whose values do not fit their field yet: Notiz')).toBeTruthy()
+      expect(unfit()).toEqual(['Notiz'])
 
       await settle()
 
-      expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
-      expect(screen.queryByText('Columns whose values do not fit their field yet: Notiz')).toBeNull()
+      expect(unfit()).not.toContain('Notiz')
     })
 
     describe('a column left before the answer', () => {
@@ -552,8 +574,9 @@ describe('the mapping step', () => {
         await settle()
 
         expect(mockPreview).toHaveBeenCalledTimes(1)
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
-        expect(canContinue()).toBe('false')
+        expect(unfit()).toContain('Notiz')
+        // a value that does not fit shows in the preview as invalid; it does not hold up the step
+        expect(canContinue()).toBe('true')
       })
 
       it('still gets its answer after moving on to the next column', async () => {
@@ -565,7 +588,7 @@ describe('the mapping step', () => {
         fireEvent.click(within(panelOf('Notiz')).getByRole('button', { name: 'Next column ›' }))
         await settle()
 
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
+        expect(unfit()).toContain('Notiz')
       })
 
       it('fits a field that does not take it as it is, once the answer says so', async () => {
@@ -580,7 +603,7 @@ describe('the mapping step', () => {
         closePanel('Notiz')
         await settle()
 
-        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+        expect(unfit()).not.toContain('Notiz')
         expect(canContinue()).toBe('true')
       })
 
@@ -593,8 +616,9 @@ describe('the mapping step', () => {
         closePanel('Notiz')
         await settle()
 
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
-        expect(canContinue()).toBe('false')
+        expect(unfit()).toContain('Notiz')
+        // the preview runs the steps again and names the values that fail
+        expect(canContinue()).toBe('true')
       })
 
       describe('and the file read again', () => {
@@ -610,7 +634,7 @@ describe('the mapping step', () => {
           await settle()
 
           expect(mockPreview).toHaveBeenCalledTimes(1)
-          expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+          expect(unfit()).not.toContain('Notiz')
           expect(canContinue()).toBe('true')
         })
 
@@ -663,8 +687,8 @@ describe('the mapping step', () => {
           await Promise.resolve()
         })
 
-        expect(within(rowOf('Notiz')).getByText('Needs a transformation')).toBeTruthy()
-        expect(within(rowOf('Name DE')).getByText('Needs a transformation')).toBeTruthy()
+        expect(unfit()).toContain('Notiz')
+        expect(unfit()).toContain('Name DE')
       })
 
       it('drops an answer to steps changed since', async () => {
@@ -685,7 +709,7 @@ describe('the mapping step', () => {
           await Promise.resolve()
         })
 
-        expect(within(rowOf('Notiz')).queryByText('Needs a transformation')).toBeNull()
+        expect(unfit()).not.toContain('Notiz')
       })
     })
 

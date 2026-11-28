@@ -188,12 +188,21 @@ const productsConfiguration = {
   className: 'Product',
   matchBy: 'field',
   matchField: 'sku',
+  matchFieldTitle: null,
   matchLanguage: null,
   matchColumn: 'Artikelnr',
   newObjectsFolder: '/Products/Imported',
   columns: ['Artikelnr', 'Bezeichnung'],
   columnsBy: 'name',
-  unusable: null
+  unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0,
+  schedule: null
 }
 
 const closedConfiguration = { ...productsConfiguration, name: 'closed', unusable: 'folder-not-allowed' }
@@ -979,7 +988,7 @@ describe('the mapping step', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Field for Bezeichnung' }))
     fireEvent.click(within(screen.getByRole('complementary', { name: 'Column Bezeichnung' })).getByRole('button', { name: 'Remove field' }))
 
-    expect(screen.getByText('1 column not decided yet: choose a field or “Don\'t import”')).toBeTruthy()
+    expect(screen.getByText('1 column not decided yet: choose a field or “Don’t import”')).toBeTruthy()
   })
 
   it('names the file in the title from the mapping on', async () => {
@@ -1022,7 +1031,7 @@ describe('the mapping step', () => {
     await toMapping()
 
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
-    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t import Bezeichnung' }))
     expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
 
     fireEvent.click(screen.getByRole('button', { name: /Not imported \(1\)/ }))
@@ -1033,22 +1042,22 @@ describe('the mapping step', () => {
     expect(screen.getByText('Preview', { selector: 'li' }).getAttribute('aria-current')).toBe('step')
   })
 
-  it('waits on a column whose values do not fit its field, and offers its transformations', async () => {
+  // the preview shows its values as invalid, so it does not hold up the step
+  it('goes on with a column whose values do not fit its field, and offers its transformations', async () => {
     await toMapping()
 
     pickField('Bezeichnung', 'Image')
 
-    expect((nextButton() as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText('Columns whose values do not fit their field yet: Bezeichnung')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
-
-    pickField('Bezeichnung', 'Title')
     expect((nextButton() as HTMLButtonElement).disabled).toBe(false)
+    // its dot stays the one of a mapped column, no notice over the table
+    expect(screen.queryByTitle('Needs a transformation')).toBeNull()
+    expect(screen.queryByText(/do not fit their field/)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Transformations of Bezeichnung' })).toBeTruthy()
   })
 
   it('keeps the mapping when going back and on with nothing changed', async () => {
     await toMapping()
-    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t import Bezeichnung' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     await act(async () => { fireEvent.click(nextButton()) })
@@ -1059,7 +1068,7 @@ describe('the mapping step', () => {
 
   it('makes a new mapping for another column to match by', async () => {
     await toMapping()
-    fireEvent.click(screen.getByRole('button', { name: "Don't import Bezeichnung" }))
+    fireEvent.click(screen.getByRole('button', { name: 'Don’t import Bezeichnung' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
     select('from column', 'Bezeichnung')
@@ -1067,7 +1076,9 @@ describe('the mapping step', () => {
 
     expect(mockLoadMapping).toHaveBeenCalledTimes(2)
     expect(screen.queryByRole('button', { name: /Not imported \(1\)/ })).toBeNull()
-    expect(screen.getByText('Finds the objects')).toBeTruthy()
+    // the column that finds the objects has no field to change and cannot be left out
+    expect(screen.queryByRole('button', { name: 'Field for Bezeichnung' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Don’t import Bezeichnung' })).toBeNull()
   })
 
   describe('of a workbook read again from another sheet', () => {
@@ -1133,6 +1144,8 @@ describe('the mapping step', () => {
 
     expect(screen.queryByText('auto')).toBeNull()
     expect(fieldOf('Artikelnr')).toBe('Choose field')
+    // as the design: a plus before the label
+    expect(screen.getByRole('button', { name: 'Field for Artikelnr' }).querySelector('[data-icon="new"]')).not.toBeNull()
   })
 
   it('reports a mapping that could not be loaded and cannot go on', async () => {
@@ -1169,7 +1182,7 @@ describe('the mapping step with a configuration', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Use a Data Importer configuration' }))
 
     expect(mockListConfigurations).toHaveBeenLastCalledWith(undefined, { skip: false, refetchOnMountOrArgChange: true })
-    expect(screen.getByRole('radiogroup', { name: 'Data Importer configurations' })).toBeTruthy()
+    expect(screen.getByRole('radiogroup', { name: /^Data Importer configurations/ })).toBeTruthy()
   })
 
   it('names the preview as the next step on the mapping step', async () => {

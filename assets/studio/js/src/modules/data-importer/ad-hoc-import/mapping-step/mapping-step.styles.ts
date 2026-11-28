@@ -41,8 +41,9 @@ export const useStyles = createStyles(({ token, css }) => ({
   barMapped: css`
     background: ${token.colorSuccess};
   `,
+  // Studio has no token for the design's #bfbfbf; its disabled text (0.55 black) is far darker, its border grey is closest
   barSkipped: css`
-    background: ${token.colorTextDisabled};
+    background: ${token.colorBorder};
   `,
   spacer: css`
     flex-grow: 1;
@@ -58,10 +59,30 @@ export const useStyles = createStyles(({ token, css }) => ({
   noteIcon: css`
     color: ${token.colorPrimary};
   `,
+  // the table takes the dialog's height left and scrolls itself
+  fill: css`
+    flex: 1 1 auto;
+    min-height: 0;
+  `,
+  // a row scrolled into view never sits under the sticky head
   table: css`
-    max-height: calc(100vh - 500px);
+    flex: 1 1 auto;
     min-height: 120px;
     overflow: auto;
+    scroll-padding-top: ${token.paddingXXS * 2 + Math.round(token.fontSize * token.lineHeight)}px;
+  `,
+  // the filters and the skip button of the design are one height
+  summaryButton: css`
+    &.ant-btn {
+      height: ${token.controlHeight - token.paddingXXS}px;
+      padding-inline: 10px;
+    }
+  `,
+  // the required fields' tags keep their success or error fill with the text colour, readable at AA
+  requiredTag: css`
+    &.ant-tag {
+      color: ${token.colorText};
+    }
   `,
   rows: css`
     margin: 0;

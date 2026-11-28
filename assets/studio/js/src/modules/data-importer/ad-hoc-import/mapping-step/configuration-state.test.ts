@@ -38,12 +38,21 @@ const configuration = (given: Partial<ImportConfiguration> = {}): ImportConfigur
   className: 'Product',
   matchBy: 'field',
   matchField: 'name',
+  matchFieldTitle: null,
   matchLanguage: 'de',
   matchColumn: '1',
   newObjectsFolder: '/Products/Imported',
   columns: ['1', '0'],
   columnsBy: 'position',
   unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0,
+  schedule: null,
   ...given
 })
 
@@ -78,6 +87,20 @@ describe('a configuration', () => {
 
     expect(unusableReason(closed, inspected)).toBe('folder-not-allowed')
     expect(canContinueWithConfiguration(closed, inspected)).toBe(false)
+  })
+
+  it('cannot be used when it reads records, not a table, before any reason of the server', () => {
+    const json = configuration({ format: 'json', unusable: 'folder' })
+
+    expect(unusableReason(json, inspected)).toBe('format-xlsx')
+    expect(unusableReason(configuration({ format: 'xml' }), csvWithHeader)).toBe('format-csv')
+    expect(canContinueWithConfiguration(json, inspected)).toBe(false)
+  })
+
+  it('can be used when it reads the other table format', () => {
+    expect(unusableReason(configuration({ format: 'csv' }), inspected)).toBeNull()
+    expect(unusableReason(configuration({ format: 'xlsx', matchColumn: '0' }), csvWithHeader)).toBeNull()
+    expect(unusableReason(configuration({ format: 'json' }), { ...inspected, type: null })).toBeNull()
   })
 
   it('cannot be used when the file lacks the column it matches by', () => {

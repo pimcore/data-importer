@@ -1115,6 +1115,8 @@ export type BundleDataImporterAdHocImportConfigurationsResponse = {
         matchBy: "id" | "field" | "none" | null;
         /** The field it finds objects by */
         matchField: string | null;
+        /** The title of the field it finds objects by, or its key when it has none */
+        matchFieldTitle: string | null;
         /** The language of a localized field it finds objects by */
         matchLanguage: string | null;
         /** The column holding the value it finds objects by; null when it finds none */
@@ -1127,6 +1129,22 @@ export type BundleDataImporterAdHocImportConfigurationsResponse = {
         columnsBy: "name" | "position";
         /** Why an ad hoc import cannot use it: class, matching, folder, folder-missing or folder-not-allowed; null if it can */
         unusable: string | null;
+        /** The type of file or data it reads: csv, xlsx, json, xml or sql */
+        format: string | null;
+        /** The sheet an XLSX configuration reads */
+        sheet: string | null;
+        /** Whether its CSV or XLSX file starts with a header row */
+        headerRow: boolean;
+        /** Where it loads its data from: sftp, http, asset, upload, push or sql */
+        source: string | null;
+        /** The remote path of an SFTP source or the asset path of an asset source */
+        sourcePath: string | null;
+        /** The rows of its mapping */
+        fieldCount: number;
+        /** The rows of its mapping with transformations */
+        transformedCount: number;
+        /** The cron definition it runs on, null when it runs only by hand */
+        schedule: string | null;
     }[];
 };
 export type BundleDataImporterAdHocImportTransformationParameters = {

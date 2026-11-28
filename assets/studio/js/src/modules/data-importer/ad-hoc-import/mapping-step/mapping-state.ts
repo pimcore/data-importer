@@ -272,17 +272,22 @@ export const autoRowCount = (mapping: Mapping): number => importedRows(mapping).
 
 export type RequiredField = MappingField & { covered: boolean }
 
-// the fields the class requires, and whether a column goes into each
+// the field the objects are matched by (a new object's key is its value), then those the class requires, and whether a
+// column goes into each
 export const requiredFields = (mapping: Mapping, fields: MappingField[]): RequiredField[] => {
   const chosen = new Set(importedRows(mapping).flatMap(({ choice }) => choice === undefined ? [] : [choice.field]))
+  const matchKey = mapping.rows.find(({ isMatch }) => isMatch)?.choice?.field
+  const matchField = fields.find(({ key }) => key === matchKey)
+  const mandatory = fields.filter(({ key, mandatory }) => mandatory && key !== matchKey)
+  const required = matchField === undefined ? mandatory : [matchField, ...mandatory]
 
-  return fields.filter(({ mandatory }) => mandatory).map((field) => ({ ...field, covered: chosen.has(field.key) }))
+  return required.map((field) => ({ ...field, covered: chosen.has(field.key) }))
 }
 
 /**
- * Something to import beside the column that finds the objects, and every column known to fit its field.
+ * Something to import beside the column that finds the objects, and no steps still waiting for the server's answer.
+ * A column that does not fit its field holds nothing up: the preview shows its values as invalid.
  */
-export const canContinueMapping = (mapping: Mapping, fields: MappingField[]): boolean =>
+export const canContinueMapping = (mapping: Mapping): boolean =>
   mapping.rows.some((row) => !row.isMatch && !row.skipped && row.choice !== undefined) &&
-  unfitRows(mapping, fields).length === 0 &&
   !mapping.rows.some(awaitsFit)

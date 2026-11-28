@@ -186,12 +186,21 @@ class AdHocImportConfigurationServiceTest extends Unit
             'className' => 'Product',
             'matchBy' => 'field',
             'matchField' => 'name',
+            'matchFieldTitle' => 'Product name',
             'matchLanguage' => 'de',
             'matchColumn' => self::NAME_COLUMN,
             'newObjectsFolder' => self::FOLDER,
             'columns' => [self::NAME_COLUMN, 'Price'],
             'columnsBy' => 'name',
             'unusable' => null,
+            'format' => 'csv',
+            'sheet' => null,
+            'headerRow' => true,
+            'source' => 'upload',
+            'sourcePath' => null,
+            'fieldCount' => 2,
+            'transformedCount' => 0,
+            'schedule' => null,
         ], $configuration);
     }
 
@@ -203,6 +212,7 @@ class AdHocImportConfigurationServiceTest extends Unit
 
         $this->assertSame('id', $configuration['matchBy']);
         $this->assertNull($configuration['matchField']);
+        $this->assertNull($configuration['matchFieldTitle']);
         $this->assertNull($configuration['matchLanguage']);
         $this->assertSame('0', $configuration['matchColumn']);
         $this->assertNull($configuration['unusable']);
@@ -340,6 +350,7 @@ class AdHocImportConfigurationServiceTest extends Unit
 
         $this->assertNull($configuration['unusable']);
         $this->assertSame('sku', $configuration['matchField']);
+        $this->assertSame('sku', $configuration['matchFieldTitle'], 'a field without a title is named by its key');
     }
 
     /**
@@ -400,13 +411,122 @@ class AdHocImportConfigurationServiceTest extends Unit
             'className' => null,
             'matchBy' => null,
             'matchField' => null,
+            'matchFieldTitle' => null,
             'matchLanguage' => null,
             'matchColumn' => null,
             'newObjectsFolder' => null,
             'columns' => [],
             'columnsBy' => 'name',
             'unusable' => 'class',
+            'format' => null,
+            'sheet' => null,
+            'headerRow' => false,
+            'source' => null,
+            'sourcePath' => null,
+            'fieldCount' => 0,
+            'transformedCount' => 0,
+            'schedule' => null,
         ], $configuration);
+    }
+
+    public function testItDescribesItsSourceFileFormatAndMapping(): void
+    {
+        $mapping = [
+            ['dataSourceIndex' => ['SKU'], 'transformationPipeline' => [['type' => 'trim']]],
+            ['dataSourceIndex' => ['Name'], 'transformationPipeline' => []],
+            ['dataSourceIndex' => ['Price']],
+            'broken',
+        ];
+
+        $configuration = $this->described($this->config(
+            mapping: $mapping,
+            interpreter: ['type' => 'xlsx', 'settings' => ['sheetName' => 'Products', 'skipFirstRow' => true]],
+            loader: [
+                'type' => 'sftp',
+                'settings' => ['host' => 'files', 'password' => 'secret', 'remotePath' => '/in/p.xlsx'],
+            ],
+        ));
+
+        $this->assertSame('xlsx', $configuration['format']);
+        $this->assertSame('Products', $configuration['sheet']);
+        $this->assertTrue($configuration['headerRow']);
+        $this->assertSame('sftp', $configuration['source']);
+        $this->assertSame('/in/p.xlsx', $configuration['sourcePath']);
+        $this->assertSame(3, $configuration['fieldCount']);
+        $this->assertSame(1, $configuration['transformedCount']);
+        $this->assertStringNotContainsString('secret', (string)json_encode($configuration));
+    }
+
+    /**
+     * @dataProvider schedules
+     */
+    public function testItNamesTheCronDefinitionItRunsOnOrNoneWhenItRunsByHand(mixed $cron, ?string $schedule): void
+    {
+        $data = $this->config();
+        if ($cron !== null) {
+            $data['executionConfig'] = ['cronDefinition' => $cron];
+        }
+
+        $this->assertSame($schedule, $this->described($data)['schedule']);
+    }
+
+    /**
+     * @return array<string, array{mixed, string|null}>
+     */
+    public static function schedules(): array
+    {
+        return [
+            'nightly' => ['0 2 * * *', '0 2 * * *'],
+            'no cron definition' => ['', null],
+            'no execution settings' => [null, null],
+        ];
+    }
+
+    /**
+     * @dataProvider sourcesWithoutAPath
+     *
+     * @param array<string, mixed> $loader
+     * @param array<string, mixed> $interpreter
+     */
+    public function testOnlyAnSftpFileOrAnAssetNamesItsPathAndOnlyAnXlsxItsSheet(
+        array $loader,
+        array $interpreter,
+        ?string $sourcePath,
+        bool $headerRow
+    ): void {
+        $configuration = $this->described($this->config(interpreter: $interpreter, loader: $loader));
+
+        $this->assertSame($sourcePath, $configuration['sourcePath']);
+        $this->assertNull($configuration['sheet']);
+        $this->assertSame($headerRow, $configuration['headerRow']);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, array<string, mixed>, string|null, bool}>
+     */
+    public static function sourcesWithoutAPath(): array
+    {
+        return [
+            'an asset' => [
+                ['type' => 'asset', 'settings' => ['assetPath' => '/imports/p.csv']],
+                ['type' => 'csv', 'settings' => ['skipFirstRow' => true]],
+                '/imports/p.csv',
+                true,
+            ],
+            'a URL, which may hold credentials' => [
+                ['type' => 'http', 'settings' => ['url' => 'https://user:pw@example.org/p.csv']],
+                ['type' => 'csv', 'settings' => []],
+                null,
+                false,
+            ],
+            'an upload' => [['type' => 'upload', 'settings' => []], ['type' => 'csv'], null, false],
+            'a JSON with a sheet setting' => [
+                ['type' => 'upload'],
+                ['type' => 'json', 'settings' => ['sheetName' => 'x', 'skipFirstRow' => true]],
+                null,
+                false,
+            ],
+        ];
     }
 
     /**
@@ -414,6 +534,7 @@ class AdHocImportConfigurationServiceTest extends Unit
      * @param array<string, mixed>|null $location
      * @param array<mixed> $mapping
      * @param array<string, mixed>|null $interpreter
+     * @param array<string, mixed>|null $loader
      *
      * @return array<string, mixed>
      */
@@ -423,8 +544,10 @@ class AdHocImportConfigurationServiceTest extends Unit
         ?array $location = null,
         array $mapping = [],
         ?array $interpreter = null,
+        ?array $loader = null,
     ): array {
         return [
+            'loaderConfig' => $loader ?? ['type' => 'upload', 'settings' => []],
             'interpreterConfig' => $interpreter ?? ['type' => 'csv', 'settings' => []],
             'resolverConfig' => [
                 'elementType' => 'dataObject',
@@ -456,6 +579,20 @@ class AdHocImportConfigurationServiceTest extends Unit
                 && $permission === 'read'
                 && $user === $this->user
         );
+
+        return $configuration;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function described(array $data): array
+    {
+        [$configuration] = $this->service([$this->configuration('products', $data)])
+            ->listConfigurations()
+            ->getConfigurations();
 
         return $configuration;
     }
@@ -522,7 +659,7 @@ class AdHocImportConfigurationServiceTest extends Unit
     }
 
     /**
-     * Product with `sku` to match by, a checkbox `active` the matcher cannot compare and a localized `name`.
+     * Product with `sku` (untitled) to match by, a checkbox `active` the matcher cannot compare and a localized `name`.
      */
     private function productClass(): ClassDefinition
     {
@@ -534,7 +671,9 @@ class AdHocImportConfigurationServiceTest extends Unit
 
         $localized = new Localizedfields();
         $localized->setName('localizedfields');
-        $localized->addChild($field('name', new Input()));
+        $name = $field('name', new Input());
+        $name->setTitle('Product name');
+        $localized->addChild($name);
 
         $class = new ClassDefinition();
         $class->setName('Product');

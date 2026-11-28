@@ -10,19 +10,23 @@
 
 import React from 'react'
 import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Alert, Card, Flex, Form, FormKit, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
+import { Alert, Card, Flex, Skeleton, Text } from '@pimcore/studio-ui-bundle/components'
 import { type InspectedFile } from '../file-step/file-step-state'
 import {
   configurationColumnLabel,
   findConfiguration,
   missingColumns,
+  commonClassOf,
   unusableReason,
+  unusableSummaryOf,
+  usableFirst,
   type ImportConfiguration
 } from './configuration-state'
+import { ConfigurationDetail } from './configuration-detail'
 
 const LIST_WIDTH = 360
 const LIST_MAX_HEIGHT = 420
-const FORM_ITEM_STYLE = { marginBottom: 0 }
+const CONFIGURATION = 'data-importer.ad-hoc-import.configuration'
 
 const NEXT_KEYS = ['ArrowDown', 'ArrowRight']
 const PREVIOUS_KEYS = ['ArrowUp', 'ArrowLeft']
@@ -52,10 +56,13 @@ const useStyles = createStyles(({ token, css }) => ({
     flex: 0 0 ${LIST_WIDTH}px;
     max-height: ${LIST_MAX_HEIGHT}px;
     overflow-y: auto;
+    && [role='radiogroup'] { gap: ${token.marginXS}px; margin-top: ${token.marginXXS}px; } /* compact cards as the design's; the hint sits closer to the heading */
+    && .ant-card-body { padding: ${token.paddingXS}px ${token.paddingSM}px; }
   `,
   detail: css`
     flex: 1 1 0;
     min-width: 0;
+    && .ant-alert-warning :is(.ant-alert-message, .ant-alert-title) { color: ${token.Colors.Brand.Warning.colorWarningText}; }
   `,
   card: css`
     cursor: pointer;
@@ -70,7 +77,7 @@ const useStyles = createStyles(({ token, css }) => ({
     }
 
     .configuration-name {
-      color: ${token.colorPrimary};
+      color: ${token.colorPrimaryActive};
     }
   `,
   unusable: css`
@@ -84,10 +91,18 @@ const useStyles = createStyles(({ token, css }) => ({
       color: ${token.colorTextDisabled};
     }
   `,
-  detailLine: css`
-    color: ${token.colorTextSecondary};
-  `
+  detailLine: css`color: ${token.colorTextSecondary};`
 }))
+
+// what a card says of a usable configuration: its class unless the heading names it, what it reads, how many fields it maps and when it runs
+export const summaryOf = (t: ReturnType<typeof useTranslation>['t'], configuration: ImportConfiguration, withClass = false): string => [
+  withClass ? configuration.className ?? configuration.classId ?? '' : '',
+  configuration.format?.toUpperCase() ?? '',
+  t(`${CONFIGURATION}.${configuration.fieldCount === 1 ? 'field-count-one' : 'field-count'}`, { count: configuration.fieldCount }),
+  configuration.schedule === null
+    ? t(`${CONFIGURATION}.schedule.manual`)
+    : t(`${CONFIGURATION}.schedule.cron`, { cron: configuration.schedule, interpolation: { escapeValue: false } })
+].filter((part) => part !== '').join(' · ')
 
 export interface ConfigurationChoiceProps {
   inspected?: InspectedFile
@@ -97,6 +112,8 @@ export interface ConfigurationChoiceProps {
   isError?: boolean
   chosen?: string
   onChoose: (name: string | undefined) => void
+  // the uploaded file, which the configuration reads instead of its own source
+  fileName?: string
 }
 
 export const ConfigurationChoice = ({
@@ -105,7 +122,8 @@ export const ConfigurationChoice = ({
   isLoading,
   isError = false,
   chosen,
-  onChoose
+  onChoose,
+  fileName
 }: ConfigurationChoiceProps): React.JSX.Element => {
   const { t } = useTranslation()
   const { styles } = useStyles()
@@ -141,6 +159,7 @@ export const ConfigurationChoice = ({
     return <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.none') }</Text>
   }
 
+  const commonClass = commonClassOf(configurations)
   const configuration = findConfiguration(configurations, chosen)
   const usable = configuration !== undefined && reasonOf(configuration) === null
   const missing = usable && inspected !== undefined ? missingColumns(configuration, inspected) : []
@@ -151,9 +170,9 @@ export const ConfigurationChoice = ({
     }
 
     return shown.matchLanguage === null
-      ? t('data-importer.ad-hoc-import.configuration.match-field', { field: shown.matchField, column, ...plain })
+      ? t('data-importer.ad-hoc-import.configuration.match-field', { field: shown.matchFieldTitle ?? shown.matchField, column, ...plain })
       : t('data-importer.ad-hoc-import.configuration.match-field-language', {
-          field: shown.matchField,
+          field: shown.matchFieldTitle ?? shown.matchField,
           language: shown.matchLanguage,
           column,
           ...plain
@@ -167,7 +186,6 @@ export const ConfigurationChoice = ({
     const reason = reasonOf(shown)
     const detailId = `ad-hoc-import-configuration-${index}-detail`
     const isChosen = usable && shown.name === chosen
-    const className = shown.className ?? shown.classId ?? ''
     const choose = (): void => {
       if (reason === null) {
         onChoose(shown.name)
@@ -181,6 +199,7 @@ export const ConfigurationChoice = ({
         aria-disabled={ reason !== null }
         aria-label={ shown.name }
         className={ [styles.card, isChosen ? styles.chosen : '', reason === null ? '' : styles.unusable].join(' ') }
+        contentPadding="none"
         key={ shown.name }
         onClick={ choose }
         onKeyDown={ (event: React.KeyboardEvent<HTMLElement>) => {
@@ -216,8 +235,8 @@ export const ConfigurationChoice = ({
             id={ detailId }
           >
             { reason === null
-              ? className
-              : t('data-importer.ad-hoc-import.configuration.unusable-detail', { class: className, reason, ...plain }) }
+              ? summaryOf(t, shown, commonClass === undefined)
+              : unusableSummaryOf(shown, reason, commonClass === undefined) }
           </Text>
         </Flex>
       </Card>
@@ -228,23 +247,24 @@ export const ConfigurationChoice = ({
     <Flex gap="large">
       <Flex
         className={ styles.list }
-        gap="small"
+        gap="extra-small"
         vertical
       >
         <Text
           id="ad-hoc-import-configurations"
           strong
         >
-          { t('data-importer.ad-hoc-import.configuration.list-title') }
+          { commonClass === undefined
+            ? t(`${CONFIGURATION}.list-title`)
+            : t(`${CONFIGURATION}.list-title-class`, { class: commonClass, ...plain }) }
         </Text>
         <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.list-hint') }</Text>
         <Flex
           aria-labelledby="ad-hoc-import-configurations"
-          gap="small"
           role="radiogroup"
           vertical
         >
-          { configurations.map((shown, index) => card(shown, index)) }
+          { usableFirst(configurations, (shown) => reasonOf(shown) === null).map((shown, index) => card(shown, index)) }
         </Flex>
       </Flex>
 
@@ -256,35 +276,21 @@ export const ConfigurationChoice = ({
         { !usable && <Text className={ styles.quiet }>{ t('data-importer.ad-hoc-import.configuration.choose') }</Text> }
 
         { usable && (
-          <FormKit.Panel title={ configuration.name }>
-            <Form.Item
-              label={ t('data-importer.ad-hoc-import.objects.class') }
-              style={ FORM_ITEM_STYLE }
-            >
-              <Text>{ configuration.className ?? configuration.classId }</Text>
-            </Form.Item>
-            <Form.Item
-              label={ t('data-importer.ad-hoc-import.objects.match-by') }
-              style={ FORM_ITEM_STYLE }
-            >
-              <Text>{ configuration.matchBy === 'none' ? t('data-importer.ad-hoc-import.configuration.match-none') : match(configuration) }</Text>
-            </Form.Item>
-            <Form.Item
-              label={ t('data-importer.ad-hoc-import.objects.new-objects-in') }
-              style={ FORM_ITEM_STYLE }
-            >
-              <Text>{ configuration.newObjectsFolder }</Text>
-            </Form.Item>
-          </FormKit.Panel>
+          <ConfigurationDetail
+            configuration={ configuration }
+            fileName={ fileName }
+            inspected={ inspected }
+            match={ configuration.matchBy === 'none' ? t(`${CONFIGURATION}.match-none`) : match(configuration) }
+          />
         ) }
 
         { missing.length > 0 && (
           <Alert
-            message={ t('data-importer.ad-hoc-import.configuration.missing-columns', {
-              columns: missing.join(', '),
+            message={ t(`${CONFIGURATION}.${missing.length === 1 ? 'missing-columns-one' : 'missing-columns'}`, {
+              count: missing.length,
+              columns: missing.map((column) => `“${column}”`).join(', '),
               ...plain
             }) }
-            showIcon
             type="warning"
           />
         ) }

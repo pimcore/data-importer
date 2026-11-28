@@ -10,9 +10,10 @@
 
 import React from 'react'
 import { useTranslation } from '@pimcore/studio-ui-bundle/app'
-import { Button, Flex, Icon, Tag, Text } from '@pimcore/studio-ui-bundle/components'
+import { Button, Flex, Tag, Text } from '@pimcore/studio-ui-bundle/components'
 import { type RequiredField, type RowFilter } from './mapping-state'
 import { useStyles } from './mapping-step.styles'
+import { SparkleIcon } from './sparkle-icon'
 
 const MAPPING = 'data-importer.ad-hoc-import.mapping'
 const FILTERS: RowFilter[] = ['all', 'open', 'mapped']
@@ -69,6 +70,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
         <Flex gap="mini">
           { FILTERS.map((value) => (
             <Button
+              className={ styles.summaryButton }
               key={ value }
               onClick={ () => { onFilter(value) } }
               size="small"
@@ -80,6 +82,8 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
         </Flex>
         { counts.open > 0 && (
           <Button
+            className={ styles.summaryButton }
+            color="secondary"
             onClick={ onSkipOpen }
             size="small"
           >
@@ -96,6 +100,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
             <Text type="secondary">{ t(`${MAPPING}.required`) }</Text>
             { required.map(({ key, title, covered }) => (
               <Tag
+                className={ styles.requiredTag }
                 color={ covered ? 'success' : 'error' }
                 key={ key }
               >
@@ -108,7 +113,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
 
       { (auto > 0 || pending > 0) && (
         <div className={ styles.note }>
-          <span className={ styles.noteIcon }><Icon value="auto-save" /></span>
+          <span className={ styles.noteIcon }><SparkleIcon withSecond /></span>
           { auto === 0
             ? <span><strong>{ pendingLead }</strong></span>
             : (
@@ -121,6 +126,7 @@ export const MappingSummary = ({ filter, onFilter, counts, total, skipped, requi
           <span className={ styles.spacer } />
           { pending > 0 && (
             <Button
+              className={ styles.summaryButton }
               onClick={ onUseSuggestions }
               size="small"
               type="primary"

@@ -10,7 +10,7 @@
 
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from '@pimcore/studio-ui-bundle/app'
+import { createStyles, useTranslation } from '@pimcore/studio-ui-bundle/app'
 import { Alert, Modal, Steps } from '@pimcore/studio-ui-bundle/components'
 import { ApiError, GeneralError, trackError } from '@pimcore/studio-ui-bundle/modules/app'
 import {
@@ -56,6 +56,81 @@ import { ImportFooter, PreviewFooter, StepFooter } from './dialog-footers'
 const DIALOG_WIDTH = 1160
 const STEPS_WIDTH = 720
 
+// the step list ends the dialog's head: a divider across its whole width, the current step's name bold
+const useStyles = createStyles(({ token, css }) => ({
+  // the dialog keeps within the viewport, its body scrolls, so the footer stays in view; the footer's divider runs across, as the head's
+  dialog: css`
+    && .ant-modal-content {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - ${2 * token.marginLG}px);
+    }
+
+    /* the scrolling body spans the content's padding (stretched, as the footer: the content does not stretch its items), so the dividers run edge to edge */
+    && .ant-modal-body {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      align-self: stretch;
+      width: auto;
+      min-height: 0;
+      margin: 0 -${token.paddingLG}px;
+      padding: 0 ${token.paddingLG}px;
+      overflow: auto;
+    }
+
+    && .ant-modal-footer {
+      flex: none;
+      align-self: stretch;
+      width: auto;
+      margin: ${token.marginSM}px -${token.paddingLG}px 0;
+      padding: ${token.paddingSM}px ${token.paddingLG}px 0;
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
+  head: css`
+    margin: 0 -${token.paddingLG}px ${token.margin}px;
+    padding: ${token.padding}px ${token.paddingLG}px ${token.margin}px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+  // a done step is a light circle with the check in the primary colour, the steps ahead grey;
+  // Studio forces the white check on .ant-steps-icon, so the colour goes on the check itself
+  steps: css`
+    max-width: ${STEPS_WIDTH}px;
+
+    && .ant-steps-item-icon .ant-steps-icon {
+      font-size: ${token.fontSize}px;
+    }
+
+    && .ant-steps-item-title {
+      font-size: ${token.fontSizeLG}px;
+    }
+
+    && .ant-steps-item-process .ant-steps-item-title {
+      font-weight: ${token.fontWeightStrong};
+    }
+
+    && .ant-steps-item-finish .ant-steps-item-icon {
+      background: ${token.colorPrimaryBg};
+      border-color: ${token.colorPrimaryBg};
+    }
+
+    && .ant-steps-item-finish .ant-steps-item-icon .anticon {
+      color: ${token.colorPrimary};
+    }
+
+    && .ant-steps-item-wait .ant-steps-item-icon {
+      background: ${token.colorFillSecondary};
+      border-color: transparent;
+    }
+
+    && .ant-steps-item-wait .ant-steps-item-icon .ant-steps-icon,
+    && .ant-steps-item-wait .ant-steps-item-title {
+      color: ${token.colorTextTertiary};
+    }
+  `
+}))
+
 const STEPS = ['file', 'mapping', 'preview', 'import']
 const IMPORT_STEP = 3
 const RUN_POLLING_MS = 1000
@@ -73,6 +148,7 @@ export interface AdHocImportDialogProps {
 
 export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): React.JSX.Element => {
   const { t } = useTranslation()
+  const { styles } = useStyles()
   const languages = useLanguages()
   const [phase, setPhase] = useState<FilePhase>({ kind: 'empty' })
   const [objects, setObjects] = useState<ObjectsSettings>(initialObjects)
@@ -325,7 +401,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   const canMapOn = (): boolean => configurationMapping.mapWith === 'configuration'
     ? configurationMapping.canContinue
-    : mapping !== null && canContinueMapping(mapping, fields)
+    : mapping !== null && canContinueMapping(mapping)
 
   const canGoOn = step === 0
     ? !isInspecting && canContinue(phase, objects)
@@ -484,6 +560,8 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
 
   return (
     <Modal
+      centered
+      className={ styles.dialog }
       footer={ footer() }
       maskClosable={ false }
       onCancel={ close }
@@ -500,12 +578,14 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
           }) }
       width={ DIALOG_WIDTH }
     >
-      <div style={ { maxWidth: STEPS_WIDTH, marginBottom: 16 } }>
-        <Steps
-          current={ isDone(run) ? STEPS.length : step }
-          items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
-          size="small"
-        />
+      <div className={ styles.head }>
+        <div className={ styles.steps }>
+          <Steps
+            current={ isDone(run) ? STEPS.length : step }
+            items={ STEPS.map((name) => ({ title: t(`data-importer.ad-hoc-import.step.${name}`) })) }
+            size="small"
+          />
+        </div>
       </div>
       { step === 0 && (
         <FileStep
@@ -521,7 +601,7 @@ export const AdHocImportDialog = ({ target, onClose }: AdHocImportDialogProps): 
       { step === 1 && objects.classId !== undefined && (
         <MappingStep
           classId={ objects.classId }
-          configuration={ configurationMapping.choice }
+          configuration={ { ...configurationMapping.choice, fileName: phase.kind === 'inspected' ? phase.file.name : undefined } }
           fields={ fields }
           isLoading={ isLoadingMapping }
           mapWith={ configurationMapping.mapWith }

@@ -28,6 +28,7 @@ use Pimcore\Bundle\StudioBackendBundle\Class\Service\ClassDefinitionServiceInter
 use Pimcore\Bundle\StudioBackendBundle\Exception\Api\InvalidArgumentException;
 use Pimcore\Bundle\StudioBackendBundle\Security\Service\SecurityServiceInterface;
 use Pimcore\Model\DataObject\ClassDefinition;
+use Pimcore\Model\DataObject\ClassDefinition\Data\Localizedfields;
 use Pimcore\Model\DataObject\Folder;
 use Pimcore\Model\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -173,6 +174,7 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
             'className' => $class?->getName(),
             'matchBy' => $match['by'] ?? null,
             'matchField' => $match['field'] ?? null,
+            'matchFieldTitle' => $this->fieldTitle($class, $match['field'] ?? null),
             'matchLanguage' => $match['language'] ?? null,
             'matchColumn' => $match['column'] ?? null,
             'newObjectsFolder' => $folder,
@@ -181,7 +183,67 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
                 is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : []
             )->value,
             'unusable' => $unusable?->value,
+            ...$this->fileAndMapping($data),
         ];
+    }
+
+    /**
+     * What it reads, how much it maps and when it runs: the file format, the source, the counts of its mapping rows
+     * and its cron definition.
+     *
+     * @param array<mixed> $data
+     *
+     * @return array{
+     *     format: string|null,
+     *     sheet: string|null,
+     *     headerRow: bool,
+     *     source: string|null,
+     *     sourcePath: string|null,
+     *     fieldCount: int,
+     *     transformedCount: int,
+     *     schedule: string|null
+     * }
+     */
+    private function fileAndMapping(array $data): array
+    {
+        $mapping = is_array($data['mappingConfig'] ?? null) ? $data['mappingConfig'] : [];
+        $interpreter = is_array($data['interpreterConfig'] ?? null) ? $data['interpreterConfig'] : [];
+        $settings = is_array($interpreter['settings'] ?? null) ? $interpreter['settings'] : [];
+        $format = $this->text($interpreter['type'] ?? null);
+        $loader = is_array($data['loaderConfig'] ?? null) ? $data['loaderConfig'] : [];
+        $execution = is_array($data['executionConfig'] ?? null) ? $data['executionConfig'] : [];
+
+        return [
+            'format' => $format,
+            'sheet' => $format === 'xlsx' ? $this->text($settings['sheetName'] ?? null) : null,
+            'headerRow' => in_array($format, ['csv', 'xlsx'], true) && (bool)($settings['skipFirstRow'] ?? false),
+            'source' => $this->text($loader['type'] ?? null),
+            'sourcePath' => $this->sourcePath($loader),
+            'fieldCount' => count(array_filter($mapping, is_array(...))),
+            'transformedCount' => count(array_filter(
+                $mapping,
+                static fn (mixed $row): bool => is_array($row)
+                    && is_array($row['transformationPipeline'] ?? null)
+                    && $row['transformationPipeline'] !== []
+            )),
+            'schedule' => $this->text($execution['cronDefinition'] ?? null),
+        ];
+    }
+
+    /**
+     * The path a source reads, for those that name one without credentials: an SFTP file and an asset.
+     *
+     * @param array<mixed> $loader
+     */
+    private function sourcePath(array $loader): ?string
+    {
+        $settings = is_array($loader['settings'] ?? null) ? $loader['settings'] : [];
+
+        return match ($loader['type'] ?? null) {
+            'sftp' => $this->text($settings['remotePath'] ?? null),
+            'asset' => $this->text($settings['assetPath'] ?? null),
+            default => null,
+        };
     }
 
     /**
@@ -237,6 +299,23 @@ final readonly class AdHocImportConfigurationService implements AdHocImportConfi
         }
 
         return true;
+    }
+
+    // the step names the field as the class shows it; one it cannot find, or without a title, by its key
+    private function fieldTitle(?ClassDefinition $class, ?string $field): ?string
+    {
+        if ($field === null) {
+            return null;
+        }
+
+        $definition = $class?->getFieldDefinition($field);
+        $localized = $class?->getFieldDefinition('localizedfields');
+        if ($definition === null && $localized instanceof Localizedfields) {
+            $definition = $localized->getFieldDefinition($field);
+        }
+        $title = trim((string) $definition?->getTitle());
+
+        return $title === '' ? $field : $title;
     }
 
     /**

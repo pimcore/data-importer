@@ -18,8 +18,23 @@ const SEARCH_WIDTH = 260
 const AREA = 'not-imported'
 
 const useStyles = createStyles(({ token, css }) => ({
+  // a light fieldset area, the arrow a text mark before the bold title
   area: css`
     margin-top: ${token.marginSM}px;
+
+    &.collapse .ant-collapse.collapse-item--theme-default.collapse-item--bordered {
+      border-color: ${token.colorBorderTertiary};
+      border-radius: ${token.borderRadiusLG}px;
+      background: ${token.colorBgFieldset};
+    }
+
+    &.collapse .ant-collapse.ant-collapse-small > .ant-collapse-item > .ant-collapse-header {
+      min-height: 36px;
+      padding: ${token.paddingXS}px ${token.paddingSM}px;
+    }
+  `,
+  arrow: css`
+    font-weight: ${token.fontWeightStrong};
   `,
   names: css`
     display: block;
@@ -74,11 +89,14 @@ export const NotImportedPanel = ({ skipped, onRestore }: NotImportedPanelProps):
   return (
     <Collapse
       activeKeys={ isOpen ? [AREA] : [] }
+      bordered
       className={ styles.area }
+      expandIcon={ ({ isActive }) => <span className={ styles.arrow }>{ isActive === true ? '▾' : '▸' }</span> }
       expandIconPosition="start"
       items={ [{
         key: AREA,
-        label: t(`${MAPPING}.not-imported`, { count: skipped.length }),
+        label: <Text strong>{ t(`${MAPPING}.not-imported`, { count: skipped.length }) }</Text>,
+        subLabelPosition: 'inline',
         subLabel: <span className={ styles.names }>{ skipped.map(({ label }) => label).join(', ') }</span>,
         extra: <span className={ styles.action }>{ t(`${MAPPING}.not-imported.${isOpen ? 'hide' : 'show'}`) }</span>,
         children: (

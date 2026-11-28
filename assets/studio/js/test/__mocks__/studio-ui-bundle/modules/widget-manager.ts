@@ -8,4 +8,4 @@
  *  @license    Pimcore Open Core License (POCL)
  */
 
-export {}
+export const useWidgetManager = (): { openMainWidget: () => void } => ({ openMainWidget: () => {} })

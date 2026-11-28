@@ -83,12 +83,21 @@ const configuration: ImportConfiguration = {
   className: 'Car',
   matchBy: 'id',
   matchField: null,
+  matchFieldTitle: null,
   matchLanguage: null,
   matchColumn: 'sku',
   newObjectsFolder: '/Cars',
   columns: ['sku', 'name', 'color'],
   columnsBy: 'name',
-  unusable: null
+  unusable: null,
+  format: 'csv',
+  sheet: null,
+  headerRow: true,
+  source: 'upload',
+  sourcePath: null,
+  fieldCount: 2,
+  transformedCount: 0,
+  schedule: null
 }
 
 const row = (given: Partial<DryRunRow>): DryRunRow => ({
