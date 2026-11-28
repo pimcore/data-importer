@@ -57,8 +57,9 @@ const useStyles = createStyles(({ token, css }) => ({
   replaced: css`
     color: ${token.colorTextQuaternary};
   `,
+  // the success text colour that holds 4.5:1 on white; colorSuccess and colorSuccessText do not
   matches: css`
-    color: ${token.colorSuccess};
+    color: ${token.colorSuccessTextActive};
     font-weight: ${token.fontWeightStrong};
   `
 }))

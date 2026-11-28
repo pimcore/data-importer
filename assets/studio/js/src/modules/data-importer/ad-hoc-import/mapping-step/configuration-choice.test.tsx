@@ -176,6 +176,13 @@ describe('the mapping with a configuration', () => {
     expect(cards().map(({ tabIndex }) => tabIndex)).toEqual([-1, -1, -1])
   })
 
+  it('offers one that reads records, not a table, as one that does not fit the file', () => {
+    useConfiguration({ configurations: [configuration(), configuration({ name: 'pim-sync-json', format: 'json' })] })
+
+    expect(cards().map(detailOf)[1]).toBe('JSON · does not fit a CSV file')
+    expect(cards().map((shown) => shown.getAttribute('aria-disabled'))).toEqual(['false', 'true'])
+  })
+
   it('names the class in the heading when all are of one, and else on each card', () => {
     useConfiguration({ configurations: [configuration(), configuration({ name: 'closed', unusable: 'folder-not-allowed', format: null })] })
 

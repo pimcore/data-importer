@@ -15,8 +15,11 @@ export type ImportConfiguration = BundleDataImporterAdHocImportConfigurationsRes
 
 export type MapWith = 'here' | 'configuration'
 
-// the one reason only the file shows; the others come from the server
+// the reasons only the file shows; the others come from the server
 export const MATCH_COLUMN_MISSING = 'match-column'
+// a configuration reading records (JSON, XML, SQL) has no columns to find in a table; CSV and XLSX key them alike
+export const formatUnfit = (type: 'csv' | 'xlsx'): string => `format-${type}`
+const TABULAR = new Set(['csv', 'xlsx'])
 
 export interface ImportObjects extends ObjectsSettings {
   // for a localized field matched by: its language
@@ -77,6 +80,11 @@ export const configurationColumnLabel = (
  * Why the import cannot use the configuration with this file, or null if it can.
  */
 export const unusableReason = (configuration: ImportConfiguration, inspected: InspectedFile): string | null => {
+  const type = inspected.type ?? null
+  if (type !== null && configuration.format !== null && !TABULAR.has(configuration.format)) {
+    return formatUnfit(type)
+  }
+
   if (configuration.unusable !== null) {
     return configuration.unusable
   }

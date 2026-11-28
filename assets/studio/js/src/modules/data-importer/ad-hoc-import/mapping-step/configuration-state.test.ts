@@ -89,6 +89,20 @@ describe('a configuration', () => {
     expect(canContinueWithConfiguration(closed, inspected)).toBe(false)
   })
 
+  it('cannot be used when it reads records, not a table, before any reason of the server', () => {
+    const json = configuration({ format: 'json', unusable: 'folder' })
+
+    expect(unusableReason(json, inspected)).toBe('format-xlsx')
+    expect(unusableReason(configuration({ format: 'xml' }), csvWithHeader)).toBe('format-csv')
+    expect(canContinueWithConfiguration(json, inspected)).toBe(false)
+  })
+
+  it('can be used when it reads the other table format', () => {
+    expect(unusableReason(configuration({ format: 'csv' }), inspected)).toBeNull()
+    expect(unusableReason(configuration({ format: 'xlsx', matchColumn: '0' }), csvWithHeader)).toBeNull()
+    expect(unusableReason(configuration({ format: 'json' }), { ...inspected, type: null })).toBeNull()
+  })
+
   it('cannot be used when the file lacks the column it matches by', () => {
     const elsewhere = configuration({ matchColumn: 'Artikelnr' })
 
